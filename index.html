@@ -1,0 +1,1423 @@
+<!--This is the main page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebayednoob - Ethical GAI</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts for a clean look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- three.js and related libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a; /* A very dark base background */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        /* Main Page Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Main Page Content Styling */
+        .content-overlay {
+            background-color: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(8px);
+            --webkit-backdrop-filter: blur(8px);
+        }
+        .main-content-area {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .nav-active {
+            color: #ffffff;
+            border-bottom: 2px solid #3b82f6; /* Blue-500 */
+        }
+
+        /* Codex Module Specific Styles */
+        #codex-module {
+            height: calc(100vh - 105px); /* Full viewport height minus header */
+        }
+        #render-container { position: relative; width: 100%; height: 100%; }
+        #render-container canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+        #render-container canvas:active { cursor: grabbing; }
+        .label {
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            padding: 2px 4px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 3px;
+            pointer-events: none; /* Important */
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        input[type="radio"]:checked + label, input[type="checkbox"]:checked + label { color: #06b6d4; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 0.875rem; }
+        #selection-info { transition: opacity 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white selection:bg-blue-500 selection:text-white">
+
+    <!-- This canvas is for the main page's animated background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="container mx-auto px-4 min-h-screen flex flex-col relative z-10">
+
+        <!-- Unified Header -->
+        <header class="py-6 border-b border-gray-700/50 content-overlay rounded-b-xl sticky top-0 z-50">
+            <nav class="flex justify-between items-center px-6">
+                <a href="#" id="home-btn" class="block transition-opacity hover:opacity-80">
+                    <img src="Resources/Pictures/Logo Files/Ebayednoob-logo.png" alt="Ebayednoob Logo" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/150x40/0a0a0a/ffffff?text=Logo';">
+                </a>
+                <div class="flex items-center space-x-6">
+                    <button id="projects-btn" class="nav-btn text-lg text-gray-300 hover:text-white transition-colors pb-1">Projects</button>
+                    <button id="pages-btn" class="nav-btn text-lg text-gray-300 hover:text-white transition-colors pb-1">Pages</button>
+                    <button id="tutorials-btn" class="nav-btn text-lg text-gray-300 hover:text-white transition-colors pb-1">Tutorials</button>
+                    <button id="research-btn" class="nav-btn text-lg text-gray-300 hover:text-white transition-colors pb-1">Research</button>
+                    <!-- New button for the Codex Module -->
+                    <button id="codex-btn" class="nav-btn text-lg text-gray-300 hover:text-white transition-colors pb-1">Codex</button>
+                    
+                    <div id="auth-container" class="pl-4 border-l border-gray-700">
+                         <button id="login-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                             Login
+                         </button>
+                         <div id="user-profile" class="hidden items-center space-x-3">
+                             <span id="user-email" class="text-sm text-gray-400"></span>
+                             <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                 Logout
+                             </button>
+                         </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Site Content Area -->
+        <main id="content-area" class="flex-grow py-10 main-content-area">
+            <!-- Initial content, will be replaced by dynamic loading -->
+            <div class="text-center h-full flex flex-col justify-center">
+                <h1 class="text-5xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-300">
+                    Ethical General Intelligence
+                </h1>
+                <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                    An interactive journey towards understanding and developing advanced, ethical AI systems.
+                </p>
+            </div>
+        </main>
+
+        <!-- Codex Module Content Area (Initially Hidden) -->
+        <div id="codex-module" class="hidden w-full text-gray-200 flex-col md:flex-row">
+            <!-- === CONTROL PANEL === -->
+            <div class="w-full md:w-2/5 lg:w-1/3 p-6 bg-gray-900/80 backdrop-blur-sm border-r border-gray-700/50 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                <div>
+                    <h1 class="text-2xl font-bold text-cyan-400">Procedural Codex</h1>
+                    <p class="text-sm text-gray-400 mt-1">A Universal Mapping Tool</p>
+                </div>
+                <div class="flex border-b border-gray-700">
+                    <button id="tab-static" class="px-4 py-2 text-sm font-medium border-b-2 border-cyan-500 text-cyan-400">Static Codex</button>
+                    <button id="tab-temporal" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white">Temporal Codex</button>
+                </div>
+                <div id="panel-static" class="space-y-4">
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-3">
+                        <h2 class="text-lg font-semibold text-gray-100 border-b border-gray-600 pb-2">View Mode</h2>
+                        <div id="view-mode-selector" class="space-y-2">
+                            <div><input type="radio" id="view-cube" name="view-mode" value="cube" checked class="form-radio h-4 w-4 text-cyan-600"><label for="view-cube" class="ml-2 text-gray-300">Single Token</label></div>
+                            <div><input type="radio" id="view-constellation" name="view-mode" value="constellation" disabled class="form-radio h-4 w-4"><label for="view-constellation" class="ml-2 text-gray-500">Constellation</label></div>
+                            <div><input type="radio" id="view-ontological" name="view-mode" value="ontological" disabled class="form-radio h-4 w-4"><label for="view-ontological" class="ml-2 text-gray-500">Ontological Codex</label></div>
+                        </div>
+                        <div id="build-controls" class="space-x-2 pt-2 hidden">
+                            <button id="build-btn" class="bg-teal-600 hover:bg-teal-500 px-3 py-1 rounded text-sm">Play</button>
+                            <button id="pause-btn" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-sm">Pause</button>
+                            <button id="reset-build-btn" class="bg-red-700 hover:bg-red-600 px-3 py-1 rounded text-sm">Reset</button>
+                        </div>
+                        <div id="viz-progress-container" class="w-full bg-gray-700 rounded-full h-2.5 hidden"><div id="viz-progress-bar" class="bg-teal-500 h-2.5 rounded-full" style="width: 0%"></div></div>
+                        <p id="viz-progress-text" class="text-xs text-center text-teal-300"></p>
+                        <div id="filtering-controls" class="space-y-2 pt-2 hidden">
+                            <h3 class="text-md font-semibold text-gray-200">Filtering & Display</h3>
+                            <div><label for="toroid-filter" class="text-sm font-medium text-gray-300">Toroid</label><select id="toroid-filter" class="w-full mt-1 bg-gray-700 border-gray-600 rounded-md px-3 py-1"></select></div>
+                            <div><label for="stream-filter" class="text-sm font-medium text-gray-300">Stream</label><select id="stream-filter" class="w-full mt-1 bg-gray-700 border-gray-600 rounded-md px-3 py-1"></select></div>
+                            <div class="pt-2">
+                                <input type="checkbox" id="temporal-flow-toggle" disabled class="form-checkbox h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 disabled:cursor-not-allowed">
+                                <label for="temporal-flow-toggle" class="ml-2 text-gray-500">Show Temporal Flow</label>
+                            </div>
+                             <div class="pt-2">
+                                <input type="checkbox" id="labels-toggle" disabled class="form-checkbox h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500 disabled:cursor-not-allowed">
+                                <label for="labels-toggle" class="ml-2 text-gray-500">Show Node Labels</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-4">
+                        <h2 class="text-lg font-semibold text-gray-100 border-b border-gray-600 pb-2">Single Token Orientation</h2>
+                        <input type="text" id="token-input" value="quaternion" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none transition">
+                        <button id="generate-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md transition-transform transform hover:scale-105 active:scale-100">Generate Orientation</button>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-4">
+                        <h2 class="text-lg font-semibold text-gray-100 border-b border-gray-600 pb-2">Dictionary Processing</h2>
+                        <input type="file" id="dictionary-file" accept=".txt" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-violet-500 file:text-violet-50 hover:file:bg-violet-600"/>
+                        <button id="generate-codex-btn" class="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2 px-4 rounded-md" disabled>Generate Codex Root</button>
+                        <div class="pt-2 space-y-3">
+                            <div id="gen-progress-container" class="w-full bg-gray-700 rounded-full h-2.5 hidden"><div id="gen-progress-bar" class="bg-violet-500 h-2.5 rounded-full" style="width: 0%"></div></div>
+                            <p id="gen-progress-text" class="text-sm text-center text-gray-400"></p>
+                            <p class="text-sm font-medium text-gray-300">Tokens Processed: <span id="tokens-processed" class="font-mono text-amber-400">0</span></p>
+                            <p class="text-sm font-medium text-gray-300">Codex Root (SHA-256):</p>
+                            <textarea id="codex-root" readonly class="w-full h-24 bg-gray-900 font-mono text-xs text-amber-400 p-2 border border-gray-600 rounded-md break-all"></textarea>
+                            <div class="flex space-x-2"><button id="export-root-btn" class="w-full mt-2 bg-emerald-600 text-white font-bold py-2 px-4 rounded-md" disabled>Export Root Files</button><button id="export-tree-btn" class="w-full mt-2 bg-sky-600 text-white font-bold py-2 px-4 rounded-md" disabled>Export Tree (.json)</button></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="panel-temporal" class="space-y-4 hidden">
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-4">
+                        <h2 class="text-lg font-semibold text-gray-100 border-b border-gray-600 pb-2">SHD-CCP Packet Builder</h2>
+                        <div><label for="temporal-token-input" class="text-sm font-medium">Manual Token</label><input type="text" id="temporal-token-input" value="temporal" class="w-full mt-1 bg-gray-700 border-gray-600 rounded-md px-3 py-2"></div>
+                        <div class="flex space-x-2">
+                            <button id="append-codex-btn" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 px-4 rounded-md">Append Token</button>
+                            <button id="update-node-btn" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-4 rounded-md" disabled>Update Selected</button>
+                        </div>
+                        <hr class="border-gray-700">
+                        <div>
+                            <h3 class="text-md font-semibold text-gray-200">Context Settings</h3>
+                            <p class="text-xs text-gray-400">Set the context below before processing a file or appending a token.</p>
+                        </div>
+                        <div>
+                            <label for="struct-id" class="slider-label"><span>Structural Form ID</span><span id="struct-id-val">1</span></label>
+                            <input type="range" id="struct-id" min="0" max="15" value="1" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                            <div id="struct-id-desc" class="text-xs text-cyan-300 mt-1 h-8"></div>
+                        </div>
+                        <div><label for="amp-id" class="slider-label"><span>Amplitude ID</span><span id="amp-id-val">0</span></label><input type="range" id="amp-id" min="0" max="7" value="0" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"></div>
+                        <div><label for="freq-id" class="slider-label"><span>Frequency ID</span><span id="freq-id-val">0</span></label><input type="range" id="freq-id" min="0" max="31" value="0" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"></div>
+                        <div><label for="spin-id" class="slider-label"><span>Spin Class ID</span><span id="spin-id-val">0</span></label><input type="range" id="spin-id" min="0" max="7" value="0" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"></div>
+                        <div><label for="payload-scale" class="text-sm font-medium">Payload Scaling Factor</label><input type="number" id="payload-scale" value="1.0" step="0.1" class="w-full mt-1 bg-gray-700 border-gray-600 rounded-md px-3 py-2"></div>
+                        <hr class="border-gray-700">
+                        <div class="space-y-2">
+                            <h3 class="text-md font-semibold text-gray-200">Bulk Processing</h3>
+                            <div>
+                                <label for="prompt-input" class="text-sm font-medium">Enter Prompt</label>
+                                <textarea id="prompt-input" rows="3" class="w-full mt-1 bg-gray-700 border-gray-600 rounded-md px-3 py-2" placeholder="Enter text to tokenize..."></textarea>
+                                <button id="process-prompt-btn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Process Prompt</button>
+                            </div>
+                            <div class="text-center text-xs text-gray-500">OR</div>
+                            <div>
+                                <label for="temporal-file-input" class="text-sm font-medium">Upload File</label>
+                                <input type="file" id="temporal-file-input" accept=".txt" class="w-full mt-1 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-teal-500 file:text-teal-50 hover:file:bg-teal-600"/>
+                                <button id="process-temporal-file-btn" class="w-full mt-2 bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-md" disabled>Process File (Manual Context)</button>
+                            </div>
+                            <div id="temporal-progress-container" class="w-full bg-gray-700 rounded-full h-2.5 pt-2 hidden"><div id="temporal-progress-bar" class="bg-teal-500 h-2.5 rounded-full" style="width: 0%"></div></div>
+                            <p id="temporal-progress-text" class="text-xs text-center text-teal-300"></p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-2 flex-grow">
+                         <h2 class="text-lg font-semibold text-gray-100 border-b border-gray-600 pb-2">Stream History</h2>
+                         <div id="stream-history-log" class="h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1 text-xs font-mono"></div>
+                         <div class="flex space-x-2 pt-2">
+                            <button id="export-binary-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-md" disabled>Export Binary (.bin)</button>
+                            <button id="export-manifest-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md" disabled>Export Manifest (.json)</button>
+                         </div>
+                         <button id="reset-temporal-btn" class="w-full mt-2 bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md">Reset Temporal Codex</button>
+                    </div>
+                </div>
+                <div id="selection-info" class="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-2 opacity-0 hidden">
+                    <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+                        <h2 class="text-lg font-semibold text-gray-100">Selected Node</h2>
+                        <button id="close-selection-btn" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+                    </div>
+                    <div id="selection-content" class="text-xs font-mono text-amber-300 break-words max-h-48 overflow-y-auto custom-scrollbar"></div>
+                </div>
+            </div>
+            <!-- === 3D VIEWER === -->
+            <div id="render-container" class="flex-grow w-full md:w-3/5 lg:w-2/3 h-full"></div>
+        </div>
+
+        <!-- Unified Footer -->
+        <footer id="main-footer" class="text-center py-6 text-gray-500">
+            <p>&copy; 2025 Ebayednoob. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Firebase and Main Logic Script -->
+    <script type="module">
+        // --- Firebase services ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnBBcdczugJzl_5u1aLJb-OiHvvtDgHvY",
+            authDomain: "gitlabs-3e081.firebaseapp.com",
+            projectId: "gitlabs-3e081",
+            storageBucket: "gitlabs-3e081.appspot.com",
+            messagingSenderId: "46943115268",
+            appId: "1:46943115268:web:d6746d2cb953a2847d7d51",
+            measurementId: "G-M3MLTNVRH0"
+        };
+
+        // --- Firebase Initialization ---
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        setPersistence(auth, browserLocalPersistence);
+
+        // --- Global DOM Element References ---
+        const contentArea = document.getElementById('content-area');
+        const mainFooter = document.getElementById('main-footer');
+        const homeBtn = document.getElementById('home-btn');
+        const projectsBtn = document.getElementById('projects-btn');
+        const pagesBtn = document.getElementById('pages-btn');
+        const tutorialsBtn = document.getElementById('tutorials-btn');
+        const researchBtn = document.getElementById('research-btn');
+        const codexBtn = document.getElementById('codex-btn'); // Codex button
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userProfileDiv = document.getElementById('user-profile');
+        const userEmailSpan = document.getElementById('user-email');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const codexModule = document.getElementById('codex-module');
+
+        // Store the initial home content so we can restore it
+        const homeContent = contentArea.innerHTML;
+        
+        // --- State Management ---
+        let mainPageAnimationId;
+        let codexIsActive = false;
+        let codexCleanupFunction = null;
+
+        // --- Authentication Logic ---
+        const provider = new GoogleAuthProvider();
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                userProfileDiv.classList.remove('hidden');
+                userProfileDiv.classList.add('flex');
+                loginBtn.classList.add('hidden');
+                userEmailSpan.textContent = user.email;
+                const userRef = doc(db, "users", user.uid);
+                getDoc(userRef).then(docSnap => {
+                    if (!docSnap.exists()) {
+                        setDoc(userRef, { email: user.email, createdAt: new Date(), tutorialProgress: {} });
+                    }
+                });
+            } else {
+                userProfileDiv.classList.add('hidden');
+                loginBtn.classList.remove('hidden');
+                userEmailSpan.textContent = '';
+            }
+        });
+
+        loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Authentication failed:", error)));
+        logoutBtn.addEventListener('click', () => signOut(auth).catch(error => console.error("Sign out failed:", error)));
+
+        // --- Main Page Content Loading Logic ---
+        function showMainContent() {
+            if (codexIsActive && codexCleanupFunction) {
+                codexCleanupFunction();
+                codexCleanupFunction = null;
+            }
+            codexModule.classList.add('hidden');
+            codexModule.classList.remove('flex');
+            contentArea.classList.remove('hidden');
+            mainFooter.classList.remove('hidden');
+            codexIsActive = false;
+            startMainPageAnimation();
+        }
+
+        async function loadContent(filePath, buttonToActivate) {
+            showMainContent();
+            try {
+                contentArea.innerHTML = '<p class="text-center text-gray-400">Loading...</p>';
+                const response = await fetch(filePath);
+                if (!response.ok) throw new Error(`Could not load ${filePath}. Status: ${response.status}`);
+                contentArea.innerHTML = await response.text();
+                
+                // If we've loaded the research page, we need to initialize its script
+                if (filePath === 'research.html') {
+                    const script = document.createElement('script');
+                    script.src = 'research.js'; // Assuming the logic is in research.js
+                    document.body.appendChild(script);
+                }
+
+                navButtons.forEach(btn => btn.classList.remove('nav-active'));
+                if(buttonToActivate) {
+                    buttonToActivate.classList.add('nav-active');
+                }
+            } catch (error) {
+                console.error('Failed to fetch content:', error);
+                contentArea.innerHTML = `<div class="text-center"><p class="text-red-400 text-xl">Sorry, we couldn't load this section.</p><p class="text-gray-500 mt-2">Please make sure the file '${filePath}' exists.</p></div>`;
+            }
+        }
+        
+        // --- Navigation Event Listeners ---
+        homeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showMainContent();
+            contentArea.innerHTML = homeContent;
+            navButtons.forEach(btn => btn.classList.remove('nav-active'));
+        });
+
+        projectsBtn.addEventListener('click', () => loadContent('projects.html', projectsBtn));
+        pagesBtn.addEventListener('click', () => loadContent('pages.html', pagesBtn));
+        tutorialsBtn.addEventListener('click', () => loadContent('tutorials.html', tutorialsBtn));
+        researchBtn.addEventListener('click', () => loadContent('research.html', researchBtn));
+        codexBtn.addEventListener('click', () => {
+            if (mainPageAnimationId) cancelAnimationFrame(mainPageAnimationId);
+            contentArea.classList.add('hidden');
+            mainFooter.classList.add('hidden');
+            codexModule.classList.remove('hidden');
+            codexModule.classList.add('flex');
+            
+            navButtons.forEach(btn => btn.classList.remove('nav-active'));
+            codexBtn.classList.add('nav-active');
+
+            if (!codexIsActive) {
+                codexCleanupFunction = initCodexModule();
+                codexIsActive = true;
+            }
+        });
+
+        // --- Event Delegation for Dynamic Content (Main Page) ---
+        contentArea.addEventListener('click', (event) => {
+            // Logic for accordions
+            const toggleTarget = event.target.closest('[data-toggle-id]');
+            if (toggleTarget) {
+                 event.preventDefault();
+                 const elementToToggle = document.getElementById(toggleTarget.getAttribute('data-toggle-id'));
+                 if (elementToToggle) {
+                       elementToToggle.classList.toggle('hidden');
+                       const icon = toggleTarget.querySelector('span:last-child');
+                       if(icon) {
+                           icon.textContent = elementToToggle.classList.contains('hidden') ? '+' : '-';
+                       }
+                 }
+            }
+            // Logic for tutorial buttons
+            const tutorialButton = event.target.closest('[data-load-path]');
+            if (tutorialButton) {
+                event.preventDefault(); 
+                const filePath = tutorialButton.getAttribute('data-load-path');
+                if (filePath) {
+                    window.open(filePath, '_blank');
+                    location.reload();
+                }
+            }
+        });
+        
+        // --- Main Page Interactive Background Logic (three.js) ---
+        const mainScene = new THREE.Scene();
+        const mainCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const mainRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+        let mainParticles;
+
+        function initMainPageBackground() {
+            mainRenderer.setSize(window.innerWidth, window.innerHeight);
+            mainRenderer.setClearColor(0x000000, 0);
+
+            const particleCount = 5000;
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 20;
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: 0x00aaff, size: 0.025, transparent: true, blending: THREE.AdditiveBlending });
+            mainParticles = new THREE.Points(geometry, material);
+            mainScene.add(mainParticles);
+            mainCamera.position.z = 10;
+        }
+
+        function startMainPageAnimation() {
+            if (codexIsActive) return; // Don't run if codex is active
+            mainPageAnimationId = requestAnimationFrame(startMainPageAnimation);
+            if(mainParticles) {
+                mainParticles.rotation.y += 0.0001;
+                mainParticles.rotation.x += 0.0002;
+            }
+            mainRenderer.render(mainScene, mainCamera);
+        }
+
+        window.addEventListener('resize', () => {
+            if (!codexIsActive) {
+                mainCamera.aspect = window.innerWidth / window.innerHeight;
+                mainCamera.updateProjectionMatrix();
+                mainRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }, false);
+        
+        // --- CODEX MODULE LOGIC ---
+        function initCodexModule() {
+            // This function encapsulates the entire logic for the Codex tool.
+            
+            // === STATE & GLOBALS for CODEX ===
+            let scene, camera, renderer, labelRenderer, controls, cube, raycaster, mouse;
+            let animationFrameId; // To control the animation loop
+            let constellationPoints, ontologicalCodexObject, temporalCodexObject, temporalFlowObject;
+            let visualHierarchy = [], plottedOntologicalNodes = [];
+            let temporalCodex = [];
+            let temporalColors = [];
+            for(let i=0; i<16; i++) { temporalColors.push(new THREE.Color().setHSL(i/16, 0.8, 0.6)); }
+            let dictionaryWords = [], allData = [], lastGeneratedRoot = '', codexTree = null;
+            
+            // Geometries for temporal nodes
+            let baseGeometries, wireframeGeometries, innerSphereGeometry;
+
+            let temporalFileWords = [];
+            let isTemporalFlowBuilt = false;
+            let selectedObject = null;
+            let buildState = { handle: null, isPaused: false, builder: null };
+
+            // === DOM ELEMENT GETTERS (scoped to codex module) ===
+            const container = document.getElementById('render-container');
+            const tabStatic = document.getElementById('tab-static');
+            const tabTemporal = document.getElementById('tab-temporal');
+            const panelStatic = document.getElementById('panel-static');
+            const panelTemporal = document.getElementById('panel-temporal');
+            const temporalTokenInput = document.getElementById('temporal-token-input');
+            const structIdSlider = document.getElementById('struct-id');
+            const structIdDesc = document.getElementById('struct-id-desc');
+            const ampIdSlider = document.getElementById('amp-id');
+            const freqIdSlider = document.getElementById('freq-id');
+            const spinIdSlider = document.getElementById('spin-id');
+            const payloadScaleInput = document.getElementById('payload-scale');
+            const appendCodexBtn = document.getElementById('append-codex-btn');
+            const updateNodeBtn = document.getElementById('update-node-btn');
+            const streamHistoryLog = document.getElementById('stream-history-log');
+            const exportBinaryBtn = document.getElementById('export-binary-btn');
+            const exportManifestBtn = document.getElementById('export-manifest-btn');
+            const resetTemporalBtn = document.getElementById('reset-temporal-btn');
+            const viewModeSelector = document.getElementById('view-mode-selector');
+            const generateBtn = document.getElementById('generate-btn');
+            const tokenInput = document.getElementById('token-input');
+            const dictionaryFileInput = document.getElementById('dictionary-file');
+            const generateCodexBtn = document.getElementById('generate-codex-btn');
+            const exportRootBtn = document.getElementById('export-root-btn');
+            const exportTreeBtn = document.getElementById('export-tree-btn');
+            const genProgressContainer = document.getElementById('gen-progress-container');
+            const genProgressBar = document.getElementById('gen-progress-bar');
+            const genProgressText = document.getElementById('gen-progress-text');
+            const tokensProcessedSpan = document.getElementById('tokens-processed');
+            const codexRootTextarea = document.getElementById('codex-root');
+            const vizProgressContainer = document.getElementById('viz-progress-container');
+            const vizProgressBar = document.getElementById('viz-progress-bar');
+            const vizProgressText = document.getElementById('viz-progress-text');
+            const filteringControls = document.getElementById('filtering-controls');
+            const toroidFilter = document.getElementById('toroid-filter');
+            const streamFilter = document.getElementById('stream-filter');
+            const temporalFileInput = document.getElementById('temporal-file-input');
+            const processTemporalFileBtn = document.getElementById('process-temporal-file-btn');
+            const temporalProgressContainer = document.getElementById('temporal-progress-container');
+            const temporalProgressBar = document.getElementById('temporal-progress-bar');
+            const temporalProgressText = document.getElementById('temporal-progress-text');
+            const temporalFlowToggle = document.getElementById('temporal-flow-toggle');
+            const labelsToggle = document.getElementById('labels-toggle');
+            const buildControls = document.getElementById('build-controls');
+            const buildBtn = document.getElementById('build-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resetBuildBtn = document.getElementById('reset-build-btn');
+            const selectionInfo = document.getElementById('selection-info');
+            const selectionContent = document.getElementById('selection-content');
+            const closeSelectionBtn = document.getElementById('close-selection-btn');
+            const promptInput = document.getElementById('prompt-input');
+            const processPromptBtn = document.getElementById('process-prompt-btn');
+
+            // === SEMANTIC DATA & SHD-CCP ENGINE ===
+            const STRUCTURAL_FORM_DATA = [
+                { name: "Tetrahedron", concept: "Atomic Concept, Axiom" }, { name: "Cube", concept: "Structured, Logical Data" },
+                { name: "Octahedron", concept: "Connections, Relationships" }, { name: "Icosahedron", concept: "Complex, Monolithic Concept" },
+                { name: "Dodecahedron", concept: "High-Level Domains, Container" }, { name: "Truncated Tetrahedron", concept: "Axiom with a Caveat" },
+                { name: "Undefined", concept: "Reserved for future use" }, { name: "Truncated Icosahedron", concept: "Data Packet (Header/Payload)" },
+                { name: "Rhombicuboctahedron", concept: "Event with Parameters/Fundamentals" }, { name: "Icosidodecahedron", concept: "Theory with Evidence" },
+                { name: "Truncated Cuboctahedron", concept: "Multi-layered System Model" }, { name: "Snub Cube", concept: "Structured Concept with Bias" },
+                { name: "Undefined", concept: "Reserved" }, { name: "Undefined", concept: "Reserved" },
+                { name: "Undefined", concept: "Reserved" }, { name: "Undefined", concept: "Reserved" },
+            ];
+
+            const SHDCCP = (() => {
+                const fp16View = new DataView(new ArrayBuffer(4));
+                const floatView = new DataView(new ArrayBuffer(4));
+                function float32_to_fp16(val) {
+                    fp16View.setFloat32(0, val); const f32 = fp16View.getUint32(0);
+                    const sign = (f32 >> 31) & 0x1; let exp = (f32 >> 23) & 0xff; const mant = f32 & 0x7fffff;
+                    if (exp === 0xff) return (sign << 15) | 0x7c00 | (mant ? 0x200 : 0); if (exp === 0) return (sign << 15);
+                    exp = exp - 127 + 15; if (exp >= 0x1f) return (sign << 15) | 0x7c00;
+                    if (exp <= 0) return (sign << 15) | ( (mant | 0x800000) >> (1 - exp) >> 13 );
+                    return (sign << 15) | (exp << 10) | (mant >> 13);
+                }
+                function float32_to_e4m3(val) {
+                    floatView.setFloat32(0, val); const f32 = floatView.getUint32(0);
+                    const sign = (f32 >> 31) & 0x1; let exp = (f32 >> 23) & 0xff; const mant = f32 & 0x7fffff;
+                    if (exp === 0xff) return (sign << 7) | 0x78 | (mant ? 0x4 : 0); exp = exp - 127 + 7;
+                    if (exp >= 0xf) return (sign << 7) | 0x78; if (exp <= 0) return (sign << 7);
+                    return (sign << 7) | (exp << 3) | (mant >> 20);
+                }
+                function pack(quaternion, structId, ampId, reserved, freqId, spinId, payloadScale) {
+                    const q_w = BigInt(float32_to_e4m3(quaternion.w)), q_x = BigInt(float32_to_e4m3(quaternion.x)), q_y = BigInt(float32_to_e4m3(quaternion.y)), q_z = BigInt(float32_to_e4m3(quaternion.z));
+                    const compressedQuat = (q_w << 24n) | (q_x << 16n) | (q_y << 8n) | q_z;
+                    const payloadScaleFp16 = BigInt(float32_to_fp16(payloadScale));
+                    let packet = 0n;
+                    packet |= payloadScaleFp16; packet |= BigInt(spinId) << 16n; packet |= BigInt(freqId) << 19n;
+                    packet |= BigInt(reserved) << 24n; packet |= BigInt(ampId) << 25n; packet |= BigInt(structId) << 28n;
+                    packet |= compressedQuat << 32n;
+                    return packet;
+                }
+                return { pack };
+            })();
+            
+            // === FUNCTION DEFINITIONS ===
+            function initViewer() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(renderer.domElement);
+
+                labelRenderer = new THREE.CSS2DRenderer();
+                labelRenderer.setSize(container.clientWidth, container.clientHeight);
+                labelRenderer.domElement.style.position = 'absolute';
+                labelRenderer.domElement.style.top = '0px';
+                labelRenderer.domElement.style.pointerEvents = 'none';
+                container.appendChild(labelRenderer.domElement);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1; controls.maxDistance = 100;
+                
+                cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), [
+                    new THREE.MeshStandardMaterial({color: 0xff5733}), new THREE.MeshStandardMaterial({color: 0x33ff57}),
+                    new THREE.MeshStandardMaterial({color: 0x3357ff}), new THREE.MeshStandardMaterial({color: 0xff33a1}),
+                    new THREE.MeshStandardMaterial({color: 0xffff33}), new THREE.MeshStandardMaterial({color: 0x33ffff})
+                ]);
+                scene.add(cube);
+                scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7.5);
+                scene.add(directionalLight);
+                camera.position.z = 15;
+
+                // Define geometries for temporal nodes (scaled down by half)
+                baseGeometries = {
+                    0: new THREE.TetrahedronGeometry(0.5),
+                    1: new THREE.BoxGeometry(0.75, 0.75, 0.75),
+                    2: new THREE.OctahedronGeometry(0.5),
+                    3: new THREE.IcosahedronGeometry(0.5),
+                    4: new THREE.DodecahedronGeometry(0.5),
+                    5: new THREE.TetrahedronGeometry(0.6), 
+                    7: new THREE.IcosahedronGeometry(0.6),
+                    8: new THREE.OctahedronGeometry(0.6),
+                    9: new THREE.DodecahedronGeometry(0.6),
+                    10: new THREE.BoxGeometry(0.85, 0.85, 0.85),
+                    11: new THREE.IcosahedronGeometry(0.65),
+                    default: new THREE.SphereGeometry(0.5)
+                };
+                wireframeGeometries = {};
+                for (const key in baseGeometries) {
+                    wireframeGeometries[key] = new THREE.WireframeGeometry(baseGeometries[key]);
+                }
+                innerSphereGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Scaled down sphere
+                
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+                renderer.domElement.addEventListener('click', onCanvasClick, false);
+            }
+
+            function onWindowResize() {
+                if (!codexIsActive) return;
+                const newWidth = container.clientWidth; 
+                const newHeight = container.clientHeight;
+                camera.aspect = newWidth / newHeight; 
+                camera.updateProjectionMatrix();
+                renderer.setSize(newWidth, newHeight);
+                labelRenderer.setSize(newWidth, newHeight);
+            }
+
+            function animate() {
+                animationFrameId = requestAnimationFrame(animate);
+                controls.update();
+
+                // Spin animation logic for temporal nodes
+                if (codexIsActive && temporalCodexObject && temporalCodexObject.visible) {
+                    temporalCodexObject.children.forEach(nodeGroup => {
+                        if (nodeGroup.isGroup && nodeGroup.userData.sphere) {
+                            const sphere = nodeGroup.userData.sphere;
+                            const spinId = sphere.userData.spinId;
+                            if (spinId > 0) {
+                                const spinSpeed = 0.0005 * spinId;
+                                sphere.rotateOnAxis(sphere.userData.spinAxis, spinSpeed);
+                            }
+                        }
+                    });
+                }
+
+                renderer.render(scene, camera);
+                if (labelRenderer) labelRenderer.render(scene, camera);
+            }
+
+            function switchTab(tab) {
+                cleanupVisuals();
+                if (tab === 'static') {
+                    tabStatic.classList.add('border-cyan-500', 'text-cyan-400'); tabStatic.classList.remove('text-gray-400');
+                    tabTemporal.classList.remove('border-cyan-500', 'text-cyan-400'); tabTemporal.classList.add('text-gray-400');
+                    panelStatic.style.display = 'block'; panelTemporal.style.display = 'none';
+                    document.getElementById('view-cube').checked = true;
+                    viewModeSelector.dispatchEvent(new Event('change'));
+                } else { // temporal
+                    tabTemporal.classList.add('border-cyan-500', 'text-cyan-400'); tabTemporal.classList.remove('text-gray-400');
+                    tabStatic.classList.remove('border-cyan-500', 'text-cyan-400'); tabStatic.classList.add('text-gray-400');
+                    panelStatic.style.display = 'none'; panelTemporal.style.display = 'block';
+                    cube.visible = false;
+                    if (!temporalCodexObject) {
+                        temporalCodexObject = new THREE.Group();
+                        scene.add(temporalCodexObject);
+                    }
+                    if (!temporalFlowObject) {
+                        temporalFlowObject = new THREE.Group();
+                        scene.add(temporalFlowObject);
+                    }
+                    temporalCodexObject.visible = true;
+                    temporalFlowObject.visible = true;
+                    updateStructIdDescription();
+                }
+            }
+            
+            function generateQuaternionFromToken(token) {
+                if (token.length === 0) return new THREE.Quaternion(0, 0, 0, 1);
+                const hash = sha256(token);
+                const w = Number(BigInt('0x' + hash.substring(0, 16))), x = Number(BigInt('0x' + hash.substring(16, 32))), y = Number(BigInt('0x' + hash.substring(32, 48))), z = Number(BigInt('0x' + hash.substring(48, 64)));
+                const magnitude = Math.sqrt(w*w + x*x + y*y + z*z);
+                if (magnitude === 0) return new THREE.Quaternion(0, 0, 0, 1);
+                return new THREE.Quaternion(x / magnitude, y / magnitude, z / magnitude, w / magnitude);
+            }
+
+            function cleanupVisuals() {
+                if (constellationPoints) { scene.remove(constellationPoints); constellationPoints.geometry.dispose(); constellationPoints.material.dispose(); constellationPoints = null; }
+                if (ontologicalCodexObject) { scene.remove(ontologicalCodexObject); ontologicalCodexObject.traverse(child => { if (child.geometry) child.geometry.dispose(); if (child.material) child.material.dispose(); }); ontologicalCodexObject = null; }
+                if (temporalCodexObject) { scene.remove(temporalCodexObject); temporalCodexObject.traverse(child => { if (child.geometry) child.geometry.dispose(); if (child.material) child.material.dispose(); }); temporalCodexObject = null; }
+                if (temporalFlowObject) { scene.remove(temporalFlowObject); temporalFlowObject.traverse(child => { if (child.geometry) child.geometry.dispose(); if (child.material) child.material.dispose(); }); temporalFlowObject = null; }
+                visualHierarchy = [];
+                plottedOntologicalNodes = [];
+                isTemporalFlowBuilt = false;
+            }
+
+            function resetCodexState() {
+                lastGeneratedRoot = ''; codexTree = null;
+                genProgressContainer.style.display = 'none'; genProgressText.textContent = '';
+                tokensProcessedSpan.textContent = '0';
+                vizProgressContainer.style.display = 'none'; filteringControls.style.display = 'none';
+                
+                cleanupVisuals();
+
+                document.getElementById('view-cube').checked = true;
+                document.querySelectorAll('input[name="view-mode"]').forEach(radio => {
+                    if(radio.id !== 'view-cube') {
+                        radio.disabled = true;
+                        radio.parentElement.querySelector('label').classList.add('text-gray-500');
+                    }
+                });
+                if(cube) cube.visible = true;
+                ['generate-codex-btn', 'export-root-btn', 'export-tree-btn'].forEach(id => document.getElementById(id).disabled = true);
+                temporalFlowToggle.disabled = true;
+                temporalFlowToggle.checked = false;
+                temporalFlowToggle.parentElement.querySelector('label').classList.add('text-gray-500');
+            }
+            
+            function* createConstellationGenerator(data, onProgress, onComplete) {
+                const batchSize = 500;
+                const pointPositions = [];
+                const scale = 3.0;
+                for (let i = 0; i < data.length; i++) {
+                    const q = data[i].quat;
+                    pointPositions.push(q.x * scale, q.y * scale, q.z * scale);
+                    if (i % batchSize === 0) {
+                        onProgress(i / data.length);
+                        yield;
+                    }
+                }
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(pointPositions, 3));
+                const material = new THREE.PointsMaterial({ color: 0x00ffff, size: 0.05, sizeAttenuation: true });
+                constellationPoints = new THREE.Points(geometry, material);
+                scene.add(constellationPoints);
+                onComplete();
+            }
+
+            function* plotOntologicalCodexGenerator(data, onProgress, onComplete) {
+                ontologicalCodexObject = new THREE.Group();
+                visualHierarchy = [];
+                plottedOntologicalNodes = [];
+                const NODES_PER_TOROID_STREAM = 16, numStreams = 8, torusMajorRadius = 6, torusMinorRadius = 2, toroidStackHeight = 5;
+                const nodeGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+                const nodeMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffff });
+                const batchSize = 100;
+
+                for (let i = 0; i < data.length; i++) {
+                    const toroidIndex = Math.floor(i / (numStreams * NODES_PER_TOROID_STREAM));
+                    const streamIndex = (i % (numStreams * NODES_PER_TOROID_STREAM)) % numStreams;
+                    const nodeIndexInStream = Math.floor((i % (numStreams * NODES_PER_TOROID_STREAM)) / numStreams);
+                    const yOffset = toroidIndex * toroidStackHeight;
+                    const streamAngle = (streamIndex / numStreams) * Math.PI * 2;
+                    const nodeAngle = (nodeIndexInStream / NODES_PER_TOROID_STREAM) * Math.PI * 2;
+                    const x = (torusMajorRadius + torusMinorRadius * Math.cos(nodeAngle)) * Math.cos(streamAngle);
+                    const y = yOffset + torusMinorRadius * Math.sin(nodeAngle);
+                    const z = (torusMajorRadius + torusMinorRadius * Math.cos(nodeAngle)) * Math.sin(streamAngle);
+                    const node = new THREE.Mesh(nodeGeometry.clone(), nodeMaterial.clone());
+                    node.position.set(x, y, z);
+                    node.userData = { token: data[i].label, streamIndex, toroidIndex };
+                    ontologicalCodexObject.add(node);
+                    if (!visualHierarchy[toroidIndex]) visualHierarchy[toroidIndex] = [];
+                    if (!visualHierarchy[toroidIndex][streamIndex]) visualHierarchy[toroidIndex][streamIndex] = { nodes: [], compressionLines: [], temporalLines: [] };
+                    visualHierarchy[toroidIndex][streamIndex].nodes.push(node);
+                    plottedOntologicalNodes.push(node);
+                    if (i % batchSize === 0) {
+                        onProgress(i / data.length);
+                        yield;
+                    }
+                }
+                addCompressionLines();
+                populateFilters();
+                scene.add(ontologicalCodexObject);
+                onComplete();
+            }
+
+            function* createTemporalFlowGenerator(nodes, onProgress, onComplete) {
+                temporalFlowObject = new THREE.Group();
+                const intraStreamMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+                const interStreamMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7 });
+                const batchSize = 100;
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    const node1 = nodes[i]; const node2 = nodes[i+1];
+                    const isJump = node1.userData.streamIndex !== node2.userData.streamIndex || node1.userData.toroidIndex !== node2.userData.toroidIndex;
+                    const material = isJump ? interStreamMaterial : intraStreamMaterial;
+                    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([node1.position, node2.position]), material);
+                    temporalFlowObject.add(line);
+                    const { toroidIndex, streamIndex } = node1.userData;
+                    visualHierarchy[toroidIndex][streamIndex].temporalLines.push(line);
+                    if (i % batchSize === 0) {
+                        onProgress(i / (nodes.length - 1));
+                        yield;
+                    }
+                }
+                scene.add(temporalFlowObject);
+                onComplete();
+            }
+
+            function addCompressionLines() {
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.2 });
+                visualHierarchy.forEach(toroid => {
+                    toroid.forEach(stream => {
+                        let currentTier = stream.nodes; let tierIndex = 1;
+                        while(currentTier.length > 1) {
+                            const nextTier = [];
+                            for (let i = 0; i < currentTier.length; i += 2) {
+                                if (i + 1 >= currentTier.length) { nextTier.push(currentTier[i]); continue; }
+                                const child1 = currentTier[i], child2 = currentTier[i+1];
+                                const parentPos = new THREE.Vector3().addVectors(child1.position, child2.position).multiplyScalar(0.5);
+                                const parentMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.1 * tierIndex, 1.0, 0.5) });
+                                const parentNode = new THREE.Mesh(new THREE.SphereGeometry(0.06 * (tierIndex + 1), 16, 16), parentMaterial);
+                                parentNode.position.copy(parentPos);
+                                ontologicalCodexObject.add(parentNode);
+                                const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([child1.position, parentPos, child2.position]), lineMaterial);
+                                ontologicalCodexObject.add(line);
+                                nextTier.push(parentNode);
+                            }
+                            currentTier = nextTier; tierIndex++;
+                        }
+                    });
+                });
+            }
+
+            function populateFilters() {
+                toroidFilter.innerHTML = '<option value="all">All Toroids</option>';
+                visualHierarchy.forEach((_, i) => { toroidFilter.innerHTML += `<option value="${i}">Toroid ${i}</option>`; });
+                streamFilter.innerHTML = '<option value="all">All Streams</option>';
+                const numStreams = visualHierarchy[0] ? visualHierarchy[0].length : 0;
+                for(let i=0; i<numStreams; i++) { streamFilter.innerHTML += `<option value="${i}">Stream ${i}</option>`; }
+            }
+
+            function updateCodexVisibility() {
+                const selectedToroid = toroidFilter.value;
+                const selectedStream = streamFilter.value;
+                const flowEnabled = temporalFlowToggle.checked;
+                streamFilter.disabled = (selectedToroid === 'all');
+                visualHierarchy.forEach((toroid, tIdx) => {
+                    toroid.forEach((stream, sIdx) => {
+                        const isSectionVisible = (selectedToroid === 'all' || tIdx == selectedToroid) && (selectedStream === 'all' || sIdx == selectedStream || selectedToroid === 'all');
+                        stream.nodes.forEach(node => node.visible = isSectionVisible);
+                        if (stream.temporalLines) {
+                            stream.temporalLines.forEach(line => line.visible = isSectionVisible && flowEnabled);
+                        }
+                    });
+                });
+            }
+            
+            function generateCodexTree(data) {
+                if (!data || data.length === 0) return null;
+                let currentTier = data.map(item => ({...item, children: [] }));
+                while(currentTier.length > 1) {
+                    const nextTier = [];
+                    for (let i = 0; i < currentTier.length; i += 2) {
+                        if (i + 1 >= currentTier.length) { nextTier.push(currentTier[i]); continue; }
+                        const child1 = currentTier[i], child2 = currentTier[i+1];
+                        const avgQuat = new THREE.Quaternion(child1.quat.x, child1.quat.y, child1.quat.z, child1.quat.w).slerp(new THREE.Quaternion(child2.quat.x, child2.quat.y, child2.quat.z, child2.quat.w), 0.5);
+                        nextTier.push({ label: `tier_${(child1.tier || 0) + 1}_node_${i/2}`, quat: { w: avgQuat.w, x: avgQuat.x, y: avgQuat.y, z: avgQuat.z }, children: [child1, child2], tier: (child1.tier || 0) + 1 });
+                    }
+                    currentTier = nextTier;
+                }
+                return currentTier[0];
+            }
+            
+            const downloadFile = (filename, content) => {
+                const element = document.createElement('a');
+                const file = new Blob([content], {type: 'text/plain'});
+                element.href = URL.createObjectURL(file);
+                element.download = filename;
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            };
+
+            function updateStructIdDescription() {
+                const id = structIdSlider.value;
+                const data = STRUCTURAL_FORM_DATA[id];
+                structIdDesc.innerHTML = `<span class="font-semibold">${data.name}:</span> ${data.concept}`;
+            }
+
+            function appendTemporalToken(token, context) {
+                const i = temporalCodex.length;
+                const NODES_PER_TOROID_STREAM = 16, numStreams = 8, torusMajorRadius = 6, torusMinorRadius = 2, toroidStackHeight = 5;
+                const toroidIndex = Math.floor(i / (numStreams * NODES_PER_TOROID_STREAM));
+                const streamIndex = (i % (numStreams * NODES_PER_TOROID_STREAM)) % numStreams;
+                const nodeIndexInStream = Math.floor((i % (numStreams * NODES_PER_TOROID_STREAM)) / numStreams);
+                const yOffset = toroidIndex * toroidStackHeight;
+                const streamAngle = (streamIndex / numStreams) * Math.PI * 2;
+                const nodeAngle = (nodeIndexInStream / NODES_PER_TOROID_STREAM) * Math.PI * 2;
+                const x = (torusMajorRadius + torusMinorRadius * Math.cos(nodeAngle)) * Math.cos(streamAngle);
+                const y = yOffset + torusMinorRadius * Math.sin(nodeAngle);
+                const z = (torusMajorRadius + torusMinorRadius * Math.cos(nodeAngle)) * Math.sin(streamAngle);
+                const position = new THREE.Vector3(x, y, z);
+
+                const quaternion = generateQuaternionFromToken(token);
+                const packet = SHDCCP.pack(quaternion, context.structId, context.ampId, 0, context.freqId, context.spinId, context.payloadScale);
+                const entry = { uuid: crypto.randomUUID(), token, quaternion, ...context, packet: packet.toString(16).padStart(16, '0'), position, toroidIndex, streamIndex };
+                
+                const shapeInfo = STRUCTURAL_FORM_DATA[context.structId];
+                const logEntry = document.createElement('div');
+                logEntry.id = `log-${entry.uuid}`;
+                logEntry.innerHTML = `<span class="text-cyan-400">${token} (${shapeInfo.name})</span>: 0x${entry.packet}`;
+                streamHistoryLog.appendChild(logEntry);
+                streamHistoryLog.scrollTop = streamHistoryLog.scrollHeight;
+                
+                // Create the node as a group
+                const nodeGroup = new THREE.Group();
+                nodeGroup.position.copy(position);
+
+                // Inner sphere
+                const sphereMaterial = new THREE.MeshStandardMaterial({ color: temporalColors[context.structId], metalness: 0.3, roughness: 0.6 });
+                const sphere = new THREE.Mesh(innerSphereGeometry, sphereMaterial);
+                sphere.quaternion.copy(quaternion);
+                sphere.userData.spinId = context.spinId;
+                sphere.userData.spinAxis = new THREE.Vector3( (context.spinId & 1) ? 1 : 0.5, (context.spinId & 2) ? 1 : 0.5, (context.spinId & 4) ? 1 : 0.5 ).normalize();
+                
+                // Outer wireframe
+                const wireframeMaterial = new THREE.LineBasicMaterial({ color: temporalColors[context.structId], transparent: true, opacity: 0.75 });
+                const wireframeGeom = wireframeGeometries[context.structId] || wireframeGeometries.default;
+                const wireframe = new THREE.LineSegments(wireframeGeom, wireframeMaterial);
+                const phi = 1.61803398875;
+                const scale = Math.pow(phi, context.ampId / 2.0); // Tempered growth
+                wireframe.scale.set(scale, scale, scale);
+
+                nodeGroup.add(sphere);
+                nodeGroup.add(wireframe);
+                nodeGroup.userData = entry;
+                nodeGroup.userData.sphere = sphere;
+                nodeGroup.userData.wireframe = wireframe;
+
+                if (!temporalCodexObject) { temporalCodexObject = new THREE.Group(); scene.add(temporalCodexObject); }
+                if (!temporalFlowObject) { temporalFlowObject = new THREE.Group(); scene.add(temporalFlowObject); }
+                temporalCodexObject.add(nodeGroup);
+
+                if (temporalCodex.length > 0) {
+                    const prevEntry = temporalCodex[temporalCodex.length - 1];
+                    const intraStreamMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+                    const interStreamMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7 });
+                    const isJump = prevEntry.streamIndex !== entry.streamIndex || prevEntry.toroidIndex !== entry.toroidIndex;
+                    const material = isJump ? interStreamMaterial : intraStreamMaterial;
+                    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([prevEntry.position, entry.position]), material);
+                    temporalFlowObject.add(line);
+                }
+
+                temporalCodex.push(entry);
+                exportBinaryBtn.disabled = false;
+                exportManifestBtn.disabled = false;
+            }
+            
+            function resetTemporalCodex() {
+                temporalCodex = [];
+                temporalFileWords = [];
+                cleanupVisuals();
+                streamHistoryLog.innerHTML = '';
+                exportBinaryBtn.disabled = true;
+                exportManifestBtn.disabled = true;
+                temporalProgressText.textContent = '';
+                temporalProgressContainer.style.display = 'none';
+            }
+
+            function onCanvasClick(event) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+
+                let targetObjects = [];
+                if (ontologicalCodexObject && ontologicalCodexObject.visible) {
+                    targetObjects = plottedOntologicalNodes; // Static codex unchanged
+                } else if (temporalCodexObject && temporalCodexObject.visible) {
+                    // Target the spheres inside the groups
+                    targetObjects = temporalCodexObject.children.map(group => group.userData.sphere).filter(Boolean);
+                }
+
+                const intersects = raycaster.intersectObjects(targetObjects);
+
+                if (intersects.length > 0) {
+                    if (selectedObject) {
+                        selectedObject.material.emissive.setHex(0x000000);
+                    }
+                    
+                    selectedObject = intersects[0].object; // This is the sphere
+                    selectedObject.material.emissive.setHex(0x00ff00);
+                    
+                    const nodeGroup = selectedObject.parent; // The group holds the data
+                    const data = nodeGroup.userData;
+                    
+                    let content = '';
+                    for (const key in data) {
+                        if (key === 'sphere' || key === 'wireframe') continue; // Don't show internal references
+                        let value = data[key];
+                        if (typeof value === 'object' && value !== null) value = JSON.stringify(value, (k, v) => typeof v === 'number' ? v.toFixed(4) : v, 2);
+                        content += `<div class="py-1"><span class="text-gray-400">${key}:</span> ${value}</div>`;
+                    }
+                    selectionContent.innerHTML = content;
+                    selectionInfo.classList.remove('hidden');
+                    setTimeout(() => selectionInfo.classList.remove('opacity-0'), 10);
+                    
+                    if(panelTemporal.style.display !== 'none') {
+                        temporalTokenInput.value = data.token;
+                        structIdSlider.value = data.structId;
+                        ampIdSlider.value = data.ampId;
+                        freqIdSlider.value = data.freqId;
+                        spinIdSlider.value = data.spinId;
+                        payloadScaleInput.value = data.payloadScale;
+                        ['struct-id', 'amp-id', 'freq-id', 'spin-id'].forEach(id => document.getElementById(`${id}-val`).textContent = document.getElementById(id).value);
+                        updateStructIdDescription();
+                        updateNodeBtn.disabled = false;
+                        appendCodexBtn.disabled = true;
+                    }
+                }
+            }
+
+            function closeSelectionPanel() {
+                if (selectedObject) {
+                    selectedObject.material.emissive.setHex(0x000000);
+                    selectedObject = null;
+                }
+                selectionInfo.classList.add('opacity-0');
+                setTimeout(() => selectionInfo.classList.add('hidden'), 300);
+                
+                updateNodeBtn.disabled = true;
+                appendCodexBtn.disabled = false;
+            }
+
+            function startBuild(builder) {
+                if (buildState.handle) cancelAnimationFrame(buildState.handle);
+                buildState.builder = builder;
+                buildState.isPaused = false;
+                pauseBtn.textContent = 'Pause';
+                
+                const buildLoop = () => {
+                    if (buildState.isPaused) return;
+                    let isDone = false;
+                    try {
+                        isDone = buildState.builder.next().done;
+                    } catch (e) {
+                        console.error("Error during build process:", e);
+                        isDone = true;
+                    }
+                    
+                    if (!isDone) {
+                        buildState.handle = requestAnimationFrame(buildLoop);
+                    } else {
+                        buildState.handle = null;
+                    }
+                };
+                buildState.handle = requestAnimationFrame(buildLoop);
+            }
+
+            // === EVENT LISTENERS ===
+            window.addEventListener('resize', onWindowResize, false);
+            tabStatic.addEventListener('click', () => switchTab('static'));
+            tabTemporal.addEventListener('click', () => switchTab('temporal'));
+            
+            ['struct-id', 'amp-id', 'freq-id', 'spin-id'].forEach(id => {
+                const slider = document.getElementById(id);
+                const label = document.getElementById(`${id}-val`);
+                slider.addEventListener('input', () => {
+                    label.textContent = slider.value;
+                    if (id === 'struct-id') { updateStructIdDescription(); }
+                });
+            });
+            
+            appendCodexBtn.addEventListener('click', () => {
+                const token = temporalTokenInput.value;
+                if (!token) { alert('Please enter a token.'); return; }
+                const context = {
+                    structId: parseInt(structIdSlider.value), ampId: parseInt(ampIdSlider.value),
+                    freqId: parseInt(freqIdSlider.value), spinId: parseInt(spinIdSlider.value),
+                    payloadScale: parseFloat(payloadScaleInput.value)
+                };
+                appendTemporalToken(token, context);
+            });
+
+            resetTemporalBtn.addEventListener('click', resetTemporalCodex);
+
+            temporalFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) {
+                    temporalFileWords = []; processTemporalFileBtn.disabled = true; return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    temporalFileWords = e.target.result.split(/\s+/).filter(word => word.length > 0);
+                    processTemporalFileBtn.disabled = false;
+                    temporalProgressText.textContent = `${temporalFileWords.length} words loaded. Ready to process.`;
+                };
+                reader.readAsText(file);
+            });
+            
+            function processTokenList(tokens) {
+                if (tokens.length === 0) return;
+                
+                processTemporalFileBtn.disabled = true; 
+                processPromptBtn.disabled = true;
+                appendCodexBtn.disabled = true;
+                temporalProgressContainer.style.display = 'block';
+
+                const context = {
+                    structId: parseInt(structIdSlider.value), ampId: parseInt(ampIdSlider.value),
+                    freqId: parseInt(freqIdSlider.value), spinId: parseInt(spinIdSlider.value),
+                    payloadScale: parseFloat(payloadScaleInput.value)
+                };
+
+                let index = 0; const batchSize = 100;
+                function processBatch() {
+                    const limit = Math.min(index + batchSize, tokens.length);
+                    for (let i = index; i < limit; i++) {
+                        appendTemporalToken(tokens[i], context);
+                    }
+                    index = limit;
+                    const progress = index / tokens.length;
+                    temporalProgressBar.style.width = `${progress * 100}%`;
+                    temporalProgressText.textContent = `Processing: ${Math.round(progress * 100)}%`;
+
+                    if (index < tokens.length) { requestAnimationFrame(processBatch); } 
+                    else {
+                        temporalProgressText.textContent = `Processing complete!`;
+                        processTemporalFileBtn.disabled = false; 
+                        processPromptBtn.disabled = false;
+                        appendCodexBtn.disabled = false;
+                    }
+                }
+                processBatch();
+            }
+
+            processTemporalFileBtn.addEventListener('click', () => {
+                processTokenList(temporalFileWords);
+            });
+            
+            processPromptBtn.addEventListener('click', () => {
+                const text = promptInput.value;
+                const tokens = text.split(/\s+/).filter(word => word.length > 0);
+                processTokenList(tokens);
+            });
+
+            generateBtn.addEventListener('click', () => {
+                const token = tokenInput.value;
+                const quaternion = generateQuaternionFromToken(token);
+                cube.quaternion.copy(quaternion);
+            });
+            tokenInput.addEventListener('keyup', e => e.key === 'Enter' && generateBtn.click());
+            
+            dictionaryFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) { dictionaryWords = []; allData = []; resetCodexState(); return; }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    dictionaryWords = e.target.result.split(/\r?\n/).filter(word => word.trim().length > 0);
+                    allData = dictionaryWords.map(word => ({ label: word, quat: generateQuaternionFromToken(word) }));
+                    genProgressText.textContent = `${allData.length} tokens loaded.`;
+                    resetCodexState();
+                    generateCodexBtn.disabled = false; exportTreeBtn.disabled = false;
+                    document.querySelectorAll('input[name="view-mode"]').forEach(radio => {
+                        radio.disabled = false;
+                        radio.parentElement.querySelector('label').classList.remove('text-gray-500');
+                    });
+                };
+                reader.readAsText(file);
+            });
+
+            toroidFilter.addEventListener('change', updateCodexVisibility);
+            streamFilter.addEventListener('change', updateCodexVisibility);
+
+            viewModeSelector.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                cleanupVisuals();
+                closeSelectionPanel();
+                cube.visible = false;
+                filteringControls.style.display = 'none';
+                buildControls.style.display = 'none';
+                
+                if (buildState.handle) cancelAnimationFrame(buildState.handle);
+                buildState.handle = null;
+                
+                const showProgress = (p, t) => { vizProgressBar.style.width = `${p*100}%`; vizProgressText.textContent = `${t}: ${Math.round(p*100)}%`; };
+                const hideProgress = () => { vizProgressContainer.style.display = 'none'; vizProgressText.textContent = ''; };
+                
+                switch(mode) {
+                    case 'cube': cube.visible = true; break;
+                    case 'constellation':
+                    case 'ontological':
+                        buildControls.style.display = 'flex';
+                        const onCompleteOntological = () => {
+                            hideProgress();
+                            filteringControls.style.display = 'block';
+                            temporalFlowToggle.disabled = false;
+                            labelsToggle.disabled = false;
+                            temporalFlowToggle.parentElement.querySelector('label').classList.remove('text-gray-500');
+                            labelsToggle.parentElement.querySelector('label').classList.remove('text-gray-500');
+                            updateCodexVisibility();
+                        };
+                        const builder = (mode === 'constellation') ? 
+                            createConstellationGenerator(allData, p => showProgress(p, "Building"), hideProgress) : 
+                            plotOntologicalCodexGenerator(allData, p => showProgress(p, "Building"), onCompleteOntological);
+                        buildState.builder = builder;
+                        break;
+                }
+            });
+
+            temporalFlowToggle.addEventListener('change', () => {
+                if (temporalFlowToggle.checked) {
+                    if (!isTemporalFlowBuilt) {
+                        const showProgress = (p) => { vizProgressContainer.style.display = 'block'; vizProgressBar.style.width = `${p*100}%`; vizProgressText.textContent = `Building Flow: ${Math.round(p*100)}%`; };
+                        const hideProgress = () => { vizProgressContainer.style.display = 'none'; vizProgressText.textContent = ''; updateCodexVisibility(); };
+                        startBuild(createTemporalFlowGenerator(plottedOntologicalNodes, showProgress, hideProgress));
+                        isTemporalFlowBuilt = true;
+                    } else {
+                       updateCodexVisibility();
+                    }
+                } else {
+                   updateCodexVisibility();
+                }
+            });
+
+            labelsToggle.addEventListener('change', () => {
+                const showLabels = labelsToggle.checked;
+                plottedOntologicalNodes.forEach(node => {
+                    node.children.forEach(child => {
+                        if (child.isCSS2DObject) {
+                            child.visible = showLabels;
+                        }
+                    });
+                });
+            });
+
+            generateCodexBtn.addEventListener('click', () => {
+                if (allData.length === 0) { alert("Please upload a dictionary file first."); return; }
+                generateCodexBtn.disabled = true; exportRootBtn.disabled = true;
+                genProgressText.textContent = "Processing..."; genProgressContainer.style.display = 'block'; genProgressBar.style.width = '0%';
+                setTimeout(() => {
+                    let concatenatedQuaternions = '';
+                    const totalWords = allData.length;
+                    for (let i = 0; i < totalWords; i++) {
+                        const q = allData[i].quat;
+                        concatenatedQuaternions += `${q.w.toPrecision(15)},${q.x.toPrecision(15)},${q.y.toPrecision(15)},${q.z.toPrecision(15)};`;
+                        if ((i + 1) % 500 === 0 || i === totalWords - 1) {
+                            genProgressBar.style.width = `${((i + 1) / totalWords) * 100}%`;
+                        }
+                    }
+                    lastGeneratedRoot = sha256(concatenatedQuaternions);
+                    codexRootTextarea.value = lastGeneratedRoot;
+                    genProgressText.textContent = `Codex Root generated successfully!`;
+                    tokensProcessedSpan.textContent = totalWords.toLocaleString();
+                    generateCodexBtn.disabled = false; exportRootBtn.disabled = false;
+                }, 100);
+            });
+
+            exportTreeBtn.addEventListener('click', () => {
+                if (allData.length === 0) { alert('Please load a dictionary first.'); return; }
+                if (!codexTree) { codexTree = generateCodexTree(allData); }
+                if (codexTree) downloadFile('codex_tree.json', JSON.stringify(codexTree, null, 2));
+            });
+
+            exportRootBtn.addEventListener('click', () => {
+                if (!lastGeneratedRoot || dictionaryWords.length === 0) { alert('Please generate a Codex Root first.'); return; }
+                downloadFile('codex_map.txt', dictionaryWords.join('\n'));
+                downloadFile('codex_root.txt', lastGeneratedRoot);
+            });
+
+            closeSelectionBtn.addEventListener('click', closeSelectionPanel);
+            
+            buildBtn.addEventListener('click', () => {
+                if (buildState.builder) {
+                    startBuild(buildState.builder);
+                }
+            });
+
+            pauseBtn.addEventListener('click', () => {
+                buildState.isPaused = !buildState.isPaused;
+                if (!buildState.isPaused && buildState.builder) {
+                    startBuild(buildState.builder);
+                    pauseBtn.textContent = 'Pause';
+                } else {
+                    pauseBtn.textContent = 'Resume';
+                }
+            });
+
+            resetBuildBtn.addEventListener('click', () => {
+                if (buildState.handle) cancelAnimationFrame(buildState.handle);
+                buildState.handle = null;
+                buildState.isPaused = true;
+                const currentView = document.querySelector('input[name="view-mode"]:checked').value;
+                cleanupVisuals();
+                const showProgress = (p, t) => { vizProgressBar.style.width = `${p*100}%`; vizProgressText.textContent = `${t}: ${Math.round(p*100)}%`; };
+                const hideProgress = () => { vizProgressContainer.style.display = 'none'; vizProgressText.textContent = ''; };
+                
+                if(currentView === 'ontological') {
+                    const onComplete = () => {
+                        hideProgress();
+                        filteringControls.style.display = 'block';
+                        temporalFlowToggle.disabled = false;
+                        labelsToggle.disabled = false;
+                        temporalFlowToggle.parentElement.querySelector('label').classList.remove('text-gray-500');
+                        labelsToggle.parentElement.querySelector('label').classList.remove('text-gray-500');
+                        updateCodexVisibility();
+                    };
+                    startBuild(plotOntologicalCodexGenerator(allData, p => showProgress(p, "Building"), onComplete));
+                } else if(currentView === 'constellation') {
+                    startBuild(createConstellationGenerator(allData, p => showProgress(p, "Building"), hideProgress));
+                }
+            });
+
+            updateNodeBtn.addEventListener('click', () => {
+                if (!selectedObject) return; // selectedObject is the sphere
+
+                const nodeGroup = selectedObject.parent;
+                if (!nodeGroup || !nodeGroup.isGroup) return;
+
+                const newContext = {
+                    structId: parseInt(structIdSlider.value),
+                    ampId: parseInt(ampIdSlider.value),
+                    freqId: parseInt(freqIdSlider.value),
+                    spinId: parseInt(spinIdSlider.value),
+                    payloadScale: parseFloat(payloadScaleInput.value)
+                };
+                const token = temporalTokenInput.value;
+
+                // Update sphere
+                const sphere = nodeGroup.userData.sphere;
+                sphere.material.color.set(temporalColors[newContext.structId]);
+                const quaternion = generateQuaternionFromToken(token);
+                sphere.quaternion.copy(quaternion);
+                sphere.userData.spinId = newContext.spinId;
+                sphere.userData.spinAxis = new THREE.Vector3( (newContext.spinId & 1) ? 1 : 0.5, (newContext.spinId & 2) ? 1 : 0.5, (newContext.spinId & 4) ? 1 : 0.5 ).normalize();
+
+                // Update wireframe
+                const wireframe = nodeGroup.userData.wireframe;
+                wireframe.geometry.dispose();
+                wireframe.geometry = wireframeGeometries[newContext.structId] || wireframeGeometries.default;
+                wireframe.material.color.set(temporalColors[newContext.structId]);
+                const phi = 1.61803398875;
+                const scale = Math.pow(phi, newContext.ampId / 2.0);
+                wireframe.scale.set(scale, scale, scale);
+
+                // Update data array
+                const packet = SHDCCP.pack(quaternion, newContext.structId, newContext.ampId, 0, newContext.freqId, newContext.spinId, newContext.payloadScale);
+                const entryIndex = temporalCodex.findIndex(e => e.uuid === nodeGroup.userData.uuid);
+                if (entryIndex !== -1) {
+                    const updatedEntry = { ...temporalCodex[entryIndex], token, quaternion, ...newContext, packet: packet.toString(16).padStart(16, '0') };
+                    temporalCodex[entryIndex] = updatedEntry;
+                    nodeGroup.userData = { ...updatedEntry, sphere, wireframe }; // Update group's data
+                }
+                
+                // Update log
+                const shapeInfo = STRUCTURAL_FORM_DATA[newContext.structId];
+                const logEntry = document.getElementById(`log-${nodeGroup.userData.uuid}`);
+                if(logEntry) {
+                    logEntry.innerHTML = `<span class="text-cyan-400">${token} (${shapeInfo.name})</span>: 0x${nodeGroup.userData.packet}`;
+                }
+                
+                closeSelectionPanel();
+            });
+
+            // === INITIALIZATION CALLS for CODEX ===
+            initViewer();
+            animate();
+            resetCodexState();
+
+            // --- Return a cleanup function ---
+            return function cleanup() {
+                console.log("Cleaning up Codex Module...");
+                window.removeEventListener('resize', onWindowResize, false);
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                // Dispose of three.js objects to free up GPU memory
+                if (scene) {
+                    scene.traverse(object => {
+                        if (object.geometry) object.geometry.dispose();
+                        if (object.material) {
+                            if (Array.isArray(object.material)) {
+                                object.material.forEach(material => material.dispose());
+                            } else {
+                                object.material.dispose();
+                            }
+                        }
+                    });
+                }
+                if (renderer) renderer.dispose();
+                if (labelRenderer && labelRenderer.domElement.parentElement) {
+                     labelRenderer.domElement.parentElement.removeChild(labelRenderer.domElement);
+                }
+                if (renderer && renderer.domElement.parentElement) {
+                     renderer.domElement.parentElement.removeChild(renderer.domElement);
+                }
+                console.log("Codex Module cleaned up.");
+            };
+        }
+
+        // --- Initial Page Load ---
+        initMainPageBackground();
+        startMainPageAnimation();
+
+    </script>
+</body>
+</html>

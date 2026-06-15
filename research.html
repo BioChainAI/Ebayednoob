@@ -1,0 +1,71 @@
+<div class="flex flex-col md:flex-row gap-8 p-4 md:p-8 h-full">
+
+    <!-- PDF List -->
+    <div id="pdf-list-container" class="w-full md:w-1/3 lg:w-1/4 bg-gray-800/50 p-4 rounded-lg border border-gray-700 overflow-y-auto custom-scrollbar">
+        <h2 class="text-2xl font-bold text-cyan-400 border-b border-gray-600 pb-3 mb-4">Research Papers</h2>
+        <ul id="pdf-list" class="space-y-2">
+            <!-- PDF links will be inserted here by JavaScript -->
+        </ul>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div id="pdf-viewer-container" class="w-full md:w-2/3 lg:w-3/4 flex-grow bg-gray-900/80 rounded-lg border border-gray-700/50 flex flex-col">
+        <div id="pdf-viewer-header" class="p-4 border-b border-gray-700">
+            <h3 id="pdf-title" class="text-xl font-semibold text-gray-100">Select a paper to view</h3>
+        </div>
+        <div id="pdf-embed-wrapper" class="flex-grow p-1">
+             <iframe id="pdf-embed" src="" class="w-full h-full border-0 rounded-b-lg"></iframe>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pdfList = document.getElementById('pdf-list');
+        const pdfEmbed = document.getElementById('pdf-embed');
+        const pdfTitle = document.getElementById('pdf-title');
+
+        // --- IMPORTANT ---
+        // This is a list of your research papers. 
+        // You will need to manually add the paths to your PDF files here.
+        // Make sure the files are located in a 'research_papers' folder in your project directory.
+        const papers = [
+            'research_papers/Quaternion_Compression.pdf',
+            // Add more papers here
+        ];
+
+        // Function to create a list item for a PDF
+        function createPdfListItem(filePath) {
+            const fileName = filePath.split('/').pop().replace('.pdf', '');
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = fileName.replace(/_/g, ' '); // Replace underscores with spaces for display
+            link.className = 'block p-3 rounded-md hover:bg-cyan-600/50 transition-colors text-gray-300 hover:text-white';
+            link.dataset.path = filePath;
+
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                pdfEmbed.src = this.dataset.path;
+                pdfTitle.textContent = this.textContent;
+
+                // Style the active link
+                document.querySelectorAll('#pdf-list a').forEach(a => a.classList.remove('bg-cyan-600', 'text-white'));
+                this.classList.add('bg-cyan-600', 'text-white');
+            });
+
+            listItem.appendChild(link);
+            return listItem;
+        }
+
+        // Populate the list
+        if (papers.length > 0) {
+            papers.forEach(paperPath => {
+                pdfList.appendChild(createPdfListItem(paperPath));
+            });
+        } else {
+            pdfList.innerHTML = '<li class="text-gray-400 p-3">No papers found. Add your PDF files to the `papers` array in `research.html`.</li>';
+        }
+    });
+</script>
