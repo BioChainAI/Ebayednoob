@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Orthogonal Conversion</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- three.js for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- KaTeX for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css" xintegrity="sha384-Xi8rHCmBmhbuyyhbI88391ZKP2dmMAadU+6eJtCowdXj75Zd5bEkFRG7lx7MAeO5" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js" xintegrity="sha384-X/XCfMm41VSsqRNwNE3EeUDoFQ9SAjd0yrM5AUiOLDSDE2Hht/sAbsAXSyM4hIYH" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js" xintegrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"></script>
+    <style>
+        /* Custom styles for canvas elements */
+        canvas {
+            display: block;
+            margin: auto;
+            background-color: #111827; /* bg-gray-900 */
+            border-radius: 0.5rem; /* rounded-lg */
+            border: 1px solid #047857; /* border-green-700 */
+        }
+        .katex-display {
+            color: #d1d5db; /* gray-300 for math */
+        }
+        .katex {
+            color: #d1d5db; /* gray-300 for math */
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <h1 class="text-4xl font-bold text-green-200 mb-8 text-center">Tutorial: Understanding Orthogonal Conversion</h1>
+
+    <!-- Module 1: Introduction -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 1: The Art of Moving Without Distortion</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            Welcome! This tutorial explores <strong class="text-green-300">orthogonal conversions</strong>, a fundamental concept in geometry, physics, and computer graphics. At their core, these are transformations that move and reorient objects without changing their shape or size. Think of them as <strong class="text-green-300">rigid motions</strong>—like rotating a key, reflecting an image in a mirror, or simply sliding a book across a table. They preserve the essential geometric properties of an object: its lengths, angles, and overall form.
+        </p>
+        <div class="p-6 text-center text-green-400 my-4">
+            <canvas id="anim1" width="500" height="200"></canvas>
+            <p class="text-green-500 mt-4">A square rotating and moving across the screen. Notice how its side lengths and 90-degree angles remain constant.</p>
+        </div>
+        <p class="text-lg leading-relaxed">
+            These transformations are crucial in many fields, from ensuring a character in a video game moves realistically to aligning medical scans in healthcare and controlling the precise movements of a robotic arm.
+        </p>
+    </section>
+
+    <!-- Module 2: Vectors and Inner Products -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 2: The Building Blocks - Vectors & Inner Products</h2>
+        <p class="text-lg leading-relaxed mb-4">
+            To understand transformations, we must first understand what they act upon: <strong class="text-green-300">vectors</strong>. Geometrically, a vector is an object with both magnitude (length) and direction. Algebraically, we can represent a vector in <span class="math-inline">n</span>-dimensional space as a list of components: <span class="math-inline">u = (u_1, u_2, ..., u_n)</span>.
+        </p>
+        <p class="text-lg leading-relaxed mb-4">
+            The relationship between two vectors is quantified by the <strong class="text-green-300">inner product</strong> (or dot product). Geometrically, it's defined by their lengths and the angle between them:
+        </p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-center text-lg mb-4">
+            $$ u \cdot v = |u||v| \cos\theta $$
+        </div>
+        <p class="text-lg leading-relaxed mb-4">
+            Algebraically, it's the sum of the products of their corresponding components:
+        </p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-center text-lg mb-6">
+            $$ u \cdot v = u_1v_1 + u_2v_2 + \dots + u_nv_n = \sum_{i=1}^{n} u_iv_i $$
+        </div>
+        <p class="text-lg leading-relaxed mb-6">
+            This formula is incredibly powerful. When two non-zero vectors are perpendicular, the angle <span class="math-inline">\theta</span> is 90° (<span class="math-inline">\pi/2</span> radians), and <span class="math-inline">\cos(90^\circ) = 0</span>. This makes their inner product zero. We call such vectors <strong class="text-green-300">orthogonal</strong>.
+        </p>
+        <div class="p-6 text-center text-green-400 my-4">
+             <canvas id="anim2" width="500" height="250"></canvas>
+            <p class="text-green-500 mt-4">As the angle <span class="math-inline">\theta</span> changes, the inner product <span class="math-inline">u \cdot v</span> updates. When the vectors are perpendicular (<span class="math-inline">\theta = 90^\circ</span>), the product is zero.</p>
+        </div>
+    </section>
+
+    <!-- Module 3: What is Preserved -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 3: The Unchanging Essence</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            An orthogonal transformation <span class="math-inline">T</span> is formally defined as a transformation that preserves the inner product. That is, for any two vectors <span class="math-inline">u</span> and <span class="math-inline">v</span>:
+        </p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-center text-lg mb-6">
+             $$ T(u) \cdot T(v) = u \cdot v $$
+        </div>
+        <p class="text-lg leading-relaxed mb-6">
+            From this single defining property, we can prove that all key geometric features are preserved:
+        </p>
+        <ul class="list-disc list-inside text-lg space-y-4">
+            <li>
+                <strong class="text-green-400">Norms (Lengths):</strong> A vector's length (norm) squared is its inner product with itself: <span class="math-inline">|v|^2 = v \cdot v</span>. Since the inner product is preserved, so is the length:
+                <div class="text-gray-300 text-base my-2 pl-4">
+                    <span class="math-inline">|T(v)|^2 = T(v) \cdot T(v) = v \cdot v = |v|^2</span>. Taking the square root gives <span class="math-inline">|T(v)| = |v|</span>.
+                </div>
+            </li>
+            <li>
+                <strong class="text-green-400">Angles:</strong> The angle between two vectors is derived from the inner product formula: <span class="math-inline">\theta = \arccos\left(\frac{u \cdot v}{|u||v|}\right)</span>. Since an orthogonal transformation <span class="math-inline">T</span> preserves both the inner product (numerator) and the vector lengths (denominator), the angle must also be preserved.
+            </li>
+        </ul>
+        <div class="p-6 text-center text-green-400 my-6">
+            <canvas id="anim3" width="500" height="250"></canvas>
+            <p class="text-green-500 mt-4">As the entire system rotates, notice that the lengths, angle, and inner product remain constant.</p>
+        </div>
+    </section>
+
+    <!-- Module 4: Types of Conversions -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 4: Rotations and Reflections in Action</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            There are two primary types of orthogonal conversions:
+        </p>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-3">Rotations</h3>
+                <p class="text-lg leading-relaxed mb-4">
+                    Rotations pivot an object around a point or an axis. They <strong class="text-green-300">preserve orientation</strong>. If you write your name on a piece of paper and rotate it, the letters still read the same way.
+                </p>
+                <div class="p-4 text-center">
+                    <canvas id="anim6" width="300" height="300"></canvas>
+                    <p class="text-green-500 mt-4">An object smoothly rotates around an axis in 3D space.</p>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-3">Reflections</h3>
+                <p class="text-lg leading-relaxed mb-4">
+                    Reflections flip an object across a line (in 2D) or a plane (in 3D). They <strong class="text-green-300">reverse orientation</strong>. Looking at your name in a mirror, the letters are flipped.
+                </p>
+                <div class="p-4 text-center">
+                    <canvas id="anim7" width="300" height="300"></canvas>
+                    <p class="text-green-500 mt-4">An object is mirrored across a plane, showing its orientation flip.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Module 5: The Matrix Connection -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 5: The Matrix Connection</h2>
+        <p class="text-lg leading-relaxed mb-4">
+            In linear algebra, we represent linear transformations using <strong class="text-green-300">matrices</strong>. An orthogonal conversion corresponds to an <strong class="text-green-300">orthogonal matrix</strong>, which we'll call <span class="math-inline">A</span>. A square matrix <span class="math-inline">A</span> is orthogonal if its columns (and rows) form an <strong class="text-green-400">orthonormal basis</strong>—a set of mutually orthogonal unit vectors.
+        </p>
+        <p class="text-lg leading-relaxed mb-4">
+            This condition leads to a beautifully simple algebraic property: the inverse of an orthogonal matrix is its transpose.
+        </p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-center text-lg mb-6">
+            $$ A^T A = I \quad \implies \quad A^T = A^{-1} $$
+        </div>
+        <p class="text-lg leading-relaxed mb-4">
+            The reason this works is that the matrix product <span class="math-inline">A^T A</span> computes the dot products of all column vectors of <span class="math-inline">A</span> with each other. For an orthonormal set, this results in the identity matrix <span class="math-inline">I</span>. This property is precisely what guarantees the preservation of the inner product:
+            <div class="text-gray-300 text-base my-2 pl-4">
+                $$ (Au) \cdot (Av) = (Au)^T(Av) = u^T A^T A v = u^T I v = u^T v = u \cdot v $$
+            </div>
+        </p>
+        <p class="text-lg leading-relaxed mb-4">
+            The <strong class="text-green-300">determinant</strong> of an orthogonal matrix tells us its type:
+        </p>
+         <ul class="list-disc list-inside text-lg space-y-2 mb-6">
+            <li>If <span class="math-inline">\det(A) = +1</span>, the transformation preserves orientation (a <strong class="text-green-400">rotation</strong>).</li>
+            <li>If <span class="math-inline">\det(A) = -1</span>, the transformation reverses orientation (a <strong class="text-green-400">reflection</strong> or rotoreflection).</li>
+        </ul>
+        <div class="p-6 text-center text-green-400 my-4">
+            <canvas id="anim9" width="500" height="250"></canvas>
+            <p class="text-green-500 mt-4">A unit square transformed by a rotation matrix (<span class="math-inline">\det=1</span>). Its shape and size are preserved.</p>
+        </div>
+    </section>
+
+    <!-- Module 6: Applications -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 6: Real-World Impact</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            Orthogonal conversions are the engine behind many technologies we use daily.
+        </p>
+        <ul class="list-disc list-inside text-lg space-y-3">
+            <li><strong class="text-green-400">Computer Graphics:</strong> Moving a camera in a 3D game.</li>
+            <li><strong class="text-green-400">Robotics:</strong> Controlling a robot's arm with precision.</li>
+            <li><strong class="text-green-400">Physics:</strong> Describing the motion of rigid bodies.</li>
+            <li><strong class="text-green-400">Image Processing:</strong> Rotating or flipping a photo.</li>
+        </ul>
+         <div class="p-6 text-center text-green-400 my-6">
+            <canvas id="anim11" width="500" height="150"></canvas>
+            <p class="text-green-500 mt-4">A symbolic representation of applications in different fields.</p>
+        </div>
+    </section>
+
+    <!-- Module 7: Advanced Interpretations -->
+    <section class="mb-10">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 7: Advanced Interpretations</h2>
+        
+        <h3 class="text-2xl font-semibold text-green-300 mt-6 mb-3">Rotations as Phase Angles in 3D Space</h3>
+        <p class="text-lg leading-relaxed mb-4">
+            We can think of a rotation more abstractly. Any rotation in 3D space can be described by an <strong class="text-green-400">axis of rotation</strong> and an angle describing how much to rotate around that axis. This angle can be thought of as a <strong class="text-green-300">phase angle</strong>. Just as a sine wave has a phase that shifts it left or right, a 3D rotation has a phase that determines its "progress" around its axis.
+        </p>
+        <div class="p-6 text-center text-green-400 my-4">
+            <canvas id="anim_axis_angle" width="500" height="300"></canvas>
+            <p id="angle_display" class="text-green-500 mt-4 font-mono">Phase Angle <span class="math-inline">\alpha</span>: 0.00°</p>
+        </div>
+        <p class="text-lg leading-relaxed mb-4">
+            This is formalized in the <strong class="text-green-400">axis-angle representation</strong>. A rotation is defined by a unit vector <span class="math-inline">\hat{n}</span> (the axis) and a scalar angle <span class="math-inline">\alpha</span> (the phase). This is often more intuitive than a full rotation matrix. For example, <strong class="text-green-400">quaternions</strong>, which are used extensively in graphics and robotics to avoid issues like gimbal lock, are built directly on this principle. A quaternion <span class="math-inline">q</span> that represents a rotation has a scalar part and a vector part:
+        </p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-center text-lg mb-6">
+            $$ q = \cos(\alpha/2) + \sin(\alpha/2)\hat{n} $$
+        </div>
+        <p class="text-lg leading-relaxed mb-4">
+            Here, the rotation's "phase" <span class="math-inline">\alpha</span> is encoded directly into the mathematics.
+        </p>
+
+        <h3 class="text-2xl font-semibold text-green-300 mt-8 mb-3">Orthogonality and the Fourier "Scalar" Conversion</h3>
+        <p class="text-lg leading-relaxed mb-4">
+            The concept of orthogonality extends far beyond geometric vectors into fields like signal processing. Here, we can treat functions (like an audio signal <span class="math-inline">f(t)</span>) as vectors in an infinite-dimensional space. The <strong class="text-green-400">Fourier Transform</strong> is a powerful tool that acts as an orthogonal conversion in this space.
+        </p>
+        <p class="text-lg leading-relaxed mb-4">
+            It converts a function from its time-domain representation, <span class="math-inline">f(t)</span>, to its frequency-domain representation, <span class="math-inline">\hat{f}(\omega)</span>. It does this by projecting the function onto an <strong class="text-green-400">orthogonal basis</strong> of sine and cosine waves of different frequencies. Each resulting value in the frequency domain, <span class="math-inline">\hat{f}(\omega)</span>, is a complex number containing an <strong class="text-green-300">amplitude</strong> and a <strong class="text-green-300">phase</strong>.
+        </p>
+        <p class="text-lg leading-relaxed mb-4">
+            The connection to our topic is this: the Fourier Transform preserves the "length" of the function. In signal processing, the squared length of a function is its <strong class="text-green-400">energy</strong>. <strong class="text-green-400">Parseval's Theorem</strong> states that the total energy of the signal is the same whether you calculate it in the time domain or the frequency domain.
+        </p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-center text-lg mb-6">
+            $$ \text{Energy} = \int |f(t)|^2 dt = \int |\hat{f}(\omega)|^2 d\omega $$
+        </div>
+        <p class="text-lg leading-relaxed mb-4">
+            This is the function-space equivalent of <span class="math-inline">|T(v)|^2 = |v|^2</span>. The Fourier transform is an orthogonal conversion that preserves the total energy—a single <strong class="text-green-300">scalar</strong> value—by simply redistributing it among the amplitudes of its frequency components. This "scalar conversion" is a profound example of orthogonality ensuring that a transformation doesn't add or remove energy, but merely changes its representation.
+        </p>
+    </section>
+
+    <!-- Module 8: Platonic Solids -->
+    <section>
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Module 8: Visualizing Symmetry - The Platonic Solids</h2>
+        <p class="text-lg leading-relaxed mb-4">
+            An orthogonal transformation preserves the internal angles and lengths of <strong class="text-green-300">any</strong> object. However, highly symmetric objects are the perfect subjects for observing these transformations. The most symmetric 3D shapes are the five <strong class="text-green-400">Platonic Solids</strong>. Each is a convex polyhedron where all faces are identical regular polygons, and the same number of faces meet at each vertex. Their perfect regularity makes them ideal for seeing the pure, undistorted nature of rotation.
+        </p>
+        <div class="p-6 text-center text-green-400 my-4">
+            <canvas id="platonic_solids_anim" width="500" height="350"></canvas>
+            <p id="solid_name_display" class="text-green-300 mt-4 text-xl font-semibold">Tetrahedron</p>
+            <div id="platonic_controls" class="flex justify-center space-x-2 mt-3 flex-wrap">
+                <!-- Buttons will be generated by script -->
+            </div>
+        </div>
+    </section>
+    
+    <footer class="text-center text-green-700 mt-12 border-t border-green-900 pt-4">
+        <p>End of Tutorial. <a href="#" class="text-green-500 hover:text-green-300 underline">Return to top</a>.</p>
+    </footer>
+
+    <script>
+        // KaTeX auto-render configuration
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "\\[", right: "\\]", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\(", right: "\\)", display: false},
+                    // Custom delimiter for inline math to avoid conflicts
+                    {left: "<span class=\"math-inline\">", right: "</span>", display: false}
+                ]
+            });
+        });
+
+        window.onload = function() {
+            // Helper function to draw an arrow
+            function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+                const headlen = 10;
+                const dx = tox - fromx;
+                const dy = toy - fromy;
+                const angle = Math.atan2(dy, dx);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(fromx, fromy);
+                ctx.lineTo(tox, toy);
+                ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+                ctx.moveTo(tox, toy);
+                ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+                ctx.stroke();
+            }
+
+            // Animation 1: Rigid Motion
+            (function initAnim1() {
+                const canvas = document.getElementById('anim1');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                let angle = 0;
+                let x = 50;
+                let dir = 1;
+
+                function draw() {
+                    ctx.clearRect(0, 0, w, h);
+                    ctx.save();
+                    ctx.translate(x, h / 2);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = 'rgba(52, 211, 153, 0.7)'; // green-400 with opacity
+                    ctx.fillRect(-20, -20, 40, 40);
+                    ctx.strokeStyle = '#6EE7B7'; // green-300
+                    ctx.strokeRect(-20, -20, 40, 40);
+                    ctx.restore();
+                }
+
+                function animate() {
+                    angle += 0.01;
+                    x += 0.5 * dir;
+                    if (x > w - 50 || x < 50) {
+                        dir *= -1;
+                    }
+                    draw();
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+
+            // Animation 2: Inner Product
+            (function initAnim2() {
+                const canvas = document.getElementById('anim2');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const originX = 150, originY = h / 2;
+                const lenU = 100, lenV = 75;
+                let angleV = 0;
+
+                function animate() {
+                    angleV += 0.01;
+                    
+                    ctx.clearRect(0, 0, w, h);
+                    
+                    // Vector U (static)
+                    const u = { x: lenU, y: 0 };
+                    drawArrow(ctx, originX, originY, originX + u.x, originY + u.y, '#6EE7B7'); // green-300
+                    
+                    // Vector V (rotating)
+                    const v = { x: lenV * Math.cos(angleV), y: lenV * Math.sin(angleV) };
+                    drawArrow(ctx, originX, originY, originX + v.x, originY + v.y, '#FBBF24'); // amber-400
+                    
+                    // Calculate inner product
+                    const innerProduct = u.x * v.x + u.y * v.y;
+                    const displayAngle = (Math.atan2(v.y, v.x) * 180 / Math.PI).toFixed(1);
+                    
+                    // Display text
+                    ctx.fillStyle = '#A7F3D0'; // green-200
+                    ctx.font = '16px Inter';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`Vector u (green): [${lenU}, 0]`, 320, 50);
+                    ctx.fillText(`Vector v (yellow)`, 320, 80);
+                    ctx.fillText(`  Angle θ: ${displayAngle}°`, 320, 105);
+                    ctx.fillText(`Inner Product u·v:`, 320, 145);
+                    ctx.font = 'bold 18px Inter';
+                    ctx.fillStyle = Math.abs(innerProduct) < 500 ? '#F87171' : '#A7F3D0'; // red-400 if near zero
+                    ctx.fillText(innerProduct.toFixed(0), 320, 170);
+
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+
+            // Animation 3: Preservation of Properties
+            (function initAnim3() {
+                const canvas = document.getElementById('anim3');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const originX = 150, originY = h / 2;
+                
+                // Initial vectors relative to origin
+                const u_local = { x: 100, y: 0 };
+                const v_local = { x: 60 * Math.cos(Math.PI / 4), y: 60 * Math.sin(Math.PI / 4) };
+                const lenU = Math.sqrt(u_local.x**2 + u_local.y**2);
+                const lenV = Math.sqrt(v_local.x**2 + v_local.y**2);
+                const angleUV = Math.acos((u_local.x * v_local.x + u_local.y * v_local.y) / (lenU * lenV)) * 180 / Math.PI;
+                const innerProduct = u_local.x * v_local.x + u_local.y * v_local.y;
+
+                let rotationAngle = 0;
+
+                function animate() {
+                    rotationAngle += 0.005;
+                    ctx.clearRect(0, 0, w, h);
+
+                    const cosR = Math.cos(rotationAngle);
+                    const sinR = Math.sin(rotationAngle);
+
+                    // Rotate vectors
+                    const u_rot = { x: u_local.x * cosR - u_local.y * sinR, y: u_local.x * sinR + u_local.y * cosR };
+                    const v_rot = { x: v_local.x * cosR - v_local.y * sinR, y: v_local.x * sinR + v_local.y * cosR };
+
+                    drawArrow(ctx, originX, originY, originX + u_rot.x, originY + u_rot.y, '#6EE7B7');
+                    drawArrow(ctx, originX, originY, originX + v_rot.x, originY + v_rot.y, '#FBBF24');
+
+                    // Display constant properties
+                    ctx.fillStyle = '#A7F3D0';
+                    ctx.font = '16px Inter';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`Length |u|: ${lenU.toFixed(0)} (constant)`, 320, 50);
+                    ctx.fillText(`Length |v|: ${lenV.toFixed(0)} (constant)`, 320, 80);
+                    ctx.fillText(`Angle θ: ${angleUV.toFixed(1)}° (constant)`, 320, 110);
+                    ctx.fillText(`Inner Product u·v:`, 320, 150);
+                    ctx.font = 'bold 18px Inter';
+                    ctx.fillText(innerProduct.toFixed(0) + ' (constant)', 320, 175);
+                    
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+            
+            // Animation 6: 3D Rotation
+            (function initAnim6() {
+                const canvas = document.getElementById('anim6');
+                if (!canvas) return;
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+                renderer.setSize(canvas.width, canvas.height);
+
+                const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                const material = new THREE.MeshBasicMaterial({ color: 0x34D399, wireframe: true });
+                const cube = new THREE.Mesh(geometry, material);
+                scene.add(cube);
+
+                camera.position.z = 3;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    cube.rotation.x += 0.01;
+                    cube.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                }
+                animate();
+            })();
+
+            // Animation 7: Reflection
+            (function initAnim7() {
+                const canvas = document.getElementById('anim7');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const midX = w / 2;
+
+                const p1 = {x: 50, y: 100};
+                const p2 = {x: 100, y: 100};
+                const p3 = {x: 50, y: 200};
+
+                let progress = 0;
+                let dir = 1;
+
+                function drawShape(points, color) {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    ctx.lineTo(points[1].x, points[1].y);
+                    ctx.lineTo(points[2].x, points[2].y);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                function animate() {
+                    progress += 0.01 * dir;
+                    if (progress > 1 || progress < 0) {
+                        dir *= -1;
+                        progress = Math.max(0, Math.min(1, progress)); // clamp
+                    }
+
+                    ctx.clearRect(0, 0, w, h);
+                    
+                    // Reflection line
+                    ctx.strokeStyle = '#059669'; // green-600
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(midX, 20);
+                    ctx.lineTo(midX, h - 20);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Interpolate points
+                    const currentP1 = {x: p1.x + (2 * (midX - p1.x)) * progress, y: p1.y};
+                    const currentP2 = {x: p2.x + (2 * (midX - p2.x)) * progress, y: p2.y};
+                    const currentP3 = {x: p3.x + (2 * (midX - p3.x)) * progress, y: p3.y};
+                    
+                    drawShape([currentP1, currentP2, currentP3], 'rgba(52, 211, 153, 0.7)');
+                    
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+
+            // Animation 9: Matrix Transformation
+            (function initAnim9() {
+                const canvas = document.getElementById('anim9');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const originX = 150, originY = h / 2;
+                const size = 50;
+
+                const points = [
+                    {x: -size, y: -size}, {x: size, y: -size},
+                    {x: size, y: size}, {x: -size, y: size}
+                ];
+                let angle = 0;
+
+                function animate() {
+                    angle += 0.01;
+                    const cosA = Math.cos(angle);
+                    const sinA = Math.sin(angle);
+
+                    // Apply rotation matrix
+                    const transformedPoints = points.map(p => ({
+                        x: p.x * cosA - p.y * sinA,
+                        y: p.x * sinA + p.y * cosA
+                    }));
+
+                    ctx.clearRect(0, 0, w, h);
+                    
+                    // Draw transformed square
+                    ctx.strokeStyle = '#6EE7B7';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(originX + transformedPoints[0].x, originY + transformedPoints[0].y);
+                    for (let i = 1; i < transformedPoints.length; i++) {
+                        ctx.lineTo(originX + transformedPoints[i].x, originY + transformedPoints[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    // Display matrix
+                    ctx.fillStyle = '#A7F3D0';
+                    ctx.font = '16px "Courier New", monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText("Rotation Matrix (det=1):", 300, 80);
+                    ctx.fillText(`[ ${cosA.toFixed(2).padStart(5, ' ')}, ${(-sinA).toFixed(2).padStart(5, ' ')} ]`, 300, 110);
+                    ctx.fillText(`[ ${sinA.toFixed(2).padStart(5, ' ')},  ${cosA.toFixed(2).padStart(5, ' ')} ]`, 300, 140);
+
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+
+            // Animation 11: Applications
+            (function initAnim11() {
+                const canvas = document.getElementById('anim11');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const icons = [
+                    // Graphics (Monitor)
+                    (x, y, size) => {
+                        ctx.strokeRect(x - size/2, y - size/2, size, size * 0.75);
+                        ctx.beginPath();
+                        ctx.moveTo(x - size/4, y + size/2);
+                        ctx.lineTo(x, y + size/2 - size*0.25);
+                        ctx.lineTo(x + size/4, y + size/2);
+                        ctx.closePath();
+                        ctx.fill();
+                    },
+                    // Robotics (Arm)
+                    (x, y, size) => {
+                        ctx.beginPath();
+                        ctx.arc(x, y, size/4, 0, Math.PI, true);
+                        ctx.lineTo(x - size/2, y);
+                        ctx.lineTo(x-size/2, y-size/2);
+                        ctx.arc(x, y-size/2, size/2, Math.PI, 0);
+                        ctx.lineTo(x+size/2, y);
+                        ctx.stroke();
+                    },
+                    // Physics (Atom)
+                    (x, y, size) => {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.ellipse(x, y, size/2, size/4, 0, 0, 2 * Math.PI);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.ellipse(x, y, size/4, size/2, Math.PI / 2, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    }
+                ];
+                const positions = [{x: w/4, y:h/2}, {x: w/2, y:h/2}, {x: 3*w/4, y:h/2}];
+                let time = 0;
+
+                function animate() {
+                    time += 1;
+                    ctx.clearRect(0, 0, w, h);
+
+                    const currentIconIndex = Math.floor(time / 200) % icons.length;
+
+                    for(let i=0; i<icons.length; i++) {
+                        ctx.save();
+                        ctx.translate(positions[i].x, positions[i].y);
+                        if (i === currentIconIndex) {
+                           ctx.rotate(time * 0.01);
+                           ctx.strokeStyle = '#6EE7B7';
+                           ctx.fillStyle = '#6EE7B7';
+                        } else {
+                           ctx.strokeStyle = '#047857';
+                           ctx.fillStyle = '#047857';
+                        }
+                        ctx.lineWidth = 2;
+                        icons[i](0, 0, 60);
+                        ctx.restore();
+                    }
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+
+            // Animation for Axis-Angle
+            (function initAnimAxisAngle() {
+                const canvas = document.getElementById('anim_axis_angle');
+                if (!canvas) return;
+                const angleDisplay = document.getElementById('angle_display');
+                if(!angleDisplay) return;
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+                renderer.setSize(canvas.width, canvas.height);
+
+                // The object to be rotated
+                const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+                const material = new THREE.MeshBasicMaterial({ color: 0x34D399, wireframe: true });
+                const knot = new THREE.Mesh(geometry, material);
+                scene.add(knot);
+
+                // The axis of rotation
+                const axis = new THREE.Vector3(0.5, 1, 0.2).normalize();
+                const axisGeom = new THREE.CylinderGeometry(0.03, 0.03, 5, 8);
+                const axisMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 }); // amber-400
+                const axisCylinder = new THREE.Mesh(axisGeom, axisMat);
+                axisCylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis); // Align cylinder with axis
+                scene.add(axisCylinder);
+
+                camera.position.z = 4;
+                let angle = 0;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    angle += 0.01;
+                    
+                    // Rotate the object around the axis
+                    knot.setRotationFromAxisAngle(axis, angle);
+                    
+                    // Update the text display
+                    const angleInDegrees = (angle * 180 / Math.PI) % 360;
+                    const displayElem = document.getElementById('angle_display');
+                    if (displayElem) {
+                        displayElem.innerHTML = `Phase Angle <span class="math-inline">\\alpha</span>: ${angleInDegrees.toFixed(2)}°`;
+                        renderMathInElement(displayElem);
+                    }
+                    
+                    renderer.render(scene, camera);
+                }
+                animate();
+            })();
+
+            // Animation for Platonic Solids
+            (function initPlatonicSolidsAnim() {
+                const canvas = document.getElementById('platonic_solids_anim');
+                if (!canvas) return;
+                const nameDisplay = document.getElementById('solid_name_display');
+                const controlsContainer = document.getElementById('platonic_controls');
+                if (!nameDisplay || !controlsContainer) return;
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+                renderer.setSize(canvas.width, canvas.height);
+                camera.position.z = 3.5;
+
+                const material = new THREE.MeshBasicMaterial({ color: 0x6EE7B7, wireframe: true });
+                const solidRadius = 1.5;
+
+                const solids = [
+                    { name: 'Tetrahedron', geom: new THREE.TetrahedronGeometry(solidRadius) },
+                    { name: 'Cube', geom: new THREE.BoxGeometry(solidRadius, solidRadius, solidRadius) },
+                    { name: 'Octahedron', geom: new THREE.OctahedronGeometry(solidRadius) },
+                    { name: 'Dodecahedron', geom: new THREE.DodecahedronGeometry(solidRadius) },
+                    { name: 'Icosahedron', geom: new THREE.IcosahedronGeometry(solidRadius) }
+                ];
+                
+                let currentMesh = null;
+
+                function switchSolid(index) {
+                    if (currentMesh) {
+                        scene.remove(currentMesh);
+                        currentMesh.geometry.dispose();
+                    }
+                    
+                    const solid = solids[index];
+                    currentMesh = new THREE.Mesh(solid.geom, material);
+                    scene.add(currentMesh);
+                    nameDisplay.textContent = solid.name;
+                }
+
+                // Create buttons
+                solids.forEach((solid, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = solid.name;
+                    button.className = 'px-3 py-1 bg-green-900 hover:bg-green-700 text-green-300 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500';
+                    button.onclick = () => switchSolid(index);
+                    controlsContainer.appendChild(button);
+                });
+                
+                // Initial state
+                switchSolid(0);
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    if (currentMesh) {
+                        currentMesh.rotation.x += 0.005;
+                        currentMesh.rotation.y += 0.007;
+                    }
+                    renderer.render(scene, camera);
+                }
+                animate();
+            })();
+        };
+    </script>
+</body>
+</html>

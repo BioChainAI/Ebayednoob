@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bifilar Pancake Coil Magnetic Field Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #simulationCanvas { cursor: grab; }
+        #simulationCanvas:active { cursor: grabbing; }
+        .info-box, .tooltip-box {
+            position: absolute;
+            background-color: rgba(20, 20, 20, 0.9);
+            border: 1px solid #00ff00;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            pointer-events: none;
+            color: #00ff00;
+            z-index: 100;
+        }
+        .tooltip-box { display: none; }
+        .tooltip-box code { color: #86efac; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #22c55e; border-radius: 5px; outline: none; opacity: 0.7; transition: opacity .2s; }
+        input[type="range"]:hover { opacity: 1; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #86efac; cursor: pointer; border-radius: 50%; border: 2px solid #15803d; }
+        input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #86efac; cursor: pointer; border-radius: 50%; border: 2px solid #15803d; }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8">
+
+    <div class="container mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-green-200">Bifilar Pancake Coil Simulator</h1>
+            <p class="mt-2 text-md text-green-400">Visualize the magnetic field in a 2D cross-section.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Controls Column -->
+            <div class="lg:col-span-1 bg-gray-900/50 p-6 rounded-xl border border-green-800">
+                <h2 class="text-xl font-semibold mb-6 border-b border-green-800 pb-3 text-green-300">Coil Parameters</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="current" class="text-sm text-green-400 flex justify-between">Current (I) <span id="currentValue" class="font-semibold text-green-200">4 A</span></label>
+                        <input type="range" id="current" min="3" max="30" value="4" step="0.1">
+                    </div>
+                    <div>
+                        <label for="windings" class="text-sm text-green-400 flex justify-between">Windings (N) <span id="windingsValue" class="font-semibold text-green-200">40</span></label>
+                        <input type="range" id="windings" min="5" max="80" value="40" step="1">
+                    </div>
+                    <div>
+                        <label for="wireGauge" class="text-sm text-green-400">Wire Gauge (AWG)</label>
+                        <select id="wireGauge" class="mt-1 block w-full bg-gray-800 border-green-700 text-green-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm p-2">
+                            <option value="14">14 AWG (~1.63mm)</option>
+                            <option value="15">15 AWG (~1.45mm)</option>
+                            <option value="16">16 AWG (~1.29mm)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="innerGap" class="text-sm text-green-400 flex justify-between">Inner Gap <span id="innerGapValue" class="font-semibold text-green-200">1.0 cm</span></label>
+                        <input type="range" id="innerGap" min="0.5" max="5" value="1" step="0.1">
+                    </div>
+                </div>
+
+                <h2 class="text-xl font-semibold mb-6 mt-8 border-b border-green-800 pb-3 text-green-300">Visualization</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="visType" class="text-sm text-green-400">Display Mode</label>
+                        <select id="visType" class="mt-1 block w-full bg-gray-800 border-green-700 text-green-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm p-2">
+                            <option value="heatmap">Field Magnitude (Heatmap)</option>
+                            <option value="vectors">Vector Field</option>
+                            <option value="lines">Field Lines</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vectorDensity" class="text-sm text-green-400 flex justify-between">Vector/Line Density <span id="vectorDensityValue" class="font-semibold text-green-200">25</span></label>
+                        <input type="range" id="vectorDensity" min="10" max="50" value="25" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Column -->
+            <div class="lg:col-span-2 bg-black rounded-xl shadow-lg border border-green-800 p-2 relative min-h-[400px] md:min-h-[600px] overflow-hidden">
+                <canvas id="simulationCanvas" class="rounded-lg"></canvas>
+                <div id="infoBox" class="info-box" style="display: none;"></div>
+                <div id="loadingIndicator" class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-xl">
+                    <div class="text-center">
+                        <svg class="animate-spin h-8 w-8 text-green-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-2 text-lg font-semibold text-green-300">Initializing...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- HSL to RGB Utility ---
+        function hslToRgb(h, s, l) {
+            let r, g, b;
+            if (s === 0) { r = g = b = l; } 
+            else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1 / 6) return p + (q - p) * 6 * t;
+                    if (t < 1 / 2) return q;
+                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1 / 3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        // --- Main Application ---
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const currentSlider = document.getElementById('current');
+        const windingsSlider = document.getElementById('windings');
+        const wireGaugeSelect = document.getElementById('wireGauge');
+        const innerGapSlider = document.getElementById('innerGap');
+        const visTypeSelect = document.getElementById('visType');
+        const vectorDensitySlider = document.getElementById('vectorDensity');
+        const infoBox = document.getElementById('infoBox');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        
+        const uiValueSpans = {
+            current: document.getElementById('currentValue'),
+            windings: document.getElementById('windingsValue'),
+            innerGap: document.getElementById('innerGapValue'),
+            vectorDensity: document.getElementById('vectorDensityValue'),
+        };
+
+        const MU0 = 4 * Math.PI * 1e-7;
+        const WIRE_GAUGE_DIAMETERS = { '14': 1.628e-3, '15': 1.450e-3, '16': 1.291e-3 };
+        const INSULATION_THICKNESS = 0.1e-3;
+
+        let coilPoints = [];
+        let view = { zoom: 1, offsetX: 0, offsetY: 0 };
+        let baseScale = 1;
+        let isPanning = false;
+        let lastMousePos = { x: 0, y: 0 };
+        let canvasWidth, canvasHeight;
+        let db, auth, userId, settingsRef;
+
+        function getParams() {
+            return {
+                current: parseFloat(currentSlider.value),
+                windings: parseInt(windingsSlider.value),
+                wireGauge: wireGaugeSelect.value,
+                innerGap: parseFloat(innerGapSlider.value), // Keep as cm for saving
+                visType: visTypeSelect.value,
+                density: parseInt(vectorDensitySlider.value),
+            };
+        }
+        
+        function setupCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
+        }
+
+        function generateCoilGeometry() {
+            const params = getParams();
+            const wireDiameter = WIRE_GAUGE_DIAMETERS[params.wireGauge];
+            const wireSpacing = wireDiameter + INSULATION_THICKNESS;
+            const innerRadius = (params.innerGap * 1e-2) / 2;
+
+            coilPoints = [];
+            for (let i = 0; i < params.windings; i++) {
+                const r = innerRadius + i * (2 * wireSpacing);
+                coilPoints.push({ x: r, y: 0, current: params.current });
+                coilPoints.push({ x: r + wireSpacing, y: 0, current: -params.current });
+                coilPoints.push({ x: -r, y: 0, current: -params.current });
+                coilPoints.push({ x: -(r + wireSpacing), y: 0, current: params.current });
+            }
+            
+            const outerRadius = innerRadius + params.windings * 2 * wireSpacing;
+            baseScale = (canvasWidth - 40) / (2 * outerRadius);
+        }
+
+        function getField(x, y) {
+            let totalBx = 0, totalBy = 0;
+            for (const wire of coilPoints) {
+                const dx = x - wire.x;
+                const dy = y - wire.y;
+                const rSq = dx * dx + dy * dy;
+                if (rSq < 1e-12) continue;
+                const r = Math.sqrt(rSq);
+                const B_mag = (MU0 * wire.current) / (2 * Math.PI * r);
+                totalBx += -B_mag * (dy / r);
+                totalBy += B_mag * (dx / r);
+            }
+            return { bx: totalBx, by: totalBy };
+        }
+        
+        // --- Coordinate Transformation ---
+        function worldToScreen(x_m, y_m) {
+            const scale = baseScale * view.zoom;
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
+            return {
+                x: (x_m * scale) + centerX + view.offsetX,
+                y: (y_m * scale) + centerY + view.offsetY
+            };
+        }
+
+        function screenToWorld(x_px, y_px) {
+            const scale = baseScale * view.zoom;
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
+            return {
+                x: (x_px - centerX - view.offsetX) / scale,
+                y: (y_px - centerY - view.offsetY) / scale
+            };
+        }
+
+        // --- Drawing Functions ---
+        function drawScene() {
+            const params = getParams();
+            const dpr = window.devicePixelRatio || 1;
+            ctx.resetTransform();
+            ctx.scale(dpr, dpr);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            if (params.visType === 'heatmap') drawHeatmap();
+            else if (params.visType === 'vectors') drawVectors();
+            else if (params.visType === 'lines') drawFieldLines();
+            drawWires();
+        }
+
+        function drawHeatmap() {
+            const gridSize = 75;
+            const rectWidth = canvasWidth / gridSize;
+            const rectHeight = canvasHeight / gridSize;
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = gridSize;
+            offscreenCanvas.height = gridSize;
+            const offscreenCtx = offscreenCanvas.getContext('2d');
+            let maxB = 0;
+            const fieldValues = [];
+            for (let gy = 0; gy < gridSize; gy++) {
+                fieldValues[gy] = [];
+                for (let gx = 0; gx < gridSize; gx++) {
+                    const { x: x_m, y: y_m } = screenToWorld(gx * rectWidth, gy * rectHeight);
+                    const { bx, by } = getField(x_m, y_m);
+                    const bMag = Math.sqrt(bx*bx + by*by);
+                    fieldValues[gy][gx] = bMag;
+                    if (bMag > maxB) maxB = bMag;
+                }
+            }
+            const logMax = maxB > 0 ? Math.log10(1 + 1000) : 1;
+            for (let gy = 0; gy < gridSize; gy++) {
+                for (let gx = 0; gx < gridSize; gx++) {
+                    const bMag = fieldValues[gy][gx];
+                    if (maxB === 0) { offscreenCtx.fillStyle = `rgb(0,0,128)`; } 
+                    else {
+                        const logMag = Math.log10(1 + bMag / maxB * 1000);
+                        const normalizedMag = Math.min(logMag / logMax, 1);
+                        const hue = 240 * (1 - normalizedMag);
+                        const [r, g, b] = hslToRgb(hue / 360, 0.9, 0.5);
+                        offscreenCtx.fillStyle = `rgba(${r},${g},${b}, 0.8)`;
+                    }
+                    offscreenCtx.fillRect(gx, gy, 1, 1);
+                }
+            }
+            ctx.imageSmoothingEnabled = true;
+            ctx.drawImage(offscreenCanvas, 0, 0, canvasWidth, canvasHeight);
+        }
+
+        function drawVectors() {
+            const params = getParams();
+            const step = canvasWidth / params.density;
+            let maxMag = 0;
+            const vectors = [];
+            for (let i = 0; i < canvasWidth; i += step) {
+                for (let j = 0; j < canvasHeight; j += step) {
+                    const { x: x_m, y: y_m } = screenToWorld(i, j);
+                    const { bx, by } = getField(x_m, y_m);
+                    const mag = Math.sqrt(bx*bx + by*by);
+                    if (mag > maxMag) maxMag = mag;
+                    vectors.push({x:i, y:j, bx, by, mag});
+                }
+            }
+            if (maxMag === 0) return;
+            ctx.lineWidth = 1;
+            for(const v of vectors) {
+                const normalizedMag = v.mag / maxMag;
+                const len = normalizedMag * step * 0.9;
+                const angle = Math.atan2(v.by, v.bx);
+                const hue = 240 * (1 - normalizedMag);
+                const [r, g, b] = hslToRgb(hue / 360, 0.9, 0.6);
+                ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                ctx.beginPath();
+                ctx.moveTo(v.x, v.y);
+                ctx.lineTo(v.x + len * Math.cos(angle), v.y + len * Math.sin(angle));
+                ctx.stroke();
+            }
+        }
+        
+        function drawFieldLines() {
+            const params = getParams();
+            const lineSteps = 250;
+            const stepLength = 1.5;
+            
+            for (const wire of coilPoints) {
+                if (wire.current <= 0) continue;
+
+                const numLines = params.density / 2;
+                for (let i = 0; i < numLines; i++) {
+                    const angle = (i / numLines) * 2 * Math.PI;
+                    const startRadiusM = WIRE_GAUGE_DIAMETERS[params.wireGauge] / 2 + 1e-4;
+                    
+                    const startX_m = wire.x + startRadiusM * Math.cos(angle);
+                    const startY_m = wire.y + startRadiusM * Math.sin(angle);
+                    
+                    let { x: px, y: py } = worldToScreen(startX_m, startY_m);
+
+                    ctx.beginPath();
+                    ctx.moveTo(px, py);
+
+                    for (let j = 0; j < lineSteps; j++) {
+                        const { x: mx, y: my } = screenToWorld(px, py);
+                        const { bx, by } = getField(mx, my);
+                        const bMag = Math.sqrt(bx * bx + by * by);
+                        if (bMag === 0) break;
+                        
+                        px += stepLength * (bx / bMag);
+                        py += stepLength * (by / bMag);
+                        
+                        if (px < 0 || px > canvasWidth || py < 0 || py > canvasHeight) break;
+                        ctx.lineTo(px, py);
+                    }
+                    const alpha = 0.7;
+                    ctx.strokeStyle = `rgba(0, 255, 0, ${alpha})`;
+                    ctx.lineWidth = 0.75;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function drawWires() {
+            const params = getParams();
+            const wireDiameter = WIRE_GAUGE_DIAMETERS[params.wireGauge];
+            const radiusPx = (wireDiameter / 2) * baseScale * view.zoom;
+            for (const wire of coilPoints) {
+                const { x: x_px, y: y_px } = worldToScreen(wire.x, wire.y);
+                ctx.beginPath();
+                ctx.arc(x_px, y_px, Math.max(1, radiusPx), 0, 2 * Math.PI);
+                ctx.fillStyle = wire.current > 0 ? 'rgba(255, 80, 80, 0.9)' : 'rgba(80, 80, 255, 0.9)';
+                ctx.fill();
+            }
+        }
+        
+        function render() {
+            loadingIndicator.style.display = 'flex';
+            setTimeout(() => {
+                generateCoilGeometry();
+                drawScene();
+                loadingIndicator.style.display = 'none';
+            }, 10);
+        }
+        
+        function handleResize() {
+            setupCanvas();
+            render();
+        }
+
+        async function saveSettings() {
+            if (!settingsRef) return;
+            const settings = getParams();
+            try {
+                await setDoc(settingsRef, settings);
+            } catch (error) { console.error("Error saving settings:", error); }
+        }
+
+        async function loadSettings() {
+            if (!settingsRef) return;
+            try {
+                const docSnap = await getDoc(settingsRef);
+                if (docSnap.exists()) {
+                    const settings = docSnap.data();
+                    currentSlider.value = settings.current || 4;
+                    windingsSlider.value = settings.windings || 40;
+                    wireGaugeSelect.value = settings.wireGauge || '15';
+                    innerGapSlider.value = settings.innerGap || 1.0;
+                    visTypeSelect.value = settings.visType || 'heatmap';
+                    vectorDensitySlider.value = settings.density || 25;
+                    updateAllUI();
+                }
+            } catch (error) { console.error("Error loading settings:", error); }
+        }
+
+        function updateAllUI() {
+            uiValueSpans.current.textContent = `${parseFloat(currentSlider.value).toFixed(1)} A`;
+            uiValueSpans.windings.textContent = windingsSlider.value;
+            uiValueSpans.innerGap.textContent = `${parseFloat(innerGapSlider.value).toFixed(1)} cm`;
+            uiValueSpans.vectorDensity.textContent = vectorDensitySlider.value;
+        }
+
+        async function initFirebase() {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            if (!firebaseConfig) {
+                console.error("Firebase config not found.");
+                handleResize();
+                return;
+            }
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser.uid;
+                settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings`, 'coilSimulator');
+                await loadSettings();
+            } catch (error) { console.error("Firebase Auth failed:", error);
+            } finally { handleResize(); }
+        }
+
+        // --- Event Listeners ---
+        [currentSlider, windingsSlider, wireGaugeSelect, innerGapSlider, visTypeSelect, vectorDensitySlider].forEach(el => {
+            if(el) el.addEventListener('input', () => { render(); saveSettings(); });
+        });
+        window.addEventListener('resize', handleResize);
+        
+        if(canvas) {
+            canvas.addEventListener('mousedown', (e) => {
+                isPanning = true;
+                lastMousePos = { x: e.clientX, y: e.clientY };
+            });
+            canvas.addEventListener('mouseup', () => isPanning = false);
+            canvas.addEventListener('mouseleave', () => isPanning = false);
+            canvas.addEventListener('mousemove', (e) => {
+                if (isPanning) {
+                    const dx = e.clientX - lastMousePos.x;
+                    const dy = e.clientY - lastMousePos.y;
+                    view.offsetX += dx;
+                    view.offsetY += dy;
+                    lastMousePos = { x: e.clientX, y: e.clientY };
+                    drawScene();
+                }
+                const rect = canvas.getBoundingClientRect();
+                const x_px = e.clientX - rect.left;
+                const y_px = e.clientY - rect.top;
+                const { x: x_m, y: y_m } = screenToWorld(x_px, y_px);
+                const { bx, by } = getField(x_m, y_m);
+                const bMag = Math.sqrt(bx*bx + by*by);
+                if(infoBox) {
+                    infoBox.style.display = 'block';
+                    infoBox.style.left = `${x_px + 15}px`;
+                    infoBox.style.top = `${y_px + 15}px`;
+                    let bMagText;
+                    if (bMag > 1e-3) bMagText = `${(bMag * 1000).toPrecision(3)} mT`;
+                    else if (bMag > 1e-6) bMagText = `${(bMag * 1e6).toPrecision(3)} µT`;
+                    else bMagText = `${(bMag * 1e9).toPrecision(3)} nT`;
+                    infoBox.innerHTML = `<b>B:</b> ${bMagText}<br><b>x:</b> ${(x_m * 100).toFixed(2)} cm<br><b>y:</b> ${(y_m * 100).toFixed(2)} cm`;
+                }
+            });
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomFactor = 1.1;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const worldPosBeforeZoom = screenToWorld(mouseX, mouseY);
+                if (e.deltaY < 0) { view.zoom *= zoomFactor; } 
+                else { view.zoom /= zoomFactor; }
+                const worldPosAfterZoom = screenToWorld(mouseX, mouseY);
+                view.offsetX += (worldPosAfterZoom.x - worldPosBeforeZoom.x) * baseScale * view.zoom;
+                view.offsetY += (worldPosAfterZoom.y - worldPosBeforeZoom.y) * baseScale * view.zoom;
+                drawScene();
+            });
+        }
+        
+        // --- Initial Load ---
+        initFirebase();
+    </script>
+</body>
+</html>

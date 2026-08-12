@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Interactive Guide to the Fokker-Planck Equation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // Simplified MathJax configuration.
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for slider thumb and track to match the matrix theme */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #34d399; /* emerald-400 */
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -6px; /* Center thumb on the track */
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #34d399; /* emerald-400 */
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #064e3b; /* emerald-900 */
+            border-radius: 5px;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="max-w-4xl mx-auto">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-green-300">An Interactive Guide to the Fokker-Planck Equation</h1>
+            <p class="text-xl mt-4 text-green-500">From Random Walks to Symbolic AI</p>
+        </header>
+
+        <!-- Introduction -->
+        <section class="mb-8 p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. What is the Fokker-Planck Equation?</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                Imagine dropping a single speck of ink into a still glass of water. At first, it's just a tiny, concentrated dot. But over time, the random jostling of water molecules causes the ink to spread out, creating a diffuse cloud. The Fokker-Planck equation is the mathematical tool that describes this process precisely.
+            </p>
+            <p class="text-lg leading-relaxed">
+                It's a powerful partial differential equation that describes how the <strong>probability distribution</strong> of a system evolves over time when it's influenced by two fundamental forces: a predictable, directional push (<strong>drift</strong>) and a random, uncertain jiggle (<strong>diffusion</strong>).
+            </p>
+        </section>
+
+        <!-- Core Concepts -->
+        <section class="mb-8 p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. The Two Key Ingredients: Drift and Diffusion</h2>
+            <p class="text-lg leading-relaxed mb-6">The Fokker-Planck equation is built on two simple but profound ideas. Let's look at them individually.</p>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-green-300 mb-2">Drift: The Predictable Push</h3>
+                    <p class="leading-relaxed">Drift is the deterministic part of the equation. It's a consistent force that pushes the system in a specific direction. Think of a ball rolling down a sloped surface—gravity provides a constant "drift" force.</p>
+                    <div class="mt-4 border border-green-700 rounded-md p-2 bg-black">
+                        <canvas id="drift-canvas" width="300" height="150"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-green-300 mb-2">Diffusion: The Random Jiggle</h3>
+                    <p class="leading-relaxed">Diffusion is the stochastic (random) part. It represents unpredictable fluctuations that cause the system to spread out. This is the essence of Brownian motion.</p>
+                    <div class="mt-4 border border-green-700 rounded-md p-2 bg-black">
+                        <canvas id="diffusion-canvas" width="300" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Equation -->
+        <section class="mb-8 p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Putting It All Together: The Equation</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                When we combine drift and diffusion, we get the Fokker-Planck equation. In one dimension, it is written as:
+            </p>
+            <div class="text-center text-xl my-6 bg-gray-950 p-4 rounded-md overflow-x-auto">
+                $$ \frac{\partial P(x, t)}{\partial t} = \underbrace{-\frac{\partial}{\partial x} [A(x) P(x, t)]}_{\text{Drift Term}} + \underbrace{\frac{1}{2} \frac{\partial^2}{\partial x^2} [B(x) P(x, t)]}_{\text{Diffusion Term}} $$
+            </div>
+            <h3 class="text-xl font-semibold text-green-300 mb-3">Breaking Down the Terms:</h3>
+            <ul class="list-none space-y-3 text-lg">
+                <li><span class="bg-gray-800 text-green-300 px-2 py-1 rounded-md">$P(x, t)$</span> : The <strong>probability density</strong>. This tells you the likelihood of finding the system at position <strong>x</strong> at a given time <strong>t</strong>.</li>
+                <li><span class="bg-gray-800 text-green-300 px-2 py-1 rounded-md">$A(x)$</span> : The <strong>Drift Coefficient</strong>. This represents the strength and direction of the deterministic push on the system.</li>
+                <li><span class="bg-gray-800 text-green-300 px-2 py-1 rounded-md">$B(x)$</span> : The <strong>Diffusion Coefficient</strong>. This represents the strength of the random, stochastic fluctuations.</li>
+            </ul>
+        </section>
+        
+        <!-- Interactive Simulation -->
+        <section class="mb-8 p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Interactive Simulation: See it in Action!</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                Now let's see how changing the drift and diffusion coefficients affects our probability distribution. Our "system" will start as a highly probable state in the center. Use the sliders to control the forces and watch how the distribution evolves.
+            </p>
+
+            <div class="border border-green-700 rounded-md p-2 bg-black">
+                <div id="main-simulation"></div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mt-6">
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Drift (A)</span>
+                        <span id="drift-value">0</span>
+                    </div>
+                    <input type="range" id="drift-slider" min="-1" max="1" value="0" step="0.1">
+                </div>
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Diffusion (B)</span>
+                        <span id="diffusion-value">0.5</span>
+                    </div>
+                    <input type="range" id="diffusion-slider" min="0.01" max="2" value="0.5" step="0.01">
+                </div>
+            </div>
+             <div class="text-center mt-6">
+                <button id="reset-button" class="bg-green-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors">Reset Simulation</button>
+            </div>
+        </section>
+
+        <!-- Symbolic AI -->
+        <section class="mb-8 p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Application: Symbolic AI and Belief</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                We can use the same framework to model how an AI's <strong>belief</strong> or <strong>certainty</strong> in a proposition evolves.
+            </p>
+            <p class="text-lg leading-relaxed mb-6">
+                Imagine an AI trying to determine if a statement is true or false. Its belief isn't just a binary choice; it's a probability.
+            </p>
+            <ul class="list-disc list-inside text-lg space-y-2 mb-6">
+                <li><strong>State (x):</strong> The AI's level of belief, from -1 (Certainly False) to +1 (Certainly True).</li>
+                <li><strong>Drift:</strong> An inherent <strong>bias</strong>. A positive drift might represent a "confirmation bias," where the AI is predisposed to believe the statement is true.</li>
+                <li><strong>Diffusion:</strong> The impact of new <strong>evidence</strong>. Strong, conflicting evidence creates high diffusion, making the belief state fluctuate wildly.</li>
+            </ul>
+
+            <div class="border border-green-700 rounded-md p-2 bg-black">
+                <div id="ai-simulation"></div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8 mt-6">
+                 <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>AI Bias (Drift)</span>
+                        <span id="ai-drift-value">0.2</span>
+                    </div>
+                    <input type="range" id="ai-drift-slider" min="-1" max="1" value="0.2" step="0.1">
+                </div>
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Evidence Impact (Diffusion)</span>
+                        <span id="ai-diffusion-value">0.3</span>
+                    </div>
+                    <input type="range" id="ai-diffusion-slider" min="0.01" max="1.5" value="0.3" step="0.01">
+                </div>
+            </div>
+             <div class="text-center mt-6">
+                <button id="ai-reset-button" class="bg-green-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors">Reset AI Belief</button>
+            </div>
+        </section>
+
+        <!-- REWRITTEN SECTION 6 -->
+        <section class="p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6. Advanced Topic: The Evolving Brain of an AI</h2>
+            <p class="text-lg leading-relaxed mb-4">
+               A key application for this framework in AI is modeling an **ever-evolving truth system**. Here, "truth" isn't fixed, but is defined by the relationships between concepts and their power to explain patterns in data. This provides a mathematical lens for understanding symbolic reasoning and neural network dynamics.
+            </p>
+            
+            <h3 class="text-xl font-semibold text-green-300 mt-8 mb-2">A Mathematical Basis for Neuron Pruning</h3>
+             <p class="text-lg leading-relaxed mb-4">
+               This simulation shows a sequence of nodes. The **Current Node** is influenced by its neighbors. We can model the "truth" of a connection by its weight. This is a step-by-step process over 12 "time frames."
+            </p>
+             <p class="text-lg leading-relaxed mb-4">
+               <strong>Your task:</strong> At each step, set the learning parameters using the sliders. Click "Proceed to Next Frame" to apply the learning and advance the sequence. A brighter node indicates higher coherency in its 3-node path.
+            </p>
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2 border border-green-700 rounded-md p-2 bg-black">
+                    <div id="sequence-simulation"></div>
+                </div>
+                <div class="border border-green-700 rounded-md p-2 bg-black">
+                    <div id="learned-state-chart"></div>
+                </div>
+             </div>
+
+             <div class="grid md:grid-cols-2 gap-8 mt-6">
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Forward Prediction (Drift)</span>
+                        <span id="forward-drift-value">0.1</span>
+                    </div>
+                    <input type="range" id="forward-drift-slider" min="0" max="1" value="0.1" step="0.05">
+                </div>
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Reverse Prediction (Drift)</span>
+                        <span id="reverse-drift-value">0.1</span>
+                    </div>
+                    <input type="range" id="reverse-drift-slider" min="0" max="1" value="0.1" step="0.05">
+                </div>
+                 <div class="col-span-full">
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Overall Uncertainty (Diffusion)</span>
+                        <span id="uncertainty-value">0.2</span>
+                    </div>
+                    <input type="range" id="uncertainty-slider" min="0" max="1" value="0.2" step="0.05">
+                </div>
+                 <div class="col-span-full text-center">
+                    <button id="next-frame-button" class="bg-green-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors">Proceed to Next Frame</button>
+                 </div>
+            </div>
+        </section>
+        
+    </div>
+
+<script>
+    function setupSimpleAnimation(canvasId, color) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let x = canvas.width / 2, y = canvas.height / 2;
+        function animate() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            if (canvasId === 'drift-canvas') {
+                x += 0.5;
+                if (x > canvas.width - 10) x = 10;
+            } else {
+                x += (Math.random() - 0.5) * 5;
+                y += (Math.random() - 0.5) * 5;
+                if (x < 10 || x > canvas.width - 10) x = canvas.width / 2;
+                if (y < 10 || y > canvas.height - 10) y = canvas.height / 2;
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function setupFokkerPlanckSimulation(containerId, sliderIds, valueIds, xAxisLabel) {
+        let animId;
+        const margin = {top: 20, right: 20, bottom: 45, left: 40},
+              width = 600 - margin.left - margin.right,
+              height = 300 - margin.top - margin.bottom;
+
+        d3.select(containerId).select("svg").remove();
+        const svg = d3.select(containerId).append("svg")
+            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        const x = d3.scaleLinear().domain([-5, 5]).range([0, width]);
+        const y = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+        const xAxis = svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+        const yAxis = svg.append("g").call(d3.axisLeft(y).ticks(5));
+
+        [xAxis, yAxis].forEach(axis => {
+            axis.selectAll("line, path").attr("stroke", "#10b981");
+            axis.selectAll("text").attr("fill", "#a7f3d0");
+        });
+
+        if (xAxisLabel) svg.append("text").attr("x", width/2).attr("y", height+40).text(xAxisLabel).attr("fill", "#a7f3d0").style("text-anchor", "middle");
+
+        const path = svg.append("path").attr("fill", "none").attr("stroke", "#6ee7b7").attr("stroke-width", 2.5);
+        
+        let mean, variance;
+        const dt = 0.02;
+
+        function update() {
+            const drift = +document.getElementById(sliderIds.drift).value;
+            const diffusion = +document.getElementById(sliderIds.diffusion).value;
+            document.getElementById(valueIds.drift).textContent = drift.toFixed(2);
+            document.getElementById(valueIds.diffusion).textContent = diffusion.toFixed(2);
+            
+            mean += drift * dt;
+            variance += diffusion * dt;
+
+            const dataPoints = d3.range(-5, 5, 0.1).map(d => ({x: d, y: (1/Math.sqrt(2*Math.PI*variance)) * Math.exp(-Math.pow(d-mean, 2)/(2*variance))}));
+            const maxY = d3.max(dataPoints, d => d.y);
+            y.domain([0, maxY > 0 ? maxY * 1.1 : 1]);
+            yAxis.transition().duration(50).call(d3.axisLeft(y).ticks(5)).selectAll("line, path, text").attr("stroke", "#10b981").attr("fill", "#a7f3d0");
+
+            path.datum(dataPoints).attr("d", d3.line().x(d => x(d.x)).y(d => y(d.y)));
+            animId = requestAnimationFrame(update);
+        }
+
+        return { reset: () => { if(animId) cancelAnimationFrame(animId); mean = 0; variance = 0.05; update(); } };
+    }
+    
+    function setupSequenceSimulation() {
+        const containerId = '#sequence-simulation';
+        const chartId = '#learned-state-chart';
+        const width = 400, height = 400, chartWidth = 200, chartHeight = 400;
+
+        d3.select(containerId).select('svg').remove();
+        const svg = d3.select(containerId).append("svg").attr("viewBox", `0 0 ${width} ${height}`);
+
+        d3.select(chartId).select('svg').remove();
+        const chartSvg = d3.select(chartId).append("svg").attr("viewBox", `0 0 ${chartWidth} ${chartHeight}`);
+
+        let currentFrame = 0;
+        const totalFrames = 12;
+        const centralNode = { id: 'Current', fx: width / 2, fy: height / 2, x: width / 2, y: height / 2 };
+        let outerNodes = [];
+        
+        let linkGroup = svg.append("g");
+        let triangleGroup = svg.append("g");
+        let nodeGroup = svg.append("g");
+        
+        function initialize() {
+            currentFrame = 0;
+            outerNodes = [];
+            for (let i = 0; i < totalFrames; i++) {
+                const angle = (i / totalFrames) * 2 * Math.PI - Math.PI / 2;
+                outerNodes.push({
+                    id: `N${i}`,
+                    x: width / 2 + 150 * Math.cos(angle),
+                    y: height / 2 + 150 * Math.sin(angle),
+                    weight: 0.1,
+                    index: i
+                });
+            }
+            updateVisualization();
+            drawFrame(currentFrame);
+            updateLearnedStateChart();
+        }
+
+        function updateVisualization() {
+            const allNodes = [centralNode, ...outerNodes];
+            const allLinks = outerNodes.map(node => ({source: centralNode, target: node, weight: node.weight}));
+
+            nodeGroup.selectAll("g").data(allNodes, d => d.id)
+                .join(
+                    enter => {
+                        const g = enter.append("g")
+                            .attr("transform", d => `translate(${d.x}, ${d.y})`)
+                            .attr("cursor", d => d.id === 'Current' ? "default" : "pointer")
+                            .on('click', (event, d) => {
+                                if (d.id !== 'Current') {
+                                    currentFrame = outerNodes.findIndex(n => n.id === d.id);
+                                    drawFrame(currentFrame);
+                                }
+                            });
+                        g.append("circle").attr("r", d => d.id === 'Current' ? 25 : 18).attr("stroke", "#6ee7b7").attr("stroke-width", 2);
+                        g.append("text").text(d => d.id).attr("fill", "#ecfdf5").attr("text-anchor", "middle").attr("dy", 5).style("font-size", "12px");
+                    }
+                );
+            
+            linkGroup.selectAll("line").data(allLinks)
+                .join("line")
+                .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y)
+                .attr("stroke", "#047857")
+                .transition().duration(100)
+                .attr("stroke-width", d => Math.max(1, d.target.weight * 10));
+        }
+
+        function drawFrame(frameIndex) {
+            triangleGroup.selectAll("*").remove();
+            
+            const activeNode = outerNodes[frameIndex];
+            const prevNode = outerNodes[(frameIndex - 1 + totalFrames) % totalFrames];
+            
+            const frameLinks = [
+                { source: centralNode, target: activeNode, weight: activeNode.weight },
+                { source: centralNode, target: prevNode, weight: prevNode.weight },
+                { source: activeNode, target: prevNode, weight: (activeNode.weight + prevNode.weight) / 2 }
+            ];
+
+            const coherency = frameLinks.reduce((acc, l) => acc * l.weight, 1) * 20;
+
+            triangleGroup.selectAll("line").data(frameLinks).enter().append("line")
+                .attr("class", "temp-elements")
+                .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y)
+                .attr("stroke", "#a7f3d0").attr("stroke-width", 2).attr("stroke-dasharray", "4 2");
+            
+            triangleGroup.selectAll("text").data(frameLinks).enter().append("text")
+                .attr("class", "temp-elements")
+                .attr("x", d => (d.source.x + d.target.x) / 2).attr("y", d => (d.source.y + d.target.y) / 2)
+                .text(d => d.weight.toFixed(2)).attr("fill", "#f0fdf4").attr("text-anchor", "middle").attr("dy", -5);
+
+            nodeGroup.selectAll("circle")
+                .transition().duration(200)
+                .attr("fill", d => {
+                    if(d.id === activeNode.id) return `hsl(100, 100%, ${coherency * 50 + 25}%)`;
+                    if(d.id === 'Current') return "#4ade80";
+                    return "#10b981";
+                });
+        }
+
+        function updateLearnedStateChart() {
+            const chartMargin = { top: 20, right: 20, bottom: 30, left: 40 };
+            const chartInnerWidth = chartWidth - chartMargin.left - chartMargin.right;
+            const chartInnerHeight = chartHeight - chartMargin.top - chartMargin.bottom;
+
+            chartSvg.selectAll("*").remove();
+            const g = chartSvg.append("g").attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`);
+            
+            const x = d3.scaleBand().domain(outerNodes.map(d => d.id)).range([0, chartInnerWidth]).padding(0.1);
+            const y = d3.scaleLinear().domain([0, 1]).range([chartInnerHeight, 0]);
+
+            g.append("g").call(d3.axisLeft(y).ticks(5)).selectAll("line, path, text").attr("stroke", "#10b981").attr("fill", "#a7f3d0");
+            g.append("g").attr("transform", `translate(0, ${chartInnerHeight})`).call(d3.axisBottom(x))
+             .selectAll("text").attr("transform", "rotate(-45)").style("text-anchor", "end").attr("fill", "#a7f3d0");
+
+            g.selectAll(".bar").data(outerNodes).enter().append("rect")
+                .attr("class", "bar").attr("x", d => x(d.id)).attr("y", d => y(d.weight))
+                .attr("width", x.bandwidth()).attr("height", d => chartInnerHeight - y(d.weight))
+                .attr("fill", "#34d399");
+        }
+        
+        document.getElementById('next-frame-button').addEventListener('click', () => {
+            const forwardDrift = +document.getElementById('forward-drift-slider').value;
+            const reverseDrift = +document.getElementById('reverse-drift-slider').value;
+            const uncertainty = +document.getElementById('uncertainty-slider').value;
+            
+            const activeNode = outerNodes[currentFrame];
+            const prevNode = outerNodes[(currentFrame - 1 + totalFrames) % totalFrames];
+
+            activeNode.weight += forwardDrift * 0.1 + (Math.random() - 0.5) * uncertainty;
+            prevNode.weight += reverseDrift * 0.1 + (Math.random() - 0.5) * uncertainty;
+            
+            activeNode.weight = Math.max(0.01, Math.min(1, activeNode.weight));
+            prevNode.weight = Math.max(0.01, Math.min(1, prevNode.weight));
+            
+            currentFrame = (currentFrame + 1) % totalFrames;
+            updateVisualization();
+            drawFrame(currentFrame);
+            updateLearnedStateChart();
+        });
+        
+        initialize();
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        setupSimpleAnimation('drift-canvas', '#6ee7b7');
+        setupSimpleAnimation('diffusion-canvas', '#a7f3d0');
+
+        const mainSimInstance = setupFokkerPlanckSimulation(
+            '#main-simulation',
+            { drift: 'drift-slider', diffusion: 'diffusion-slider' },
+            { drift: 'drift-value', diffusion: 'diffusion-value' }
+        );
+        const aiSimInstance = setupFokkerPlanckSimulation(
+            '#ai-simulation',
+            { drift: 'ai-drift-slider', diffusion: 'ai-diffusion-slider' },
+            { drift: 'ai-drift-value', diffusion: 'ai-diffusion-value' },
+            "Belief (False <-> True)"
+        );
+
+        document.getElementById('reset-button').addEventListener('click', mainSimInstance.reset);
+        document.getElementById('ai-reset-button').addEventListener('click', aiSimInstance.reset);
+
+        if (document.getElementById('sequence-simulation')) {
+             setupSequenceSimulation();
+        }
+    });
+
+</script>
+</body>
+</html>

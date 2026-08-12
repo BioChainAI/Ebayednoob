@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quaternionic Resolution Dashboard</title>
+    <!-- 1. Load Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // 2. MathJax Configuration
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <!-- 3. Load 'Inter' Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 4. Custom Styles (Theme) -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #a0aec0; /* Default text: green-500 equivalent */
+        }
+        
+        /* Custom Slider Styles */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #34d399; /* Accent Green */
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -6px;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #34d399; /* Accent Green */
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #064e3b; /* Dark Green Track */
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        /* Custom D3.js Axis Styles */
+        .axis .domain {
+            stroke: #065f46; /* border-green-800 */
+        }
+        .axis .tick line {
+            stroke: #065f46;
+        }
+        .axis .tick text {
+            fill: #6ee7b7; /* green-300 */
+            font-size: 12px;
+        }
+        .axis-label {
+            fill: #a7f3d0; /* green-200 */
+            font-size: 14px;
+            font-weight: 500;
+            text-anchor: middle;
+        }
+        .zero-line {
+            stroke: #065f46;
+            stroke-dasharray: 2 2;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500">
+
+    <!-- 5. Main Layout Container -->
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-green-300">Quaternionic Resolution Dashboard</h1>
+            <p class="text-xl mt-4 text-green-400">Visualizing 4D Resolution Across 6 Projection Planes</p>
+        </header>
+
+        <!-- 1. Controls Section -->
+        <section class="mb-12 p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-6 text-center border-b border-green-800 pb-2">4D Vector Controls $(r_1 + r_i(i) + r_j(j) + r_k(k))$</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Real (1) Slider -->
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Real $(r_1)$</span>
+                        <span id="r1-value">1.0</span>
+                    </div>
+                    <input type="range" id="r1-slider" min="-5" max="5" value="1" step="0.1">
+                </div>
+                
+                <!-- i Slider -->
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Imaginary $(r_i)$</span>
+                        <span id="ri-value">1.0</span>
+                    </div>
+                    <input type="range" id="ri-slider" min="-5" max="5" value="1" step="0.1">
+                </div>
+
+                <!-- j Slider -->
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Imaginary $(r_j)$</span>
+                        <span id="rj-value">1.0</span>
+                    </div>
+                    <input type="range" id="rj-slider" min="-5" max="5" value="1" step="0.1">
+                </div>
+
+                <!-- k Slider -->
+                <div>
+                    <div class="flex justify-between font-semibold text-green-300 mb-2">
+                        <span>Imaginary $(r_k)$</span>
+                        <span id="rk-value">1.0</span>
+                    </div>
+                    <input type="range" id="rk-slider" min="-5" max="5" value="1" step="0.1">
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 2. Dashboard Section -->
+        <section>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Plot 1: Real-i Plane -->
+                <div class="p-4 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-lg font-semibold text-green-300 text-center mb-2">Real-$i$ Plane $(1i)$</h4>
+                    <div id="plot-1i" class="bg-black rounded border border-green-900"></div>
+                </div>
+
+                <!-- Plot 2: Real-j Plane -->
+                <div class="p-4 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-lg font-semibold text-green-300 text-center mb-2">Real-$j$ Plane $(1j)$</h4>
+                    <div id="plot-1j" class="bg-black rounded border border-green-900"></div>
+                </div>
+
+                <!-- Plot 3: Real-k Plane -->
+                <div class="p-4 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-lg font-semibold text-green-300 text-center mb-2">Real-$k$ Plane $(1k)$</h4>
+                    <div id="plot-1k" class="bg-black rounded border border-green-900"></div>
+                </div>
+
+                <!-- Plot 4: i-j Plane -->
+                <div class="p-4 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-lg font-semibold text-green-300 text-center mb-2">$i$-$j$ Plane $(ij)$</h4>
+                    <div id="plot-ij" class="bg-black rounded border border-green-900"></div>
+                </div>
+
+                <!-- Plot 5: i-k Plane -->
+                <div class="p-4 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-lg font-semibold text-green-300 text-center mb-2">$i$-$k$ Plane $(ik)$</h4>
+                    <div id="plot-ik" class="bg-black rounded border border-green-900"></div>
+                </div>
+
+                <!-- Plot 6: j-k Plane -->
+                <div class="p-4 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-lg font-semibold text-green-300 text-center mb-2">$j$-$k$ Plane $(jk)$</h4>
+                    <div id="plot-jk" class="bg-black rounded border border-green-900"></div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+    
+    <!-- 6. JavaScript for Simulations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. Global State ---
+            const qVector = { r: 1, i: 1, j: 1, k: 1 };
+            const plotUpdaters = {};
+            
+            // --- 2. D3 Plot Factory ---
+            function create2DPlot(containerId, xLabel, yLabel) {
+                const margin = {top: 10, right: 10, bottom: 40, left: 40};
+                const width = 300 - margin.left - margin.right;
+                const height = 300 - margin.top - margin.bottom;
+
+                const svg = d3.select(containerId).append("svg")
+                    .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                // --- Scales (fixed domain) ---
+                const scaleDomain = [-5.5, 5.5];
+                const xScale = d3.scaleLinear().domain(scaleDomain).range([0, width]);
+                const yScale = d3.scaleLinear().domain(scaleDomain).range([height, 0]);
+
+                // --- Axes ---
+                svg.append("g").attr("class", "axis").attr("transform", `translate(0,${height})`).call(d3.axisBottom(xScale).ticks(5));
+                svg.append("g").attr("class", "axis").call(d3.axisLeft(yScale).ticks(5));
+                
+                // --- Zero Lines ---
+                svg.append("line").attr("class", "zero-line").attr("x1", 0).attr("x2", width).attr("y1", yScale(0)).attr("y2", yScale(0));
+                svg.append("line").attr("class", "zero-line").attr("x1", xScale(0)).attr("x2", xScale(0)).attr("y1", 0).attr("y2", height);
+                
+                // --- Axis Labels ---
+                svg.append("text").attr("class", "axis-label").attr("x", width / 2).attr("y", height + 35).text(xLabel);
+                svg.append("text").attr("class", "axis-label").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", -30).text(yLabel);
+
+                // --- The Dot ---
+                const dot = svg.append("circle")
+                    .attr("r", 6)
+                    .attr("fill", "#34d399")
+                    .attr("stroke", "#d1fae5")
+                    .attr("stroke-width", 2);
+                
+                // --- Return the update function ---
+                return (xVal, yVal) => {
+                    dot.transition()
+                        .duration(50) // Fast transition
+                        .attr("cx", xScale(xVal))
+                        .attr("cy", yScale(yVal));
+                };
+            }
+
+            // --- 3. DOM References for Sliders & Labels ---
+            const sliders = {
+                r: document.getElementById('r1-slider'),
+                i: document.getElementById('ri-slider'),
+                j: document.getElementById('rj-slider'),
+                k: document.getElementById('rk-slider')
+            };
+            const labels = {
+                r: document.getElementById('r1-value'),
+                i: document.getElementById('ri-value'),
+                j: document.getElementById('rj-value'),
+                k: document.getElementById('rk-value')
+            };
+
+            // --- 4. Main Update Function ---
+            function updateAllPlots() {
+                // Update global state from sliders
+                qVector.r = parseFloat(sliders.r.value);
+                qVector.i = parseFloat(sliders.i.value);
+                qVector.j = parseFloat(sliders.j.value);
+                qVector.k = parseFloat(sliders.k.value);
+                
+                // Update text labels
+                labels.r.textContent = qVector.r.toFixed(1);
+                labels.i.textContent = qVector.i.toFixed(1);
+                labels.j.textContent = qVector.j.toFixed(1);
+                labels.k.textContent = qVector.k.toFixed(1);
+
+                // Update all 6 plots
+                plotUpdaters.p1i(qVector.r, qVector.i);
+                plotUpdaters.p1j(qVector.r, qVector.j);
+                plotUpdaters.p1k(qVector.r, qVector.k);
+                plotUpdaters.pij(qVector.i, qVector.j);
+                plotUpdaters.pik(qVector.i, qVector.k);
+                plotUpdaters.pjk(qVector.j, qVector.k);
+            }
+
+            // --- 5. Initialization ---
+            function initDashboard() {
+                // Create all 6 plots and store their update functions
+                plotUpdaters.p1i = create2DPlot('#plot-1i', 'Real (1)', 'i');
+                plotUpdaters.p1j = create2DPlot('#plot-1j', 'Real (1)', 'j');
+                plotUpdaters.p1k = create2DPlot('#plot-1k', 'Real (1)', 'k');
+                plotUpdaters.pij = create2DPlot('#plot-ij', 'i', 'j');
+                plotUpdaters.pik = create2DPlot('#plot-ik', 'i', 'k');
+                plotUpdaters.pjk = create2DPlot('#plot-jk', 'j', 'k');
+                
+                // Add event listeners to all sliders
+                Object.values(sliders).forEach(slider => {
+                    slider.addEventListener('input', updateAllPlots);
+                });
+                
+                // Initial draw
+                updateAllPlots();
+                
+                // Wait for MathJax to be ready, then typeset
+                if (window.MathJax && MathJax.startup) {
+                    MathJax.startup.promise.then(() => {
+                        MathJax.typeset();
+                    });
+                }
+            }
+            
+            initDashboard();
+        });
+    </script>
+
+</body>
+</html>
+

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Tutorial: Completely Integrable Gradient Flows</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Matrix (Black, Green, Dim Green) -->
+    <!-- Application Structure Plan: Retaining the thematic, single-page scrollable journey. The dark "Matrix" theme enhances the focus on the mathematical "code" and flow diagrams. The animated node background adds a sense of a living, connected system, mirroring the concepts of dynamical flows. -->
+    <!-- Visualization & Content Choices: All visualizations (Chart.js, Plotly, HTML anim) are re-skinned for the dark theme. Plotly's 'Greens' scale and Chart.js's green lines will stand out on the black background. The core interactive elements (matrix selector, sorter button) are retained. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #000000;
+            color: #00FF41;
+        }
+        #node-network-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -10;
+            opacity: 0.3;
+        }
+        .latex {
+            font-family: "Times New Roman", Times, serif;
+            font-style: italic;
+            color: #6ee7b7;
+        }
+        .matrix {
+            font-family: 'Share Tech Mono', monospace;
+            white-space: pre;
+            background-color: #0c0a09;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid #042f2e;
+            color: #a7f3d0;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+                max-height: 500px;
+            }
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #00FF41;
+            border-bottom-color: #00FF41;
+            text-shadow: 0 0 5px #00FF41;
+        }
+        .matrix-viz {
+            display: grid;
+            gap: 4px;
+            padding: 8px;
+            background-color: #1c1917;
+            border-radius: 4px;
+        }
+        .matrix-viz-cell {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 2px;
+        }
+        .content-card {
+            background-color: rgba(0, 10, 0, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        .anim-step-1 { animation: fadeIn 1s ease-out 0.5s forwards; }
+        .anim-arrow-1 { animation: fadeIn 0.5s ease-out 1.5s forwards; }
+        .anim-step-2 { animation: fadeIn 1s ease-out 2s forwards, pulse 2s infinite 3s; }
+        .anim-plus { animation: fadeIn 0.5s ease-out 3s forwards; }
+        .anim-step-3 { animation: fadeIn 1s ease-out 3.5s forwards; }
+        .anim-arrow-2 { animation: fadeIn 0.5s ease-out 4.5s forwards; }
+        .anim-step-4 { animation: fadeIn 1s ease-out 5s forwards; }
+
+        .shimmer-anim {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                110deg,
+                rgba(255, 255, 255, 0) 40%,
+                rgba(0, 255, 65, 0.4) 50%,
+                rgba(255, 255, 255, 0) 60%
+            );
+            transform: translateX(-100%);
+            animation: shimmer 3s infinite 5.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 10px 10px rgba(0, 255, 65, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+        }
+
+        @keyframes shimmer {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body class="antialiased text-green-400">
+
+    <canvas id="node-network-bg"></canvas>
+
+    <header class="bg-black/80 backdrop-blur-md sticky top-0 z-50 border-b border-green-500/20 shadow-lg shadow-green-900/50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-lg text-green-300">Integrable Flows Explorer</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#intro" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-green-500">Introduction</a>
+                        <a href="#double-bracket" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-green-500">The Double Bracket</a>
+                        <a href="#toda-lattice" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-green-500">The Toda Lattice</a>
+                        <a href="#geometry" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-green-500">Geometric Views</a>
+                        <a href="#sorter" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-green-500">The Sorter</a>
+                        <a href="#tutorial-advanced" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-green-500">Advanced Tutorial</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="intro" class="text-center mb-16 md:mb-24">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-green-200 mb-4" style="text-shadow: 0 0 10px rgba(0,255,65,0.5);">Completely Integrable Gradient Flows</h1>
+            <p class="text-lg md:text-xl text-green-400 max-w-3xl mx-auto">An interactive exploration of the paper by Bloch, Brockett, and Ratiu, revealing the elegant connection between energy-conserving systems and downhill-rolling gradient flows.</p>
+        </section>
+
+        <section id="double-bracket" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="max-w-4xl mx-auto p-8 content-card">
+                <h2 class="text-3xl font-bold text-green-300 mb-4">The Big Idea: The Double Bracket Equation</h2>
+                <p class="text-green-400 mb-6">The paper's central discovery is a surprisingly simple equation that unifies two different worlds of dynamics. It describes how a matrix <span class="latex">L</span> evolves over time through a "double interaction" with a fixed matrix <span class="latex">N</span>.</p>
+                <div class="bg-black/80 p-6 rounded-lg text-center text-xl md:text-2xl font-mono text-green-300 tracking-wider border border-green-500/30">
+                    dL/dt = [L, [L, N]]
+                </div>
+                
+                <div class="mt-8 flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-4 h-48 p-4 overflow-hidden">
+    
+                    <div class="flex flex-col items-center relative opacity-0 anim-step-1">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 bg-green-700 border-2 border-green-300 rounded-md flex items-center justify-center text-green-100 font-bold text-lg">L</div>
+                        <span class="mt-1 text-green-300 text-xs sm:text-base">L</span>
+                    </div>
+                    <div class="flex flex-col items-center relative opacity-0 anim-step-1">
+                        <div class="text-green-400 text-2xl">&amp;</div>
+                    </div>
+                    <div class="flex flex-col items-center relative opacity-0 anim-step-1">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gray-700 border-2 border-green-700 rounded-md flex items-center justify-center text-green-400 font-bold text-lg">N</div>
+                        <span class="mt-1 text-green-500 text-xs sm:text-base">N (Fixed)</span>
+                    </div>
+                
+                    <div class="text-green-400 text-3xl font-bold opacity-0 anim-arrow-1 mx-1 sm:mx-2">&rarr;</div>
+                    
+                    <div class="flex flex-col items-center relative opacity-0 anim-step-2">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-black border-2 border-dashed border-green-500 rounded-md flex items-center justify-center text-green-400 font-bold text-base sm:text-lg">[L, N]</div>
+                        <span class="mt-1 text-green-500 text-xs sm:text-base">Interaction 1</span>
+                    </div>
+                    
+                    <div class="text-green-400 text-3xl font-bold opacity-0 anim-plus mx-1 sm:mx-2">+</div>
+                
+                    <div class="flex flex-col items-center relative opacity-0 anim-step-3">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 bg-green-700 border-2 border-green-300 rounded-md flex items-center justify-center text-green-100 font-bold text-lg">L</div>
+                        <span class="mt-1 text-green-300 text-xs sm:text-base">L</span>
+                    </div>
+                    
+                    <div class="text-green-400 text-3xl font-bold opacity-0 anim-arrow-2 mx-1 sm:mx-2">&rarr;</div>
+                
+                    <div class="flex flex-col items-center relative opacity-0 anim-step-4">
+                        <div id="anim-L" class="w-16 h-16 sm:w-20 sm:h-20 bg-green-600 border-2 border-green-200 rounded-md flex items-center justify-center text-green-100 font-bold text-lg sm:text-xl relative overflow-hidden">
+                            L'
+                            <div class="shimmer-anim"></div>
+                        </div>
+                        <span class="mt-1 text-green-200 text-xs sm:text-base">Evolving L</span>
+                    </div>
+                
+                </div>
+
+                <p class="text-green-600 text-sm mt-2 text-center">where <span class="font-mono text-green-400">[A, B] = AB - BA</span> is the matrix commutator.</p>
+                
+                <div class="mt-8 grid md:grid-cols-2 gap-6">
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h3 class="font-semibold text-green-300">It's a Gradient Flow</h3>
+                        <p class="text-green-500 text-sm">The equation describes a system moving "downhill" (or more accurately, "uphill") on an energy landscape. The solution <span class="latex">L(t)</span> evolves in the direction that most rapidly increases a value defined by <span class="latex">L</span> and <span class="latex">N</span>, eventually settling at a maximum.</p>
+                    </div>
+                    <div class="border-l-4 border-green-700 pl-4">
+                        <h3 class="font-semibold text-green-300">It's Isospectral</h3>
+                        <p class="text-green-500 text-sm">This is the magic property: the **eigenvalues** of the matrix <span class="latex">L(t)</span> do not change as it evolves. This conservation of values is a key feature of "integrable systems," which are often predictable and well-behaved.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="toda-lattice" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="max-w-4xl mx-auto p-8 content-card">
+                <h2 class="text-3xl font-bold text-green-300 mb-4">The Star Example: The Toda Lattice</h2>
+                <p class="text-green-400 mb-6">The most celebrated result of the paper is showing that the famous Toda lattice—a model of particles in a line—is a specific instance of the double bracket equation. By choosing the right matrices for <span class="latex">L</span> and <span class="latex">N</span> based on the system's underlying structure (its Lie algebra), the abstract equation becomes identical to the Toda equations.</p>
+                
+                <div class="mb-6">
+                    <label for="lie-algebra-selector" class="block text-sm font-medium text-green-300 mb-2">Select a Classical Lie Algebra to see the corresponding matrices:</label>
+                    <div class="flex space-x-2" id="lie-algebra-selector">
+                        <button data-algebra="Al" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-green-700/80 border border-green-500 text-green-100 shadow">A_l (sl(l+1))</button>
+                        <button data-algebra="Bl" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-800/80 text-green-600 hover:bg-gray-700/80 border border-green-900">B_l (so(2l+1))</button>
+                        <button data-algebra="Cl" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-800/80 text-green-600 hover:bg-gray-700/80 border border-green-900">C_l (sp(2l))</button>
+                        <button data-algebra="Dl" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-800/80 text-green-600 hover:bg-gray-700/80 border border-green-900">D_l (so(2l))</button>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold text-green-300 mb-2">The Evolving Matrix <span class="latex">L(t)</span></h3>
+                        <div id="matrix-L" class="matrix text-xs"></div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-green-300 mb-2">The Fixed Matrix <span class="latex">N</span></h3>
+                        <div id="matrix-N" class="matrix text-xs"></div>
+                    </div>
+                </div>
+
+                <div id="matrix-viz-container" class="mt-8">
+                    <h3 class="text-xl font-bold text-green-300 mb-4 text-center">Visualizing the Matrix Structure (for A₄)</h3>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="flex flex-col items-center">
+                             <p class="font-semibold text-green-300 mb-2">L (Tridiagonal)</p>
+                             <div id="l-viz" class="matrix-viz" style="grid-template-columns: repeat(5, 1fr);"></div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <p class="font-semibold text-green-300 mb-2">N (Diagonal)</p>
+                            <div id="n-viz" class="matrix-viz" style="grid-template-columns: repeat(5, 1fr);"></div>
+                        </div>
+                    </div>
+                     <div class="flex justify-center space-x-6 mt-4 text-sm text-green-500">
+                        <div class="flex items-center"><div class="w-4 h-4 rounded-sm bg-green-500 mr-2"></div>Diagonal</div>
+                        <div class="flex items-center"><div class="w-4 h-4 rounded-sm bg-green-700 mr-2"></div>Off-Diagonal</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="geometry" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="max-w-5xl mx-auto">
+                <h2 class="text-3xl font-bold text-green-300 mb-8 text-center">Geometric Views: The Flow Landscape</h2>
+                
+                <div class="p-8 content-card mb-12">
+                    <h3 class="text-2xl font-bold text-green-300 mb-4 text-center">1. The Conceptual Landscape</h3>
+                    <p class="text-green-400 mb-6 text-center max-w-3xl mx-auto">The mathematics describes a projection. The full "isospectral" set of matrices (a high-dimensional curved manifold) is projected down onto a flat, convex shape—the polytope. The gradient flow happens on the manifold, but we can visualize its shadow in the polytope.</p>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center text-green-300 font-semibold">
+                        <div class="p-6 border-2 border-dashed border-green-400/50 rounded-xl w-48">
+                            <p class="text-lg">Isospectral Manifold</p>
+                            <p class="text-sm font-normal text-green-500">(All matrices with the same eigenvalues)</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <p class="text-sm text-green-400 font-medium">Projection</p>
+                            <div class="text-4xl text-green-400 font-light my-1">&darr;</div>
+                            <p class="text-sm text-green-400 font-medium">(via Momentum Map)</p>
+                        </div>
+                        <div class="p-6 border-2 border-solid border-green-500 bg-green-900/50 rounded-xl w-48">
+                            <p class="text-lg">Convex Polytope</p>
+                            <p class="text-sm font-normal text-green-500">(The "shadow" of the manifold)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-8 content-card mb-12">
+                    <h3 class="text-2xl font-bold text-green-300 mb-4 text-center">2. 2D Projected Flow (A₂ Toda Lattice)</h3>
+                    <p class="text-green-400 mb-6 text-center">This chart, from the paper, shows the "shadow" of the flow within the polytope. The vertices represent sorted eigenvalues {1, 2, 3}, and the lines show different starting configurations all flowing to the stable equilibrium.</p>
+                    <div class="chart-container">
+                        <canvas id="toda-flow-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="p-8 content-card">
+                    <h3 class="text-2xl font-bold text-green-300 mb-4 text-center">3. 3D Energy Landscape (Conceptual)</h3>
+                    <p class="text-green-400 mb-6 text-center">We can imagine the gradient flow as rolling "uphill" on an energy surface. The peak of the hill is the stable equilibrium point. This interactive 3D plot shows trajectories on a conceptual energy landscape. Drag to rotate the view.</p>
+                    <div id="toda-3d-chart" class="w-full h-[400px] md:h-[600px] mx-auto rounded-lg overflow-hidden"></div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="sorter" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="max-w-4xl mx-auto p-8 content-card">
+                <h2 class="text-3xl font-bold text-green-300 mb-4">A Lie-Algebraic Sorter</h2>
+                <p class="text-green-400 mb-6">What does this flow actually *do*? It sorts the eigenvalues of the initial matrix <span class="latex">L(0)</span>. The system evolves until <span class="latex">L(t)</span> becomes a diagonal matrix, and the final ordering of the eigenvalues on the diagonal is determined by the entries of <span class="latex">N</span>. For the standard Toda lattice, this corresponds to sorting the eigenvalues in increasing order. The double bracket flow is a continuous dynamical system that solves the symmetric eigenvalue problem.</p>
+                <div class="flex flex-col items-center">
+                    <div id="sorter-matrix" class="grid grid-cols-3 gap-2 mb-4"></div>
+                    <button id="run-sorter-btn" class="px-6 py-2 bg-green-700/80 border border-green-500 text-green-100 font-semibold rounded-lg shadow-md hover:bg-green-600/80 transition-colors">Run Flow</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="tutorial-advanced" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="max-w-4xl mx-auto p-8 content-card">
+                <h2 class="text-3xl font-bold text-green-300 mb-6">Advanced Tutorial: Optimizing SHD-CCP Resonance</h2>
+                <p class="text-green-400 mb-6">The concepts from the paper are powerful. Now, let's apply them to the **SHD-CCP packet** structure. The 64-bit packet is a 4x4x4 lattice divided into three parts:</p>
+                <ul class="list-disc list-inside text-green-400 mb-6 space-y-2">
+                    <li><span class="text-green-300 font-semibold">Neuro (32 bits):</span> The Quaternion (W,X,Y,Z) state to be transformed.</li>
+                    <li><span class="text-green-300 font-semibold">Symbolic (4 bits):</span> The Structural Form ID, or the 'logic' to execute.</li>
+                    <li><span class="text-green-300 font-semibold">Data (28 bits):</span> The context and parameters for the logic (Freq, Spin, Amp IDs, etc.). This is the part that defines the **resonance**.</li>
+                </ul>
+                <p class="text-green-400 mb-8">Our goal is to **optimize the 28-bit 'Data' packet** to produce a desired 'resonance'. We'll model this resonance using a tridiagonal matrix system and apply gradient descent, just as you suggested.</p>
+
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-300 mb-3">Step 1: Define the Model (Packet-to-Matrix)</h3>
+                        <p class="text-green-400 mb-4">Our optimization variables are the 28 bits of the 'Data' packet, which we'll call the vector <span class="latex">d</span>. Our resonance model is a tridiagonal matrix <span class="latex">L</span> defined by parameters <span class="latex">p</span>. We need a function <span class="latex">f</span> that maps <span class="latex">d</span> to <span class="latex">p</span>.</p>
+                        <p class="text-green-400 mb-4"><span class="latex">d</span> = 28-bit vector (Freq, Spin, Amp, etc.)</p>
+                        <p class="text-green-400 mb-4"><span class="latex">p = f(d)</span> (e.g., a small neural network or polynomial function)</p>
+                        <p class="text-green-400 mb-4">The final matrix <span class="latex">L</span> is a function of the 'Data' packet: <span class="latex">L(f(d))</span></p>
+                        <div class="matrix text-xs">
+L(p) = | p₁  pₙ₊₁ 0 ... |  // p₁=b₁, pₙ₊₁=a₁
+| pₙ₊₁ p₂  pₙ₊₂ ... |  // p₂=b₂, pₙ₊₂=a₂
+| 0   pₙ₊₂ p₃ ... |
+| ... ... ... p₂ₙ₋₁ |
+| ... ... p₂ₙ₋₁ pₙ |
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-300 mb-3">Step 2: Define the Loss Function (Matching Resonance)</h3>
+                        <p class="text-green-400 mb-4">This remains the same. The "resonance" is modeled by the eigenvalues (<span class="latex">\lambda</span>) of <span class="latex">L</span>. The loss (<span class="latex">\mathcal{L}</span>) is the error between the model's eigenvalues and the target eigenvalues (<span class="latex">\lambda^{target}</span>).</p>
+                        <div class="bg-black/80 p-4 rounded-lg text-center text-lg font-mono text-green-300 border border-green-500/30">
+L(d) = (1/n) * &Sigma; [ &lambda;ᵢ(L(f(d))) - &lambda;ᵢᵗᵃʳᵍᵉᵗ ]²
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-300 mb-3">Step 3: The Optimization (Gradient Descent)</h3>
+                        <p class="text-green-400 mb-4">We minimize the loss <span class="latex">\mathcal{L}</span> by updating our 'Data' packet parameters <span class="latex">d</span> in the direction of the negative gradient, controlled by a learning rate <span class="latex">\eta</span>.</p>
+                        <div class="bg-black/80 p-4 rounded-lg text-center text-lg font-mono text-green-300 border border-green-500/30">
+d_new = d_old - &eta; &middot; &nabla;ₔL(d_old)
+                        </div>
+                        <p class="text-green-400 mt-4">The core task is finding the gradient <span class="latex">\nabla;ₔL</span>.</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-300 mb-3">Step 4: Calculating the Gradient (The Full Chain Rule)</h3>
+                        <p class="text-green-400 mb-4">We need the gradient of the loss with respect to each of the 28 'Data' bits (or the 5 fields they form, e.g., <span class="latex">d_k</span> = Freq ID). We use the chain rule:</p>
+                        <p class="text-green-400 mb-4"><span class="latex">\frac{\partial \mathcal{L}}{\partial d_k} = \sum_{i=1}^{n} \frac{\partial \mathcal{L}}{\partial \lambda_i} \frac{\partial \lambda_i}{\partial d_k}</span></p>
+                        <p class="text-green-400 mb-4">We must expand <span class="latex">\frac{\partial \lambda_i}{\partial d_k}</span> further:</p>
+                        <p class="text-green-400 mb-4"><span class="latex">\frac{\partial \lambda_i}{\partial d_k} = \sum_{j=1}^{2n-1} \frac{\partial \lambda_i}{\partial p_j} \frac{\partial p_j}{\partial d_k}</span></p>
+                        <p class="text-green-400 mt-4">This gives us three parts to calculate:</p>
+                        <p class="text-green-400 mb-4 ml-4">1. <span class="latex">\frac{\partial \mathcal{L}}{\partial \lambda_i}</span> = <span class="latex">(2/n) \cdot (\lambda_i - \lambda_i^{target})</span> (Easy, from the loss)</p>
+                        <p class="text-green-400 mb-4 ml-4">2. <span class="latex">\frac{\partial \lambda_i}{\partial p_j}</span> = <span class="latex">v_i^T (\partial L / \partial p_j) v_i</span> (Hadamard's formula, as before)</p>
+                        <p class="text-green-400 mb-4 ml-4">3. <span class="latex">\frac{\partial p_j}{\partial d_k}</span> = <span class="latex">\frac{\partial f_j}{\partial d_k}</span> (The derivative of our packet-to-parameter function <span class="latex">f</span>)</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-300 mb-3">Step 5: The Full Algorithm (Conceptual Code)</h3>
+                        <div class="matrix text-xs">
+1. Initialize data parameters d (28-bits, e.g., random)
+2. Define target eigenvalues &lambda;_target
+3. Define function f(d) -> p and its derivative &nabla;f
+
+4. loop (for N_steps):
+5.     // Forward pass
+6.     p = f(d)
+7.     L = construct_matrix_from_params(p)
+8.     (&lambda;, V) = eigensolve(L)  // Get eigenvalues & eigenvectors
+9.     loss = (1/n) * sum( (&lambda; - &lambda;_target)^2 )
+10.
+11.    // Backward pass (Gradient Calculation)
+12.    grad_d = new_vector(size(d))
+13.    d_loss_d_lambda = (2/n) * (&lambda; - &lambda;_target)
+14.
+15.    for k in 0 to size(d): // For each of the 28 data bits/fields
+16.        d_lambda_d_pk = new_vector(size(&lambda;))
+17.        for i in 0 to size(&lambda;): // For each eigenvalue
+18.            v_i = V[:, i]
+19.            d_lambda_i_d_pj = new_vector(size(p))
+20.            for j in 0 to size(p): // For each matrix param
+21.                dL_dpj = get_matrix_derivative(p_j)
+22.                d_lambda_i_d_pj[j] = v_i_transpose * dL_dpj * v_i
+23.
+24.        dp_d_dk = get_f_derivative(d, k) // Get k-th col of &nabla;f
+25.        d_lambda_d_dk = d_lambda_i_d_pj * dp_d_dk // Vector dot prod
+26.        
+27.        grad_d[k] = sum( d_loss_d_lambda * d_lambda_d_dk )
+28.
+29.    // Parameter Update
+30.    d = d - learning_rate * grad_d
+31.
+32.    if loss < threshold: break
+33. end loop
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-300 mb-3">Extension: The 4x4x4 SHD-CCP Lattice</h3>
+                        <p class="text-green-400 mb-4">The final step is to apply this to the full 3D structure. The "packet" is not one 64-bit entity, but a 4x4x4 grid of 64 packets. We are optimizing a **field** of 64 'Data' vectors, <span class="latex">d(x,y,z)</span>, where <span class="latex">(x,y,z)</span> are the lattice coordinates.</p>
+                        <p class="text-green-400 mb-4">The target resonance is also a 3D field, <span class="latex">\lambda^{target}(x,y,z)</span>. Our goal is to find the optimal 28-bit 'Data' packet at *each* of the 64 locations.</p>
+                        <p class="text-green-400 mb-4">The loss function becomes a sum over the entire 4x4x4 volume <span class="latex">V</span>:</p>
+                        <div class="bg-black/80 p-4 rounded-lg text-center text-lg font-mono text-green-300 border border-green-500/30">
+L = &Sigma;₍ₓ,ᵧ,₂₎ in V &{ (1/n) * &Sigma;ᵢ [ &lambda;ᵢ(L(f(d(r)))) - &lambda;ᵢᵗᵃʳᵍᵉᵗ(r) ]² }
+                        </div>
+                        <p class="text-green-400 mt-4">This is a **volumetric optimization** problem. The gradient descent must be computed for all 64 packets simultaneously. The gradient <span class="latex">\nabla L</span> is a 4x4x4 grid, where each cell contains the 28-component gradient vector for that packet. This is a perfect problem for 3D convolutional methods or other field-based optimization techniques.</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+    
+    <footer class="bg-black/70 border-t border-green-500/20 mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm text-green-600">
+            <p>Interactive SPA based on "Completely Integrable Gradient Flows" by Bloch, Brockett, and Ratiu.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const bgCanvas = document.getElementById('node-network-bg');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particlesArray;
+
+    function setCanvasSize() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+    }
+    setCanvasSize();
+
+    class Particle {
+        constructor(x, y, dx, dy, size, color) {
+            this.x = x;
+            this.y = y;
+            this.dx = dx;
+            this.dy = dy;
+            this.size = size;
+            this.color = color;
+        }
+        draw() {
+            bgCtx.beginPath();
+            bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+            bgCtx.fillStyle = this.color;
+            bgCtx.fill();
+        }
+        update() {
+            if (this.x > bgCanvas.width || this.x < 0) {
+                this.dx = -this.dx;
+            }
+            if (this.y > bgCanvas.height || this.y < 0) {
+                this.dy = -this.dy;
+            }
+            this.x += this.dx;
+            this.y += this.dy;
+            this.draw();
+        }
+    }
+
+    function initParticles() {
+        particlesArray = [];
+        let numberOfParticles = (bgCanvas.height * bgCanvas.width) / 9000;
+        for (let i = 0; i < numberOfParticles; i++) {
+            let size = (Math.random() * 2) + 1;
+            let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+            let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+            let dx = (Math.random() * 0.4) - 0.2;
+            let dy = (Math.random() * 0.4) - 0.2;
+            let color = 'rgba(0, 255, 65, 0.5)';
+            particlesArray.push(new Particle(x, y, dx, dy, size, color));
+        }
+    }
+
+    function connectParticles() {
+        let opacityValue = 1;
+        for (let a = 0; a < particlesArray.length; a++) {
+            for (let b = a; b < particlesArray.length; b++) {
+                let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                if (distance < (bgCanvas.width / 7) * (bgCanvas.height / 7)) {
+                    opacityValue = 1 - (distance / 20000);
+                    bgCtx.strokeStyle = 'rgba(0, 255, 65, ' + opacityValue * 0.3 + ')';
+                    bgCtx.lineWidth = 1;
+                    bgCtx.beginPath();
+                    bgCtx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                    bgCtx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                    bgCtx.stroke();
+                }
+            }
+        }
+    }
+
+    function animateParticles() {
+        requestAnimationFrame(animateParticles);
+        bgCtx.clearRect(0, 0, innerWidth, innerHeight);
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].update();
+        }
+        connectParticles();
+    }
+
+    window.addEventListener('resize', () => {
+        setCanvasSize();
+        initParticles();
+    });
+
+    initParticles();
+    animateParticles();
+
+    const matrixData = {
+        Al: {
+            L: `L = i * | b₁      a₁      ... |
+| a₁  b₂-b₁   a₂  ... |
+| ...     a₂   ...  aₗ |
+| ...     ...  aₗ  -bₗ |`,
+            N: `N = i * diag( -l/2, (-l+2)/2, ... , l/2 )`
+        },
+        Bl: {
+            L: `L for Bₗ is a (2l+1)x(2l+1) block matrix representing so(2l+1). It is bordered and tridiagonal in structure.`,
+            N: `N = i * diag( 0, -l, l, -l+1, 1-l, ... , -1, 1 )`
+        },
+        Cl: {
+            L: `L for Cₗ is a 2lx2l block matrix representing sp(2l). It has a block-tridiagonal structure built from 2x2 blocks.`,
+            N: `N = i * diag( (1-2l)/2, -(1-2l)/2, ... , -1/2, 1/2 )`
+        },
+        Dl: {
+            L: `L for Dₗ is a 2lx2l block matrix representing so(2l), similar to Cₗ but with a different structure for the final blocks.`,
+            N: `N = i * diag( -l+1, l-1, -l+2, 2-l, ... , -1, 1, 0, 0 )`
+        }
+    };
+
+    const matrixL = document.getElementById('matrix-L');
+    const matrixN = document.getElementById('matrix-N');
+    const selector = document.getElementById('lie-algebra-selector');
+    const buttons = selector.querySelectorAll('button');
+
+    function updateMatrices(algebra) {
+        matrixL.textContent = matrixData[algebra].L;
+        matrixN.textContent = matrixData[algebra].N;
+        buttons.forEach(btn => {
+            if (btn.dataset.algebra === algebra) {
+                btn.classList.add('bg-green-700/80', 'text-green-100', 'shadow', 'border-green-500');
+                btn.classList.remove('bg-gray-800/80', 'text-green-600', 'hover:bg-gray-700/80', 'border-green-900');
+            } else {
+                btn.classList.remove('bg-green-700/80', 'text-green-100', 'shadow', 'border-green-500');
+                btn.classList.add('bg-gray-800/80', 'text-green-600', 'hover:bg-gray-700/80', 'border-green-900');
+            }
+        });
+    }
+
+    selector.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            updateMatrices(e.target.dataset.algebra);
+        }
+    });
+
+    updateMatrices('Al');
+
+    function createMatrixViz() {
+        const lViz = document.getElementById('l-viz');
+        const nViz = document.getElementById('n-viz');
+        lViz.innerHTML = '';
+        nViz.innerHTML = '';
+        const size = 5; 
+        for (let i = 0; i < size * size; i++) {
+            const row = Math.floor(i / size);
+            const col = i % size;
+            
+            const lCell = document.createElement('div');
+            lCell.className = 'matrix-viz-cell';
+            if (row === col) {
+                lCell.classList.add('bg-green-500');
+            } else if (Math.abs(row - col) === 1) {
+                lCell.classList.add('bg-green-700');
+            } else {
+                lCell.classList.add('bg-gray-800');
+            }
+            lViz.appendChild(lCell);
+
+            const nCell = document.createElement('div');
+            nCell.className = 'matrix-viz-cell';
+            if (row === col) {
+                nCell.classList.add('bg-green-500');
+            } else {
+                nCell.classList.add('bg-gray-800');
+            }
+            nViz.appendChild(nCell);
+        }
+    }
+    createMatrixViz();
+
+    const ctx = document.getElementById('toda-flow-chart').getContext('2d');
+    const polytopeVertices = [
+        { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 3, y: 1 },
+        { x: 3, y: 2 }, { x: 2, y: 3 }, { x: 1, y: 3 },
+        { x: 1, y: 2 }
+    ];
+
+    const flowLinesData = [
+        [{x: 2, y: 2}, {x: 1.8, y: 2.2}, {x: 1.5, y: 2.5}, {x: 1.2, y: 2.8}, {x: 1, y: 3}],
+        [{x: 2, y: 2}, {x: 1.8, y: 1.8}, {x: 1.5, y: 1.5}, {x: 1.2, y: 1.2}, {x: 1, y: 2}],
+        [{x: 2, y: 2}, {x: 2.2, y: 1.8}, {x: 2.5, y: 1.5}, {x: 2.8, y: 1.2}, {x: 3, y: 1}],
+        [{x: 2, y: 2}, {x: 2.2, y: 2.2}, {x: 2.5, y: 2.5}, {x: 2.8, y: 2.8}, {x: 3, y: 2}],
+        [{x: 2, y: 2}, {x: 2, y: 2.3}, {x: 2, y: 2.6}, {x: 2, y: 2.9}, {x: 2, y: 3}],
+        [{x: 2, y: 2}, {x: 2, y: 1.7}, {x: 2, y: 1.4}, {x: 2, y: 1.1}, {x: 2, y: 1}],
+        [{x: 1.5, y: 1.5}, {x: 1.3, y: 1.7}, {x: 1.1, y: 1.9}, {x: 1, y: 2}],
+        [{x: 2.5, y: 1.5}, {x: 2.7, y: 1.3}, {x: 2.9, y: 1.1}, {x: 3, y: 1}],
+        [{x: 1.5, y: 2.5}, {x: 1.3, y: 2.7}, {x: 1.1, y: 2.9}, {x: 1, y: 3}],
+        [{x: 2.5, y: 2.5}, {x: 2.7, y: 2.3}, {x: 2.9, y: 2.1}, {x: 3, y: 2}],
+    ];
+
+    const datasets = [{
+        label: 'Polytope Boundary',
+        data: polytopeVertices,
+        borderColor: '#00FF41',
+        backgroundColor: 'rgba(0, 255, 65, 0.1)',
+        borderWidth: 2,
+        showLine: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#00FF41',
+        tension: 0,
+        fill: true,
+    }];
+    
+    flowLinesData.forEach((line, index) => {
+        datasets.push({
+            label: `Flow ${index + 1}`,
+            data: line,
+            borderColor: 'rgba(0, 255, 65, 0.3)',
+            borderWidth: 1.5,
+            showLine: true,
+            pointRadius: 0,
+            tension: 0.4,
+            fill: false,
+        });
+    });
+
+    const todaFlowChart = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            },
+            scales: {
+                x: { 
+                    type: 'linear', 
+                    position: 'bottom',
+                    min: 0.5,
+                    max: 3.5,
+                    grid: { color: 'rgba(0, 255, 65, 0.1)' },
+                    ticks: { color: '#00FF41' }
+                },
+                y: {
+                    min: 0.5,
+                    max: 3.5,
+                    grid: { color: 'rgba(0, 255, 65, 0.1)' },
+                    ticks: { color: '#00FF41' }
+                }
+            }
+        }
+    });
+
+    function create3DChart() {
+        const x_val = [];
+        const y_val = [];
+        const z_val = [];
+        for (let x = -3; x <= 3; x += 0.25) {
+            const x_row = [];
+            const y_row = [];
+            const z_row = [];
+            for (let y = -3; y <= 3; y += 0.25) {
+                x_row.push(x);
+                y_row.push(y);
+                z_row.push(10 - (x * x + y * y));
+            }
+            x_val.push(x_row);
+            y_val.push(y_row);
+            z_val.push(z_row);
+        }
+
+        const surface = {
+            x: x_val,
+            y: y_val,
+            z: z_val,
+            type: 'surface',
+            colorscale: 'Greens',
+            reversescale: true,
+            opacity: 0.8,
+            showscale: false,
+        };
+        
+        const traces = [];
+        const startPoints = [[-2, -2], [2, -1.5], [-1, 2]];
+        startPoints.forEach(p => {
+            let x = p[0], y = p[1];
+            let z = 10 - (x * x + y * y);
+            const trace_x = [x], trace_y = [y], trace_z = [z];
+            for(let i=0; i<20; i++) {
+                x *= 0.8;
+                y *= 0.8;
+                z = 10 - (x * x + y * y);
+                trace_x.push(x);
+                trace_y.push(y);
+                trace_z.push(z);
+            }
+            traces.push({
+                x: trace_x, y: trace_y, z: trace_z,
+                mode: 'lines',
+                line: { width: 6, color: 'rgba(0, 255, 65, 0.8)' },
+                type: 'scatter3d'
+            });
+        });
+        
+        const data = [surface, ...traces];
+
+        const layout = {
+            title: '',
+            showlegend: false,
+            autosize: true,
+            margin: { l: 0, r: 0, b: 0, t: 0 },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            scene: {
+                xaxis: { title: 'x', color: '#00FF41', gridcolor: 'rgba(0, 255, 65, 0.2)', zerolinecolor: 'rgba(0, 255, 65, 0.5)', linecolor: 'rgba(0, 255, 65, 0.5)', showticklabels: false, titlefont: {color: 'transparent'}},
+                yaxis: { title: 'y', color: '#00FF41', gridcolor: 'rgba(0, 255, 65, 0.2)', zerolinecolor: 'rgba(0, 255, 65, 0.5)', linecolor: 'rgba(0, 255, 65, 0.5)', showticklabels: false, titlefont: {color: 'transparent'}},
+                zaxis: { title: 'Energy', color: '#00FF41', gridcolor: 'rgba(0, 255, 65, 0.2)', zerolinecolor: 'rgba(0, 255, 65, 0.5)', linecolor: 'rgba(0, 255, 65, 0.5)', showticklabels: false, titlefont: {color: 'transparent'}},
+                camera: {
+                    eye: { x: 1.8, y: 1.8, z: 1.5 }
+                },
+                bgcolor: 'rgba(0,0,0,0)'
+            }
+        };
+
+        Plotly.newPlot('toda-3d-chart', data, layout, {responsive: true});
+    }
+
+    create3DChart();
+
+    const sorterMatrixContainer = document.getElementById('sorter-matrix');
+    const runSorterBtn = document.getElementById('run-sorter-btn');
+    let initialMatrixState = [
+        { val: 2.5, final: 1, pos: 0 }, { val: 1.8, final: 0, pos: 1 }, { val: 0.9, final: 0, pos: 2 },
+        { val: 1.8, final: 0, pos: 3 }, { val: 3.1, final: 2, pos: 4 }, { val: -1.2, final: 0, pos: 5 },
+        { val: 0.9, final: 0, pos: 6 }, { val: -1.2, final: 0, pos: 7 }, { val: 0.4, final: 3, pos: 8 }
+    ];
+    let matrixElements = [];
+
+    function createSorterMatrix() {
+        sorterMatrixContainer.innerHTML = '';
+        matrixElements = [];
+        initialMatrixState.forEach(item => {
+            const cell = document.createElement('div');
+            cell.className = 'w-16 h-16 md:w-20 md:h-20 flex items-center justify-center text-lg font-medium rounded-lg transition-all duration-500 border';
+            if (item.pos === 0 || item.pos === 4 || item.pos === 8) {
+                cell.classList.add('bg-gray-700', 'text-green-200', 'border-green-800');
+            } else {
+                cell.classList.add('bg-gray-800', 'text-green-500', 'border-green-900');
+            }
+            cell.textContent = item.val.toFixed(1);
+            sorterMatrixContainer.appendChild(cell);
+            matrixElements.push({ element: cell, data: item });
+        });
+    }
+
+    runSorterBtn.addEventListener('click', () => {
+        runSorterBtn.disabled = true;
+        runSorterBtn.textContent = 'Flowing...';
+        runSorterBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        matrixElements.forEach(({element, data}) => {
+            const isDiagonal = data.pos === 0 || data.pos === 4 || data.pos === 8;
+            element.style.transition = 'all 1.5s ease-in-out';
+            if (isDiagonal) {
+                element.style.backgroundColor = '#22c55e';
+                element.style.color = '#000000';
+                element.style.transform = 'scale(1.1)';
+                element.style.borderColor = '#86efac';
+                element.style.textShadow = 'none';
+            } else {
+                element.style.opacity = '0';
+            }
+        });
+        
+        let interval = 20;
+        let duration = 1500;
+        let steps = duration / interval;
+        let stepCount = 0;
+
+        const animationInterval = setInterval(() => {
+            stepCount++;
+            matrixElements.forEach(({element, data}) => {
+                const isDiagonal = data.pos === 0 || data.pos === 4 || data.pos === 8;
+                let currentValue = parseFloat(element.textContent);
+                let targetValue = data.final;
+                let startValue = data.val;
+                
+                let newValue;
+                if(isDiagonal){
+                    newValue = startValue + (targetValue - startValue) * (stepCount / steps);
+                } else {
+                    newValue = startValue * (1 - (stepCount/steps));
+                }
+                element.textContent = newValue.toFixed(1);
+            });
+
+            if(stepCount >= steps){
+                clearInterval(animationInterval);
+                matrixElements.forEach(({element, data}) => element.textContent = data.final.toFixed(1));
+                 setTimeout(() => {
+                    matrixElements.forEach(({element, data}) => {
+                        element.style.transform = 'scale(1)';
+                    });
+                     runSorterBtn.disabled = false;
+                     runSorterBtn.textContent = 'Run Flow Again';
+                     runSorterBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                     createSorterMatrix(); 
+                 }, 500);
+            }
+        }, interval);
+    });
+
+    createSorterMatrix();
+
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href) {
+                        link.classList.toggle('active', href.substring(1) === entry.target.id);
+                    }
+                });
+            }
+        });
+    }, { rootMargin: '-50% 0px -50% 0px' });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+});
+</script>
+</body>
+</html>

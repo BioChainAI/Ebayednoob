@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longitudinal Wave Encapsulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        canvas {
+            background-color: #000;
+            display: block;
+            border-radius: 0.5rem;
+            border: 1px solid #374151; /* gray-700 */
+        }
+        .info {
+            background-color: #1F2937; /* gray-800 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 1.5rem;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.75rem 1rem;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+            background-color: #1F2937; /* Tailwind gray-800 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .controls label {
+            white-space: nowrap;
+            color: #D1D5DB; /* gray-300 */
+            font-weight: 600;
+        }
+        .controls select {
+            width: 100%;
+            background-color: #374151; /* gray-700 */
+            color: #F9FAFB; /* gray-50 */
+            border: 1px solid #4B5563; /* gray-600 */
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239CA3AF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+        .controls input:disabled, .controls select:disabled, .playback-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .controls input[type="range"]:disabled::-webkit-slider-thumb {
+            background: #4B5563; /* gray-600 */
+        }
+        .controls input[type="range"]:disabled::-moz-range-thumb {
+            background: #4B5563; /* gray-600 */
+        }
+
+
+        .controls input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 0.5rem;
+            background: #374151; /* gray-700 */
+            border-radius: 0.25rem;
+            outline: none;
+        }
+        .controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .controls input[type="range"]::-moz-range-thumb {
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #nodeLogContainer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 1.5rem;
+        }
+        #nodeLogContainer canvas {
+            width: 100%; /* Make canvas responsive */
+            height: auto;
+            background-color: #000;
+            border-radius: 0.375rem;
+            border: 1px solid #374151; /* gray-700 */
+        }
+        .node-log-title {
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600;
+            color: #D1D5DB; /* gray-300 */
+            text-align: center;
+            margin-bottom: -0.5rem; /* Pull canvas closer */
+        }
+        
+        .playback-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr; /* 4-column layout */
+            gap: 0.75rem 1rem;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+            background-color: #1F2937; /* Tailwind gray-800 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .playback-controls button {
+            background-color: #3B82F6; /* blue-500 */
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .playback-controls button:hover:not(:disabled) {
+            background-color: #2563EB; /* blue-600 */
+        }
+        .playback-controls button.pause {
+            background-color: #EF4444; /* red-500 */
+        }
+        .playback-controls button.pause:hover:not(:disabled) {
+            background-color: #DC2626; /* red-600 */
+        }
+        .playback-controls button.record {
+            background-color: #10B981; /* emerald-500 */
+        }
+        .playback-controls button.record:hover:not(:disabled) {
+            background-color: #059669; /* emerald-600 */
+        }
+        .playback-controls button.record.pause { /* "Stop" state */
+            background-color: #EF4444; /* red-500 */
+        }
+        .playback-controls button.record.pause:hover:not(:disabled) {
+            background-color: #DC2626; /* red-600 */
+        }
+
+        .playback-controls .full-width {
+            grid-column: 1 / -1; /* Span all columns */
+        }
+        .playback-controls label {
+            grid-column: 1 / -1; /* Span all columns */
+            margin-bottom: -0.25rem;
+            color: #D1D5DB; /* gray-300 */
+            font-weight: 600;
+        }
+        .playback-controls label:disabled {
+            opacity: 0.5;
+        }
+
+        #programContainer {
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 1.5rem;
+            background-color: #1F2937; /* gray-800 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        #programText {
+            width: 100%;
+            height: 150px;
+            background-color: #111827; /* gray-900 */
+            color: #F9FAFB; /* gray-50 */
+            border: 1px solid #374151; /* gray-700 */
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        #programText:disabled {
+            background-color: #374151;
+            opacity: 0.7;
+        }
+        #programStatus {
+            font-size: 0.875rem;
+            color: #6EE7B7; /* emerald-300 */
+            margin-top: 0.5rem;
+            min-height: 1.25rem;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="info">
+        <h1 class="text-2xl font-bold text-white text-center">Longitudinal Wave Simulation</h1>
+        <p class="text-sm text-gray-400 text-center mt-2">
+            This simulation models wave interference from rotating point sources.
+        </p>
+    </div>
+
+    <!-- Controls updated for 2D simulation -->
+    <div class="controls" id="mainControls">
+        <label for="nodeCountSlider">Node Count:</label>
+        <input type="range" id="nodeCountSlider" min="3" max="288" step="1" value="4">
+        
+        <label for="orbitalModeSelect">Orbital Mode:</label>
+        <select id="orbitalModeSelect">
+            <option value="circle">Simple Circle</option>
+            <option value="p-orbital">p-orbital (Dumbbell)</option>
+            <option value="d-orbital">d-orbital (Clover)</option>
+            <option value="shells">Valence Shells</option>
+        </select>
+        
+        <label for="shellSpacingSlider">Shell Spacing:</label>
+        <input type="range" id="shellSpacingSlider" min="0.1" max="2.0" step="0.05" value="1.0">
+
+        <label for="spinSpeedSlider">Spin Speed:</label>
+        <input type="range" id="spinSpeedSlider" min="0" max="5" step="0.1" value="0.5">
+
+        <label for="spinRadiusSlider">Spin Radius:</label>
+        <input type="range" id="spinRadiusSlider" min="10" max="500" step="1" value="30">
+        
+        <label for="massNodeRadiusSlider">Mass Node Radius:</label>
+        <input type="range" id="massNodeRadiusSlider" min="1" max="50" step="1" value="10">
+
+        <label for="waveNumberSlider">Wave Number (k):</label>
+        <input type="range" id="waveNumberSlider" min="0.01" max="1" step="0.01" value="0.1">
+
+        <label for="waveFreqSlider">Wave Freq (w):</label>
+        <input type="range" id="waveFreqSlider" min="0.1" max="20" step="0.1" value="5">
+
+        <label for="massSlider">Mass (Amplitude):</label>
+        <input type="range" id="massSlider" min="0" max="10" step="0.1" value="3">
+
+        <label for="zoomSlider">Zoom:</label>
+        <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1">
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="playback-controls">
+        <button id="playPauseButton">Play</button>
+        <button id="resetButton">Reset (Time = 0)</button>
+        <button id="toggleModeButton">Mode: Program</button>
+        <button id="recordButton" class="record">Record</button>
+
+
+        <label for="timeSlider" id="timeSliderLabel">Global Time (0-300s): 0.00s</label>
+        <input type="range" id="timeSlider" min="0" max="300" step="0.01" value="0" class="full-width">
+        
+        <label for="speedSlider">Playback Speed:</label>
+        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1" class="full-width">
+    </div>
+
+    <canvas id="waveCanvas"></canvas>
+    
+    <h3 class="text-lg font-semibold mt-4 mb-0 text-white">Accretion Disk Log (X-axis)</h3>
+    <canvas id="logCanvasX"></canvas>
+    
+    <h3 class="text-lg font-semibold mt-4 mb-0 text-white">Time Cycle Log (Y-axis)</h3>
+    <canvas id="logCanvasY"></canvas>
+    
+    <div id="nodeLogContainer"></div>
+
+    <!-- Program Editor -->
+    <div id="programContainer">
+        <h2 class="text-xl font-semibold mb-2 text-white">Simulation Program</h2>
+        <textarea id="programText" placeholder="Example:&#10;0: mass: 3, spinSpeed: 0.5&#10;60: mass: 8, waveFreq: 2&#10;120: mass: 3, spinSpeed: 0.1, orbitalMode: p-orbital"></textarea>
+        <button id="parseProgramButton" class="playback-controls button mt-2">Parse Program</button>
+        <div id="programStatus"></div>
+    </div>
+
+
+    <script type="module">
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const logCanvasX = document.getElementById('logCanvasX');
+        const logCtxX = logCanvasX.getContext('2d');
+        const logCanvasY = document.getElementById('logCanvasY');
+        const logCtxY = logCanvasY.getContext('2d');
+        
+        // Container for dynamic node logs
+        const nodeLogContainer = document.getElementById('nodeLogContainer');
+        let nodeLogContexts = []; // Array to hold contexts for individual logs
+
+        // Set canvas size (square)
+        let width = Math.min(1000, window.innerWidth - 32);
+        width = Math.max(width, 300); // Ensure a minimum positive width
+        let height = width; // Maintain square aspect ratio
+        
+        canvas.width = width;
+        canvas.height = height;
+
+        // --- Taller log canvases ---
+        let logHeight = 150; // Increased from 100
+        logCanvasX.width = width;
+        logCanvasX.height = logHeight;
+        logCanvasY.width = width;
+        logCanvasY.height = logHeight;
+
+        // --- Configurable Parameters ---
+        let params = {
+            numEmitters: 4,
+            gridSize: 25, // Reduced from 40 for performance
+            spinSpeed: 0.5,
+            spinRadius: 30,
+            massNodeRadius: 10,
+            waveNumber: 0.1,
+            waveFreq: 5,
+            amplitude: 3,
+            dampening: 0.1,
+            zoom: 1.0,
+            orbitalMode: 'circle',
+            shellSpacing: 1.0
+        };
+
+        // Get sliders
+        const mainControls = document.getElementById('mainControls');
+        const nodeCountSlider = document.getElementById('nodeCountSlider');
+        const orbitalModeSelect = document.getElementById('orbitalModeSelect');
+        const shellSpacingSlider = document.getElementById('shellSpacingSlider');
+        const spinSpeedSlider = document.getElementById('spinSpeedSlider');
+        const spinRadiusSlider = document.getElementById('spinRadiusSlider');
+        const massNodeRadiusSlider = document.getElementById('massNodeRadiusSlider');
+        const waveNumberSlider = document.getElementById('waveNumberSlider');
+        const waveFreqSlider = document.getElementById('waveFreqSlider');
+        const massSlider = document.getElementById('massSlider');
+        const zoomSlider = document.getElementById('zoomSlider');
+
+        // Store sliders in an object for easy access
+        const sliders = {
+            nodeCount: nodeCountSlider,
+            orbitalMode: orbitalModeSelect,
+            shellSpacing: shellSpacingSlider,
+            spinSpeed: spinSpeedSlider,
+            spinRadius: spinRadiusSlider,
+            massNodeRadius: massNodeRadiusSlider,
+            waveNumber: waveNumberSlider,
+            waveFreq: waveFreqSlider,
+            amplitude: massSlider,
+            zoom: zoomSlider
+        };
+        const paramKeys = {
+            nodecount: 'numEmitters',
+            nodes: 'numEmitters',
+            orbitalmode: 'orbitalMode',
+            shellspacing: 'shellSpacing',
+            spinspeed: 'spinSpeed',
+            spinradius: 'spinRadius',
+            massnoderadius: 'massNodeRadius',
+            wavenumber: 'waveNumber',
+            wavefreq: 'waveFreq',
+            mass: 'amplitude',
+            amplitude: 'amplitude',
+            zoom: 'zoom'
+        };
+
+        // --- Playback and Program State ---
+        let isPlaying = false;
+        let globalTime = 0.0; // The "relative time" (0-300s)
+        let localTime = 0.0;  // The "local time" (physics time, affected by dilation)
+        let lastTimestamp = 0;
+        let playbackSpeed = 1.0;
+        let keyframes = {}; // Will store parsed program
+        
+        let simulationMode = 'program'; // 'program' or 'manual'
+        let isRecording = false;
+        let recordTimer = null;
+        // --- UPDATED: Faster recording interval ---
+        const recordInterval = 100; // Sample 10 times per second (was 500)
+        
+
+        // Get playback controls
+        const playPauseButton = document.getElementById('playPauseButton');
+        const resetButton = document.getElementById('resetButton');
+        const toggleModeButton = document.getElementById('toggleModeButton');
+        const recordButton = document.getElementById('recordButton');
+        const timeSlider = document.getElementById('timeSlider');
+        const timeSliderLabel = document.getElementById('timeSliderLabel');
+        const speedSlider = document.getElementById('speedSlider');
+        const programText = document.getElementById('programText');
+        const parseProgramButton = document.getElementById('parseProgramButton');
+        const programStatus = document.getElementById('programStatus');
+
+        // --- Playback Functions ---
+        function playPause() {
+            if (isPlaying) {
+                isPlaying = false;
+                playPauseButton.innerText = 'Play';
+                playPauseButton.classList.remove('pause');
+            } else {
+                isPlaying = true;
+                playPauseButton.innerText = 'Pause';
+                playPauseButton.classList.add('pause');
+                // Start the animation loop
+                lastTimestamp = performance.now();
+                requestAnimationFrame(animate);
+            }
+        }
+
+        function resetSimulation() {
+            if (isRecording) toggleRecord(); // Stop recording if reset
+            
+            isPlaying = false;
+            globalTime = 0.0;
+            localTime = 0.0;
+            playPauseButton.innerText = 'Play';
+            playPauseButton.classList.remove('pause');
+            
+            simulationMode = 'program'; // Default to program mode on reset
+            updateControlState();
+            
+            updateTimeUI();
+            updateParamsFromProgram(0.0); // Set params to t=0
+            
+            // Clear all log data
+            logX = [];
+            logY = [];
+            nodeLogs.forEach(log => log.length = 0);
+        }
+
+        function updateTimeUI() {
+            timeSlider.value = globalTime;
+            timeSliderLabel.innerText = `Global Time (0-300s): ${globalTime.toFixed(2)}s`;
+        }
+
+        function scrubTime() {
+            globalTime = parseFloat(timeSlider.value);
+            isPlaying = false; // Pause when scrubbing
+            playPauseButton.innerText = 'Play';
+            playPauseButton.classList.remove('pause');
+            updateTimeUI();
+            updateParamsFromProgram(globalTime);
+        }
+        
+        // Toggle between Program and Manual modes
+        function toggleMode() {
+            if (isRecording) return; // Don't allow mode toggle while recording
+            
+            if (simulationMode === 'program') {
+                simulationMode = 'manual';
+            } else {
+                simulationMode = 'program';
+                // When switching back to program, reset params to current time
+                updateParamsFromProgram(globalTime);
+            }
+            updateControlState();
+        }
+        
+        // Toggle slider/button disabled state based on mode
+        function updateControlState() {
+            if (simulationMode === 'manual') {
+                toggleModeButton.innerText = 'Mode: Manual';
+                toggleSliderControls(true); // Enable sliders
+                // Disable program controls
+                resetButton.disabled = true;
+                timeSlider.disabled = true;
+                speedSlider.disabled = true;
+                programText.disabled = true;
+                parseProgramButton.disabled = true;
+                recordButton.disabled = false; // Enable recording
+                
+            } else { // Program mode
+                toggleModeButton.innerText = 'Mode: Program';
+                toggleSliderControls(false); // Disable sliders
+                // Enable program controls
+                resetButton.disabled = false;
+                timeSlider.disabled = false;
+                speedSlider.disabled = false;
+                programText.disabled = false;
+                parseProgramButton.disabled = false;
+                recordButton.disabled = true; // Disable recording
+            }
+            
+            // Record button overrides
+            if (isRecording) {
+                toggleModeButton.disabled = true;
+                resetButton.disabled = true;
+                parseProgramButton.disabled = true;
+                playPauseButton.disabled = true;
+            } else {
+                toggleModeButton.disabled = false;
+                playPauseButton.disabled = false;
+            }
+        }
+        
+        // Record functionality
+        function toggleRecord() {
+            if (simulationMode !== 'manual') return; // Can only record in manual mode
+            
+            if (isRecording) {
+                // --- Stop Recording ---
+                isRecording = false;
+                clearInterval(recordTimer);
+                recordButton.innerText = 'Record';
+                recordButton.classList.remove('pause');
+                
+                if (isPlaying) playPause(); // Stop sim
+                
+                updateControlState(); // Re-enable controls
+                parseProgram(); // Parse the new program
+                
+            } else {
+                // --- Start Recording ---
+                isRecording = true;
+                programText.value = '// Recording new program...\n';
+                globalTime = 0.0;
+                localTime = 0.0;
+                
+                if (!isPlaying) playPause(); // Start sim
+                
+                recordButton.innerText = 'Stop';
+                recordButton.classList.add('pause');
+                updateControlState(); // Disable other controls
+                
+                lastTimestamp = performance.now(); // Reset time for recording
+                
+                // Record the first frame
+                recordCurrentFrame();
+                // Start sampling interval
+                recordTimer = setInterval(recordCurrentFrame, recordInterval);
+            }
+        }
+        
+        function recordCurrentFrame() {
+            const time = globalTime.toFixed(1); // More precision for faster sampling
+            programText.value += `${time}: ${getCurrentParamsAsProgramLine()}\n`;
+            programText.scrollTop = programText.scrollHeight; // Auto-scroll
+        }
+        
+        function getCurrentParamsAsProgramLine() {
+            return `nodeCount: ${params.numEmitters}, ` +
+                   `orbitalMode: ${params.orbitalMode}, ` +
+                   `shellSpacing: ${params.shellSpacing.toFixed(2)}, ` +
+                   `spinSpeed: ${params.spinSpeed.toFixed(2)}, ` +
+                   `spinRadius: ${params.spinRadius.toFixed(1)}, ` +
+                   `massNodeRadius: ${params.massNodeRadius.toFixed(1)}, ` +
+                   `waveNumber: ${params.waveNumber.toFixed(2)}, ` +
+                   `waveFreq: ${params.waveFreq.toFixed(2)}, ` +
+                   `mass: ${params.amplitude.toFixed(2)}, ` +
+                   `zoom: ${params.zoom.toFixed(1)}`;
+        }
+        
+
+        function toggleSliderControls(enabled) {
+            for (const key in sliders) {
+                sliders[key].disabled = !enabled;
+            }
+        }
+        
+        playPauseButton.onclick = playPause;
+        resetButton.onclick = resetSimulation;
+        toggleModeButton.onclick = toggleMode;
+        recordButton.onclick = toggleRecord;
+        timeSlider.oninput = scrubTime;
+        speedSlider.oninput = (e) => playbackSpeed = parseFloat(e.target.value);
+        parseProgramButton.onclick = parseProgram;
+
+        // --- Keyframe and Interpolation ---
+        function parseProgram() {
+            const text = programText.value;
+            keyframes = {
+                numEmitters: [],
+                orbitalMode: [],
+                shellSpacing: [],
+                spinSpeed: [],
+                spinRadius: [],
+                massNodeRadius: [],
+                waveNumber: [],
+                waveFreq: [],
+                amplitude: [],
+                zoom: []
+            };
+            let lines = text.split('\n');
+            let errorCount = 0;
+            
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (line.length === 0 || line.startsWith('//')) return;
+
+                const timeMatch = line.match(/^([\d\.]+):(.*)$/);
+                if (!timeMatch) {
+                    programStatus.innerText = `Error on line ${index+1}: Invalid time format.`;
+                    errorCount++;
+                    return;
+                }
+                
+                const time = parseFloat(timeMatch[1]);
+                const paramsStr = timeMatch[2];
+                // Updated regex to accept strings (for orbitalMode)
+                const paramRegex = /([\w\s]+):\s*([\d\.-]+|[\w-]+)/g;
+                let match;
+                
+                while ((match = paramRegex.exec(paramsStr)) !== null) {
+                    const paramKey = match[1].trim().toLowerCase().replace(/\s+/g, '');
+                    const internalKey = paramKeys[paramKey];
+                    if (internalKey) {
+                        // Check if value is a string or number
+                        const value = match[2];
+                        if (internalKey === 'orbitalMode') {
+                            // String value (e.g., orbitalMode)
+                            keyframes[internalKey].push([time, value.trim()]);
+                        } else {
+                            // Numeric value
+                            keyframes[internalKey].push([time, parseFloat(value)]);
+                        }
+                    } else {
+                        programStatus.innerText = `Error on line ${index+1}: Unknown param "${match[1]}".`;
+                        errorCount++;
+                    }
+                }
+            });
+
+            if (errorCount > 0) return;
+
+            // Sort all keyframe arrays by time
+            for (const key in keyframes) {
+                keyframes[key].sort((a, b) => a[0] - b[0]);
+            }
+            
+            programStatus.innerText = `Program parsed successfully! ${Object.values(keyframes).flat().length} keyframes loaded.`;
+            resetSimulation(); // Reset simulation to apply new program
+        }
+
+        function getInterpolatedValue(paramKey, time) {
+            // Find the correct internal key (e.g., 'amplitude' from 'mass')
+            const internalKey = paramKeys[paramKey] || paramKey;
+            
+            const frames = keyframes[internalKey];
+            const slider = sliders[paramKey];
+            
+            // Get the default value from the param object first, then slider
+            let defaultValue = params[internalKey];
+            if (defaultValue === undefined && slider) {
+                 defaultValue = (slider.type === 'select-one' ? slider.value : parseFloat(slider.value));
+            }
+            
+            if (!frames || frames.length === 0) {
+                return defaultValue; // No keyframes, use current param value
+            }
+
+            // Find surrounding frames
+            let prevFrame = null;
+            let nextFrame = null;
+
+            for (let i = 0; i < frames.length; i++) {
+                if (frames[i][0] <= time) {
+                    prevFrame = frames[i];
+                } else {
+                    nextFrame = frames[i];
+                    break;
+                }
+            }
+
+            if (!prevFrame) {
+                return frames[0][1]; // Before first keyframe
+            }
+            if (!nextFrame) {
+                return prevFrame[1]; // After last keyframe
+            }
+
+            // Check for non-numeric (string) interpolation
+            if (internalKey === 'orbitalMode') {
+                // For strings (like orbitalMode), just snap to previous value
+                return prevFrame[1];
+            }
+
+            // Interpolate numbers
+            const timeRange = nextFrame[0] - prevFrame[0];
+            if (timeRange <= 0) {
+                return prevFrame[1]; // Avoid divide by zero
+            }
+            
+            const timeAlpha = (time - prevFrame[0]) / timeRange;
+            const valueRange = nextFrame[1] - prevFrame[1];
+            
+            return prevFrame[1] + (valueRange * timeAlpha);
+        }
+
+
+        function updateParamsFromProgram(time) {
+            // Get interpolated values for all params
+            const newNumEmitters = Math.round(getInterpolatedValue('nodeCount', time));
+            if (newNumEmitters !== params.numEmitters) {
+                params.numEmitters = newNumEmitters;
+                setupEmittersAndLogs(); // Rebuild for new node count
+            }
+            
+            params.orbitalMode = getInterpolatedValue('orbitalMode', time);
+            params.shellSpacing = getInterpolatedValue('shellSpacing', time);
+            params.spinSpeed = getInterpolatedValue('spinSpeed', time);
+            params.spinRadius = getInterpolatedValue('spinRadius', time);
+            params.massNodeRadius = getInterpolatedValue('massNodeRadius', time);
+            params.waveNumber = getInterpolatedValue('waveNumber', time);
+            params.waveFreq = getInterpolatedValue('waveFreq', time);
+            params.amplitude = getInterpolatedValue('amplitude', time);
+            params.zoom = getInterpolatedValue('zoom', time);
+
+            // Update sliders to reflect program
+            sliders.nodeCount.value = params.numEmitters;
+            sliders.orbitalMode.value = params.orbitalMode;
+            sliders.shellSpacing.value = params.shellSpacing;
+            sliders.spinSpeed.value = params.spinSpeed;
+            sliders.spinRadius.value = params.spinRadius;
+            sliders.massNodeRadius.value = params.massNodeRadius;
+            sliders.waveNumber.value = params.waveNumber;
+            sliders.waveFreq.value = params.waveFreq;
+            sliders.amplitude.value = params.amplitude;
+            sliders.zoom.value = params.zoom;
+        }
+
+        // --- Slider oninput handlers (for manual control) ---
+        // UPDATED to check simulationMode
+        nodeCountSlider.oninput = (e) => {
+            if (simulationMode === 'manual') {
+                params.numEmitters = parseInt(e.target.value);
+                setupEmittersAndLogs();
+            }
+        };
+        orbitalModeSelect.oninput = (e) => { if (simulationMode === 'manual') params.orbitalMode = e.target.value; };
+        shellSpacingSlider.oninput = (e) => { if (simulationMode === 'manual') params.shellSpacing = parseFloat(e.target.value); };
+        spinSpeedSlider.oninput = (e) => { if (simulationMode === 'manual') params.spinSpeed = parseFloat(e.target.value); };
+        spinRadiusSlider.oninput = (e) => { 
+            if (simulationMode === 'manual') {
+                params.spinRadius = parseFloat(e.target.value);
+            }
+        };
+        massNodeRadiusSlider.oninput = (e) => { if (simulationMode === 'manual') params.massNodeRadius = parseFloat(e.target.value); };
+        waveNumberSlider.oninput = (e) => { if (simulationMode === 'manual') params.waveNumber = parseFloat(e.target.value); };
+        waveFreqSlider.oninput = (e) => { if (simulationMode === 'manual') params.waveFreq = parseFloat(e.target.value); };
+        massSlider.oninput = (e) => { if (simulationMode === 'manual') params.amplitude = parseFloat(e.target.value); };
+        zoomSlider.oninput = (e) => { if (simulationMode === 'manual') params.zoom = parseFloat(e.target.value); };
+
+        // --- The 'Mass Node' and 'Sphere of Influence' ---
+        const center = { x: width / 2, y: height / 2 };
+        let sphereRadius = Math.min(width, height) * 0.35; // 35% of canvas size
+
+        let particleGrid = [];
+        let logParticle = null; // Particle we track for the log
+        let emitters = [];
+        let logX = []; // Renamed from resonanceLog
+        let logY = []; // NEW: For Y-axis data
+        let nodeLogs = []; // NEW: Array of arrays for individual node data
+
+        // --- Helper Function: Distance ---
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        }
+        
+        // --- Setup Emitters and Log Canvases ---
+        function setupEmittersAndLogs() {
+            // 1. Setup Emitters
+            emitters = [];
+            for (let i = 0; i < params.numEmitters; i++) {
+                emitters.push({});
+            }
+
+            // 2. Setup Node Logs (Data)
+            nodeLogs = Array.from({ length: params.numEmitters }, () => []);
+
+            // 3. Setup Node Log Canvases (HTML)
+            nodeLogContainer.innerHTML = ''; // Clear old canvases
+            nodeLogContexts = [];
+            
+            // --- Limit logs to 12 ---
+            const logsToShow = Math.min(params.numEmitters, 12);
+            
+            if (params.numEmitters > 12) {
+                nodeLogContainer.innerHTML = `<p class="text-gray-400 text-center col-span-2">Showing first 12 of ${params.numEmitters} node logs for clarity.</p>`;
+            }
+            
+            const nodeLogHeight = 80;
+            for (let i = 0; i < logsToShow; i++) {
+                // Create title
+                const title = document.createElement('h4');
+                title.className = 'node-log-title';
+                title.innerText = `Node ${i + 1} Log`;
+
+                // Create canvas
+                const nodeCanvas = document.createElement('canvas');
+                nodeCanvas.className = 'node-log-canvas';
+                nodeCanvas.width = width / 2; // Will be scaled by CSS
+                nodeCanvas.height = nodeLogHeight;
+                
+                // Create container for title + canvas
+                const container = document.createElement('div');
+                container.appendChild(title);
+                container.appendChild(nodeCanvas);
+                
+                nodeLogContainer.appendChild(container);
+                
+                nodeLogContexts.push(nodeCanvas.getContext('2d'));
+            }
+            
+            
+            // Resize main log canvases
+            logCanvasX.width = width;
+            logCanvasX.height = logHeight;
+            logCanvasY.width = width;
+            logCanvasY.height = logHeight;
+        }
+
+        // Initialize particle grid
+        function setupParticles() {
+            particleGrid = [];
+            let closestDist = Infinity;
+            let closestParticle = null;
+            
+            // Recalculate sphere radius based on current width/height
+            sphereRadius = Math.min(width, height) * 0.35;
+            
+            for (let i = 0; i <= params.gridSize; i++) {
+                particleGrid[i] = [];
+                for (let j = 0; j <= params.gridSize; j++) {
+                    const x = (i / params.gridSize) * width;
+                    const y = (j / params.gridSize) * height;
+                    const p = { homeX: x, homeY: y, x: x, y: y };
+                    particleGrid[i][j] = p;
+
+                    // Find particle closest to the log point (right edge of sphere)
+                    const logPointX = center.x + sphereRadius;
+                    const logPointY = center.y;
+                    const d = distance(x, y, logPointX, logPointY);
+                    if (d < closestDist) {
+                        closestDist = d;
+                        closestParticle = p;
+                    }
+                }
+            }
+            logParticle = closestParticle;
+        }
+
+        // --- UPDATE FUNCTION (Now driven by animate) ---
+        function update(realDeltaTime) {
+            // 1. Advance clocks
+            if (isPlaying) {
+                let timeAdvance = 0;
+                
+                // --- FIX: Force 1:1 time during recording ---
+                if (isRecording) {
+                    timeAdvance = realDeltaTime; // Use real delta time, ignore playbackSpeed
+                } else if (simulationMode === 'program') {
+                    timeAdvance = realDeltaTime * playbackSpeed;
+                }
+                
+                if (simulationMode === 'program' || isRecording) {
+                    globalTime += timeAdvance;
+                    globalTime = Math.min(globalTime, 300);
+                    updateTimeUI();
+                    
+                    if (simulationMode === 'program' && globalTime >= 300) {
+                        playPause(); // Stop simulation
+                    }
+                }
+                
+                // 2. Get params
+                if (simulationMode === 'program') {
+                    updateParamsFromProgram(globalTime);
+                } 
+                // In manual mode, params are updated by slider 'oninput' events
+                
+                // 3. Calculate Local Time dilation and advance localTime
+                const timeDilation = 1.0 / (1.0 + params.amplitude * 0.1 + params.waveFreq * 0.05);
+                const physicsDeltaTime = realDeltaTime * timeDilation;
+                localTime += physicsDeltaTime; // Always advance local time if playing
+            } else {
+                // Not playing, but update params if scrubbing in program mode
+                if (simulationMode === 'program') {
+                    updateParamsFromProgram(globalTime); 
+                }
+            }
+            
+
+            // 4. Update Emitter Positions (uses localTime for physics)
+            const t = localTime * params.spinSpeed; // Parametric time
+            const r = params.spinRadius; // Max radius
+            const num = params.numEmitters;
+
+            if (params.orbitalMode === 'circle') {
+                for (let i = 0; i < num; i++) {
+                    const angle = t + (i * (Math.PI * 2) / num);
+                    emitters[i].x = center.x + r * Math.cos(angle);
+                    emitters[i].y = center.y + r * Math.sin(angle);
+                }
+            } else if (params.orbitalMode === 'p-orbital') {
+                // p-orbital (lemniscate/dumbbell)
+                const baseAngle = t * 0.5; // Slower overall rotation
+                const cos_base = Math.cos(baseAngle);
+                const sin_base = Math.sin(baseAngle);
+
+                for (let i = 0; i < num; i++) {
+                    // Distribute nodes along the parametric curve
+                    const node_t = t + (i * Math.PI * 2 / num);
+                    
+                    // Parametric equation for a lemniscate (figure-eight)
+                    const local_x = r * Math.cos(node_t);
+                    const local_y = r * Math.sin(2 * node_t) / 2;
+
+                    // Rotate the whole pattern
+                    emitters[i].x = center.x + (local_x * cos_base - local_y * sin_base);
+                    emitters[i].y = center.y + (local_x * sin_base + local_y * cos_base);
+                }
+            } else if (params.orbitalMode === 'd-orbital') {
+                // d-orbital (4-leaf rose curve)
+                const baseAngle = t * 0.25; // Even slower rotation
+                const cos_base = Math.cos(baseAngle);
+                const sin_base = Math.sin(baseAngle);
+
+                for (let i = 0; i < num; i++) {
+                    // Distribute nodes along the parametric curve
+                    const node_t = t + (i * Math.PI * 2 / num);
+                    
+                    // Polar equation for a 4-leaf rose: r = a * cos(2 * theta)
+                    const local_r = r * Math.cos(2 * node_t);
+                    
+                    // Convert polar to cartesian
+                    const local_x = local_r * Math.cos(node_t);
+                    const local_y = local_r * Math.sin(node_t);
+
+                    // Rotate the whole pattern
+                    emitters[i].x = center.x + (local_x * cos_base - local_y * sin_base);
+                    emitters[i].y = center.y + (local_x * sin_base + local_y * cos_base);
+                }
+            } else if (params.orbitalMode === 'shells') {
+                // --- Dynamic Valence Shell Logic ---
+                const shell_max_nodes = [3, 5, 8, 13, 21, 34, 55, 89, 144, 233]; // Up to 10 shells, 288 fits in 9
+                const shell_base_radii = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+                const shell_speeds = [1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2, 0.15, 0.1, 0.05];
+                
+                let nodesPlaced = 0;
+                let nodeIndex = 0;
+
+                for (let shell = 0; shell < shell_max_nodes.length; shell++) {
+                    if (nodesPlaced >= num) break;
+
+                    let nodesInThisShell = Math.min(num - nodesPlaced, shell_max_nodes[shell]);
+                    
+                    const r_shell = r * shell_base_radii[shell] * params.shellSpacing;
+                    const t_shell = t * shell_speeds[shell];
+
+                    for (let i = 0; i < nodesInThisShell; i++, nodeIndex++) {
+                        const angle = t_shell + (i * (Math.PI * 2) / nodesInThisShell);
+                        emitters[nodeIndex].x = center.x + r_shell * Math.cos(angle);
+                        emitters[nodeIndex].y = center.y + r_shell * Math.sin(angle);
+                    }
+                    
+                    nodesPlaced += nodesInThisShell;
+                }
+            }
+
+
+            // 5. Update Particle Positions (uses localTime for physics)
+            const physicsTime = localTime; // Use localTime for the wave equation
+            for (let i = 0; i <= params.gridSize; i++) {
+                for (let j = 0; j <= params.gridSize; j++) {
+                    const p = particleGrid[i][j];
+                    let totalDisplacement = { x: 0, y: 0 };
+
+                    // Calculate displacement from all emitters
+                    emitters.forEach((e, index) => {
+                        const dx = p.homeX - e.x;
+                        const dy = p.homeY - e.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy) + 0.1; // Add 0.1 to avoid divide by zero
+                        
+                        // --- Inverse Square Law ---
+                        // Amplitude falls off with distance. (dist * 0.05 + 1) to prevent singularity and tame falloff.
+                        const falloff = (dist * 0.05 + 1);
+                        const baseAmplitude = params.amplitude / falloff;
+                        
+                        // Wave value: A * sin(k*r - w*t)
+                        const waveValue = baseAmplitude * Math.sin(params.waveNumber * dist - params.waveFreq * physicsTime);
+                        
+                        // Longitudinal: Displace along the line from emitter to particle
+                        const unitX = dx / dist;
+                        const unitY = dy / dist;
+                        
+                        const displacementX = unitX * waveValue;
+                        const displacementY = unitY * waveValue;
+
+                        totalDisplacement.x += displacementX;
+                        totalDisplacement.y += displacementY;
+
+                        // Log individual node contribution
+                        if (p === logParticle && isPlaying && index < 12) { // Limit to 12
+                            // Log the magnitude of the displacement vector from this node
+                            const magnitude = Math.sqrt(displacementX*displacementX + displacementY*displacementY) * Math.sign(waveValue);
+                            if(nodeLogs[index]) {
+                                nodeLogs[index].push(magnitude);
+                                if (nodeLogs[index].length > width + 50) {
+                                    nodeLogs[index].shift();
+                                }
+                            }
+                        }
+                    });
+
+                    // 6. Apply Dampening
+                    const distFromCenter = distance(p.homeX, p.homeY, center.x, center.y);
+                    if (distFromCenter > sphereRadius) {
+                        totalDisplacement.x *= params.dampening;
+                        totalDisplacement.y *= params.dampening;
+                    }
+
+                    // --- Add "Wrapping" effect (Vortex) ---
+                    // This adds a "twist" or "vortex" displacement,
+                    // simulating the "wrapping" of spacetime.
+                    if (distFromCenter < sphereRadius * 1.2 && distFromCenter > params.massNodeRadius) {
+                        // Strength is 0 at the sphere edge, max near the black hole
+                        const vortexStrength = params.amplitude * 0.5 * (1.0 - (distFromCenter / (sphereRadius * 1.2)));
+                        
+                        // Get vector perpendicular to the line from center (for rotation)
+                        const dx_center = p.homeX - center.x;
+                        const dy_center = p.homeY - center.y;
+                        const perp_x = -dy_center / (distFromCenter + 0.1); // Perpendicular X
+                        const perp_y =  dx_center / (distFromCenter + 0.1); // Perpendicular Y
+                        
+                        // Add the vortex displacement
+                        // This pushes particles in a circular motion
+                        totalDisplacement.x += perp_x * vortexStrength;
+                        totalDisplacement.y += perp_y * vortexStrength;
+                    }
+
+
+                    p.x = p.homeX + totalDisplacement.x; 
+                    p.y = p.homeY + totalDisplacement.y;
+                }
+            }
+
+            // 7. Update Main Logs
+            if (logParticle && isPlaying) {
+                const logDispX = logParticle.x - logParticle.homeX;
+                const logDispY = logParticle.y - logParticle.homeY;
+                
+                logX.push(logDispX);
+                logY.push(logDispY);
+                
+                if (logX.length > width + 50) {
+                    logX.shift();
+                }
+                if (logY.length > width + 50) {
+                    logY.shift();
+                }
+            }
+        }
+
+        // --- DRAW FUNCTION ---
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // --- Apply Zoom ---
+            ctx.save();
+            ctx.translate(center.x, center.y); // Move origin to center
+            ctx.scale(params.zoom, params.zoom); // Apply zoom
+            ctx.translate(-center.x, -center.y); // Move origin back
+
+            // --- Draw Grid Lines ---
+            ctx.strokeStyle = '#1F2937'; // gray-800
+            ctx.lineWidth = 1 / params.zoom; // Scale line width
+            for (let i = 0; i <= params.gridSize; i++) {
+                // Vertical lines
+                ctx.beginPath();
+                for (let j = 0; j <= params.gridSize; j++) {
+                    const p = particleGrid[i][j];
+                    if (j === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+
+                // Horizontal lines
+                ctx.beginPath();
+                for (let j = 0; j <= params.gridSize; j++) {
+                    const p = particleGrid[j][i]; // Note swapped indices
+                    if (j === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
+
+            // --- Draw the 'Sphere of Influence' ---
+            ctx.strokeStyle = '#4B5563'; // gray-600
+            ctx.lineWidth = 2 / params.zoom; // Scale line width
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, sphereRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // --- Draw the 'Mass Node' (Black Hole) ---
+            // Draw this *after* the grid and *before* the emitters
+            // This makes it look like a "hole" in the grid
+            ctx.fillStyle = '#000000'; // Solid Black
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, params.massNodeRadius, 0, Math.PI * 2); // Use independent radius
+            ctx.fill();
+            
+            // Add a thin white "event horizon" line
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1 / params.zoom; // Scale line width
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, params.massNodeRadius, 0, Math.PI * 2); // Use independent radius
+            ctx.stroke();
+
+
+            // --- Draw the Emitters ---
+            emitters.forEach(e => {
+                ctx.beginPath();
+                // Scale emitter radius, but don't let it get smaller than 1px
+                const emitterRadius = Math.max(1 / params.zoom, 4 / params.zoom); 
+                ctx.arc(e.x, e.y, emitterRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFFFFF'; // White
+                ctx.fill();
+            });
+            
+            // --- Restore context after zoom ---
+            ctx.restore();
+
+            // --- Draw Logs (outside of zoomed context) ---
+            drawMainLogs();
+            drawNodeLogs();
+        }
+        
+        // --- Helper function to draw a single log ---
+        // maxDisplacement is now the DYNAMIC amplitude of the log
+        function drawSingleLog(logCtx, logData, canvasHeight, maxDisplacement) {
+            const canvasWidth = logCtx.canvas.width;
+            logCtx.fillStyle = '#000';
+            logCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            const logCenter = canvasHeight / 2;
+            
+            // --- Draw Log Boundaries (Static) ---
+            logCtx.strokeStyle = '#1F2937'; // gray-800
+            logCtx.lineWidth = 1;
+            
+            // Top boundary (at 10% from edge)
+            logCtx.beginPath();
+            logCtx.moveTo(0, canvasHeight * 0.1);
+            logCtx.lineTo(canvasWidth, canvasHeight * 0.1);
+            logCtx.stroke();
+            
+            // Bottom boundary (at 90% from edge)
+            logCtx.beginPath();
+            logCtx.moveTo(0, canvasHeight * 0.9);
+            logCtx.lineTo(canvasWidth, canvasHeight * 0.9);
+            logCtx.stroke();
+
+            // Draw center line
+            logCtx.beginPath();
+            logCtx.strokeStyle = '#374151'; // gray-700
+            logCtx.lineWidth = 1;
+            logCtx.moveTo(0, logCenter);
+            logCtx.lineTo(canvasWidth, logCenter);
+            logCtx.stroke();
+
+            // --- Draw the log data (scrolling right-to-left) ---
+            logCtx.beginPath();
+            logCtx.strokeStyle = '#3B82F6'; // blue-500
+            logCtx.lineWidth = 2;
+            
+            // --- DYNAMIC SCALING ---
+            // Calculate the scaling factor so that `maxDisplacement`
+            // fits within 80% of the canvas height (leaving 10% margin top/bottom)
+            let dataScale = 1.0;
+            if (maxDisplacement > 0.01) { // Avoid divide by zero
+                dataScale = (canvasHeight * 0.4) / maxDisplacement;
+            }
+
+            for (let i = 0; i < canvasWidth; i++) {
+                const logIndex = logData.length - 1 - i;
+                if (logIndex < 0) break;
+
+                const value = logData[logIndex] * dataScale; // Scale value to fit boundary
+                const x = canvasWidth - 1 - i;
+                const y = logCenter - value; 
+
+                if (i === 0) {
+                    logCtx.moveTo(x, y);
+                } else {
+                    logCtx.lineTo(x, y);
+                }
+            }
+            logCtx.stroke();
+        }
+
+        // --- Function to draw the MAIN logs ---
+        function drawMainLogs() {
+            // Find max absolute value in recent log data for dynamic scaling
+            const recentLogX = logX.slice(-width);
+            const recentLogY = logY.slice(-width);
+            
+            // --- DYNAMIC SCALING ---
+            // Find the peak value in the visible log, or default to 0.1
+            const maxDispX = Math.max(0.1, ...recentLogX.map(Math.abs));
+            const maxDispY = Math.max(0.1, ...recentLogY.map(Math.abs));
+             
+            drawSingleLog(logCtxX, logX, logHeight, maxDispX);
+            drawSingleLog(logCtxY, logY, logHeight, maxDispY);
+        }
+
+        // --- Function to draw the individual NODE logs ---
+        function drawNodeLogs() {
+            const logsToShow = Math.min(params.numEmitters, 12);
+            if (logsToShow === 0) return;
+
+            // Calculate a default max amplitude for scaling node logs
+            const defaultMaxDisp = Math.max(0.1, params.amplitude / (params.numEmitters * 0.5 + 1));
+
+            for(let i = 0; i < logsToShow; i++) {
+                if(nodeLogContexts[i] && nodeLogs[i]) {
+                    const recentLog = nodeLogs[i].slice(-width);
+                    // Dynamically scale each node log individually
+                    const maxDisp = Math.max(0.1, ...recentLog.map(Math.abs), defaultMaxDisp);
+                    drawSingleLog(nodeLogContexts[i], nodeLogs[i], 80, maxDisp);
+                }
+            }
+        }
+        
+        // --- Main Animation Loop ---
+        function animate(timestamp) {
+            if (!lastTimestamp) {
+                lastTimestamp = timestamp;
+            }
+            const realDeltaTime = (timestamp - lastTimestamp) * 0.001; // Delta time in seconds
+            lastTimestamp = timestamp;
+
+            // Always update physics/time if playing
+            if (isPlaying) {
+                update(realDeltaTime);
+            } else if (simulationMode === 'program') {
+                // Still update params for scrubbing even if paused
+                update(0); 
+            }
+            
+            draw();
+
+            if (isPlaying) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // Handle window resize
+        window.onresize = () => {
+            // Ensure width is always positive to prevent negative radius error
+            width = Math.min(1000, window.innerWidth - 32);
+            width = Math.max(width, 300); // Ensure a minimum positive width
+            height = width;
+            
+            canvas.width = width;
+            canvas.height = height;
+            center.x = width / 2;
+            center.y = height / 2;
+
+            logHeight = 150; // Use new taller height
+            
+            logX = [];
+            logY = [];
+            setupParticles();
+            setupEmittersAndLogs(); // Recreate all log canvases with new width
+        };
+
+        // Start
+        setupParticles();
+        setupEmittersAndLogs(); // Initial setup
+        updateControlState(); // Set initial disabled states
+        updateParamsFromProgram(0); // Set initial values
+        draw(); // Initial draw
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Sample: Simple Cymatic Patterns</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Simple toggle switch styles */
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #374151; transition: .4s; border-radius: 28px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10B981; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        /* Custom styles for range inputs */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #1f2937; border-radius: 5px; border: 1px solid #374151; }
+        input[type=range]::-webkit-slider-thumb { border: 1px solid #10B981; height: 20px; width: 20px; border-radius: 50%; background: #059669; cursor: pointer; -webkit-appearance: none; margin-top: -7px; }
+        input[type=range]::-moz-range-track { width: 100%; height: 8px; cursor: pointer; background: #1f2937; border-radius: 5px; border: 1px solid #374151; }
+        input[type=range]::-moz-range-thumb { border: 1px solid #10B981; height: 20px; width: 20px; border-radius: 50%; background: #059669; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8 overflow-y-auto" style="font-family: 'Inter', sans-serif;">
+
+    <h1 class="text-4xl font-bold text-green-200 mb-6">Simple Cymatic Patterns</h1>
+
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Demonstration</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            This is an interactive 3D visualization of cymatic patterns. Click the surface to add a wave source with a random color. Use the controls to adjust wave properties, lighting, and create geometric formations with specific colors. Drag to rotate, scroll to zoom.
+        </p>
+
+        <!-- Top Controls -->
+        <div class="flex items-center justify-center flex-wrap gap-4 sm:gap-6 mb-4 p-4 bg-gray-900/50 border border-green-900 rounded-lg">
+            <label for="showHelpers" class="flex items-center gap-3 text-green-300 cursor-pointer">
+                Show Helpers
+                <span class="switch">
+                    <input type="checkbox" id="showHelpers" checked>
+                    <span class="slider"></span>
+                </span>
+            </label>
+            <label for="clickToPlace" class="flex items-center gap-3 text-green-300 cursor-pointer">
+                Click to Place
+                <span class="switch">
+                    <input type="checkbox" id="clickToPlace" checked>
+                    <span class="slider"></span>
+                </span>
+            </label>
+            <button id="resetButton" class="bg-green-800 hover:bg-green-700 text-green-200 font-bold py-2 px-4 rounded-lg transition-all duration-200 border border-green-700">Clear All Sources</button>
+            <button id="toggleAnimationButton" class="bg-gray-800 hover:bg-gray-700 text-green-300 font-bold py-2 px-4 rounded-lg transition-all duration-200 border border-gray-600">Pause Animation</button>
+        </div>
+
+
+        <!-- Main container for the visualizer and its controls -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Canvas Container for 3D Scene -->
+            <div id="canvasContainer" class="lg:col-span-2 h-[70vh] min-h-[500px] rounded-lg overflow-hidden cursor-crosshair touch-none relative bg-gray-900/50 border border-green-900">
+                <div id="instruction" class="absolute top-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-70 px-4 py-2 rounded-lg text-sm md:text-base pointer-events-none z-10 text-green-400">
+                    Click to add a source, drag to rotate, scroll to zoom
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel space-y-4">
+                <h3 class="text-xl font-bold text-center text-green-300">Parameters</h3>
+                
+                <!-- Simulation Controls -->
+                <div class="space-y-3 p-4 bg-gray-900/50 border border-green-900 rounded-lg">
+                    <h4 class="text-lg font-semibold text-center text-green-300">Simulation</h4>
+                    <div class="space-y-2">
+                        <label for="frequency" class="flex justify-between items-center text-green-300">Frequency<span id="frequencyValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                        <input type="range" id="frequency" min="0.5" max="5" step="0.05" value="1.5" class="w-full">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="amplitude" class="flex justify-between items-center text-green-300">Amplitude<span id="amplitudeValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                        <input type="range" id="amplitude" min="1" max="25" step="0.5" value="5" class="w-full">
+                    </div>
+                     <div class="space-y-2">
+                        <label for="waveSpeed" class="flex justify-between items-center text-green-300">Wave Speed<span id="waveSpeedValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                        <input type="range" id="waveSpeed" min="0.1" max="5" step="0.1" value="1" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Formation Controls -->
+                <div class="space-y-3 p-4 bg-gray-900/50 border border-green-900 rounded-lg">
+                    <h4 class="text-lg font-semibold text-center text-green-300">Formations</h4>
+                    <div class="space-y-2">
+                        <label for="formationColor" class="flex justify-between items-center text-green-300">Color<input type="color" id="formationColor" value="#00ff41" class="w-10 h-8 p-1 bg-gray-800 rounded-md cursor-pointer border border-green-800"></label>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="formationSides" class="flex justify-between items-center text-green-300">Sides<span id="formationSidesValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                         <input type="range" id="formationSides" min="2" max="12" step="1" value="4" class="w-full">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="formationRadius" class="flex justify-between items-center text-green-300">Size<span id="formationRadiusValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                         <input type="range" id="formationRadius" min="10" max="150" step="5" value="50" class="w-full">
+                    </div>
+                    <button id="addFormationButton" class="w-full bg-green-800 hover:bg-green-700 text-green-200 font-bold py-2 px-4 rounded-lg transition-all duration-200 border border-green-700">Add Formation</button>
+                </div>
+                
+                <!-- Lighting Controls -->
+                <div class="space-y-3 p-4 bg-gray-900/50 border border-green-900 rounded-lg">
+                    <h4 class="text-lg font-semibold text-center text-green-300">Lighting</h4>
+                    <div class="space-y-2">
+                        <label for="lightBrightness" class="flex justify-between items-center text-green-300">Brightness<span id="lightBrightnessValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                        <input type="range" id="lightBrightness" min="0" max="2.0" step="0.05" value="1.0" class="w-full">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="ambientLight" class="flex justify-between items-center text-green-300">Ambient<span id="ambientLightValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                        <input type="range" id="ambientLight" min="0" max="1.0" step="0.05" value="0.4" class="w-full">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="shininess" class="flex justify-between items-center text-green-300">Shininess<span id="shininessValue" class="text-green-400 font-mono bg-gray-900 px-2 py-1 rounded-md text-sm"></span></label>
+                        <input type="range" id="shininess" min="1" max="128" step="1" value="32" class="w-full">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Three.js libraries -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const uiControls = {
+            frequency: document.getElementById('frequency'),
+            amplitude: document.getElementById('amplitude'),
+            waveSpeed: document.getElementById('waveSpeed'),
+            formationColor: document.getElementById('formationColor'),
+            formationSides: document.getElementById('formationSides'),
+            formationRadius: document.getElementById('formationRadius'),
+            lightBrightness: document.getElementById('lightBrightness'),
+            ambientLight: document.getElementById('ambientLight'),
+            shininess: document.getElementById('shininess'),
+            addFormation: document.getElementById('addFormationButton'),
+            showHelpers: document.getElementById('showHelpers'),
+            clickToPlace: document.getElementById('clickToPlace'),
+            reset: document.getElementById('resetButton'),
+            toggleAnimation: document.getElementById('toggleAnimationButton'),
+            frequencyValue: document.getElementById('frequencyValue'),
+            amplitudeValue: document.getElementById('amplitudeValue'),
+            waveSpeedValue: document.getElementById('waveSpeedValue'),
+            formationSidesValue: document.getElementById('formationSidesValue'),
+            formationRadiusValue: document.getElementById('formationRadiusValue'),
+            lightBrightnessValue: document.getElementById('lightBrightnessValue'),
+            ambientLightValue: document.getElementById('ambientLightValue'),
+            shininessValue: document.getElementById('shininessValue'),
+            instruction: document.getElementById('instruction'),
+            container: document.getElementById('canvasContainer'),
+        };
+        
+        let scene, camera, renderer, controls, planeMesh, gridHelper, formationPreview;
+        let raycaster = new THREE.Raycaster();
+        let pointer = new THREE.Vector2();
+        let time = 0;
+        let sources = [];
+        let isPaused = false;
+        const MAX_SOURCES = 20;
+
+        const simConfig = {
+            frequency: parseFloat(uiControls.frequency.value),
+            amplitude: parseFloat(uiControls.amplitude.value),
+            waveSpeed: parseFloat(uiControls.waveSpeed.value),
+        };
+        const formationConfig = {
+            color: new THREE.Color(uiControls.formationColor.value),
+            sides: parseInt(uiControls.formationSides.value),
+            radius: parseInt(uiControls.formationRadius.value)
+        };
+        const lightingConfig = {
+            brightness: parseFloat(uiControls.lightBrightness.value),
+            ambient: parseFloat(uiControls.ambientLight.value),
+            shininess: parseFloat(uiControls.shininess.value),
+        };
+
+        const vertexShader = `
+            uniform float u_time;
+            uniform float u_frequency;
+            uniform float u_amplitude;
+            uniform float u_waveSpeed;
+            uniform int u_source_count;
+            uniform vec3 u_sources[${MAX_SOURCES}];
+
+            varying vec3 vViewNormal;
+            varying vec2 vUv;
+            varying vec3 vWorldPosition;
+
+            float getWaveValue(vec2 pos) {
+                float wave = 0.0;
+                if (u_source_count == 0) return 0.0;
+                for (int i = 0; i < ${MAX_SOURCES}; i++) {
+                    if (i >= u_source_count) break;
+                    float dx = pos.x - u_sources[i].x;
+                    float dy = pos.y - u_sources[i].y;
+                    float dist = sqrt(dx*dx + dy*dy);
+                    wave += sin(dist / 10.0 * u_frequency - u_time * u_waveSpeed);
+                }
+                return wave;
+            }
+
+            void main() {
+                vUv = uv;
+                vec2 pos = vec2(position.x, position.y);
+                float h_center = getWaveValue(pos);
+                vec3 displaced_pos = vec3(position.x, position.y, h_center * u_amplitude);
+                
+                float epsilon = 1.0;
+                float h_x = getWaveValue(vec2(pos.x + epsilon, pos.y));
+                float h_y = getWaveValue(vec2(pos.x, pos.y + epsilon));
+                vec3 tangent_x = normalize(vec3(epsilon, 0.0, (h_x - h_center) * u_amplitude));
+                vec3 tangent_y = normalize(vec3(0.0, epsilon, (h_y - h_center) * u_amplitude));
+                vec3 modelNormal = normalize(cross(tangent_y, tangent_x));
+                
+                vViewNormal = normalize(normalMatrix * modelNormal);
+                vec4 worldPos = modelMatrix * vec4(displaced_pos, 1.0);
+                vWorldPosition = worldPos.xyz;
+
+                gl_Position = projectionMatrix * viewMatrix * worldPos;
+            }
+        `;
+
+        const fragmentShader = `
+            uniform float u_time;
+            uniform float u_frequency;
+            uniform float u_waveSpeed;
+            uniform int u_source_count;
+            uniform vec3 u_sources[${MAX_SOURCES}]; 
+            uniform vec3 u_colors[${MAX_SOURCES}];
+            uniform float u_brightness;
+            uniform float u_ambient;
+            uniform float u_shininess;
+            
+            varying vec3 vViewNormal;
+            varying vec2 vUv;
+            varying vec3 vWorldPosition;
+
+            void main() {
+                float worldX = (vUv.x - 0.5) * 500.0;
+                float worldY = (vUv.y - 0.5) * 500.0;
+                
+                vec3 mixed_color = vec3(0.0, 0.1, 0.05);
+                float total_influence = 0.0;
+
+                if (u_source_count > 0) {
+                    mixed_color = vec3(0.0);
+                    for (int i = 0; i < ${MAX_SOURCES}; i++) {
+                        if (i >= u_source_count) break;
+                        float dx = worldX - u_sources[i].x;
+                        float dy = worldY - u_sources[i].y;
+                        float distance = sqrt(dx*dx + dy*dy);
+                        float wave = sin(distance / 10.0 * u_frequency - u_time * u_waveSpeed);
+                        float influence = abs(wave);
+                        mixed_color += u_colors[i] * influence;
+                        total_influence += influence;
+                    }
+                    if (total_influence > 0.001) {
+                       mixed_color /= total_influence;
+                    } else {
+                       mixed_color = u_colors[0]; 
+                    }
+                }
+
+                vec3 light_dir = normalize(vec3(0.5, 1.0, 0.5));
+                vec3 ambient = u_ambient * mixed_color;
+                float diff = max(dot(vViewNormal, light_dir), 0.0);
+                vec3 diffuse = diff * mixed_color;
+                vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+                vec3 reflectDir = reflect(-light_dir, vViewNormal);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_shininess);
+                vec3 specular = vec3(0.9) * spec;
+
+                vec3 final_color = ambient + (diffuse + specular) * u_brightness;
+                gl_FragColor = vec4(final_color, 1.0);
+            }
+        `;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            const aspect = uiControls.container.offsetWidth / uiControls.container.offsetHeight;
+            camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+            camera.position.set(0, 180, 220);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(uiControls.container.offsetWidth, uiControls.container.offsetHeight);
+            renderer.domElement.classList.add('w-full', 'h-full', 'block');
+            uiControls.container.appendChild(renderer.domElement);
+            
+            const geometry = new THREE.PlaneGeometry(500, 500, 150, 150);
+            
+            const initialSources = Array(MAX_SOURCES).fill(null).map(() => new THREE.Vector3());
+            const initialColors = Array(MAX_SOURCES).fill(null).map(() => new THREE.Color());
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: THREE.UniformsUtils.merge([
+                    THREE.UniformsLib['lights'],
+                    {
+                        u_time: { value: 0.0 },
+                        u_frequency: { value: simConfig.frequency },
+                        u_amplitude: { value: simConfig.amplitude },
+                        u_waveSpeed: { value: simConfig.waveSpeed },
+                        u_source_count: { value: 0 },
+                        u_sources: { value: initialSources },
+                        u_colors: { value: initialColors },
+                        u_brightness: { value: lightingConfig.brightness },
+                        u_ambient: { value: lightingConfig.ambient },
+                        u_shininess: { value: lightingConfig.shininess },
+                    }
+                ]),
+                vertexShader,
+                fragmentShader,
+                lights: true, 
+                side: THREE.DoubleSide
+            });
+            planeMesh = new THREE.Mesh(geometry, material);
+            planeMesh.rotation.x = -Math.PI / 2;
+            scene.add(planeMesh);
+            
+            gridHelper = new THREE.GridHelper(500, 20, 0x00ff00, 0x00ff00);
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x00ff41 });
+            const lineGeom = new THREE.BufferGeometry();
+            formationPreview = new THREE.Line(lineGeom, lineMat);
+            formationPreview.position.y = 0.5;
+            scene.add(formationPreview);
+
+            updateHelpersVisibility();
+            updateFormationPreview();
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!isPaused) {
+                const uniforms = planeMesh.material.uniforms;
+                uniforms.u_time.value = time;
+                uniforms.u_source_count.value = sources.length;
+                
+                for (let i = 0; i < MAX_SOURCES; i++) {
+                    if (i < sources.length) {
+                        uniforms.u_sources.value[i].set(sources[i].x, sources[i].y, 0);
+                        uniforms.u_colors.value[i].set(sources[i].color);
+                    }
+                }
+                time += 0.02;
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function updateFormationPreview() {
+            const sides = formationConfig.sides;
+            const radius = formationConfig.radius;
+            const points = [];
+            for (let i = 0; i <= sides; i++) {
+                const angle = (i / sides) * Math.PI * 2;
+                points.push(new THREE.Vector3(radius * Math.cos(angle), 0, radius * Math.sin(angle)));
+            }
+            formationPreview.geometry.setFromPoints(points);
+        }
+
+        function updateHelpersVisibility() {
+            const isVisible = uiControls.showHelpers.checked;
+            gridHelper.visible = isVisible;
+            formationPreview.visible = isVisible;
+        }
+
+        function addSource(x, y, color) {
+            if (sources.length >= MAX_SOURCES) return;
+            sources.push({ x, y, color });
+            if(sources.length > 0) uiControls.instruction.style.opacity = '0';
+        }
+        
+        function onWindowResize() {
+            camera.aspect = uiControls.container.offsetWidth / uiControls.container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(uiControls.container.offsetWidth, uiControls.container.offsetHeight);
+        }
+        
+        function onCanvasClick( event ) {
+            if (!uiControls.clickToPlace.checked) return;
+
+            const rect = uiControls.container.getBoundingClientRect();
+            pointer.x = ( (event.clientX - rect.left) / rect.width ) * 2 - 1;
+            pointer.y = - ( (event.clientY - rect.top) / rect.height ) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObject(planeMesh);
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                const localPoint = planeMesh.worldToLocal(point.clone());
+                addSource(localPoint.x, localPoint.y, new THREE.Color().setHSL(Math.random(), 0.7, 0.5));
+            }
+        }
+        
+        function addFormation() {
+            const { sides, radius, color } = formationConfig;
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * Math.PI * 2;
+                addSource(radius * Math.cos(angle), radius * Math.sin(angle), color.clone());
+            }
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize);
+            uiControls.container.addEventListener('click', onCanvasClick);
+
+            const uniformUpdater = (configObj, key, uniformName, isFloat = true) => e => {
+                const value = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
+                configObj[key] = value;
+                if (planeMesh && planeMesh.material.uniforms[uniformName]) {
+                    planeMesh.material.uniforms[uniformName].value = value;
+                }
+                updateValueDisplays();
+            };
+
+            uiControls.frequency.addEventListener('input', uniformUpdater(simConfig, 'frequency', 'u_frequency'));
+            uiControls.amplitude.addEventListener('input', uniformUpdater(simConfig, 'amplitude', 'u_amplitude'));
+            uiControls.waveSpeed.addEventListener('input', uniformUpdater(simConfig, 'waveSpeed', 'u_waveSpeed'));
+            
+            uiControls.lightBrightness.addEventListener('input', uniformUpdater(lightingConfig, 'brightness', 'u_brightness'));
+            uiControls.ambientLight.addEventListener('input', uniformUpdater(lightingConfig, 'ambient', 'u_ambient'));
+            uiControls.shininess.addEventListener('input', uniformUpdater(lightingConfig, 'shininess', 'u_shininess', false));
+            
+            uiControls.formationColor.addEventListener('input', e => { formationConfig.color.set(e.target.value); });
+            uiControls.formationSides.addEventListener('input', e => { formationConfig.sides = parseInt(e.target.value); updateFormationPreview(); updateValueDisplays(); });
+            uiControls.formationRadius.addEventListener('input', e => { formationConfig.radius = parseInt(e.target.value); updateFormationPreview(); updateValueDisplays(); });
+            
+            uiControls.addFormation.addEventListener('click', addFormation);
+            uiControls.reset.addEventListener('click', () => { sources = []; if (!isPaused) uiControls.instruction.style.opacity = '1'; });
+            uiControls.toggleAnimation.addEventListener('click', () => { isPaused = !isPaused; uiControls.toggleAnimation.textContent = isPaused ? 'Resume Animation' : 'Pause Animation'; });
+            uiControls.showHelpers.addEventListener('change', updateHelpersVisibility);
+        }
+        
+        function updateValueDisplays() {
+            uiControls.frequencyValue.textContent = simConfig.frequency.toFixed(2);
+            uiControls.amplitudeValue.textContent = simConfig.amplitude.toFixed(1);
+            uiControls.waveSpeedValue.textContent = simConfig.waveSpeed.toFixed(1);
+            uiControls.formationSidesValue.textContent = formationConfig.sides;
+            uiControls.formationRadiusValue.textContent = formationConfig.radius;
+            uiControls.lightBrightnessValue.textContent = lightingConfig.brightness.toFixed(2);
+            uiControls.ambientLightValue.textContent = lightingConfig.ambient.toFixed(2);
+            uiControls.shininessValue.textContent = lightingConfig.shininess;
+        }
+
+        function init() {
+            initThree();
+            updateValueDisplays();
+            setupEventListeners();
+            animate();
+        }
+
+        init();
+    </script>
+</body>
+</html>

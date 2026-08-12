@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Lissajous Knots</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        /* Custom styles for range inputs to match the Matrix theme */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #10B981; /* green-500 */
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #6EE7B7; /* green-300 */
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #047857; /* green-700 */
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #6EE7B7;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #047857;
+        }
+        /* Styles for active/inactive tabs */
+        .symmetry-tab {
+            transition: all 0.2s;
+        }
+        .symmetry-tab.active {
+            background-color: #10B981; /* green-500 */
+            color: #000;
+            border-color: #059669; /* green-600 */
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <h1 class="text-4xl font-bold text-green-200 mb-6 text-center">Tutorial: Lissajous Knots</h1>
+    <p class="text-center mb-8 text-lg text-green-400">An exploration into knots defined by parametric equations.</p>
+
+    <!-- Introduction Section -->
+    <section class="mb-8 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Introduction</h2>
+        <div class="text-lg leading-relaxed space-y-4">
+            <p>
+                In knot theory, a <strong class="text-green-300">Lissajous knot</strong> is a knot defined by parametric equations of the form:
+            </p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>x = cos(n_x t + φ_x)
+y = cos(n_y t + φ_y)
+z = cos(n_z t + φ_z)</code></pre>
+            <p>
+                Here, $n_x, n_y,$ and $n_z$ are integers, and the phase shifts $φ_x, φ_y,$ and $φ_z$ can be any real numbers. The projection of a Lissajous knot onto any of the three coordinate planes forms a <strong class="text-green-300">Lissajous curve</strong>. Many properties of these knots are closely related to the properties of these curves.
+            </p>
+        </div>
+    </section>
+
+    <!-- Understanding Parametric Equations Section -->
+    <section class="mb-12 max-w-6xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Understanding Parametric Equations</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div class="text-lg leading-relaxed space-y-4">
+                <p>Before diving into 3D knots, let's understand the foundation: parametric equations. Instead of defining a shape with a single equation like $y = f(x)$, we define each coordinate $(x, y, z)$ in terms of a third variable, called a <strong class="text-green-300">parameter</strong>, usually denoted by $t$. You can think of $t$ as time.</p>
+                <p>As $t$ increases, the $(x, y)$ coordinates trace out a path, forming a curve. Lissajous curves are a classic example, defined by:</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-sm"><code>x(t) = A cos(a t + δ)
+y(t) = B cos(b t)</code></pre>
+                <p>The integers $a$ and $b$ determine the number of lobes, and the phase shift $δ$ determines the curve's starting shape. A Lissajous knot is simply the 3D extension of this concept.</p>
+                <p class="text-green-400">Try adjusting the sliders and animating the 2D curve to see how the parameters change the final shape!</p>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-green-800">
+                <div class="w-full h-80 rounded-lg mb-4" id="parametric-canvas-container"></div>
+                <div class="space-y-3 text-green-300 px-2">
+                    <div class="flex items-center space-x-4">
+                        <label for="para-a" class="w-8">a:</label>
+                        <input id="para-a" type="range" min="1" max="10" value="3" step="1" class="w-full">
+                        <span id="para-a-value" class="font-mono w-6 text-right">3</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="para-b" class="w-8">b:</label>
+                        <input id="para-b" type="range" min="1" max="10" value="4" step="1" class="w-full">
+                        <span id="para-b-value" class="font-mono w-6 text-right">4</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label for="para-delta" class="w-8">δ:</label>
+                        <input id="para-delta" type="range" min="0" max="2" value="0.5" step="0.01" class="w-full">
+                        <span id="para-delta-value" class="font-mono w-10 text-right">0.50</span>
+                    </div>
+                    <button id="animate-para-btn" class="w-full bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg transition-colors duration-300 mt-2">
+                        Animate 2D Curve
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Animation Section -->
+    <section class="mb-8 max-w-6xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Interactive Knot Formation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 bg-gray-900 rounded-lg border border-green-800 min-h-[400px] md:min-h-[500px]" id="canvas-container">
+                <!-- Canvas will be inserted here by three.js -->
+            </div>
+            <div class="bg-gray-900 p-6 rounded-lg border border-green-800">
+                <h3 class="text-xl font-bold text-green-200 mb-4">Parameters</h3>
+                <div class="space-y-4 text-green-300">
+                    <div>
+                        <label for="nx" class="block mb-1">nx: <span id="nx-value" class="font-mono float-right">3</span></label>
+                        <input id="nx" type="range" min="1" max="15" value="3" step="1" class="w-full">
+                    </div>
+                    <div>
+                        <label for="ny" class="block mb-1">ny: <span id="ny-value" class="font-mono float-right">4</span></label>
+                        <input id="ny" type="range" min="1" max="15" value="4" step="1" class="w-full">
+                    </div>
+                    <div>
+                        <label for="nz" class="block mb-1">nz: <span id="nz-value" class="font-mono float-right">7</span></label>
+                        <input id="nz" type="range" min="1" max="15" value="7" step="1" class="w-full">
+                    </div>
+                    <div>
+                        <label for="phix" class="block mb-1">φx: <span id="phix-value" class="font-mono float-right">0.10</span></label>
+                        <input id="phix" type="range" min="0" max="2" value="0.1" step="0.01" class="w-full">
+                    </div>
+                    <div>
+                        <label for="phiy" class="block mb-1">φy: <span id="phiy-value" class="font-mono float-right">0.70</span></label>
+                        <input id="phiy" type="range" min="0" max="2" value="0.7" step="0.01" class="w-full">
+                    </div>
+                     <button id="animate-btn" class="w-full bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                        Animate Formation
+                    </button>
+                    <p class="text-xs text-green-600 text-center pt-2">Drag the knot to rotate. Scroll to zoom.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Form, Examples, Symmetry, Consequences sections ... -->
+    <section class="mb-8 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Form</h2>
+        <div class="text-lg leading-relaxed space-y-4">
+             <p>Because a knot cannot be self-intersecting, there are specific constraints on the parameters. The three integers $n_x, n_y, n_z$ must be pairwise relatively prime. Additionally, none of the quantities below may be an integer multiple of $\pi$:</p>
+            <ul class="list-disc list-inside bg-gray-900 p-4 rounded-lg text-green-400">
+                <li>$n_x φ_y - n_y φ_x$</li>
+                <li>$n_y φ_z - n_z φ_y$</li>
+                <li>$n_z φ_x - n_x φ_z$</li>
+            </ul>
+        </div>
+    </section>
+    <section class="mb-8 max-w-5xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Examples</h2>
+        <p class="text-lg mb-6">Here are some examples of Lissajous knots, all of which have $φ_z = 0$:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-gray-900 p-4 rounded-lg border border-green-800"><h3 class="text-xl font-bold text-green-200 mb-2">Three-twist knot</h3><img src="https://placehold.co/400x400/000000/34D399?text=Three-twist+Knot" alt="Three-twist knot" class="rounded-md mb-4 w-full"><pre class="text-sm text-gray-200 overflow-x-auto"><code>(n_x, n_y, n_z) = (3, 2, 7)
+(φ_x, φ_y) = (0.7, 0.2)</code></pre></div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-green-800"><h3 class="text-xl font-bold text-green-200 mb-2">Stevedore knot</h3><img src="https://placehold.co/400x400/000000/34D399?text=Stevedore+Knot" alt="Stevedore knot" class="rounded-md mb-4 w-full"><pre class="text-sm text-gray-200 overflow-x-auto"><code>(n_x, n_y, n_z) = (3, 2, 5)
+(φ_x, φ_y) = (1.5, 0.2)</code></pre></div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-green-800"><h3 class="text-xl font-bold text-green-200 mb-2">Square knot</h3><img src="https://placehold.co/400x400/000000/34D399?text=Square+Knot" alt="Square knot" class="rounded-md mb-4 w-full"><pre class="text-sm text-gray-200 overflow-x-auto"><code>(n_x, n_y, n_z) = (3, 5, 7)
+(φ_x, φ_y) = (0.7, 1.0)</code></pre></div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-green-800"><h3 class="text-xl font-bold text-green-200 mb-2">8_21 knot</h3><img src="https://placehold.co/400x400/000000/34D399?text=8_21+Knot" alt="8_21 knot" class="rounded-md mb-4 w-full"><pre class="text-sm text-gray-200 overflow-x-auto"><code>(n_x, n_y, n_z) = (3, 4, 7)
+(φ_x, φ_y) = (0.1, 0.7)</code></pre></div>
+        </div>
+    </section>
+    <section class="mb-8 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Symmetry</h2>
+        <div class="text-lg leading-relaxed space-y-6">
+            <p>Lissajous knots are highly symmetric, with the type of symmetry depending on whether the integers $n_x, n_y,$ and $n_z$ are odd or even.</p>
+            <div><h3 class="text-xl font-semibold text-green-200 mb-2">Odd Case</h3><p>If $n_x, n_y,$ and $n_z$ are all odd, then the point reflection across the origin $(x,y,z) \mapsto (-x,-y,-z)$ is a symmetry of the Lissajous knot which preserves its orientation. A knot with this property is known as <strong class="text-green-300">strongly positive amphicheiral</strong>. This is a rare property, making this case less common for prime Lissajous knots.</p></div>
+            <div><h3 class="text-xl font-semibold text-green-200 mb-2">Even Case</h3><p>If one of the frequencies (e.g., $n_x$) is even, then the 180° rotation around the x-axis $(x,y,z) \mapsto (x,-y,-z)$ is a symmetry. A knot with this type of symmetry is called <strong class="text-green-300">2-periodic</strong>. Every even Lissajous knot must be 2-periodic.</p></div>
+        </div>
+    </section>
+    <section class="mb-8 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Consequences</h2>
+        <div class="text-lg leading-relaxed space-y-4">
+            <p>The symmetry of a Lissajous knot places severe constraints on its properties, such as the <strong class="text-green-300">Alexander polynomial</strong>.</p>
+            <ul class="list-disc list-inside space-y-2">
+                <li>In the odd case, the Alexander polynomial must be a perfect square.</li>
+                <li>In the even case, the Alexander polynomial must be a perfect square modulo 2.</li>
+                <li>The Arf invariant of any Lissajous knot must be zero.</li>
+            </ul>
+            <p>From these constraints, it follows that some well-known knots cannot be Lissajous knots, including the trefoil knot, the figure-eight knot, and any torus knot.</p>
+        </div>
+    </section>
+    
+    <!-- Chirality Section -->
+    <section class="mb-8 max-w-6xl mx-auto">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Knot Chirality and Symmetry</h2>
+        <div class="text-lg leading-relaxed space-y-4 mb-8">
+            <p>A core concept in knot theory is <strong class="text-green-300">chirality</strong>, which is just a formal word for "handedness". The easiest way to understand it is to think about your hands. Your left and right hands are perfect mirror images, but you can never rotate one to make it look identical to the other. They are fundamentally different. This property is chirality.</p>
+            <p>Knots can have this same property. A <strong class="text-green-300">chiral knot</strong> is not equivalent to its mirror image. An <strong class="text-green-300">amphicheiral knot</strong> is one that IS equivalent to its mirror image. We can further classify them by whether a knot is <strong class="text-green-300">invertible</strong> (equivalent to itself traced backwards).</p>
+        </div>
+        
+        <div class="bg-gray-900 p-4 rounded-lg border border-green-800">
+             <!-- Tabs -->
+            <div class="flex flex-wrap justify-center gap-2 mb-4">
+                <button data-type="chiral" class="symmetry-tab text-sm font-bold py-2 px-3 rounded border border-green-700 hover:bg-green-800">Chiral</button>
+                <button data-type="reversible" class="symmetry-tab text-sm font-bold py-2 px-3 rounded border border-green-700 hover:bg-green-800">Reversible</button>
+                <button data-type="amphicheiral" class="symmetry-tab text-sm font-bold py-2 px-3 rounded border border-green-700 hover:bg-green-800">Amphicheiral</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                <div>
+                    <h3 class="text-center text-green-200 font-semibold text-sm">Original Knot</h3>
+                    <div id="chiral-canvas-1" class="w-full h-48 sm:h-56 rounded-lg cursor-move bg-black bg-opacity-20"></div>
+                </div>
+                <div>
+                    <h3 class="text-center text-green-200 font-semibold text-sm">Mirror Image</h3>
+                    <div id="chiral-canvas-2" class="w-full h-48 sm:h-56 rounded-lg cursor-move bg-black bg-opacity-20"></div>
+                </div>
+                 <div>
+                    <h3 class="text-center text-green-200 font-semibold text-sm">Inverse</h3>
+                    <div id="chiral-canvas-3" class="w-full h-48 sm:h-56 rounded-lg cursor-move bg-black bg-opacity-20"></div>
+                </div>
+            </div>
+             <div class="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                 <p id="chiral-info" class="text-center text-sm text-green-400 flex-grow h-12 sm:h-auto"></p>
+                <button id="chiral-animate-btn" class="bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Animate Match</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-sm text-green-700 mt-12 border-t border-green-800 pt-4">
+        <p>Content adapted from Wikipedia. This tutorial is for educational purposes.</p>
+        <p><a href="https://en.wikipedia.org/wiki/Lissajous_knot" target="_blank" class="text-green-400 hover:text-green-300 underline">Original Article</a></p>
+    </footer>
+
+    <script>
+        // --- Shared THREE.js Logic ---
+        let knotContainer, paraContainer;
+        function onWindowResize() {
+            if(knotRenderer && knotContainer) { 
+                knotCamera.aspect = knotContainer.clientWidth / knotContainer.clientHeight;
+                knotCamera.updateProjectionMatrix();
+                knotRenderer.setSize(knotContainer.clientWidth, knotContainer.clientHeight);
+            }
+            if(paraRenderer && paraContainer) { 
+                paraCamera.aspect = paraContainer.clientWidth / paraContainer.clientHeight;
+                paraCamera.updateProjectionMatrix();
+                paraRenderer.setSize(paraContainer.clientWidth, paraContainer.clientHeight);
+            }
+            if(chiralManager) chiralManager.onResize();
+        }
+        window.addEventListener('resize', onWindowResize, false);
+
+        // --- 3D KNOT VISUALIZATION ---
+        let knotScene, knotCamera, knotRenderer, knotControls, knotMesh;
+        let isAnimatingKnot = false;
+        let knotDrawCount = 0;
+        const KNOT_RADIAL_SEGMENTS = 12;
+        const KNOT_TUBE_RADIUS = 0.15;
+        const KNOT_SCALE = 2.5;
+        
+        const knotSliders = {};
+        const knotValues = {};
+
+        class LissajousKnotCurve extends THREE.Curve {
+            constructor(nx, ny, nz, phix, phiy, phiz, scale) { super(); this.nx = nx; this.ny = ny; this.nz = nz; this.phix = phix; this.phiy = phiy; this.phiz = phiz; this.scale = scale; }
+            getPoint(t) { t *= 2 * Math.PI; const x = Math.cos(this.nx * t + this.phix * Math.PI); const y = Math.cos(this.ny * t + this.phiy * Math.PI); const z = Math.cos(this.nz * t + this.phiz * Math.PI); return new THREE.Vector3(x, y, z).multiplyScalar(this.scale); }
+        }
+
+        function initKnot() {
+            knotContainer = document.getElementById('canvas-container');
+            Object.assign(knotSliders, { nx: document.getElementById('nx'), ny: document.getElementById('ny'), nz: document.getElementById('nz'), phix: document.getElementById('phix'), phiy: document.getElementById('phiy') });
+            Object.assign(knotValues, { nx: document.getElementById('nx-value'), ny: document.getElementById('ny-value'), nz: document.getElementById('nz-value'), phix: document.getElementById('phix-value'), phiy: document.getElementById('phiy-value') });
+            knotScene = new THREE.Scene();
+            knotCamera = new THREE.PerspectiveCamera(75, knotContainer.clientWidth / knotContainer.clientHeight, 0.1, 1000);
+            knotCamera.position.z = 7;
+            knotRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            knotRenderer.setSize(knotContainer.clientWidth, knotContainer.clientHeight);
+            knotRenderer.setPixelRatio(window.devicePixelRatio);
+            knotContainer.appendChild(knotRenderer.domElement);
+            knotControls = new THREE.OrbitControls(knotCamera, knotRenderer.domElement);
+            knotControls.enableDamping = true;
+            knotScene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            knotScene.add(directionalLight);
+            document.getElementById('animate-btn').addEventListener('click', () => { isAnimatingKnot = true; updateKnot(); });
+            for (const key in knotSliders) { knotSliders[key].addEventListener('input', (e) => { isAnimatingKnot = false; knotValues[key].textContent = parseFloat(e.target.value).toFixed(key.startsWith('phi') ? 2 : 0); updateKnot(); }); }
+        }
+        function updateKnot() {
+            if (knotMesh) { knotScene.remove(knotMesh); knotMesh.geometry.dispose(); knotMesh.material.dispose(); }
+            const curve = new LissajousKnotCurve(parseInt(knotSliders.nx.value), parseInt(knotSliders.ny.value), parseInt(knotSliders.nz.value), parseFloat(knotSliders.phix.value), parseFloat(knotSliders.phiy.value), 0, KNOT_SCALE);
+            const tubularSegments = Math.max(256, (parseInt(knotSliders.nx.value) + parseInt(knotSliders.ny.value) + parseInt(knotSliders.nz.value)) * 16);
+            const geometry = new THREE.TubeGeometry(curve, tubularSegments, KNOT_TUBE_RADIUS, KNOT_RADIAL_SEGMENTS, false);
+            knotMesh = new THREE.Mesh(geometry, new THREE.MeshNormalMaterial({ side: THREE.DoubleSide }));
+            if (!isAnimatingKnot) { knotMesh.geometry.setDrawRange(0, Infinity); } else { knotMesh.geometry.setDrawRange(0, 0); knotDrawCount = 0; }
+            knotScene.add(knotMesh);
+        }
+
+        // --- 2D PARAMETRIC CURVE VISUALIZATION ---
+        let paraScene, paraCamera, paraRenderer, paraLine;
+        let isAnimatingPara = false;
+        let paraDrawCount = 0;
+        const PARA_SCALE = 1.5;
+        const PARA_POINTS = 500;
+        const paraSliders = {};
+        const paraValues = {};
+        function initParametric() {
+            paraContainer = document.getElementById('parametric-canvas-container');
+            Object.assign(paraSliders, { a: document.getElementById('para-a'), b: document.getElementById('para-b'), delta: document.getElementById('para-delta') });
+            Object.assign(paraValues, { a: document.getElementById('para-a-value'), b: document.getElementById('para-b-value'), delta: document.getElementById('para-delta-value') });
+            paraScene = new THREE.Scene();
+            paraCamera = new THREE.OrthographicCamera(paraContainer.clientWidth / -100, paraContainer.clientWidth / 100, paraContainer.clientHeight / 100, paraContainer.clientHeight / -100, 1, 1000);
+            paraCamera.position.z = 10;
+            paraRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            paraRenderer.setSize(paraContainer.clientWidth, paraContainer.clientHeight);
+            paraRenderer.setPixelRatio(window.devicePixelRatio);
+            paraContainer.appendChild(paraRenderer.domElement);
+            document.getElementById('animate-para-btn').addEventListener('click', () => { isAnimatingPara = true; updateParametricCurve(); });
+            for (const key in paraSliders) { paraSliders[key].addEventListener('input', (e) => { isAnimatingPara = false; paraValues[key].textContent = parseFloat(e.target.value).toFixed(key === 'delta' ? 2 : 0); updateParametricCurve(); }); }
+        }
+        function updateParametricCurve() {
+            if (paraLine) { paraScene.remove(paraLine); paraLine.geometry.dispose(); paraLine.material.dispose(); }
+            const points = [];
+            for (let i = 0; i <= PARA_POINTS; i++) {
+                const t = (i / PARA_POINTS) * 2 * Math.PI;
+                const x = Math.cos(parseInt(paraSliders.a.value) * t + parseFloat(paraSliders.delta.value) * Math.PI) * PARA_SCALE;
+                const y = Math.cos(parseInt(paraSliders.b.value) * t) * PARA_SCALE;
+                points.push(new THREE.Vector3(x, y, 0));
+            }
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            paraLine = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x6EE7B7, linewidth: 2 }));
+            if (!isAnimatingPara) { paraLine.geometry.setDrawRange(0, PARA_POINTS + 1); } else { paraLine.geometry.setDrawRange(0, 0); paraDrawCount = 0; }
+            paraScene.add(paraLine);
+        }
+
+        // --- CHIRALITY VISUALIZATION ---
+        class FigureEightCurve extends THREE.Curve { getPoint(t) { t *= 2 * Math.PI; const x = (2 + Math.cos(2*t))*Math.cos(3*t); const y = (2 + Math.cos(2*t))*Math.sin(3*t); const z = Math.sin(4*t); return new THREE.Vector3(x, y, z).multiplyScalar(0.6); } }
+        class TorusKnotCurve extends THREE.Curve {
+            constructor(p = 2, q = 3) { super(); this.p = p; this.q = q; }
+            getPoint(t) { t *= 2 * Math.PI; const r = Math.cos(this.q * t) + 2; const x = r * Math.cos(this.p * t); const y = r * Math.sin(this.p * t); const z = -Math.sin(this.q * t); return new THREE.Vector3(x, y, z); }
+        }
+
+        class ChiralityManager {
+            constructor() {
+                this.scenes = []; this.cameras = []; this.renderers = []; this.controls = []; this.knots = [];
+                this.currentType = 'chiral';
+                this.animation = { running: false, targetKnot: null, startQuat: null, targetQuat: null, startTime: 0 };
+                this.knotDefs = {
+                    chiral: { type: 'torus', p: 2, q: 3, name: 'Trefoil Knot' },
+                    reversible: { type: 'torus', p: 3, q: 4, name: 'Torus Knot (3,4)' },
+                    amphicheiral: { type: 'figureEight', name: 'Figure-8 Knot' },
+                };
+                this.infoText = {
+                    chiral: "The Trefoil knot is chiral. None of its forms (Mirror or Inverse) can be rotated to match the original.",
+                    reversible: "This knot is reversible. Its Inverse is identical to the Original. Click the button to see it animate.",
+                    amphicheiral: "The Figure-8 knot is amphicheiral. Its Mirror Image is identical to the Original. Click to see it match.",
+                };
+                this.initScenes();
+                this.initUI();
+            }
+
+            initScenes() {
+                for (let i = 1; i <= 3; i++) {
+                    const container = document.getElementById(`chiral-canvas-${i}`);
+                    const scene = new THREE.Scene();
+                    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+                    camera.position.z = 7;
+                    const renderer = new THREE.WebGLRenderer({ antias: true, alpha: true });
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                    renderer.setPixelRatio(window.devicePixelRatio);
+                    container.appendChild(renderer.domElement);
+                    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.addEventListener('change', () => this.syncControls(i - 1));
+                    scene.add(new THREE.AmbientLight(0xffffff, 0.7)); scene.add(new THREE.DirectionalLight(0xffffff, 0.8));
+                    this.scenes.push(scene); this.cameras.push(camera); this.renderers.push(renderer); this.controls.push(controls);
+                }
+            }
+            
+            syncControls(changedIndex) {
+                const sourceQuat = this.controls[changedIndex].object.quaternion;
+                this.controls.forEach((control, i) => { if (i !== changedIndex) { control.object.quaternion.copy(sourceQuat); } });
+            }
+
+            initUI() {
+                this.tabs = document.querySelectorAll('.symmetry-tab');
+                this.infoEl = document.getElementById('chiral-info');
+                this.animateBtn = document.getElementById('chiral-animate-btn');
+                this.tabs.forEach(tab => { tab.addEventListener('click', (e) => { this.currentType = e.target.dataset.type; this.updateVisuals(); }); });
+                this.animateBtn.addEventListener('click', () => {
+                    if (this.currentType === 'reversible') this.startAnimation(this.knots[2], this.knots[0].quaternion);
+                    else if (this.currentType === 'amphicheiral') this.startAnimation(this.knots[1], this.knots[0].quaternion);
+                });
+            }
+            
+            startAnimation(targetKnot, targetQuat) {
+                this.animation.running = true;
+                this.animation.targetKnot = targetKnot;
+                this.animation.startQuat = targetKnot.quaternion.clone();
+                this.animation.targetQuat = targetQuat.clone();
+                this.animation.startTime = Date.now();
+            }
+
+            createKnot(def, isMirror, isInverse) {
+                let curve;
+                if (def.type === 'torus') curve = new TorusKnotCurve(def.p, def.q);
+                else if (def.type === 'figureEight') curve = new FigureEightCurve();
+                const points = curve.getPoints(256);
+                if (isInverse) points.reverse();
+                const finalCurve = new THREE.CatmullRomCurve3(points, true);
+                const geometry = new THREE.TubeGeometry(finalCurve, 256, 0.2, 12, true);
+                const knot = new THREE.Mesh(geometry, new THREE.MeshNormalMaterial());
+                if (isMirror) knot.scale.x = -1;
+                knot.scale.multiplyScalar(1.5);
+                return knot;
+            }
+
+            updateVisuals() {
+                this.animation.running = false;
+                this.tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.type === this.currentType));
+                this.knots.forEach(knot => knot && knot.parent.remove(knot));
+                this.knots = [];
+                const def = this.knotDefs[this.currentType];
+                const original = this.createKnot(def, false, false);
+                const mirror = this.createKnot(def, true, false);
+                const inverse = this.createKnot(def, false, true);
+                this.scenes[0].add(original); this.scenes[1].add(mirror); this.scenes[2].add(inverse);
+                this.knots.push(original, mirror, inverse);
+                this.infoEl.textContent = this.infoText[this.currentType];
+                if (this.currentType === 'chiral') { this.animateBtn.disabled = true; this.animateBtn.textContent = 'No Match Possible'; }
+                else if (this.currentType === 'reversible') { this.animateBtn.disabled = false; this.animateBtn.textContent = 'Animate Inverse -> Original'; }
+                else if (this.currentType === 'amphicheiral') { this.animateBtn.disabled = false; this.animateBtn.textContent = 'Animate Mirror -> Original'; }
+            }
+
+            onResize() {
+                for (let i = 0; i < 3; i++) {
+                    const container = this.renderers[i].domElement.parentElement;
+                    this.cameras[i].aspect = container.clientWidth / container.clientHeight;
+                    this.cameras[i].updateProjectionMatrix();
+                    this.renderers[i].setSize(container.clientWidth, container.clientHeight);
+                }
+            }
+
+            animate() {
+                 if (this.animation.running) {
+                    const duration = 1500; // ms
+                    let progress = (Date.now() - this.animation.startTime) / duration;
+                    if (progress >= 1) {
+                        progress = 1;
+                        this.animation.running = false;
+                    }
+                    const easedProgress = 0.5 * (1 - Math.cos(progress * Math.PI));
+                    THREE.Quaternion.slerp(
+                        this.animation.startQuat,
+                        this.animation.targetQuat,
+                        this.animation.targetKnot.quaternion,
+                        easedProgress
+                    );
+                    if (!this.animation.running) {
+                        this.animation.targetKnot.quaternion.copy(this.animation.targetQuat);
+                    }
+                }
+                this.controls.forEach(c => c.update());
+                this.renderers.forEach((r, i) => r.render(this.scenes[i], this.cameras[i]));
+            }
+        }
+        
+        let chiralManager;
+
+        // --- MAIN ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isAnimatingKnot && knotMesh) {
+                const totalCount = knotMesh.geometry.index.count;
+                const speed = Math.ceil(totalCount / 150);
+                knotDrawCount += speed;
+                if (knotDrawCount >= totalCount) { knotDrawCount = totalCount; isAnimatingKnot = false; }
+                knotMesh.geometry.setDrawRange(0, knotDrawCount);
+            }
+            if(knotControls) knotControls.update();
+            if(knotRenderer) knotRenderer.render(knotScene, knotCamera);
+            
+            if (isAnimatingPara && paraLine) {
+                 const speed = Math.ceil(PARA_POINTS / 120);
+                 paraDrawCount += speed;
+                 if(paraDrawCount >= PARA_POINTS) { paraDrawCount = PARA_POINTS + 1; isAnimatingPara = false; }
+                 paraLine.geometry.setDrawRange(0, paraDrawCount);
+            }
+            if(paraRenderer) paraRenderer.render(paraScene, paraCamera);
+
+            if(chiralManager) chiralManager.animate();
+        }
+        
+        // --- INITIAL SETUP ---
+        function initializeVisuals() {
+            initKnot();
+            for (const key in knotSliders) { knotValues[key].textContent = parseFloat(knotSliders[key].value).toFixed(key.startsWith('phi') ? 2 : 0); }
+            updateKnot();
+
+            initParametric();
+            for (const key in paraSliders) { paraValues[key].textContent = parseFloat(paraSliders[key].value).toFixed(key === 'delta' ? 2 : 0); }
+            updateParametricCurve();
+
+            chiralManager = new ChiralityManager();
+            chiralManager.updateVisuals();
+            animate();
+        }
+
+        initializeVisuals();
+    </script>
+</body>
+</html>
+
