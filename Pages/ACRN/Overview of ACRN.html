@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACRN Masking Algorithm Tutorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true,
+            tags: 'ams'
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style>
+        /* Custom styles for the matrix theme */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .math-block {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #10B981 #1F2937;
+        }
+        canvas {
+            background-color: #050a05;
+            border: 1px solid #047857;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8">
+
+    <header class="text-center mb-12">
+        <h1 class="text-4xl lg:text-5xl font-bold text-green-200 mb-4">Acoustic Coordinated-Reset Neuromodulation (ACRN)</h1>
+        <p class="text-lg text-green-400">A Theoretical and Algorithmic Tutorial</p>
+    </header>
+
+    <!-- Section 1: The Problem and the Premise -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. The Problem: Tinnitus and Neuronal Synchrony</h2>
+        <div class="space-y-4 text-lg leading-relaxed">
+            <p>Tinnitus, often perceived as a persistent "ringing in the ears," is thought to arise from an abnormally hyperactive neural network in the brain's auditory cortex. In this pathological state, a large population of neurons begins firing in a highly synchronized manner.</p>
+            <p>The goal of acoustic neuromodulation, specifically Acoustic Coordinated-Reset Neuromodulation (ACRN), is to disrupt this pathological synchrony. By breaking the lock-step firing of these neurons, the therapy aims to reduce or even eliminate the phantom sound.</p>
+        </div>
+    </section>
+
+    <!-- Section 2: The ACRN Method -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. The ACRN Method: How It Works</h2>
+        <div class="space-y-4 text-lg leading-relaxed">
+            <p>ACRN uses a personalized sound prescription. The core idea is to use the patient's specific tinnitus frequency ($f_t$) as a "center tone" and add four flanking tones: two slightly higher and two slightly lower in pitch.</p>
+            <p>These tones are delivered in short, rapid bursts that are staggered in time. This forces different subgroups of the synchronized neurons to be stimulated at slightly different moments. Each burst nudges a small group of neurons out of phase with the main, pathologically synchronized cluster. Repeated over and over, these stimulations hopefully remodel the neural network, reducing the hyperactivity and reversing the synchrony.</p>
+        </div>
+    </section>
+
+    <!-- Section 3: Animation Example -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Visualizing Desynchronization</h2>
+        <p class="text-lg leading-relaxed mb-4">The animation below provides a simplified model of neuronal phase dynamics. Each dot represents a neuron. Initially, they are highly synchronized. When you apply the ACRN stimulus, you'll see how the targeted "kicks" disrupt this synchrony, causing the order parameter $R$ to drop towards zero.</p>
+        <div class="bg-gray-900/50 border border-green-800 rounded-lg p-4 flex flex-col items-center">
+            <canvas id="animationCanvas" width="500" height="300"></canvas>
+            <div class="mt-4 flex space-x-4">
+                <button id="stimulusBtn" class="bg-green-600 hover:bg-green-500 text-black font-bold py-2 px-4 rounded transition-all duration-200">Apply ACRN Stimulus</button>
+                <button id="resetBtn" class="bg-gray-700 hover:bg-gray-600 text-green-300 font-bold py-2 px-4 rounded transition-all duration-200">Reset Simulation</button>
+            </div>
+            <div id="orderParamDisplay" class="mt-4 text-lg font-mono text-green-200"></div>
+        </div>
+    </section>
+    
+    <!-- Section 4: Measuring Success -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Measuring Success: The Distance Metric 'd'</h2>
+        <p class="text-lg leading-relaxed mb-4">To quantify therapeutic progress, a single scalar value, $d$, can be calculated. It summarizes the "distance" between any two therapy sessions based on patient-reported scores for loudness, annoyance (Visual Analogue Scale, or VAS), and a Tinnitus Questionnaire (TQ). As the therapy works, the scores become more consistent and the value of $d$ shrinks.</p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg math-block">
+            <p>$$d = \frac{1}{n^2} \sum_{l=1}^{n} \sum_{k=1}^{n} \sqrt{(\widetilde{\text{VAS}}^{l}_{\text{Loud}} - \widetilde{\text{VAS}}^{k}_{\text{Loud}})^2 + (\widetilde{\text{VAS}}^{l}_{\text{Annoy}} - \widetilde{\text{VAS}}^{k}_{\text{Annoy}})^2 + (\widetilde{\text{TQ}}^{l} - \widetilde{\text{TQ}}^{k})^2}$$</p>
+        </div>
+        <p class="mt-4 text-sm text-green-600">Clinical trials have shown that 12 weeks of ACRN can significantly reduce TQ scores in responders. More info can be found on <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" class="text-green-400 hover:text-green-300 underline">PubMed</a>.</p>
+    </section>
+
+    <!-- Section 5: The Fokker-Planck Model -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. The Fokker-Planck Model for ACRN</h2>
+        <p class="text-lg leading-relaxed mb-4">While the original theory is often described with phase-oscillator equations (like the Kuramoto model), for a large number of neurons, it's more efficient to use a Fokker-Planck (FP) partial differential equation. This equation describes the probability density $p(\theta, t)$ of finding a neuron with a phase $\theta$ at time $t$. The FP approach is useful because:</p>
+        <ul class="list-disc list-inside space-y-2 text-lg leading-relaxed pl-4">
+            <li>It elegantly captures the transition from disorder to synchrony using an order parameter, $R(t)$.</li>
+            <li>External stimuli, like the ACRN tones, can be added as mathematical terms in the equation.</li>
+            <li>It allows for principled inclusion of noise and neural plasticity (the brain's ability to "unlearn" the tinnitus).</li>
+        </ul>
+    </section>
+
+    <!-- Section 6: Deriving the Model -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6. Deriving the FP Model for ACRN</h2>
+        
+        <h3 class="text-xl font-semibold text-green-400 mt-6 mb-2">6.1 Starting Point: Stochastic Phase Oscillators</h3>
+        <p class="text-lg leading-relaxed mb-4">We begin by modeling each neuron $i$ as an oscillator with phase $\theta_i$ and natural frequency $\omega_i \approx 2\pi f_t$. Its evolution is governed by coupling between neurons, the ACRN stimulus, and random noise.</p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg math-block">
+            <p>$$ \frac{d\theta_i}{dt} = \omega_i + \frac{K}{N}\sum_{j=1}^N \sin(\theta_j-\theta_i) + I_{\text{ACRN}}^{(i)}(t) + \sqrt{2D}\xi_i(t) $$</p>
+        </div>
+        <ul class="list-disc list-inside space-y-2 mt-4 text-green-400">
+            <li>$K$: Coupling strength (causes synchrony).</li>
+            <li>$D$: Phase-noise intensity, with $\xi_i(t)$ being a white noise term.</li>
+            <li>$I_{\text{ACRN}}^{(i)}(t)$: Stimulus current from the flanking tones.</li>
+        </ul>
+
+        <h3 class="text-xl font-semibold text-green-400 mt-6 mb-2">6.2 The Fokker-Planck Equation</h3>
+        <p class="text-lg leading-relaxed mb-4">In the limit of many neurons, this system is described by the FP-ACRN equation. The tinnitus you hear corresponds to the magnitude of the Kuramoto order parameter, $|R|$. This can be defined for discrete oscillators (like in the animation) or for the continuous probability density $p(\theta, t)$. The goal of therapy is to drive $|R| \to 0$.</p>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg math-block">
+            <p>$$ R e^{i\psi} = \frac{1}{N}\sum_{j=1}^N e^{i\theta_j} \quad \text{(Discrete)} \qquad \text{or} \qquad R e^{i\psi} = \int_0^{2\pi} p(\theta, t) e^{i\theta} d\theta \quad \text{(Continuous)} $$</p>
+            <p class="mt-4">$$ \frac{\partial p}{\partial t} = -\frac{\partial}{\partial\theta}\Big[ \underbrace{\left(\omega+ KR\sin(\psi-\theta)+I_{\text{ACRN}}(t)\right)}_{\text{Drift}} p \Big] + \underbrace{D\frac{\partial^{2}p}{\partial \theta^{2}}}_{\text{Diffusion}} $$</p>
+        </div>
+
+        <h3 class="text-xl font-semibold text-green-400 mt-6 mb-2">6.3 Modeling the 4-Tone Stimulus</h3>
+        <p class="text-lg leading-relaxed mb-4">The stimulus $I_{\text{ACRN}}(t)$ can be modeled in two primary ways:</p>
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Impulsive Phase Reset Graph -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg flex flex-col items-center">
+                <h4 class="font-bold text-green-300 mb-2">A. Impulsive Phase Resets</h4>
+                <svg viewBox="0 0 300 180" class="w-full h-auto">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
+                            <polygon points="0 0, 5 1.75, 0 3.5" fill="#10B981" />
+                        </marker>
+                    </defs>
+                    <!-- Axes -->
+                    <line x1="20" y1="150" x2="280" y2="150" stroke="#047857" stroke-width="1" marker-end="url(#arrowhead)"/>
+                    <line x1="30" y1="160" x2="30" y2="20" stroke="#047857" stroke-width="1" marker-end="url(#arrowhead)"/>
+                    <text x="285" y="155" font-size="10" fill="#047857">θ</text>
+                    <text x="10" y="25" font-size="10" fill="#047857">p(θ)</text>
+                    <!-- Initial distribution -->
+                    <path d="M 50 150 C 100 50, 150 50, 200 150" stroke="#6EE7B7" stroke-width="1.5" fill="none" stroke-dasharray="3,3" />
+                    <text x="115" y="45" font-size="10" fill="#6EE7B7">p(θ, t⁻)</text>
+                    <!-- Shifted distribution -->
+                    <path d="M 50 150 C 80 100, 100 100, 110 150" stroke="#34D399" stroke-width="1.5" fill="none" />
+                    <path d="M 160 150 C 170 100, 190 100, 200 150" stroke="#34D399" stroke-width="1.5" fill="none" />
+                    <path d="M 110 120 C 130 60, 140 60, 160 120" stroke="#34D399" stroke-width="1.5" fill="none" transform="translate(50, 30)"/>
+                    <text x="180" y="85" font-size="10" fill="#34D399">p(θ, t⁺)</text>
+                    <!-- Arrow showing shift -->
+                    <path d="M 135 70 Q 160 85 185 80" stroke="#FBBF24" stroke-width="1" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="140" y="100" font-size="10" fill="#FBBF24">Δθ</text>
+                </svg>
+                <p class="text-center text-sm mt-2 text-gray-400">A fraction of the neuron population is instantly shifted in phase.</p>
+            </div>
+            <!-- Weak Continuous Forcing Graph -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg flex flex-col items-center">
+                <h4 class="font-bold text-green-300 mb-2">B. Weak Continuous Forcing</h4>
+                <svg viewBox="0 0 300 180" class="w-full h-auto">
+                     <defs>
+                        <marker id="arrowhead2" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
+                            <polygon points="0 0, 5 1.75, 0 3.5" fill="#10B981" />
+                        </marker>
+                    </defs>
+                    <!-- Axes -->
+                    <line x1="20" y1="90" x2="280" y2="90" stroke="#047857" stroke-width="1" marker-end="url(#arrowhead2)"/>
+                    <line x1="30" y1="160" x2="30" y2="20" stroke="#047857" stroke-width="1" marker-end="url(#arrowhead2)"/>
+                    <text x="285" y="95" font-size="10" fill="#047857">t</text>
+                    <text x="5" y="25" font-size="10" fill="#047857">I(t)</text>
+                    <!-- Waveform -->
+                    <path id="forcingWave" stroke="#34D399" stroke-width="1.5" fill="none"/>
+                    <script>
+                        let path = "M 30 90";
+                        for (let i = 0; i < 250; i++) {
+                            const t = i / 25;
+                            // Sum of 4 cosines with slightly different frequencies to create a beat pattern
+                            const y = 15 * (Math.cos(t*2) + Math.cos(t*2.2) + Math.cos(t*2.5) + Math.cos(t*2.7));
+                            path += ` L ${30 + i} ${90 - y}`;
+                        }
+                        document.getElementById('forcingWave').setAttribute('d', path);
+                    </script>
+                </svg>
+                <p class="text-center text-sm mt-2 text-gray-400">A complex, rhythmic stimulus is applied continuously over time.</p>
+            </div>
+        </div>
+        
+        <h3 class="text-xl font-semibold text-green-400 mt-10 mb-2">6.4 Visualizing Fokker-Planck Dynamics</h3>
+        <p class="text-lg leading-relaxed mb-4">The two main forces in the Fokker-Planck equation are Drift (which drives synchrony) and Diffusion (which promotes disorder).</p>
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Drift Visualization -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg flex flex-col items-center">
+                <h4 class="font-bold text-green-300 mb-2">Drift Term (Synchronization)</h4>
+                <svg viewBox="0 0 300 180" class="w-full h-auto">
+                    <defs>
+                        <marker id="arrowDrift" markerWidth="5" markerHeight="3.5" refX="5" refY="1.75" orient="auto"><polygon points="0 0, 5 1.75, 0 3.5" fill="#34D399"/></marker>
+                    </defs>
+                    <!-- Axes -->
+                    <line x1="20" y1="90" x2="280" y2="90" stroke="#047857" stroke-width="1"/>
+                    <text x="285" y="95" font-size="10" fill="#047857">θ</text>
+                    <text x="5" y="25" font-size="10" fill="#047857">Drift</text>
+                    <!-- Sine wave for drift -->
+                    <path d="M 30 90 C 80 20, 120 20, 150 90 S 220 160, 270 90" stroke="#6EE7B7" stroke-width="1.5" fill="none"/>
+                    <!-- Stable point -->
+                    <circle cx="150" cy="90" r="3" fill="#34D399"/>
+                    <text x="145" y="110" font-size="10" fill="#34D399">ψ (stable)</text>
+                    <!-- Unstable point -->
+                    <circle cx="30" cy="90" r="3" fill="#F87171"/>
+                    <circle cx="270" cy="90" r="3" fill="#F87171"/>
+                    <!-- Drift arrows -->
+                    <path d="M 80 50 L 120 70" stroke="#34D399" stroke-width="1.5" marker-end="url(#arrowDrift)"/>
+                    <path d="M 220 130 L 180 110" stroke="#34D399" stroke-width="1.5" marker-end="url(#arrowDrift)"/>
+                </svg>
+                <p class="text-center text-sm mt-2 text-gray-400">The drift term pulls neuron phases towards the mean phase $\psi$, increasing synchrony.</p>
+            </div>
+            <!-- Diffusion Visualization -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg flex flex-col items-center">
+                <h4 class="font-bold text-green-300 mb-2">Diffusion Term (Disorder)</h4>
+                <svg viewBox="0 0 300 180" class="w-full h-auto">
+                     <defs>
+                        <marker id="arrowDiffusion" markerWidth="3.5" markerHeight="3.5" refX="1.75" refY="1.75" orient="auto"><polygon points="0 0, 3.5 1.75, 0 3.5" fill="#FBBF24"/></marker>
+                    </defs>
+                    <!-- Axes -->
+                    <line x1="20" y1="150" x2="280" y2="150" stroke="#047857" stroke-width="1"/>
+                    <line x1="30" y1="160" x2="30" y2="20" stroke="#047857" stroke-width="1"/>
+                    <text x="285" y="155" font-size="10" fill="#047857">θ</text>
+                    <text x="10" y="25" font-size="10" fill="#047857">p(θ)</text>
+                    <!-- Distribution -->
+                    <path d="M 100 150 C 125 30, 175 30, 200 150" stroke="#6EE7B7" stroke-width="1.5" fill="none"/>
+                    <!-- Diffusion arrows -->
+                    <path d="M 150 50 L 120 50" stroke="#FBBF24" stroke-width="1.5" marker-end="url(#arrowDiffusion)"/>
+                    <path d="M 150 50 L 180 50" stroke="#FBBF24" stroke-width="1.5" marker-end="url(#arrowDiffusion)"/>
+                    <path d="M 150 80 L 110 80" stroke="#FBBF24" stroke-width="1.5" marker-end="url(#arrowDiffusion)"/>
+                    <path d="M 150 80 L 190 80" stroke="#FBBF24" stroke-width="1.5" marker-end="url(#arrowDiffusion)"/>
+                </svg>
+                <p class="text-center text-sm mt-2 text-gray-400">The diffusion term (noise) spreads the distribution out, counteracting synchrony.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 7: Algorithmic Recipe -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">7. Algorithmic Recipe (Numerical Simulation)</h2>
+        <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto">
+<pre><code class="language-pseudocode">
+# INPUTS:
+#   f_t:       Patient’s tinnitus frequency (Hz)
+#   Δf:        Vector of frequency offsets [-Δ_hi, -Δ_lo, +Δ_lo, +Δ_hi] (Hz)
+#   K, D:      Coupling & noise parameters
+#   T_total:   Total therapy time (s)
+#   stim_grid: Schedule of tone bursts (e.g., 3ms burst every 200ms)
+#
+# OUTPUTS:
+#   R(t):      Order parameter time-series
+#   d_scores:  Predicted distance metric vs. session index
+
+PROCEDURE Simulate_ACRN:
+  1. Discretise phase space: θ ∈ [0, 2π) -> grid of N_θ points.
+  
+  2. Set initial condition:
+     p(θ,0) = (1/(2π)) * [1 + 2*R_0*cos(θ - ψ_0)]  (with R_0 ≈ 1 for high sync)
+
+  3. Time-stepping loop from t = 0 to T_total:
+     a. Calculate mean-field: R_n, ψ_n from p_n(θ)
+     
+     b. Evolve p(θ) over Δt using the FP equation (e.g., Euler-Upwind scheme):
+        p_n+1 = p_n - Δt * ∂/∂θ[...] + D * Δt * ∂²/∂θ²[...]
+
+     c. Check stim_grid for stimulus event at current time t_n:
+        IF stimulus is ON:
+           Apply stimulus model (either impulsive phase shift or update I_ACRN(t))
+        
+     d. Renormalise p_n+1 so that ∫p(θ)dθ = 1.
+
+  4. (Optional) Implement plasticity:
+     IF |R(t)| remains low for a sustained period:
+        Slowly decrease coupling strength K.
+
+  5. Calculate session-level metrics:
+     Periodically, compute synthetic VAS/TQ scores based on |R(t)|
+     and update the distance metric d.
+
+END PROCEDURE
+</code></pre>
+        </div>
+    </section>
+
+    <!-- Section 8: Interpreting the Simulation -->
+    <section>
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">8. Interpreting the Simulation Results</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-lg leading-relaxed">
+            
+            <!-- Early Phase -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg">
+                <h3 class="font-bold text-green-300 mb-2">Early Phase: Rapid Desynchronization</h3>
+                <p class="text-gray-300 text-base mb-4">Tone bursts quickly break the initial high synchrony, causing a sharp drop in the order parameter $|R(t)|$, which corresponds to reduced loudness.</p>
+                <svg viewBox="0 0 300 150" class="w-full h-auto bg-gray-900 rounded">
+                    <line x1="30" y1="130" x2="280" y2="130" stroke="#047857" stroke-width="1"/>
+                    <line x1="30" y1="130" x2="30" y2="10" stroke="#047857" stroke-width="1"/>
+                    <text x="10" y="20" font-size="10" fill="#047857">|R|</text>
+                    <text x="15" y="25" font-size="8" fill="#047857">1.0</text><line x1="25" y1="20" x2="30" y2="20" stroke="#047857" stroke-width="1"/>
+                    <text x="15" y="135" font-size="8" fill="#047857">0.0</text>
+                    <text x="270" y="145" font-size="10" fill="#047857">Time</text>
+                    <path d="M 30 25 L 100 25 L 120 110 C 130 120, 200 100, 280 115" stroke="#34D399" stroke-width="2" fill="none"/>
+                    <line x1="100" y1="25" x2="100" y2="130" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2,2"/>
+                    <text x="80" y="145" font-size="10" fill="#FBBF24">Stimulus ON</text>
+                </svg>
+            </div>
+
+            <!-- Middle Phase -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg">
+                <h3 class="font-bold text-green-300 mb-2">Middle Phase: Residual Oscillations</h3>
+                <p class="text-gray-300 text-base mb-4">The system settles into a state of low, fluctuating synchrony as smaller neuronal clusters form and dissolve under continuous stimulation.</p>
+                <svg viewBox="0 0 300 150" class="w-full h-auto bg-gray-900 rounded">
+                    <line x1="30" y1="130" x2="280" y2="130" stroke="#047857" stroke-width="1"/>
+                    <line x1="30" y1="130" x2="30" y2="10" stroke="#047857" stroke-width="1"/>
+                    <text x="10" y="20" font-size="10" fill="#047857">|R|</text>
+                    <text x="270" y="145" font-size="10" fill="#047857">Time</text>
+                    <path d="M 30 110 Q 60 80, 90 110 T 150 110 T 210 110 T 270 110" stroke="#34D399" stroke-width="2" fill="none" />
+                    <text x="90" y="75" font-size="10" fill="#6EE7B7">Residual Synchrony</text>
+                </svg>
+            </div>
+
+            <!-- Late Phase -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg">
+                <h3 class="font-bold text-green-300 mb-2">Late Phase: Plasticity & After-Effect</h3>
+                <p class="text-gray-300 text-base mb-4">If plasticity is active, the neural coupling $K$ weakens. The system "unlearns" the pathological synchrony, leading to a stable, incoherent state.</p>
+                <svg viewBox="0 0 300 150" class="w-full h-auto bg-gray-900 rounded">
+                    <line x1="30" y1="130" x2="280" y2="130" stroke="#047857" stroke-width="1"/>
+                    <line x1="30" y1="130" x2="30" y2="10" stroke="#047857" stroke-width="1"/>
+                    <text x="5" y="20" font-size="10" fill="#047857">Value</text>
+                    <text x="270" y="145" font-size="10" fill="#047857">Time</text>
+                    <path d="M 30 40 C 80 35, 150 80, 280 125" stroke="#34D399" stroke-width="2" fill="none"/>
+                    <text x="40" y="35" font-size="10" fill="#34D399">|R(t)|</text>
+                    <path d="M 30 30 C 100 25, 180 50, 280 80" stroke="#FBBF24" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+                    <text x="40" y="55" font-size="10" fill="#FBBF24">Coupling K(t)</text>
+                </svg>
+            </div>
+
+            <!-- Clinical Read-Out -->
+            <div class="bg-gray-900/50 border border-green-900 p-4 rounded-lg">
+                <h3 class="font-bold text-green-300 mb-2">Clinical Read-Out: Therapeutic Progress</h3>
+                <p class="text-gray-300 text-base mb-4">The distance metric $d$ between therapy sessions should progressively shrink, mirroring the empirical reduction in VAS/TQ scores.</p>
+                <svg viewBox="0 0 300 150" class="w-full h-auto bg-gray-900 rounded">
+                    <line x1="30" y1="130" x2="280" y2="130" stroke="#047857" stroke-width="1"/>
+                    <line x1="30" y1="130" x2="30" y2="10" stroke="#047857" stroke-width="1"/>
+                    <text x="15" y="20" font-size="10" fill="#047857">d</text>
+                    <text x="250" y="145" font-size="10" fill="#047857">Session #</text>
+                    <path d="M 30 30 C 100 40, 180 80, 280 120" stroke="#34D399" stroke-width="2" fill="none"/>
+                    <text x="120" y="60" font-size="10" fill="#6EE7B7">Improvement</text>
+                </svg>
+            </div>
+        </div>
+    </section>
+
+    <div class="text-center mt-16">
+        <a href="#" class="bg-green-600 hover:bg-green-500 text-black font-bold py-3 px-6 rounded-lg transition-all duration-200 text-lg inline-block shadow-lg shadow-green-500/20 hover:shadow-green-400/40">Check out the Fokker-Planck 31 Tonal approach</a>
+    </div>
+
+    <footer class="text-center mt-12 pt-6 border-t border-green-800">
+        <p class="text-green-600 text-sm">This tutorial provides a simplified overview for educational purposes.</p>
+    </footer>
+
+<script>
+    // --- Animation Script ---
+    const canvas = document.getElementById('animationCanvas');
+    const ctx = canvas.getContext('2d');
+    const stimulusBtn = document.getElementById('stimulusBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const orderParamDisplay = document.getElementById('orderParamDisplay');
+
+    const NUM_OSCILLATORS = 150;
+    const COUPLING_K = 0.03; // Strength of attraction between oscillators
+    const NATURAL_FREQ = 0.02; // Base speed
+    const STIMULUS_KICK = Math.PI / 2; // How much the phase is shifted by stimulus
+    const OSCILLATORS_PER_KICK = 15;
+
+    let oscillators = [];
+    let stimulusActive = false;
+    let animationFrameId;
+
+    function init() {
+        oscillators = [];
+        for (let i = 0; i < NUM_OSCILLATORS; i++) {
+            oscillators.push({
+                phase: Math.random() * 0.2 - 0.1, // Start highly synchronized
+                freq: NATURAL_FREQ + (Math.random() - 0.5) * 0.005 // Slight variation
+            });
+        }
+        stimulusActive = false;
+        stimulusBtn.textContent = 'Apply ACRN Stimulus';
+        stimulusBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+        stimulusBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+        
+        if(animationFrameId) cancelAnimationFrame(animationFrameId);
+        animate();
+    }
+
+    function calculateOrderParameter() {
+        let sum_cos = 0;
+        let sum_sin = 0;
+        oscillators.forEach(osc => {
+            sum_cos += Math.cos(osc.phase);
+            sum_sin += Math.sin(osc.phase);
+        });
+        const R = Math.sqrt(sum_cos**2 + sum_sin**2) / NUM_OSCILLATORS;
+        return R;
+    }
+
+    function draw() {
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.min(width, height) / 2 * 0.8;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw the phase circle
+        ctx.beginPath();
+        ctx.strokeStyle = '#047857';
+        ctx.lineWidth = 1;
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Draw oscillators
+        oscillators.forEach(osc => {
+            const x = centerX + radius * Math.cos(osc.phase);
+            const y = centerY + radius * Math.sin(osc.phase);
+            ctx.beginPath();
+            ctx.fillStyle = '#6EE7B7';
+            ctx.arc(x, y, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        });
+        
+        // Display order parameter
+        const R = calculateOrderParameter();
+        orderParamDisplay.textContent = `Synchrony (R) = ${R.toFixed(3)}`;
+    }
+
+    function update() {
+        const R = calculateOrderParameter();
+        const mean_phase = Math.atan2(
+            oscillators.reduce((sum, osc) => sum + Math.sin(osc.phase), 0),
+            oscillators.reduce((sum, osc) => sum + Math.cos(osc.phase), 0)
+        );
+
+        oscillators.forEach(osc => {
+            const phase_diff = mean_phase - osc.phase;
+            // Kuramoto model update rule
+            osc.phase += osc.freq + COUPLING_K * R * Math.sin(phase_diff);
+            osc.phase %= (2 * Math.PI);
+        });
+    }
+    
+    function applyStimulus() {
+        if (!stimulusActive) return;
+        
+        // Pick a random subset of oscillators to "kick"
+        for(let i=0; i<OSCILLATORS_PER_KICK; i++) {
+            const randIndex = Math.floor(Math.random() * NUM_OSCILLATORS);
+            oscillators[randIndex].phase += STIMULUS_KICK * (Math.random() - 0.5);
+        }
+    }
+
+    function animate() {
+        update();
+        applyStimulus();
+        draw();
+        animationFrameId = requestAnimationFrame(animate);
+    }
+
+    stimulusBtn.addEventListener('click', () => {
+        stimulusActive = !stimulusActive;
+        if (stimulusActive) {
+            stimulusBtn.textContent = 'Stop Stimulus';
+            stimulusBtn.classList.remove('bg-green-600', 'hover:bg-green-500');
+            stimulusBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+        } else {
+            stimulusBtn.textContent = 'Apply ACRN Stimulus';
+            stimulusBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+            stimulusBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+        }
+    });
+
+    resetBtn.addEventListener('click', init);
+
+    // Initial call
+    init();
+</script>
+
+</body>
+</html>
