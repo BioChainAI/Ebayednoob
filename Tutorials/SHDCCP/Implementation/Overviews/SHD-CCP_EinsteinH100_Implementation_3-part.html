@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD-CCP Implementation Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0; /* Slate 200 */
+        }
+        
+        .panel {
+            background-color: #1e293b; /* Slate 800 */
+            border: 1px solid #334155; /* Slate 700 */
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 400px;
+            background-color: #000;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Einstein Tile Grid */
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .tile-cell {
+            aspect-ratio: 1;
+            border-radius: 2px;
+            background-color: #334155;
+            transition: background-color 0.1s;
+        }
+        
+        /* Color classes for tile map */
+        .bg-halo { background-color: #8b5cf6; } /* Violet - Halo */
+        .bg-buffer { background-color: #10b981; } /* Emerald - Buffer */
+        .bg-core { background-color: #ec4899; } /* Pink - Core */
+        .bg-freq { background-color: #3b82f6; } /* Blue - Freq */
+    </style>
+</head>
+<body class="p-8 max-w-7xl mx-auto">
+
+    <header class="mb-12 text-center">
+        <h1 class="text-4xl font-bold text-cyan-400 mb-4">SHD-CCP Implementation Dashboard</h1>
+        <p class="text-xl text-gray-400">"Einstein Tile" Topology on a Trefoil Knot Manifold</p>
+    </header>
+
+    <!-- SECTION 1: The Einstein Tile -->
+    <div class="panel grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div>
+            <h2 class="text-2xl font-semibold text-white mb-4">Step 1: The "Einstein Tile" Topology</h2>
+            <p class="mb-4">
+                Before projection, the 64-bit packet is organized into an 8x8 memory grid optimized for NVIDIA H100 Tensor Cores.
+            </p>
+            <ul class="list-disc list-inside space-y-2 text-sm text-gray-300">
+                <li><strong class="text-violet-400">Rows 0 & 7 (Halo):</strong> Symbolic Control Data. Accessed via DSMEM for zero-latency neighbor sync.</li>
+                <li><strong class="text-pink-400">Rows 2-5 (Core):</strong> The 32-bit Quaternion Payload. Loaded asynchronously via TMA.</li>
+                <li><strong class="text-emerald-400">Rows 1 & 6 (Buffer):</strong> Payload Scaling Factors to prevent register leakage.</li>
+            </ul>
+        </div>
+        <div class="flex flex-col items-center">
+            <h3 class="text-sm font-mono text-gray-400 mb-2">8x8 BIT-FIELD MAP</h3>
+            <div id="einstein-grid" class="tile-grid"></div>
+            <div class="mt-4 flex gap-4 text-xs">
+                <span class="flex items-center"><div class="w-3 h-3 bg-halo mr-1"></div> Halo</span>
+                <span class="flex items-center"><div class="w-3 h-3 bg-core mr-1"></div> Core</span>
+                <span class="flex items-center"><div class="w-3 h-3 bg-buffer mr-1"></div> Buffer</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: The Trefoil Manifold -->
+    <div class="panel">
+        <h2 class="text-2xl font-semibold text-white mb-4">Step 2: The Trefoil Manifold & 16-Stream Bundle</h2>
+        <p class="mb-4 text-gray-300">
+            The packet is projected onto a Trefoil Knot path in $\mathbb{R}^3$. Instead of a single line, we simulate a **16-stream data bus** (representing the 16 columns of the 4x4x4 spatial packet) twisting around the manifold.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+             <div class="bg-slate-900 p-3 rounded text-sm">
+                <strong class="block text-cyan-400 mb-1">Path Equation</strong>
+                $$x(t) = \sin(t) + 2\sin(2t)$$
+                $$y(t) = \cos(t) - 2\cos(2t)$$
+                $$z(t) = -\sin(3t)$$
+            </div>
+            <div class="bg-slate-900 p-3 rounded text-sm">
+                <strong class="block text-cyan-400 mb-1">Topological Twist</strong>
+                The 16 streams rotate $720^{\circ}$ over one cycle ($t: 0 \to 4\pi$) to maintain Spin-1/2 statistics and prevent data tangling.
+            </div>
+             <div class="bg-slate-900 p-3 rounded text-sm">
+                <strong class="block text-cyan-400 mb-1">Strassen Sectors</strong>
+                The path is divided into 7 color-coded "Phase Stations" representing the recursive steps of the matrix multiplication algorithm ($M_1 - M_7$).
+            </div>
+        </div>
+
+        <div id="manifold-canvas" class="canvas-container"></div>
+    </div>
+
+    <!-- SECTION 3: Keystone Correction -->
+    <div class="panel grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+            <h2 class="text-2xl font-semibold text-white mb-4">Step 3: Keystone Scope (Micro-Physics)</h2>
+            <p class="mb-4 text-gray-300">
+                As the packet travels the curve, "inner" streams travel a shorter distance than "outer" streams. The system must apply **Keystone Correction** (squashing/stretching) to maintain volumetric consistency.
+            </p>
+            <p class="mb-4 text-gray-300">
+                The view on the right isolates the packet's local coordinate frame, showing the real-time deformation required to fit the manifold's curvature at the current $t$.
+            </p>
+             <div class="bg-slate-900 p-4 rounded mt-4">
+                <div class="flex justify-between text-sm mb-1">
+                    <span>Curvature Strain:</span>
+                    <span id="strain-readout" class="font-mono text-red-400">0.00%</span>
+                </div>
+                <div class="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                    <div id="strain-bar" class="bg-red-500 h-full" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div id="keystone-canvas" class="canvas-container"></div>
+    </div>
+
+    <script>
+        // --- 1. EINSTEIN TILE LOGIC ---
+        function initEinsteinGrid() {
+            const grid = document.getElementById('einstein-grid');
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'tile-cell';
+                    
+                    // Apply color map from PDF
+                    if (row === 0 || row === 7) {
+                        cell.classList.add('bg-halo'); // Halo
+                        if (row === 7 && col < 5) cell.classList.add('bg-freq'); // Freq override
+                    } else if (row === 1 || row === 6) {
+                        cell.classList.add('bg-buffer'); // Buffer
+                    } else {
+                        cell.classList.add('bg-core'); // Core
+                    }
+                    
+                    // Add subtle pulse animation
+                    cell.style.animation = `pulse 2s infinite ${Math.random()}s`;
+                    grid.appendChild(cell);
+                }
+            }
+        }
+        
+        // --- 2. MANIFOLD & KEYSTONE LOGIC ---
+        let sceneM, cameraM, rendererM, controlsM; // Manifold Scene
+        let sceneK, cameraK, rendererK; // Keystone Scene
+        let streams = [];
+        let packetCursor;
+        let keystoneBox;
+        
+        const SEGMENTS = 720; // As per requirement
+        const TUBE_RADIUS = 2; // Radius of the 16-stream bundle
+        
+        function init3D() {
+            // --- Manifold Scene Setup ---
+            const contM = document.getElementById('manifold-canvas');
+            sceneM = new THREE.Scene();
+            cameraM = new THREE.PerspectiveCamera(50, contM.clientWidth / contM.clientHeight, 0.1, 100);
+            cameraM.position.set(0, 15, 25);
+            
+            rendererM = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            rendererM.setSize(contM.clientWidth, contM.clientHeight);
+            contM.appendChild(rendererM.domElement);
+            
+            controlsM = new THREE.OrbitControls(cameraM, rendererM.domElement);
+            controlsM.enableDamping = true;
+
+            // --- Keystone Scene Setup ---
+            const contK = document.getElementById('keystone-canvas');
+            sceneK = new THREE.Scene();
+            cameraK = new THREE.PerspectiveCamera(50, contK.clientWidth / contK.clientHeight, 0.1, 100);
+            cameraK.position.set(5, 5, 5);
+            cameraK.lookAt(0,0,0);
+            
+            rendererK = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            rendererK.setSize(contK.clientWidth, contK.clientHeight);
+            contK.appendChild(rendererK.domElement);
+
+            // --- Generate Trefoil Path ---
+            // x = sin(t) + 2sin(2t), y = cos(t) - 2cos(2t), z = -sin(3t)
+            class TrefoilCurve extends THREE.Curve {
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+                    // t goes from 0 to 1, we map to 0 to 4PI for 2 full loops
+                    const angle = t * Math.PI * 4;
+                    const x = Math.sin(angle) + 2 * Math.sin(2 * angle);
+                    const y = Math.cos(angle) - 2 * Math.cos(2 * angle);
+                    const z = -Math.sin(3 * angle);
+                    return optionalTarget.set(x * 2, y * 2, z * 2); // Scale up
+                }
+            }
+            const path = new TrefoilCurve();
+
+            // --- Create 16-Stream Bundle ---
+            const streamMat = new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.3, transparent: true });
+            
+            for (let i = 0; i < 16; i++) {
+                const streamPoints = [];
+                const offsetAngle = (i / 16) * Math.PI * 2;
+                
+                for (let j = 0; j <= SEGMENTS; j++) {
+                    const t = j / SEGMENTS;
+                    const point = path.getPoint(t);
+                    const tangent = path.getTangent(t);
+                    const normal = new THREE.Vector3(0, 1, 0).applyAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2).cross(tangent).normalize();
+                    const binormal = new THREE.Vector3().crossVectors(tangent, normal).normalize();
+                    
+                    // Twist logic: 720 degrees (4PI) over the loop
+                    const twist = t * Math.PI * 4; 
+                    const angle = offsetAngle + twist;
+                    
+                    // Calculate offset position
+                    const cx = Math.cos(angle) * 0.4; // Bundle thickness
+                    const cy = Math.sin(angle) * 0.4;
+                    
+                    const offset = normal.clone().multiplyScalar(cx).add(binormal.clone().multiplyScalar(cy));
+                    streamPoints.push(point.add(offset));
+                }
+                
+                const geo = new THREE.BufferGeometry().setFromPoints(streamPoints);
+                const line = new THREE.Line(geo, streamMat);
+                sceneM.add(line);
+            }
+
+            // --- Create Packet Cursor (Macro View) ---
+            const cursorGeo = new THREE.BoxGeometry(1, 1, 1);
+            const cursorMat = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+            packetCursor = new THREE.Mesh(cursorGeo, cursorMat);
+            sceneM.add(packetCursor);
+
+            // --- Create Keystone Box (Micro View) ---
+            // We use a group of points/lines to allow deformation
+            keystoneBox = new THREE.Group();
+            const kGeo = new THREE.BoxGeometry(2, 2, 2, 4, 4, 4); // Subdivided for deformation
+            const kMat = new THREE.MeshBasicMaterial({ color: 0x39ff14, wireframe: true });
+            const kMesh = new THREE.Mesh(kGeo, kMat);
+            keystoneBox.add(kMesh);
+            sceneK.add(keystoneBox);
+
+            // Start Loop
+            animate(path);
+        }
+
+        let time = 0;
+        function animate(path) {
+            requestAnimationFrame(() => animate(path));
+            
+            time += 0.002;
+            const t = time % 1;
+            
+            // --- 1. Update Macro View ---
+            const pos = path.getPointAt(t);
+            const tangent = path.getTangentAt(t);
+            
+            packetCursor.position.copy(pos);
+            packetCursor.lookAt(pos.clone().add(tangent));
+            
+            // --- 2. Update Micro View (Simulate Keystone) ---
+            // Calculate curvature (approximation)
+            const tNext = (time + 0.01) % 1;
+            const tangentNext = path.getTangentAt(tNext);
+            const curvature = tangent.angleTo(tangentNext) * 100; // Fake strain magnitude
+            
+            // Apply scale shear based on curvature
+            // High curvature = squash Y, stretch X
+            const squash = 1 - (curvature * 0.2);
+            const stretch = 1 + (curvature * 0.2);
+            keystoneBox.scale.set(stretch, squash, 1);
+            
+            // Update UI
+            document.getElementById('strain-bar').style.width = Math.min(curvature * 20, 100) + '%';
+            document.getElementById('strain-readout').innerText = (curvature * 10).toFixed(2) + '%';
+            
+            controlsM.update();
+            rendererM.render(sceneM, cameraM);
+            rendererK.render(sceneK, cameraK);
+        }
+
+        // Init
+        initEinsteinGrid();
+        init3D();
+        
+        // Add CSS pulse for grid
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.7; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+    </script>
+</body>
+</html>

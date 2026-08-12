@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD-CCP Framework Tutorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- MathJax for rendering LaTeX equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .canvas-container { width: 100%; height: 400px; background-color: #1e293b; border-radius: 0.5rem; overflow: hidden; position: relative; border: 1px solid #334155; }
+        .gradient-text { background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        @keyframes dash { to { stroke-dashoffset: -20; } }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <!-- Navigation / Header -->
+    <header class="border-b border-slate-700 bg-slate-900 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight text-white"><span class="text-blue-400">BioChain AI</span> | SHD-CCP Architecture</h1>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-300">
+                <a href="#intro" class="hover:text-white transition">Introduction</a>
+                <a href="#tqf" class="hover:text-white transition">TQF Lattice</a>
+                <a href="#topology" class="hover:text-white transition">Trefoil Topology</a>
+                <a href="#toroid" class="hover:text-white transition">Toroidal Scanning</a>
+                <a href="#holographic" class="hover:text-white transition">Holo-Toroid</a>
+                <a href="#spinor" class="hover:text-white transition">720 Spinor</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12 space-y-24">
+
+        <!-- Hero Section -->
+        <section id="intro" class="text-center space-y-6">
+            <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
+                Topological Symmetry Folding <br>
+                <span class="gradient-text">in the SHD-CCP Framework</span>
+            </h2>
+            <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
+                An interactive exploration of Quaternionic Delta Encoding, Hyperbolic Projection, Toroidal Similarity Scanning, and the 720:1 Spinor Cyclic system designed for FPGA geometric compression.
+            </p>
+            
+            <div class="pt-4">
+                <a href="https://www.academia.edu/165167160/Topological_Symmetry_Folding_and_Hyperbolic_Projection_in_the_SHD_CCP_Framework_A_720_1_Quaternionic_Cyclic_System" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-800 border border-slate-600 hover:border-blue-400 hover:bg-slate-800/80 text-blue-300 transition shadow-lg hover:shadow-blue-900/20 text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    Read the Published Paper on Academia.edu
+                </a>
+            </div>
+        </section>
+
+        <!-- Section 1: TQF and Lattice -->
+        <section id="tqf" class="space-y-8">
+            <div class="text-center space-y-4">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-blue-400 bg-blue-400/10">Step 1: Euclidean Compression</div>
+                <h3 class="text-3xl font-bold text-white">The Triple Quad Formula (TQF) Simulator</h3>
+                <p class="text-slate-300 max-w-3xl mx-auto leading-relaxed">
+                    Explore the discrete \(4\times4\times4\) lattice. The TQF identifies geometric redundancy purely through integers. Generate points to see how the system identifies whether they form a branching triangle or a compressible collinear path.
+                </p>
+                <div class="p-3 bg-slate-800 rounded-lg border border-slate-700 font-mono text-center text-blue-300 shadow-inner max-w-2xl mx-auto">
+                    \[(Q_1+Q_2+Q_3)^2 = 2(Q_1^2+Q_2^2+Q_3^2)\]
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 items-start">
+                <!-- TQF Interactive Controls -->
+                <div class="glass-panel p-6 rounded-xl shadow-2xl space-y-6">
+                    <div class="flex justify-between items-center border-b border-slate-600 pb-2">
+                        <h4 class="text-xl font-bold text-white">Lattice Coordinates</h4>
+                        <div class="space-x-2">
+                            <button onclick="generateRandomCollinear()" class="px-2 py-1 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/40 border border-emerald-500/50 rounded text-xs font-bold transition">Gen Collinear</button>
+                            <button onclick="generateRandomTriangle()" class="px-2 py-1 bg-rose-600/20 text-rose-400 hover:bg-rose-600/40 border border-rose-500/50 rounded text-xs font-bold transition">Gen Triangle</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-sm text-center font-semibold text-slate-300 items-center">
+                        <div class="text-right pr-2">Node</div><div>X (0-3)</div><div>Y (0-3)</div><div>Z (0-3)</div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-4 gap-2 items-center">
+                            <div class="text-right pr-2 font-bold text-blue-400">P₁</div>
+                            <input type="number" id="x1" value="0" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                            <input type="number" id="y1" value="0" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                            <input type="number" id="z1" value="0" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 items-center">
+                            <div class="text-right pr-2 font-bold text-purple-400">P₂</div>
+                            <input type="number" id="x2" value="1" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                            <input type="number" id="y2" value="1" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                            <input type="number" id="z2" value="1" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 items-center">
+                            <div class="text-right pr-2 font-bold text-amber-400">P₃</div>
+                            <input type="number" id="x3" value="2" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                            <input type="number" id="y3" value="2" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                            <input type="number" id="z3" value="2" min="0" max="3" onchange="updateSim()" class="bg-slate-900 border border-slate-600 rounded p-2 text-white text-center">
+                        </div>
+                    </div>
+                    
+                    <div id="tqf-result" class="p-3 rounded-lg bg-slate-900 border border-slate-700 text-center text-sm font-mono text-slate-300">
+                        <!-- Results populated via JS -->
+                    </div>
+
+                    <button id="compress-btn" onclick="autoCompress()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 transition rounded-lg text-white font-bold shadow-lg" disabled>
+                        Auto Compress Redundant Node
+                    </button>
+                </div>
+
+                <!-- 3D Lattice Viewer -->
+                <div class="relative">
+                    <div id="lattice-canvas" class="canvas-container shadow-2xl shadow-blue-900/20 cursor-move">
+                        <!-- Canvas injected here -->
+                    </div>
+                    <div class="absolute bottom-4 left-4 bg-slate-900/80 px-3 py-2 rounded text-xs font-mono text-slate-300 border border-slate-500/30 pointer-events-none">
+                        Drag to rotate | Scroll to zoom
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 1.5: Collinear vs Triangular & Knot Detection -->
+        <section id="knot-detection" class="space-y-10 pt-8 border-t border-slate-800">
+            <div class="text-center space-y-4">
+                <h3 class="text-3xl font-bold text-white">From TQF to Topological Knot Detection</h3>
+                <p class="text-slate-400 max-w-3xl mx-auto leading-relaxed">
+                    The Triple Quad Formula is more than a compression tool; it is the fundamental discriminator of spatial behavior. By identifying where the lattice flows linearly and where it fractures into triangles, we form the geometric basis for detecting complex topological knots.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- 1. Collinear Flow -->
+                <div class="bg-slate-800/60 p-6 rounded-2xl border border-blue-500/30 space-y-4 hover:border-blue-500/60 transition shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                    <h4 class="text-xl font-bold text-blue-400">1. Collinear Flow (1D)</h4>
+                    <div class="h-24 flex items-center justify-center">
+                        <svg viewBox="0 0 200 50" class="w-full h-full">
+                            <line x1="20" y1="25" x2="180" y2="25" stroke="#3b82f6" stroke-width="3" stroke-dasharray="6 4" class="animate-[dash_3s_linear_infinite]"/>
+                            <circle cx="20" cy="25" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="3"/>
+                            <circle cx="100" cy="25" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="3" class="opacity-30"/>
+                            <circle cx="180" cy="25" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="3"/>
+                            <text x="100" y="12" fill="#60a5fa" font-size="12" font-family="monospace" text-anchor="middle">Compressed</text>
+                        </svg>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-sm font-mono text-blue-300">TQF = TRUE</p>
+                        <p class="text-sm text-slate-300">
+                            <strong>Mechanic:</strong> The probability wave encounters no resistance. It flows perfectly along the affine lattice. The intermediate node is geometrically redundant and pruned, maximizing data compression.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 2. Triangular Structure -->
+                <div class="bg-slate-800/60 p-6 rounded-2xl border border-rose-500/30 space-y-4 hover:border-rose-500/60 transition shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                    <h4 class="text-xl font-bold text-rose-400">2. Triangular Structure (2D)</h4>
+                    <div class="h-24 flex items-center justify-center">
+                        <svg viewBox="0 0 200 100" class="w-full h-full">
+                            <polygon points="100,20 40,80 160,80" fill="rgba(244, 63, 94, 0.1)" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 4"/>
+                            <line x1="40" y1="80" x2="100" y2="20" stroke="#f43f5e" stroke-width="3"/>
+                            <line x1="100" y1="20" x2="160" y2="80" stroke="#f43f5e" stroke-width="3"/>
+                            
+                            <circle cx="100" cy="20" r="7" fill="#1e293b" stroke="#f43f5e" stroke-width="3"/>
+                            <circle cx="40" cy="80" r="7" fill="#1e293b" stroke="#f43f5e" stroke-width="3"/>
+                            <circle cx="160" cy="80" r="7" fill="#1e293b" stroke="#f43f5e" stroke-width="3"/>
+                            <text x="100" y="60" fill="#fb7185" font-size="12" font-family="monospace" text-anchor="middle">Rule of 3</text>
+                        </svg>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-sm font-mono text-rose-300">TQF ≠ TRUE</p>
+                        <p class="text-sm text-slate-300">
+                            <strong>Mechanic:</strong> The vector hits a boundary (Prime Potential), forcing an Orthogonal Bifurcation. This forms a discrete 2D bounding plane, triggering the cyclical "Rule of 3" branching dynamic.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 3. Topological Knotting -->
+                <div class="bg-slate-800/60 p-6 rounded-2xl border border-emerald-500/30 space-y-4 hover:border-emerald-500/60 transition shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                    <h4 class="text-xl font-bold text-emerald-400">3. Topological Knotting (3D/4D)</h4>
+                    <div class="h-24 flex items-center justify-center">
+                        <svg viewBox="0 0 120 120" class="h-full w-auto" fill="none" stroke-width="4" stroke-linecap="round">
+                            <!-- Bottom left loop -->
+                            <path d="M 45 75 C 20 100, 0 80, 20 55 C 30 40, 50 45, 60 60" stroke="#34d399"/>
+                            <!-- Top loop -->
+                            <path d="M 60 60 C 70 80, 100 70, 95 45 C 90 20, 60 10, 50 35 C 45 45, 45 65, 60 75" stroke="#34d399"/>
+                            <!-- Overlap break to make it look like a knot -->
+                            <path d="M 50 35 C 35 60, 35 80, 50 90" stroke="#059669" stroke-dasharray="4 6"/>
+                            <circle cx="60" cy="60" r="4" fill="#10b981" stroke="none"/>
+                            <circle cx="50" cy="35" r="4" fill="#10b981" stroke="none"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-sm font-mono text-emerald-300">Crystallization</p>
+                        <p class="text-sm text-slate-300">
+                            <strong>Mechanic:</strong> As triangles propagate, they loop back. The specific sequence of non-collinear "turns" forms a mathematical knot, distilled into a Topological Invariant and saved to the Codex.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Group Theory & Delta Encoding -->
+        <section class="p-8 glass-panel rounded-2xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                <svg width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="max-w-3xl space-y-6 relative z-10">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-purple-400 bg-purple-400/10">Step 2: Continuous Evolution</div>
+                <h3 class="text-3xl font-bold text-white">Quaternionic Delta Encoding & Group Axioms</h3>
+                <p class="text-slate-300 leading-relaxed">
+                    To prevent coordinate drift during infinite fractal generation, the SHD-CCP protocol abandons absolute Cartesian coordinates \((x,y,z)\). Instead, it strictly tracks transformational changes using Quaternionic Delta Encoding (\(\Delta q\)).
+                </p>
+                <div class="grid sm:grid-cols-2 gap-4 mt-6">
+                    <div class="bg-slate-800/50 p-4 rounded border border-slate-700">
+                        <h5 class="text-blue-300 font-bold mb-1">1. Closure</h5>
+                        <p class="text-xs text-slate-400">Any combination of states yields a valid \(4\times4\times4\) state within the manifold.</p>
+                    </div>
+                    <div class="bg-slate-800/50 p-4 rounded border border-slate-700">
+                        <h5 class="text-blue-300 font-bold mb-1">2. Associativity</h5>
+                        <p class="text-xs text-slate-400">The grouping of continuous operations does not alter the crystallized structure.</p>
+                    </div>
+                    <div class="bg-slate-800/50 p-4 rounded border border-slate-700">
+                        <h5 class="text-blue-300 font-bold mb-1">3. Identity</h5>
+                        <p class="text-xs text-slate-400">A neutral null-quaternion state (\(e\)) represents the unperturbed lattice vacuum.</p>
+                    </div>
+                    <div class="bg-slate-800/50 p-4 rounded border border-slate-700">
+                        <h5 class="text-blue-300 font-bold mb-1">4. Inverse</h5>
+                        <p class="text-xs text-slate-400">Every bifurcation trajectory has a reversible inverse path.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Trefoil Topology -->
+        <section id="topology" class="space-y-8">
+            <div class="text-center space-y-4">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-emerald-400 bg-emerald-400/10">Step 3: Topological Compression</div>
+                <h3 class="text-3xl font-bold text-white">Trefoil Manifold & \(D_3\) Symmetry Folding</h3>
+                <p class="text-slate-300 max-w-2xl mx-auto">
+                    The three data streams of the lattice are mapped onto the parametric equations of a Trefoil Knot. Because the trefoil possesses 3-fold dihedral symmetry (\(D_3\)), the FPGA only needs to store exactly <strong>1/3 of the manifold</strong> (the Fundamental Domain) in BRAM. 
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8 items-center">
+                <div class="lg:col-span-2">
+                    <!-- Three.js Canvas Container -->
+                    <div id="trefoil-canvas" class="canvas-container shadow-2xl shadow-emerald-900/20">
+                        <div class="absolute bottom-4 left-4 bg-slate-900/80 px-3 py-2 rounded text-xs font-mono text-emerald-300 border border-emerald-500/30">
+                            Solid: Fundamental Domain (BRAM) <br>
+                            Wireframe: Procedurally Generated (O(1))
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="p-6 bg-slate-800 rounded-xl border border-slate-700 shadow-lg">
+                        <h4 class="text-lg font-bold text-white mb-3">Parametric Projection</h4>
+                        <div class="text-sm font-mono text-slate-300 space-y-2">
+                            <p>\(x(t) = \sin(t) + 2\sin(2t)\)</p>
+                            <p>\(y(t) = \cos(t) - 2\cos(2t)\)</p>
+                            <p>\(z(t) = -\sin(3t)\)</p>
+                        </div>
+                        <p class="text-sm text-slate-400 mt-4 leading-relaxed">
+                            By substituting absolute position with angular phase \(t\), memory lookup becomes an \(O(1)\) operation calculated via a simple \(120^\circ\) phase shift rotation matrix.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Golden Toroid & Similarity Conservation -->
+        <section id="toroid" class="space-y-10 pt-8 border-t border-slate-800">
+            <div class="text-center space-y-4">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-indigo-400 bg-indigo-400/10">Step 4: Multi-Stream Conservation</div>
+                <h3 class="text-3xl font-bold text-white">Golden Toroids & Similarity Scanning</h3>
+                <p class="text-slate-400 max-w-4xl mx-auto leading-relaxed">
+                    A logical fallacy arises if we assume infinite procedural generation happens in unbounded space: comparing multiple independent trefoils would require massive \(O(N^3)\) geometrical comparisons. To solve this, the SHD-CCP protocol bounds all data streams to the surface of a <strong>Golden Strassen-Clifford Toroid</strong>.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6 order-2 lg:order-1">
+                    <div class="bg-slate-800/60 p-6 rounded-2xl border border-indigo-500/30 shadow-lg">
+                        <h4 class="text-xl font-bold text-indigo-400 mb-3">Ergodic Covering & Forced Intersections</h4>
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                            By parameterizing the toroid using the Golden Ratio (\(\phi \approx 1.618\)), the frequency of the wrapping paths is irrational. This ensures an <strong>ergodic covering</strong>—the streams wrap infinitely without repeating, comprehensively scanning the phase space.
+                        </p>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            Because the surface is bounded, multiple trefoil streams (representing different data histories) <em>must</em> intersect. These intersections occur at specific resonance nodes called <strong>Prime Solitons</strong>.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/60 p-6 rounded-2xl border border-teal-500/30 shadow-lg">
+                        <h4 class="text-xl font-bold text-teal-400 mb-3">Similarity Conservation System</h4>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            Instead of performing expensive voxel-by-voxel comparisons of two complex shapes, the system performs a simple lookup: <strong>Do Trefoil A and Trefoil B share the same Soliton intersection nodes on the torus?</strong>
+                        </p>
+                        <p class="text-sm text-slate-300 leading-relaxed mt-2">
+                            If they share the same Prime IDs, they are topologically similar. This reduces massive 3D geometrical analysis to an \(O(1)\) discrete graph-node matching algorithm, conserving immense computational bandwidth.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="order-1 lg:order-2 relative">
+                    <div id="toroid-canvas" class="canvas-container shadow-2xl shadow-indigo-900/20 cursor-move border-indigo-500/30">
+                        <!-- Canvas injected here -->
+                    </div>
+                    <div class="absolute bottom-4 right-4 flex flex-col items-end gap-2 text-xs font-mono">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block shadow-[0_0_8px_#3b82f6]"></span> <span class="text-slate-300">Stream A (Trefoil 1)</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-500 inline-block shadow-[0_0_8px_#a855f7]"></span> <span class="text-slate-300">Stream B (Trefoil 2)</span></div>
+                        <div class="flex items-center gap-2 mt-1"><span class="w-4 h-4 rounded-full bg-white inline-block shadow-[0_0_12px_#ffffff]"></span> <span class="text-teal-300 font-bold">Similarity Node (Soliton)</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4.5: Holographic Scaling & Probability Stream -->
+        <section id="holographic" class="space-y-10 pt-8 border-t border-slate-800">
+            <div class="text-center space-y-4">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-pink-400 bg-pink-400/10">Step 4.5: High-Density Computation</div>
+                <h3 class="text-3xl font-bold text-white">Holographic 24-Stream Projection</h3>
+                <p class="text-slate-400 max-w-4xl mx-auto leading-relaxed">
+                    As we increase the tensor bandwidth, the Golden Toroid natively supports symmetrical high-density stream packing. By scaling up to 24 simultaneous data streams, opposing phase geometries collide to generate a macroscopic topological invariant.
+                </p>
+            </div>
+
+            <div class="glass-panel p-6 rounded-2xl shadow-2xl border border-pink-500/20">
+                
+                <!-- Controls -->
+                <div class="flex flex-wrap justify-center gap-4 mb-6">
+                    <button onclick="setHoloMode(3, this)" class="holo-btn px-6 py-2 rounded-full border border-blue-500/50 bg-blue-500/20 text-blue-300 font-bold transition hover:bg-blue-500/40">3 Streams</button>
+                    <button onclick="setHoloMode(6, this)" class="holo-btn px-6 py-2 rounded-full border border-slate-600 bg-slate-800 text-slate-400 font-bold transition hover:bg-slate-700">6 Streams</button>
+                    <button onclick="setHoloMode(9, this)" class="holo-btn px-6 py-2 rounded-full border border-slate-600 bg-slate-800 text-slate-400 font-bold transition hover:bg-slate-700">9 Streams</button>
+                    <button onclick="setHoloMode(12, this)" class="holo-btn px-6 py-2 rounded-full border border-slate-600 bg-slate-800 text-slate-400 font-bold transition hover:bg-slate-700">12 Streams</button>
+                    <button onclick="setHoloMode(24, this)" class="holo-btn px-8 py-2 rounded-full border border-pink-500/50 bg-pink-500/10 text-pink-400 font-extrabold transition hover:bg-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.3)]">24-Stream Holographic (12+ / 12-)</button>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 relative">
+                        <div id="holo-canvas" class="w-full h-[500px] bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-inner cursor-move">
+                            <!-- Canvas injected here -->
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6 flex flex-col justify-center">
+                        <div id="holo-desc-standard" class="space-y-4">
+                            <h4 class="text-xl font-bold text-blue-400">Symmetrical Packing</h4>
+                            <p class="text-sm text-slate-300 leading-relaxed">
+                                The irrational \(\phi\) parameterization of the Clifford Toroid allows for symmetrical multiplexing. We can offset multiple Rule of 3 data streams without breaking the ergodic covering. 
+                            </p>
+                            <p class="text-sm text-slate-300 leading-relaxed">
+                                Each stream perfectly avoids catastrophic global collision while steadily intersecting at prime coordinate Soliton nodes.
+                            </p>
+                        </div>
+
+                        <div id="holo-desc-24" class="space-y-4 hidden">
+                            <h4 class="text-xl font-bold text-pink-400">The Probability Stream</h4>
+                            <p class="text-sm text-slate-300 leading-relaxed">
+                                When 12 <span class="text-cyan-400 font-bold">Positive Streams (\(+\Delta q\))</span> and 12 <span class="text-rose-400 font-bold">Negative Streams (\(-\Delta q\))</span> are projected simultaneously, a phase-cancellation event occurs.
+                            </p>
+                            <p class="text-sm text-slate-300 leading-relaxed">
+                                The intense localized diffusion between opposing streams filters out transient topological noise. What remains is the <span class="text-amber-400 font-bold">Third Probability Stream</span> (Golden)—a self-reinforcing standing wave of probability density that traces the exact prime coordinate skeleton of the Fokker-Planck sieve.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Spinor Cycle -->
+        <section id="spinor" class="grid lg:grid-cols-2 gap-12 items-center pt-8 border-t border-slate-800">
+            <div class="order-2 lg:order-1 space-y-6">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-amber-400 bg-amber-400/10">Step 5: Zero-Drift Hardware</div>
+                <h3 class="text-3xl font-bold text-white">The 720:1 Spinor Cycle</h3>
+                <p class="text-slate-300 leading-relaxed">
+                    To stabilize the continuous Fokker-Planck prime sieve, the system acts as a Spin-1/2 Fermion constraint. Quaternions require a \(720^\circ\) (\(4\pi\) radians) spatial rotation to return precisely to their initial quantum state.
+                </p>
+                <div class="p-5 bg-slate-800 border-l-4 border-amber-500 rounded-r-lg shadow-md">
+                    <p class="font-mono text-amber-300 mb-2">\(\mathcal{T}_{n} \equiv \mathcal{T}_{n \pmod{720}}\)</p>
+                    <p class="text-sm text-slate-400">
+                        At exactly iteration 720, the product of all quaternion deltas and hyperbolic projections is forced back to the Identity Matrix \((\mathcal{I})\). This automatically purges cumulative fractional drift without interrupting the data stream.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="order-1 lg:order-2">
+                 <div id="spinor-canvas" class="canvas-container shadow-2xl shadow-amber-900/20 flex flex-col items-center justify-center relative border-amber-500/30">
+                    <div class="absolute top-4 left-0 right-0 flex justify-center z-10">
+                        <div class="bg-slate-900/90 border border-amber-500/50 px-6 py-2 rounded-full shadow-lg">
+                            <span class="text-slate-400 text-sm uppercase tracking-widest mr-2">Phase:</span>
+                            <span id="phase-counter" class="text-2xl font-mono font-bold text-amber-400">0°</span>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-4 left-4 right-4 flex justify-between px-4 text-xs font-mono text-slate-500">
+                        <span>0° (Identity)</span>
+                        <span>360° (Entangled)</span>
+                        <span>720° (Identity)</span>
+                    </div>
+                 </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-slate-800 bg-slate-950 py-12 text-center mt-24">
+        <p class="text-slate-500 text-sm">Interactive Research Tutorial &copy; 2026 BioChain AI - SHD-CCP Architecture</p>
+    </footer>
+
+    <!-- INTERACTIVE LOGIC & THREE.JS SCRIPTS -->
+    <script>
+        // --- 1. TQF & Lattice Simulator Logic ---
+        let latticeScene, latticeCamera, latticeRenderer, latticeControls;
+        let gridNodes = [];
+        let highlightMeshes = [];
+        let connectionLines;
+        let isCollinearState = false;
+
+        function initLattice() {
+            const container = document.getElementById('lattice-canvas');
+            latticeScene = new THREE.Scene();
+            
+            latticeCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            latticeCamera.position.set(6, 5, 8);
+            latticeCamera.lookAt(0,0,0);
+
+            latticeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            latticeRenderer.setSize(container.clientWidth, container.clientHeight);
+            latticeRenderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(latticeRenderer.domElement);
+
+            latticeControls = new THREE.OrbitControls(latticeCamera, latticeRenderer.domElement);
+            latticeControls.enableDamping = true;
+            latticeControls.dampingFactor = 0.05;
+            latticeControls.autoRotate = true;
+            latticeControls.autoRotateSpeed = 0.5;
+
+            // Lighting
+            latticeScene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(10, 20, 10);
+            latticeScene.add(dirLight);
+
+            // Create 4x4x4 Grid
+            const nodeGeo = new THREE.SphereGeometry(0.06, 8, 8);
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x475569, transparent: true, opacity: 0.3 });
+            
+            for(let x=0; x<4; x++) {
+                gridNodes[x] = [];
+                for(let y=0; y<4; y++) {
+                    gridNodes[x][y] = [];
+                    for(let z=0; z<4; z++) {
+                        const mesh = new THREE.Mesh(nodeGeo, nodeMat);
+                        mesh.position.set(x - 1.5, y - 1.5, z - 1.5);
+                        latticeScene.add(mesh);
+                        gridNodes[x][y][z] = mesh;
+                    }
+                }
+            }
+
+            const highlightGeo = new THREE.SphereGeometry(0.15, 16, 16);
+            const mats = [
+                new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x1e3a8a }), // P1 Blue
+                new THREE.MeshStandardMaterial({ color: 0xc084fc, emissive: 0x4c1d95 }), // P2 Purple
+                new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0x78350f })  // P3 Amber
+            ];
+            for(let i=0; i<3; i++) {
+                const mesh = new THREE.Mesh(highlightGeo, mats[i]);
+                latticeScene.add(mesh);
+                highlightMeshes.push(mesh);
+            }
+
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, linewidth: 2 });
+            const lineGeo = new THREE.BufferGeometry();
+            connectionLines = new THREE.Line(lineGeo, lineMat);
+            latticeScene.add(connectionLines);
+
+            animateLattice();
+            updateSim();
+        }
+
+        function animateLattice() {
+            requestAnimationFrame(animateLattice);
+            latticeControls.update();
+            latticeRenderer.render(latticeScene, latticeCamera);
+        }
+
+        function getInputs() {
+            return [
+                { x: parseInt(document.getElementById('x1').value), y: parseInt(document.getElementById('y1').value), z: parseInt(document.getElementById('z1').value) },
+                { x: parseInt(document.getElementById('x2').value), y: parseInt(document.getElementById('y2').value), z: parseInt(document.getElementById('z2').value) },
+                { x: parseInt(document.getElementById('x3').value), y: parseInt(document.getElementById('y3').value), z: parseInt(document.getElementById('z3').value) }
+            ];
+        }
+
+        function setInputs(p1, p2, p3) {
+            document.getElementById('x1').value = p1.x; document.getElementById('y1').value = p1.y; document.getElementById('z1').value = p1.z;
+            document.getElementById('x2').value = p2.x; document.getElementById('y2').value = p2.y; document.getElementById('z2').value = p2.z;
+            document.getElementById('x3').value = p3.x; document.getElementById('y3').value = p3.y; document.getElementById('z3').value = p3.z;
+            updateSim();
+        }
+
+        function updateSim() {
+            const pts = getInputs();
+            pts.forEach(p => {
+                p.x = Math.max(0, Math.min(3, isNaN(p.x) ? 0 : p.x));
+                p.y = Math.max(0, Math.min(3, isNaN(p.y) ? 0 : p.y));
+                p.z = Math.max(0, Math.min(3, isNaN(p.z) ? 0 : p.z));
+            });
+
+            const points3D = [];
+            pts.forEach((p, i) => {
+                const pos = new THREE.Vector3(p.x - 1.5, p.y - 1.5, p.z - 1.5);
+                highlightMeshes[i].position.copy(pos);
+                highlightMeshes[i].visible = true;
+                points3D.push(pos);
+            });
+
+            points3D.push(points3D[0]);
+            connectionLines.geometry.setFromPoints(points3D);
+            connectionLines.material.color.setHex(0x94a3b8);
+
+            calculateTQF(pts);
+        }
+
+        function calculateQuadrance(p1, p2) {
+            return Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2) + Math.pow(p2.z - p1.z, 2);
+        }
+
+        function calculateTQF(pts) {
+            const q3 = calculateQuadrance(pts[0], pts[1]); 
+            const q2 = calculateQuadrance(pts[0], pts[2]); 
+            const q1 = calculateQuadrance(pts[1], pts[2]); 
+
+            const LHS = Math.pow(q1 + q2 + q3, 2);
+            const RHS = 2 * (Math.pow(q1, 2) + Math.pow(q2, 2) + Math.pow(q3, 2));
+
+            isCollinear = (LHS === RHS) && (q1 > 0 && q2 > 0 && q3 > 0); 
+            if(q1===0 || q2===0 || q3===0) isCollinear = false;
+
+            const resDiv = document.getElementById('tqf-result');
+            const compressBtn = document.getElementById('compress-btn');
+            
+            let html = `<div class="mb-2">Q₁₂=${q3}, Q₁₃=${q2}, Q₂₃=${q1}</div>`;
+            html += `<div class="mb-2">LHS: (${q1}+${q2}+${q3})² = <span class="text-white">${LHS}</span></div>`;
+            html += `<div class="mb-2">RHS: 2(${q1}²+${q2}²+${q3}²) = <span class="text-white">${RHS}</span></div>`;
+            
+            if (isCollinear) {
+                html += `<div class="text-emerald-400 font-bold mt-3">LHS = RHS. Points are COLLINEAR.</div>`;
+                resDiv.style.borderColor = '#10b981';
+                compressBtn.disabled = false;
+                compressBtn.innerText = "Auto Compress Redundant Node";
+                compressBtn.classList.replace('bg-slate-700', 'bg-emerald-600');
+                compressBtn.classList.replace('hover:bg-blue-500', 'hover:bg-emerald-500');
+            } else {
+                html += `<div class="text-rose-400 font-bold mt-3">LHS ≠ RHS. Points form a TRIANGLE.</div>`;
+                resDiv.style.borderColor = '#f43f5e';
+                compressBtn.disabled = true;
+                compressBtn.innerText = "Requires Collinear State to Compress";
+                compressBtn.classList.replace('bg-emerald-600', 'bg-slate-700');
+            }
+            resDiv.innerHTML = html;
+        }
+
+        function generateRandomCollinear() {
+            let valid = false;
+            let p1, p2, p3;
+            while(!valid) {
+                p1 = { x: Math.floor(Math.random()*4), y: Math.floor(Math.random()*4), z: Math.floor(Math.random()*4) };
+                const dx = Math.floor(Math.random()*3) - 1;
+                const dy = Math.floor(Math.random()*3) - 1;
+                const dz = Math.floor(Math.random()*3) - 1;
+                if(dx===0 && dy===0 && dz===0) continue;
+                
+                p2 = { x: p1.x + dx, y: p1.y + dy, z: p1.z + dz };
+                p3 = { x: p1.x + 2*dx, y: p1.y + 2*dy, z: p1.z + 2*dz };
+                
+                if(p3.x >=0 && p3.x <=3 && p3.y >=0 && p3.y <=3 && p3.z >=0 && p3.z <=3) {
+                    valid = true;
+                }
+            }
+            const arr = [p1, p2, p3].sort(() => Math.random() - 0.5);
+            setInputs(arr[0], arr[1], arr[2]);
+        }
+
+        function generateRandomTriangle() {
+            let valid = false;
+            let p1, p2, p3;
+            while(!valid) {
+                p1 = { x: Math.floor(Math.random()*4), y: Math.floor(Math.random()*4), z: Math.floor(Math.random()*4) };
+                p2 = { x: Math.floor(Math.random()*4), y: Math.floor(Math.random()*4), z: Math.floor(Math.random()*4) };
+                p3 = { x: Math.floor(Math.random()*4), y: Math.floor(Math.random()*4), z: Math.floor(Math.random()*4) };
+                
+                const q3 = calculateQuadrance(p1, p2);
+                const q2 = calculateQuadrance(p1, p3);
+                const q1 = calculateQuadrance(p2, p3);
+                
+                if(q1 > 0 && q2 > 0 && q3 > 0) {
+                    const LHS = Math.pow(q1 + q2 + q3, 2);
+                    const RHS = 2 * (Math.pow(q1, 2) + Math.pow(q2, 2) + Math.pow(q3, 2));
+                    if(LHS !== RHS) valid = true;
+                }
+            }
+            setInputs(p1, p2, p3);
+        }
+
+        function autoCompress() {
+            if(!isCollinearState && !document.getElementById('compress-btn').disabled) {
+                const pts = getInputs();
+                const q12 = calculateQuadrance(pts[0], pts[1]);
+                const q13 = calculateQuadrance(pts[0], pts[2]);
+                const q23 = calculateQuadrance(pts[1], pts[2]);
+                
+                let endpoints = [];
+                let middleIdx = -1;
+                if(q13 >= q12 && q13 >= q23) { endpoints = [pts[0], pts[2]]; middleIdx = 1; }
+                else if(q12 >= q13 && q12 >= q23) { endpoints = [pts[0], pts[1]]; middleIdx = 2; }
+                else { endpoints = [pts[1], pts[2]]; middleIdx = 0; }
+
+                highlightMeshes[middleIdx].visible = false;
+                
+                const pA = new THREE.Vector3(endpoints[0].x - 1.5, endpoints[0].y - 1.5, endpoints[0].z - 1.5);
+                const pB = new THREE.Vector3(endpoints[1].x - 1.5, endpoints[1].y - 1.5, endpoints[1].z - 1.5);
+                connectionLines.geometry.setFromPoints([pA, pB]);
+                connectionLines.material.color.setHex(0x10b981); 
+
+                const btn = document.getElementById('compress-btn');
+                btn.innerText = `Node P${middleIdx + 1} Compressed Successfully!`;
+                btn.disabled = true;
+            }
+        }
+
+        // --- 2. Three.js: Trefoil Topology Visualization ---
+        function initTrefoil() {
+            const container = document.getElementById('trefoil-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 15; camera.position.y = 5; camera.lookAt(0,0,0);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const pt1 = new THREE.PointLight(0x38bdf8, 1); pt1.position.set(10, 10, 10); scene.add(pt1);
+            const pt2 = new THREE.PointLight(0xc084fc, 0.8); pt2.position.set(-10, -10, 5); scene.add(pt2);
+
+            class TrefoilCurve extends THREE.Curve {
+                constructor(scale = 1, startPhase = 0, endPhase = Math.PI * 2) {
+                    super(); this.scale = scale; this.startPhase = startPhase; this.endPhase = endPhase;
+                }
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+                    const phase = this.startPhase + t * (this.endPhase - this.startPhase);
+                    return optionalTarget.set(
+                        Math.sin(phase) + 2 * Math.sin(2 * phase),
+                        Math.cos(phase) - 2 * Math.cos(2 * phase),
+                        -Math.sin(3 * phase)
+                    ).multiplyScalar(this.scale);
+                }
+            }
+
+            const domainMesh = new THREE.Mesh(
+                new THREE.TubeGeometry(new TrefoilCurve(1.5, 0, (Math.PI * 2) / 3), 64, 0.4, 16, false),
+                new THREE.MeshPhysicalMaterial({ color: 0x10b981, metalness: 0.3, roughness: 0.2, clearcoat: 1.0, emissive: 0x064e3b })
+            );
+            
+            const ghostMat = new THREE.MeshBasicMaterial({ color: 0x475569, wireframe: true, transparent: true, opacity: 0.3 });
+            const ghostMesh1 = new THREE.Mesh(new THREE.TubeGeometry(new TrefoilCurve(1.5, (Math.PI * 2)/3, (Math.PI * 4)/3), 64, 0.38, 8, false), ghostMat);
+            const ghostMesh2 = new THREE.Mesh(new THREE.TubeGeometry(new TrefoilCurve(1.5, (Math.PI * 4)/3, Math.PI * 2), 64, 0.38, 8, false), ghostMat);
+
+            const trefoilGroup = new THREE.Group();
+            trefoilGroup.add(domainMesh, ghostMesh1, ghostMesh2);
+            scene.add(trefoilGroup);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                trefoilGroup.rotation.y += 0.005; trefoilGroup.rotation.x += 0.002;
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // --- 3. Three.js: Toroidal Scanning (Similarity Conservation) ---
+        function initToroid() {
+            const container = document.getElementById('toroid-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 10, 14);
+            camera.lookAt(0,0,0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = false; controls.autoRotate = true; controls.autoRotateSpeed = 1.0;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+            const light = new THREE.PointLight(0xffffff, 1); light.position.set(10, 10, 10); scene.add(light);
+
+            // Base Torus (Representing the Golden Clifford Manifold)
+            const torusGeom = new THREE.TorusGeometry(5, 2, 32, 64);
+            const torusMat = new THREE.MeshPhysicalMaterial({ color: 0x1e293b, transparent: true, opacity: 0.6, roughness: 0.5, wireframe: true });
+            const baseTorus = new THREE.Mesh(torusGeom, torusMat);
+            baseTorus.rotation.x = Math.PI / 2;
+            scene.add(baseTorus);
+
+            // Parametric curves wrapping the Torus
+            class TorusKnotCurve extends THREE.Curve {
+                constructor(p, q, scale=1) { super(); this.p = p; this.q = q; this.scale = scale; }
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+                    const phase = t * Math.PI * 2;
+                    const r = 5 + 2 * Math.cos(this.q * phase); // R + r*cos(q*theta)
+                    const x = r * Math.cos(this.p * phase);
+                    const y = r * Math.sin(this.p * phase);
+                    const z = 2 * Math.sin(this.q * phase);
+                    return optionalTarget.set(x, z, y).multiplyScalar(this.scale); // swapped y/z for orientation
+                }
+            }
+
+            // Stream A (p=2, q=3 standard trefoil wrapping)
+            const streamA = new THREE.Mesh(
+                new THREE.TubeGeometry(new TorusKnotCurve(2, 3), 150, 0.15, 8, true),
+                new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x1d4ed8 })
+            );
+            scene.add(streamA);
+
+            // Stream B (p=3, q=2 inverse wrapping for different frequency)
+            const streamB = new THREE.Mesh(
+                new THREE.TubeGeometry(new TorusKnotCurve(3, 2), 150, 0.15, 8, true),
+                new THREE.MeshStandardMaterial({ color: 0xa855f7, emissive: 0x6b21a8 })
+            );
+            scene.add(streamB);
+
+            // Resonance Nodes (Solitons) where they intersect
+            const nodeGeo = new THREE.SphereGeometry(0.4, 16, 16);
+            const nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x14b8a6, emissiveIntensity: 1.5 });
+            
+            // Mathematically approximated intersection points for visual representation
+            const intersectionAngles = [0.1, 0.35, 0.6, 0.85]; 
+            const curve = new TorusKnotCurve(2, 3);
+            intersectionAngles.forEach(t => {
+                const pt = curve.getPoint(t);
+                const node = new THREE.Mesh(nodeGeo, nodeMat);
+                // add slight offset to ensure it sits visibly on the surface
+                node.position.copy(pt).multiplyScalar(1.02);
+                scene.add(node);
+                
+                // Add point lights at intersections for glow effect
+                const glow = new THREE.PointLight(0x5eead4, 2, 5);
+                glow.position.copy(node.position);
+                scene.add(glow);
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // --- 4. Three.js: High-Density Holographic Projection ---
+        let renderHoloStreams;
+        function initHoloToroid() {
+            const container = document.getElementById('holo-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 16, 20);
+            camera.lookAt(0,0,0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = true; controls.autoRotate = true; controls.autoRotateSpeed = 0.8;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+            const light = new THREE.PointLight(0xffffff, 1.5); light.position.set(10, 20, 10); scene.add(light);
+            const light2 = new THREE.PointLight(0xfbbf24, 2); light2.position.set(0, -10, 0); scene.add(light2);
+
+            // Base Faint Torus
+            const baseTorus = new THREE.Mesh(
+                new THREE.TorusGeometry(6, 2.5, 32, 64),
+                new THREE.MeshPhysicalMaterial({ color: 0x0f172a, transparent: true, opacity: 0.4, roughness: 0.8, wireframe: true })
+            );
+            baseTorus.rotation.x = Math.PI / 2;
+            scene.add(baseTorus);
+
+            class HoloKnotCurve extends THREE.Curve {
+                constructor(p, q, scale=1) { super(); this.p = p; this.q = q; this.scale = scale; }
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+                    const phase = t * Math.PI * 2;
+                    const r = 6 + 2.5 * Math.cos(this.q * phase);
+                    const x = r * Math.cos(this.p * phase);
+                    const y = r * Math.sin(this.p * phase);
+                    const z = 2.5 * Math.sin(this.q * phase);
+                    return optionalTarget.set(x, z, y).multiplyScalar(this.scale); 
+                }
+            }
+
+            const streamGroup = new THREE.Group();
+            scene.add(streamGroup);
+
+            renderHoloStreams = function(mode) {
+                // Clear old streams
+                while(streamGroup.children.length > 0){ 
+                    const child = streamGroup.children[0];
+                    child.geometry.dispose();
+                    child.material.dispose();
+                    streamGroup.remove(child); 
+                }
+
+                if (mode <= 12) {
+                    // Standard Symmetrical Packing (3, 6, 9, 12)
+                    for(let i=0; i<mode; i++) {
+                        const mesh = new THREE.Mesh(
+                            new THREE.TubeGeometry(new HoloKnotCurve(2, 3), 200, 0.12, 8, true),
+                            new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, transparent: true, opacity: 0.8 })
+                        );
+                        mesh.rotation.y = (i / mode) * Math.PI * 2;
+                        streamGroup.add(mesh);
+                    }
+                } else if (mode === 24) {
+                    // 12 Positive Streams (Cyan)
+                    for(let i=0; i<12; i++) {
+                        const mesh = new THREE.Mesh(
+                            new THREE.TubeGeometry(new HoloKnotCurve(2, 3), 200, 0.08, 6, true),
+                            new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x0891b2, transparent: true, opacity: 0.5 })
+                        );
+                        mesh.rotation.y = (i / 12) * Math.PI * 2;
+                        streamGroup.add(mesh);
+                    }
+                    // 12 Negative Streams (Rose)
+                    for(let i=0; i<12; i++) {
+                        const mesh = new THREE.Mesh(
+                            new THREE.TubeGeometry(new HoloKnotCurve(2, -3), 200, 0.08, 6, true),
+                            new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0xbe123c, transparent: true, opacity: 0.5 })
+                        );
+                        mesh.rotation.y = (i / 12) * Math.PI * 2;
+                        streamGroup.add(mesh);
+                    }
+                    
+                    // The 3rd "Probability Stream" - Golden Standing Wave
+                    // Visually represented by a dense, highly emissive structural core
+                    const probCore = new THREE.Mesh(
+                        new THREE.TorusGeometry(6, 1.2, 32, 100),
+                        new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xd97706, transparent: true, opacity: 0.3, wireframe: true })
+                    );
+                    probCore.rotation.x = Math.PI / 2;
+                    streamGroup.add(probCore);
+
+                    // Central high-energy knot
+                    const probKnot = new THREE.Mesh(
+                        new THREE.TubeGeometry(new HoloKnotCurve(12, 24), 400, 0.15, 8, true),
+                        new THREE.MeshStandardMaterial({ color: 0xffedd5, emissive: 0xf59e0b, emissiveIntensity: 2 })
+                    );
+                    streamGroup.add(probKnot);
+                }
+            }
+
+            renderHoloStreams(3); // init
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                streamGroup.rotation.y -= 0.002; // slow drift
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // Helper function to switch Holographic modes
+        function setHoloMode(mode, btnElement) {
+            // Update UI Buttons
+            document.querySelectorAll('.holo-btn').forEach(btn => {
+                btn.className = "holo-btn px-6 py-2 rounded-full border border-slate-600 bg-slate-800 text-slate-400 font-bold transition hover:bg-slate-700";
+            });
+            
+            if(mode === 24) {
+                btnElement.className = "holo-btn px-8 py-2 rounded-full border border-pink-500/50 bg-pink-500/10 text-pink-400 font-extrabold transition hover:bg-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.3)]";
+                document.getElementById('holo-desc-standard').classList.add('hidden');
+                document.getElementById('holo-desc-24').classList.remove('hidden');
+            } else {
+                btnElement.className = "holo-btn px-6 py-2 rounded-full border border-blue-500/50 bg-blue-500/20 text-blue-300 font-bold transition hover:bg-blue-500/40";
+                document.getElementById('holo-desc-standard').classList.remove('hidden');
+                document.getElementById('holo-desc-24').classList.add('hidden');
+            }
+
+            // Update 3D Model
+            renderHoloStreams(mode);
+        }
+
+        // --- 5. Three.js: 720 Spinor Visualization ---
+        function initSpinor() {
+            const container = document.getElementById('spinor-canvas');
+            const phaseCounter = document.getElementById('phase-counter');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 2, 10); camera.lookAt(0,0,0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+            const point = new THREE.PointLight(0xf59e0b, 1.5); point.position.set(5, 5, 5); scene.add(point);
+
+            const centerSphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0x451a03 })
+            );
+            scene.add(centerSphere);
+
+            const orbitGroup = new THREE.Group(); scene.add(orbitGroup);
+
+            const pathMesh = new THREE.Mesh(
+                new THREE.TorusGeometry(3, 0.05, 16, 100),
+                new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.5 })
+            );
+            pathMesh.rotation.x = Math.PI / 2; scene.add(pathMesh);
+
+            const spinorMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, flatShading: true });
+            const spinorMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.4, 0), spinorMat);
+            spinorMesh.position.set(3, 0, 0); orbitGroup.add(spinorMesh);
+
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.8 });
+            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(3,0,0)]), lineMat);
+            orbitGroup.add(line);
+
+            let phase = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                phase += 1; if (phase >= 720) phase = 0;
+                phaseCounter.innerText = `${Math.floor(phase)}°`;
+
+                let hue, torsion;
+                if (phase <= 360) {
+                    const n = phase / 360; 
+                    hue = 0.5 - (n * 0.5); torsion = n * Math.PI;
+                    centerSphere.scale.set(1 + n*0.5, 1 + n*0.5, 1 + n*0.5);
+                    lineMat.opacity = 0.8 - (n * 0.5);
+                } else {
+                    const n = (phase - 360) / 360;
+                    hue = 0.0 + (n * 0.5); torsion = Math.PI - (n * Math.PI);
+                    centerSphere.scale.set(1.5 - n*0.5, 1.5 - n*0.5, 1.5 - n*0.5);
+                    lineMat.opacity = 0.3 + (n * 0.5);
+                }
+
+                spinorMat.color.setHSL(hue, 1, 0.5);
+                orbitGroup.rotation.y = phase * (Math.PI / 180); 
+                spinorMesh.rotation.x = phase * 0.05; spinorMesh.rotation.z = phase * 0.05;
+                orbitGroup.rotation.z = Math.sin(torsion) * 0.5;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // Initialize WebGL scenes after DOM load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                initLattice();
+                initTrefoil();
+                initToroid();
+                initHoloToroid();
+                initSpinor();
+            }, 100);
+            
+            window.addEventListener('resize', () => {
+                if(latticeCamera && latticeRenderer) {
+                    const container = document.getElementById('lattice-canvas');
+                    latticeCamera.aspect = container.clientWidth / container.clientHeight;
+                    latticeCamera.updateProjectionMatrix();
+                    latticeRenderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

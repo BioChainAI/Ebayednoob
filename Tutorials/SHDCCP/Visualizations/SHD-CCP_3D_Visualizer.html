@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD-CCP 3D Visualizer</title>
+    <!-- Load Tailwind CSS for styling the UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Add Inter font family
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <!-- Load three.js libraries (non-module versions) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/renderers/CSS2DRenderer.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at center, #1a2a2a 0%, #000000 70%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #scene-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        #scene-container.grabbing {
+            cursor: grabbing;
+        }
+
+        #side-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 380px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 20;
+            padding: 1.5rem;
+            overflow-y: auto;
+            color: #f0f0f0;
+        }
+        
+        #bottom-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            pointer-events: none; /* Pass clicks through */
+        }
+
+        .control-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: rgba(0, 20, 20, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            pointer-events: auto; /* Buttons are clickable */
+        }
+        .control-button:hover {
+            background-color: rgba(0, 50, 50, 0.9);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+
+        /* Custom slider styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #374151;
+            border-radius: 4px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover { opacity: 1; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00ffff;
+            border-radius: 50%;
+            border: 2px solid #000;
+            cursor: pointer;
+            box-shadow: 0 0 8px #00ffff;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #00ffff;
+            border-radius: 50%;
+            border: 2px solid #000;
+            cursor: pointer;
+            box-shadow: 0 0 8px #00ffff;
+        }
+        input[type="range"]:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            cursor: not-allowed;
+            background: #9ca3af; /* gray-400 */
+        }
+
+
+        /* Custom checkbox */
+        .toggle-checkbox {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background-color: #374151;
+            border-radius: 9999px;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+            appearance: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .toggle-checkbox::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border-radius: 9999px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease-in-out;
+        }
+        .toggle-checkbox:checked {
+            background-color: #00ffff;
+            box-shadow: 0 0 8px #00ffff;
+        }
+        .toggle-checkbox:checked::before {
+            transform: translateX(16px);
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            color: #00ffff;
+        }
+
+        /* 3D Label styles */
+        .data-label {
+            color: #fff;
+            font-size: 16px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-shadow: 0 0 4px #000;
+            white-space: nowrap;
+        }
+        .data-label .title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .data-label .bits {
+            font-size: 14px;
+            font-family: monospace;
+            opacity: 0.8;
+        }
+        .data-label .desc {
+            font-size: 14px;
+            font-style: italic;
+            opacity: 0.7;
+        }
+        
+        /* Tooltip for hover */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 280px;
+            background-color: rgba(10, 30, 30, 0.95);
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 50;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -140px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #00ffff transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- This div will hold the 3D canvas -->
+    <div id="scene-container"></div>
+
+    <!-- Side Panel for UI Controls -->
+    <div id="side-panel">
+        <h1 class="text-3xl font-bold text-cyan-300 mb-2" style="text-shadow: 0 0 6px #00ffff;">SHD-CCP Visualizer</h1>
+        <h2 class="text-xl font-light text-gray-400 mb-6">64-Bit Voxel Controller</h2>
+
+        <!-- Hex Display -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Packet 64-Bit (Hex)</label>
+            <pre id="hex-display" class="w-full bg-gray-900 text-cyan-300 p-3 rounded-md text-sm font-mono break-words" style="box-shadow: 0 0 8px #00ffff inset;">0000 0000 0000 0000</pre>
+        </div>
+
+        <!-- Payload Scaler [63-48] -->
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="payload" class="flex items-center text-sm font-medium text-red-400">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #ff4103"></span>
+                    Payload Scaler (16 bits)
+                </label>
+                <span id="payload-value" class="text-sm text-gray-400">0</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Payload Scaler [63-48]</strong><br>
+                    A 16-bit value (FP16) that acts as a primary modifier or "context" for the entire packet's operation.
+                </span>
+            </div>
+            <input type="range" id="payload" min="0" max="65535" value="0" class="control-slider">
+        </div>
+
+        <!-- Dynamics [47-40] -->
+        <h3 class="text-lg font-semibold text-green-400 mt-6 mb-2">Dynamics [47-40]</h3>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="freq" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #39ff14"></span>
+                    Freq ID (5 bits)
+                </label>
+                <span id="freq-value" class="text-sm text-gray-400">0</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Frequency ID [47-43]</strong><br>
+                    A 5-bit identifier for a specific frequency, timing, or vibrational pattern to be used by the logic.
+                </span>
+            </div>
+            <input type="range" id="freq" min="0" max="31" value="0" class="control-slider">
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="spin" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #90ff80"></span>
+                    Spin ID (3 bits)
+                </label>
+                <span id="spin-value" class="text-sm text-gray-400">0</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Spin Class ID [42-40]</strong><br>
+                    A 3-bit identifier for a spin class or harmonic relationship, defining the behavior of the operation.
+                </span>
+            </div>
+            <input type="range" id="spin" min="0" max="7" value="0" class="control-slider">
+        </div>
+
+        <!-- State & ID [39-32] -->
+        <h3 class="text-lg font-semibold text-purple-400 mt-6 mb-2">State & ID [39-32]</h3>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="form" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #9f50ff"></span>
+                    Form ID (4 bits)
+                </label>
+                <span id="form-value" class="text-sm text-gray-400">0</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Form ID [39-36]</strong><br>
+                    A 4-bit identifier for the specific structural logic to execute (the "what to do").
+                </span>
+            </div>
+            <input type="range" id="form" min="0" max="15" value="0" class="control-slider">
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="amp" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #ff50c0"></span>
+                    Amp ID (3 bits)
+                </label>
+                <span id="amp-value" class="text-sm text-gray-400">0</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Amplitude ID [35-33]</strong><br>
+                    A 3-bit identifier that modifies the logic's intensity or amplitude.
+                </span>
+            </div>
+            <input type="range" id="amp" min="0" max="7" value="0" class="control-slider">
+        </div>
+        <div class="mb-4 tooltip">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="parity" class="toggle-checkbox">
+                <span class="ml-3 text-sm font-medium text-gray-300 toggle-label flex items-center">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #ff50c0"></span>
+                    Parity Bit (1 bit)
+                </span>
+            </label>
+            <span class="tooltiptext" style="left: 0; margin-left: 0;">
+                <strong class="text-cyan-300">Parity Bit [32]</strong><br>
+                A single bit used for error checking on the State & ID section.
+            </span>
+        </div>
+
+        <!-- Quaternion [31-0] -->
+        <h3 class="text-lg font-semibold text-cyan-400 mt-6 mb-2">Quaternion [31-0] (FP8 x4)</h3>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="quat-w" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #00aaff"></span>
+                    Quat W
+                </label>
+                <span id="quat-w-value" class="text-sm text-gray-400">1.00</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Quaternion W [31-24]</strong><br>
+                    The W component (real part) of the 3D rotation, compressed to 8 bits (FP8 E4M3).
+                </span>
+            </div>
+            <input type="range" id="quat-w" min="-1" max="1" value="1" step="0.01" class="control-slider">
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="quat-x" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #ff50c0"></span>
+                    Quat X
+                </label>
+                <span id="quat-x-value" class="text-sm text-gray-400">0.00</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Quaternion X [23-16]</strong><br>
+                    The X component (imaginary part) of the 3D rotation, compressed to 8 bits (FP8 E4M3).
+                </span>
+            </div>
+            <input type="range" id="quat-x" min="-1" max="1" value="0" step="0.01" class="control-slider">
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="quat-y" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #ff4103"></span>
+                    Quat Y
+                </label>
+                <span id="quat-y-value" class="text-sm text-gray-400">0.00</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Quaternion Y [15-8]</strong><br>
+                    The Y component (imaginary part) of the 3D rotation, compressed to 8 bits (FP8 E4M3).
+                </span>
+            </div>
+            <input type="range" id="quat-y" min="-1" max="1" value="0" step="0.01" class="control-slider">
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1 tooltip">
+                <label for="quat-z" class="flex items-center text-sm font-medium text-gray-300">
+                    <span class="inline-block w-3 h-3 rounded-sm mr-2" style="background-color: #39ff14"></span>
+                    Quat Z
+                </label>
+                <span id="quat-z-value" class="text-sm text-gray-400">0.00</span>
+                <span class="tooltiptext">
+                    <strong class="text-cyan-300">Quaternion Z [7-0]</strong><br>
+                    The Z component (imaginary part) of the 3D rotation, compressed to 8 bits (FP8 E4M3).
+                </span>
+            </div>
+            <input type="range" id="quat-z" min="-1" max="1" value="0" step="0.01" class="control-slider">
+        </div>
+
+        <div class="mb-4">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="auto-rotate-knot" class="toggle-checkbox">
+                <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Auto-Rotate to Knot Path</span>
+            </label>
+        </div>
+        
+        <!-- Knots & Indicators -->
+        <h3 class="text-lg font-semibold text-gray-400 mt-6 mb-2">Axis Indicators (Knots)</h3>
+        <div class="mb-4">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="show-knots" class="toggle-checkbox" checked>
+                <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Show Knots</span>
+            </label>
+        </div>
+        <fieldset id="knot-controls" class="space-y-4">
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="knot-opacity" class="text-sm font-medium text-gray-300">Knot Opacity</label>
+                    <span id="knot-opacity-value" class="text-sm text-gray-400">0.5</span>
+                </div>
+                <input type="range" id="knot-opacity" min="0" max="1" value="0.5" step="0.05" class="control-slider">
+            </div>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="knot-scale" class="text-sm font-medium text-gray-300">Knot Scale</label>
+                    <span id="knot-scale-value" class="text-sm text-gray-400">1.0</span>
+                </div>
+                <input type="range" id="knot-scale" min="0.5" max="2.0" value="1.0" step="0.1" class="control-slider">
+            </div>
+        </fieldset>
+        
+        <!-- Latent Space -->
+        <h3 class="text-lg font-semibold text-gray-400 mt-6 mb-2">Latent Space Indicator</h3>
+        <div class="mb-4">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="show-indicator" class="toggle-checkbox" checked>
+                <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Show Indicator</span>
+            </label>
+        </div>
+        <fieldset id="indicator-controls" class="space-y-4">
+             <div class="mb-4">
+                <label for="indicator-color" class="text-sm font-medium text-gray-300">Wireframe Color</label>
+                <input type="color" id="indicator-color" value="#ffff00" class="w-full h-8 p-0 border-0 rounded cursor-pointer">
+            </div>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="indicator-opacity" class="text-sm font-medium text-gray-300">Wireframe Opacity</Slabel>
+                    <span id="indicator-opacity-value" class="text-sm text-gray-400">0.7</span>
+                </div>
+                <input type="range" id="indicator-opacity" min="0" max="1" value="0.7" step="0.05" class="control-slider">
+            </div>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="node-position" class="text-sm font-medium text-gray-300">Node Position</label>
+                    <span id="node-position-value" class="text-sm text-gray-400">0.00</span>
+                </div>
+                <input type="range" id="node-position" min="0" max="1" value="0" step="0.001" class="control-slider">
+            </div>
+            <div class="mb-4">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="animate-flow" class="toggle-checkbox" checked>
+                    <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Animate Flow</span>
+                </label>
+            </div>
+        </fieldset>
+
+        <!-- Display Settings -->
+        <h3 class="text-lg font-semibold text-gray-400 mt-6 mb-2">Display Settings</h3>
+        <fieldset id="display-controls" class="space-y-4">
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="label-spacing-slider" class="text-sm font-medium text-gray-300">Label Spacing</label>
+                    <span id="label-spacing-value" class="text-sm text-gray-400">3.0</span>
+                </div>
+                <input type="range" id="label-spacing-slider" min="1" max="5" value="3.0" step="0.1" class="control-slider">
+            </div>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                    <label for="line-thickness-slider" class="text-sm font-medium text-gray-300">Leader Line Thickness</label>
+                    <span id="line-thickness-value" class="text-sm text-gray-400">2</span>
+                </div>
+                <input type="range" id="line-thickness-slider" min="1" max="5" value="2" step="1" class="control-slider">
+            </div>
+
+            <h4 class="text-md font-semibold text-gray-300 mt-4 mb-2">Section Wireframes & Labels</h4>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-wire-payload" class="toggle-checkbox" checked>
+                    <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Payload</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-wire-dynamics" class="toggle-checkbox" checked>
+                    <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Dynamics</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-wire-stateId" class="toggle-checkbox" checked>
+                    <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">State & ID</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-wire-quat" class="toggle-checkbox" checked>
+                    <span class="ml-3 text-sm font-medium text-gray-300 toggle-label">Quaternion</span>
+                </label>
+            </div>
+        </fieldset>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div id="bottom-controls">
+        <button id="toggle-labels-btn" class="control-button">Toggle Labels (On)</button>
+        <button id="toggle-wireframe-btn" class="control-button">Toggle Wireframe</button>
+    </div>
+
+    <script>
+        // --- FP8 (E4M3) Helper Functions ---
+        // These functions convert between a 32-bit float and a custom 8-bit float (E4M3).
+        const floatView = new DataView(new ArrayBuffer(4));
+        const intView = new DataView(new ArrayBuffer(4));
+        
+        /**
+         * Compresses a 32-bit float into an 8-bit E4M3 float (represented as an integer 0-255).
+         * E4M3 format: 1 sign bit, 4 exponent bits, 3 mantissa bits.
+         */
+        function floatToFp8e4m3(f) {
+            floatView.setFloat32(0, f);
+            const f32Bits = floatView.getUint32(0);
+            const sign = (f32Bits >> 31) & 0x1;
+            let exponent = (f32Bits >> 23) & 0xFF; // f32 exponent (8 bits)
+            let mantissa = f32Bits & 0x7FFFFF; // f32 mantissa (23 bits)
+            
+            // Handle special cases: NaN, Infinity
+            if (exponent === 0xFF) { return sign ? 0x88 : 0x08; } // NaN/Inf -> E4M3 special
+            // Handle zero / denormals
+            if (exponent === 0) { return sign << 7; } // f32 zero -> E4M3 zero
+
+            // Convert f32 exponent bias (127) to E4M3 bias (8)
+            let exp = exponent - 127 + 8;
+
+            // Handle underflow
+            if (exp <= 0) { return sign << 7; } // Underflow to zero
+            // Handle overflow
+            if (exp >= 0x0F) { return (sign << 7) | 0x0F; } // Overflow to max
+
+            // Shift f32 mantissa to 3 bits
+            let man = mantissa >> (23 - 3);
+
+            // Assemble the 8-bit number
+            return (sign << 7) | (exp << 3) | man;
+        }
+
+        /**
+         * Decompresses an 8-bit E4M3 float (integer 0-255) into a 32-bit float.
+         */
+        function fp8e4m3ToFloat(b) {
+            const sign = (b >> 7) & 0x1;
+            const exponent = (b >> 3) & 0x0F; // E4M3 exponent (4 bits)
+            const mantissa = b & 0x07; // E4M3 mantissa (3 bits)
+
+            // Handle zero
+            if (exponent === 0) { return sign ? -0.0 : 0.0; }
+            
+            // Handle special cases (E4M3 "max" value, 0x0F)
+            if (exponent === 0x0F) { return sign ? -3.84e+2 : 3.84e+2; } // Approx max value for E4M3
+
+            // Convert E4M3 exponent bias (8) to f32 bias (127)
+            let exp = exponent - 8 + 127;
+            
+            // Shift 3-bit mantissa to 23 bits
+            let man = mantissa << (23 - 3);
+
+            // Assemble the 32-bit float
+            const f32Bits = (sign << 31) | (exp << 23) | man;
+            intView.setUint32(0, f32Bits);
+            return intView.getFloat32(0);
+        }
+        // --- END FP8 Helpers ---
+
+
+        // --- Custom Torus Knot Curve ---
+        // three.js's TorusKnotGeometry is a buffer geometry, not a curve.
+        // We need a proper curve class to use .getPointAt()
+        class CustomTorusKnot extends THREE.Curve {
+            constructor(scale = 1) {
+                super();
+                this.scale = scale;
+            }
+            getPoint(t, optionalTarget = new THREE.Vector3()) {
+                const p = 3;
+                const q = 4; // (p,q) = (3,4) gives a nice knot
+                t *= Math.PI * 2;
+                const tx = (2 + Math.cos(q * t)) * Math.cos(p * t);
+                const ty = (2 + Math.cos(q * t)) * Math.sin(p * t);
+                const tz = Math.sin(q * t);
+                return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+            }
+        }
+        // --- END Custom Torus Knot Curve ---
+
+
+        // --- Globals ---
+        let scene, camera, renderer, labelRenderer, controls, clock;
+        let mainPacketGroup; // A group to hold the packet and its indicators
+        let bitCubes = new Array(64); // Array to hold all 64 cubes
+        let isWireframe = false; // Voxel wireframe toggle
+        let labelsVisible = true; // Master label toggle
+        
+        let targetQuaternion = new THREE.Quaternion(); // For auto-rotation
+        let currentQuaternion = new THREE.Quaternion(); // For slerping
+
+        // Indicators
+        let arrowHelper;
+        let knotGroup, knotCurve;
+        let latentSpaceGroup;
+        let latentNodes = [];
+        let latentLineTriangle, latentLinesToCenter;
+        
+        // Labels
+        let labels = {};
+        let leaderLines = {};
+        let leaderLineMaterial;
+        let sectionWireframes = {};
+
+        // --- Constants ---
+        const CUBE_SIZE = 0.2;
+        const SPACING = 0.05;
+        const STEP = CUBE_SIZE + SPACING;
+        const LATTICE_SIZE = 4;
+        const OFFSET = (LATTICE_SIZE - 1) * STEP / 2;
+        const PACKET_SIZE = LATTICE_SIZE * CUBE_SIZE + (LATTICE_SIZE - 1) * SPACING;
+        const OPACITY_ON = 0.8;
+        const OPACITY_OFF = 0.15;
+        const KNOT_SCALE = 3;
+
+        // --- Materials ---
+        let solidMaterials = {};
+        let wireMaterials = {};
+        
+        // Color mapping
+        const bitColors = {
+            qZ: 0x39ff14, // Green
+            qY: 0xff4103, // Red-Orange
+            qX: 0xff50c0, // Pink
+            qW: 0x00aaff, // Blue
+            payload: 0xff4103, // Red-Orange
+            freq: 0x39ff14, // Green
+            spin: 0x90ff80, // Light Green
+            form: 0x9f50ff, // Purple
+            amp: 0xff50c0, // Pink
+        };
+
+
+        /**
+         * Initialize the entire 3D scene
+         */
+        function init() {
+            scene = new THREE.Scene();
+            clock = new THREE.Clock();
+
+            // Camera
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+            camera.position.z = 8;
+            camera.position.y = 2;
+
+            // WebGL Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('scene-container').appendChild(renderer.domElement);
+
+            // CSS2D Renderer for labels
+            labelRenderer = new THREE.CSS2DRenderer();
+            labelRenderer.setSize(w, h);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            labelRenderer.domElement.style.pointerEvents = 'none'; // Pass clicks through
+            document.getElementById('scene-container').appendChild(labelRenderer.domElement);
+            
+            // Controls
+            const sceneContainer = document.getElementById('scene-container');
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.addEventListener('start', () => sceneContainer.classList.add('grabbing'));
+            controls.addEventListener('end', () => sceneContainer.classList.remove('grabbing'));
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            // Create materials
+            createMaterials();
+
+            // Main group to hold packet and indicators
+            mainPacketGroup = new THREE.Group();
+            scene.add(mainPacketGroup);
+            
+            // Create the 64-bit lattice
+            createLattice();
+            
+            // Create axis indicators
+            createAxisIndicators();
+            
+            // Create latent space indicators
+            createLatentSpaceIndicator();
+
+            // Create 3D labels
+            createLabels();
+
+            // Create section wireframes
+            createSectionWireframes();
+
+            // Setup UI event listeners
+            setupControls();
+            
+            // Update visuals to default slider values
+            updateFromControls();
+
+            // Start animation loop
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        /**
+         * Create reusable materials (solid and wireframe) for each bit type
+         */
+        function createMaterials() {
+            for (const key in bitColors) {
+                const color = bitColors[key];
+                solidMaterials[key] = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: OPACITY_ON,
+                    emissive: color,
+                    emissiveIntensity: 0.3
+                });
+                wireMaterials[key] = new THREE.MeshBasicMaterial({
+                    color: color,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: OPACITY_ON
+                });
+            }
+            
+            // Leader line material
+            leaderLineMaterial = new THREE.LineDashedMaterial({
+                color: 0xffffff,
+                linewidth: 2,
+                scale: 1,
+                dashSize: 0.1,
+                gapSize: 0.05,
+                transparent: true,
+                opacity: 0.5
+            });
+        }
+        
+        /**
+         * Maps a 3D lattice coordinate to a 64-bit index
+         */
+        function getBitIndex(x, y, z) {
+            // z < 2 (0, 1) are Quaternions [0-31]
+            if (z < 2) {
+                // (z * 16) + (y * 4) + x
+                // z=0, y=0, x=0 -> 0
+                // z=1, y=3, x=3 -> 31
+                return (z * 16) + (y * 4) + x;
+            } 
+            // z = 2 are Payload Scaler [48-63]
+            else if (z === 2) {
+                // (y * 4) + x -> 0-15. Add 48.
+                // z=2, y=0, x=0 -> 48
+                // z=2, y=3, x=3 -> 63
+                return 48 + (y * 4) + x;
+            }
+            // z = 3 are Dynamics & State [32-47]
+            else { // z === 3
+                // (y * 4) + x -> 0-15. Add 32.
+                // z=3, y=0, x=0 -> 32
+                // z=3, y=3, x=3 -> 47
+                return 32 + (y * 4) + x;
+            }
+        }
+        
+        /**
+         * Gets the material key for a given bit index
+         */
+        function getMaterialKey(bitIndex) {
+            // Quaternions [0-31]
+            if (bitIndex <= 7) return 'qZ';
+            if (bitIndex <= 15) return 'qY';
+            if (bitIndex <= 23) return 'qX';
+            if (bitIndex <= 31) return 'qW';
+            
+            // State & ID [32-39]
+            if (bitIndex === 32) return 'amp'; // Parity (shares color)
+            if (bitIndex <= 35) return 'amp';
+            if (bitIndex <= 39) return 'form';
+            
+            // Dynamics [40-47]
+            if (bitIndex <= 42) return 'spin';
+            if (bitIndex <= 47) return 'freq';
+
+            // Payload [48-63]
+            return 'payload';
+        }
+
+        /**
+         * Create the 4x4x4 (64) voxel lattice
+         */
+        function createLattice() {
+            const cubeGeom = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+
+            for (let z = 0; z < LATTICE_SIZE; z++) {
+                for (let y = 0; y < LATTICE_SIZE; y++) {
+                    for (let x = 0; x < LATTICE_SIZE; x++) {
+                        const bitIndex = getBitIndex(x, y, z);
+                        const matKey = getMaterialKey(bitIndex);
+                        
+                        // --- FIX: Clone materials for unique opacity control ---
+                        // We store the unique materials in userData so we can toggle them
+                        const solidMat = solidMaterials[matKey].clone();
+                        const wireMat = wireMaterials[matKey].clone();
+                        
+                        // Create mesh, starting with solid material
+                        const cube = new THREE.Mesh(cubeGeom, solidMat);
+                        cube.position.set(
+                            x * STEP - OFFSET,
+                            y * STEP - OFFSET,
+                            z * STEP - OFFSET
+                        );
+                        
+                        // Store references to both materials on the cube
+                        cube.userData.materials = {
+                            solid: solidMat,
+                            wire: wireMat
+                        };
+                        cube.userData.bitIndex = bitIndex; // Store index for referencing
+
+                        mainPacketGroup.add(cube);
+                        bitCubes[bitIndex] = cube;
+                    }
+                }
+            }
+
+            // Add the orientation arrow
+            const arrowOrigin = new THREE.Vector3(0, PACKET_SIZE / 2, 0);
+            const arrowDir = new THREE.Vector3(0, 1, 0);
+            const arrowLength = PACKET_SIZE * 1.5;
+            const arrowColor = 0x00ffff;
+            arrowHelper = new THREE.ArrowHelper(arrowDir, arrowOrigin, arrowLength, arrowColor, 0.4, 0.2);
+            mainPacketGroup.add(arrowHelper);
+        }
+        
+        /**
+         * Create the 3-axis trefoil knot indicators
+         */
+        function createAxisIndicators() {
+            knotGroup = new THREE.Group();
+            knotCurve = new CustomTorusKnot(KNOT_SCALE);
+            
+            const knotPoints = knotCurve.getPoints(200);
+            const knotGeom = new THREE.BufferGeometry().setFromPoints(knotPoints);
+            
+            const materials = {
+                x: new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 }),
+                y: new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }),
+                z: new THREE.LineBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 })
+            };
+            
+            // X-Axis Knot
+            const knotX = new THREE.Line(knotGeom, materials.x);
+            knotX.rotation.y = Math.PI / 2;
+            knotGroup.add(knotX);
+            
+            // Y-Axis Knot
+            const knotY = new THREE.Line(knotGeom, materials.y);
+            knotY.rotation.x = Math.PI / 2;
+            knotGroup.add(knotY);
+            
+            // Z-Axis Knot
+            const knotZ = new THREE.Line(knotGeom, materials.z);
+            knotGroup.add(knotZ);
+            
+            scene.add(knotGroup); // Add to scene, not packet group
+        }
+        
+        /**
+         * Create the latent space indicator (nodes and lines)
+         */
+        function createLatentSpaceIndicator() {
+            latentSpaceGroup = new THREE.Group();
+            const nodeGeom = new THREE.SphereGeometry(0.05, 8, 8);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0.7
+            });
+            const nodeMat = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+            });
+
+            // Create 3 nodes
+            for (let i = 0; i < 3; i++) {
+                const node = new THREE.Mesh(nodeGeom, nodeMat);
+                latentNodes.push(node);
+                latentSpaceGroup.add(node);
+            }
+            
+            // Create triangle line
+            const triGeom = new THREE.BufferGeometry();
+            triGeom.setAttribute('position', new THREE.Float32BufferAttribute(new Array(4 * 3).fill(0), 3));
+            latentLineTriangle = new THREE.LineLoop(triGeom, lineMat);
+            latentSpaceGroup.add(latentLineTriangle);
+            
+            // Create lines to center
+            const centerGeom = new THREE.BufferGeometry();
+            centerGeom.setAttribute('position', new THREE.Float32BufferAttribute(new Array(3 * 2 * 3).fill(0), 3));
+            latentLinesToCenter = new THREE.LineSegments(centerGeom, lineMat);
+            latentSpaceGroup.add(latentLinesToCenter);
+
+            scene.add(latentSpaceGroup); // Add to scene, not packet group
+        }
+
+        /**
+         * Create the 3D labels for data sections
+         */
+        function createLabels() {
+            const positions = {
+                payload:  { x: 0, y: 0, z: (1.5 * STEP) + OFFSET, desc: "Payload Scaler" },
+                dynamics: { x: 0, y: 0, z: (2.5 * STEP) + OFFSET, desc: "Dynamics" },
+                stateId:  { x: 0, y: 0, z: (2.5 * STEP) + OFFSET, desc: "State & ID" },
+                quat:     { x: 0, y: 0, z: (-0.5 * STEP) - OFFSET, desc: "Quaternion" },
+            };
+            
+            const content = {
+                payload:  { title: "Payload", bits: "[63-48]" },
+                dynamics: { title: "Dynamics", bits: "[47-40]" },
+                stateId:  { title: "State & ID", bits: "[39-32]" },
+                quat:     { title: "Quaternion", bits: "[31-0]" },
+            };
+
+            // Offset 'Dynamics' and 'State & ID' so they don't overlap
+            positions.dynamics.x = -PACKET_SIZE / 2;
+            positions.stateId.x = PACKET_SIZE / 2;
+
+            for (const key in positions) {
+                const pos = positions[key];
+                
+                // --- 1. Create HTML element for the label ---
+                const div = document.createElement('div');
+                div.className = 'data-label';
+                div.innerHTML = `
+                    <div class="title" style="color: #${bitColors[getMaterialKey(content[key].bits === '[63-48]' ? 48 : content[key].bits === '[47-40]' ? 40 : content[key].bits === '[39-32]' ? 32 : 0)].toString(16)}">${content[key].title}</div>
+                    <div class="bits">${content[key].bits}</div>
+                    <div class="desc">${pos.desc}</div>
+                `;
+                const label = new THREE.CSS2DObject(div);
+                
+                // Position the label. We'll adjust this with the slider.
+                label.position.set(pos.x, pos.y, pos.z); 
+                labels[key] = label;
+                mainPacketGroup.add(label);
+                
+                // --- 2. Create the leader line ---
+                const lineGeom = new THREE.BufferGeometry();
+                // 2 points: (0,0,0) for center of block, and (0,0,0) for label anchor
+                lineGeom.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3));
+                const line = new THREE.Line(lineGeom, leaderLineMaterial);
+                
+                leaderLines[key] = line;
+                mainPacketGroup.add(line);
+            }
+        }
+        
+        /**
+         * Create the bounding-box wireframes for each data section
+         */
+        function createSectionWireframes() {
+            const wireMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true, opacity: 0.7 });
+
+            // Payload [63-48] -> z=2
+            const payloadGeom = new THREE.BoxGeometry(PACKET_SIZE, PACKET_SIZE, CUBE_SIZE);
+            const payloadBox = new THREE.EdgesGeometry(payloadGeom);
+            sectionWireframes.payload = new THREE.LineSegments(payloadBox, wireMat.clone());
+            sectionWireframes.payload.position.z = 2 * STEP - OFFSET;
+            mainPacketGroup.add(sectionWireframes.payload);
+
+            // Dynamics [47-40] & State/ID [39-32] -> z=3
+            // We'll make two half-size boxes
+            const halfGeom = new THREE.BoxGeometry(PACKET_SIZE, PACKET_SIZE / 2, CUBE_SIZE);
+            const halfBox = new THREE.EdgesGeometry(halfGeom);
+            
+            // Dynamics (y = 2, 3)
+            sectionWireframes.dynamics = new THREE.LineSegments(halfBox, wireMat.clone());
+            sectionWireframes.dynamics.position.z = 3 * STEP - OFFSET;
+            sectionWireframes.dynamics.position.y = (1 * STEP); // y=2,3
+            sectionWireframes.dynamics.material.color.set(0x39ff14); // Green
+            mainPacketGroup.add(sectionWireframes.dynamics);
+
+            // State & ID (y = 0, 1)
+            sectionWireframes.stateId = new THREE.LineSegments(halfBox, wireMat.clone());
+            sectionWireframes.stateId.position.z = 3 * STEP - OFFSET;
+            sectionWireframes.stateId.position.y = (-1 * STEP); // y=0,1
+            sectionWireframes.stateId.material.color.set(0x9f50ff); // Purple
+            mainPacketGroup.add(sectionWireframes.stateId);
+
+            // Quaternion [31-0] -> z=0, 1
+            const quatGeom = new THREE.BoxGeometry(PACKET_SIZE, PACKET_SIZE, (CUBE_SIZE * 2) + SPACING);
+            const quatBox = new THREE.EdgesGeometry(quatGeom);
+            sectionWireframes.quat = new THREE.LineSegments(quatBox, wireMat.clone());
+            sectionWireframes.quat.position.z = (0.5 * STEP) - OFFSET; // Center of z=0 and z=1
+            sectionWireframes.quat.material.color.set(0x00aaff); // Blue
+            mainPacketGroup.add(sectionWireframes.quat);
+        }
+
+        /**
+         * Set up all UI event listeners
+         */
+        function setupControls() {
+            // Link all sliders and checkboxes to update the visuals
+            document.querySelectorAll('#side-panel input').forEach(element => {
+                element.addEventListener('input', updateFromControls);
+            });
+            
+            // Bottom bar buttons
+            document.getElementById('toggle-wireframe-btn').addEventListener('click', toggleWireframe);
+            document.getElementById('toggle-labels-btn').addEventListener('click', toggleLabels);
+
+            // Setup display controls
+            setupDisplayControls();
+        }
+
+        /**
+         * Setup controls in the "Display Settings" panel
+         */
+        function setupDisplayControls() {
+            // Sliders
+            document.getElementById('label-spacing-slider').addEventListener('input', (e) => {
+                const spacing = parseFloat(e.target.value);
+                document.getElementById('label-spacing-value').textContent = spacing.toFixed(1);
+                updateLabelPositions(spacing);
+            });
+            document.getElementById('line-thickness-slider').addEventListener('input', (e) => {
+                const thickness = parseInt(e.target.value);
+                document.getElementById('line-thickness-value').textContent = thickness;
+                leaderLineMaterial.linewidth = thickness;
+            });
+
+            // Link wireframe toggles
+            document.getElementById('toggle-wire-payload').addEventListener('change', updateLabelVisibility);
+            document.getElementById('toggle-wire-dynamics').addEventListener('change', updateLabelVisibility);
+            document.getElementById('toggle-wire-stateId').addEventListener('change', updateLabelVisibility);
+            document.getElementById('toggle-wire-quat').addEventListener('change', updateLabelVisibility);
+            
+            // Set defaults and run once
+            document.getElementById('toggle-wire-payload').checked = true;
+            document.getElementById('toggle-wire-dynamics').checked = true;
+            document.getElementById('toggle-wire-stateId').checked = true;
+            document.getElementById('toggle-wire-quat').checked = true;
+            updateLabelVisibility(); // Run on init
+        }
+
+        /**
+         * Master function to update label/wireframe visibility
+         * Reads all toggles and updates the scene.
+         */
+        function updateLabelVisibility() {
+            // Get state of all toggles
+            const payloadOn = document.getElementById('toggle-wire-payload').checked;
+            const dynamicsOn = document.getElementById('toggle-wire-dynamics').checked;
+            const stateIdOn = document.getElementById('toggle-wire-stateId').checked;
+            const quatOn = document.getElementById('toggle-wire-quat').checked;
+
+            // Update wireframes
+            if (sectionWireframes.payload) sectionWireframes.payload.visible = payloadOn;
+            if (sectionWireframes.dynamics) sectionWireframes.dynamics.visible = dynamicsOn;
+            if (sectionWireframes.stateId) sectionWireframes.stateId.visible = stateIdOn;
+            if (sectionWireframes.quat) sectionWireframes.quat.visible = quatOn;
+
+            // Update labels and lines (respecting master toggle 'labelsVisible')
+            if (labels.payload) {
+                labels.payload.visible = labelsVisible && payloadOn;
+                leaderLines.payload.visible = labelsVisible && payloadOn;
+            }
+            if (labels.dynamics) {
+                labels.dynamics.visible = labelsVisible && dynamicsOn;
+                leaderLines.dynamics.visible = labelsVisible && dynamicsOn;
+            }
+            if (labels.stateId) {
+                labels.stateId.visible = labelsVisible && stateIdOn;
+                leaderLines.stateId.visible = labelsVisible && stateIdOn;
+            }
+            if (labels.quat) {
+                labels.quat.visible = labelsVisible && quatOn;
+                leaderLines.quat.visible = labelsVisible && quatOn;
+            }
+        }
+        
+        /**
+         * Update the positions of labels and leader lines based on spacing
+         */
+        function updateLabelPositions(spacing) {
+            // 1. Update Label Positions
+            const zQuat = (-0.5 * STEP) - OFFSET - (PACKET_SIZE * spacing * 0.2);
+            const zPayload = (1.5 * STEP) + OFFSET + (PACKET_SIZE * spacing * 0.2);
+            const zDynamics = (2.5 * STEP) + OFFSET + (PACKET_SIZE * spacing * 0.2);
+            
+            labels.quat.position.z = zQuat;
+            labels.payload.position.z = zPayload;
+            labels.dynamics.position.z = zDynamics;
+            labels.stateId.position.z = zDynamics; // Same Z as dynamics
+
+            // 2. Update Leader Line Geometries
+            const quatLinePos = leaderLines.quat.geometry.attributes.position;
+            quatLinePos.setZ(0, (0.5 * STEP) - OFFSET); // Anchor to center of block
+            quatLinePos.setXYZ(1, labels.quat.position.x, labels.quat.position.y, zQuat);
+            quatLinePos.needsUpdate = true;
+            leaderLines.quat.computeLineDistances(); // For dashed lines
+
+            const payloadLinePos = leaderLines.payload.geometry.attributes.position;
+            payloadLinePos.setZ(0, 2 * STEP - OFFSET); // Anchor
+            payloadLinePos.setXYZ(1, labels.payload.position.x, labels.payload.position.y, zPayload);
+            payloadLinePos.needsUpdate = true;
+            leaderLines.payload.computeLineDistances();
+            
+            const dynamicsLinePos = leaderLines.dynamics.geometry.attributes.position;
+            dynamicsLinePos.setY(0, (1 * STEP)); // Anchor
+            dynamicsLinePos.setZ(0, 3 * STEP - OFFSET);
+            dynamicsLinePos.setXYZ(1, labels.dynamics.position.x, labels.dynamics.position.y, zDynamics);
+            dynamicsLinePos.needsUpdate = true;
+            leaderLines.dynamics.computeLineDistances();
+
+            const stateIdLinePos = leaderLines.stateId.geometry.attributes.position;
+            stateIdLinePos.setY(0, (-1 * STEP)); // Anchor
+            stateIdLinePos.setZ(0, 3 * STEP - OFFSET);
+            stateIdLinePos.setXYZ(1, labels.stateId.position.x, labels.stateId.position.y, zDynamics);
+            stateIdLinePos.needsUpdate = true;
+            leaderLines.stateId.computeLineDistances();
+        }
+
+        /**
+         * Read all controls and update the 3D model
+         */
+        function updateFromControls() {
+            // --- 1. Read values from sliders and checkbox ---
+            const payload = parseInt(document.getElementById('payload').value);
+            const freq = parseInt(document.getElementById('freq').value);
+            const spin = parseInt(document.getElementById('spin').value);
+            const form = parseInt(document.getElementById('form').value);
+            const amp = parseInt(document.getElementById('amp').value);
+            const parity = document.getElementById('parity').checked;
+            
+            const quatW = parseFloat(document.getElementById('quat-w').value);
+            const quatX = parseFloat(document.getElementById('quat-x').value);
+            const quatY = parseFloat(document.getElementById('quat-y').value);
+            const quatZ = parseFloat(document.getElementById('quat-z').value);
+
+            // --- 2. Update value labels ---
+            document.getElementById('payload-value').textContent = payload;
+            document.getElementById('freq-value').textContent = freq;
+            document.getElementById('spin-value').textContent = spin;
+            document.getElementById('form-value').textContent = form;
+            document.getElementById('amp-value').textContent = amp;
+            document.getElementById('quat-w-value').textContent = quatW.toFixed(2);
+            document.getElementById('quat-x-value').textContent = quatX.toFixed(2);
+            document.getElementById('quat-y-value').textContent = quatY.toFixed(2);
+            document.getElementById('quat-z-value').textContent = quatZ.toFixed(2);
+
+            // --- 3. Update 3D Model Rotation ---
+            // Set the target quaternion for slerping (if not auto-rotating)
+            if (!document.getElementById('auto-rotate-knot').checked) {
+                targetQuaternion.set(quatX, quatY, quatZ, quatW).normalize();
+            }
+
+            // --- 4. Update Voxel Opacity ---
+            // Compress floats to 8-bit integers (0-255)
+            const qW_fp8 = floatToFp8e4m3(quatW);
+            const qX_fp8 = floatToFp8e4m3(quatX);
+            const qY_fp8 = floatToFp8e4m3(quatY);
+            const qZ_fp8 = floatToFp8e4m3(quatZ);
+
+            // Convert 8-bit ints to 8-bit binary strings
+            // .reverse() because we map index 0 (LSB) to x=0,y=0,z=0
+            const qZBits = qZ_fp8.toString(2).padStart(8, '0').split('').reverse().join(''); // [7-0]
+            const qYBits = qY_fp8.toString(2).padStart(8, '0').split('').reverse().join(''); // [15-8]
+            const qXBits = qX_fp8.toString(2).padStart(8, '0').split('').reverse().join(''); // [23-16]
+            const qWBits = qW_fp8.toString(2).padStart(8, '0').split('').reverse().join(''); // [31-24]
+            
+            // Convert other values to binary strings
+            const parityBit = parity ? '1' : '0'; // [32]
+            const ampBits = amp.toString(2).padStart(3, '0').split('').reverse().join(''); // [35-33]
+            const formBits = form.toString(2).padStart(4, '0').split('').reverse().join(''); // [39-36]
+            const spinBits = spin.toString(2).padStart(3, '0').split('').reverse().join(''); // [42-40]
+            const freqBits = freq.toString(2).padStart(5, '0').split('').reverse().join(''); // [47-43]
+            const payloadBits = payload.toString(2).padStart(16, '0').split('').reverse().join(''); // [63-48]
+
+            // --- Assemble the full 64-bit string (LSB-first, 0 -> 63) ---
+            const full64BitString = 
+                qZBits + qYBits + qXBits + qWBits +
+                parityBit + ampBits + formBits + spinBits + freqBits +
+                payloadBits;
+
+            // --- Update Cube Opacity ---
+            for (let i = 0; i < 64; i++) {
+                const cube = bitCubes[i];
+                const bit = full64BitString[i];
+                if (cube) {
+                    // Toggle opacity based on bit state
+                    // IMPORTANT: We change the unique material of this specific cube
+                    cube.material.opacity = (bit === '1') ? OPACITY_ON : OPACITY_OFF;
+                }
+            }
+            
+            // --- 5. Update Hex Display ---
+            // Re-assemble MSB-first string for hex conversion
+            const msbFirstString = 
+                payloadBits.split('').reverse().join('') + 
+                freqBits.split('').reverse().join('') +
+                spinBits.split('').reverse().join('') +
+                formBits.split('').reverse().join('') +
+                ampBits.split('').reverse().join('') +
+                parityBit +
+                qWBits.split('').reverse().join('') +
+                qXBits.split('').reverse().join('') +
+                qYBits.split('').reverse().join('') +
+                qZBits.split('').reverse().join('');
+            
+            try {
+                const bigIntValue = BigInt('0b' + msbFirstString);
+                const hexString = bigIntValue.toString(16).padStart(16, '0').toUpperCase();
+                // Format with spaces: 0000 0000 ...
+                const formattedHex = hexString.match(/.{1,4}/g).join(' ');
+                document.getElementById('hex-display').textContent = formattedHex;
+            } catch (e) {
+                document.getElementById('hex-display').textContent = "Error";
+            }
+            
+            // --- 6. Update Knot/Indicator Controls ---
+            const showKnots = document.getElementById('show-knots').checked;
+            knotGroup.visible = showKnots;
+            
+            // Disable indicator controls if knots are off
+            const indicatorControls = document.getElementById('indicator-controls');
+            indicatorControls.disabled = !showKnots;
+            indicatorControls.style.opacity = showKnots ? 1 : 0.5;
+            
+            const showIndicator = document.getElementById('show-indicator').checked;
+            latentSpaceGroup.visible = showKnots && showIndicator;
+            
+            // Disable auto-rotate if indicators are hidden
+            const autoRotateKnot = document.getElementById('auto-rotate-knot');
+            if (!showKnots || !showIndicator) {
+                autoRotateKnot.checked = false;
+            }
+            
+            // Disable manual quaternion sliders if auto-rotating
+            const autoRotating = autoRotateKnot.checked;
+            document.getElementById('quat-w').disabled = autoRotating;
+            document.getElementById('quat-x').disabled = autoRotating;
+            document.getElementById('quat-y').disabled = autoRotating;
+            document.getElementById('quat-z').disabled = autoRotating;
+            
+            // Sync animate flow with auto-rotate
+            if (autoRotating) {
+                document.getElementById('animate-flow').checked = true;
+            }
+            
+            // Disable node slider if flow is animated
+            document.getElementById('node-position').disabled = document.getElementById('animate-flow').checked;
+        }
+        
+        /**
+         * Update knot appearance
+         */
+        function updateKnotIndicator() {
+            const opacity = parseFloat(document.getElementById('knot-opacity').value);
+            const scale = parseFloat(document.getElementById('knot-scale').value);
+            
+            document.getElementById('knot-opacity-value').textContent = opacity.toFixed(2);
+            document.getElementById('knot-scale-value').textContent = scale.toFixed(1);
+            
+            knotGroup.scale.set(scale, scale, scale);
+            knotGroup.children.forEach(line => {
+                line.material.opacity = opacity;
+            });
+        }
+        
+        /**
+         * Update latent space indicator appearance and position
+         */
+        function updateLatentSpaceIndicator() {
+            let t = 0;
+            const animateFlow = document.getElementById('animate-flow').checked;
+            
+            if (animateFlow) {
+                t = (clock.getElapsedTime() * 0.1) % 1;
+                // Update slider to reflect animation
+                document.getElementById('node-position').value = t;
+            } else {
+                t = parseFloat(document.getElementById('node-position').value);
+            }
+            document.getElementById('node-position-value').textContent = t.toFixed(3);
+            
+            // Update materials
+            const color = document.getElementById('indicator-color').value;
+            const opacity = parseFloat(document.getElementById('indicator-opacity').value);
+            document.getElementById('indicator-opacity-value').textContent = opacity.toFixed(2);
+            
+            latentNodes.forEach(node => node.material.color.set(color));
+            latentLineTriangle.material.color.set(color);
+            latentLineTriangle.material.opacity = opacity;
+            latentLinesToCenter.material.color.set(color);
+            latentLinesToCenter.material.opacity = opacity;
+            
+            // Update node positions
+            updateLatentSpacePositions(t);
+        }
+
+        /**
+         * Helper to calculate node positions and line geometries
+         */
+        function updateLatentSpacePositions(t) {
+            const p = knotCurve.getPointAt(t);
+            const scale = parseFloat(document.getElementById('knot-scale').value);
+            
+            // Get positions on each of the 3 knots
+            const pX = p.clone().applyMatrix4(knotGroup.children[0].matrixWorld);
+            const pY = p.clone().applyMatrix4(knotGroup.children[1].matrixWorld);
+            const pZ = p.clone().applyMatrix4(knotGroup.children[2].matrixWorld);
+            
+            latentNodes[0].position.copy(pX);
+            latentNodes[1].position.copy(pY);
+            latentNodes[2].position.copy(pZ);
+            
+            // Update triangle geometry
+            const triPos = latentLineTriangle.geometry.attributes.position;
+            triPos.setXYZ(0, pX.x, pX.y, pX.z);
+            triPos.setXYZ(1, pY.x, pY.y, pY.z);
+            triPos.setXYZ(2, pZ.x, pZ.y, pZ.z);
+            triPos.setXYZ(3, pX.x, pX.y, pX.z); // Close loop
+            triPos.needsUpdate = true;
+            
+            // Update center lines geometry
+            const centerPos = latentLinesToCenter.geometry.attributes.position;
+            const center = mainPacketGroup.position;
+            centerPos.setXYZ(0, center.x, center.y, center.z);
+            centerPos.setXYZ(1, pX.x, pX.y, pX.z);
+            centerPos.setXYZ(2, center.x, center.y, center.z);
+            centerPos.setXYZ(3, pY.x, pY.y, pY.z);
+            centerPos.setXYZ(4, center.x, center.y, center.z);
+            centerPos.setXYZ(5, pZ.x, pZ.y, pZ.z);
+            centerPos.needsUpdate = true;
+
+            // --- Auto-Rotation Logic ---
+            if (document.getElementById('auto-rotate-knot').checked) {
+                // Get tangent (direction) at point t
+                const tangent = knotCurve.getTangentAt(t);
+                
+                // We need to apply the Y-axis knot's rotation (rotated 90deg on X)
+                // This is the knot the "up" arrow will follow
+                tangent.applyAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2).normalize();
+                
+                // Calculate target quaternion to align "up" (0,1,0) with the tangent
+                const up = new THREE.Vector3(0, 1, 0);
+                targetQuaternion.setFromUnitVectors(up, tangent);
+                
+                // Update sliders to reflect this new target
+                document.getElementById('quat-w').value = targetQuaternion.w.toFixed(2);
+                document.getElementById('quat-x').value = targetQuaternion.x.toFixed(2);
+                document.getElementById('quat-y').value = targetQuaternion.y.toFixed(2);
+                document.getElementById('quat-z').value = targetQuaternion.z.toFixed(2);
+                // Trigger 'input' event to update everything else
+                document.getElementById('quat-w').dispatchEvent(new Event('input'));
+            }
+        }
+        
+        /**
+         * Toggle master label visibility
+         */
+        function toggleLabels() {
+            labelsVisible = !labelsVisible;
+            updateLabelVisibility(); // This will show/hide all *eligible* labels
+            document.getElementById('toggle-labels-btn').textContent = labelsVisible ? 'Toggle Labels (On)' : 'Toggle Labels (Off)';
+        }
+
+        /**
+         * Toggle voxel wireframe mode
+         */
+        function toggleWireframe() {
+            isWireframe = !isWireframe;
+            
+            for (let i = 0; i < 64; i++) {
+                const cube = bitCubes[i];
+                if (cube && cube.userData.materials) {
+                    // --- FIX: Use stored unique materials ---
+                    const mat = isWireframe ? cube.userData.materials.wire : cube.userData.materials.solid;
+                    cube.material = mat;
+                    
+                    // Re-apply opacity because we just swapped the material object
+                    // (Opacity state is lost on swap unless we re-apply)
+                    // Fortunately updateFromControls runs constantly or we can trigger it
+                    // But for immediate feedback we should re-run logic.
+                    // Easiest way is to just re-run updateFromControls() after the loop.
+                }
+            }
+            updateFromControls(); // Re-apply opacity state to the new materials
+        }
+        
+        /**
+         * Handle window resize
+         */
+        function onWindowResize() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            labelRenderer.setSize(w, h);
+        }
+
+        /**
+         * The main animation loop
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+            const deltaTime = clock.getDelta();
+            
+            // Smoothly interpolate to the target rotation
+            currentQuaternion.slerp(targetQuaternion, deltaTime * 5);
+            mainPacketGroup.setRotationFromQuaternion(currentQuaternion);
+            
+            // Update indicators
+            updateKnotIndicator();
+            if (document.getElementById('show-knots').checked && document.getElementById('show-indicator').checked) {
+                updateLatentSpaceIndicator();
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+
+        // Start the application
+        init();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Hierarchical Reasoning Models</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for LaTeX Rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        /* Custom styles for the scrollbar to fit the matrix theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0d4d22;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #15803d;
+        }
+
+        /* --- General Animation Keyframes --- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInFromTop {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideInFromBottom {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* --- Intro Animation --- */
+        @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        .anim-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .anim-slide-in-top { animation: slideInFromTop 0.5s ease-out forwards; }
+        .anim-slide-in-bottom { animation: slideInFromBottom 0.5s ease-out forwards; }
+        .anim-progress { animation: progress 2s linear forwards; }
+
+        /* --- Principles Animation --- */
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 2px #22c55e; }
+            50% { box-shadow: 0 0 10px #86efac, 0 0 15px #22c55e; }
+        }
+        @keyframes grow-and-fade {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .anim-grow-fade { animation: grow-and-fade 0.6s ease-out forwards; }
+        .latent-node { animation: glow 2s infinite ease-in-out; }
+
+        /* --- Case Study & Training Animations --- */
+        @keyframes pulse-border {
+            0%, 100% { border-color: #16a34a; }
+            50% { border-color: #86efac; }
+        }
+        @keyframes draw-path {
+            to { stroke-dashoffset: 0; }
+        }
+        .anim-pulse { animation: pulse-border 1.5s infinite; }
+        .anim-draw-path { animation: draw-path 1.5s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-4">Tutorial: Hierarchical Reasoning Models</h1>
+            <p class="text-lg text-green-400">Decomposing Complexity for Advanced AI Reasoning</p>
+            <p class="text-sm text-gray-500 mt-2">Last Updated: July 1, 2025</p>
+        </header>
+
+        <!-- Introduction Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. Introduction: The Next Leap in AI Cognition</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                As Large Language Models (LLMs) continue to evolve, the frontier of research is pushing beyond simple pattern matching and text generation towards complex, multi-step problem-solving. A pivotal innovation in this domain is the development of <span class="font-bold text-green-300">Hierarchical Reasoning Models (HRMs)</span>.
+            </p>
+            <p class="text-lg leading-relaxed mb-6">
+                An HRM is an advanced AI architecture designed to tackle complex tasks by decomposing them into multiple levels of abstraction, much like the human brain does. Instead of processing a problem in a single, monolithic sequence, an HRM separates <span class="font-bold text-green-300">high-level strategic planning</span> from <span class="font-bold text-green-300">low-level, detailed execution</span>. This structured approach allows for more robust, efficient, and scalable reasoning, enabling models to solve problems that are intractable for traditional architectures. This tutorial explores the core principles, architectures, and advantages of this exciting paradigm.
+            </p>
+
+            <!-- Intro Animation Container -->
+            <div class="bg-gray-900/50 p-4 md:p-6 rounded-lg border border-green-900 my-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="text-center">
+                        <h4 class="text-xl font-semibold text-green-200 mb-4">Standard Monolithic Reasoning</h4>
+                        <div id="anim-mono-problem" class="relative w-full h-16 bg-gray-800 border-2 border-green-700 rounded-lg flex items-center justify-center opacity-0">
+                            <span class="text-green-300">Complex Problem</span>
+                            <div id="anim-mono-progress-bar" class="absolute top-0 left-0 h-full bg-green-500/30 rounded-md" style="width: 0%;"></div>
+                        </div>
+                        <div id="anim-mono-arrow" class="text-5xl mt-4 opacity-0">↓</div>
+                        <div id="anim-mono-processor" class="text-lg text-green-400 opacity-0">Single Processor</div>
+                    </div>
+                    <div class="text-center">
+                        <h4 class="text-xl font-semibold text-green-200 mb-4">Hierarchical Reasoning (HRM)</h4>
+                        <div id="anim-hrm-planner" class="text-lg text-green-400 opacity-0">High-Level Planner</div>
+                        <div id="anim-hrm-plan-arrow" class="text-5xl mb-2 opacity-0">↓</div>
+                        <div id="anim-hrm-problem" class="relative w-full h-16 bg-gray-800 border-2 border-green-700 rounded-lg flex items-center justify-center opacity-0">
+                            <span class="text-green-300">Complex Problem</span>
+                        </div>
+                        <div id="anim-hrm-subtasks" class="flex justify-around mt-4 space-x-2 opacity-0">
+                            <div class="w-1/3 h-12 bg-gray-700 border border-green-800 rounded flex items-center justify-center text-sm">Task 1</div>
+                            <div class="w-1/3 h-12 bg-gray-700 border border-green-800 rounded flex items-center justify-center text-sm">Task 2</div>
+                            <div class="w-1/3 h-12 bg-gray-700 border border-green-800 rounded flex items-center justify-center text-sm">Task 3</div>
+                        </div>
+                         <div id="anim-hrm-exec-arrow" class="text-5xl mt-2 opacity-0">↓</div>
+                        <div id="anim-hrm-executor" class="text-lg text-green-400 opacity-0">Low-Level Executor</div>
+                    </div>
+                </div>
+                <div class="text-center mt-6">
+                    <button id="replay-intro-button" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Replay Animation
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Principles Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. Core Principles of Hierarchical Reasoning</h2>
+            <p class="text-lg leading-relaxed mb-6">HRMs are built on a few foundational ideas that distinguish them from flatter architectures like standard Transformers or basic Chain-of-Thought prompting.</p>
+            
+            <!-- Principles Animation Container -->
+            <div id="principles-animation-container" class="bg-gray-900/50 p-4 md:p-6 rounded-lg border border-green-900 my-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <!-- A: Decomposition -->
+                    <div id="anim-principle-A" class="opacity-0">
+                        <h4 class="text-xl font-semibold text-green-200 mb-4 h-14">A. Hierarchical Decomposition</h4>
+                        <div class="p-3 bg-gray-800 border border-green-700 rounded-lg">Planner</div>
+                        <div class="text-4xl text-green-400 my-2">↓</div>
+                        <div class="p-3 bg-gray-700 border border-green-800 rounded-lg">Executor</div>
+                    </div>
+                    <!-- B: Latent Reasoning -->
+                    <div id="anim-principle-B" class="opacity-0">
+                        <h4 class="text-xl font-semibold text-green-200 mb-4 h-14">B. Latent Reasoning</h4>
+                        <div class="p-3 bg-gray-800 border border-green-700 rounded-lg flex justify-center items-center h-28">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="w-4 h-4 bg-green-500 rounded-full latent-node" style="animation-delay: 0s;"></div>
+                                <div class="w-4 h-4 bg-green-500 rounded-full latent-node" style="animation-delay: 0.2s;"></div>
+                                <div class="w-4 h-4 bg-green-500 rounded-full latent-node" style="animation-delay: 0.4s;"></div>
+                                <div class="w-4 h-4 bg-green-500 rounded-full latent-node" style="animation-delay: 0.6s;"></div>
+                                <div class="w-4 h-4 bg-green-500 rounded-full latent-node" style="animation-delay: 0.8s;"></div>
+                                <div class="w-4 h-4 bg-green-500 rounded-full latent-node" style="animation-delay: 1s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- C: Adaptive Computation -->
+                    <div id="anim-principle-C" class="opacity-0">
+                        <h4 class="text-xl font-semibold text-green-200 mb-4 h-14">C. Adaptive Computation</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-sm text-green-300">Simple Task</div>
+                                <div class="flex justify-center items-center space-x-1 mt-1">
+                                    <div class="w-8 h-8 bg-gray-700 border border-green-800 rounded"></div>
+                                    <div class="w-8 h-8 bg-gray-700 border border-green-800 rounded"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-green-300">Complex Task</div>
+                                <div class="flex justify-center items-center space-x-1 mt-1">
+                                    <div class="w-8 h-8 bg-gray-700 border border-green-800 rounded"></div>
+                                    <div class="w-8 h-8 bg-gray-700 border border-green-800 rounded"></div>
+                                    <div class="w-8 h-8 bg-gray-700 border border-green-800 rounded"></div>
+                                    <div class="w-8 h-8 bg-gray-700 border border-green-800 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="text-center mt-6">
+                    <button id="replay-principles-button" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Replay Animation
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                    <h3 class="text-2xl font-semibold text-green-200 mb-2">A. Hierarchical Decomposition</h3>
+                    <p class="leading-relaxed">
+                        The central tenet of HRMs is breaking a problem down. A typical HRM has at least two layers:
+                        <ul class="list-disc list-inside mt-2 ml-4 space-y-2">
+                            <li><span class="font-bold text-green-300">High-Level Module (The "Planner"):</span> Operates on a slower timescale, focusing on the overall strategy. It sets sub-goals, formulates plans, and maintains a global understanding of the task.</li>
+                            <li><span class="font-bold text-green-300">Low-Level Module (The "Executor"):</span> Operates on a faster timescale to execute the plans set by the high-level module. It performs detailed computations, manipulates data, and solves the immediate sub-problem.</li>
+                        </ul>
+                    </p>
+                </div>
+
+                <div class="bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                    <h3 class="text-2xl font-semibold text-green-200 mb-2">B. Latent, Non-Linguistic Reasoning</h3>
+                    <p class="leading-relaxed">
+                        Unlike Chain-of-Thought (CoT), which externalizes its reasoning process into human-readable text, many HRMs perform their reasoning in <span class="font-bold text-green-300">latent space</span>. The "thoughts" are represented as hidden states (vectors or matrices) within the neural network. This has a key advantage: the model is not constrained by the grammar and verbosity of natural language, potentially leading to more robust and efficient computation, free from the brittleness of token-level errors.
+                    </p>
+                </div>
+
+                <div class="bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                    <h3 class="text-2xl font-semibold text-green-200 mb-2">C. Dynamic and Adaptive Computation</h3>
+                    <p class="leading-relaxed">
+                        HRMs can dynamically adjust their computational effort based on task difficulty. Using techniques like <span class="font-bold text-green-300">Adaptive Computation Time (ACT)</span>, the model can decide to "think longer" by running more reasoning cycles for a challenging problem. This contrasts with standard Transformers, which have a fixed computational depth for every input, making them inefficient for problems with varying complexity.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Case Study 1: The HRM Framework -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Case Study: The "HRM" Dual-Recurrent Architecture</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                One specific implementation of a Hierarchical Reasoning Model features two interdependent recurrent modules that formalize the planner-executor dynamic. This architecture has demonstrated exceptional performance on complex benchmarks like Sudoku and the ARC-AGI dataset.
+            </p>
+
+            <!-- Case Study Animation -->
+            <div id="casestudy-animation-container" class="bg-gray-900/50 p-4 md:p-6 rounded-lg border border-green-900 my-8 min-h-[420px] relative">
+                <div class="absolute top-0 right-4 z-10">
+                    <button id="replay-casestudy-button" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Replay
+                    </button>
+                </div>
+                <div class="grid grid-cols-3 gap-4 h-full items-center">
+                    <!-- Left Column -->
+                    <div class="flex flex-col items-center justify-around h-full pt-20">
+                         <div id="anim-cs-result" class="p-2 bg-green-800 border border-green-500 rounded-lg opacity-0 w-32 text-center">Result</div>
+                    </div>
+                    <!-- Center Column -->
+                    <div class="flex flex-col items-center justify-between h-full">
+                        <div id="anim-cs-problem" class="p-2 bg-gray-700 border border-green-600 rounded-lg opacity-0">Problem Input</div>
+                        <div id="anim-cs-planner" class="p-4 bg-gray-800 border-2 border-green-700 rounded-lg opacity-0 w-48 text-center">
+                            <h4 class="font-bold text-green-200">Planner</h4>
+                            <p class="text-sm text-green-400">State: \(z_H\)</p>
+                        </div>
+                        <div id="anim-cs-executor" class="p-4 bg-gray-800 border-2 border-green-800 rounded-lg opacity-0 w-48 text-center">
+                             <h4 class="font-bold text-green-200">Executor</h4>
+                            <p class="text-sm text-green-400">State: \(z_L\)</p>
+                        </div>
+                        <div id="anim-cs-output" class="p-2 bg-yellow-400 text-black font-bold border border-yellow-200 rounded-lg opacity-0">Final Output</div>
+                    </div>
+                    <!-- Right Column -->
+                    <div class="flex flex-col items-center justify-around h-full pt-20">
+                        <div id="anim-cs-plan" class="p-2 bg-green-800 border border-green-500 rounded-lg opacity-0 w-32 text-center">Plan/Context</div>
+                    </div>
+                </div>
+                <!-- SVG for Signal Traces -->
+                <svg class="absolute top-0 left-0 w-full h-full" style="pointer-events: none;">
+                    <path id="trace-problem-planner" d="M 50% 30, 50% 120" stroke="#4ade80" stroke-width="2" fill="none" />
+                    <path id="trace-planner-plan" d="M 60% 160, 83% 160" stroke="#4ade80" stroke-width="2" fill="none" />
+                    <path id="trace-plan-executor" d="M 83% 200, 60% 200, 60% 280, 50% 280" stroke="#4ade80" stroke-width="2" fill="none" />
+                    <path id="trace-executor-result" d="M 40% 320, 17% 320" stroke="#4ade80" stroke-width="2" fill="none" />
+                    <path id="trace-result-planner" d="M 17% 280, 40% 280, 40% 200, 50% 200" stroke="#4ade80" stroke-width="2" fill="none" />
+                    <path id="trace-planner-output" d="M 50% 240, 50% 370" stroke="#facc15" stroke-width="2" fill="none" />
+                </svg>
+            </div>
+
+            <h3 class="text-2xl font-semibold text-green-200 mb-3">Model Architecture</h3>
+            <p class="leading-relaxed mb-4">The model consists of a high-level module (H) and a low-level module (L), each with its own recurrent hidden state, \(z_H\) and \(z_L\) respectively. The process for a single high-level reasoning cycle is as follows:</p>
+            
+            <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mb-4">
+                <p class="font-mono text-sm text-green-400 mb-2">// 1. Embed the input problem 'x'</p>
+                \[ \tilde{x} = f_r(x; \theta_r) \]
+                <p class="font-mono text-sm text-green-400 mt-4 mb-2">// 2. Low-level module runs for 'T' steps, conditioned on the high-level state</p>
+                \[ z_L^{(i)} = f_L(z_L^{(i-1)}, z_H, \tilde{x}; \theta_L) \quad \text{for } i=1, ..., T \]
+                <p class="font-mono text-sm text-green-400 mt-4 mb-2">// 3. High-level module updates its state using the final low-level result</p>
+                \[ z_H' = f_H(z_H, z_L^{(T)}; \theta_H) \]
+                <p class="font-mono text-sm text-green-400 mt-4 mb-2">// 4. The final output is read from the high-level state</p>
+                \[ y = f_o(z_H; \theta_o) \]
+            </div>
+
+            <p class="leading-relaxed mb-4">This entire process is repeated for \(N\) high-level cycles, allowing for deep, structured reasoning. A key concept here is <span class="font-bold text-green-300">Hierarchical Convergence</span>: within each cycle, the low-level module (L) converges on a local solution. The high-level module (H) then integrates this solution and "restarts" L for the next phase of the plan. This makes the model robust to local errors and allows it to dynamically adjust its reasoning depth.</p>
+
+            <!-- Hierarchical Convergence Animation -->
+            <div id="convergence-animation-container" class="bg-gray-900/50 p-4 md:p-6 rounded-lg border border-green-900 my-8 min-h-[450px] relative">
+                <div class="absolute top-2 right-4 z-10">
+                    <button id="replay-convergence-button" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Replay
+                    </button>
+                </div>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Animation Graph -->
+                    <div class="w-full md:w-2/3 h-80 bg-gray-900 rounded-lg relative overflow-hidden">
+                        <svg id="convergence-graph" class="w-full h-full">
+                            <!-- Axes -->
+                            <line x1="30" y1="290" x2="95%" y2="290" stroke="#4b5563" stroke-width="2"/>
+                            <line x1="30" y1="290" x2="30" y2="10" stroke="#4b5563" stroke-width="2"/>
+                            <text x="50%" y="315" text-anchor="middle" fill="#9ca3af" class="text-sm">Reasoning Steps (Time) →</text>
+                            <text x="15" y="150" text-anchor="middle" transform="rotate(-90, 15, 150)" fill="#9ca3af" class="text-sm">Solution Error →</text>
+                            <text x="35" y="25" text-anchor="start" fill="#d1d5db" class="text-lg font-bold">Goal State (Error = 0)</text>
+                            <line x1="30" y1="30" x2="95%" y2="30" stroke="#facc15" stroke-width="1" stroke-dasharray="4 4"/>
+
+                            <!-- Paths for animation -->
+                            <path id="conv-path-1" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" />
+                            <path id="conv-path-2" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" />
+                            <path id="conv-path-3" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" />
+
+                            <!-- Points -->
+                            <circle id="planner-dot" cx="0" cy="0" r="6" fill="#a78bfa" class="opacity-0 transition-all duration-1000"/>
+                            <circle id="executor-dot" cx="0" cy="0" r="5" fill="#34d399" class="opacity-0"/>
+                        </svg>
+                    </div>
+                    <!-- Explanation Panel -->
+                    <div class="w-full md:w-1/3 flex flex-col justify-center">
+                        <h4 class="text-xl font-semibold text-green-200 mb-4">Convergence Cycle</h4>
+                        <div id="conv-status-panel" class="space-y-3">
+                            <div id="conv-cycle-text" class="text-lg text-green-300 font-bold">Cycle: -</div>
+                            <div id="conv-planner-text" class="text-base text-gray-300 opacity-0 transition-opacity duration-300">1. Planner sets a new goal.</div>
+                            <div id="conv-executor-text" class="text-base text-gray-300 opacity-0 transition-opacity duration-300">2. Executor iterates to converge.</div>
+                            <div id="conv-feedback-text" class="text-base text-gray-300 opacity-0 transition-opacity duration-300">3. Feedback improves the next plan.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-semibold text-green-200 mt-12 mb-3">Training and Efficiency: The One-Step Gradient</h3>
+            <p class="leading-relaxed mb-4">This HRM architecture is notable for its efficiency. A key innovation is how it's trained, which sidesteps a major bottleneck in standard recurrent models.</p>
+
+            <div class="space-y-8">
+                <!-- Step 1 -->
+                <div id="training-step-1" class="bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                    <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <h4 class="text-xl font-semibold text-green-200 mb-2">Step 1: The Problem with Backpropagation Through Time (BPTT)</h4>
+                            <p class="leading-relaxed">Standard recurrent models are trained using BPTT. The network is "unrolled" for all \(T\) low-level steps, creating a deep computational graph. This requires storing the output of every step in memory, leading to a high memory cost (\(O(T)\)) that grows with the reasoning length and can cause unstable training.</p>
+                        </div>
+                        <div class="h-48 bg-gray-900 rounded-lg p-2 relative">
+                            <svg id="bptt-graph" class="w-full h-full"></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div id="training-step-2" class="bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                    <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <h4 class="text-xl font-semibold text-green-200 mb-2">Step 2: The Solution: One-Step Gradient Approximation</h4>
+                            <p class="leading-relaxed">The HRM uses a shortcut. It approximates the gradient by only looking at the high-level module's final update step, ignoring the long chain of low-level computations. This assumes the planner's update rule (\(f_H\)) is the most critical part to improve.</p>
+                             <div class="bg-gray-900 text-gray-200 p-3 rounded-lg overflow-x-auto mt-2 text-sm">
+                                \[ \frac{d z_H^*}{d\theta} \approx \frac{\partial f_H}{\partial\theta} \]
+                            </div>
+                        </div>
+                        <div class="h-48 bg-gray-900 rounded-lg p-2 relative">
+                             <svg id="one-step-graph" class="w-full h-full"></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div id="training-step-3" class="bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                     <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <h4 class="text-xl font-semibold text-green-200 mb-2">Step 3: The Impact on Efficiency</h4>
+                            <p class="leading-relaxed">This approximation slashes memory requirements from \(O(T)\) to \(O(1)\), meaning memory usage is constant regardless of reasoning depth. This allows for stable training with large batches and leads to exceptional performance with far fewer parameters and data than typical LLMs.</p>
+                        </div>
+                        <div class="h-48 bg-gray-900 rounded-lg p-2 relative">
+                           <svg id="efficiency-graph" class="w-full h-full"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Case Study 2: SUPERCORRECT -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Case Study: Hierarchical Reasoning via Distillation (SUPERCORRECT)</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                Another approach to hierarchical reasoning is through knowledge distillation, where a large, powerful "teacher" model imparts structured reasoning skills to a smaller "student" model. The SUPERCORRECT framework exemplifies this by using <span class="font-bold text-green-300">Hierarchical Thought Templates</span>.
+            </p>
+            <p class="leading-relaxed mb-4">
+                Rather than just having the student mimic the final answer, the teacher model provides a solution broken down into a hierarchical template:
+            </p>
+            <ul class="list-disc list-inside ml-4 space-y-2 mb-4 bg-gray-900/50 p-6 rounded-lg border border-green-900">
+                <li><span class="font-bold text-green-300">High-Level Thought:</span> A generalized, abstract summary of the solution strategy. This serves as the "plan" and helps the student model generalize to similar problems.</li>
+                <li><span class="font-bold text-green-300">Detailed Solution:</span> A step-by-step walkthrough of the reasoning. For particularly tricky steps, the teacher adds detailed annotations and explanations, guiding the student through the execution phase.</li>
+            </ul>
+            <p class="leading-relaxed">
+                This method explicitly teaches the student model to separate the "what to do" (high-level thought) from the "how to do it" (detailed steps). The framework further enhances the student's ability by using a novel preference optimization technique (Cross-model DPO) where the teacher corrects the student's reasoning errors, teaching it to self-correct more effectively.
+            </p>
+        </section>
+
+        <!-- Case Study 3: Buffer of Thoughts -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Case Study: Experience-Augmented Reasoning (Buffer of Thoughts)</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                The <span class="font-bold text-green-300">Buffer of Thoughts (BoT)</span> framework introduces a versatile, experience-based approach to hierarchical reasoning. It's built around the idea of creating and maintaining a library of reusable reasoning strategies.
+            </p>
+            <!-- BoT Static Visual -->
+            <div id="bot-visual-container" class="bg-gray-900/50 p-4 md:p-6 rounded-lg border border-green-900 my-8">
+                <svg viewBox="0 0 400 320" class="w-full h-auto">
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80" />
+                        </marker>
+                         <marker id="arrow-purple" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa" />
+                        </marker>
+                    </defs>
+
+                    <!-- Nodes -->
+                    <g>
+                        <rect x="150" y="10" width="100" height="30" rx="5" fill="#1f2937" stroke="#374151" />
+                        <text x="200" y="30" text-anchor="middle" fill="#d1d5db" font-size="10">1. Problem Input</text>
+                    </g>
+                    <g>
+                        <rect x="150" y="70" width="100" height="30" rx="5" fill="#111827" stroke="#16a34a" />
+                        <text x="200" y="90" text-anchor="middle" fill="#6ee7b7" font-size="10">2. Problem Distiller</text>
+                    </g>
+                    <g>
+                        <rect x="280" y="145" width="110" height="50" rx="5" fill="#111827" stroke="#16a34a" />
+                        <text x="335" y="160" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="bold">3. Meta-Buffer</text>
+                        <rect x="290" y="170" width="90" height="5" rx="2" fill="#064e3b" />
+                        <rect x="290" y="177" width="90" height="5" rx="2" fill="#064e3b" />
+                        <rect x="290" y="184" width="90" height="5" rx="2" fill="#064e3b" />
+                    </g>
+                     <g>
+                        <rect x="145" y="155" width="110" height="30" rx="5" fill="#111827" stroke="#16a34a" />
+                        <text x="200" y="175" text-anchor="middle" fill="#6ee7b7" font-size="10">4. Instantiated Reasoner</text>
+                    </g>
+                    <g>
+                        <rect x="150" y="280" width="100" height="30" rx="5" fill="#fde047" stroke="#fef08a" />
+                        <text x="200" y="300" text-anchor="middle" fill="#18181b" font-size="10" font-weight="bold">5. Final Output</text>
+                    </g>
+                     <g>
+                        <rect x="10" y="215" width="100" height="30" rx="5" fill="#111827" stroke="#a78bfa" />
+                        <text x="60" y="235" text-anchor="middle" fill="#c4b5fd" font-size="10">6. Buffer Manager</text>
+                    </g>
+                    
+                    <!-- Arrows -->
+                    <path d="M 200 40 V 70" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow)" />
+                    <path d="M 200 100 V 120 H 335 V 145" stroke="#4ade80" stroke-width="1.5" fill="none" marker-end="url(#arrow)" />
+                    <path d="M 280 170 H 255" stroke="#4ade80" stroke-width="1.5" fill="none" marker-end="url(#arrow)" />
+                    <path d="M 200 185 V 280" stroke="#fde047" stroke-width="1.5" fill="none" marker-end="url(#arrow)" />
+                    <path d="M 150 295 H 60 V 245" stroke="#a78bfa" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)" />
+                    <path d="M 60 215 V 195 H 280" stroke="#a78bfa" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)" />
+
+                    <!-- Arrow Labels -->
+                    <text x="268" y="118" fill="#9ca3af" font-size="8">Search</text>
+                    <text x="268" y="180" fill="#9ca3af" font-size="8">Retrieve</text>
+                    <text x="100" y="270" fill="#c4b5fd" font-size="8">Analyze & Distill</text>
+                    <text x="180" y="205" fill="#c4b5fd" font-size="8">Update Buffer</text>
+                </svg>
+            </div>
+        </section>
+        
+        <!-- Advantages Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6. Key Advantages over CoT and Standard Transformers</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-gray-900 border border-green-800 rounded-lg">
+                    <thead>
+                        <tr class="border-b border-green-800">
+                            <th class="p-4 text-left text-lg font-semibold text-green-200">Feature</th>
+                            <th class="p-4 text-left text-lg font-semibold text-green-200">Hierarchical Reasoning Models (HRM)</th>
+                            <th class="p-4 text-left text-lg font-semibold text-green-200">Chain-of-Thought (CoT)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-green-900">
+                            <td class="p-4 font-semibold text-green-300 align-top">Reasoning Process</td>
+                            <td class="p-4 align-top">Internal, latent-space computation. Separates high-level planning from low-level execution.</td>
+                            <td class="p-4 align-top">Externalized as sequential, token-based natural language steps. Monolithic process.</td>
+                        </tr>
+                        <tr class="border-b border-green-900">
+                            <td class="p-4 font-semibold text-green-300 align-top">Robustness</td>
+                            <td class="p-4 align-top">More robust. Less susceptible to token-level errors and error accumulation due to latent states and structured oversight.</td>
+                            <td class="p-4 align-top">Brittle. A single logical or factual error in the chain can derail the entire reasoning process.</td>
+                        </tr>
+                        <tr class="border-b border-green-900">
+                            <td class="p-4 font-semibold text-green-300 align-top">Efficiency</td>
+                            <td class="p-4 align-top">Highly efficient. Can achieve greater reasoning depth with fewer parameters. Adaptive computation allows for variable effort.</td>
+                            <td class="p-4 align-top">Inefficient for deep reasoning. Requires generating many tokens, and computational depth is fixed by output length.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-semibold text-green-300 align-top">Generalization</td>
+                            <td class="p-4 align-top">Stronger generalization. Learning abstract reasoning strategies (plans) can be applied to a wider range of unseen problems.</td>
+                            <td class="p-4 align-top">Limited generalization. Often learns to mimic the style of reasoning steps rather than the underlying logic.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <section>
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">7. Conclusion: Building More Thoughtful Machines</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                Hierarchical Reasoning Models represent a significant paradigm shift in AI. By moving away from brute-force scaling and towards more structured, brain-inspired architectures, HRMs offer a path to creating AI systems that are not only more powerful but also more efficient, robust, and general-purpose.
+            </p>
+            <p class="text-lg leading-relaxed">
+                Whether through dual-recurrent latent states, knowledge distillation with thought templates, or experience-augmented reasoning buffers, the core principle remains the same: complex problems are best solved by breaking them down. As this field matures, we can expect to see even more sophisticated models that can plan, execute, and learn with a level of cognitive flexibility that brings us closer to true artificial general intelligence.
+            </p>
+        </section>
+
+    </div>
+    <script>
+        // --- Intro Animation Logic ---
+        const introElements = {
+            monoProblem: document.getElementById('anim-mono-problem'),
+            monoProgressBar: document.getElementById('anim-mono-progress-bar'),
+            monoArrow: document.getElementById('anim-mono-arrow'),
+            monoProcessor: document.getElementById('anim-mono-processor'),
+            hrmPlanner: document.getElementById('anim-hrm-planner'),
+            hrmPlanArrow: document.getElementById('anim-hrm-plan-arrow'),
+            hrmProblem: document.getElementById('anim-hrm-problem'),
+            hrmSubtasks: document.querySelectorAll('#anim-hrm-subtasks > div'),
+            hrmSubtasksContainer: document.getElementById('anim-hrm-subtasks'),
+            hrmExecArrow: document.getElementById('anim-hrm-exec-arrow'),
+            hrmExecutor: document.getElementById('anim-hrm-executor'),
+        };
+
+        function resetIntroAnimation() {
+            Object.values(introElements).forEach(el => {
+                if (el.nodeName) {
+                    el.style.opacity = '0';
+                    el.style.transform = '';
+                    el.classList.remove('anim-fade-in', 'anim-slide-in-top', 'anim-slide-in-bottom', 'anim-progress');
+                    if (el.id === 'anim-mono-progress-bar') el.style.width = '0%';
+                } else if (el.forEach) { // NodeList
+                    el.forEach(subEl => {
+                        subEl.style.opacity = '1';
+                        subEl.style.backgroundColor = '';
+                        subEl.style.borderColor = '';
+                    });
+                }
+            });
+        }
+
+        function startIntroAnimation() {
+            resetIntroAnimation();
+            setTimeout(() => { introElements.monoProblem.style.opacity = '1'; introElements.monoProblem.classList.add('anim-fade-in'); }, 100);
+            setTimeout(() => { introElements.monoArrow.style.opacity = '1'; introElements.monoArrow.classList.add('anim-slide-in-top'); introElements.monoProcessor.style.opacity = '1'; introElements.monoProcessor.classList.add('anim-slide-in-top'); }, 500);
+            setTimeout(() => { introElements.monoProgressBar.classList.add('anim-progress'); }, 1000);
+            setTimeout(() => { introElements.hrmPlanner.style.opacity = '1'; introElements.hrmPlanner.classList.add('anim-slide-in-top'); }, 2500);
+            setTimeout(() => { introElements.hrmPlanArrow.style.opacity = '1'; introElements.hrmPlanArrow.classList.add('anim-fade-in'); introElements.hrmProblem.style.opacity = '1'; introElements.hrmProblem.classList.add('anim-fade-in'); }, 3000);
+            setTimeout(() => { introElements.hrmProblem.style.opacity = '0'; introElements.hrmSubtasksContainer.style.opacity = '1'; introElements.hrmSubtasksContainer.classList.add('anim-fade-in'); }, 3800);
+            setTimeout(() => { introElements.hrmExecArrow.style.opacity = '1'; introElements.hrmExecArrow.classList.add('anim-slide-in-bottom'); introElements.hrmExecutor.style.opacity = '1'; introElements.hrmExecutor.classList.add('anim-slide-in-bottom'); }, 4200);
+            setTimeout(() => {
+                introElements.hrmSubtasks.forEach((task, index) => {
+                    setTimeout(() => {
+                        task.style.transition = 'background-color 0.5s, border-color 0.5s';
+                        task.style.backgroundColor = '#16a34a'; task.style.borderColor = '#22c55e';
+                    }, index * 400);
+                });
+            }, 4800);
+        }
+        
+        // --- Principles Animation Logic ---
+        const principlesElements = {
+            principleA: document.getElementById('anim-principle-A'),
+            principleB: document.getElementById('anim-principle-B'),
+            principleC: document.getElementById('anim-principle-C')
+        };
+
+        function resetPrinciplesAnimation() {
+            Object.values(principlesElements).forEach(el => {
+                el.style.opacity = '0';
+                el.classList.remove('anim-grow-fade');
+            });
+        }
+
+        function startPrinciplesAnimation() {
+            resetPrinciplesAnimation();
+            setTimeout(() => { principlesElements.principleA.style.opacity = '1'; principlesElements.principleA.classList.add('anim-grow-fade'); }, 100);
+            setTimeout(() => { principlesElements.principleB.style.opacity = '1'; principlesElements.principleB.classList.add('anim-grow-fade'); }, 800);
+            setTimeout(() => { principlesElements.principleC.style.opacity = '1'; principlesElements.principleC.classList.add('anim-grow-fade'); }, 1500);
+        }
+
+        // --- Case Study Animation Logic ---
+        const csElements = {
+            problem: document.getElementById('anim-cs-problem'),
+            planner: document.getElementById('anim-cs-planner'),
+            executor: document.getElementById('anim-cs-executor'),
+            plan: document.getElementById('anim-cs-plan'),
+            result: document.getElementById('anim-cs-result'),
+            output: document.getElementById('anim-cs-output'),
+            traces: {
+                problemPlanner: document.getElementById('trace-problem-planner'),
+                plannerPlan: document.getElementById('trace-planner-plan'),
+                planExecutor: document.getElementById('trace-plan-executor'),
+                executorResult: document.getElementById('trace-executor-result'),
+                resultPlanner: document.getElementById('trace-result-planner'),
+                plannerOutput: document.getElementById('trace-planner-output'),
+            }
+        };
+
+        function setupSVGPath(pathElement) {
+            if(!pathElement) return;
+            const length = pathElement.getTotalLength();
+            pathElement.style.strokeDasharray = length;
+            pathElement.style.strokeDashoffset = length;
+        }
+
+        function resetCaseStudyAnimation() {
+            Object.values(csElements).forEach(el => {
+                if (el.id) { // It's a DOM element
+                    el.style.opacity = '0';
+                    el.classList.remove('anim-pulse');
+                }
+            });
+            Object.values(csElements.traces).forEach(trace => {
+                 if(trace) {
+                    trace.classList.remove('anim-draw-path');
+                    setupSVGPath(trace);
+                 }
+            });
+        }
+
+        function startCaseStudyAnimation() {
+            resetCaseStudyAnimation();
+            const animate = (el, delay) => setTimeout(() => el.style.opacity = '1', delay);
+            const pulse = (el, delay) => setTimeout(() => el.classList.add('anim-pulse'), delay);
+            const unpulse = (el, delay) => setTimeout(() => el.classList.remove('anim-pulse'), delay);
+            const drawTrace = (trace, delay) => setTimeout(() => trace.classList.add('anim-draw-path'), delay);
+            animate(csElements.problem, 100);
+            drawTrace(csElements.traces.problemPlanner, 300);
+            animate(csElements.planner, 800);
+            pulse(csElements.planner, 1200);
+            drawTrace(csElements.traces.plannerPlan, 1500);
+            animate(csElements.plan, 2000);
+            unpulse(csElements.planner, 2300);
+            drawTrace(csElements.traces.planExecutor, 2400);
+            animate(csElements.executor, 2900);
+            pulse(csElements.executor, 3300);
+            drawTrace(csElements.traces.executorResult, 3600);
+            animate(csElements.result, 4100);
+            unpulse(csElements.executor, 4400);
+            drawTrace(csElements.traces.resultPlanner, 4500);
+            pulse(csElements.planner, 5300);
+            drawTrace(csElements.traces.plannerOutput, 5600);
+            animate(csElements.output, 6100);
+            unpulse(csElements.planner, 6200);
+        }
+
+        // --- Convergence Animation Logic ---
+        const convElements = {
+            graph: document.getElementById('convergence-graph'),
+            plannerDot: document.getElementById('planner-dot'),
+            executorDot: document.getElementById('executor-dot'),
+            paths: [
+                document.getElementById('conv-path-1'),
+                document.getElementById('conv-path-2'),
+                document.getElementById('conv-path-3')
+            ],
+            cycleText: document.getElementById('conv-cycle-text'),
+            plannerText: document.getElementById('conv-planner-text'),
+            executorText: document.getElementById('conv-executor-text'),
+            feedbackText: document.getElementById('conv-feedback-text')
+        };
+        let convAnimationTimeout;
+
+        function resetConvergenceAnimation() {
+            clearTimeout(convAnimationTimeout);
+            convElements.plannerDot.style.opacity = '0';
+            convElements.executorDot.style.opacity = '0';
+            convElements.paths.forEach(p => {
+                p.setAttribute('d', '');
+                p.classList.remove('anim-draw-path');
+                p.style.strokeDasharray = '0';
+                p.style.strokeDashoffset = '0';
+            });
+            [convElements.plannerText, convElements.executorText, convElements.feedbackText].forEach(el => el.style.opacity = '0');
+            convElements.cycleText.textContent = 'Cycle: -';
+        }
+
+        function startConvergenceAnimation() {
+            resetConvergenceAnimation();
+
+            const graphWidth = convElements.graph.clientWidth;
+            const graphHeight = convElements.graph.clientHeight;
+            const padding = 35;
+
+            const cycles = [
+                { startY: graphHeight - 50, plannerY: graphHeight * 0.6, endXOffset: graphWidth * 0.3 },
+                { startY: graphHeight * 0.6, plannerY: graphHeight * 0.35, endXOffset: graphWidth * 0.3 },
+                { startY: graphHeight * 0.35, plannerY: graphHeight * 0.15, endXOffset: graphWidth * 0.3 }
+            ];
+
+            let currentX = padding;
+
+            function runCycle(cycleIndex) {
+                if (cycleIndex >= cycles.length) return;
+
+                const cycle = cycles[cycleIndex];
+                cycle.startX = currentX;
+                const endX = cycle.startX + cycle.endXOffset;
+
+                // Update text panel
+                convElements.cycleText.textContent = `Cycle: ${cycleIndex + 1}`;
+                convElements.plannerText.style.opacity = '0';
+                convElements.executorText.style.opacity = '0';
+                convElements.feedbackText.style.opacity = '0';
+
+                // 1. Planner sets goal
+                convAnimationTimeout = setTimeout(() => {
+                    convElements.plannerText.style.opacity = '1';
+                    convElements.plannerDot.style.opacity = '1';
+                    convElements.plannerDot.setAttribute('cx', endX);
+                    convElements.plannerDot.setAttribute('cy', cycle.plannerY);
+                }, 500);
+
+                // 2. Executor converges
+                convAnimationTimeout = setTimeout(() => {
+                    convElements.executorText.style.opacity = '1';
+                    convElements.executorDot.style.opacity = '1';
+                    convElements.executorDot.setAttribute('cx', cycle.startX);
+                    convElements.executorDot.setAttribute('cy', cycle.startY);
+
+                    const path = convElements.paths[cycleIndex];
+                    const d = `M ${cycle.startX},${cycle.startY} Q ${cycle.startX + (endX - cycle.startX) * 0.25},${cycle.startY} ${cycle.startX + (endX - cycle.startX) * 0.5},${(cycle.startY + cycle.plannerY) / 2} T ${endX},${cycle.plannerY}`;
+                    path.setAttribute('d', d);
+                    
+                    setupSVGPath(path);
+                    path.classList.add('anim-draw-path');
+
+                    let start = null;
+                    const duration = 2000;
+                    function animateDot(timestamp) {
+                        if (!start) start = timestamp;
+                        const progress = Math.min((timestamp - start) / duration, 1);
+                        const length = path.getTotalLength();
+                        if (length > 0) {
+                            const point = path.getPointAtLength(progress * length);
+                            if(point) convElements.executorDot.setAttribute('cx', point.x);
+                            if(point) convElements.executorDot.setAttribute('cy', point.y);
+                        }
+                        if (progress < 1) requestAnimationFrame(animateDot);
+                    }
+                    requestAnimationFrame(animateDot);
+
+                }, 1500);
+
+                // 3. Feedback and prepare for next cycle
+                convAnimationTimeout = setTimeout(() => {
+                    convElements.feedbackText.style.opacity = '1';
+                    convElements.plannerDot.style.opacity = '0';
+                    currentX = endX;
+                    runCycle(cycleIndex + 1);
+                }, 4000);
+            }
+
+            runCycle(0);
+        }
+        
+        // --- Training Animation Logic ---
+        function drawTrainingGraph(svgId, isBptt) {
+            const svg = document.getElementById(svgId);
+            if (!svg) return;
+            svg.innerHTML = ''; // Clear previous drawing
+
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+            const nodeRadius = 12;
+            const numNodes = 5;
+
+            const nodes = Array.from({ length: numNodes }).map((_, i) => ({
+                x: (width / (numNodes + 1)) * (i + 1),
+                y: height / 2,
+            }));
+
+            // Draw nodes and forward arrows
+            nodes.forEach((node, i) => {
+                if (i < numNodes - 1) {
+                    const nextNode = nodes[i+1];
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', node.x);
+                    line.setAttribute('y1', node.y);
+                    line.setAttribute('x2', nextNode.x);
+                    line.setAttribute('y2', nextNode.y);
+                    line.setAttribute('stroke', '#4b5563');
+                    line.setAttribute('stroke-width', '2');
+                    svg.appendChild(line);
+                }
+            });
+            nodes.forEach((node, i) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.x);
+                circle.setAttribute('cy', node.y);
+                circle.setAttribute('r', nodeRadius);
+                circle.setAttribute('fill', '#1f2937');
+                circle.setAttribute('stroke', '#374151');
+                circle.setAttribute('stroke-width', '2');
+                svg.appendChild(circle);
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', node.x);
+                text.setAttribute('y', node.y + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#9ca3af');
+                text.setAttribute('font-size', '10');
+                text.textContent = `t-${numNodes - i -1}`;
+                svg.appendChild(text);
+            });
+
+            // Draw gradient path
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d;
+            if (isBptt) {
+                d = `M ${nodes[4].x},${nodes[4].y + nodeRadius + 5} C ${nodes[2].x},${nodes[2].y + 60} ${nodes[2].x},${nodes[2].y + 60} ${nodes[0].x},${nodes[0].y + nodeRadius + 5}`;
+            } else {
+                d = `M ${nodes[4].x},${nodes[4].y + nodeRadius + 5} C ${nodes[4].x},${nodes[4].y + 60} ${nodes[3].x},${nodes[3].y + 60} ${nodes[3].x},${nodes[3].y + nodeRadius + 5}`;
+            }
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', '#ef4444');
+            path.setAttribute('stroke-width', '2.5');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(path);
+            setupSVGPath(path);
+            setTimeout(() => path.classList.add('anim-draw-path'), 500);
+        }
+
+        function drawEfficiencyGraph() {
+            const svg = document.getElementById('efficiency-graph');
+            if (!svg) return;
+            svg.innerHTML = ''; // Clear previous drawing
+
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+            const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+
+            // Draw axes
+            svg.innerHTML += `
+                <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="#4b5563" stroke-width="2"/>
+                <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${padding.left}" y2="${padding.top}" stroke="#4b5563" stroke-width="2"/>
+                <text x="${width / 2}" y="${height - 10}" text-anchor="middle" fill="#9ca3af" class="text-sm">Reasoning Depth (T) →</text>
+                <text x="${padding.left - 35}" y="${height / 2}" text-anchor="middle" transform="rotate(-90, ${padding.left - 35}, ${height / 2})" fill="#9ca3af" class="text-sm">Memory Usage →</text>
+            `;
+
+            // BPTT Path (O(T))
+            const bpttPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const bptt_d = `M ${padding.left},${height - padding.bottom} L ${width - padding.right},${padding.top}`;
+            bpttPath.setAttribute('d', bptt_d);
+            bpttPath.setAttribute('stroke', '#ef4444');
+            bpttPath.setAttribute('stroke-width', '3');
+            bpttPath.setAttribute('fill', 'none');
+            bpttPath.setAttribute('id', 'bptt-line');
+            svg.appendChild(bpttPath);
+            svg.innerHTML += `<text x="${width - padding.right - 10}" y="${padding.top + 15}" text-anchor="end" fill="#f87171" class="font-bold">O(T)</text>`;
+
+
+            // One-Step Path (O(1))
+            const oneStepPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const oneStep_d = `M ${padding.left},${height - padding.bottom - 20} L ${width - padding.right},${height - padding.bottom - 20}`;
+            oneStepPath.setAttribute('d', oneStep_d);
+            oneStepPath.setAttribute('stroke', '#34d399');
+            oneStepPath.setAttribute('stroke-width', '3');
+            oneStepPath.setAttribute('fill', 'none');
+            oneStepPath.setAttribute('id', 'one-step-line');
+            svg.appendChild(oneStepPath);
+            svg.innerHTML += `<text x="${width - padding.right - 10}" y="${height - padding.bottom - 5}" text-anchor="end" fill="#6ee7b7" class="font-bold">O(1)</text>`;
+
+            // Animate paths
+            setupSVGPath(bpttPath);
+            setupSVGPath(oneStepPath);
+            setTimeout(() => {
+                bpttPath.classList.add('anim-draw-path');
+                oneStepPath.classList.add('anim-draw-path');
+            }, 100);
+        }
+        
+        // --- Event Listeners ---
+        window.addEventListener('load', () => {
+            
+            const observerCallback = (entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const containerId = entry.target.id;
+                        if (containerId === 'principles-animation-container') startPrinciplesAnimation();
+                        else if (containerId === 'casestudy-animation-container') {
+                            Object.values(csElements.traces).forEach(setupSVGPath);
+                            startCaseStudyAnimation();
+                        } else if (containerId === 'convergence-animation-container') startConvergenceAnimation();
+                        else if (containerId === 'training-step-1') drawTrainingGraph('bptt-graph', true);
+                        else if (containerId === 'training-step-2') drawTrainingGraph('one-step-graph', false);
+                        else if (containerId === 'training-step-3') drawEfficiencyGraph();
+                        
+                        observer.unobserve(entry.target); // Run only once
+                    }
+                });
+            };
+
+            const observer = new IntersectionObserver(observerCallback, { threshold: 0.5 });
+            
+            const containersToObserve = [
+                'principles-animation-container', 
+                'casestudy-animation-container', 
+                'convergence-animation-container',
+                'training-step-1',
+                'training-step-2',
+                'training-step-3',
+            ];
+            containersToObserve.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) observer.observe(el);
+            });
+            
+            startIntroAnimation();
+        });
+
+        document.getElementById('replay-intro-button').addEventListener('click', startIntroAnimation);
+        document.getElementById('replay-principles-button').addEventListener('click', startPrinciplesAnimation);
+        document.getElementById('replay-casestudy-button').addEventListener('click', startCaseStudyAnimation);
+        document.getElementById('replay-convergence-button').addEventListener('click', startConvergenceAnimation);
+    </script>
+</body>
+</html>
