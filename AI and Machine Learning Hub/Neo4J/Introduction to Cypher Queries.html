@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo4J Cypher Queries</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Simple scrollbar styling for the matrix theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a1a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #33ff33;
+        }
+        
+        /* --- Animation Keyframes --- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes drawLine {
+            from { stroke-dashoffset: 1000; }
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: scale(0.8); }
+        }
+        @keyframes changeColor {
+            from { fill: #047857; }
+            to { fill: #34d399; }
+        }
+        @keyframes searchPath {
+            0% { stroke-dashoffset: 300; }
+            100% { stroke-dashoffset: 0; }
+        }
+        @keyframes highlightRow {
+            from { fill: #064e3b; }
+            to { fill: #047857; }
+        }
+        @keyframes travel {
+            to { motion-offset: 100%; }
+        }
+
+        /* --- Animation Classes --- */
+        .anim-fade-in { animation: fadeIn 1s ease-in-out forwards; }
+        .anim-scale-up { animation: scaleUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transform-origin: center; }
+        .anim-draw-line { stroke-dasharray: 1000; animation: drawLine 2s ease-out forwards; }
+        .anim-pulse { animation: pulse 1.5s infinite ease-in-out; }
+        .anim-fade-out { animation: fadeOut 1s ease-in-out forwards; }
+        .anim-change-color { animation: changeColor 1s forwards; }
+        
+        /* Delay helpers */
+        .delay-1s { animation-delay: 1s; }
+        .delay-2s { animation-delay: 2s; }
+        .delay-3s { animation-delay: 3s; }
+        .delay-4s { animation-delay: 4s; }
+
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-4 tracking-wider">Neo4J Cypher Queries</h1>
+            <p class="text-lg text-green-400">A Guide to Neo4J Graphical Cypher Querying</p>
+        </header>
+
+        <!-- Introduction -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. Introduction to Graph Databases</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                Graph databases represent data as a network of interconnected entities, a departure from the tabular structure of relational databases. This fundamental difference makes them exceptionally powerful for querying and analyzing complex relationships.
+            </p>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <!-- Relational DB Visualization -->
+                <div>
+                    <h3 class="text-2xl font-bold text-green-200 mb-3 text-center">Relational Model: Joining Tables</h3>
+                     <div class="bg-gray-900 rounded-lg p-4">
+                        <svg viewBox="0 0 300 220" class="w-full h-auto">
+                            <style>
+                                .table-bg { fill: #064e3b; stroke: #10b981; }
+                                .table-header { font-size: 8px; fill: #a7f3d0; font-weight: bold; text-anchor: middle; }
+                                .table-text { font-size: 7px; fill: #6ee7b7; text-anchor: middle; }
+                                .join-line { stroke: #fde047; stroke-width: 1.5; stroke-dasharray: 3 3; animation: drawLine 1s forwards; }
+                            </style>
+                            <!-- Users Table -->
+                            <g class="anim-fade-in">
+                                <rect x="10" y="10" width="80" height="60" class="table-bg" rx="3"/>
+                                <text x="50" y="22" class="table-header">Users</text>
+                                <rect x="10" y="27" width="80" height="1" fill="#10b981"/>
+                                <text x="50" y="40" class="table-text">id: 1</text>
+                                <text x="50" y="50" class="table-text">name: 'Neo'</text>
+                            </g>
+                            <!-- Orders Table -->
+                            <g class="anim-fade-in delay-1s">
+                                <rect x="110" y="80" width="80" height="60" class="table-bg" rx="3"/>
+                                <text x="150" y="92" class="table-header">Orders</text>
+                                <rect x="110" y="97" width="80" height="1" fill="#10b981"/>
+                                <text x="150" y="110" class="table-text">id: 101</text>
+                                <text x="150" y="120" class="table-text">user_id: 1</text>
+                            </g>
+                            <!-- Products Table -->
+                            <g class="anim-fade-in delay-2s">
+                                <rect x="210" y="150" width="80" height="60" class="table-bg" rx="3"/>
+                                <text x="250" y="162" class="table-header">Products</text>
+                                <rect x="210" y="167" width="80" height="1" fill="#10b981"/>
+                                <text x="250" y="180" class="table-text">id: 99</text>
+                                <text x="250" y="190" class="table-text">name: 'Spoon'</text>
+                            </g>
+                            <!-- Join Lines -->
+                            <path d="M 90 45 C 100 45, 100 115, 110 115" fill="none" class="join-line delay-3s" opacity="0" style="animation-fill-mode: forwards;"/>
+                            <path d="M 190 115 C 200 115, 200 185, 210 185" fill="none" class="join-line delay-4s" opacity="0" style="animation-fill-mode: forwards;"/>
+                        </svg>
+                     </div>
+                    <p class="text-center text-sm mt-2 text-green-400">Relationships are inferred at query time using expensive JOIN operations across tables.</p>
+                </div>
+                <!-- Graph DB Visualization -->
+                <div>
+                    <h3 class="text-2xl font-bold text-green-200 mb-3 text-center">Graph Model: Traversing Paths</h3>
+                    <div class="bg-gray-900 rounded-lg p-4">
+                        <svg viewBox="0 0 300 220" class="w-full h-auto">
+                             <defs>
+                                <marker id="arrow-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399" />
+                                </marker>
+                            </defs>
+                            <style>
+                                .node-circle { fill: #064e3b; stroke: #10b981; stroke-width: 2; }
+                                .node-label { font-size: 8px; fill: #a7f3d0; text-anchor: middle; }
+                                .node-prop { font-size: 7px; fill: #6ee7b7; text-anchor: middle; }
+                                .rel-path { stroke: #34d399; stroke-width: 2; marker-end: url(#arrow-g); }
+                                .rel-text { font-size: 8px; fill: #6ee7b7; text-anchor: middle; }
+                                #spark { fill: #fde047; r: 3; animation: travel 2s linear forwards; }
+                            </style>
+                            <!-- Nodes -->
+                            <g class="anim-scale-up"><circle cx="50" cy="110" r="30" class="node-circle"/><text x="50" y="105" class="node-label">User</text><text x="50" y="118" class="node-prop">{name:'Neo'}</text></g>
+                            <g class="anim-scale-up delay-1s"><circle cx="150" cy="110" r="30" class="node-circle"/><text x="150" y="105" class="node-label">Order</text><text x="150" y="118" class="node-prop">{id:101}</text></g>
+                            <g class="anim-scale-up delay-2s"><circle cx="250" cy="110" r="30" class="node-circle"/><text x="250" y="105" class="node-label">Product</text><text x="250" y="118" class="node-prop">{name:'Spoon'}</text></g>
+                            <!-- Relationships -->
+                            <path id="path1" d="M 80 110 L 120 110" fill="none" class="rel-path anim-draw-line delay-3s" opacity="0" style="animation-fill-mode: forwards;"/>
+                            <text x="100" y="100" class="rel-text anim-fade-in delay-3s" opacity="0">[PLACED]</text>
+                            <path id="path2" d="M 180 110 L 220 110" fill="none" class="rel-path anim-draw-line delay-4s" opacity="0" style="animation-fill-mode: forwards;"/>
+                            <text x="200" y="100" class="rel-text anim-fade-in delay-4s" opacity="0">[CONTAINS]</text>
+                            
+                            <!-- Traversal Animation -->
+                            <circle id="spark" motion-path="M 50 110 L 250 110" class="delay-4s" opacity="0" style="animation-fill-mode: forwards;"/>
+                        </svg>
+                    </div>
+                    <p class="text-center text-sm mt-2 text-green-400">Relationships are stored as first-class citizens, enabling fast, direct traversal from one node to another.</p>
+                </div>
+            </div>
+            <p class="text-lg leading-relaxed mt-8">
+                <a href="https://neo4j.com/developer/cypher/" target="_blank" class="text-green-400 hover:text-green-300 underline">Cypher</a> is a declarative query language designed to extract insights from these networks. This tutorial covers concepts from the fundamental building blocks—nodes and relationships—to powerful algorithms that reveal hidden context and patterns in data.
+            </p>
+        </section>
+
+        <!-- Core Concepts -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. The Building Blocks: Nodes & Relationships</h2>
+            <p class="mb-6 text-lg">Graphs have two primary components:</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Nodes -->
+                <div>
+                    <h3 class="text-2xl font-bold text-green-200 mb-3">Nodes <code class="text-sm">( )</code></h3>
+                    <p class="mb-4">Nodes are the entities in your graph. They are represented by parentheses in Cypher.</p>
+                    <pre class="bg-gray-900 text-gray-200 p-4 mt-4 rounded-lg overflow-x-auto"><code><span class="text-gray-500">// CREATE a node</span>
+CREATE (p:Person {name: 'Neo'})</code></pre>
+                    <div class="flex items-center justify-center p-6 bg-gray-900 rounded-lg mt-4 h-48">
+                        <svg viewBox="0 0 200 100" class="w-full h-full">
+                            <g class="anim-scale-up">
+                                <circle cx="100" cy="50" r="30" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+                                <text x="100" y="45" font-family="Inter" font-size="10" fill="#a7f3d0" text-anchor="middle">Person</text>
+                                <text x="100" y="60" font-family="Inter" font-size="8" fill="#6ee7b7" text-anchor="middle">{name:'Neo'}</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <p class="text-center text-sm mt-2 text-green-400">Visualization: A new node is created and added to the graph space.</p>
+                </div>
+                <!-- Relationships -->
+                <div>
+                    <h3 class="text-2xl font-bold text-green-200 mb-3">Relationships <code class="text-sm">-[ ]-></code></h3>
+                    <p class="mb-4">Relationships connect nodes. They always have a direction and a type.</p>
+                    <pre class="bg-gray-900 text-gray-200 p-4 mt-4 rounded-lg overflow-x-auto"><code><span class="text-gray-500">// CREATE a relationship</span>
+MATCH (a:Person), (b:Person)
+CREATE (a)-[r:KNOWS]->(b)</code></pre>
+                    <div class="flex items-center justify-center p-6 bg-gray-900 rounded-lg mt-4 h-48">
+                        <svg viewBox="0 0 200 100" class="w-full h-full">
+                            <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                                </marker>
+                            </defs>
+                            <!-- Nodes -->
+                            <g class="anim-fade-in"><circle cx="40" cy="50" r="20" fill="#064e3b" stroke="#10b981" stroke-width="2"/><text x="40" y="53" font-size="8" fill="#a7f3d0" text-anchor="middle">Neo</text></g>
+                            <g class="anim-fade-in delay-1s"><circle cx="160" cy="50" r="20" fill="#064e3b" stroke="#10b981" stroke-width="2"/><text x="160" y="53" font-size="8" fill="#a7f3d0" text-anchor="middle">Morpheus</text></g>
+                            <!-- Relationship -->
+                            <line x1="60" y1="50" x2="140" y2="50" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)" class="anim-draw-line delay-2s" opacity="0" style="animation-fill-mode: forwards;"/>
+                            <text x="100" y="40" font-size="8" fill="#6ee7b7" text-anchor="middle" class="anim-fade-in delay-3s" opacity="0">[KNOWS]</text>
+                        </svg>
+                    </div>
+                    <p class="text-center text-sm mt-2 text-green-400">Visualization: An arrow is drawn from one node to another, representing a directed relationship.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Basic Querying -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Reading Data: MATCH & RETURN</h2>
+            <h3 class="text-xl font-semibold text-green-200 mb-3">Matching Patterns</h3>
+            <p class="mb-4">Cypher uses an ASCII-art style syntax to define the graph patterns to be matched.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code><span class="text-gray-500">// Who does Neo know?</span>
+MATCH (neo:Person {name: 'Neo'})-[r:KNOWS]->(friend:Person)
+RETURN friend.name</code></pre>
+            <div class="bg-gray-900 rounded-lg mt-4 p-4">
+                <svg viewBox="0 0 300 150" class="w-full h-auto">
+                    <defs>
+                        <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" /></marker>
+                        <marker id="arrowHighlight" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399" /></marker>
+                    </defs>
+                    <!-- Non-matching nodes -->
+                    <g opacity="0.3"><circle cx="250" cy="110" r="20" fill="#064e3b" stroke="#10b981" /><text x="250" y="113" fill="#a7f3d0" font-size="8" text-anchor="middle">Smith</text></g>
+                    <g opacity="0.3"><circle cx="200" cy="40" r="20" fill="#064e3b" stroke="#10b981" /><text x="200" y="43" fill="#a7f3d0" font-size="8" text-anchor="middle">Oracle</text></g>
+                    
+                    <!-- The Pattern Match -->
+                    <g class="anim-pulse"><circle cx="50" cy="75" r="25" fill="#047857" stroke="#34d399" stroke-width="3" /><text x="50" y="78" fill="#a7f3d0" font-size="10" text-anchor="middle">Neo</text></g>
+                    <line x1="75" y1="75" x2="125" y2="75" stroke="#34d399" stroke-width="3" marker-end="url(#arrowHighlight)" class="anim-draw-line delay-1s" style="animation-fill-mode: forwards;"/>
+                    <text x="100" y="65" fill="#6ee7b7" font-size="8" text-anchor="middle" class="anim-fade-in delay-2s" opacity="0">[KNOWS]</text>
+                    <g class="anim-pulse delay-2s" style="animation-fill-mode: forwards; opacity:0;"><circle cx="150" cy="75" r="25" fill="#047857" stroke="#34d399" stroke-width="3" /><text x="150" y="78" fill="#a7f3d0" font-size="10" text-anchor="middle">Trinity</text></g>
+                </svg>
+                <p class="text-center text-sm mt-2 text-green-400">Visualization: The query pattern locks onto the graph. The 'Neo' node is found first, then the outgoing 'KNOWS' relationship is followed to find 'Trinity'. Other nodes are ignored.</p>
+            </div>
+        </section>
+
+        <!-- Modifying Data -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Writing Data: A Visual Guide</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-green-200">SET: Update properties</h3>
+                    <pre class="bg-gray-900 text-gray-200 p-4 mt-2 rounded-lg overflow-x-auto"><code>MATCH (a:Agent {name: 'Smith'})
+SET a.status = 'Rogue'</code></pre>
+                    <div class="bg-gray-900 rounded-lg mt-4 p-4 flex flex-col items-center justify-center">
+                        <svg viewBox="0 0 200 100" class="w-full h-40">
+                            <g>
+                                <circle id="agent-node-circle" cx="100" cy="50" r="30" fill="#064e3b" stroke="#10b981" stroke-width="2" style="transition: fill 0.5s;"/>
+                                <text x="100" y="45" font-family="Inter" font-size="10" fill="#a7f3d0" text-anchor="middle">Agent</text>
+                                <text id="agent-status" x="100" y="60" font-family="Inter" font-size="8" fill="#6ee7b7" text-anchor="middle" style="transition: fill 0.5s;">{status:'System'}</text>
+                            </g>
+                        </svg>
+                        <button onclick="runSetQuery()" class="mt-4 bg-green-700 hover:bg-green-600 text-green-100 font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                            Run SET Query
+                        </button>
+                    </div>
+                    <p class="text-center text-sm mt-2 text-green-400">Click the button to execute the SET query and update the node's property.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-green-200">DETACH DELETE: Remove nodes</h3>
+                    <pre class="bg-gray-900 text-gray-200 p-4 mt-2 rounded-lg overflow-x-auto"><code>MATCH (c:Character {name: 'Cypher'})
+DETACH DELETE c</code></pre>
+                    <div class="bg-gray-900 rounded-lg mt-4 p-4 h-48 flex items-center justify-center">
+                        <svg viewBox="0 0 200 100" class="w-full h-full">
+                            <g class="anim-fade-out delay-1s" style="animation-fill-mode: forwards;">
+                                <line x1="60" y1="50" x2="140" y2="50" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>
+                                <circle cx="40" cy="50" r="20" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+                                <text x="40" y="53" font-size="8" fill="#a7f3d0" text-anchor="middle">Neo</text>
+                                <circle cx="160" cy="50" r="20" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+                                <text x="160" y="53" font-size="8" fill="#a7f3d0" text-anchor="middle">Cypher</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <p class="text-center text-sm mt-2 text-green-400">Visualization: The 'Cypher' node and any connected relationships are detached and fade away.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Querying & Algorithms -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Finding Context: Algorithms & Advanced Queries</h2>
+            
+            <h3 class="text-2xl font-semibold text-green-200 mb-4">Pathfinding: Shortest Path</h3>
+            <p class="mb-4"><strong>Scenario:</strong> What is the shortest chain of "KNOWS" connections between Neo and the Architect?</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>MATCH p = shortestPath(
+  (start:Person {name: 'Neo'})-[*]-(end:Person {name: 'Architect'})
+) RETURN p</code></pre>
+            <div class="bg-gray-900 p-6 rounded-lg mt-4">
+                <svg viewBox="0 0 400 200" class="w-full h-auto">
+                     <defs><marker id="arrow3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" opacity="0.5"/></marker></defs>
+                    <!-- Nodes -->
+                    <g><circle cx="30" cy="100" r="20"/><text x="30" y="103">Neo</text></g>
+                    <g><circle cx="120" cy="50" r="15"/><text x="120" y="53">Morpheus</text></g>
+                    <g><circle cx="120" cy="150" r="15"/><text x="120" y="153">Trinity</text></g>
+                    <g><circle cx="210" cy="50" r="15"/><text x="210" y="53">Oracle</text></g>
+                    <g><circle cx="210" cy="150" r="15"/><text x="210" y="153">Niobe</text></g>
+                    <g><circle cx="300" cy="100" r="15"/><text x="300" y="103">Seraph</text></g>
+                    <g><circle cx="370" cy="100" r="20"/><text x="370" y="103">Architect</text></g>
+                    <!-- Default styles for SVG elements -->
+                    <style> circle { fill: #064e3b; stroke: #10b981; } text { font-family: Inter; font-size: 6px; fill: #a7f3d0; text-anchor: middle; } line { stroke: #10b981; stroke-width:1; opacity: 0.5; marker-end: url(#arrow3); } </style>
+                    <!-- Paths (long) -->
+                    <line x1="48" y1="108" x2="105" y2="142"/>
+                    <line x1="135" y1="150" x2="195" y2="150"/>
+                    <line x1="225" y1="150" x2="285" y2="108"/>
+                    <!-- Paths (short) - these will be animated -->
+                    <line x1="48" y1="92" x2="105" y2="58" class="anim-draw-line" style="stroke-width:2.5; stroke:#34d399; opacity:1; animation-fill-mode:forwards;"/>
+                    <line x1="135" y1="50" x2="195" y2="50" class="anim-draw-line delay-1s" style="stroke-width:2.5; stroke:#34d399; opacity:1; animation-fill-mode:forwards;"/>
+                    <line x1="225" y1="58" x2="285" y2="92" class="anim-draw-line delay-2s" style="stroke-width:2.5; stroke:#34d399; opacity:1; animation-fill-mode:forwards;"/>
+                    <line x1="315" y1="100" x2="350" y2="100" class="anim-draw-line delay-3s" style="stroke-width:2.5; stroke:#34d399; opacity:1; animation-fill-mode:forwards;"/>
+                </svg>
+                <p class="mt-4 text-green-400 text-center">Visualization: The `shortestPath` function explores the graph, ignoring longer routes (faded) and highlighting the most direct connection (bright, animated line).</p>
+            </div>
+
+            <h3 class="text-2xl font-semibold text-green-200 mt-8 mb-4">Community Detection: Finding Triangles</h3>
+            <p class="mb-4"><strong>Scenario:</strong> Find groups of three people who all know each other. This suggests a strong social bond.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>MATCH (p1)-[:KNOWS]-(p2),
+      (p2)-[:KNOWS]-(p3),
+      (p3)-[:KNOWS]-(p1)
+RETURN p1.name, p2.name, p3.name</code></pre>
+            <div class="bg-gray-900 p-6 rounded-lg mt-4">
+                 <svg viewBox="0 0 300 150" class="w-full h-auto">
+                    <style> .node { fill: #064e3b; stroke: #10b981; } .node-text { font-size: 8px; fill: #a7f3d0; text-anchor: middle; } .rel { stroke: #10b981; stroke-width:1; opacity: 0.4; } </style>
+                    <!-- Other nodes -->
+                    <circle class="node" cx="250" cy="75" r="15"/><text class="node-text" x="250" y="78">Smith</text>
+                    <line class="rel" x1="195" y1="75" x2="235" y2="75" />
+                    <!-- The Triangle -->
+                    <circle class="node anim-pulse" cx="50" cy="75" r="20"/><text class="node-text" x="50" y="78">Neo</text>
+                    <circle class="node anim-pulse delay-1s" cx="125" cy="30" r="20"/><text class="node-text" x="125" y="33">Morpheus</text>
+                    <circle class="node anim-pulse delay-2s" cx="125" cy="120" r="20"/><text class="node-text" x="125" y="123">Trinity</text>
+                    <!-- Triangle Rels -->
+                    <line class="anim-draw-line" style="stroke:#34d399;stroke-width:2;" x1="68" y1="65" x2="110" y2="40"/>
+                    <line class="anim-draw-line delay-1s" style="stroke:#34d399;stroke-width:2;" x1="125" y1="50" x2="125" y2="100"/>
+                    <line class="anim-draw-line delay-2s" style="stroke:#34d399;stroke-width:2;" x1="110" y1="110" x2="68" y2="85"/>
+                 </svg>
+                <p class="mt-4 text-green-400 text-center">Visualization: The query looks for a closed loop of three nodes. The animation highlights each node and relationship that forms the "triangle", identifying the cohesive group.</p>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <footer class="mt-12 pt-8 border-t border-green-800 text-center">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4">Conclusion</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                This tutorial has covered the fundamentals of the Cypher query language. It has demonstrated how to create, read, update, and delete graph data, and how to ask complex questions about the structure of the network itself.
+            </p>
+            <p class="text-green-400">Further Reading:</p>
+            <ul class="mt-4 space-y-2">
+                <li><a href="https://neo4j.com/sandbox/" target="_blank" class="text-green-400 hover:text-green-200 underline">Experiment in the Neo4j Sandbox</a></li>
+                <li><a href="https://neo4j.com/docs/cypher-manual/current/" target="_blank" class="text-green-400 hover:text-green-200 underline">Read the Official Cypher Manual</a></li>
+                <li><a href="https://neo4j.com/graphgists/" target="_blank" class="text-green-400 hover:text-green-200 underline">Explore GraphGists for more examples</a></li>
+            </ul>
+        </footer>
+
+    </div>
+
+    <script>
+        function runSetQuery() {
+            const statusText = document.getElementById('agent-status');
+            const nodeCircle = document.getElementById('agent-node-circle');
+            const button = event.target;
+
+            if (statusText.textContent === "{status:'System'}") {
+                // Update to Rogue
+                statusText.textContent = "{status:'Rogue'}";
+                statusText.style.fill = '#34d399'; // Brighter green for updated state
+                nodeCircle.style.fill = '#047857'; // Darker, highlighted green for the node
+                button.textContent = 'Revert SET Query';
+            } else {
+                // Revert to System
+                statusText.textContent = "{status:'System'}";
+                statusText.style.fill = '#6ee7b7'; // Original text color
+                nodeCircle.style.fill = '#064e3b'; // Original node color
+                button.textContent = 'Run SET Query';
+            }
+        }
+    </script>
+
+</body>
+</html>

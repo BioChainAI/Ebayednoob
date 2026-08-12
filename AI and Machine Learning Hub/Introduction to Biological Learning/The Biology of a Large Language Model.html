@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: The Biology of a Large Language Model</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for glowing effects and animations */
+        .feature-node {
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .feature-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.6);
+        }
+        .connection-line {
+            transition: stroke-width 0.3s ease, opacity 0.3s ease;
+        }
+        .feature-node.active {
+            background-color: #10B981; /* green-500 */
+            color: #000;
+            box-shadow: 0 0 20px #10B981;
+        }
+        .connection-line.active {
+            stroke: #34D399; /* green-400 */
+            stroke-width: 3;
+            opacity: 1;
+        }
+        .connection-line.suppressive {
+            stroke-dasharray: 4 4;
+            stroke: #F87171; /* red-400 */
+        }
+         .connection-line.suppressive.active {
+            stroke: #EF4444; /* red-500 */
+            stroke-width: 3;
+            opacity: 1;
+        }
+        .fade-in { animation: fadeIn 1s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Styles for the Neuron/Feature demo */
+        .concept-display { min-height: 12rem; position: relative; overflow: hidden; }
+        .concept-tag { position: absolute; transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; opacity: 0; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; }
+        .interactive-orb { cursor: pointer; transition: all 0.3s ease; }
+        .interactive-orb:hover { transform: scale(1.1); box-shadow: 0 0 25px rgba(52, 211, 153, 0.7); }
+        
+        /* Styles for the Dictionary Learning demo */
+        .data-pool, .dictionary-slots { min-height: 20rem; position: relative; }
+        .raw-data-item { position: absolute; transition: all 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); padding: 0.25rem 0.5rem; background-color: #374151; border: 1px solid #10B981; border-radius: 0.375rem; cursor: grab; }
+        .dictionary-slot { transition: all 0.3s ease; cursor: pointer; }
+        .dictionary-slot.active .slot-label { display: none; }
+        .dictionary-slot .feature-label { display: none; opacity: 0; transition: opacity 0.5s ease 0.5s; }
+        .dictionary-slot.active .feature-label { display: inline-block; opacity: 1; }
+        .feature-label input { background: transparent; border: none; border-bottom: 2px solid #10B981; color: #6EE7B7; text-align: center; width: 100%; }
+
+        /* Styles for Section 4 Tabs */
+        .tab-btn { transition: all 0.2s ease; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: #6EE7B7; border-bottom-color: #10B981; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Styles for Section 5 (Thinking Fast/Slow) */
+        .slow-thought { opacity: 0; transition: opacity 0.5s ease-in-out; }
+        .slow-thought.active { opacity: 1; }
+        .comparison-box { opacity: 0; transition: opacity 0.5s ease-in-out; transform: translateY(10px); }
+        .comparison-box.active { opacity: 1; transform: translateY(0); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <header class="text-center mb-10 fade-in">
+        <h1 class="text-3xl md:text-4xl font-bold text-green-200 mb-2">On the Biology of a Large Language Model</h1>
+        <p class="text-lg text-green-400">An Interactive Tutorial Inspired by Research from Anthropic</p>
+    </header>
+
+    <section class="mb-12 max-w-4xl mx-auto fade-in" style="animation-delay: 0.2s;">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. Grown, Not Built</h2>
+        <p class="text-lg leading-relaxed">A useful metaphor is to think of LLMs as being <strong class="text-green-300">grown, not built</strong>. We create a scaffold (the architecture), provide nutrients (the training data), and let it grow. This tutorial explores the "biology" of these complex, organic systems.</p>
+    </section>
+
+    <section class="mb-12 max-w-4xl mx-auto fade-in" style="animation-delay: 0.4s;">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. Neurons vs. Features: An Interactive Demo</h2>
+        <p class="text-lg leading-relaxed mb-4"><strong class="text-green-300">Hover over the orbs below</strong> to see the difference. A "Single Neuron" activates on a chaotic mix of topics. A "Learned Feature" represents a single, coherent concept.</p>
+        <div class="grid md:grid-cols-2 gap-8 mt-6">
+            <div class="bg-gray-900 border border-green-900 rounded-lg p-6 text-center">
+                <h3 class="text-xl font-semibold text-green-200 mb-4">Single Neuron</h3>
+                <div class="flex justify-center items-center mb-4"><div id="neuron-orb" class="interactive-orb w-24 h-24 bg-gray-800 border-2 border-green-600 rounded-full flex items-center justify-center"><span class="text-green-400">Hover Me</span></div></div>
+                <div id="neuron-concepts" class="concept-display bg-gray-950/50 rounded-lg"></div>
+            </div>
+            <div class="bg-gray-900 border border-green-900 rounded-lg p-6 text-center">
+                <h3 class="text-xl font-semibold text-green-200 mb-4">Learned Feature</h3>
+                <div class="flex justify-center items-center mb-4"><div id="feature-orb" class="interactive-orb w-24 h-24 bg-gray-800 border-2 border-green-600 rounded-full flex items-center justify-center"><span class="text-green-400">Hover Me</span></div></div>
+                <div id="feature-concepts" class="concept-display bg-gray-950/50 rounded-lg"></div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="mb-12 max-w-4xl mx-auto fade-in" style="animation-delay: 0.6s;">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Interactive Dictionary: Finding the Atoms of Meaning</h2>
+        <p class="text-lg leading-relaxed mb-4">Models use <strong class="text-green-200">dictionary learning</strong> to group messy data into coherent features. Click <strong class="text-green-300">"Start Learning"</strong> to see a simulation of this process.</p>
+        <div class="bg-gray-900 border border-green-900 rounded-lg p-6 mt-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-green-200 mb-4 text-center">Raw Data Pool</h3>
+                    <div id="data-pool" class="data-pool bg-gray-950/50 rounded-lg border border-dashed border-green-800 p-2"></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-green-200 mb-4 text-center">Learned Dictionary</h3>
+                    <div id="dictionary-slots" class="dictionary-slots bg-gray-950/50 rounded-lg border border-dashed border-green-800 p-4 flex flex-col justify-around"></div>
+                </div>
+            </div>
+            <div class="text-center mt-6">
+                <button id="learn-btn" class="bg-green-600 text-black font-bold py-2 px-6 rounded-lg hover:bg-green-500 transition-all">Start Learning</button>
+                <button id="dict-reset-btn" class="bg-gray-700 text-green-300 font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition-all ml-4">Reset</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-12 max-w-4xl mx-auto fade-in" style="animation-delay: 0.8s;">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Parallel Circuits: Capabilities and Flaws</h2>
+        <p class="text-lg leading-relaxed mb-4">Models don't think in a single line. They run many computations in parallel. This is powerful, but it's also where things go wrong. When different circuits compete, the model can hallucinate or become "unfaithful" to the facts. Explore the scenarios below.</p>
+        <div class="flex justify-center border-b border-green-900 mb-6">
+            <button class="tab-btn active text-lg font-semibold p-4" data-tab="factual">Factual Recall</button>
+            <button class="tab-btn text-lg font-semibold p-4" data-tab="hallucination">Hallucination</button>
+            <button class="tab-btn text-lg font-semibold p-4" data-tab="unfaithful">Unfaithful Reasoning</button>
+        </div>
+        <div class="bg-gray-900 border border-green-900 rounded-lg p-6">
+            <div id="tab-factual" class="tab-content active"><p class="text-lg leading-relaxed mb-4 text-center"><strong>Scenario 1:</strong> Factual Question. <strong class="text-green-200">"The capital of ... Dallas is..."</strong> Circuits cooperate.</p><div id="viz-factual" class="relative w-full h-96"><svg class="absolute top-0 left-0 w-full h-full" id="svg-factual"></svg></div><div class="text-center mt-4"><button id="btn-activate-factual" class="bg-green-600 text-black font-bold py-2 px-6 rounded-lg hover:bg-green-500">Activate</button><button id="btn-reset-factual" class="bg-gray-700 text-green-300 font-bold py-2 px-6 rounded-lg hover:bg-gray-600 ml-4">Reset</button></div></div>
+            <div id="tab-hallucination" class="tab-content"><p class="text-lg leading-relaxed mb-4 text-center"><strong>Scenario 2:</strong> Unknown Entity. <strong class="text-green-200">"...Michael Batkin..."</strong> Answer and Refusal circuits compete.</p><div id="viz-hallucination" class="relative w-full h-96"><svg class="absolute top-0 left-0 w-full h-full" id="svg-hallucination"></svg></div><div class="text-center mt-4"><button id="btn-activate-hallucination" class="bg-green-600 text-black font-bold py-2 px-6 rounded-lg hover:bg-green-500">Activate (Default)</button><button id="btn-force-hallucination" class="bg-yellow-500 text-black font-bold py-2 px-6 rounded-lg hover:bg-yellow-400 ml-4">Force Hallucination</button></div></div>
+            <div id="tab-unfaithful" class="tab-content"><p class="text-lg leading-relaxed mb-4 text-center"><strong>Scenario 3:</strong> Misleading Hint. <strong class="text-green-200">"5 * 0.5 = ? (Hint: 4)"</strong> "Use Hint" circuit overrides "Do Math" circuit.</p><div id="viz-unfaithful" class="relative w-full h-96"><svg class="absolute top-0 left-0 w-full h-full" id="svg-unfaithful"></svg></div><div class="text-center mt-4"><button id="btn-activate-unfaithful" class="bg-green-600 text-black font-bold py-2 px-6 rounded-lg hover:bg-green-500">Activate</button><button id="btn-reset-unfaithful" class="bg-gray-700 text-green-300 font-bold py-2 px-6 rounded-lg hover:bg-gray-600 ml-4">Reset</button></div></div>
+        </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section class="max-w-4xl mx-auto fade-in" style="animation-delay: 1s;">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Thinking, Fast and Slow in Silicon</h2>
+        <p class="text-lg leading-relaxed mb-4">Today's LLMs are masters of <strong class="text-green-300">"System 1" (Fast)</strong> thinking: intuitive, parallel, and associative. This makes them fluent but prone to error. The next frontier is developing <strong class="text-blue-300">"System 2" (Slow)</strong> thinking: a deliberate, logical process to correct the initial response.</p>
+        <p class="text-lg leading-relaxed mb-4">Consider this riddle: <strong class="text-green-200">"A bat and a ball cost $1.10. The bat costs $1.00 more than the ball. How much does the ball cost?"</strong> Run each system sequentially to see the difference.</p>
+
+        <div class="bg-gray-900 border border-green-900 rounded-lg p-6 mt-6">
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- System 1: Fast Thinking -->
+                <div>
+                    <h3 class="text-xl font-semibold text-green-300 mb-4 text-center">System 1: Fast & Intuitive</h3>
+                    <div id="viz-fast" class="relative w-full h-64">
+                         <svg class="absolute top-0 left-0 w-full h-full" id="svg-fast"></svg>
+                    </div>
+                    <div id="answer-fast" class="text-center text-4xl font-bold text-green-400 h-16"></div>
+                </div>
+                <!-- System 2: Slow Thinking -->
+                <div>
+                     <h3 class="text-xl font-semibold text-blue-300 mb-4 text-center">System 2: Slow & Deliberate</h3>
+                     <div id="viz-slow" class="relative w-full h-64 space-y-3 p-4 bg-gray-950/50 rounded-lg">
+                        <!-- Slow thoughts go here -->
+                     </div>
+                     <div id="answer-slow" class="text-center text-4xl font-bold text-blue-300 h-16"></div>
+                </div>
+            </div>
+             <div id="comparison-container" class="mt-6 pt-4 border-t border-green-800 text-center">
+                <!-- Comparison result appears here -->
+             </div>
+             <div class="flex justify-center items-center mt-6 space-x-4">
+                <button id="run-system1-btn" class="bg-green-600 text-black font-bold py-2 px-4 rounded-lg hover:bg-green-500 transition-all">1. Run System 1 (Fast)</button>
+                <button id="run-system2-btn" class="bg-blue-600 text-black font-bold py-2 px-4 rounded-lg hover:bg-blue-500 transition-all">2. Run System 2 (Slow)</button>
+                <button id="thinking-reset-btn" class="bg-gray-700 text-green-300 font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-all">Reset</button>
+            </div>
+        </div>
+         <p class="text-lg leading-relaxed mt-6">How does a "System 2" actually perform these logical steps? The goal is to build models that can create an internal <strong class="text-green-200">'symbolic workspace.'</strong> Here, instead of relying only on pattern association, the model can define variables (like <code>L</code> for the ball's cost) and apply learned rules of logic and algebra, step-by-step. A fascinating research frontier involves using more advanced mathematical structures, like <strong class="text-purple-300">quaternions</strong>, to create adaptable reasoning systems. Quaternions could allow a model to represent the relationships between concepts in a high-dimensional space, enabling it to fluidly 'rotate' a problem, examine it from different logical angles, and adapt its reasoning strategy to fit any situation.</p>
+         <p class="text-lg leading-relaxed mt-4">By building models that can combine these two modes of thinking, we can create AI that is not only fluent and creative, but also more accurate, robust, and trustworthy. Understanding the internal "biology" is the first step.</p>
+    </section>
+
+<script>
+    // Utility functions
+    function createVizNode(id, text, container, positionClasses) { const node = document.createElement('div'); node.id = id; node.className = `feature-node absolute bg-gray-800 p-3 rounded-lg border border-green-700 ${positionClasses}`; node.textContent = text; container.appendChild(node); return node; }
+    function getCenter(el, container) { if (!el || !container) return {x:0, y:0}; const elRect = el.getBoundingClientRect(); const containerRect = container.getBoundingClientRect(); return { x: elRect.left - containerRect.left + elRect.width / 2, y: elRect.top - containerRect.top + elRect.height / 2 }; }
+    function drawVizLine(p1, p2, svg, id, isSuppressive = false) { const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y); line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y); line.setAttribute('stroke', isSuppressive ? '#F87171' : '#047857'); line.setAttribute('stroke-width', '1'); line.setAttribute('opacity', '0.5'); line.classList.add('connection-line'); if (isSuppressive) line.classList.add('suppressive'); line.id = id; svg.appendChild(line); return line; }
+    function activateViz(nodes, connections, vizContainer, svg, pathFilter) {
+        Object.values(nodes).forEach(n => n.classList.remove('active'));
+        svg.querySelectorAll('.connection-line').forEach(l => l.classList.remove('active'));
+        const queue = [{ el: nodes.prompt, delay: 0 }];
+        connections.filter(pathFilter).forEach((c, i) => {
+            queue.push({ el: nodes[c.to], delay: c.delay });
+            const lineEl = svg.querySelector(`#l-${svg.id.slice(-1)}-${connections.indexOf(c)}`);
+            if(lineEl) queue.push({ el: lineEl, delay: c.delay });
+        });
+        queue.forEach(item => setTimeout(() => item.el?.classList.add('active'), item.delay));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- LOGIC FOR SECTION 2 ---
+        const neuronOrb = document.getElementById('neuron-orb'), featureOrb = document.getElementById('feature-orb'), neuronConceptsDisplay = document.getElementById('neuron-concepts'), featureConceptsDisplay = document.getElementById('feature-concepts');
+        let neuronInterval; const chaoticConcepts = ['Python `import`','Socrates','Calculus ∫','Hemlock','你好','Legal docs','JSON','Speeches','HTML','Git'], featureConcepts = ['Golden Gate Bridge','San Francisco','Marin County','Iconic Landmark','Suspension Bridge','Bay Area','Red-orange color','Famous Bridge','California'];
+        function showConcepts(display, concepts, isChaotic) { if (!display) return; display.innerHTML = ''; if (isChaotic) { neuronInterval = setInterval(() => { display.innerHTML = ''; const shuffled = [...concepts].sort(() => 0.5 - Math.random()).slice(0, 5); shuffled.forEach(text => { const tag = createTag(text, display.clientWidth, display.clientHeight); display.appendChild(tag); void tag.offsetWidth; tag.style.opacity = '1'; tag.style.transform = 'scale(1)'; }); }, 800); } else { concepts.forEach((text, i) => { const tag = createTag(text, display.clientWidth, display.clientHeight); tag.style.transitionDelay = `${i * 50}ms`; display.appendChild(tag); void tag.offsetWidth; tag.style.opacity = '1'; tag.style.transform = 'scale(1)'; }); } }
+        function createTag(text, w, h) { const tag = document.createElement('div'); tag.textContent = text; tag.className = 'concept-tag bg-gray-800 text-green-300'; tag.style.left = `${Math.random()*(w-100)}px`; tag.style.top = `${Math.random()*(h-40)}px`; tag.style.transform = 'scale(0.5)'; return tag; }
+        function hideConcepts(display) { clearInterval(neuronInterval); if (display) { Array.from(display.children).forEach(c => c.style.opacity = '0'); setTimeout(() => { display.innerHTML = ''; }, 500); } }
+        if(neuronOrb) { neuronOrb.addEventListener('mouseenter', () => showConcepts(neuronConceptsDisplay, chaoticConcepts, true)); neuronOrb.addEventListener('mouseleave', () => hideConcepts(neuronConceptsDisplay)); }
+        if(featureOrb) { featureOrb.addEventListener('mouseenter', () => showConcepts(featureConceptsDisplay, featureConcepts, false)); featureOrb.addEventListener('mouseleave', () => hideConcepts(featureConceptsDisplay)); }
+
+        // --- LOGIC FOR SECTION 3 ---
+        const dataPool = document.getElementById('data-pool'), dictionarySlotsContainer = document.getElementById('dictionary-slots'), learnBtn = document.getElementById('learn-btn'), dictResetBtn = document.getElementById('dict-reset-btn');
+        const rawData = { 'Food': ['apple', 'sushi', 'pizza', 'banana', 'taco'], 'Technology': ['server', 'GPU', 'code', 'algorithm', 'network'], 'Nature': ['river', 'tree', 'mountain', 'cloud', 'fauna'] };
+        function setupDictionaryDemo() { if (!dataPool || !dictionarySlotsContainer) return; dataPool.innerHTML = ''; dictionarySlotsContainer.innerHTML = ''; Object.keys(rawData).forEach((category, i) => { const slot = document.createElement('div'); slot.id = `slot-${i}`; slot.className = 'dictionary-slot border border-green-700 rounded-lg h-24 flex items-center justify-center'; slot.innerHTML = `<span class="slot-label text-gray-500 text-2xl">? ? ?</span><span class="feature-label text-2xl font-bold text-green-300"><span class="label-text">${category}</span></span>`; dictionarySlotsContainer.appendChild(slot); const labelTextSpan = slot.querySelector('.label-text'); labelTextSpan.addEventListener('click', () => { const currentName = labelTextSpan.textContent; labelTextSpan.innerHTML = `<input type="text" value="${currentName}" class="feature-name-input" />`; const input = labelTextSpan.querySelector('input'); input.focus(); input.select(); input.addEventListener('blur', () => { labelTextSpan.textContent = input.value || "Untitled"; }); input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); }); }); }); let dataId=0; Object.values(rawData).flat().forEach(item => { const el=document.createElement('div'); el.id=`data-${dataId++}`; el.className='raw-data-item'; el.textContent=item; el.style.left=`${Math.random()*80}%`; el.style.top=`${Math.random()*85}%`; dataPool.appendChild(el); }); if(learnBtn) learnBtn.disabled = false; }
+        function startLearning() { if (!learnBtn) return; learnBtn.disabled = true; let dataId = 0; Object.keys(rawData).forEach((category, categoryIndex) => { const slot = document.getElementById(`slot-${categoryIndex}`); const slotRect = slot.getBoundingClientRect(); const poolRect = dataPool.getBoundingClientRect(); rawData[category].forEach(() => { const dataEl = document.getElementById(`data-${dataId++}`); const offsetX = (Math.random() - 0.5) * (slotRect.width * 0.4); const offsetY = (Math.random() - 0.5) * (slotRect.height * 0.4); const targetX = slotRect.left - poolRect.left + (slotRect.width - dataEl.clientWidth)/2 + offsetX; const targetY = slotRect.top - poolRect.top + (slotRect.height - dataEl.clientHeight)/2 + offsetY; dataEl.style.left = `${targetX}px`; dataEl.style.top = `${targetY}px`; dataEl.style.opacity = '0'; dataEl.style.transform = 'scale(0.5)'; }); setTimeout(() => slot.classList.add('active'), 1500); }); }
+        if(learnBtn) learnBtn.addEventListener('click', startLearning);
+        if(dictResetBtn) dictResetBtn.addEventListener('click', setupDictionaryDemo);
+        
+        // --- LOGIC FOR SECTION 4 ---
+        const tabsContainer = document.querySelector('.flex.justify-center.border-b');
+        let factualNodes = {}, factualConnections = [], hallucinationNodes = {}, hallucinationConnections = [], unfaithfulNodes = {}, unfaithfulConnections = [];
+        if(tabsContainer) {
+            const tabBtns = tabsContainer.querySelectorAll('.tab-btn'); const tabContents = document.querySelectorAll('.tab-content');
+            tabsContainer.addEventListener('click', (e) => { const clicked = e.target.closest('.tab-btn'); if (!clicked) return; tabBtns.forEach(btn => btn.classList.remove('active')); clicked.classList.add('active'); tabContents.forEach(content => content.classList.remove('active')); document.getElementById(`tab-${clicked.dataset.tab}`).classList.add('active'); });
+            
+            const vizFactual = document.getElementById('viz-factual'), svgFactual = document.getElementById('svg-factual'), btnActivateFactual = document.getElementById('btn-activate-factual'), btnResetFactual = document.getElementById('btn-reset-factual');
+            function setupFactual() { vizFactual.innerHTML = ''; svgFactual.innerHTML = ''; factualNodes.prompt = createVizNode('n-f-prompt', 'Prompt: "capital of...Dallas"', vizFactual, 'top-2 left-1/2 -translate-x-1/2'); factualNodes.dallas = createVizNode('n-f-dallas', 'Dallas Features', vizFactual, 'top-24 left-4'); factualNodes.capital = createVizNode('n-f-capital', '"State Capital" Concept', vizFactual, 'top-24 right-4'); factualNodes.texas = createVizNode('n-f-texas', 'Texas Features', vizFactual, 'top-1/2 -translate-y-1/2 left-1/4 -translate-x-1/2'); factualNodes.say_capital = createVizNode('n-f-say-capital', 'Action: Say a Capital', vizFactual, 'top-1/2 -translate-y-1/2 right-1/4 -translate-x-1/2'); factualNodes.austin = createVizNode('n-f-austin', 'Austin Features', vizFactual, 'bottom-20 left-1/2 -translate-x-1/2'); factualNodes.output = createVizNode('n-f-output', 'Output: "Austin"', vizFactual, 'bottom-2 left-1/2 -translate-x-1/2'); factualConnections = [ { from: 'prompt', to: 'dallas', delay: 100 }, { from: 'prompt', to: 'capital', delay: 100 }, { from: 'dallas', to: 'texas', delay: 600 }, { from: 'capital', to: 'say_capital', delay: 600 }, { from: 'texas', to: 'austin', delay: 1100 }, { from: 'capital', to: 'austin', delay: 1100 }, { from: 'say_capital', to: 'austin', delay: 1100 }, { from: 'austin', to: 'output', delay: 1600 } ]; factualConnections.forEach((c, i) => drawVizLine(getCenter(factualNodes[c.from], vizFactual), getCenter(factualNodes[c.to], vizFactual), svgFactual, `l-f-${i}`)); }
+            
+            const vizHallucination = document.getElementById('viz-hallucination'), svgHallucination = document.getElementById('svg-hallucination');
+            function setupHallucination() { vizHallucination.innerHTML = ''; svgHallucination.innerHTML = ''; hallucinationNodes.prompt = createVizNode('n-h-prompt', 'Prompt: "...Michael Batkin..."', vizHallucination, 'top-2 left-1/2 -translate-x-1/2'); hallucinationNodes.unknown = createVizNode('n-h-unknown', 'Feature: Unknown Name', vizHallucination, 'top-24 left-8'); hallucinationNodes.known = createVizNode('n-h-known', 'Feature: Known Answer', vizHallucination, 'top-24 right-8'); hallucinationNodes.refuse = createVizNode('n-h-refuse', 'Circuit: Refuse to Answer', vizHallucination, 'top-1/2 -translate-y-1/2 left-8'); hallucinationNodes.hallucinate = createVizNode('n-h-hallucinate', 'Circuit: Guess an Answer', vizHallucination, 'top-1/2 -translate-y-1/2 right-8'); hallucinationNodes.output_refuse = createVizNode('n-h-output-refuse', 'Output: "I can\'t find..."', vizHallucination, 'bottom-2 left-8'); hallucinationNodes.output_guess = createVizNode('n-h-output-guess', 'Output: "Basketball"', vizHallucination, 'bottom-2 right-8'); hallucinationConnections = [ { from: 'prompt', to: 'unknown', delay: 100 }, { from: 'prompt', to: 'known', delay: 100 }, { from: 'unknown', to: 'refuse', delay: 600 }, { from: 'known', to: 'hallucinate', delay: 600 }, { from: 'refuse', to: 'output_refuse', delay: 1100 }, { from: 'hallucinate', to: 'output_guess', delay: 1100 }, { from: 'unknown', to: 'hallucinate', delay: 600, suppress: true }, { from: 'known', to: 'refuse', delay: 600, suppress: true } ]; hallucinationConnections.forEach((c, i) => drawVizLine(getCenter(hallucinationNodes[c.from], vizHallucination), getCenter(hallucinationNodes[c.to], vizHallucination), svgHallucination, `l-h-${i}`, c.suppress)); }
+            
+            const vizUnfaithful = document.getElementById('viz-unfaithful'), svgUnfaithful = document.getElementById('svg-unfaithful');
+            function setupUnfaithful() { vizUnfaithful.innerHTML = ''; svgUnfaithful.innerHTML = ''; unfaithfulNodes.prompt = createVizNode('n-u-prompt', 'Prompt: 5*0.5=? (Hint: 4)', vizUnfaithful, 'top-2 left-1/2 -translate-x-1/2'); unfaithfulNodes.math = createVizNode('n-u-math', 'Circuit: Do the Math', vizUnfaithful, 'top-24 left-8'); unfaithfulNodes.hint = createVizNode('n-u-hint', 'Circuit: Use the Hint', vizUnfaithful, 'top-24 right-8'); unfaithfulNodes.correct_path = createVizNode('n-u-correct-path', 'Calculate 2.5', vizUnfaithful, 'top-1/2 -translate-y-1/2 left-8'); unfaithfulNodes.unfaithful_path = createVizNode('n-u-unfaithful-path', 'Work backwards from 4', vizUnfaithful, 'top-1/2 -translate-y-1/2 right-8'); unfaithfulNodes.output_correct = createVizNode('n-u-output-correct', 'Output: "2.5"', vizUnfaithful, 'bottom-2 left-8'); unfaithfulNodes.output_unfaithful = createVizNode('n-u-output-unfaithful', 'Output: "4"', vizUnfaithful, 'bottom-2 right-8'); unfaithfulConnections = [ { from: 'prompt', to: 'math', delay: 100 }, { from: 'prompt', to: 'hint', delay: 100 }, { from: 'math', to: 'correct_path', delay: 600 }, { from: 'hint', to: 'unfaithful_path', delay: 600 }, { from: 'correct_path', to: 'output_correct', delay: 1100 }, { from: 'unfaithful_path', to: 'output_unfaithful', delay: 1100 }, { from: 'hint', to: 'math', delay: 100, suppress: true } ]; unfaithfulConnections.forEach((c, i) => drawVizLine(getCenter(unfaithfulNodes[c.from], vizUnfaithful), getCenter(unfaithfulNodes[c.to], vizUnfaithful), svgUnfaithful, `l-u-${i}`, c.suppress)); }
+
+            btnActivateFactual.addEventListener('click', () => activateViz(factualNodes, factualConnections, vizFactual, svgFactual, () => true)); btnResetFactual.addEventListener('click', setupFactual);
+            document.getElementById('btn-activate-hallucination').addEventListener('click', () => activateViz(hallucinationNodes, hallucinationConnections, vizHallucination, svgHallucination, c => !c.suppress || c.from === 'known')); document.getElementById('btn-force-hallucination').addEventListener('click', () => activateViz(hallucinationNodes, hallucinationConnections, vizHallucination, svgHallucination, c => !c.suppress || c.from === 'unknown'));
+            document.getElementById('btn-activate-unfaithful').addEventListener('click', () => activateViz(unfaithfulNodes, unfaithfulConnections, vizUnfaithful, svgUnfaithful, () => true)); document.getElementById('btn-reset-unfaithful').addEventListener('click', setupUnfaithful);
+            
+            setupFactual(); setupHallucination(); setupUnfaithful();
+            window.addEventListener('resize', () => { setupFactual(); setupHallucination(); setupUnfaithful(); });
+        }
+        
+        // --- LOGIC FOR SECTION 5 ---
+        const runSystem1Btn = document.getElementById('run-system1-btn'), runSystem2Btn = document.getElementById('run-system2-btn'), thinkingResetBtn = document.getElementById('thinking-reset-btn'), comparisonContainer = document.getElementById('comparison-container');
+        const vizFast = document.getElementById('viz-fast'), svgFast = document.getElementById('svg-fast'), answerFast = document.getElementById('answer-fast'); let fastNodes = {}, fastConnections = [];
+        const vizSlow = document.getElementById('viz-slow'), answerSlow = document.getElementById('answer-slow'); const slowThoughts = ["Let B = bat cost, L = ball cost.", "B + L = 1.10", "B = L + 1.00", "(L + 1.00) + L = 1.10", "2L + 1.00 = 1.10", "2L = 0.10", "L = 0.05"];
+        function setupThinkingViz() { if (!vizFast || !vizSlow) return; vizFast.innerHTML = ''; svgFast.innerHTML = ''; answerFast.innerHTML = ''; fastNodes.prompt = createVizNode('n-t-prompt', 'bat, ball, $1.10, $1.00 more', vizFast, 'top-2 left-1/2 -translate-x-1/2'); fastNodes.subtract = createVizNode('n-t-subtract', '1.10 - 1.00', vizFast, 'top-24 left-8'); fastNodes.associate = createVizNode('n-t-associate', '...more than the ball', vizFast, 'top-24 right-8'); fastNodes.intuitive = createVizNode('n-t-intuitive', 'Intuitive Answer', vizFast, 'bottom-12 left-1/2 -translate-x-1/2'); fastConnections = [ { from: 'prompt', to: 'subtract', delay: 100 }, { from: 'prompt', to: 'associate', delay: 100 }, { from: 'subtract', to: 'intuitive', delay: 500 }, { from: 'associate', to: 'intuitive', delay: 500 } ]; fastConnections.forEach((c, i) => drawVizLine(getCenter(fastNodes[c.from], vizFast), getCenter(fastNodes[c.to], vizFast), svgFast, `l-t-${i}`)); vizSlow.innerHTML = ''; answerSlow.innerHTML = ''; slowThoughts.forEach((thought, i) => { const p = document.createElement('p'); p.id = `slow-thought-${i}`; p.className = 'slow-thought text-blue-200 text-lg'; p.innerHTML = `<span class="text-gray-500 mr-2">${i+1}.</span> ${thought}`; vizSlow.appendChild(p); }); comparisonContainer.innerHTML = ''; comparisonContainer.classList.remove('active'); runSystem1Btn.disabled = false; runSystem2Btn.disabled = true; }
+        function runSystem1() { runSystem1Btn.disabled = true; const fastQueue = [{el: fastNodes.prompt, delay: 0}]; fastConnections.forEach((c, i) => { fastQueue.push({ el: fastNodes[c.to], delay: c.delay }); fastQueue.push({ el: svgFast.querySelector(`#l-t-${i}`), delay: c.delay }); }); fastQueue.forEach(item => setTimeout(() => item.el?.classList.add('active'), item.delay)); setTimeout(() => { answerFast.innerHTML = '<span class="text-red-500">$0.10 ?</span>'; runSystem2Btn.disabled = false; }, 1000); }
+        function runSystem2() { runSystem2Btn.disabled = true; slowThoughts.forEach((_, i) => { setTimeout(() => { document.getElementById(`slow-thought-${i}`).classList.add('active'); }, i * 400); }); setTimeout(() => { answerSlow.innerHTML = '<span class="text-green-400">$0.05 ✓</span>'; showComparison(); }, slowThoughts.length * 400); }
+        function showComparison() { comparisonContainer.innerHTML = `<h4 class="text-xl font-semibold text-yellow-300 mb-2">Comparison</h4><p class="text-lg">System 1's fast, associative leap led to an error. System 2's deliberate, step-by-step logic corrected it, arriving at the right answer.</p>`; comparisonContainer.classList.add('active'); }
+        if(runSystem1Btn) runSystem1Btn.addEventListener('click', runSystem1);
+        if(runSystem2Btn) runSystem2Btn.addEventListener('click', runSystem2);
+        if(thinkingResetBtn) thinkingResetBtn.addEventListener('click', setupThinkingViz);
+        
+        setupDictionaryDemo(); // Run setup for other sections
+        setupThinkingViz(); // Run setup for section 5
+
+        window.addEventListener('resize', () => {
+             // Re-setup all visualizations on resize
+            if(tabsContainer) { setupFactual(); setupHallucination(); setupUnfaithful(); }
+            setupDictionaryDemo();
+            setupThinkingViz();
+        });
+    });
+</script>
+
+</body>
+</html>

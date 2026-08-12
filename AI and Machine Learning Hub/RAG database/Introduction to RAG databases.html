@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: RAG with Graph Databases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for a better "Matrix" feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0f766e; /* teal-700 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #14b8a6; /* teal-500 */
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <h1 class="text-3xl md:text-4xl font-bold text-green-200 mb-6 text-center">Tutorial: Introduction to Graph RAG</h1>
+    <p class="text-center text-lg text-green-400 mb-8 max-w-3xl mx-auto">An introductory guide to building Retrieval-Augmented Generation systems with Knowledge Graphs, using Neo4j, LangChain, and Large Language Models.</p>
+
+    <!-- Introduction Section -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. Introduction to Graph RAG</h2>
+        <p class="text-lg leading-relaxed mb-4">
+            Retrieval-Augmented Generation (RAG) is a powerful technique for enhancing Large Language Models (LLMs) with external knowledge. While vector search is a common approach, using a Knowledge Graph as the retrieval backbone offers significant advantages in control, explainability, and accuracy, especially for complex domains.
+        </p>
+        <div class="bg-gray-900 border border-green-900 p-6 rounded-lg">
+            <h3 class="text-xl font-bold text-green-300 mb-3">Why a Knowledge Graph?</h3>
+            <p class="leading-relaxed">
+                An agentic RAG architecture often has an LLM at its core, but a Knowledge Graph serves as the structured "brain" in the middle. It allows you to ingest both unstructured (PDFs, docs) and structured (CSVs, database tables) data, creating an interconnected model of your domain. This model enables:
+            </p>
+            <ul class="list-disc list-inside mt-4 space-y-2 text-green-400">
+                <li><strong class="text-green-300">Precise Retrieval:</strong> Move beyond simple semantic similarity to complex, multi-hop queries that traverse relationships.</li>
+                <li><strong class="text-green-300">Explainable AI:</strong> The retrieval path through the graph provides a clear, auditable trail of how the LLM arrived at an answer.</li>
+                <li><strong class="text-green-300">Enhanced Control:</strong> The graph's schema exposes domain logic, giving you more control over how data is retrieved and interpreted by the agent.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Architecture Diagram Section -->
+    <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. High-Level Architecture</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            The diagram below illustrates a complete Graph RAG architecture. It shows how data flows from various sources, gets processed into a knowledge graph, and is ultimately used by an AI agent to power a user-facing application.
+        </p>
+        <div class="bg-gray-950 p-4 sm:p-6 rounded-xl border border-green-900/50 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Col 1: AI Models -->
+                <div class="bg-gray-900 p-4 rounded-lg border border-green-800 h-full">
+                    <h3 class="font-bold text-center text-green-300 mb-2">AI Models</h3>
+                    <div class="flex justify-around gap-2">
+                        <div class="bg-green-900/50 text-green-300 text-sm rounded px-3 py-1 text-center">Embedder</div>
+                        <div class="bg-green-900/50 text-green-300 text-sm rounded px-3 py-1 text-center">LLM</div>
+                    </div>
+                </div>
+                <!-- Arrow to Graph Enrichment -->
+                <div class="flex justify-center">
+                     <svg class="w-16 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" /></svg>
+                </div>
+                <!-- Col 3: UI -->
+                <div class="bg-gray-900 p-4 rounded-lg border border-green-800 h-full">
+                    <h3 class="font-bold text-center text-green-300 mb-2">UI</h3>
+                    <div class="bg-green-900/50 text-green-300 text-sm rounded px-3 py-1 text-center">Knowledge Assistant</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 items-center">
+                <!-- Arrow from Entity Extraction -->
+                <div class="flex justify-center transform -rotate-45">
+                     <svg class="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.2

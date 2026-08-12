@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Agentic Zero Trust Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the Matrix theme and interactive elements */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .flow-diagram-box {
+            transition: all 0.3s ease-in-out;
+            border-color: #10B981; /* green-500 */
+        }
+        .flow-diagram-box.active {
+            background-color: #10B981; /* green-500 */
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #10B981;
+        }
+        .arrow {
+            position: relative;
+            width: 100%;
+            height: 2px;
+            background-color: #34D399; /* green-400 */
+            margin: 2rem 0;
+        }
+        .arrow::after {
+            content: '►';
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #34D399; /* green-400 */
+            font-size: 1.5rem;
+        }
+        .interactive-section .hidden {
+            display: none;
+        }
+        .interactive-section .visible {
+            display: block;
+        }
+        .btn-matrix {
+            background-color: #047857; /* green-700 */
+            border: 1px solid #059669; /* green-600 */
+            transition: all 0.2s ease;
+        }
+        .btn-matrix:hover {
+            background-color: #059669; /* green-600 */
+            box-shadow: 0 0 10px #10B981;
+        }
+        
+        /* Styles for HE Animation */
+        #he-animation-container {
+            min-height: 250px;
+        }
+        .data-packet {
+            position: absolute;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #34D399;
+            background-color: #111827;
+            transition: all 1s ease-in-out, background-color 0.5s, color 0.5s;
+            opacity: 0;
+            white-space: nowrap;
+        }
+        .data-packet.visible {
+            opacity: 1;
+        }
+        .data-packet.encrypted {
+            background-color: #FBBF24; /* yellow-400 */
+            border-color: #F59E0B; /* yellow-500 */
+            color: #1f2937;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8">
+
+    <main class="max-w-5xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-4">A Tutorial on the Agentic Zero Trust Protocol</h1>
+            <p class="text-lg text-green-400">A Novel Identity Framework for AI Agents in Multi-Agent Systems</p>
+        </header>
+
+        <!-- Introduction Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. Introduction: The Need for a New Paradigm</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                Traditional Identity and Access Management (IAM) systems, like OAuth and SAML, were built for humans and predictable machine identities. They are fundamentally unequipped for the world of Agentic AI. In Multi-Agent Systems (MAS), AI agents are dynamic, autonomous, and often short-lived. They create complex, interdependent relationships that traditional IAM protocols cannot secure or manage effectively.
+            </p>
+            <p class="text-lg leading-relaxed">
+                This tutorial explores a novel IAM framework designed specifically for Agentic AI. We will deconstruct the failures of old protocols and build up a new model based on decentralized identity, verifiable credentials, and fine-grained access control, establishing the trust and accountability necessary for the future of AI.
+            </p>
+        </section>
+
+        <!-- Defining Agent ID Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. What is an Agent's Identity?</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                An AI agent's identity is more than just an API key. It's a rich, dynamic, and cryptographically secure profile that serves as the foundation for trust and access control. This framework defines an Agent ID using two core technologies from the world of Self-Sovereign Identity (SSI):
+            </p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-gray-900 p-6 rounded-lg border border-green-700">
+                    <h3 class="text-2xl font-bold text-green-300 mb-3">Decentralized Identifiers (DIDs)</h3>
+                    <p class="leading-relaxed">
+                        A globally unique, persistent ID that the agent controls. It's the root of the agent's identity, like <code class="bg-black text-green-400 px-2 py-1 rounded">did:example:agent123</code>. The DID links to a DID Document containing public keys, service endpoints, and other core metadata.
+                    </p>
+                </div>
+                <div class="bg-gray-900 p-6 rounded-lg border border-green-700">
+                    <h3 class="text-2xl font-bold text-green-300 mb-3">Verifiable Credentials (VCs)</h3>
+                    <p class="leading-relaxed">
+                        Digital, tamper-proof attestations about an agent. A trusted issuer can grant a VC to an agent to prove things like its capabilities ("Can perform financial analysis"), roles ("Is a disaster response coordinator"), or compliance status ("Is SOX compliant").
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. The Four-Layer Architecture</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                The framework is structured into four distinct layers, each handling a critical aspect of agent identity and access management.
+            </p>
+            <!-- Interactive Architecture Diagram -->
+            <div id="architecture-diagram" class="space-y-2 text-center">
+                <div id="layer1" class="flow-diagram-box p-4 border-2 rounded-lg cursor-pointer bg-gray-900">
+                    <h4 class="font-bold text-xl text-green-300">Layer 1: Identity & Credential Management</h4>
+                    <p class="text-green-500">DID/VC creation, issuance, storage, and lifecycle management.</p>
+                </div>
+                <div class="text-2xl text-green-400">▲▼</div>
+                <div id="layer2" class="flow-diagram-box p-4 border-2 rounded-lg cursor-pointer bg-gray-900">
+                    <h4 class="font-bold text-xl text-green-300">Layer 2: Agent Discovery & Trust Establishment</h4>
+                    <p class="text-green-500">Agent Name Service (ANS) resolution, DID resolution, and reputation systems.</p>
+                </div>
+                 <div class="text-2xl text-green-400">▲▼</div>
+                <div id="layer3" class="flow-diagram-box p-4 border-2 rounded-lg cursor-pointer bg-gray-900">
+                    <h4 class="font-bold text-xl text-green-300">Layer 3: Dynamic Access Control</h4>
+                    <p class="text-green-500">Policy Decision/Administration/Information Points (PDP/PAP/PIP) for ABAC, PBAC, JIT access.</p>
+                </div>
+                 <div class="text-2xl text-green-400">▲▼</div>
+                <div id="layer4" class="flow-diagram-box p-4 border-2 rounded-lg cursor-pointer bg-gray-900">
+                    <h4 class="font-bold text-xl text-green-300">Layer 4: Unified Global Session Management & Policy Enforcement</h4>
+                    <p class="text-green-500">Cross-protocol session authority and real-time control.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Processes Section -->
+        <section class="mb-12 interactive-section">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Core Processes in Action</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                Let's see how these concepts work together in practice. Click the buttons below to simulate each process.
+            </p>
+
+            <!-- Agent Discovery Simulation -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800 mb-8">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">Process 1: Agent Discovery via ANS</h3>
+                <p class="mb-4">An orchestrator agent needs to find another agent capable of financial risk analysis. It queries the <strong>Agent Name Service (ANS)</strong>.</p>
+                <button id="run-discovery-btn" class="btn-matrix text-white font-bold py-2 px-4 rounded-lg mb-4">Run Discovery Simulation</button>
+                
+                <div id="discovery-simulation" class="hidden grid md:grid-cols-2 gap-4 items-start">
+                    <div>
+                        <h4 class="font-semibold text-green-200 mb-2">1. The Query</h4>
+                        <p class="text-sm mb-2">The orchestrator sends a capability-based query.</p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-sm"><code>{
+  "requestType": "resolveAgentByCapability",
+  "desiredProtocol": "acp",
+  "requiredCapability": "FinancialRiskAnalysis.CorporateReporting",
+  "preferredProvider": "AcmeFinanceServices",
+  "requiredAttestations": [
+    { "vcType": "SOXComplianceCertified" }
+  ]
+}</code></pre>
+                    </div>
+                    <div class="mt-8 md:mt-0">
+                        <div class="arrow hidden md:block"></div>
+                        <h4 class="font-semibold text-green-200 mb-2">2. The Response</h4>
+                        <p class="text-sm mb-2">The ANS finds a matching agent and returns its DID and other metadata.</p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-sm"><code>{
+  "status": "success",
+  "resolvedAgents": [
+    {
+      "ansName": "acp://RiskAnalyzerBot...",
+      "agentDid": "did:com:acme:agent:riskanalyzer:beta-007",
+      "serviceEndpoint": "acps://riskanalyzer.acme.com/service",
+      "relevantVcSnippets": [
+        { "type": "SOXComplianceCertified", "issuer": "did:com:acme:audit..." }
+      ]
+    }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Control Simulation -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800 mb-8">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">Process 2: Dynamic Access Control</h3>
+                <p class="mb-4">The discovered `RiskAnalyzerBot` now tries to access a sensitive database. The request is intercepted and evaluated against a policy.</p>
+                <button id="run-access-btn" class="btn-matrix text-white font-bold py-2 px-4 rounded-lg mb-4">Run Access Control Simulation</button>
+
+                <div id="access-simulation" class="hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-center text-center space-y-4 md:space-y-0 md:space-x-4">
+                        <!-- Agent -->
+                        <div class="flex-1">
+                            <div class="p-3 bg-gray-800 border border-green-600 rounded-lg">
+                                <p class="font-bold text-green-200">RiskAnalyzerBot</p>
+                                <p class="text-xs">Presents DID & VCs</p>
+                            </div>
+                        </div>
+                        <div class="text-2xl text-green-400">→</div>
+                        <!-- AEM/PIP -->
+                        <div class="flex-1">
+                             <div class="p-3 bg-gray-800 border border-green-600 rounded-lg">
+                                <p class="font-bold text-green-200">AEM/PIP</p>
+                                <p class="text-xs">Gathers Context</p>
+                            </div>
+                        </div>
+                        <div class="text-2xl text-green-400">→</div>
+                        <!-- PDP -->
+                        <div class="flex-1">
+                            <div class="p-3 bg-gray-800 border border-green-600 rounded-lg">
+                                <p class="font-bold text-green-200">Policy Decision Point (PDP)</p>
+                                <p class="text-xs">Evaluates Policy</p>
+                            </div>
+                        </div>
+                        <div class="text-2xl text-green-400">→</div>
+                        <!-- Decision -->
+                        <div class="flex-1">
+                            <div id="access-decision" class="p-3 bg-red-900 border border-red-500 rounded-lg">
+                                <p class="font-bold text-red-200">Decision: ???</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-green-200 mb-2">Policy (in Rego)</h4>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto text-sm"><code># Allow access if agent has correct role, capability, and compliance VCs
+allow {
+    input.agent.vcs[_].credentialSubject.role == "FinancialRiskAnalystRole"
+    input.agent.vcs[_].credentialSubject.capability == "SalesDataAnalyticsCapability"
+    input.agent.vcs[_].type == "SOXComplianceCertified"
+    input.action == "QUERY_TABLE"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- JIT Access Simulation -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">Process 3: Just-In-Time (JIT) Access for Ephemeral Agents</h3>
+                <p class="mb-4">A temporary agent is spawned for a 15-minute task. Instead of a permanent key, it's issued a short-lived JIT Verifiable Credential to access a specific tool.</p>
+                <button id="run-jit-btn" class="btn-matrix text-white font-bold py-2 px-4 rounded-lg mb-4">Run JIT Access Simulation</button>
+
+                <div id="jit-simulation" class="hidden text-center">
+                    <div class="p-4 bg-gray-800 border-2 border-dashed border-green-600 rounded-lg inline-block transition-opacity duration-500" id="jit-vc">
+                        <h4 class="font-bold text-green-200">JIT Verifiable Credential</h4>
+                        <p class="text-sm">Subject: <code class="text-green-400">did:ephemeral:task-xyz:agent-77</code></p>
+                        <p class="text-sm">Authorized Tool: <code class="text-green-400">did:com:acmetools:mcp:tool...</code></p>
+                        <p class="text-sm">Action: <code class="text-green-400">["executeTransform"]</code></p>
+                        <p class="font-bold mt-2 text-yellow-400" id="jit-timer">Valid for: 15:00</p>
+                    </div>
+                    <p class="mt-4 text-green-300" id="jit-status">The ephemeral agent uses this VC to perform its task. Once expired, access is automatically revoked.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: Implementation & Advanced Encryption -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Implementation & Advanced Encryption</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                Understanding the theory is one thing; seeing how it can be implemented is another. This section provides conceptual code examples in Python and C++ to illustrate how core operations like issuing and verifying credentials might work. We will also explore the frontier of privacy-preserving computation with Homomorphic Encryption.
+            </p>
+
+            <!-- Python Example -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800 mb-8">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">Python: Creating and Signing a Verifiable Credential</h3>
+                <p class="mb-4">Here, a trusted 'issuer' agent (e.g., an HR system) creates a VC for a `RiskAnalyzerBot` to attest to its role. This uses a conceptual library for DID/VC operations.</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>
+# Conceptual Python code for an issuer agent
+import json
+from did_auth_lib import DIDAuthenticator, VCIssuer
+
+# 1. Issuer authenticates with its own DID and private key
+issuer_did = "did:com:acme:hr"
+issuer_auth = DIDAuthenticator.from_key_vault("acme-hr-key")
+
+# 2. Define the credential subject and claims
+credential_claim = {
+    "@context": ["https://www.w3.org/2018/credentials/v1"],
+    "type": ["VerifiableCredential", "FinancialRoleCredential"],
+    "issuer": issuer_did,
+    "credentialSubject": {
+        "id": "did:com:acme:agent:riskanalyzer:beta-007",
+        "role": "FinancialRiskAnalystRole",
+        "clearanceLevel": 4
+    }
+}
+
+# 3. Create and sign the Verifiable Credential
+vc_issuer = VCIssuer(issuer_auth)
+signed_vc_jwt = vc_issuer.issue_credential_as_jwt(credential_claim)
+
+print("Signed VC (JWT format):", signed_vc_jwt)
+</code></pre>
+            </div>
+
+            <!-- C++ Example -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800 mb-8">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">C++: Verifying a Verifiable Credential</h3>
+                <p class="mb-4">A high-performance service (like a database gateway) written in C++ receives the VC. It must verify the signature and trust the issuer before granting access.</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>
+// Conceptual C++ code for a verifier service
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include "did_verifier_lib.hpp" // A conceptual C++ library
+
+bool verify_agent_access(const std::string& vc_jwt) {
+    // 1. Define the trust policy: which issuers are trusted?
+    TrustRegistry trusted_issuers;
+    trusted_issuers.add("did:com:acme:hr");
+
+    // 2. Create a verifier instance
+    VCVerifier verifier(trusted_issuers);
+
+    try {
+        // 3. Decode and verify the VC. This checks:
+        //    - The signature against the issuer's public key (fetched via DID)
+        //    - That the issuer is in our Trust Registry
+        //    - That the VC has not expired
+        DecodedVC decoded_vc = verifier.verify_jwt(vc_jwt);
+
+        std::cout &lt;&lt; "Verification successful for subject: " &lt;&lt; decoded_vc.get_subject_did() &lt;&lt; std::endl;
+        
+        // 4. Check specific claims for authorization
+        if (decoded_vc.get_claim("role") == "FinancialRiskAnalystRole") {
+            return true; // Access granted
+        }
+
+    } catch (const VerificationException& e) {
+        std::cerr &lt;&lt; "Verification failed: " &lt;&lt; e.what() &lt;&lt; std::endl;
+    }
+
+    return false; // Access denied
+}
+</code></pre>
+            </div>
+
+            <!-- Homomorphic Encryption -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">Advanced Topic: Privacy with Homomorphic Encryption (HE)</h3>
+                <p class="mb-4">What if an agent needs a calculation performed on sensitive data without revealing the data itself? Homomorphic Encryption allows computations on encrypted data (ciphertexts). The result, when decrypted, is the same as if the computation were performed on the original data (plaintexts).</p>
+                <p class="mb-4"><strong>Scenario:</strong> An agent has sensitive financial figures and needs a third-party analysis service (another agent) to calculate their sum, without the service ever seeing the numbers. Click the button below to see how this works.</p>
+                
+                <!-- HE Animation Container -->
+                <div id="he-animation-container" class="relative mt-6 mb-8 p-4 bg-gray-900 border border-green-800 rounded-lg overflow-hidden">
+                    <div class="flex justify-between items-start h-48">
+                        <!-- Client Agent -->
+                        <div id="he-client-agent" class="w-1/3 text-center">
+                            <div class="p-3 bg-gray-800 rounded-lg border border-green-600">
+                                <h4 class="font-bold text-green-200">Client Agent</h4>
+                                <p class="text-xs">(Holds private key)</p>
+                            </div>
+                        </div>
+                        <!-- Service Agent -->
+                        <div id="he-service-agent" class="w-1/3 text-center">
+                            <div class="p-3 bg-gray-800 rounded-lg border border-green-600">
+                                <h4 class="font-bold text-green-200">Service Agent</h4>
+                                <p class="text-xs">(Blind computation)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Data packets will be positioned within this container -->
+                    <div id="packet1" class="data-packet">1500</div>
+                    <div id="packet2" class="data-packet">850</div>
+                    <div id="result-packet" class="data-packet"></div>
+                    
+                    <button id="run-he-animation" class="btn-matrix absolute bottom-4 left-1/2 -translate-x-1/2 text-white font-bold py-2 px-4 rounded-lg">Run HE Animation</button>
+                </div>
+
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>
+# Conceptual Python pseudocode for Homomorphic Encryption
+from he_library import HEKeygen, Encryptor, Evaluator, Decryptor
+
+# === Client Agent (has the secret data) ===
+# 1. Generate public/private key pair for HE
+public_key, private_key = HEKeygen.generate_keys()
+
+# 2. The numbers to be summed
+value1 = 1500
+value2 = 850
+
+# 3. Encrypt the data with the public key
+encryptor = Encryptor(public_key)
+encrypted_value1 = encryptor.encrypt(value1)
+encrypted_value2 = encryptor.encrypt(value2)
+
+# 4. Send the *encrypted* data and public key to the service agent.
+# The service agent NEVER sees 1500 or 850.
+
+# === Service Agent (performs the computation) ===
+# 1. Receives the encrypted data
+evaluator = Evaluator(received_public_key)
+
+# 2. Performs addition on the encrypted data
+encrypted_sum = evaluator.add(received_encrypted_value1, received_encrypted_value2)
+
+# 3. Sends the *encrypted result* back to the client.
+
+# === Client Agent (gets the result) ===
+# 1. Decrypts the result with its private key
+decryptor = Decryptor(private_key)
+decrypted_sum = decryptor.decrypt(encrypted_sum)
+
+print(f"Decrypted Sum: {decrypted_sum}") # Output: Decrypted Sum: 2350
+</code></pre>
+            </div>
+        </section>
+
+
+        <!-- Conclusion -->
+        <footer class="mt-16 pt-8 border-t border-green-800 text-center">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4">Conclusion: A Foundation for Trustworthy AI</h2>
+            <p class="text-lg leading-relaxed max-w-3xl mx-auto">
+                By redefining agent identity and building a purpose-built framework, we can move beyond the fragile security of traditional IAM. This Agentic Zero Trust model provides the fine-grained control, verifiable accountability, and dynamic session management required to secure the complex, autonomous AI ecosystems of tomorrow.
+            </p>
+            <div class="mt-8 text-sm text-green-700">
+                <p>Based on "A Novel Zero-Trust Identity Framework for Agentic AI" (arXiv:2505.19301v2).</p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // --- Architecture Diagram Interaction ---
+        const layers = document.querySelectorAll('.flow-diagram-box');
+        layers.forEach(layer => {
+            layer.addEventListener('mouseenter', () => {
+                layers.forEach(l => l.classList.remove('active'));
+                layer.classList.add('active');
+            });
+            layer.addEventListener('mouseleave', () => {
+                layer.classList.remove('active');
+            });
+        });
+
+        // --- Process 1: Discovery Simulation ---
+        const runDiscoveryBtn = document.getElementById('run-discovery-btn');
+        const discoverySimulation = document.getElementById('discovery-simulation');
+        runDiscoveryBtn.addEventListener('click', () => {
+            discoverySimulation.classList.toggle('hidden');
+            runDiscoveryBtn.textContent = discoverySimulation.classList.contains('hidden') ? 'Run Discovery Simulation' : 'Hide Simulation';
+        });
+
+        // --- Process 2: Access Control Simulation ---
+        const runAccessBtn = document.getElementById('run-access-btn');
+        const accessSimulation = document.getElementById('access-simulation');
+        const accessDecision = document.getElementById('access-decision');
+        runAccessBtn.addEventListener('click', () => {
+            accessSimulation.classList.toggle('hidden');
+            runAccessBtn.textContent = accessSimulation.classList.contains('hidden') ? 'Run Access Control Simulation' : 'Hide Simulation';
+            if (!accessSimulation.classList.contains('hidden')) {
+                // Simulate the decision process
+                setTimeout(() => {
+                    accessDecision.classList.remove('bg-red-900', 'border-red-500');
+                    accessDecision.classList.add('bg-green-900', 'border-green-500');
+                    accessDecision.innerHTML = '<p class="font-bold text-green-200">Decision: ALLOW</p>';
+                }, 2000);
+            } else {
+                 accessDecision.classList.add('bg-red-900', 'border-red-500');
+                 accessDecision.classList.remove('bg-green-900', 'border-green-500');
+                 accessDecision.innerHTML = '<p class="font-bold text-red-200">Decision: ???</p>';
+            }
+        });
+
+        // --- Process 3: JIT Access Simulation ---
+        const runJitBtn = document.getElementById('run-jit-btn');
+        const jitSimulation = document.getElementById('jit-simulation');
+        const jitVc = document.getElementById('jit-vc');
+        const jitTimer = document.getElementById('jit-timer');
+        const jitStatus = document.getElementById('jit-status');
+        let jitInterval;
+
+        runJitBtn.addEventListener('click', () => {
+            jitSimulation.classList.toggle('hidden');
+            runJitBtn.textContent = jitSimulation.classList.contains('hidden') ? 'Run JIT Access Simulation' : 'Hide Simulation';
+            
+            clearInterval(jitInterval);
+
+            if (!jitSimulation.classList.contains('hidden')) {
+                let timeLeft = 15 * 60;
+                jitVc.style.opacity = '1';
+                jitVc.style.borderColor = '#10B981'; // green-500
+                jitStatus.textContent = "The ephemeral agent uses this VC to perform its task. Once expired, access is automatically revoked.";
+
+                jitInterval = setInterval(() => {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    jitTimer.textContent = `Valid for: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(jitInterval);
+                        jitTimer.textContent = 'EXPIRED';
+                        jitVc.style.opacity = '0.5';
+                        jitVc.style.borderColor = '#EF4444'; // red-500
+                        jitStatus.textContent = "The JIT credential has expired. The agent can no longer access the tool.";
+                    }
+                }, 100); // Speed up timer for demo purposes
+            }
+        });
+
+        // --- Process 4: Homomorphic Encryption Animation ---
+        const runHeBtn = document.getElementById('run-he-animation');
+        const container = document.getElementById('he-animation-container');
+        const packet1 = document.getElementById('packet1');
+        const packet2 = document.getElementById('packet2');
+        const resultPacket = document.getElementById('result-packet');
+        let heAnimationRunning = false;
+
+        runHeBtn.addEventListener('click', () => {
+            if (heAnimationRunning) return;
+            heAnimationRunning = true;
+            runHeBtn.disabled = true;
+            runHeBtn.classList.add('opacity-50');
+
+            // Reset state
+            [packet1, packet2, resultPacket].forEach(p => {
+                p.style.transition = 'none';
+                p.classList.remove('visible', 'encrypted');
+                p.style.left = '';
+                p.style.top = '';
+            });
+            packet1.textContent = '1500';
+            packet2.textContent = '850';
+            resultPacket.textContent = '';
+
+
+            // Calculate positions
+            const clientEl = document.getElementById('he-client-agent');
+            const serviceEl = document.getElementById('he-service-agent');
+            const clientRect = clientEl.getBoundingClientRect();
+            const serviceRect = serviceEl.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const startX = clientRect.left - containerRect.left + (clientRect.width / 2);
+            const endX = serviceRect.left - containerRect.left + (serviceRect.width / 2);
+
+            // Animation sequence
+            setTimeout(() => { // 1. Appear in client
+                packet1.style.top = '60px';
+                packet1.style.left = `${startX - (packet1.offsetWidth / 2)}px`;
+                packet2.style.top = '110px';
+                packet2.style.left = `${startX - (packet2.offsetWidth / 2)}px`;
+                packet1.classList.add('visible');
+                packet2.classList.add('visible');
+            }, 100);
+
+            setTimeout(() => { // 2. Encrypt
+                [packet1, packet2].forEach(p => {
+                    p.classList.add('encrypted');
+                    p.textContent = 'Encrypted(???)';
+                });
+            }, 1500);
+
+            setTimeout(() => { // 3. Move to service
+                 [packet1, packet2].forEach(p => {
+                    p.style.transition = 'all 1s ease-in-out, background-color 0.5s, color 0.5s';
+                    p.style.left = `${endX - (p.offsetWidth / 2)}px`;
+                });
+            }, 2500);
+
+            setTimeout(() => { // 4. Compute
+                packet1.classList.remove('visible');
+                packet2.classList.remove('visible');
+                resultPacket.style.top = '85px';
+                resultPacket.style.left = `${endX - (resultPacket.offsetWidth / 2)}px`;
+                resultPacket.classList.add('visible', 'encrypted');
+                resultPacket.textContent = 'Encrypted Result';
+            }, 4000);
+            
+            setTimeout(() => { // 5. Move back to client
+                resultPacket.style.transition = 'all 1s ease-in-out, background-color 0.5s, color 0.5s';
+                resultPacket.style.left = `${startX - (resultPacket.offsetWidth / 2)}px`;
+            }, 5000);
+
+            setTimeout(() => { // 6. Decrypt
+                resultPacket.classList.remove('encrypted');
+                resultPacket.textContent = '2350';
+                heAnimationRunning = false;
+                runHeBtn.disabled = false;
+                runHeBtn.classList.remove('opacity-50');
+            }, 6500);
+        });
+
+    </script>
+</body>
+</html>

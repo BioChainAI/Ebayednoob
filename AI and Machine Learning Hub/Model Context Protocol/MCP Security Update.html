@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Model Context Protocol Walkthrough</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Common styles */
+        :root {
+            --matrix-green: #00ff41;
+            --dark-green: #008f11;
+            --bg-color: #000000;
+            --border-color: #004d00;
+            --alert-red: #ff4747;
+            --code-bg: #0a1a0a;
+        }
+
+        .component-box {
+            border: 2px solid var(--border-color);
+            background-color: rgba(0, 20, 0, 0.8);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px var(--dark-green);
+            transition: all 0.3s ease;
+        }
+        
+        /* Animation-specific styles */
+        .animation-component.active {
+            border-color: var(--matrix-green);
+            box-shadow: 0 0 25px var(--matrix-green);
+            transform: scale(1.05);
+        }
+
+        .particle {
+            position: absolute;
+            background-color: var(--matrix-green);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--matrix-green);
+            opacity: 0;
+            transition: transform 1.5s ease-in-out, opacity 1.5s ease-in-out;
+            z-index: 10;
+        }
+        
+        .message-box {
+            position: absolute;
+            background-color: rgba(0, 20, 0, 0.9);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            white-space: nowrap;
+            box-shadow: 0 0 10px var(--dark-green);
+            z-index: 10;
+        }
+
+        .status-text {
+            min-height: 50px;
+            border: 1px solid var(--border-color);
+            background-color: rgba(0, 10, 0, 0.7);
+        }
+
+        /* Grid Ops Animation Styles */
+        #grid-animation-container {
+            background: #020a02;
+        }
+        .grid-line {
+            position: absolute;
+            background-color: var(--dark-green);
+            height: 3px;
+        }
+        .power-flow {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: #f0f030; /* Yellow for power */
+            border-radius: 50%;
+            box-shadow: 0 0 8px #f0f030;
+            animation: flow 4s linear infinite;
+            opacity: 0;
+        }
+        @keyframes flow {
+            from { offset-distance: 0%; opacity: 1; }
+            to { offset-distance: 100%; opacity: 1; }
+        }
+        .grid-node {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--matrix-green);
+            text-align: center;
+        }
+        .grid-node-icon {
+            filter: drop-shadow(0 0 5px var(--matrix-green));
+        }
+        .alert-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 15px;
+            height: 15px;
+            background-color: var(--alert-red);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--alert-red);
+            animation: pulse 1.5s infinite;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(0.9); }
+        }
+        .code-highlight {
+            transition: background-color 0.5s;
+        }
+        .code-highlight.active {
+            background-color: rgba(0, 255, 65, 0.2);
+        }
+        .security-gate {
+            transition: all 0.3s ease-in-out;
+            filter: drop-shadow(0 0 8px var(--dark-green));
+        }
+        .security-gate.active {
+            filter: drop-shadow(0 0 15px var(--matrix-green));
+            transform: scale(1.1);
+        }
+        .security-gate.denied {
+            filter: drop-shadow(0 0 15px var(--alert-red));
+            transform: scale(1.1);
+        }
+        .anim-element {
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold text-green-200 mb-4">Model Context Protocol Walkthrough</h1>
+        <p class="text-sm text-green-400 mb-6">
+            Written by Ken Huang, CSA Fellow, Co-Chair of CSA AI Safety Working Groups and Dr. Ying-Jung Chen, Georgia Institute of Technology.
+        </p>
+
+        <section class="mb-8">
+            <p class="text-lg leading-relaxed">
+                This implementation guide provides a comprehensive, hands-on walkthrough for building a complete system using the Model Context Protocol (MCP), a framework designed to bridge the gap between Large Language Models (LLMs) and external, real-world tools. Using a tangible use case—a 'Grid Operations Assistant'—this document details the step-by-step creation of the core MCP components. Critically, it extends beyond basic implementation to provide an essential security analysis, applying the <a href="https://www.ai21.com/blog/maestro-ai-planning-orchestration/" target="_blank" class="text-green-400 hover:text-green-300 underline">MAESTRO agentic AI threat modeling framework</a> to identify vulnerabilities in the MCP architecture, showcasing insecure code examples, and outlining actionable best practices. By following this guide, developers will learn not only how to construct a functional MCP application but also how to engineer it to be robust, secure, and trustworthy from the ground up.
+            </p>
+        </section>
+        
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">MCP Architecture Overview</h2>
+            <p class="mb-6 text-lg leading-relaxed">The MCP architecture consists of three main components:</p>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="component-box p-4 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">MCP Host</h3>
+                    <p class="text-green-400">The environment where the LLM runs, responsible for interpreting the protocol and facilitating communication between the LLM and external resources.</p>
+                </div>
+                <div class="component-box p-4 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">MCP Client</h3>
+                    <p class="text-green-400">The application that interacts with the MCP server, sending queries and receiving responses. It manages the conversation flow and handles tool calls.</p>
+                </div>
+                <div class="component-box p-4 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">MCP Server</h3>
+                    <p class="text-green-400">Provides access to tools and resources that the LLM can use. It implements the protocol specification and exposes functionality through a standardized interface.</p>
+                </div>
+            </div>
+
+            <p class="text-lg leading-relaxed">The communication flow between these components is as follows:</p>
+            <ol class="list-decimal list-inside space-y-2 my-4 text-lg">
+                <li>The client initiates a connection to the MCP server.</li>
+                <li>The server responds with its capabilities, including available tools and resources.</li>
+                <li>The client sends a query to an LLM via the host, providing information about the available tools.</li>
+                <li>The LLM processes the query and may request to use tools or access resources.</li>
+                <li>The client forwards tool calls to the server.</li>
+                <li>The server executes the requested tools and returns the results.</li>
+                <li>The client provides the tool results back to the LLM.</li>
+                <li>The LLM generates a final response based on the original query and tool results.</li>
+            </ol>
+
+            <div id="animation-container" class="relative w-full max-w-4xl mx-auto aspect-[2/1] border-2 border-dashed border-green-800 rounded-lg p-8 mt-6">
+                <div id="client" class="component-box animation-component absolute top-1/2 -translate-y-1/2 left-4 w-32 h-24 rounded-lg flex flex-col items-center justify-center text-center p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                    <span class="font-bold mt-1">MCP Client</span>
+                </div>
+                <div id="host" class="component-box animation-component absolute top-1/4 left-1/2 -translate-x-1/2 w-36 h-24 rounded-lg flex flex-col items-center justify-center text-center p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                    <span class="font-bold mt-1">MCP Host (LLM)</span>
+                </div>
+                <div id="server" class="component-box animation-component absolute top-1/2 -translate-y-1/2 right-4 w-32 h-32 rounded-lg flex flex-col items-center justify-center text-center p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><rect x="3" y="2" width="18" height="20" rx="2" ry="2"/><line x1="7" y1="6" x2="7.01" y2="6"/><line x1="7" y1="10" x2="7.01" y2="10"/><line x1="7" y1="14" x2="7.01" y2="14"/></svg>
+                    <span class="font-bold mt-1">MCP Server</span>
+                </div>
+            </div>
+            <div class="w-full max-w-4xl mx-auto mt-4">
+                <div id="status" class="status-text w-full p-4 rounded-lg text-center text-lg font-mono">
+                    Click "Start Animation" to begin.
+                </div>
+                <div class="flex justify-center mt-4 space-x-4">
+                    <button id="start-btn" class="bg-green-700 hover:bg-green-600 text-black font-bold py-2 px-6 rounded-lg shadow-lg transition-all duration-200">Start Animation</button>
+                    <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-green-300 font-bold py-2 px-6 rounded-lg shadow-lg transition-all duration-200">Reset</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1: Prerequisites</h2>
+            <p class="mb-4">Before starting, ensure you have:</p>
+            <ul class="list-disc list-inside space-y-2 text-lg">
+                <li>Python 3.11 installed</li>
+                <li>Basic understanding of asynchronous programming in Python</li>
+                <li>Familiarity with RESTful APIs and JSON</li>
+                <li>API keys for LLM providers (OpenAI, Anthropic, etc.)</li>
+                <li>Basic knowledge of grid operation (for the example use case)</li>
+            </ul>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3: Setting Up the Environment</h2>
+            <p class="mb-4 text-lg">Let's start by setting up our development environment:</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code># Create a virtual environment
+python -m venv mcp-env
+
+# Activate the virtual environment
+# On Windows:
+mcp-env\Scripts\activate
+# On macOS/Linux:
+source mcp-env/bin/activate
+
+# Install required packages
+pip install "mcp[cli]" "aisuite[all]" python-dotenv requests pandas matplotlib numpy</code></pre>
+            <p class="mt-4 mb-4 text-lg">Create a <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">.env</code> file to store your API keys:</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>OPENAI_API_KEY=your-openai-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+GOOGLE_API_KEY=your-google-api-key
+# Add other provider keys as needed</code></pre>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4: Implementing the MCP Server</h2>
+            <p class="mb-4 text-lg leading-relaxed">The MCP server provides tools and resources for Grid ops. In our use case, the "Grid Operations Assistant" is an AI agent that can monitor, analyze, and manage a power grid. The animation below illustrates its function: the assistant monitors power flow from plants to cities and uses its tools to predict and flag potential outages based on weather and load data.</p>
+            
+            <!-- Grid Ops Animation -->
+            <div id="grid-animation-container" class="relative w-full max-w-4xl mx-auto aspect-[2/1] border-2 border-dashed border-green-800 rounded-lg p-8 mt-6 overflow-hidden">
+                <!-- Grid Lines -->
+                <svg class="absolute top-0 left-0 w-full h-full" id="grid-svg-lines">
+                    <path id="line-1" d="M 80 100 L 250 100" stroke="#008f11" stroke-width="3" />
+                    <path id="line-2" d="M 250 100 L 420 50" stroke="#008f11" stroke-width="3" />
+                    <path id="line-3" d="M 250 100 L 420 150" stroke="#008f11" stroke-width="3" />
+                </svg>
+                <!-- Power Flow Particles -->
+                <div class="power-flow" style="offset-path: path('M 80 100 L 250 100');"></div>
+                <div class="power-flow" style="offset-path: path('M 250 100 L 420 50');"></div>
+                <div class="power-flow" style="offset-path: path('M 250 100 L 420 150'); animation-delay: -2s;"></div>
+                
+                <!-- Grid Nodes -->
+                <div class="grid-node" style="left: 40px; top: 75px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="grid-node-icon"><path d="M2 13.522c1.333-2.537 4.132-4.522 7.5-4.522s6.167 1.985 7.5 4.522"/><path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 6.34 1.41-1.41"/><path d="M22 12h-2"/><path d="M4 12H2"/></svg>
+                    <span class="text-sm font-bold">Power Plant</span>
+                </div>
+                <div id="substation" class="grid-node" style="left: 225px; top: 75px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="grid-node-icon"><path d="M12 22v-3"/><path d="M12 15v-4"/><path d="M12 7V2"/><path d="M6 15H2"/><path d="M10 15H8"/><path d="M16 15h-2"/><path d="M22 15h-4"/><path d="M15 12v-2a3 3 0 0 0-6 0v2"/><path d="M18 9a6 6 0 0 0-12 0"/></svg>
+                    <span class="text-sm font-bold">Substation</span>
+                    <div id="alert-substation" class="alert-indicator"></div>
+                </div>
+                <div class="grid-node" style="left: 430px; top: 25px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="grid-node-icon"><path d="M9 22V12h6v10"/><path d="M5 22V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><path d="M19 10h-4"/><path d="M9 10H5"/><path d="M19 14h-4"/><path d="M9 14H5"/><path d="M19 18h-4"/><path d="M9 18H5"/></svg>
+                    <span class="text-sm font-bold">City A</span>
+                </div>
+                <div class="grid-node" style="left: 430px; top: 125px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="grid-node-icon"><path d="M16 22v-4a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v4"/><rect width="20" height="10" x="2" y="4" rx="2"/><path d="M6 12h12"/></svg>
+                    <span class="text-sm font-bold">City B</span>
+                </div>
+            </div>
+            <div class="w-full max-w-4xl mx-auto mt-4">
+                <div id="grid-status" class="status-text w-full p-4 rounded-lg text-center text-lg font-mono">
+                    Click "Simulate" to run the Grid Ops Assistant.
+                </div>
+                <div class="flex justify-center mt-4 space-x-4">
+                    <button id="grid-start-btn" class="bg-green-700 hover:bg-green-600 text-black font-bold py-2 px-6 rounded-lg shadow-lg transition-all duration-200">Simulate</button>
+                    <button id="grid-reset-btn" class="bg-gray-700 hover:bg-gray-600 text-green-300 font-bold py-2 px-6 rounded-lg shadow-lg transition-all duration-200">Reset</button>
+                </div>
+            </div>
+
+            <p class="mt-8 mb-4 text-lg leading-relaxed">The server code below defines the tools that allow the assistant to perform these actions. Let's create a file named <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">grid_ops_server.py</code> and break down its components.</p>
+            
+            <p class="mt-4 mb-2 text-lg leading-relaxed">First, we import necessary libraries and initialize the <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">FastMCP</code> server.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>import json
+import os
+import pandas as pd
+import matplotlib
+import numpy as np
+import io
+import base64
+from datetime import datetime
+from typing import List, Dict, Any, Optional, Union
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Grid Operations Assistant")</code></pre>
+
+            <div class="my-8 p-4 border border-green-800 rounded-lg">
+                <h3 class="text-xl font-semibold text-green-300 mb-4">Diving Deeper: MCP Resources and the `@mcp.resource` Decorator</h3>
+                <p class="mb-4 text-lg leading-relaxed">A <strong>Resource</strong> in MCP is a read-only data source. It's like a specific API endpoint that the LLM can access to get information. The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">@mcp.resource</code> decorator is a Python feature that transforms a regular function into one of these data sources.</p>
+                <p class="mb-4 text-lg leading-relaxed"><strong>How does it work?</strong> When you apply the decorator to a function (e.g., <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">get_grid_topology</code>), the MCP framework registers it. It parses the URI string (like <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">"grid://topology/{region}"</code>) to understand how to call the function. When a client requests data from that URI, the MCP server invokes the decorated function, passes in any parameters from the URI, and returns the function's output as JSON data.</p>
+                
+                <div id="resource-animation-container" class="relative w-full max-w-4xl mx-auto aspect-[3/1] border-2 border-dashed border-green-800 rounded-lg p-4 mt-6 flex items-center justify-between">
+                    <!-- Left Side: Code -->
+                    <div class="w-1/2">
+                        <pre class="bg-gray-900 text-sm text-gray-200 p-4 rounded-lg overflow-x-auto h-full">
+<code id="resource-code-1" class="code-highlight">@mcp.resource("grid://topology/{region}")</code>
+<code id="resource-code-2" class="code-highlight">def get_grid_topology(region: str):</code>
+<code id="resource-code-3" class="code-highlight">    # ... logic to get data ...</code>
+<code id="resource-code-4" class="code-highlight">    return topologies.get(region)</code>
+                        </pre>
+                    </div>
+                    <!-- Right Side: Explanation -->
+                    <div class="w-1/2 pl-4">
+                        <div id="resource-status" class="status-text w-full p-4 rounded-lg text-center text-md font-mono">
+                            Click "Animate" to see how it works.
+                        </div>
+                    </div>
+                </div>
+                 <div class="flex justify-center mt-4 space-x-4">
+                    <button id="resource-start-btn" class="bg-green-700 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200">Animate</button>
+                </div>
+            </div>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">Then, we implement the <strong>Tools</strong>. These are functions the LLM can execute. The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">@mcp.tool()</code> decorator registers a function as an executable tool.</p>
+            <p class="mt-2 mb-2 text-md leading-relaxed"><code class="bg-gray-800 text-green-300 px-2 py-1 rounded">analyze_load_pattern</code>: Takes a dataset ID and calculates key statistics like max, min, and average load.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>@mcp.tool()
+def analyze_load_pattern(dataset_id: str, window_hours: int = 24) -> Dict[str, Any]:
+    # ... (function implementation)</code></pre>
+
+            <p class="mt-2 mb-2 text-md leading-relaxed"><code class="bg-gray-800 text-green-300 px-2 py-1 rounded">predict_outage_risk</code>: Uses a simulated model to calculate the risk of an equipment outage based on weather data.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>@mcp.tool()
+def predict_outage_risk(equipment_id: str, weather_data: Dict[str, float]) -> Dict[str, Any]:
+    # ... (function implementation)</code></pre>
+
+            <p class="mt-2 mb-2 text-md leading-relaxed"><code class="bg-gray-800 text-green-300 px-2 py-1 rounded">generate_grid_visualization</code>: Creates a PNG chart of grid data and returns it as a base64-encoded string.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>@mcp.tool()
+def generate_grid_visualization(dataset_id: str) -> Dict[str, Any]:
+    # ... (function implementation)</code></pre>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">Finally, we run the server if the script is executed directly.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>if __name__ == "__main__":
+    print("GridOperationsServer:STARTED", flush=True)
+    mcp.run(transport='stdio')</code></pre>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5: Implementing the MCP Host</h2>
+            <p class="mb-4 text-lg leading-relaxed">The MCP Host acts as the bridge between the client and the LLM. We'll define an <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">MCPHost</code> class in <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">grid_ops_host.py</code>.</p>
+            
+            <p class="mt-4 mb-2 text-lg leading-relaxed">The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">__init__</code> method initializes the AI client and sets the desired LLM model.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>class MCPHost:
+    def __init__(self, model: str = "openai:gpt-4o"):
+        self.client = ai.Client()
+        self.model = model</code></pre>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">process_query</code> method is the core of the host. It takes the user's query and a list of available tools, formats them for the LLM's function-calling API, sends the request, and then parses the LLM's response to extract any tool calls it wants to make.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>    async def process_query(self, query: str, tools: List[Dict]) -> Dict[str, Any]:
+        # Format tools for LLM
+        formatted_tools = [{
+            "type": "function",
+            "function": {
+                "name": t["name"],
+                "description": t["description"],
+                "parameters": t["inputSchema"]
+            }
+        } for t in tools]
+
+        # Get LLM response
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": query}],
+            tools=formatted_tools,
+            temperature=0.3
+        )
+
+        llm_msg = response.choices[0].message
+        
+        # Store messages for context
+        messages = [{"role": "user", "content": query}, llm_msg]
+
+        # Extract tool calls if any
+        tool_calls = []
+        if hasattr(llm_msg, "tool_calls") and llm_msg.tool_calls:
+            for tc in llm_msg.tool_calls:
+                tool_calls.append({
+                    "id": tc.id,
+                    "name": tc.function.name,
+                    "arguments": json.loads(tc.function.arguments)
+                })
+
+        return {
+            "response": llm_msg.content,
+            "tool_calls": tool_calls,
+            "messages": messages,
+            "llm_response": llm_msg
+        }</code></pre>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">After a tool is executed by the client, <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">process_tool_results</code> sends the tool's output back to the LLM. This allows the LLM to use the tool's result to formulate a final, informed answer.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>    async def process_tool_results(self, messages: List[Dict], llm_response: Any, tool_results: List[Dict]) -> str:
+        """Process tool results and get final LLM response."""
+        messages.append({
+            "role": "tool",
+            "tool_call_id": llm_response.tool_calls[0].id,
+            "name": llm_response.tool_calls[0].function.name,
+            "content": json.dumps(tool_results[0]["result"])
+        })
+        
+        final_response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages
+        )
+        
+        return final_response.choices[0].message.content</code></pre>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6: Implementing the MCP Client</h2>
+            <p class="mb-4 text-lg leading-relaxed">The MCP Client orchestrates the entire process. It communicates with the user, the Host, and the Server. We define it in <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">grid_ops_client.py</code>.</p>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">connect_to_server</code> method establishes a connection to the MCP server (in this case, via a subprocess stdio pipe) and retrieves the list of available tools.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>class GridOperationsClient:
+    # ... __init__ ...
+
+    async def connect_to_server(self, server_script_path: str):
+        # ... (function implementation)</code></pre>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">process_query</code> method handles the main logic:
+                <br>1. It gets the initial LLM response (with potential tool calls) from the Host.
+                <br>2. If there are tool calls, it executes them by calling the MCP server.
+                <br>3. It sends the tool results back to the Host to get the final answer.
+            </p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>    async def process_query(self, query: str) -> str:
+        # ... (function implementation)</code></pre>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed">The <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">run_loop</code> provides an interactive command-line interface for the user to enter queries.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>    async def run_loop(self):
+        # ... (function implementation)</code></pre>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">7: AI Suite Integration for Model Flexibility</h2>
+            <p class="mb-4 text-lg leading-relaxed">To easily switch between different LLM providers, we create an <code class="bg-gray-800 text-green-300 px-2 py-1 rounded">AISuiteManager</code>. This class abstracts away the differences in how providers handle tool formatting and API calls.</p>
+            
+            <p class="mt-4 mb-2 text-lg leading-relaxed"><code class="bg-gray-800 text-green-300 px-2 py-1 rounded">format_tools</code>: This crucial function checks the provider name (e.g., "openai", "anthropic", "google") and formats the tool definitions into the specific JSON structure that each provider's API expects.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>class AISuiteManager:
+    # ... (__init__, validate_model, optimize_prompt) ...
+
+    def format_tools(self, tools: List[Dict[str, Any]], model: str) -> List[Dict[str, Any]]:
+        # ... (function implementation)</code></pre>
+
+            <p class="mt-4 mb-2 text-lg leading-relaxed"><code class="bg-gray-800 text-green-300 px-2 py-1 rounded">chat_completion</code>: This is a universal method for calling any supported LLM. It uses the `format_tools` helper and passes the correctly structured arguments to the `aisuite` client.</p>
+            <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>    def chat_completion(self, model: str, messages: List[Dict[str, Any]],
+                        tools: Optional[List[Dict[str, Any]]] = None,
+                        temperature: float = 0.3) -> Any:
+        # ... (function implementation)</code></pre>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-3xl font-bold text-green-200 mb-4 border-b-2 border-green-700 pb-3">8. Securing MCP Applications: A Threat-Driven Approach</h2>
+            <p class="text-lg leading-relaxed mb-4">Connecting LLMs to real-world systems via MCP introduces powerful capabilities but also significant security risks. Because the LLM can autonomously decide to call tools that execute code and interact with data, a failure to secure the MCP implementation can lead to severe consequences, including data breaches, system compromise, and financial loss.</p>
+            <p class="text-lg leading-relaxed">This section provides a security-focused analysis of the MCP architecture. We will use Ken Huang’s <a href="https://cloudsecurityalliance.org/research/publications/maestro-for-generative-ai" target="_blank" class="text-green-400 hover:text-green-300 underline">MAESTRO (Multi-Agent Environment, Security, Threat, Risk, and Outcome) framework</a> to identify potential threats and then demonstrate how these threats manifest in poorly written code. Finally, we will provide a comprehensive guide to implementing security best practices.</p>
+
+            <h3 class="text-xl font-semibold text-green-300 mt-6 mb-4">8.1 Threat Modeling MCP with MAESTRO</h3>
+            <p class="text-lg leading-relaxed mb-4">The MAESTRO framework provides a layered approach to threat modeling that is well-suited for the complex, multi-component nature of an MCP system. We can map the MCP components (Server, Host, Client) to the MAESTRO layers to identify specific threats.</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-gray-900 border border-green-800 rounded-lg">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th class="p-3 text-left text-green-200">MAESTRO Layer</th>
+                            <th class="p-3 text-left text-green-200">MCP Component(s)</th>
+                            <th class="p-3 text-left text-green-200">Potential MCP-Specific Threats</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 7: Agent Ecosystem</td>
+                            <td class="p-3 align-top">Client, Host, LLM</td>
+                            <td class="p-3"><strong>Agent Tool Misuse & Goal Manipulation:</strong> An attacker uses prompt injection to trick the LLM into calling tools with malicious parameters. The LLM's goal is manipulated to cause harm.</td>
+                        </tr>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 6: Security & Compliance</td>
+                            <td class="p-3 align-top">All Components</td>
+                            <td class="p-3"><strong>Evasion of Security Controls:</strong> The LLM hallucinates or is tricked into generating arguments that bypass weak input validation on the MCP Server. <strong>Lack of Auditability:</strong> Poor logging makes it impossible to trace a malicious action back to a specific user query or LLM decision.</td>
+                        </tr>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 5: Evaluation & Observability</td>
+                            <td class="p-3 align-top">Host, Server</td>
+                            <td class="p-3"><strong>Poisoning Observability Data:</strong> An attacker injects false log entries by manipulating tool inputs, masking their malicious activity. <strong>Evasion of Detection:</strong> An attack is carried out through a series of seemingly benign tool calls that, when combined, are malicious.</td>
+                        </tr>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 4: Deployment & Infrastructure</td>
+                            <td class="p-3 align-top">Host, Server</td>
+                            <td class="p-3"><strong>Resource Hijacking:</strong> A vulnerable tool allows an attacker to run computationally expensive operations, leading to a Denial of Service (DoS). <strong>Information Disclosure:</strong> A tool leaks environment variables (os.environ), exposing API keys, database credentials, or other secrets.</td>
+                        </tr>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 3: Agent Frameworks</td>
+                            <td class="p-3 align-top">Server, Client</td>
+                            <td class="p-3"><strong>Supply Chain Attacks:</strong> A vulnerability in the mcp library or its dependencies (e.g., FastAPI, uvicorn) is exploited. <strong>Framework Evasion:</strong> An attacker crafts a malformed MCP message that the protocol parser handles incorrectly, leading to a crash or exploit.</td>
+                        </tr>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 2: Data Operations</td>
+                            <td class="p-3 align-top">MCP Server</td>
+                            <td class="p-3"><strong>Data Poisoning & Tampering (SQL Injection):</strong> A tool constructs SQL queries directly from user/LLM input without sanitization, allowing an attacker to modify or delete data. <strong>Data Exfiltration:</strong> A tool exposes sensitive data from a database or file system without proper authorization checks.</td>
+                        </tr>
+                        <tr class="border-t border-green-800">
+                            <td class="p-3 align-top">Layer 1: Foundation Models</td>
+                            <td class="p-3 align-top">LLM (via Host)</td>
+                            <td class="p-3"><strong>Adversarial Examples (Prompt Injection):</strong> The primary vector for initiating attacks. An attacker crafts a prompt that bypasses the LLM's safety alignment to trigger malicious tool calls. <strong>Model Stealing:</strong> An attacker could potentially use tools to infer information about the underlying model or its system prompt.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-xl font-semibold text-green-300 mt-6 mb-4">8.2 Insecure MCP Code Examples: What Not to Do</h3>
+            <p class="text-lg leading-relaxed mb-4">To demonstrate insecure MCP code, we have created a <a href="https://github.com/chen-ying-jung/MCP-threat-driven-implementation-guide/blob/main/insecure_mcp_server.py" target="_blank" class="text-green-400 hover:text-green-300 underline">sample project on GitHub</a>. The following code, taken from the project, demonstrates how several of the threats identified above can be introduced through insecure coding practices. For detailed analysis, please see <a href="https://deepwiki.csa.ai/maestro/case-studies/mcp-threat-driven-implementation-guide" target="_blank" class="text-green-400 hover:text-green-300 underline">DeepWiki’s link</a>.</p>
+
+            <div class="mb-6 p-4 border border-red-500 rounded-lg bg-red-900 bg-opacity-20">
+                <h4 class="text-lg font-bold text-red-300 mb-2">Vulnerability 1: SQL Injection in `insert_record`</h4>
+                <p class="text-red-200 mb-3">This tool directly embeds its string arguments into an SQL query using an f-string, making it trivially vulnerable to SQL Injection.</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code>@mcp.tool()
+def insert_record(name: str, address: str) -> str:
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    try:
+        # VULNERABILITY: Direct string formatting into a query
+        cursor.execute(f"INSERT INTO records (name, address) VALUES ('{name}', '{address}')")
+        conn.commit()
+        result = f"Record inserted: {name}, {address}"
+    except Exception as e:
+        result = f"SQL ERROR: {e}"
+    conn.close()
+    return result</code></pre>
+                <p class="mt-3 text-red-200"><strong>Problem:</strong> If an attacker provides a name like <code class="bg-gray-800 text-red-300 px-1 rounded">test'); DROP TABLE records;--</code>, the query becomes <code class="bg-gray-800 text-red-300 px-1 rounded">INSERT INTO records (name, address) VALUES ('test'); DROP TABLE records;--', 'some_address')</code>, which will delete the records table.</p>
+                <p class="mt-1 text-red-200"><strong>MAESTRO Threat:</strong> Maps directly to <strong>Layer 2 (Data Operations)</strong> threats like <strong>Data Poisoning</strong> and <strong>Data Tampering</strong>.</p>
+            </div>
+
+            <div class="mb-6 p-4 border border-red-500 rounded-lg bg-red-900 bg-opacity-20">
+                <h4 class="text-lg font-bold text-red-300 mb-2">Vulnerability 2: Arbitrary Code Execution in `execute_sql`</h4>
+                <p class="text-red-200 mb-3">This tool is dangerously over-privileged, allowing any client to execute any SQL command on the database.</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code># INSECURE: Allows arbitrary SQL execution
+@mcp.tool()
+def execute_sql(query: str) -> str:
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # VULNERABILITY: Executes any query provided by the client/LLM
+    result = cursor.execute(query).fetchall()
+    conn.commit()
+    conn.close()
+    return str(result)</code></pre>
+                <p class="mt-3 text-red-200"><strong>Problem:</strong> An attacker (or a tricked LLM) can call this tool to read sensitive data, modify schemas, or delete the entire database. There are no restrictions.</p>
+                <p class="mt-1 text-red-200"><strong>MAESTRO Threat:</strong> A critical example of <strong>Layer 7 (Agent Tool Misuse)</strong> and violates the principle of least privilege.</p>
+            </div>
+            
+            <div class="mb-6 p-4 border border-red-500 rounded-lg bg-red-900 bg-opacity-20">
+                <h4 class="text-lg font-bold text-red-300 mb-2">Vulnerability 3: Information Disclosure in `get_env_variable`</h4>
+                <p class="text-red-200 mb-3">This tool exposes environment variables from the server, which often contain highly sensitive secrets.</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code># INSECURE: Leaks sensitive environment variables
+@mcp.tool()
+def get_env_variable(var_name: str) -> str:
+    # VULNERABILITY: Reads and returns any environment variable
+    return os.environ.get(var_name, "Not found")</code></pre>
+                <p class="mt-3 text-red-200"><strong>Problem:</strong> An attacker can ask the LLM, "What is the OPENAI_API_KEY environment variable?" The LLM would call this tool, and the server would return the secret key.</p>
+                <p class="mt-1 text-red-200"><strong>MAESTRO Threat:</strong> A classic <strong>Layer 4 (Deployment & Infrastructure)</strong> threat of Information Disclosure.</p>
+            </div>
+
+            <div class="mb-6 p-4 border border-red-500 rounded-lg bg-red-900 bg-opacity-20">
+                <h4 class="text-lg font-bold text-red-300 mb-2">Vulnerability 4: Lack of Authorization in `query_records`</h4>
+                <p class="text-red-200 mb-3">This tool returns all records from the database without checking if the user making the request is authorized to see them.</p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto"><code># INSECURE: No authorization check
+@mcp.tool()
+def query_records() -> str:
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # VULNERABILITY: Returns all data to any caller
+    cursor.execute("SELECT * FROM records")
+    rows = cursor.fetchall()
+    conn.close()
+    return "\n".join([f"ID: {row[0]}, Name: {row[1]}, Address: {row[2]}" for row in rows])</code></pre>
+                <p class="mt-3 text-red-200"><strong>Problem:</strong> In a multi-user system, any user could ask the LLM to "list all records" and gain access to data they shouldn't see.</p>
+                <p class="mt-1 text-red-200"><strong>MAESTRO Threat:</strong> Maps to <strong>Layer 2 (Data Exfiltration)</strong> and <strong>Layer 6 (Compliance)</strong> failures.</p>
+            </div>
+
+            <h3 class="text-xl font-semibold text-green-300 mt-8 mb-4">8.3 MCP Security Practices Guide</h3>
+            <p class="text-lg leading-relaxed mb-4">To mitigate these threats, developers must adopt a defense-in-depth strategy, securing the Server, Host, and Client components.</p>
+            
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-lg font-bold text-green-200 mb-2">1. Secure the MCP Server: The First Line of Defense</h4>
+                    <p class="text-green-400 mb-3">The server is the most critical component to secure, as it directly executes code and accesses resources. The animation below demonstrates these key server-side defenses in action.</p>
+                    
+                    <!-- Server Security Animation -->
+                    <div id="server-security-animation" class="relative w-full max-w-4xl mx-auto aspect-[2/1] border-2 border-dashed border-green-800 rounded-lg p-4 mt-6 flex flex-col items-center justify-center">
+                        <div class="w-full flex justify-around items-center h-1/3">
+                            <div class="text-center">
+                                <span class="text-lg">Attacker Request</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--alert-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <div id="sec-gate-1" class="security-gate text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                <span class="text-xs">Parameterized Query</span>
+                            </div>
+                             <div id="sec-gate-2" class="security-gate text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <span class="text-xs">Least Privilege</span>
+                            </div>
+                             <div id="sec-gate-3" class="security-gate text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                <span class="text-xs">Input Validation</span>
+                            </div>
+                        </div>
+                        <div id="server-security-status" class="status-text w-full p-2 rounded-lg text-center text-md font-mono mt-4">
+                            Click "Animate Security" to begin.
+                        </div>
+                        <div class="w-full flex justify-around items-center h-1/3 mt-4">
+                            <pre id="vulnerable-code" class="bg-gray-900 text-xs text-gray-200 p-2 rounded-lg w-2/5"><code>cursor.execute(
+f"...VALUES ('{name}')")</code></pre>
+                            <pre id="secure-code" class="bg-gray-900 text-xs text-gray-200 p-2 rounded-lg w-2/5"><code>cursor.execute(
+"...VALUES (?)", (name,))</code></pre>
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-4 space-x-4">
+                        <button id="server-sec-start-btn" class="bg-green-700 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200">Animate Security</button>
+                    </div>
+
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-green-200 mb-2">2. Harden the MCP Host: The LLM Guardian</h4>
+                    <p class="text-green-400 mb-3">The host sits between the LLM and the client, acting as a critical control point. It must validate and control the LLM's requests before they are passed to the client.</p>
+                    
+                    <!-- Host Security Animation -->
+                    <div id="host-security-animation" class="relative w-full max-w-4xl mx-auto aspect-[2/1] border-2 border-dashed border-green-800 rounded-lg p-4 mt-6 flex flex-col items-center justify-center">
+                        <div class="w-full flex justify-around items-center">
+                            <div class="text-center">
+                                <span class="text-lg">LLM Request</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--matrix-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                            </div>
+                            <div id="host-gate-1" class="security-gate text-center p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                <span class="text-xs">Sanitize Output</span>
+                            </div>
+                             <div id="host-gate-2" class="security-gate text-center p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                <span class="text-xs">Tool Allowlist</span>
+                            </div>
+                             <div id="host-gate-3" class="security-gate text-center p-2">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                <span class="text-xs">Human-in-the-Loop</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-lg">To Client</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--matrix-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                            </div>
+                        </div>
+                        <div id="host-security-status" class="status-text w-full p-2 rounded-lg text-center text-md font-mono mt-4">
+                            Click "Animate" to see the Host's security checks.
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-4 space-x-4">
+                        <button id="host-sec-start-btn" class="bg-green-700 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200">Animate Host Security</button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-green-200 mb-2">3. Reinforce the MCP Client: The User's Shield</h4>
+                    <p class="text-green-400 mb-3">The client manages the user session and is the final checkpoint before an action is confirmed. It must protect the user and maintain a clear audit trail.</p>
+                    
+                    <!-- Client Security Animation -->
+                    <div id="client-security-animation" class="relative w-full max-w-4xl mx-auto aspect-[2/1] border-2 border-dashed border-green-800 rounded-lg p-4 mt-6 flex items-center justify-around">
+                        <div id="client-user" class="anim-element text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span>User</span>
+                            <div id="client-session" class="anim-element text-xs opacity-0">Session: <span class="text-yellow-400">XYZ123</span></div>
+                        </div>
+                        <div id="client-confirm" class="anim-element opacity-0 component-box p-4 rounded-lg text-center">
+                            <h4 class="text-red-400 font-bold">Confirm Action</h4>
+                            <p>Execute 'delete_records'?</p>
+                            <div class="mt-2">
+                                <button class="text-xs bg-red-700 px-2 py-1 rounded">Yes</button>
+                                <button class="text-xs bg-gray-700 px-2 py-1 rounded">No</button>
+                            </div>
+                        </div>
+                        <div id="client-log" class="anim-element opacity-0 text-center">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                            <span>Audit Log</span>
+                        </div>
+                    </div>
+                     <div class="w-full max-w-4xl mx-auto mt-4">
+                        <div id="client-security-status" class="status-text w-full p-2 rounded-lg text-center text-md font-mono">
+                            Click "Animate" to see the Client's security checks.
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-4 space-x-4">
+                        <button id="client-sec-start-btn" class="bg-green-700 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200">Animate Client Security</button>
+                    </div>
+
+                </div>
+                 <div>
+                    <h4 class="text-lg font-bold text-green-200 mb-2 mt-6">4. Preparing for the Quantum Era: Post-Quantum Cryptography</h4>
+                    <p class="text-green-400 mb-3">While the immediate threats to MCP applications are often based on logical exploits like injection, the long-term security of the underlying communication channels is also paramount. The advent of quantum computers poses a significant threat to our current cryptographic standards (like RSA and ECC), which protect data in transit.</p>
+                    <p class="text-lg leading-relaxed mb-4">The <a href="https://www.nist.gov/pqc" target="_blank" class="text-green-400 hover:text-green-300 underline">National Institute of Standards and Technology (NIST)</a> is leading the effort to standardize Post-Quantum Cryptography (PQC). These are new cryptographic algorithms believed to be secure against attacks from both classical and quantum computers. The leading candidates are based on <strong>lattice-based cryptography</strong>.</p>
+                    <p class="text-lg leading-relaxed mb-4">For developers of high-security systems, including critical infrastructure applications like our Grid Ops Assistant, this means planning for a crypto-agile future. While MCP itself doesn't dictate the encryption used, the underlying transport layers (like TLS) will need to be upgraded to use these new PQC standards. Keeping libraries and systems updated will be the primary way to ensure your MCP communications remain secure against future quantum threats.</p>
+                </div>
+            </div>
+            <p class="mt-8 text-lg">For more details on the secure code implementation, please visit <a href="https://github.com/chen-ying-jung/MCP-threat-driven-implementation-guide" target="_blank" class="text-green-400 hover:text-green-300 underline">this GitHub repository</a> by Dr. Ying-Jung Chen.</p>
+        </section>
+    </div>
+
+    <script>
+        // Animation Script for MCP Flow
+        const container = document.getElementById('animation-container');
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusEl = document.getElementById('status');
+        const components = {
+            client: document.getElementById('client'),
+            host: document.getElementById('host'),
+            server: document.getElementById('server')
+        };
+        let animationTimeout;
+
+        function getElementCenter(el, animContainer) {
+            const rect = el.getBoundingClientRect();
+            const containerRect = animContainer.getBoundingClientRect();
+            return {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top + rect.height / 2
+            };
+        }
+
+        function createParticle(fromEl, toEl, message, animContainer) {
+            const start = getElementCenter(fromEl, animContainer);
+            const end = getElementCenter(toEl, animContainer);
+
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            animContainer.appendChild(particle);
+            particle.style.transform = `translate(${start.x}px, ${start.y}px)`;
+
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+            messageBox.textContent = message;
+            animContainer.appendChild(messageBox);
+            messageBox.style.left = `${start.x + 15}px`;
+            messageBox.style.top = `${start.y - 15}px`;
+
+            setTimeout(() => {
+                particle.style.opacity = '1';
+                messageBox.style.opacity = '1';
+                particle.style.transform = `translate(${end.x}px, ${end.y}px)`;
+            }, 100);
+
+            setTimeout(() => {
+                particle.remove();
+                messageBox.remove();
+            }, 1900);
+        }
+        
+        function setActive(componentKey) {
+             Object.values(components).forEach(c => c.classList.remove('active'));
+            if (componentKey && components[componentKey]) {
+                components[componentKey].classList.add('active');
+            }
+        }
+
+        function setStatus(text) {
+            statusEl.textContent = text;
+        }
+
+        const animationSteps = [
+            { delay: 0, from: 'client', to: 'server', msg: "Initiate Connection", status: "1. Client initiates connection to Server." },
+            { delay: 2000, from: 'server', to: 'client', msg: "Capabilities [Tools]", status: "2. Server responds with its capabilities." },
+            { delay: 2000, from: 'client', to: 'host', msg: "Query + Tools Info", status: "3. Client sends query to Host (LLM)." },
+            { delay: 2000, from: null, to: 'host', msg: "", status: "4. LLM processes query and requests a tool." },
+            { delay: 2000, from: 'host', to: 'client', msg: "Request: 'analyze_load_pattern'", status: "4a. Host instructs Client to call a tool." },
+            { delay: 2000, from: 'client', to: 'server', msg: "Tool Call", status: "5. Client forwards the tool call to the Server." },
+            { delay: 2000, from: 'server', to: 'client', msg: "Tool Result [Data]", status: "6. Server executes tool and returns results." },
+            { delay: 2000, from: 'client', to: 'host', msg: "Tool Result [Data]", status: "7. Client provides tool results back to the LLM." },
+            { delay: 2000, from: 'host', to: 'client', msg: "Final Answer", status: "8. LLM generates final response." },
+            { delay: 2000, from: null, to: null, msg: "", status: "Flow Complete. Client displays answer to user." }
+        ];
+
+        function runAnimation() {
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            let cumulativeDelay = 0;
+
+            animationSteps.forEach((step) => {
+                animationTimeout = setTimeout(() => {
+                    setStatus(step.status);
+                    setActive(step.to || step.from);
+                    if (step.from && step.to) {
+                        createParticle(components[step.from], components[step.to], step.msg, container);
+                    }
+                }, cumulativeDelay);
+                cumulativeDelay += step.delay;
+            });
+             setTimeout(() => {
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }, cumulativeDelay);
+        }
+
+        function resetAnimation() {
+            clearTimeout(animationTimeout);
+            container.querySelectorAll('.particle, .message-box').forEach(el => el.remove());
+            setActive(null);
+            setStatus('Click "Start Animation" to begin.');
+            startBtn.disabled = false;
+            startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        startBtn.addEventListener('click', runAnimation);
+        resetBtn.addEventListener('click', resetAnimation);
+
+        // --- Grid Ops Animation Script ---
+        const gridStartBtn = document.getElementById('grid-start-btn');
+        const gridResetBtn = document.getElementById('grid-reset-btn');
+        const gridStatusEl = document.getElementById('grid-status');
+        const alertIndicator = document.getElementById('alert-substation');
+        const powerFlows = document.querySelectorAll('.power-flow');
+        let gridAnimationTimeout;
+
+        const gridSteps = [
+            { delay: 0, status: "Grid nominal. Assistant is monitoring power flow.", alert: false, flow: true },
+            { delay: 3000, status: "Assistant runs 'analyze_load_pattern' on City A & B.", alert: false, flow: true },
+            { delay: 3000, status: "High temperature detected. Running 'predict_outage_risk'.", alert: false, flow: true },
+            { delay: 2000, status: "RISK DETECTED: High probability of outage at Substation.", alert: true, flow: true },
+            { delay: 4000, status: "Simulation complete. Assistant has identified a potential issue.", alert: true, flow: false }
+        ];
+
+        function runGridAnimation() {
+            gridStartBtn.disabled = true;
+            gridStartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            let cumulativeDelay = 0;
+
+            gridSteps.forEach(step => {
+                gridAnimationTimeout = setTimeout(() => {
+                    gridStatusEl.textContent = step.status;
+                    alertIndicator.style.opacity = step.alert ? '1' : '0';
+                    powerFlows.forEach(p => p.style.opacity = step.flow ? '1' : '0');
+                }, cumulativeDelay);
+                cumulativeDelay += step.delay;
+            });
+             setTimeout(() => {
+                gridStartBtn.disabled = false;
+                gridStartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }, cumulativeDelay);
+        }
+
+        function resetGridAnimation() {
+            clearTimeout(gridAnimationTimeout);
+            alertIndicator.style.opacity = '0';
+            powerFlows.forEach(p => p.style.opacity = '0');
+            gridStatusEl.textContent = 'Click "Simulate" to run the Grid Ops Assistant.';
+            gridStartBtn.disabled = false;
+            gridStartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        gridStartBtn.addEventListener('click', runGridAnimation);
+        gridResetBtn.addEventListener('click', resetGridAnimation);
+
+        // --- Resource Animation Script ---
+        const resourceStartBtn = document.getElementById('resource-start-btn');
+        const resourceStatusEl = document.getElementById('resource-status');
+        const codeLines = [
+            document.getElementById('resource-code-1'),
+            document.getElementById('resource-code-2'),
+            document.getElementById('resource-code-3'),
+            document.getElementById('resource-code-4'),
+        ];
+        let resourceAnimationTimeout;
+
+        const resourceSteps = [
+            { delay: 0, status: "Client requests data from URI: 'grid://topology/northeast'", highlight: 0 },
+            { delay: 2500, status: "MCP server matches URI and finds the decorated function.", highlight: 1 },
+            { delay: 2500, status: "The server invokes the function, passing 'northeast' as the 'region' argument.", highlight: 2 },
+            { delay: 2500, status: "The function's return value is sent back to the client as JSON.", highlight: 3 },
+            { delay: 2500, status: "Process complete.", highlight: -1 }
+        ];
+
+        function runResourceAnimation() {
+            resourceStartBtn.disabled = true;
+            let cumulativeDelay = 0;
+            resourceSteps.forEach(step => {
+                resourceAnimationTimeout = setTimeout(() => {
+                    resourceStatusEl.textContent = step.status;
+                    codeLines.forEach((line, index) => {
+                        line.classList.toggle('active', index === step.highlight);
+                    });
+                }, cumulativeDelay);
+                cumulativeDelay += step.delay;
+            });
+             resourceAnimationTimeout = setTimeout(() => {
+                resourceStartBtn.disabled = false;
+            }, cumulativeDelay);
+        }
+        resourceStartBtn.addEventListener('click', runResourceAnimation);
+
+        // --- Server Security Animation ---
+        const serverSecStartBtn = document.getElementById('server-sec-start-btn');
+        const serverSecStatusEl = document.getElementById('server-security-status');
+        const gates = {
+            gate1: document.getElementById('sec-gate-1'),
+            gate2: document.getElementById('sec-gate-2'),
+            gate3: document.getElementById('sec-gate-3'),
+        };
+        const codeBlocks = {
+            vulnerable: document.getElementById('vulnerable-code'),
+            secure: document.getElementById('secure-code'),
+        }
+        let serverSecTimeout;
+
+        const serverSecSteps = [
+            { delay: 0, status: "Incoming request with SQL injection payload: '... OR 1=1; --'", activeGate: 'gate1', denied: false, highlight: 'vulnerable' },
+            { delay: 2500, status: "Vulnerable code executes payload. ACCESS GRANTED.", activeGate: 'gate1', denied: true, highlight: 'vulnerable' },
+            { delay: 2500, status: "Now, using a parameterized query...", activeGate: 'gate1', denied: false, highlight: 'secure' },
+            { delay: 2500, status: "Injection is treated as a string. ACCESS DENIED.", activeGate: 'gate1', denied: true, highlight: 'secure' },
+            { delay: 3000, status: "Incoming request to overly-powerful 'execute_sql' tool.", activeGate: 'gate2', denied: false, highlight: null },
+            { delay: 2500, status: "Least Privilege principle blocks generic tool. ACCESS DENIED.", activeGate: 'gate2', denied: true, highlight: null },
+            { delay: 3000, status: "Incoming request with invalid input: 'user_id: -1'", activeGate: 'gate3', denied: false, highlight: null },
+            { delay: 2500, status: "Input validation gate checks data type and range. ACCESS DENIED.", activeGate: 'gate3', denied: true, highlight: null },
+            { delay: 2500, status: "All defenses passed. A secure system is robust.", activeGate: null, denied: false, highlight: null },
+        ];
+        
+        function runServerSecAnimation() {
+            serverSecStartBtn.disabled = true;
+            let cumulativeDelay = 0;
+
+            serverSecSteps.forEach(step => {
+                serverSecTimeout = setTimeout(() => {
+                    serverSecStatusEl.textContent = step.status;
+                    Object.values(gates).forEach(g => g.classList.remove('active', 'denied'));
+                    if(step.activeGate) {
+                        gates[step.activeGate].classList.add('active');
+                        if(step.denied) {
+                           gates[step.activeGate].classList.add('denied');
+                        }
+                    }
+                    Object.values(codeBlocks).forEach(c => c.classList.remove('active'));
+                    if(step.highlight) {
+                        codeBlocks[step.highlight].classList.add('active');
+                    }
+
+                }, cumulativeDelay);
+                cumulativeDelay += step.delay;
+            });
+            serverSecTimeout = setTimeout(() => {
+                serverSecStartBtn.disabled = false;
+                Object.values(gates).forEach(g => g.classList.remove('active', 'denied'));
+                Object.values(codeBlocks).forEach(c => c.classList.remove('active'));
+            }, cumulativeDelay);
+        }
+        serverSecStartBtn.addEventListener('click', runServerSecAnimation);
+
+        // --- Host Security Animation ---
+        const hostSecStartBtn = document.getElementById('host-sec-start-btn');
+        const hostSecStatusEl = document.getElementById('host-security-status');
+        const hostGates = {
+            gate1: document.getElementById('host-gate-1'),
+            gate2: document.getElementById('host-gate-2'),
+            gate3: document.getElementById('host-gate-3'),
+        };
+        let hostSecTimeout;
+        const hostSecSteps = [
+            { delay: 0, status: "LLM requests to call 'delete_database' tool.", activeGate: 'gate1', denied: false },
+            { delay: 2500, status: "Sanitizer checks for dangerous operations. No issues.", activeGate: 'gate1', denied: false },
+            { delay: 2500, status: "Tool Allowlist gate checks if 'delete_database' is permitted.", activeGate: 'gate2', denied: false },
+            { delay: 2500, status: "Tool is not on the allowlist. ACCESS DENIED.", activeGate: 'gate2', denied: true },
+            { delay: 3000, status: "New LLM request: 'delete_records' (a permitted but sensitive tool).", activeGate: 'gate2', denied: false },
+            { delay: 2500, status: "Tool is on allowlist. It proceeds to the next gate.", activeGate: 'gate3', denied: false },
+            { delay: 2500, status: "Human-in-the-Loop gate flags the sensitive operation.", activeGate: 'gate3', denied: false },
+            { delay: 2500, status: "Action is paused. A confirmation request is sent to the user.", activeGate: 'gate3', denied: false },
+        ];
+
+        function runHostSecAnimation() {
+            hostSecStartBtn.disabled = true;
+            let cumulativeDelay = 0;
+            hostSecSteps.forEach(step => {
+                hostSecTimeout = setTimeout(() => {
+                    hostSecStatusEl.textContent = step.status;
+                    Object.values(hostGates).forEach(g => g.classList.remove('active', 'denied'));
+                     if(step.activeGate) {
+                        hostGates[step.activeGate].classList.add('active');
+                        if(step.denied) {
+                           hostGates[step.activeGate].classList.add('denied');
+                        }
+                    }
+                }, cumulativeDelay);
+                cumulativeDelay += step.delay;
+            });
+            hostSecTimeout = setTimeout(() => {
+                hostSecStartBtn.disabled = false;
+                Object.values(hostGates).forEach(g => g.classList.remove('active', 'denied'));
+            }, cumulativeDelay);
+        }
+        hostSecStartBtn.addEventListener('click', runHostSecAnimation);
+
+        // --- Client Security Animation ---
+        const clientSecStartBtn = document.getElementById('client-sec-start-btn');
+        const clientSecStatusEl = document.getElementById('client-security-status');
+        const clientElements = {
+            user: document.getElementById('client-user'),
+            session: document.getElementById('client-session'),
+            confirm: document.getElementById('client-confirm'),
+            log: document.getElementById('client-log'),
+        };
+        let clientSecTimeout;
+
+        const clientSecSteps = [
+            { delay: 0, status: "User logs in, client establishes a secure session.", elements: ['user', 'session'] },
+            { delay: 2500, status: "Host requests a sensitive action ('delete_records').", elements: ['user', 'session'] },
+            { delay: 2500, status: "Client enforces final confirmation, presenting a dialog to the user.", elements: ['user', 'session', 'confirm'] },
+            { delay: 3000, status: "User confirms. The action proceeds.", elements: ['user', 'session'] },
+            { delay: 2000, status: "Client creates a comprehensive log of the entire event for auditing.", elements: ['user', 'session', 'log'] },
+            { delay: 2500, status: "The client has protected the user and maintained a record.", elements: ['user', 'session', 'log'] }
+        ];
+
+        function runClientSecAnimation() {
+            clientSecStartBtn.disabled = true;
+            resetClientSecAnimation(); // Reset first
+            let cumulativeDelay = 0;
+            clientSecSteps.forEach(step => {
+                clientSecTimeout = setTimeout(() => {
+                    clientSecStatusEl.textContent = step.status;
+                    Object.keys(clientElements).forEach(k => {
+                        clientElements[k].style.opacity = step.elements.includes(k) ? '1' : '0';
+                        clientElements[k].style.transform = step.elements.includes(k) ? 'scale(1)' : 'scale(0.9)';
+                    });
+                }, cumulativeDelay);
+                cumulativeDelay += step.delay;
+            });
+            clientSecTimeout = setTimeout(() => {
+                clientSecStartBtn.disabled = false;
+            }, cumulativeDelay);
+        }
+
+        function resetClientSecAnimation() {
+             clearTimeout(clientSecTimeout);
+             Object.values(clientElements).forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'scale(0.9)';
+             });
+             clientElements.user.style.opacity = '1';
+             clientElements.user.style.transform = 'scale(1)';
+             clientSecStatusEl.textContent = "Click \"Animate\" to see the Client's security checks.";
+        }
+        clientSecStartBtn.addEventListener('click', runClientSecAnimation);
+
+    </script>
+</body>
+</html>

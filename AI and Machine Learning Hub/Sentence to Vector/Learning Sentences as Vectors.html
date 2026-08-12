@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Learning General Purpose Sentence Representations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for animations and interactivity */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .task-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 255, 0, 0.1), 0 4px 6px -2px rgba(0, 255, 0, 0.05);
+        }
+        .flow-line {
+            position: relative;
+            height: 2px;
+            background-color: #4ade80; /* green-400 */
+            width: 0;
+            transition: width 1.5s ease-in-out;
+        }
+        .flow-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #86efac; /* green-300 */
+            border-radius: 9999px;
+            opacity: 0;
+            animation: pulse 2s infinite, move-dot 4s linear infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(134, 239, 172, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(134, 239, 172, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(134, 239, 172, 0); }
+        }
+        @keyframes move-dot {
+            0% { left: 0; opacity: 1; }
+            95% { left: calc(100% - 12px); opacity: 1; }
+            100% { left: calc(100% - 12px); opacity: 0; }
+        }
+        .bar {
+            transition: width 1s ease-out;
+        }
+        
+        /* Styles for the step-by-step decoder animations */
+        .decoder-step {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: none; /* Hidden by default */
+        }
+        .decoder-step.active {
+            opacity: 1;
+            display: block;
+        }
+        .vocab-bar {
+            background-color: #22c55e; /* green-500 */
+            transition: width 0.5s ease;
+        }
+        .output-word {
+             opacity: 0;
+             transform: translateY(10px);
+             transition: opacity 0.5s, transform 0.5s;
+             display: inline-block;
+        }
+        .output-word.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .vector-box {
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.5s ease-in-out;
+        }
+        .vector-box.visible {
+             opacity: 1;
+             transform: scale(1);
+        }
+
+        /* Styles for Section 6 animations */
+        .explainer-anim {
+            opacity: 0;
+            transition: opacity 0.5s;
+            min-height: 200px;
+        }
+        .explainer-anim.visible {
+            opacity: 1;
+        }
+        .anim-element {
+            transition: all 0.8s ease-in-out;
+        }
+        .anim-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8">
+
+    <header class="text-center mb-12">
+        <h1 class="text-3xl md:text-5xl font-bold text-green-200 mb-4">Tutorial: General Purpose Sentence Representations</h1>
+        <p class="text-lg text-green-400">An Interactive Walkthrough of Large-Scale Multi-Task Learning</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto">
+
+        <!-- Introduction Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. The Goal: A Universal Translator for Sentences</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                In Natural Language Processing (NLP), we've gotten very good at turning single words into meaningful number vectors (think <code class="bg-gray-900 text-green-300 px-2 py-1 rounded">Word2Vec</code> or <code class="bg-gray-900 text-green-300 px-2 py-1 rounded">GloVe</code>). But how do we represent the meaning of an entire sentence? This is a much harder problem.
+            </p>
+            <p class="text-lg leading-relaxed">
+                This paper introduces <strong class="text-green-300">GenSen</strong> (General-purpose Sentence Representations), a technique to learn a single, fixed-length vector for any sentence that captures its rich semantic meaning. The core idea is that instead of training on one specific task, we can learn a more robust representation by training on <strong class="text-green-300">many different tasks at once</strong>.
+            </p>
+        </section>
+
+        <!-- The "How": Multi-Task Learning Animation -->
+        <section class="mb-16">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. The Framework: One Encoder, Many Tasks</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                The magic happens in a "one-to-many" multi-task learning (MTL) framework. A single, shared sentence <strong class="text-green-300">Encoder</strong> reads the input sentence. The resulting vector representation is then fed to multiple, task-specific <strong class="text-green-300">Decoders</strong>. By forcing the encoder to produce a representation useful for wildly different tasks, it learns a general, high-quality summary of the sentence's meaning.
+            </p>
+            
+            <!-- Interactive Animation Container -->
+            <div id="mtl-animation" class="bg-gray-900 border border-green-800 rounded-lg p-6">
+                <!-- High-level overview -->
+                <div id="overview-animation">
+                    <div class="flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 md:space-x-4">
+                        <div class="text-center">
+                            <p class="text-green-200 mb-2 font-semibold">Input Sentence</p>
+                            <div class="bg-black p-3 rounded-md border border-green-700">
+                                <p>"The cat sat on the mat."</p>
+                            </div>
+                        </div>
+                        <div class="flex-grow flex items-center w-full md:w-auto">
+                             <div class="w-full relative">
+                                <div class="flow-line w-full"></div>
+                                <div class="flow-dot"></div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-green-200 mb-2 font-semibold">Shared Encoder</p>
+                            <div id="encoder-box" class="bg-green-900 p-4 rounded-lg border-2 border-green-400 shadow-lg transition-all duration-300">
+                                <p class="text-green-100 font-mono">[0.1, -0.4, 0.9, ...]</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative flex justify-center mt-4">
+                        <svg class="absolute w-full h-24" preserveAspectRatio="none">
+                            <path id="line-nli-overview" d="M 50% 0 V 30 H 10% V 60" stroke="#4ade80" fill="none" stroke-width="2" stroke-dasharray="5,5" class="transition-all duration-1000" style="stroke-dashoffset: 300;"></path>
+                            <path id="line-nmt-overview" d="M 50% 0 V 40 H 35% V 80" stroke="#4ade80" fill="none" stroke-width="2" stroke-dasharray="5,5" class="transition-all duration-1000" style="stroke-dashoffset: 300;"></path>
+                            <path id="line-skip-overview" d="M 50% 0 V 40 H 65% V 80" stroke="#4ade80" fill="none" stroke-width="2" stroke-dasharray="5,5" class="transition-all duration-1000" style="stroke-dashoffset: 300;"></path>
+                            <path id="line-parse-overview" d="M 50% 0 V 30 H 90% V 60" stroke="#4ade80" fill="none" stroke-width="2" stroke-dasharray="5,5" class="transition-all duration-1000" style="stroke-dashoffset: 300;"></path>
+                        </svg>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-24">
+                        <div class="text-center bg-black p-3 rounded-md border border-green-900"><p class="font-semibold text-green-300">NLI Decoder</p></div>
+                        <div class="text-center bg-black p-3 rounded-md border border-green-900"><p class="font-semibold text-green-300">NMT Decoder</p></div>
+                        <div class="text-center bg-black p-3 rounded-md border border-green-900"><p class="font-semibold text-green-300">Skip-Thought</p></div>
+                        <div class="text-center bg-black p-3 rounded-md border border-green-900"><p class="font-semibold text-green-300">Parsing Decoder</p></div>
+                    </div>
+                    <div class="text-center mt-8">
+                        <p class="text-green-300 mb-4">See how each decoder works step-by-step:</p>
+                        <div class="flex flex-wrap justify-center gap-4">
+                           <button class="decoder-btn bg-green-600 text-black font-bold py-2 px-4 rounded-lg hover:bg-green-500 transition-colors" data-decoder="nli">NLI</button>
+                           <button class="decoder-btn bg-green-600 text-black font-bold py-2 px-4 rounded-lg hover:bg-green-500 transition-colors" data-decoder="nmt">NMT</button>
+                           <button class="decoder-btn bg-green-600 text-black font-bold py-2 px-4 rounded-lg hover:bg-green-500 transition-colors" data-decoder="skip">Skip-Thought</button>
+                           <button class="decoder-btn bg-green-600 text-black font-bold py-2 px-4 rounded-lg hover:bg-green-500 transition-colors" data-decoder="parse">Parsing</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step-by-step decoder details view -->
+                <div id="decoder-details-view" class="hidden">
+                    <!-- NMT Decoder Animation -->
+                    <div id="decoder-view-nmt" class="decoder-view-content">
+                        <h3 class="text-xl font-bold text-green-200 mb-4 text-center">NMT Decoder: Generating a Translation</h3>
+                        <div class="space-y-4">
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p><strong class="text-green-300">Step 1:</strong> The sentence vector is fed into the NMT decoder to initialize its state.</p></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 2:</strong> The decoder calculates probabilities for every word in its vocabulary. The word with the highest score is chosen.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "Die"</div></div></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 3:</strong> The decoder updates its state using "Die" and predicts the next word.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "Katze"</div></div></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 4:</strong> The process repeats. The context of "Die Katze" helps predict "saß".</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "saß"</div></div></div>
+                        </div>
+                        <div class="mt-6 p-4 bg-black rounded-lg border-2 border-green-500"><h4 class="text-lg font-semibold text-green-200 text-center">Generated Sentence:</h4><p class="generated-sentence text-center text-2xl font-mono text-white mt-2 h-8"></p></div>
+                    </div>
+                    
+                    <!-- NLI Decoder Animation -->
+                    <div id="decoder-view-nli" class="decoder-view-content hidden">
+                         <h3 class="text-xl font-bold text-green-200 mb-4 text-center">NLI Decoder: Classifying Entailment</h3>
+                         <div class="space-y-4">
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p><strong class="text-green-300">Step 1:</strong> Encode two sentences (premise and hypothesis) using the same shared encoder to get two vectors, <strong class="text-green-400">u</strong> and <strong class="text-green-400">v</strong>.</p>
+                                <div class="flex justify-around mt-4">
+                                    <div class="text-center"><p>Premise: "A man plays guitar."</p><div id="nli-u" class="vector-box font-mono text-sm bg-green-900 p-2 mt-2 rounded">u = [0.2, 0.8,...]</div></div>
+                                    <div class="text-center"><p>Hypothesis: "A man makes music."</p><div id="nli-v" class="vector-box font-mono text-sm bg-green-900 p-2 mt-2 rounded">v = [0.3, 0.7,...]</div></div>
+                                </div>
+                            </div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p><strong class="text-green-300">Step 2:</strong> Combine these vectors. The paper uses a specific formula: concatenation of the vectors, their absolute difference, and their element-wise product.</p>
+                                <div id="nli-combined" class="vector-box text-center font-mono text-sm bg-green-900 p-2 mt-2 rounded">[u, v, |u-v|, u*v]</div>
+                            </div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p><strong class="text-green-300">Step 3:</strong> Feed the combined vector into a simple classifier (MLP) which outputs probabilities for each class.</p>
+                                <div class="flex items-center space-x-4 mt-4"><div class="vocab-chart w-2/3 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> Entailment</div></div>
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Skip-Thought Decoder Animation -->
+                    <div id="decoder-view-skip" class="decoder-view-content hidden">
+                        <h3 class="text-xl font-bold text-green-200 mb-4 text-center">Skip-Thought Decoder: Predicting the Next Sentence</h3>
+                        <div class="space-y-4">
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p><strong class="text-green-300">Step 1:</strong> The vector for "The cat sat on the mat." is fed into the Skip-Thought decoder.</p></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 2:</strong> The decoder generates the most likely first word for the *next* sentence.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "It"</div></div></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 3:</strong> Using "It" as context, it predicts the next word.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "was"</div></div></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 4:</strong> The process continues, generating a plausible follow-up sentence.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "very"</div></div></div>
+                        </div>
+                        <div class="mt-6 p-4 bg-black rounded-lg border-2 border-green-500"><h4 class="text-lg font-semibold text-green-200 text-center">Generated Next Sentence:</h4><p class="generated-sentence text-center text-2xl font-mono text-white mt-2 h-8"></p></div>
+                    </div>
+
+                    <!-- Parsing Decoder Animation -->
+                    <div id="decoder-view-parse" class="decoder-view-content hidden">
+                        <h3 class="text-xl font-bold text-green-200 mb-4 text-center">Parsing Decoder: Generating a Parse Tree</h3>
+                        <div class="space-y-4">
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p><strong class="text-green-300">Step 1:</strong> The sentence vector is fed into the Parsing decoder.</p></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 2:</strong> The decoder generates the first token of the linearized parse tree.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "(S"</div></div></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 3:</strong> Using "(S" as context, it predicts the next token.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "(NP"</div></div></div>
+                            <div class="decoder-step p-4 bg-black rounded-lg border border-green-800"><p class="mb-4"><strong class="text-green-300">Step 4:</strong> The process continues, building the entire tree structure token by token.</p><div class="flex items-center space-x-4"><div class="vocab-chart w-1/2 space-y-1"></div><div class="text-2xl text-green-100 font-mono">-> "The"</div></div></div>
+                        </div>
+                        <div class="mt-6 p-4 bg-black rounded-lg border-2 border-green-500"><h4 class="text-lg font-semibold text-green-200 text-center">Generated Parse Tree:</h4><p class="generated-sentence text-center text-2xl font-mono text-white mt-2 h-8"></p></div>
+                    </div>
+
+                     <div class="text-center mt-8">
+                        <button id="replay-decoder-btn" class="bg-green-800 text-green-200 font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Replay</button>
+                        <button id="back-to-overview-btn" class="ml-4 bg-gray-700 text-gray-200 font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition-colors">Back to Overview</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Training Tasks -->
+        <section class="mb-12">
+             <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. The Training Regimen: A Diverse Workout</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                The model was trained on over 100 million sentences across four types of tasks. Click on each card to learn more.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="task-card bg-gray-900 p-6 rounded-lg border border-green-800 cursor-pointer" onclick="showDetails('details-nli')"><h3 class="text-xl font-bold text-green-200 mb-2">Natural Language Inference (NLI)</h3><p>Does sentence A imply, contradict, or is neutral to sentence B? This teaches the model about logic and reasoning.</p><div id="details-nli" class="hidden mt-4 text-green-400 border-t border-green-700 pt-4"><p><strong class="text-green-300">Example:</strong> Given premise "A man is playing a guitar" and hypothesis "A man is making music", the model should classify this as <strong class="text-green-300">entailment</strong>.</p></div></div>
+                <div class="task-card bg-gray-900 p-6 rounded-lg border border-green-800 cursor-pointer" onclick="showDetails('details-nmt')"><h3 class="text-xl font-bold text-green-200 mb-2">Neural Machine Translation (NMT)</h3><p>Translating a sentence from English to other languages (like French and German). This forces the model to understand meaning independent of a single language's structure.</p><div id="details-nmt" class="hidden mt-4 text-green-400 border-t border-green-700 pt-4"><p><strong class="text-green-300">Example:</strong> Translating "Hello, world" to "Bonjour le monde". The encoder must capture the core concept to allow the decoder to generate it in French.</p></div></div>
+                <div class="task-card bg-gray-900 p-6 rounded-lg border border-green-800 cursor-pointer" onclick="showDetails('details-skip')"><h3 class="text-xl font-bold text-green-200 mb-2">Skip-Thought Vectors</h3><p>Given a sentence, predict the sentences that came before and after it. This helps the model learn about discourse and narrative flow.</p><div id="details-skip" class="hidden mt-4 text-green-400 border-t border-green-700 pt-4"><p><strong class="text-green-300">Example:</strong> Given "The hero drew his sword.", the model might predict the next sentence is "He charged towards the dragon."</p></div></div>
+                <div class="task-card bg-gray-900 p-6 rounded-lg border border-green-800 cursor-pointer" onclick="showDetails('details-parse')"><h3 class="text-xl font-bold text-green-200 mb-2">Constituency Parsing</h3><p>Generating a grammatical parse tree for a sentence. This teaches the model about syntax and sentence structure.</p><div id="details-parse" class="hidden mt-4 text-green-400 border-t border-green-700 pt-4"><p><strong class="text-green-300">Example:</strong> For "The cat sat", the model outputs its tree structure: <code class="bg-black text-xs">(S (NP (DT The) (NN cat)) (VP (VBD sat)))</code>.</p></div></div>
+            </div>
+        </section>
+        
+        <!-- Results Section -->
+        <section class="mb-16">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. The Payoff: State-of-the-Art Performance</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                The key test for a "general-purpose" representation is how well it performs on <strong class="text-green-300">new tasks</strong> it has never seen before (called "transfer tasks"). The learned GenSen vectors were used as features to train simple linear classifiers, and they consistently outperformed previous methods.
+            </p>
+            <div class="bg-gray-900 border border-green-800 rounded-lg p-6">
+                <h3 class="text-xl font-bold text-green-200 mb-4 text-center">Performance on Transfer Tasks (Accuracy %)</h3>
+                <div id="results-chart" class="space-y-4"></div>
+                 <p class="text-center mt-4 text-sm text-green-600">Comparison of GenSen (our model) vs. Infersent (a strong previous model).</p>
+            </div>
+        </section>
+
+        <!-- Interactive Demo Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Interactive Demo: Feel the Semantics</h2>
+            <p class="text-lg leading-relaxed mb-6">
+                Enter two sentences below to see a simplified simulation of how their vector representations might be compared. A higher "cosine similarity" score (closer to 1) means the sentences are semantically more similar.
+            </p>
+            <div class="bg-gray-900 border border-green-800 rounded-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label for="sentence1" class="block mb-2 font-semibold text-green-300">Sentence 1</label><textarea id="sentence1" rows="3" class="w-full bg-black border border-green-700 rounded-md p-2 text-green-400 focus:ring-2 focus:ring-green-400 focus:outline-none" placeholder="e.g., A man is eating food."></textarea></div>
+                    <div><label for="sentence2" class="block mb-2 font-semibold text-green-300">Sentence 2</label><textarea id="sentence2" rows="3" class="w-full bg-black border border-green-700 rounded-md p-2 text-green-400 focus:ring-2 focus:ring-green-400 focus:outline-none" placeholder="e.g., The guy is enjoying a meal."></textarea></div>
+                </div>
+                <div class="text-center mt-6"><button id="compare-btn" class="bg-green-600 text-black font-bold py-2 px-6 rounded-lg hover:bg-green-500 transition-colors">Calculate Similarity</button></div>
+                <div id="similarity-result" class="mt-6 text-center hidden"><h4 class="text-xl font-semibold text-green-200">Similarity Score:</h4><p id="score" class="text-4xl font-mono font-bold text-green-100 mt-2"></p><p id="feedback" class="text-lg text-green-400 mt-2"></p></div>
+            </div>
+        </section>
+
+        <!-- Section 6: Technical Details -->
+        <section id="section-6-container" class="mb-12">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6. The Nitty-Gritty: Sequence-to-Sequence Learning</h2>
+            <div class="text-lg leading-relaxed space-y-4">
+                <p>
+                    The core of this multi-task framework relies on <strong class="text-green-300">sequence-to-sequence (seq2seq)</strong> models. These are a class of Encoder-Decoder models where both the input and output are sequences (like sentences). They directly model the probability of an output sequence <code class="bg-gray-900 text-green-300 px-1 rounded">y</code> given an input sequence <code class="bg-gray-900 text-green-300 px-1 rounded">x</code>, or <code class="bg-gray-900 text-green-300 px-1 rounded">P(y|x)</code>.
+                </p>
+                
+                <div id="anim-1-seq2seq" class="explainer-anim bg-gray-900 border border-green-800 rounded-lg p-6 my-6 relative flex items-center justify-around">
+                    <!-- Animation for Seq2Seq -->
+                    <div id="anim-1-input" class="anim-element text-center opacity-0">
+                        <p class="text-green-200">Input: "Hello world"</p>
+                        <div class="mt-2 p-2 bg-black rounded-md">x<sub>1</sub>, x<sub>2</sub></div>
+                    </div>
+                    <div id="anim-1-encoder" class="anim-element text-center opacity-0">
+                        <p class="text-green-200">Encoder</p>
+                        <div class="mt-2 p-4 bg-green-900 rounded-lg">RNN</div>
+                    </div>
+                    <div id="anim-1-vector" class="anim-element text-center opacity-0">
+                        <p class="text-green-200">Vector</p>
+                        <div class="mt-2 p-2 bg-green-400 text-black rounded-md">h<sub>x</sub></div>
+                    </div>
+                    <div id="anim-1-decoder" class="anim-element text-center opacity-0">
+                        <p class="text-green-200">Decoder</p>
+                        <div class="mt-2 p-4 bg-green-900 rounded-lg">RNN</div>
+                    </div>
+                    <div id="anim-1-output" class="anim-element text-center opacity-0">
+                        <p class="text-green-200">Output: "Bonjour monde"</p>
+                        <div class="mt-2 p-2 bg-black rounded-md">y<sub>1</sub>, y<sub>2</sub></div>
+                    </div>
+                </div>
+
+                <p>
+                    The encoder reads the input sentence and compresses it into a single fixed-length vector, which we'll call <code class="bg-gray-900 text-green-300 px-1 rounded">h<sub>x</sub></code>. The decoder then takes this vector and generates the output sequence one element at a time. This generation process is <strong class="text-green-300">auto-regressive</strong>, meaning each new word it generates depends on the original vector <code class="bg-gray-900 text-green-300 px-1 rounded">h<sub>x</sub></code> and all the words it has generated so far. This is expressed with the chain rule:
+                </p>
+                <div class="text-center bg-gray-900 p-4 rounded-lg my-4">
+                    <p class="font-mono text-green-200 text-xl">P(y|x) = &prod; P(y<sub>i</sub> | y<sub>&lt;i</sub>, h<sub>x</sub>)</p>
+                </div>
+
+                <div id="anim-2-autoregressive" class="explainer-anim bg-gray-900 border border-green-800 rounded-lg p-6 my-6 relative h-64">
+                    <svg class="absolute w-full h-full" id="autoregressive-lines"></svg>
+                    <div id="anim-2-hx" class="anim-element absolute p-2 rounded bg-green-400 text-black" style="top: 45%; left: 5%;">h<sub>x</sub></div>
+                    <div id="anim-2-decoder-cell" class="anim-element absolute p-4 rounded-lg bg-green-900" style="top: 40%; left: 45%;">Decoder</div>
+                    <div id="anim-2-y1" class="anim-element absolute p-2 rounded bg-black" style="top: 45%; left: 75%; opacity: 0; transition: all 1s ease-in-out;">y<sub>1</sub>="Bonjour"</div>
+                    <div id="anim-2-y2" class="anim-element absolute p-2 rounded bg-black" style="top: 45%; left: 75%; opacity: 0; transition: opacity 1s ease-in-out;">y<sub>2</sub>="monde"</div>
+                </div>
+
+                <p>
+                    While some models use an "attention mechanism" that lets the decoder look back at all hidden states of the encoder, this paper <strong class="text-green-300">intentionally avoids attention</strong>. This forces the entire meaning of the sentence to be compressed into that single vector <code class="bg-gray-900 text-green-300 px-1 rounded">h<sub>x</sub></code>, which is exactly what we want for a general-purpose representation. A general-purpose representation is one that is not tied to a specific task, but can be used as a useful starting point for many different downstream applications.
+                </p>
+
+                <div id="anim-3-attention" class="explainer-anim bg-gray-900 border border-green-800 rounded-lg p-6 my-6 relative h-56">
+                    <!-- Animation for Attention vs No Attention -->
+                    <div class="w-1/2 absolute left-0 top-0 p-4">
+                        <h4 class="text-center text-green-200 font-bold">With Attention</h4>
+                        <div id="anim-3-enc-words" class="flex justify-around mt-4">
+                            <div class="p-1 bg-black rounded">x<sub>1</sub></div><div class="p-1 bg-black rounded">x<sub>2</sub></div><div class="p-1 bg-black rounded">x<sub>3</sub></div>
+                        </div>
+                        <div id="anim-3-dec" class="p-4 bg-green-900 rounded-lg mt-12 text-center">Decoder</div>
+                        <div id="anim-3-attn-lines" class="absolute top-16 w-full h-12"></div>
+                    </div>
+                    <div class="w-1/2 absolute right-0 top-0 p-4">
+                        <h4 class="text-center text-green-200 font-bold">Without Attention (This Paper)</h4>
+                        <div class="p-2 bg-green-400 text-black rounded-md mt-4 text-center" style="margin-left: 35%;">h<sub>x</sub></div>
+                        <div class="p-4 bg-green-900 rounded-lg mt-12 text-center">Decoder</div>
+                        <div id="anim-3-no-attn-line" class="absolute top-16 w-full h-12"></div>
+                    </div>
+                </div>
+
+                <p>
+                    The model uses <strong class="text-green-300">Gated Recurrent Units (GRUs)</strong> for both the encoder and decoders. To ensure the decoder doesn't "forget" the input sentence, the vector <code class="bg-gray-900 text-green-300 px-1 rounded">h<sub>x</sub></code> is fed into the decoder at every single time step. The equations for the conditional GRU used in the decoder look like this:
+                </p>
+                <pre class="bg-black border border-green-800 text-gray-200 p-4 rounded-lg overflow-x-auto font-mono text-base"><code><span>r<sub>t</sub> = &sigma;(W<sub>r</sub>x<sub>t</sub> + U<sub>r</sub>h<sub>t-1</sub> + C<sub>r</sub>h<sub>x</sub>)</span>
+<span>z<sub>t</sub> = &sigma;(W<sub>z</sub>x<sub>t</sub> + U<sub>z</sub>h<sub>t-1</sub> + C<sub>z</sub>h<sub>x</sub>)</span>
+<span>h&#771;<sub>t</sub> = tanh(W<sub>d</sub>x<sub>t</sub> + U<sub>d</sub>(r<sub>t</sub> &odot; h<sub>t-1</sub>) + C<sub>d</sub>h<sub>x</sub>)</span>
+<span>h<sub>t+1</sub> = (1 - z<sub>t</sub>) &odot; h<sub>t-1</sub> + z<sub>t</sub> &odot; h&#771;<sub>t</sub></span></code></pre>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="text-center mt-16 text-green-700 text-sm">
+        <p>Interactive tutorial created by Gemini. Based on the paper "Learning General Purpose Distributed Sentence Representations via Large Scale Multi-task Learning" by Subramanian et al. (ICLR 2018).</p>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- Task Card Interactivity ---
+    window.showDetails = function(id) {
+        const detailEl = document.getElementById(id);
+        detailEl.classList.toggle('hidden');
+    };
+
+    // --- MTL Animation Trigger ---
+    const mtlAnimation = document.getElementById('mtl-animation');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                document.getElementById('line-nli-overview').style.strokeDashoffset = 0;
+                document.getElementById('line-nmt-overview').style.strokeDashoffset = 0;
+                document.getElementById('line-skip-overview').style.strokeDashoffset = 0;
+                document.getElementById('line-parse-overview').style.strokeDashoffset = 0;
+                document.querySelector('#overview-animation .flow-line').style.width = '100%';
+                const encoderBox = document.getElementById('encoder-box');
+                encoderBox.style.transform = 'scale(1.1)';
+                setTimeout(() => { encoderBox.style.transform = 'scale(1)'; }, 300);
+            }
+        });
+    }, { threshold: 0.5 });
+    observer.observe(mtlAnimation);
+
+    // --- Results Chart Generation ---
+    const resultsData = [
+        { task: 'MR (Sentiment)', gensen: 82.8, infersent: 81.1 },
+        { task: 'CR (Sentiment)', gensen: 88.3, infersent: 86.3 },
+        { task: 'SUBJ (Subjectivity)', gensen: 94.0, infersent: 92.4 },
+        { task: 'TREC (Question Type)', gensen: 93.0, infersent: 88.2 },
+        { task: 'MRPC (Paraphrase)', gensen: 78.6, infersent: 76.2 },
+        { task: 'SICK-E (Entailment)', gensen: 87.8, infersent: 86.3 },
+    ];
+    const chartContainer = document.getElementById('results-chart');
+    resultsData.forEach(item => {
+        const gensenWidth = item.gensen;
+        const infersentWidth = item.infersent;
+        const chartItem = `<div class="w-full"><p class="text-green-300 font-semibold mb-2">${item.task}</p><div class="space-y-2"><div class="flex items-center"><span class="w-28 text-sm text-right pr-4">GenSen</span><div class="flex-grow bg-black border border-green-800 rounded-full h-6"><div class="bar bg-green-400 h-full rounded-full text-right pr-2 text-black font-bold text-sm flex items-center justify-end" style="width: 0%;" data-width="${gensenWidth}%">${item.gensen}</div></div></div><div class="flex items-center"><span class="w-28 text-sm text-right pr-4">Infersent</span><div class="flex-grow bg-black border border-green-800 rounded-full h-6"><div class="bar bg-green-700 h-full rounded-full text-right pr-2 text-white font-bold text-sm flex items-center justify-end" style="width: 0%;" data-width="${infersentWidth}%">${item.infersent}</div></div></div></div></div>`;
+        chartContainer.innerHTML += chartItem;
+    });
+    const chartObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const bars = chartContainer.querySelectorAll('.bar');
+                bars.forEach(bar => { bar.style.width = bar.dataset.width; });
+                chartObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+    if (chartContainer) chartObserver.observe(chartContainer);
+
+    // --- Interactive Demo Logic ---
+    const compareBtn = document.getElementById('compare-btn');
+    const resultDiv = document.getElementById('similarity-result');
+    const scoreEl = document.getElementById('score');
+    const feedbackEl = document.getElementById('feedback');
+    const s1Text = document.getElementById('sentence1');
+    const s2Text = document.getElementById('sentence2');
+    s1Text.value = "A man is playing a guitar.";
+    s2Text.value = "Someone is performing music.";
+    function textToVector(text) {
+        const vector = new Array(50).fill(0);
+        if (!text) return vector;
+        const cleanedText = text.toLowerCase().replace(/[^a-z\s]/g, '');
+        const words = cleanedText.split(/\s+/).filter(Boolean);
+        words.forEach((word, i) => {
+            for (let j = 0; j < word.length; j++) {
+                const charCode = word.charCodeAt(j) - 97;
+                if (charCode >= 0) {
+                    const index = (charCode + i * 3) % 50;
+                    vector[index] += (1 / (j + 1));
+                }
+            }
+        });
+        const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+        return magnitude > 0 ? vector.map(v => v / magnitude) : vector;
+    }
+    function cosineSimilarity(vecA, vecB) {
+        let dotProduct = 0;
+        for (let i = 0; i < vecA.length; i++) { dotProduct += vecA[i] * vecB[i]; }
+        return dotProduct;
+    }
+    compareBtn.addEventListener('click', () => {
+        const vec1 = textToVector(s1Text.value);
+        const vec2 = textToVector(s2Text.value);
+        const similarity = cosineSimilarity(vec1, vec2);
+        scoreEl.textContent = similarity.toFixed(4);
+        let feedbackText = '';
+        if (similarity > 0.8) { feedbackText = 'Highly similar! These sentences likely have the same meaning.'; } 
+        else if (similarity > 0.5) { feedbackText = 'Moderately similar. They share some concepts.'; } 
+        else if (similarity > 0.2) { feedbackText = 'Somewhat related, but the meaning is different.'; } 
+        else { feedbackText = 'Not very similar. These sentences are likely unrelated.'; }
+        feedbackEl.textContent = feedbackText;
+        resultDiv.classList.remove('hidden');
+    });
+
+    // --- Decoder Animation Logic ---
+    const overviewAnimation = document.getElementById('overview-animation');
+    const decoderDetailsView = document.getElementById('decoder-details-view');
+    const decoderButtons = document.querySelectorAll('.decoder-btn');
+    const backToOverviewBtn = document.getElementById('back-to-overview-btn');
+    const replayDecoderBtn = document.getElementById('replay-decoder-btn');
+    let currentDecoder = 'nmt';
+
+    const animationData = {
+        nmt: {
+            vocab: ["Die", "der", "Katze", "Hund", "saß", "ist"],
+            steps: [
+                { probs: [0.8, 0.1, 0.05, 0.02, 0.02, 0.01], word: "Die" },
+                { probs: [0.05, 0.1, 0.75, 0.05, 0.04, 0.01], word: "Katze" },
+                { probs: [0.02, 0.03, 0.1, 0.05, 0.7, 0.1], word: "saß" }
+            ]
+        },
+        skip: {
+            vocab: ["It", "The", "was", "is", "very", "a"],
+            steps: [
+                { probs: [0.7, 0.1, 0.1, 0.05, 0.04, 0.01], word: "It" },
+                { probs: [0.1, 0.05, 0.6, 0.15, 0.05, 0.05], word: "was" },
+                { probs: [0.05, 0.05, 0.1, 0.05, 0.65, 0.1], word: "very" }
+            ]
+        },
+        parse: {
+            vocab: ["(S", "(NP", "The", ")", "(VP", "cat"],
+            steps: [
+                { probs: [0.9, 0.05, 0.01, 0.01, 0.02, 0.01], word: "(S" },
+                { probs: [0.1, 0.8, 0.02, 0.03, 0.04, 0.01], word: "(NP" },
+                { probs: [0.01, 0.01, 0.7, 0.08, 0.1, 0.1], word: "The" }
+            ]
+        },
+        nli: {
+            vocab: ["Entailment", "Neutral", "Contradiction"],
+            steps: [
+                { probs: [0.85, 0.1, 0.05], word: "Entailment" }
+            ]
+        }
+    };
+
+    function createVocabChart(container, vocab, probs) {
+        container.innerHTML = '';
+        const maxProb = Math.max(...probs);
+        vocab.forEach((word, i) => {
+            const width = (probs[i] / maxProb) * 100;
+            const isMax = probs[i] === maxProb;
+            const barHtml = `<div class="flex items-center"><span class="w-24 text-right pr-2 font-mono ${isMax ? 'text-green-100' : 'text-green-600'}">${word}</span><div class="flex-grow bg-green-900 h-5 rounded-sm"><div class="h-full rounded-sm ${isMax ? 'bg-green-300' : 'bg-green-600'}" style="width: ${width}%"></div></div></div>`;
+            container.innerHTML += barHtml;
+        });
+    }
+
+    function runSequenceAnimation(decoderType) {
+        const view = document.getElementById(`decoder-view-${decoderType}`);
+        const data = animationData[decoderType];
+        
+        view.querySelectorAll('.decoder-step').forEach(el => el.classList.remove('active'));
+        const sentenceEl = view.querySelector('.generated-sentence');
+        if(sentenceEl) sentenceEl.innerHTML = '';
+
+        setTimeout(() => { view.querySelector('.decoder-step:nth-child(1)').classList.add('active'); }, 100);
+        
+        data.steps.forEach((step, index) => {
+            setTimeout(() => {
+                const stepEl = view.querySelector(`.decoder-step:nth-child(${index + 2})`);
+                stepEl.classList.add('active');
+                const chartContainer = stepEl.querySelector('.vocab-chart');
+                createVocabChart(chartContainer, data.vocab, step.probs);
+                if(sentenceEl) {
+                    sentenceEl.innerHTML += `<span class="output-word">${step.word}</span> `;
+                    setTimeout(() => {
+                        const words = sentenceEl.querySelectorAll('.output-word');
+                        words[words.length-1].classList.add('visible');
+                    }, 50);
+                }
+            }, 1500 * (index + 1));
+        });
+    }
+
+    function runNliAnimation() {
+        const view = document.getElementById('decoder-view-nli');
+        const data = animationData.nli;
+        
+        view.querySelectorAll('.decoder-step').forEach(el => el.classList.remove('active'));
+        view.querySelectorAll('.vector-box').forEach(el => el.classList.remove('visible'));
+        
+        setTimeout(() => {
+            view.querySelector('.decoder-step:nth-child(1)').classList.add('active');
+            setTimeout(() => document.getElementById('nli-u').classList.add('visible'), 200);
+            setTimeout(() => document.getElementById('nli-v').classList.add('visible'), 400);
+        }, 100);
+
+        setTimeout(() => {
+            view.querySelector('.decoder-step:nth-child(2)').classList.add('active');
+            setTimeout(() => document.getElementById('nli-combined').classList.add('visible'), 200);
+        }, 2000);
+
+        setTimeout(() => {
+            const stepEl = view.querySelector('.decoder-step:nth-child(3)');
+            stepEl.classList.add('active');
+            const chartContainer = stepEl.querySelector('.vocab-chart');
+            createVocabChart(chartContainer, data.vocab, data.steps[0].probs);
+        }, 4000);
+    }
+
+    function showDecoderDetails(decoderType) {
+        currentDecoder = decoderType;
+        overviewAnimation.classList.add('hidden');
+        document.querySelectorAll('.decoder-view-content').forEach(v => v.classList.add('hidden'));
+        
+        const targetView = document.getElementById(`decoder-view-${decoderType}`);
+        targetView.classList.remove('hidden');
+        decoderDetailsView.classList.remove('hidden');
+
+        if (decoderType === 'nli') {
+            runNliAnimation();
+        } else {
+            runSequenceAnimation(decoderType);
+        }
+    }
+
+    decoderButtons.forEach(btn => {
+        btn.addEventListener('click', () => showDecoderDetails(btn.dataset.decoder));
+    });
+
+    replayDecoderBtn.addEventListener('click', () => {
+        if (currentDecoder === 'nli') {
+            runNliAnimation();
+        } else {
+            runSequenceAnimation(currentDecoder);
+        }
+    });
+
+    backToOverviewBtn.addEventListener('click', () => {
+        decoderDetailsView.classList.add('hidden');
+        overviewAnimation.classList.remove('hidden');
+    });
+
+    // --- Section 6 Animations ---
+    
+    // Use one observer per animation for individual triggering
+    const createObserver = (targetId, animationFunc) => {
+        const target = document.getElementById(targetId);
+        if (!target) return;
+
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animationFunc(target);
+                    obs.unobserve(entry.target); // Animate only once
+                }
+            });
+        }, { threshold: 0.5 });
+        observer.observe(target);
+    };
+
+    // Animation 1: Seq2Seq flow
+    const animateSeq2Seq = (target) => {
+        target.classList.add('visible');
+        const elements = ['input', 'encoder', 'vector', 'decoder', 'output'];
+        elements.forEach((el, i) => {
+            setTimeout(() => {
+                const node = document.getElementById(`anim-1-${el}`);
+                if (node) {
+                    node.style.opacity = 1;
+                    node.style.transform = 'translateY(0)';
+                }
+            }, i * 600);
+        });
+    };
+
+    // Animation 2: Autoregressive
+    const animateAutoregressive = (target) => {
+        target.classList.add('visible');
+        const linesSVG = document.getElementById('autoregressive-lines');
+        const y1 = document.getElementById('anim-2-y1');
+        const y2 = document.getElementById('anim-2-y2');
+        
+        // Reset state
+        linesSVG.innerHTML = '';
+        y1.style.opacity = 0;
+        y1.style.transform = 'translateX(0) translateY(0)';
+        y2.style.opacity = 0;
+        y2.style.display = 'none';
+
+        const getCoords = (elId) => {
+            const el = document.getElementById(elId);
+            if (!el) return { x: 0, y: 0, left: 0, right: 0 };
+            return {
+                x: el.offsetLeft + el.offsetWidth / 2,
+                y: el.offsetTop + el.offsetHeight / 2,
+                left: el.offsetLeft,
+                right: el.offsetLeft + el.offsetWidth,
+            };
+        };
+
+        // Step 1: Produce y1
+        setTimeout(() => {
+            const hx_coords = getCoords('anim-2-hx');
+            const dec_coords = getCoords('anim-2-decoder-cell');
+            const y1_coords = getCoords('anim-2-y1');
+
+            linesSVG.innerHTML = `<path id="line1" class="anim-line" d="M ${hx_coords.x} ${hx_coords.y} L ${dec_coords.left} ${dec_coords.y}" stroke="#4ade80" stroke-width="2" fill="none" />
+                                  <path id="line2" class="anim-line" d="M ${dec_coords.right} ${dec_coords.y} L ${y1_coords.left} ${y1_coords.y}" stroke="#86efac" stroke-width="2" fill="none" />`;
+            
+            setTimeout(() => {
+                document.getElementById('line1').style.strokeDashoffset = 0;
+                document.getElementById('line2').style.strokeDashoffset = 0;
+                y1.style.opacity = 1;
+            }, 100);
+        }, 500);
+
+        // Step 2: Feedback y1 to produce y2
+        setTimeout(() => {
+            // Move y1 to be an input
+            y1.style.transform = `translateX(-200px) translateY(-50px)`;
+            
+            setTimeout(() => {
+                const y1_new_coords = getCoords('anim-2-y1');
+                const dec_coords = getCoords('anim-2-decoder-cell');
+                const y2_coords = getCoords('anim-2-y2');
+                
+                y2.style.display = 'block';
+
+                linesSVG.innerHTML += `<path id="line3" class="anim-line" d="M ${y1_new_coords.x} ${y1_new_coords.y} L ${dec_coords.left} ${y1_new_coords.y}" stroke="#86efac" stroke-width="2" fill="none" />
+                                       <path id="line4" class="anim-line" d="M ${dec_coords.right} ${dec_coords.y} L ${y2_coords.left} ${y2_coords.y}" stroke="#a78bfa" stroke-width="2" fill="none" />`;
+                
+                setTimeout(() => {
+                    document.getElementById('line3').style.strokeDashoffset = 0;
+                    document.getElementById('line4').style.strokeDashoffset = 0;
+                    y1.style.opacity = 0.5; // Dim the old output
+                    y2.style.opacity = 1;
+                }, 100);
+            }, 1000);
+
+        }, 3000);
+    };
+
+    // Animation 3: Attention
+    const animateAttention = (target) => {
+        target.classList.add('visible');
+        const attnLines = document.getElementById('anim-3-attn-lines');
+        const noAttnLine = document.getElementById('anim-3-no-attn-line');
+        if(attnLines) attnLines.innerHTML = `<svg class="w-full h-full absolute" preserveAspectRatio="none"><path class="anim-line" d="M 15% 100% L 50% 0" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="4"></path><path class="anim-line" style="transition-delay: 0.2s" d="M 50% 100% L 50% 0" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="4"></path><path class="anim-line" style="transition-delay: 0.4s" d="M 85% 100% L 50% 0" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="4"></path></svg>`;
+        if(noAttnLine) noAttnLine.innerHTML = `<svg class="w-full h-full absolute" preserveAspectRatio="none"><path class="anim-line" d="M 50% 100% L 50% 0" stroke="#4ade80" stroke-width="2"></path></svg>`;
+        setTimeout(() => {
+            target.querySelectorAll('.anim-line').forEach(line => line.style.strokeDashoffset = 0);
+        }, 100);
+    };
+    
+    // Create observers for each animation in Section 6
+    createObserver('anim-1-seq2seq', animateSeq2Seq);
+    createObserver('anim-2-autoregressive', animateAutoregressive);
+    createObserver('anim-3-attention', animateAttention);
+});
+</script>
+
+</body>
+</html>

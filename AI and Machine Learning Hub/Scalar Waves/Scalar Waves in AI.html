@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Scalar Waves for AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .three-container {
+            height: 400px;
+            background-color: #1a202c;
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            cursor: move;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-4">Tutorial: Scalar Waves for Artificial Intelligence</h1>
+            <p class="text-lg text-green-400">A framework for non-local information transfer in quantum communication and AI.</p>
+        </header>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Introduction</h2>
+            <p class="text-lg leading-relaxed">
+                This tutorial explores a theoretical framework for generating and applying longitudinal scalar waves. We will establish the mathematical foundations, propose a mechanism for wave generation using a Tesla bifilar coil, and detail two critical applications: a non-local channel for quantum communication and a physical substrate for instantaneous backpropagation in AI.
+            </p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. The Mathematical Language of Reality</h2>
+            <div class="space-y-8 text-green-400 leading-relaxed">
+                <p>To bridge quantum communication and AI, we must first establish a common mathematical language. The concepts of scalars, vectors, and tensors provide the fundamental grammar for describing phenomena in both physical reality and computational systems.</p>
+                
+                <!-- Scalar Section -->
+                <div class="p-4 border border-green-800 rounded-lg">
+                    <h3 class="text-xl font-semibold text-green-200 mb-2">1.1 Scalars: Quantities of Pure Magnitude</h3>
+                    <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <p>A scalar is a quantity fully described by a single numerical value. It has magnitude only, with no direction. Examples include temperature, mass, or an AI model's loss value.</p>
+                        </div>
+                        <div class="bg-gray-900 p-6 rounded-lg flex items-center justify-center h-24">
+                            <span class="text-4xl font-mono text-green-300">98.6</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="font-semibold text-green-300 mb-2">Code Representation:</h4>
+                        <div x-data="{ tab: 'python' }" class="bg-gray-900 rounded-lg p-1">
+                            <nav class="flex space-x-1">
+                                <button @click="tab = 'python'" :class="{'bg-green-800 text-white': tab === 'python', 'text-gray-400 hover:bg-gray-700': tab !== 'python'}" class="px-3 py-1 text-sm font-medium rounded-md">Python</button>
+                                <button @click="tab = 'cpp'" :class="{'bg-green-800 text-white': tab === 'cpp', 'text-gray-400 hover:bg-gray-700': tab !== 'cpp'}" class="px-3 py-1 text-sm font-medium rounded-md">C++</button>
+                                <button @click="tab = 'r'" :class="{'bg-green-800 text-white': tab === 'r', 'text-gray-400 hover:bg-gray-700': tab !== 'r'}" class="px-3 py-1 text-sm font-medium rounded-md">R</button>
+                            </nav>
+                            <div class="mt-2 p-2 text-gray-200">
+                                <pre x-show="tab === 'python'" class="overflow-x-auto"><code># In AI, a single parameter like learning rate is a scalar
+learning_rate = 0.001</code></pre>
+                                <pre x-show="tab === 'cpp'" class="overflow-x-auto"><code>// In physics, a quantity like temperature is a scalar
+float temperature = 98.6f;</code></pre>
+                                <pre x-show="tab === 'r'" class="overflow-x-auto"><code># A single statistical value is a scalar
+loss_value <- 0.154</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vector Section -->
+                <div class="p-4 border border-green-800 rounded-lg">
+                    <h3 class="text-xl font-semibold text-green-200 mb-2">1.2 Vectors: Introducing Direction</h3>
+                    <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <p>A vector has both magnitude and direction. In physics, this could be velocity or force. In AI, a vector (or array) is the primary data structure, representing features or word embeddings.</p>
+                        </div>
+                        <div class="bg-gray-900 p-6 rounded-lg flex items-center justify-center h-24">
+                            <span class="text-xl font-mono text-green-300">[10.5, -5.2, 2.1] →</span>
+                        </div>
+                    </div>
+                     <div class="mt-4">
+                        <h4 class="font-semibold text-green-300 mb-2">Code Representation:</h4>
+                        <div x-data="{ tab: 'python' }" class="bg-gray-900 rounded-lg p-1">
+                            <nav class="flex space-x-1">
+                                <button @click="tab = 'python'" :class="{'bg-green-800 text-white': tab === 'python', 'text-gray-400 hover:bg-gray-700': tab !== 'python'}" class="px-3 py-1 text-sm font-medium rounded-md">Python</button>
+                                <button @click="tab = 'cpp'" :class="{'bg-green-800 text-white': tab === 'cpp', 'text-gray-400 hover:bg-gray-700': tab !== 'cpp'}" class="px-3 py-1 text-sm font-medium rounded-md">C++</button>
+                                <button @click="tab = 'r'" :class="{'bg-green-800 text-white': tab === 'r', 'text-gray-400 hover:bg-gray-700': tab !== 'r'}" class="px-3 py-1 text-sm font-medium rounded-md">R</button>
+                            </nav>
+                            <div class="mt-2 p-2 text-gray-200">
+                                <pre x-show="tab === 'python'" class="overflow-x-auto"><code># A word embedding is a high-dimensional vector
+word_embedding = [0.2, -0.4, 0.71, 0.12, -0.55]</code></pre>
+                                <pre x-show="tab === 'cpp'" class="overflow-x-auto"><code>#include &lt;vector&gt;
+// A 3D velocity vector
+std::vector&lt;float&gt; velocity = {10.5f, -5.2f, 2.1f};</code></pre>
+                                <pre x-show="tab === 'r'" class="overflow-x-auto"><code># A vector of features for a data point
+feature_vector <- c(1.2, 3.4, 2.8, 5.0)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tensor Section -->
+                 <div class="p-4 border border-green-800 rounded-lg">
+                    <h3 class="text-xl font-semibold text-green-200 mb-2">1.3 Tensors: Generalizing to Multiple Dimensions</h3>
+                     <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                             <p>Tensors generalize these concepts. A rank-2 tensor can be represented as a matrix. In physics, it describes directional properties like stress. In AI, it represents data like images or the weight matrices of a neural network.</p>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg flex items-center justify-center h-24">
+                            <div class="grid grid-cols-3 gap-1 font-mono text-green-300">
+                                <div class="p-2 bg-gray-800 rounded">0.1</div><div class="p-2 bg-gray-800 rounded">0.5</div><div class="p-2 bg-gray-800 rounded">0.2</div>
+                                <div class="p-2 bg-gray-800 rounded">-0.2</div><div class="p-2 bg-gray-800 rounded">0.8</div><div class="p-2 bg-gray-800 rounded">-0.4</div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mt-4">
+                        <h4 class="font-semibold text-green-300 mb-2">Code Representation (Rank-2 Tensor):</h4>
+                        <div x-data="{ tab: 'python' }" class="bg-gray-900 rounded-lg p-1">
+                            <nav class="flex space-x-1">
+                                <button @click="tab = 'python'" :class="{'bg-green-800 text-white': tab === 'python', 'text-gray-400 hover:bg-gray-700': tab !== 'python'}" class="px-3 py-1 text-sm font-medium rounded-md">Python</button>
+                                <button @click="tab = 'cpp'" :class="{'bg-green-800 text-white': tab === 'cpp', 'text-gray-400 hover:bg-gray-700': tab !== 'cpp'}" class="px-3 py-1 text-sm font-medium rounded-md">C++</button>
+                                <button @click="tab = 'r'" :class="{'bg-green-800 text-white': tab === 'r', 'text-gray-400 hover:bg-gray-700': tab !== 'r'}" class="px-3 py-1 text-sm font-medium rounded-md">R</button>
+                            </nav>
+                            <div class="mt-2 p-2 text-gray-200">
+                                <pre x-show="tab === 'python'" class="overflow-x-auto"><code># A neural network weight matrix or a grayscale image
+weight_matrix = [
+  [0.1, -0.4, 0.8],
+  [0.5, 0.2, -0.3]
+]</code></pre>
+                                <pre x-show="tab === 'cpp'" class="overflow-x-auto"><code>#include &lt;vector&gt;
+// A 2x2 stress tensor
+std::vector&lt;std::vector&lt;float&gt;&gt; stress_tensor = {
+  {100.0f, 20.5f},
+  {20.5f, 150.0f}
+};</code></pre>
+                                <pre x-show="tab === 'r'" class="overflow-x-auto"><code># A 2x2 covariance matrix
+covariance_matrix <- matrix(c(1.0, 0.7, 0.7, 1.0), nrow=2)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Information Encoding Section -->
+                <div class="pt-4">
+                    <h3 class="text-xl font-semibold text-green-200 mb-2">1.4 Propagation and Information Encoding</h3>
+                    <p>A key theoretical challenge is understanding how a longitudinal wave, which oscillates in its direction of travel and is described by a single scalar amplitude at any given point, can carry complex, multi-dimensional information. A proposed model suggests that this is achieved through a phase-dependent amplitude modulation, effectively encoding orthogonal data streams into the wave's structure.</p>
+                    <p>The "3:1 ratio" you mentioned can be modeled as a specific instance of this principle. The relationship could be described as:</p>
+                    <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto my-4"><code>A(θ) = |(3 &middot; cos(θ) + sin(θ)) &middot; X + (cos(θ) + 3 &middot; sin(θ)) &middot; Y|</code></pre>
+                    <p>This allows two independent pieces of information (`X` and `Y`) to be encoded into a single propagating scalar amplitude. A resonant receiver could then reconstruct the original data. However, this model can be extended to a more physically robust representation using quaternions.</p>
+                </div>
+
+                <!-- Quaternion Section -->
+                <div class="pt-4">
+                    <h3 class="text-xl font-semibold text-green-200 mb-2">1.5 Quaternion Encoding and State Deduction</h3>
+                    <p>To encode information about 3D spin states, we can move from simple orthogonal vectors to quaternions. A quaternion, <span class="font-mono">q = w + x<b>i</b> + y<b>j</b> + z<b>k</b></span>, provides a natural way to represent orientation and rotation in 3D space. Let's theorize that each computational node (or particle) holds its state as a quaternion. This state is not static; it contains information about its history and future.</p>
+                    <ul class="list-disc list-inside text-green-400 space-y-2 mt-2">
+                        <li>The <strong class="text-green-300">scalar part (w)</strong> could represent the magnitude or confidence of the node's <strong class="text-green-300">prior state</strong>.</li>
+                        <li>The <strong class="text-green-300">vector part (v = xi + yj + zk)</strong> could represent the 3D spin orientation of the <strong class="text-green-300">predicted forward state</strong>.</li>
+                    </ul>
+                    <p class="mt-2">When this quaternion-based node modulates the scalar wave, the resulting wave amplitude `A` and phase `θ` are a projection of this 4D information. The challenge is that measuring `A` and `θ` alone gives an underdetermined system. For example, a measured phase of 45° could originate from any of the three states shown below.</p>
+                    
+                    <!-- REVISED VISUALIZATION FOR 1.5 -->
+                    <div class="my-6 bg-gray-900 p-4 rounded-lg text-center space-y-6">
+                        <div>
+                            <p class="text-green-300 mb-2 font-semibold">1. An Ambiguous Phase Measurement</p>
+                            <svg class="w-full h-40" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="100" cy="50" r="40" fill="none" stroke="#047857"/>
+                                <line x1="100" y1="50" x2="128.28" y2="21.72" stroke="#a7f3d0" stroke-width="1.5"/>
+                                <text x="135" y="20" fill="#a7f3d0" font-size="6">45° ?</text>
+                                <text x="100" y="55" fill="#a7f3d0" font-size="6" text-anchor="middle">Could be Spin A, B, or C</text>
+                            </svg>
+                        </div>
+                        <div>
+                             <p class="text-green-300 mb-2 font-semibold">2. Resolving with a Known Spectrum</p>
+                             <div class="flex justify-around items-center">
+                                <svg class="w-1/3 h-40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 50 50 L 90 50 A 40 40 0 0 1 15.4 15.4 Z" fill="#ef4444" fill-opacity="0.3"/>
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#047857"/>
+                                    <line x1="50" y1="50" x2="78.28" y2="21.72" stroke="#f87171" stroke-width="1.5"/>
+                                    <text x="50" y="68" fill="#fecaca" font-size="6" text-anchor="middle">IF Spectrum 1 (0°-119°)</text>
+                                    <text x="50" y="76" fill="#fecaca" font-size="6" text-anchor="middle">THEN angle is 45° = Spin A</text>
+                                </svg>
+                                <svg class="w-1/3 h-40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 50 50 L 15.4 15.4 A 40 40 0 0 1 15.4 84.6 Z" fill="#22c55e" fill-opacity="0.3"/>
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#047857"/>
+                                    <line x1="50" y1="50" x2="21.72" y2="21.72" stroke="#6ee7b7" stroke-width="1.5"/>
+                                    <text x="50" y="68" fill="#bbf7d0" font-size="6" text-anchor="middle">IF Spectrum 2 (120°-239°)</text>
+                                    <text x="50" y="76" fill="#bbf7d0" font-size="6" text-anchor="middle">THEN angle is 135° = Spin B</text>
+                                </svg>
+                                 <svg class="w-1/3 h-40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 50 50 L 15.4 84.6 A 40 40 0 0 1 90 50 Z" fill="#3b82f6" fill-opacity="0.3"/>
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#047857"/>
+                                    <line x1="50" y1="50" x2="78.28" y2="78.28" stroke="#93c5fd" stroke-width="1.5"/>
+                                    <text x="50" y="68" fill="#bfdbfe" font-size="6" text-anchor="middle">IF Spectrum 3 (240°-359°)</text>
+                                    <text x="50" y="76" fill="#bfdbfe" font-size="6" text-anchor="middle">THEN angle is 315° = Spin C</text>
+                                </svg>
+                             </div>
+                        </div>
+                    </div>
+                    <p>The solution lies in constraining the system. We propose that the communication occurs within one of three pre-established <strong class="text-green-300">120-degree phase angle spectrums</strong>. If the receiver knows which spectrum the signal belongs to (acting as a form of "channel keying"), it gains a crucial piece of information. This knowledge resolves the ambiguity, allowing the receiver to solve for the original quaternion. By reconstructing the full quaternion, the receiver can deduce both the prior state (`w`) and the forward spin state (`v`), effectively "unpacking" the higher-dimensional data from the scalar wave.</p>
+                </div>
+
+                <!-- Visualizing Quaternion Encoding Section -->
+                <div class="pt-4">
+                    <h3 class="text-xl font-semibold text-green-200 mb-2">1.6 Visualizing Quaternion Encoding from Latent Space</h3>
+                    <p>How do we translate an abstract concept, like the contextual meaning of a word, into a quaternion? The process begins with a <strong class="text-green-300">latent space library</strong>—a high-dimensional space where concepts are organized by semantic similarity, typically derived from a large language model. Each word exists as a vector in this space.</p>
+                    <p>To encode the word "run" into a quaternion, we first retrieve its high-dimensional vector. This vector is then projected or mapped down to four dimensions to form the quaternion components (`w, x, y, z`). This mapping is a critical, trainable part of the system.</p>
+                    <div class="my-6 bg-gray-900 p-4 rounded-lg text-center">
+                        <p class="text-sm text-green-400 mb-2">Word → High-Dimensional Vector → 4D Quaternion</p>
+                        <div class="flex items-center justify-center space-x-4 font-mono text-green-300">
+                           <span>"run"</span> 
+                           <span class="text-green-500">→</span>
+                           <span class="text-xs">[0.2, -0.4, ..., 0.55]</span>
+                           <span class="text-green-500">→</span>
+                           <span>q = (0.85, 0.3i, -0.4j, 0.1k)</span>
+                        </div>
+                    </div>
+                    <p>The vector part of this quaternion, `(0.3, -0.4, 0.1)`, defines the "spin" or orientation of the state. This spin is not arbitrary; it is <strong class="text-green-300">context-dependent</strong>. The direction of this spin vector points towards a specific region in the latent space that corresponds to the word's context. For example:</p>
+                    <div class="my-6 bg-gray-900 p-4 rounded-lg text-center">
+                        <div class="flex flex-col md:flex-row justify-around">
+                            <div class="p-2">
+                                <p class="text-lg font-semibold text-green-300">"run a marathon"</p>
+                                <p class="font-mono text-sm text-green-400 mt-1">Spin vector points toward "athletics" cluster</p>
+                            </div>
+                            <div class="p-2">
+                                 <p class="text-lg font-semibold text-green-300">"run a program"</p>
+                                <p class="font-mono text-sm text-green-400 mt-1">Spin vector points toward "computing" cluster</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <svg class="w-full h-32" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#047857" stroke-width="1"/>
+                                <text x="50" y="55" font-family="monospace" font-size="10" fill="#a7f3d0" text-anchor="middle">Latent Space</text>
+                                
+                                <!-- run a marathon -->
+                                <circle cx="20" cy="30" r="3" fill="#34d399"/>
+                                <text x="20" y="25" font-size="8" fill="#a7f3d0" text-anchor="middle">Athletics</text>
+                                <path d="M 50 50 L 20 30" stroke="#34d399" stroke-width="1.5" stroke-dasharray="2,2"/>
+                                <text x="35" y="38" font-size="8" fill="#34d399">Spin 1</text>
+
+                                <!-- run a program -->
+                                <circle cx="80" cy="70" r="3" fill="#6ee7b7"/>
+                                 <text x="80" y="85" font-size="8" fill="#a7f3d0" text-anchor="middle">Computing</text>
+                                <path d="M 50 50 L 80 70" stroke="#6ee7b7" stroke-width="1.5"/>
+                                <text x="65" y="65" font-size="8" fill="#6ee7b7">Spin 2</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <p>In this way, the single quaternion `q` transmitted by the scalar wave carries a wealth of information. The scalar part `w` (prior state) could represent the base meaning of "run," while the vector part (forward state/spin) provides the rich contextual information that orients this meaning within the vast library of the latent space.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. Simulating Scalar Coherency: A Computational Approach</h2>
+            <div class="space-y-4 text-green-400 leading-relaxed">
+                <p>Instead of relying on a physical apparatus, we can model the effects of a scalar wave computationally. This approach treats the "scalar wave" not as a physical phenomenon, but as a propagation of coherent information through a network of computational nodes. The core principle shifts from physical wave generation to achieving and maintaining <strong class="text-green-300">information coherency</strong> across the network.</p>
+                
+                <h3 class="text-xl font-semibold text-green-200 mb-2 pt-4">2.1 The Resonant Network Model</h3>
+                <p>We first envision a simple network where nodes share a single base frequency. A node is "coherent" or "active" only when the network's frequency matches its own internal frequency. Adjust the Base Tone to see how different nodes achieve resonance.</p>
+                <!-- OLD VISUALIZATION SECTION -->
+                <div class="my-6 bg-gray-900 p-4 rounded-lg" x-data="coherencySim()">
+                    <div class="flex justify-between items-center text-center font-mono">
+                        <template x-for="node in nodes">
+                            <div class="flex flex-col items-center">
+                                <div class="relative w-16 h-16 mb-2">
+                                    <svg class="w-full h-full" viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="40" fill="#1f2937" />
+                                        <circle cx="50" cy="50" r="40" fill="#10b981" :style="{ opacity: node.coherency }" style="transition: opacity 0.3s;" />
+                                        <text x="50" y="55" text-anchor="middle" font-size="18" fill="white" class="font-sans" x-text="node.name"></text>
+                                    </svg>
+                                </div>
+                                <span class="text-sm" x-text="`ƒ: ${node.freq} Hz`"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="mt-4">
+                        <label for="baseTone" class="block mb-2 text-center">Network Base Tone: <span x-text="baseTone" class="font-bold text-green-200"></span> Hz</label>
+                        <input id="baseTone" type="range" min="10" max="90" step="1" x-model="baseTone" @input="updateCoherency" class="w-full">
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold text-green-200 mb-2 pt-4">2.2 The Multi-Dimensional Resonant Network</h3>
+                <p>We can evolve this model beyond a single base tone. Instead of one frequency, the network is defined by a <strong class="text-green-300">multi-component signal</strong>, corresponding to the 120° phase spectrums mentioned in Section 1.5. For a node to achieve <strong class="text-green-300">full resonance</strong>, its internal state must be coherent with all three frequency components simultaneously. This creates a much more specific and complex condition for coherency.</p>
+                
+                <!-- NEW VISUALIZATION SECTION -->
+                <div class="my-6 bg-gray-900 p-4 rounded-lg" x-data="multiDimCoherencySim()">
+                    <div class="flex flex-col md:flex-row justify-around items-center space-y-4 md:space-y-0 md:space-x-4">
+                        <!-- Nodes Display -->
+                        <div class="w-full md:w-1/3 flex justify-around">
+                             <template x-for="(node, index) in nodes" :key="index">
+                                <div class="flex flex-col items-center">
+                                     <div class="relative w-16 h-16 mb-2">
+                                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="45" fill="#1f2937" />
+                                            <circle cx="50" cy="50" r="45" fill="#10b981" :style="{ opacity: node.totalCoherency }" style="transition: opacity 0.3s;" />
+                                            <text x="50" y="55" text-anchor="middle" font-size="24" fill="white" class="font-sans" x-text="node.name"></text>
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-mono" x-text="`ƒ: (${node.freq.f1},${node.freq.f2},${node.freq.f3})`"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <!-- Dial and Sliders -->
+                        <div class="w-full md:w-2/3 flex justify-center items-center space-x-4">
+                            <div class="relative w-24 h-24">
+                                <svg class="w-full h-full" viewBox="0 0 100 100" style="transform: rotate(-90deg)">
+                                    <path :d="describeArc(50, 50, 40, 0, 120)" stroke="#ef4444" stroke-width="10" fill="none" :style="{opacity: coherency1 + 0.1}" />
+                                    <path :d="describeArc(50, 50, 40, 120, 240)" stroke="#22c55e" stroke-width="10" fill="none" :style="{opacity: coherency2 + 0.1}"/>
+                                    <path :d="describeArc(50, 50, 40, 240, 360)" stroke="#3b82f6" stroke-width="10" fill="none" :style="{opacity: coherency3 + 0.1}"/>
+                                </svg>
+                            </div>
+                            <div class="w-2/3 space-y-2">
+                                <div>
+                                    <label class="block text-sm text-red-400">Spectrum 1: <span x-text="baseTone.f1"></span> Hz</label>
+                                    <input type="range" min="10" max="90" x-model="baseTone.f1" @input="updateAllCoherency" class="w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-green-400">Spectrum 2: <span x-text="baseTone.f2"></span> Hz</label>
+                                    <input type="range" min="10" max="90" x-model="baseTone.f2" @input="updateAllCoherency" class="w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-blue-400">Spectrum 3: <span x-text="baseTone.f3"></span> Hz</label>
+                                    <input type="range" min="10" max="90" x-model="baseTone.f3" @input="updateAllCoherency" class="w-full">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW SECTION 2.3 -->
+                <h3 class="text-xl font-semibold text-green-200 mb-2 pt-4">2.3 3D Network Propagation and Perplexity</h3>
+                <p>This model extends the concept to a 3D network of 12 nodes. As information propagates, the network's overall resonance increases. We can measure the network's uncertainty using <strong class="text-green-300">Perplexity</strong>. A high perplexity indicates a disordered, uncertain state, while a perplexity of 1.0 indicates a perfectly coherent, ordered state where all nodes are active.</p>
+                <div class="my-6 bg-gray-900 p-4 rounded-lg">
+                    <div id="network-3d-container" class="h-96 w-full rounded-lg bg-black"></div>
+                    <div class="mt-4 flex justify-between items-center text-center font-mono">
+                        <div>
+                            <button id="propagate-btn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600">Propagate Step</button>
+                            <button id="reset-3d-btn" class="ml-2 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">Reset</button>
+                        </div>
+                        <div>
+                            <p class="text-sm">Total Resonance</p>
+                            <p id="resonance-display" class="text-lg font-bold text-green-300">0</p>
+                        </div>
+                        <div>
+                            <p class="text-sm">Network Perplexity</p>
+                            <p id="perplexity-display" class="text-lg font-bold text-green-300">1.00</p>
+                        </div>
+                    </div>
+                </div>
+
+
+                
+        </section>
+
+        <footer class="mt-12 pt-4 border-t border-green-800 text-center text-green-600">
+            <p>This tutorial is for theoretical and educational purposes.</p>
+            <p>Further research and experimentation, as outlined in the associated paper, are required for verification.</p>
+        </footer>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('coherencySim', () => ({
+            baseTone: 50,
+            nodes: [
+                { name: 'A', freq: 25, coherency: 0 },
+                { name: 'B', freq: 50, coherency: 0 },
+                { name: 'C', freq: 75, coherency: 0 }
+            ],
+            init() { this.updateCoherency(); },
+            updateCoherency() {
+                this.nodes.forEach(node => {
+                    const diff = Math.abs(this.baseTone - node.freq);
+                    node.coherency = Math.exp(-0.01 * diff * diff);
+                });
+            }
+        }));
+
+        Alpine.data('multiDimCoherencySim', () => ({
+            baseTone: { f1: 20, f2: 50, f3: 80 },
+            nodes: [
+                { name: 'A', freq: { f1: 20, f2: 50, f3: 80 }, totalCoherency: 0 },
+                { name: 'B', freq: { f1: 45, f2: 45, f3: 45 }, totalCoherency: 0 },
+                { name: 'C', freq: { f1: 70, f2: 25, f3: 60 }, totalCoherency: 0 }
+            ],
+            coherency1: 0, coherency2: 0, coherency3: 0,
+            init() { this.updateAllCoherency(); },
+            polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+                var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+                return {
+                    x: centerX + (radius * Math.cos(angleInRadians)),
+                    y: centerY + (radius * Math.sin(angleInRadians))
+                };
+            },
+            describeArc(x, y, radius, startAngle, endAngle){
+                if (endAngle >= 360) endAngle = 359.99; // Fix for 360 degree arc bug
+                var start = this.polarToCartesian(x, y, radius, endAngle);
+                var end = this.polarToCartesian(x, y, radius, startAngle);
+                var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+                var d = [ "M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y, "L", x, y, "Z" ].join(" ");
+                return d;       
+            },
+            updateAllCoherency() {
+                const calcCoherency = (base, target) => Math.exp(-0.005 * Math.pow(base - target, 2));
+                
+                let avg_c1 = 0, avg_c2 = 0, avg_c3 = 0;
+                this.nodes.forEach(node => {
+                    const c1 = calcCoherency(this.baseTone.f1, node.freq.f1);
+                    const c2 = calcCoherency(this.baseTone.f2, node.freq.f2);
+                    const c3 = calcCoherency(this.baseTone.f3, node.freq.f3);
+                    node.totalCoherency = c1 * c2 * c3;
+                    avg_c1 += c1; avg_c2 += c2; avg_c3 += c3;
+                });
+                this.coherency1 = avg_c1 / this.nodes.length;
+                this.coherency2 = avg_c2 / this.nodes.length;
+                this.coherency3 = avg_c3 / this.nodes.length;
+            }
+        }));
+    });
+</script>
+<script>
+// Plain JS for the new 3D visualization to avoid conflicts
+(function() {
+    let scene, camera, renderer, masterGroup;
+    let nodes = [];
+    let connections = [];
+    let propagationQueue = [];
+    let activeNodeIndices = new Set();
+    let animationFrameId; // To control the animation loop
+    let isInitialized = false;
+
+    function initNetwork3D() {
+        if (isInitialized) return;
+        
+        const container = document.getElementById('network-3d-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        masterGroup = new THREE.Group();
+        scene.add(masterGroup);
+        scene.add(new THREE.AmbientLight(0x404040, 2));
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+
+
+        camera.position.z = 12;
+
+        setup3DNetwork();
+        setup3DControls();
+        animate3D();
+        updateMetrics();
+
+        // Add mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        container.addEventListener('mousedown', e => { isDragging = true; previousMousePosition = {x: e.clientX, y: e.clientY};});
+        document.addEventListener('mouseup', () => { isDragging = false; });
+        container.addEventListener('mouseleave', () => { isDragging = false; });
+        container.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+            masterGroup.rotation.y += deltaX * 0.005;
+            masterGroup.rotation.x += deltaY * 0.005;
+            previousMousePosition = {x: e.clientX, y: e.clientY};
+        });
+        
+        isInitialized = true;
+    }
+
+    function setup3DNetwork() {
+        nodes = [];
+        connections = [];
+        propagationQueue = [];
+        activeNodeIndices = new Set();
+        while(masterGroup.children.length > 0){ masterGroup.remove(masterGroup.children[0]); }
+
+        const geometry = new THREE.IcosahedronGeometry(5, 0);
+        const nodeMaterial = () => new THREE.MeshPhongMaterial({ color: 0x22c55e, transparent: true, opacity: 0.5, emissive: 0x000000 });
+
+        const vertices = geometry.attributes.position.array;
+        const uniquePositions = [];
+        for (let i = 0; i < vertices.length; i += 3) {
+            const pos = new THREE.Vector3(vertices[i], vertices[i+1], vertices[i+2]);
+            if (!uniquePositions.some(p => p.distanceTo(pos) < 0.1)) {
+                 uniquePositions.push(pos);
+            }
+        }
+        
+        uniquePositions.slice(0, 12).forEach(pos => {
+            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), nodeMaterial());
+            nodeMesh.position.copy(pos);
+            nodes.push({ mesh: nodeMesh, active: false, frequency: 100 });
+            masterGroup.add(nodeMesh);
+        });
+
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                if (nodes[i].mesh.position.distanceTo(nodes[j].mesh.position) < 5.3) { // Adjusted for icosahedron edges
+                    const material = new THREE.LineBasicMaterial({ color: 0x047857, transparent: true, opacity: 0.3 });
+                    const geometry = new THREE.BufferGeometry().setFromPoints([nodes[i].mesh.position, nodes[j].mesh.position]);
+                    const line = new THREE.Line(geometry, material);
+                    connections.push({ line, from: i, to: j });
+                    masterGroup.add(line);
+                }
+            }
+        }
+    }
+
+    function setup3DControls() {
+        document.getElementById('propagate-btn').onclick = propagateStep;
+        document.getElementById('reset-3d-btn').onclick = reset3DNetwork;
+    }
+
+    function propagateStep() {
+        if (activeNodeIndices.size === nodes.length) return;
+        if (propagationQueue.length === 0 && activeNodeIndices.size === 0) {
+            propagationQueue.push(0);
+        }
+
+        const nextQueue = [];
+        propagationQueue.forEach(nodeIndex => {
+            if (!activeNodeIndices.has(nodeIndex)) {
+                nodes[nodeIndex].active = true;
+                activeNodeIndices.add(nodeIndex);
+
+                connections.forEach(conn => {
+                    if (conn.from === nodeIndex && !activeNodeIndices.has(conn.to)) nextQueue.push(conn.to);
+                    if (conn.to === nodeIndex && !activeNodeIndices.has(conn.from)) nextQueue.push(conn.from);
+                });
+            }
+        });
+        propagationQueue = [...new Set(nextQueue)];
+        updateMetrics();
+    }
+
+    function reset3DNetwork() {
+        nodes.forEach(node => node.active = false);
+        propagationQueue = [];
+        activeNodeIndices.clear();
+        updateMetrics();
+    }
+    
+    function updateMetrics() {
+        const activeCount = activeNodeIndices.size;
+        const totalNodes = nodes.length;
+        
+        const totalResonance = activeCount * 100;
+        document.getElementById('resonance-display').textContent = totalResonance;
+
+        if (activeCount === 0 || activeCount === totalNodes) {
+            document.getElementById('perplexity-display').textContent = "1.00 (Certainty)";
+            return;
+        }
+        const p = activeCount / totalNodes;
+        const entropy = -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+        const perplexity = Math.pow(2, entropy);
+        document.getElementById('perplexity-display').textContent = `${perplexity.toFixed(2)}`;
+    }
+
+    function animate3D() {
+        animationFrameId = requestAnimationFrame(animate3D);
+        if (!isInitialized || !renderer) return;
+
+        nodes.forEach(node => {
+            const targetOpacity = node.active ? 1.0 : 0.5;
+            const targetEmissive = node.active ? 0x34d399 : 0x000000;
+            node.mesh.material.opacity += (targetOpacity - node.mesh.material.opacity) * 0.1;
+            node.mesh.material.emissive.lerp(new THREE.Color(targetEmissive), 0.1);
+        });
+        connections.forEach(conn => {
+            const targetOpacity = (nodes[conn.from].active && nodes[conn.to].active) ? 0.8 : 0.3;
+            const targetColor = (nodes[conn.from].active && nodes[conn.to].active) ? 0x34d399 : 0x047857;
+            conn.line.material.opacity += (targetOpacity - conn.line.material.opacity) * 0.1;
+            conn.line.material.color.lerp(new THREE.Color(targetColor), 0.1);
+        });
+        renderer.render(scene, camera);
+    }
+    
+    function destroyNetwork3D() {
+        cancelAnimationFrame(animationFrameId);
+        const container = document.getElementById('network-3d-container');
+        if (container) container.innerHTML = '';
+        scene = null;
+        camera = null;
+        renderer = null;
+        masterGroup = null;
+        nodes = [];
+        connections = [];
+        propagationQueue = [];
+        activeNodeIndices = new Set();
+        isInitialized = false;
+    }
+    
+    // Use an IntersectionObserver to initialize the animation only when visible
+    let observer;
+    function observe3DNetwork() {
+        const target = document.getElementById('network-3d-container');
+        if (!target) return;
+        
+        observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                if(!isInitialized) initNetwork3D();
+            } else {
+                if(isInitialized) destroyNetwork3D();
+            }
+        }, { threshold: 0.1 });
+        
+        observer.observe(target);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+         observe3DNetwork();
+    });
+
+})();
+</script>
+</body>
+</html>
