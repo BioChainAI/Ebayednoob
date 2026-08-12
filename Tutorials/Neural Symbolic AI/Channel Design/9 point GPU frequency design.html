@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Building a 9-Point GPU Frequency Chart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for a more thematic feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #047857; /* A shade of green */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #059669;
+        }
+        /* Animation for data particles */
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #34d399;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #34d399, 0 0 10px #34d399;
+            opacity: 0;
+        }
+        /* Styling for the 3x3 grid */
+        .grid-cell {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #064e3b; /* Darker green */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+        .grid-cell.active {
+            background-color: #10b981; /* Bright green */
+            box-shadow: 0 0 15px #10b981;
+            color: #000;
+        }
+        /* Additional styles for new animations */
+        .spec-card {
+            background-color: rgba(17, 24, 39, 0.5); /* bg-gray-900/50 */
+            border: 1px solid #065f46; /* border-green-800 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1.5rem; /* p-6 */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem; /* gap-6 */
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .spec-card {
+                grid-template-columns: 1fr;
+            }
+        }
+        .anim-container {
+            min-height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #000;
+            border-radius: 0.5rem;
+            border: 1px solid #047857;
+            overflow: hidden;
+        }
+        /* Workflow Animation Styles */
+        .workflow-component {
+            border: 2px solid #047857;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .workflow-gpu {
+            width: 80px;
+            height: 100px;
+        }
+        .workflow-signal {
+            position: absolute;
+            background-color: #fde047; /* yellow-400 */
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            box-shadow: 0 0 10px #fde047;
+            opacity: 0;
+        }
+        .workflow-status {
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #047857;
+        }
+        /* Compression Animation Styles */
+        .context-box {
+            border: 1px solid #065f46;
+            background-color: rgba(17, 24, 39, 0.5);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .context-box.active {
+            border-color: #fde047;
+            box-shadow: 0 0 10px #fde047;
+        }
+        .data-packet {
+            position: absolute;
+            background-color: #6ee7b7;
+            color: #000;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        /* Predictive Animation Styles */
+        .timeline-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #1f2937;
+            border: 1px solid #065f46;
+            border-radius: 2px;
+            position: relative;
+        }
+        .timeline-segment {
+            position: absolute;
+            height: 100%;
+            top: 0;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #000;
+            font-weight: bold;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <!-- Main Title -->
+    <h1 class="text-3xl md:text-4xl font-bold text-green-200 mb-6 text-center">
+        Tutorial: Building a 9-Point GPU Frequency Chart for NVIDIA H200
+    </h1>
+    <p class="text-center mb-8 text-green-400 max-w-3xl mx-auto">
+        When building a voltage-frequency (V-F) curve, you must understand the GPU's data-transfer ceilings. This tutorial explains why these ceilings exist and how to design advanced data systems that work with them, not against them, using the GPU's own frequency states as a high-speed synchronization mechanism.
+    </p>
+
+    <!-- Section: Data Transfer Ceilings & Coherency -->
+    <section class="my-12">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">The Physical Limit: Data Transfer Ceilings</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+                <p class="text-lg leading-relaxed mb-4">
+                    A <strong class="text-green-300">data transfer ceiling</strong> is the maximum rate (bandwidth) at which data can be moved between two points in a system. Think of it as a highway's speed limit—no matter how fast your GPU "computes," it can only send or receive data as fast as the physical connection allows.
+                </p>
+                <p class="text-lg leading-relaxed">
+                    This directly impacts <strong class="text-green-300">frequency coherency</strong> between CUDA kernels on different GPUs. If one kernel produces data faster than the interconnect (like NVLink) can transfer it, the receiving kernel is forced to wait, creating a bottleneck. The system's performance becomes limited by the transfer ceiling, not the GPU's clock speed.
+                </p>
+            </div>
+            <!-- Animation Visualization -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800 h-80 flex flex-col justify-center items-center relative">
+                <div class="w-full flex justify-around items-end h-48">
+                    <!-- Kernel A -->
+                    <div class="text-center">
+                        <div id="kernelAStatus" class="h-6 text-green-300 font-semibold">Processing</div>
+                        <div class="w-20 h-40 bg-gray-800 rounded-t-lg relative overflow-hidden">
+                            <div id="kernelA" class="absolute bottom-0 w-full bg-green-600 transition-all duration-500" style="height: 0%;"></div>
+                        </div>
+                        <div class="font-bold text-green-200 mt-2">Kernel A (GPU 1)</div>
+                    </div>
+                    <!-- Interconnect Pipe -->
+                    <div class="absolute top-1/2 left-0 right-0 flex justify-center items-center h-8" style="margin-top: 1rem;">
+                         <div class="w-2/5 h-4 bg-gray-700 border-2 border-green-800 rounded relative">
+                            <div id="nvlinkPipe" class="relative w-full h-full"></div>
+                            <div class="absolute -top-6 w-full text-center text-green-400 text-sm">NVLink (900 GB/s Ceiling)</div>
+                         </div>
+                    </div>
+                    <!-- Kernel B -->
+                    <div class="text-center">
+                        <div id="kernelBStatus" class="h-6 text-gray-500 font-semibold">Waiting</div>
+                        <div class="w-20 h-40 bg-gray-800 rounded-t-lg relative overflow-hidden">
+                            <div id="kernelB" class="absolute bottom-0 w-full bg-green-600 transition-all duration-500" style="height: 0%;"></div>
+                        </div>
+                        <div class="font-bold text-green-200 mt-2">Kernel B (GPU 2)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Section: Beyond Brute Force -->
+    <section class="my-12">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Beyond Brute Force: The Future of GPU Efficiency</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <!-- Explanation -->
+            <div>
+                <p class="text-lg leading-relaxed mb-4">
+                    Simply adding more GPUs (lateral scaling) eventually hits a wall. The time spent waiting for data transfers becomes the dominant bottleneck (<strong class="text-green-300">Amdahl's Law</strong>). The solution is not just more power, but a smarter data architecture.
+                </p>
+                <p class="text-lg leading-relaxed mb-4">
+                    Instead of moving bulky, raw data, we can move <strong class="text-green-300">symbolic data</strong>. A tiny symbol can represent a complex operation or a large data block, which is then reconstructed locally. This dramatically reduces traffic on the interconnect.
+                </p>
+                <p class="text-lg leading-relaxed">
+                    We can evolve this into a <strong class="text-green-300">continuous, symbolic stream</strong>—a shared state that encodes data in its very structure, like the tessellating grid shown here. Agents don't send messages; they observe and modify this shared world.
+                </p>
+            </div>
+            <!-- Symbolic Grid Animation -->
+            <div class="bg-gray-900/50 p-6 rounded-lg border border-green-800 flex flex-col justify-center items-center">
+                <div id="symbolicGrid" class="grid grid-cols-3 gap-1 mb-4">
+                    <!-- Cells will be generated by JS -->
+                </div>
+                <div class="text-center">
+                    <p class="font-semibold text-green-200">Current Frequency Sync:</p>
+                    <p id="frequencyDisplay" class="text-2xl font-bold text-green-300 tabular-nums">1575 MHz</p>
+                    <p class="text-green-400">(State: <span id="stateDisplay" class="font-mono">C</span>)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <h2 class="text-3xl font-bold text-green-200 mb-6 text-center mt-16">Visualizing the 6 Key Bandwidth Specs</h2>
+    
+    <!-- Main Content Grid -->
+    <div class="space-y-8">
+        <!-- Spec cards 1-6 -->
+         <div class="spec-card">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-2">1. Core Frequency Range</h3>
+                <p class="leading-relaxed">This is the operational speed of the GPU's processing cores. The 9 V-F points for our symbolic sync are partitioned between the base and boost clocks. Higher frequencies offer more computational power but consume more energy.</p>
+            </div>
+            <div class="anim-container">
+                <div id="freq-anim" class="w-full h-full p-4 flex flex-col justify-center items-center"></div>
+            </div>
+        </div>
+        <div class="spec-card">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-2">2. On-Package Memory (HBM3e)</h3>
+                <p class="leading-relaxed">This is the ultra-fast highway between the GPU cores and their local HBM3e memory. With a massive <strong class="text-green-300">4.8 TB/s</strong> ceiling, it's essential for feeding the cores the data they need to process symbols and perform computations.</p>
+            </div>
+            <div id="hbm-anim" class="anim-container"></div>
+        </div>
+        <div class="spec-card">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-2">3. MIG Slice Bandwidth</h3>
+                <p class="leading-relaxed">Multi-Instance GPU (MIG) allows a single H200 to be partitioned into up to 7 smaller, independent GPUs. The total memory bandwidth is divided among them, creating smaller, isolated processing domains, each with its own portion of the symbolic stream.</p>
+            </div>
+            <div id="mig-anim" class="anim-container p-4"></div>
+        </div>
+        <div class="spec-card">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-2">4. Inter-GPU Fabric (NVLink)</h3>
+                <p class="leading-relaxed">NVLink provides a <strong class="text-green-300">900 GB/s</strong> direct connection between GPUs. This is the ceiling we aim to overcome with efficient symbolic data transfer, ensuring that communication between kernels doesn't become the primary bottleneck.</p>
+            </div>
+            <div id="nvlink-anim" class="anim-container"></div>
+        </div>
+        <div class="spec-card">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-2">5. Host-GPU Bus (PCIe)</h3>
+                <p class="leading-relaxed">The PCIe bus connects the GPU to the host system's CPU and RAM. At <strong class="text-green-300">128 GB/s</strong>, it's significantly slower than NVLink and is typically used by the master distribution agent to initiate high-level state changes rather than for continuous data streaming.</p>
+            </div>
+            <div id="pcie-anim" class="anim-container"></div>
+        </div>
+        <div class="spec-card">
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-2">6. Thermal & Power Envelope (TDP)</h3>
+                <p class="leading-relaxed">Each frequency state has an associated power cost. The Thermal Design Power (TDP) is the maximum power the GPU can draw, up to <strong class="text-green-300">700W</strong>. Pushing against this limit for too long will cause the GPU to throttle its frequency to prevent overheating.</p>
+            </div>
+            <div class="anim-container">
+                <div id="tdp-anim" class="w-full h-full p-4 flex flex-col justify-center items-center"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Putting It All Together Section -->
+    <section class="my-12">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Putting It All Together: The Workflow Animation</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center bg-gray-900/50 p-6 rounded-lg border border-green-800 min-h-[480px]">
+            <!-- Text description -->
+            <div class="lg:col-span-2">
+                <ol id="workflow-steps" class="list-decimal list-inside space-y-3 text-lg leading-relaxed">
+                    <li data-step="1" class="transition-all duration-300">A master <strong class="text-green-400">distribution agent</strong> decides a global state change is needed.</li>
+                    <li data-step="2" class="transition-all duration-300 opacity-50">It issues a hardware-level command to change the operating frequency of all GPUs.</li>
+                    <li data-step="3" class="transition-all duration-300 opacity-50">This frequency change acts as a <strong class="text-green-400">near-instantaneous broadcast signal</strong>.</li>
+                    <li data-step="4" class="transition-all duration-300 opacity-50">Every kernel detects this and knows which symbolic logic to execute.</li>
+                    <li data-step="5" class="transition-all duration-300 opacity-50">Kernels interact with the shared symbolic grid according to the new state.</li>
+                </ol>
+            </div>
+            <!-- Animation -->
+            <div class="lg:col-span-3 h-[430px] bg-black rounded border border-green-800 relative p-4" id="workflow-container">
+                <!-- Master Agent -->
+                <div id="wf-agent" class="workflow-component absolute top-4 left-1/2 -translate-x-1/2">
+                    Master Agent
+                    <div id="wf-agent-status" class="absolute -top-8 left-1/2 -translate-x-1/2 w-max text-sm workflow-status opacity-0"></div>
+                </div>
+                
+                <!-- GPUs -->
+                <div class="absolute top-1/3 w-full flex justify-around">
+                    <div id="wf-gpu-0" class="workflow-component workflow-gpu flex flex-col justify-center items-center">
+                        <span>GPU 0</span>
+                        <span class="text-sm text-green-400" id="wf-gpu-0-freq">1575 MHz</span>
+                    </div>
+                    <div id="wf-gpu-1" class="workflow-component workflow-gpu flex flex-col justify-center items-center">
+                        <span>GPU 1</span>
+                        <span class="text-sm text-green-400" id="wf-gpu-1-freq">1575 MHz</span>
+                    </div>
+                    <div id="wf-gpu-2" class="workflow-component workflow-gpu flex flex-col justify-center items-center">
+                        <span>GPU 2</span>
+                        <span class="text-sm text-green-400" id="wf-gpu-2-freq">1575 MHz</span>
+                    </div>
+                </div>
+
+                <!-- Symbolic Grid -->
+                <div id="wf-grid-container" class="absolute bottom-4 left-1/2 -translate-x-1/2">
+                    <div class="text-center text-sm mb-2">Shared Symbolic Grid</div>
+                    <div id="wf-grid" class="grid grid-cols-3 gap-1"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Example Section -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Example V-F Chart as a Command Set</h2>
+        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto border border-green-800"><code>Point | Freq (MHz) | Symbolic State | Logical Action
+------+------------+----------------+-----------------------------------
+  1   |   1365     |       NW       | Process North-West interactions
+  2   |   1417     |       N        | Process North-South interactions
+  3   |   1470     |       NE       | Process North-East interactions
+  4   |   1522     |       W        | Process West-East interactions
+  5   |   1575     |       C        | Perform Center/Identity check
+  6   |   1627     |       E        | Process East-West interactions
+  7   |   1680     |       SW       | Process South-West interactions
+  8   |   1732     |       S        | Process South-North interactions
+  9   |   1785     |       SE       | Process South-East interactions</code></pre>
+    </section>
+
+    <!-- Real-World Implementation -->
+    <section class="my-12">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">From Theory to Practice: Real-World Implementation</h2>
+        <p class="text-lg leading-relaxed mb-6">
+            Translating this powerful concept into a working application involves three key components: a high-level library for hardware control, a master agent for orchestration, and frequency-aware kernels for execution.
+        </p>
+        <div class="space-y-8">
+            <!-- 1. Programming the Frequencies -->
+            <div>
+                <h3 class="text-xl font-semibold text-green-300 mb-2">1. Programming the Frequencies with NVML</h3>
+                <p class="mb-4">
+                    The <strong class="text-green-400">NVIDIA Management Library (NVML)</strong> is a C-based API that allows developers to programmatically monitor and control GPU hardware. The master distribution agent uses NVML to set the application clock speeds for all GPUs in the cluster, effectively broadcasting the new state command.
+                </p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto border border-green-800"><code>// Pseudo-code for the Master Distribution Agent
+#include &lt;nvml.h&gt;
+
+// Our 9 frequency states (in MHz)
+int frequency_states[] = {1365, 1417, 1470, 1522, 1575, 1627, 1680, 1732, 1785};
+
+void set_cluster_frequency_state(int state_index) {
+    // Get the target frequency for the desired state
+    int target_freq = frequency_states[state_index];
+
+    // Iterate over every GPU in the cluster
+    for (int i = 0; i < get_gpu_count(); ++i) {
+        nvmlDevice_t device = get_gpu_handle(i);
+
+        // Set the application clock for the graphics (gr) domain.
+        // This is a privileged operation.
+        nvmlDeviceSetApplicationsClocks(device, NVML_CLOCK_MEM, target_freq);
+        nvmlDeviceSetApplicationsClocks(device, NVML_CLOCK_GRAPHICS, target_freq);
+    }
+    printf("Cluster state changed. All GPUs set to %d MHz.\n", target_freq);
+}
+
+// Main loop of the agent
+void master_agent_loop() {
+    while (true) {
+        // Advanced logic to decide when to change state
+        int new_state = decide_next_computational_state(); 
+        set_cluster_frequency_state(new_state);
+        sleep(COMPUTATIONAL_EPOCH_DURATION);
+    }
+}</code></pre>
+            </div>
+
+            <!-- 2. The Distribution Agent -->
+            <div>
+                <h3 class="text-xl font-semibold text-green-300 mb-2">2. The Distribution Agent's Logic</h3>
+                <p>
+                    The master agent is the brain of the operation. It runs on the host CPU or a dedicated GPU and has a global view of the entire computation. Its `decide_next_computational_state()` function is where the high-level logic resides. It might change the state based on:
+                </p>
+                <ul class="list-disc list-inside mt-2 space-y-1">
+                    <li>A pre-defined schedule or script for the simulation.</li>
+                    <li>Real-time analysis of the data in the symbolic grid.</li>
+                    <li>Convergence criteria, where one phase of a calculation is complete.</li>
+                    <li>External input from a user or another system.</li>
+                </ul>
+            </div>
+
+            <!-- 3. Kernel-Level Awareness -->
+            <div>
+                <h3 class="text-xl font-semibold text-green-300 mb-2">3. Kernel-Level Frequency Awareness</h3>
+                <p class="mb-4">
+                    The CUDA kernels running on the GPUs must be able to react to the frequency change. While NVML is for the host, a kernel can read its own device's current clock speed. It uses this information to select the correct code path.
+                </p>
+                 <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto border border-green-800"><code>// Pseudo-code for a Frequency-Aware CUDA Kernel
+__global__ void symbolic_grid_kernel(SharedGrid* grid) {
+    // Special register to read the current graphics clock speed
+    unsigned int current_freq;
+    asm("mov.u32 %0, %clock;" : "=r"(current_freq));
+
+    // Determine which logic path to take based on the clock speed.
+    // A small tolerance is used to account for minor fluctuations.
+    if (current_freq > 1750) {
+        execute_se_logic(grid); // State 9: 1785 MHz
+    } else if (current_freq > 1700) {
+        execute_s_logic(grid);  // State 8: 1732 MHz
+    } else if (current_freq > 1650) {
+        execute_sw_logic(grid); // State 7: 1680 MHz
+    } 
+    // ... and so on for all 9 states
+    else {
+        execute_nw_logic(grid); // State 1: 1365 MHz
+    }
+}</code></pre>
+                
+                <h3 class="text-xl font-semibold text-green-300 mt-8 mb-2">Exploiting Frequency for Data Compression</h3>
+                <p class="mb-4">
+                    We can elevate this concept further by using frequency as a <strong class="text-green-400">"context pointer."</strong> The frequency change doesn't just switch the kernel's logic; it tells the kernel which "cluster" or "vector" of data to use for its calculations. This allows for incredible data compression, as the context is broadcast "for free" via the hardware state, leaving the high-latency NVLink bus free for pure, context-free symbolic data.
+                </p>
+                <div id="compression-anim-container" class="bg-gray-900/50 p-6 rounded-lg border border-green-800 min-h-[400px] relative">
+                    <!-- This will be populated by JS -->
+                </div>
+                
+                <h3 class="text-xl font-semibold text-green-300 mt-8 mb-2">Optimizing Performance: Predictive Switching and Latency Hiding</h3>
+                <p class="mb-4">
+                    Changing frequency isn't free. The hardware requires a few milliseconds to adjust voltages and stabilize the new clock signal (PLL lock). This "switching delay" can hurt performance if not managed. The key is to make the master agent intelligent enough to <strong class="text-green-400">predict the next required state</strong> and issue the change command *in advance*.
+                </p>
+                <p class="mb-4">
+                    By doing this, the physical switching delay is <strong class="text-green-400">hidden behind the kernel's current, ongoing work</strong>. From the kernel's perspective, the transition is seamless and instantaneous, as the hardware is already stable at the new frequency the moment it's ready for its next task.
+                </p>
+                <div id="predictive-anim-container" class="bg-gray-900/50 p-6 rounded-lg border border-green-800 min-h-[400px] relative space-y-4">
+                    <!-- This will be populated by JS -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW SECTION: Performance Ratios -->
+    <section class="my-12">
+        <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Performance Ratios: Switching Cost vs. Computational Gain</h2>
+        <p class="text-lg leading-relaxed mb-4">
+            The decision to switch frequencies is a trade-off. The core question is: Is the time gained by working in an optimal context greater than the time lost during the switch?
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h3 class="text-xl font-semibold text-green-300 mb-2">The Switching Cost</h3>
+                <p class="mb-2">
+                    Let's assume an average switching delay of <strong class="text-yellow-400">2 milliseconds</strong>. At a frequency of 1.5 GHz, the number of lost processing cycles is immense:
+                </p>
+                <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg border border-green-800"><code>1,500,000,000 cycles/sec * 0.002 sec = 3,000,000 cycles</code></pre>
+                <p class="mt-2">
+                    This cost must be justified. The ratio of work time to switching time is paramount.
+                </p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-red-400">Bad Scenario: Low Work-to-Cost Ratio (1:4)</h4>
+                    <p class="text-sm mb-1">Work Epoch: 0.5ms | Switching Cost: 2ms</p>
+                    <div class="timeline-bar">
+                        <div class="timeline-segment bg-red-500" style="left: 0%; width: 20%;">Work</div>
+                        <div class="timeline-segment bg-gray-500" style="left: 20%; width: 80%;">Switching Cost</div>
+                    </div>
+                    <p class="text-xs mt-1">Result: Massive performance loss. 80% of time is spent on overhead.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-green-300">Good Scenario: High Work-to-Cost Ratio (50:1)</h4>
+                    <p class="text-sm mb-1">Work Epoch: 100ms | Switching Cost: 2ms</p>
+                    <div class="timeline-bar">
+                        <div class="timeline-segment bg-green-500" style="left: 0%; width: 98%;">Work</div>
+                        <div class="timeline-segment bg-gray-500" style="left: 98%; width: 2%;">Cost</div>
+                    </div>
+                     <p class="text-xs mt-1">Result: Huge performance gain. Overhead is negligible.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-blue-400">Ideal Scenario: Predictive Switching (Infinite Ratio)</h4>
+                    <p class="text-sm mb-1">Work Epoch: 100ms | Effective Cost: 0ms</p>
+                    <div class="timeline-bar">
+                        <div class="timeline-segment bg-blue-500" style="left: 0%; width: 100%;">Work (Latency Hidden)</div>
+                    </div>
+                    <p class="text-xs mt-1">Result: Maximum efficiency. No time is wasted waiting for hardware.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-green-700 mt-12 text-sm">
+        <p>This tutorial is for educational purposes. Always refer to official NVIDIA documentation for precise specifications.</p>
+        <p>Find more resources at the <a href="#" class="text-green-400 hover:text-green-300 underline">NVIDIA Developer Zone</a>.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const states = [
+                { freq: 1365, name: 'NW' }, { freq: 1417, name: 'N' }, { freq: 1470, name: 'NE' },
+                { freq: 1522, name: 'W' },  { freq: 1575, name: 'C' }, { freq: 1627, name: 'E' },
+                { freq: 1680, name: 'SW' }, { freq: 1732, name: 'S' }, { freq: 1785, name: 'SE' }
+            ];
+
+            // Animation for Kernel-to-Kernel transfer
+            const kernelA = document.getElementById('kernelA');
+            const kernelB = document.getElementById('kernelB');
+            const kernelAStatus = document.getElementById('kernelAStatus');
+            const kernelBStatus = document.getElementById('kernelBStatus');
+            const nvlinkPipe = document.getElementById('nvlinkPipe');
+
+            const kernelTimeline = [
+                { duration: 2000, action: () => {
+                    kernelAStatus.textContent = 'Processing';
+                    kernelAStatus.classList.add('text-green-300');
+                    kernelAStatus.classList.remove('text-yellow-400');
+                    kernelA.style.height = '90%';
+                    kernelBStatus.textContent = 'Waiting';
+                    kernelBStatus.classList.add('text-gray-500');
+                    kernelBStatus.classList.remove('text-green-300');
+                }},
+                { duration: 2500, action: () => {
+                    kernelAStatus.textContent = 'Sending Data';
+                    kernelAStatus.classList.add('text-yellow-400');
+                    kernelAStatus.classList.remove('text-green-300');
+                    kernelA.style.height = '0%';
+                    for (let i = 0; i < 15; i++) {
+                        setTimeout(() => {
+                            if (document.hidden) return;
+                            const p = document.createElement('div');
+                            p.className = 'particle';
+                            nvlinkPipe.appendChild(p);
+                            p.animate([{ left: '0%', opacity: 1 }, { left: '100%', opacity: 0 }], { duration: 1500, easing: 'linear' });
+                            setTimeout(() => p.remove(), 1500);
+                        }, i * 100);
+                    }
+                }},
+                { duration: 2000, action: () => {
+                    kernelBStatus.textContent = 'Processing';
+                    kernelBStatus.classList.remove('text-gray-500');
+                    kernelBStatus.classList.add('text-green-300');
+                    kernelB.style.height = '90%';
+                }},
+                { duration: 1000, action: () => { kernelB.style.height = '0%'; }}
+            ];
+            
+            let currentKernelStep = 0;
+            function runKernelTimeline() {
+                if(!document.hidden) kernelTimeline[currentKernelStep].action();
+                setTimeout(() => {
+                    currentKernelStep = (currentKernelStep + 1) % kernelTimeline.length;
+                    runKernelTimeline();
+                }, kernelTimeline[currentKernelStep].duration);
+            }
+            runKernelTimeline();
+
+            // Animation for Symbolic Grid
+            const symbolicGrid = document.getElementById('symbolicGrid');
+            const frequencyDisplay = document.getElementById('frequencyDisplay');
+            const stateDisplay = document.getElementById('stateDisplay');
+            const cells = [];
+            
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.textContent = states[i].name;
+                symbolicGrid.appendChild(cell);
+                cells.push(cell);
+            }
+
+            let currentGridStep = 4; // Start at Center
+            function runGridTimeline() {
+                 if(!document.hidden) {
+                    const prevCell = cells.find(c => c.classList.contains('active'));
+                    if (prevCell) prevCell.classList.remove('active');
+                    cells[currentGridStep].classList.add('active');
+                    frequencyDisplay.textContent = `${states[currentGridStep].freq} MHz`;
+                    stateDisplay.textContent = states[currentGridStep].name;
+                    const moves = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+                    let nextStep = (currentGridStep + moves[Math.floor(Math.random() * moves.length)]) % 9;
+                    if(nextStep < 0) nextStep += 9;
+                    currentGridStep = nextStep;
+                }
+                setTimeout(runGridTimeline, 1500 + Math.random() * 500);
+            }
+            runGridTimeline();
+
+            // --- ANIMATIONS FOR 6 SPECS ---
+            function setupFreqAnim() {
+                const container = document.getElementById('freq-anim');
+                container.innerHTML = `
+                    <div class="w-full text-center mb-2">
+                        <span id="freq-label" class="text-2xl font-bold text-green-300">1365 MHz</span>
+                    </div>
+                    <div class="w-full h-4 bg-gray-700 rounded-full overflow-hidden border-2 border-green-800">
+                        <div id="freq-bar" class="h-full bg-green-500 rounded-full transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
+                    </div>
+                    <div class="w-full flex justify-between text-xs mt-1 text-green-400">
+                        <span>Base</span>
+                        <span>Boost</span>
+                    </div>
+                `;
+                const bar = document.getElementById('freq-bar');
+                const label = document.getElementById('freq-label');
+                const freqs = states.map(s => s.freq);
+                let i = 0;
+                setInterval(() => {
+                    if(!document.hidden) {
+                        const percent = (i / (freqs.length - 1)) * 100;
+                        bar.style.width = `${percent}%`;
+                        label.textContent = `${freqs[i]} MHz`;
+                        i = (i + 1) % freqs.length;
+                    }
+                }, 1500);
+            }
+            setupFreqAnim();
+            
+            function spawnParticles(container, count, duration, style) {
+                if (document.hidden || !container) return;
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        const p = document.createElement('div');
+                        p.className = 'particle';
+                        container.appendChild(p);
+                        let anim;
+                        if (style === 'hbm') {
+                            const startX = Math.random() < 0.5 ? -5 : 105;
+                            const startY = Math.random() * 100;
+                            const endX = 100 - startX;
+                            const endY = Math.random() * 100;
+                            
+                            p.style.transform = 'translate(-50%, -50%)';
+                            anim = p.animate([
+                                { left: `${startX}%`, top: `${startY}%`, opacity: 1 },
+                                { left: `${endX}%`, top: `${endY}%`, opacity: 0 }
+                            ], { duration: duration, easing: 'ease-in' });
+
+                        } else {
+                            const startY = Math.random() * 80 + 10;
+                            p.style.top = `${startY}%`;
+                            p.style.transform = 'translateY(-50%)';
+                            anim = p.animate([
+                                { left: '-5px', opacity: 1 },
+                                { left: 'calc(100% + 5px)', opacity: 0 }
+                            ], { duration: duration, easing: 'linear' });
+                        }
+                        if (anim) {
+                            anim.onfinish = () => p.remove();
+                        } else {
+                            p.remove();
+                        }
+                    }, Math.random() * duration);
+                }
+            }
+
+            function setupHbmAnim() {
+                const container = document.getElementById('hbm-anim');
+                container.innerHTML = `
+                    <div class="text-green-300 font-bold text-lg z-10 p-2 bg-black/50 rounded">GPU Cores</div>
+                    <div class="absolute top-0 left-0 w-full h-full" id="hbm-particles"></div>
+                `;
+                setInterval(() => spawnParticles(container.querySelector('#hbm-particles'), 50, 1200, 'hbm'), 500);
+            }
+            setupHbmAnim();
+            function setupMigAnim() {
+                const container = document.getElementById('mig-anim');
+                container.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-around transition-all duration-1000" id="mig-container">
+                        <div class="w-2/3 h-2/3 bg-green-800 rounded-lg flex justify-center items-center text-green-200 font-bold">H200 GPU</div>
+                    </div>
+                `;
+                const migContainer = document.getElementById('mig-container');
+                let isSplit = false;
+                setInterval(() => {
+                    if(document.hidden) return;
+                    isSplit = !isSplit;
+                    if(isSplit) {
+                        migContainer.innerHTML = Array(7).fill(0).map((_, i) => `
+                            <div class="w-1/8 h-2/3 bg-green-600 rounded flex justify-center items-center text-xs text-black font-bold p-1">MIG ${i+1}</div>
+                        `).join('');
+                        migContainer.classList.add('gap-2');
+                    } else {
+                        migContainer.innerHTML = `<div class="w-2/3 h-2/3 bg-green-800 rounded-lg flex justify-center items-center text-green-200 font-bold">H200 GPU</div>`;
+                        migContainer.classList.remove('gap-2');
+                    }
+                }, 3000);
+            }
+            setupMigAnim();
+            function setupPipeAnim(id, particleCount, duration) {
+                const container = document.getElementById(id);
+                container.innerHTML = `
+                    <div class="absolute left-4 text-green-300 font-bold">${id === 'nvlink-anim' ? 'GPU A' : 'Host'}</div>
+                    <div class="w-2/3 h-6 bg-gray-700 border-2 border-green-800 rounded-full relative" id="${id}-pipe"></div>
+                    <div class="absolute right-4 text-green-300 font-bold">${id === 'nvlink-anim' ? 'GPU B' : 'GPU'}</div>
+                `;
+                setInterval(() => spawnParticles(container.querySelector(`#${id}-pipe`), particleCount, duration, 'pipe'), duration / (particleCount / 2));
+            }
+            setupPipeAnim('nvlink-anim', 20, 1500);
+            setupPipeAnim('pcie-anim', 5, 2000);
+            function setupTdpAnim() {
+                const container = document.getElementById('tdp-anim');
+                container.innerHTML = `
+                     <div class="w-full text-center mb-2">
+                        <span id="tdp-label" class="text-2xl font-bold text-green-300">350 W</span>
+                    </div>
+                    <div class="w-24 h-48 bg-gray-800 border-2 border-green-800 rounded-lg relative overflow-hidden">
+                        <div id="tdp-mercury" class="absolute bottom-0 left-0 w-full bg-green-500 transition-all duration-1000"></div>
+                        <div class="absolute bottom-3/4 left-0 w-full border-t-2 border-dashed border-red-500"></div>
+                        <div class="absolute bottom-3/4 left-24 text-red-500 text-xs">700W Limit</div>
+                    </div>
+                `;
+                const mercury = document.getElementById('tdp-mercury');
+                const label = document.getElementById('tdp-label');
+                let power = 350;
+                let direction = 1;
+                setInterval(() => {
+                    if(document.hidden) return;
+                    power += direction * (Math.random() * 50);
+                    if (power > 700) { power = 700; direction = -1; mercury.classList.add('bg-red-500'); }
+                    else if (power < 300) { power = 300; direction = 1; }
+                    else { mercury.classList.remove('bg-red-500'); mercury.classList.add('bg-green-500'); }
+                    
+                    const percent = (power / 800) * 100; // use 800 to not hit the top
+                    mercury.style.height = `${percent}%`;
+                    label.textContent = `${Math.round(power)} W`;
+                }, 2000);
+            }
+            setupTdpAnim();
+
+            // --- WORKFLOW ANIMATION ---
+            const wfContainer = document.getElementById('workflow-container');
+            const wfSteps = document.querySelectorAll('#workflow-steps li');
+            const wfAgent = document.getElementById('wf-agent');
+            const wfAgentStatus = document.getElementById('wf-agent-status');
+            const wfGpus = [document.getElementById('wf-gpu-0'), document.getElementById('wf-gpu-1'), document.getElementById('wf-gpu-2')];
+            const wfGpuFreqs = [document.getElementById('wf-gpu-0-freq'), document.getElementById('wf-gpu-1-freq'), document.getElementById('wf-gpu-2-freq')];
+            const wfGrid = document.getElementById('wf-grid');
+            const wfGridCells = [];
+
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell !w-10 !h-10 text-xs';
+                cell.textContent = states[i].name;
+                wfGrid.appendChild(cell);
+                wfGridCells.push(cell);
+            }
+
+            function animateSignal(fromElem, toElem, onFinish) {
+                const signal = document.createElement('div');
+                signal.className = 'workflow-signal';
+                wfContainer.appendChild(signal);
+
+                const startRect = fromElem.getBoundingClientRect();
+                const endRect = toElem.getBoundingClientRect();
+                const containerRect = wfContainer.getBoundingClientRect();
+
+                const startX = startRect.left + startRect.width / 2 - containerRect.left;
+                const startY = startRect.top + startRect.height / 2 - containerRect.top;
+                const endX = endRect.left + endRect.width / 2 - containerRect.left;
+                const endY = endRect.top + endRect.height / 2 - containerRect.top;
+
+                signal.style.left = `${startX}px`;
+                signal.style.top = `${startY}px`;
+
+                const anim = signal.animate([
+                    { left: `${startX}px`, top: `${startY}px`, opacity: 1 },
+                    { left: `${endX}px`, top: `${endY}px`, opacity: 1 }
+                ], { duration: 800, easing: 'ease-in-out' });
+
+                anim.onfinish = () => {
+                    signal.remove();
+                    if (onFinish) onFinish();
+                };
+            }
+
+            const workflowTimeline = [
+                // Step 1: Agent decides
+                { duration: 2000, action: (state) => {
+                    wfAgent.style.borderColor = '#fde047';
+                    wfAgentStatus.textContent = `Change state to ${state.name}`;
+                    wfAgentStatus.style.opacity = 1;
+                }},
+                // Step 2: Agent sends command
+                { duration: 1000, action: () => {
+                    wfGpus.forEach(gpu => animateSignal(wfAgent, gpu));
+                }},
+                // Step 3: GPUs receive and change freq
+                { duration: 1000, action: (state) => {
+                    wfAgent.style.borderColor = '#047857';
+                    wfAgentStatus.style.opacity = 0;
+                    wfGpus.forEach((gpu, i) => {
+                        gpu.style.borderColor = '#fde047';
+                        wfGpuFreqs[i].textContent = `${state.freq} MHz`;
+                    });
+                }},
+                // Step 4: Kernels interpret
+                { duration: 2000, action: (state) => {
+                     wfGpus.forEach((gpu) => {
+                        const status = document.createElement('div');
+                        status.className = 'absolute -bottom-7 text-xs workflow-status';
+                        status.textContent = `Exec: ${state.name}`;
+                        gpu.appendChild(status);
+                        setTimeout(() => status.remove(), 1800);
+                     });
+                }},
+                // Step 5: Interact with grid
+                { duration: 1500, action: (state) => {
+                    wfGpus.forEach(gpu => {
+                        gpu.style.borderColor = '#047857';
+                        const targetCell = wfGridCells.find(c => c.textContent === state.name);
+                        if(targetCell) {
+                           animateSignal(gpu, targetCell, () => {
+                                targetCell.classList.add('!bg-yellow-400', '!text-black');
+                                setTimeout(() => targetCell.classList.remove('!bg-yellow-400', '!text-black'), 800);
+                           });
+                        }
+                    });
+                }}
+            ];
+
+            let wfCurrentStep = 0;
+            let wfCurrentStateIndex = 0;
+
+            function runWorkflow() {
+                if(document.hidden) {
+                    setTimeout(runWorkflow, 1000);
+                    return;
+                }
+                const currentState = states[wfCurrentStateIndex];
+                const stepDef = workflowTimeline[wfCurrentStep];
+                
+                // Highlight text step
+                wfSteps.forEach((li, i) => {
+                    li.classList.toggle('opacity-50', i + 1 !== wfCurrentStep + 1);
+                    li.classList.toggle('text-green-300', i + 1 === wfCurrentStep + 1);
+                });
+
+                stepDef.action(currentState);
+                
+                setTimeout(() => {
+                    wfCurrentStep++;
+                    if (wfCurrentStep >= workflowTimeline.length) {
+                        wfCurrentStep = 0;
+                        wfCurrentStateIndex = Math.floor(Math.random() * states.length);
+                    }
+                    runWorkflow();
+                }, stepDef.duration);
+            }
+            runWorkflow();
+            
+            // --- COMPRESSION ANIMATION ---
+            function setupCompressionAnimation() {
+                const container = document.getElementById('compression-anim-container');
+                container.innerHTML = `
+                    <div class="absolute top-2 left-2 text-lg font-bold text-green-200">Frequency as a Context Pointer</div>
+                    <div class="absolute top-10 left-2 text-sm" id="comp-status">1. Master Agent selects context...</div>
+                    
+                    <div id="comp-encoder-gpu" class="absolute top-1/4 left-10 workflow-component">Encoder GPU</div>
+                    <div id="comp-decoder-gpu" class="absolute top-1/4 right-10 workflow-component">Decoder GPU</div>
+                    
+                    <div class="absolute" style="top: 28%; left: calc(25% + 20px); right: calc(25% + 20px);">
+                        <div class="w-full h-2 bg-gray-700 border-y border-green-800 relative"></div>
+                        <div class="text-center text-sm text-green-400">NVLink</div>
+                    </div>
+                    
+                    <div id="comp-decoder-memory" class="absolute bottom-4 right-10 space-y-2">
+                        <div class="text-center text-sm">Decoder Memory</div>
+                        <div id="comp-ctx-0" class="context-box">Context: Smooth (1470 MHz)</div>
+                        <div id="comp-ctx-1" class="context-box">Context: Reactive (1627 MHz)</div>
+                        <div id="comp-ctx-2" class="context-box">Context: Erratic (1785 MHz)</div>
+                    </div>
+                    
+                    <div id="comp-decoder-status" class="absolute bottom-4 left-10 text-sm workflow-status opacity-0"></div>
+                `;
+
+                const status = document.getElementById('comp-status');
+                const decoderGpu = document.getElementById('comp-decoder-gpu');
+                const decoderStatus = document.getElementById('comp-decoder-status');
+                const contexts = [
+                    { name: "Smooth", freq: 1470, elem: document.getElementById('comp-ctx-0') },
+                    { name: "Reactive", freq: 1627, elem: document.getElementById('comp-ctx-1') },
+                    { name: "Erratic", freq: 1785, elem: document.getElementById('comp-ctx-2') }
+                ];
+
+                const compTimeline = [
+                    { duration: 2000, action: (ctx) => {
+                        status.textContent = `1. Master Agent selects context: ${ctx.name}`;
+                    }},
+                    { duration: 1500, action: (ctx) => {
+                        status.textContent = `2. Broadcasting frequency change to ${ctx.freq} MHz...`;
+                        if (decoderGpu) decoderGpu.style.borderColor = '#fde047';
+                    }},
+                    { duration: 1500, action: (ctx) => {
+                        status.textContent = `3. Encoder sends compressed symbol over NVLink.`;
+                        if (decoderGpu) decoderGpu.style.borderColor = '#047857';
+                        const packet = document.createElement('div');
+                        packet.className = 'data-packet';
+                        packet.textContent = `Symbol: 10`;
+                        packet.style.top = '28%';
+                        packet.style.left = '25%';
+                        container.appendChild(packet);
+                        packet.animate([
+                            { left: '25%' }, { left: 'calc(75% - 100px)' }
+                        ], { duration: 1300, easing: 'linear' }).onfinish = () => packet.remove();
+                    }},
+                    { duration: 2000, action: (ctx) => {
+                        status.textContent = `4. Decoder checks its frequency (${ctx.freq} MHz)...`;
+                        decoderStatus.textContent = `Clock: ${ctx.freq} MHz. Mode: ${ctx.name}.`;
+                        decoderStatus.style.opacity = 1;
+                    }},
+                    { duration: 2500, action: (ctx) => {
+                        status.textContent = `5. ...and uses it to select the correct memory context.`;
+                        contexts.forEach(c => c.elem.classList.remove('active'));
+                        if (ctx.elem) ctx.elem.classList.add('active');
+                        decoderStatus.textContent = `Lookup Symbol 10 in '${ctx.name}' cluster.`;
+                    }},
+                    { duration: 1500, action: () => {
+                        status.textContent = `Waiting for next context...`;
+                        decoderStatus.style.opacity = 0;
+                        contexts.forEach(c => {
+                            if (c.elem) c.elem.classList.remove('active');
+                        });
+                    }}
+                ];
+
+                let compStep = 0;
+                let compCtxIndex = 0;
+                function runCompTimeline() {
+                    if (document.hidden) {
+                        setTimeout(runCompTimeline, 1000);
+                        return;
+                    }
+                    const currentContext = contexts[compCtxIndex];
+                    const stepDef = compTimeline[compStep];
+                    stepDef.action(currentContext);
+
+                    setTimeout(() => {
+                        compStep++;
+                        if (compStep >= compTimeline.length) {
+                            compStep = 0;
+                            compCtxIndex = (compCtxIndex + 1) % contexts.length;
+                        }
+                        runCompTimeline();
+                    }, stepDef.duration);
+                }
+                runCompTimeline();
+            }
+            setupCompressionAnimation();
+            
+            // --- PREDICTIVE SWITCHING ANIMATION ---
+            function setupPredictiveAnimation() {
+                const container = document.getElementById('predictive-anim-container');
+                container.innerHTML = `
+                    <div class="absolute top-2 left-2 text-lg font-bold text-green-200">Predictive Switching & Latency Hiding</div>
+                    <div id="pred-status" class="absolute top-10 left-2 text-sm">Monitoring data stream...</div>
+
+                    <div class="absolute w-full px-4" style="top: 25%;">
+                        <div class="text-sm mb-1">Master Agent Analysis</div>
+                        <div id="pred-data-stream" class="w-full h-10 border border-green-800 bg-gray-900 rounded flex items-center p-1"></div>
+                    </div>
+
+                    <div class="absolute w-full px-4" style="top: 50%;">
+                        <div class="text-sm mb-1">GPU Hardware State</div>
+                        <div id="pred-gpu-timeline" class="timeline-bar"></div>
+                    </div>
+                    
+                    <div class="absolute w-full px-4" style="top: 75%;">
+                        <div class="text-sm mb-1">Kernel Execution</div>
+                        <div id="pred-kernel-timeline" class="timeline-bar"></div>
+                    </div>
+                `;
+
+                const status = document.getElementById('pred-status');
+                const dataStream = document.getElementById('pred-data-stream');
+                const gpuTimeline = document.getElementById('pred-gpu-timeline');
+                const kernelTimeline = document.getElementById('pred-kernel-timeline');
+                
+                const predTimeline = [
+                    { dur: 3000, action: () => {
+                        status.textContent = "Monitoring data stream for patterns...";
+                        dataStream.innerHTML = `<div class="text-gray-400">Angular Velocity: 3.14 rad/s</div>`;
+                        gpuTimeline.innerHTML = `<div class="timeline-segment bg-green-600" style="left: 0; width: 100%;">Stable (Context A)</div>`;
+                        kernelTimeline.innerHTML = `<div class="timeline-segment bg-green-400" style="left: 0; width: 100%;">Executing Logic A</div>`;
+                    }},
+                    { dur: 2000, action: () => {
+                        status.innerHTML = `<strong>Predictive Trigger!</strong> Velocity > 5.0. Pre-emptively switching to Context B.`;
+                        dataStream.innerHTML = `<div class="text-yellow-400 font-bold">Angular Velocity: 5.12 rad/s</div>`;
+                        // No change to timelines yet, command is just issued
+                    }},
+                    { dur: 2500, action: () => {
+                        status.textContent = "Latency Hiding: Hardware switches while kernel finishes its current work.";
+                        // GPU starts switching
+                        gpuTimeline.innerHTML = `
+                            <div class="timeline-segment bg-green-600" style="left: 0; width: 20%;">Stable (A)</div>
+                            <div class="timeline-segment bg-yellow-500 animate-pulse" style="left: 20%; width: 80%;">Switching... (2ms delay)</div>
+                        `;
+                        // Kernel continues its old work
+                        kernelTimeline.innerHTML = `
+                             <div class="timeline-segment bg-green-400" style="left: 0; width: 100%;">Finishing Logic A</div>
+                        `;
+                    }},
+                    { dur: 2000, action: () => {
+                        status.textContent = "Seamless Transition: Hardware is stable just as kernel is ready for new task.";
+                        gpuTimeline.innerHTML = `<div class="timeline-segment bg-blue-500" style="left: 0; width: 100%;">Stable (Context B)</div>`;
+                        kernelTimeline.innerHTML = `<div class="timeline-segment bg-blue-300" style="left: 0; width: 100%;">Executing Logic B</div>`;
+                    }},
+                ];
+
+                let predStep = 0;
+                function runPredTimeline() {
+                    if (document.hidden) {
+                        setTimeout(runPredTimeline, 1000);
+                        return;
+                    }
+                    const stepDef = predTimeline[predStep];
+                    stepDef.action();
+                    setTimeout(() => {
+                        predStep = (predStep + 1) % predTimeline.length;
+                        runPredTimeline();
+                    }, stepDef.dur);
+                }
+                runPredTimeline();
+            }
+            setupPredictiveAnimation();
+        });
+    </script>
+</body>
+</html>

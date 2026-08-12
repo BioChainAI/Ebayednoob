@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Tutorial: RAN Cortex Memory</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for animations and interactive elements */
+        .dot {
+            transition: transform 1s ease-in-out;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+        }
+        .vector {
+            transition: all 0.5s ease-in-out;
+            border: 2px solid transparent;
+        }
+        .highlight-vector {
+            border-color: #4ade80; /* green-400 */
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 15px #4ade80;
+        }
+        .code-editor {
+            background-color: #020617; /* slate-950 */
+            border: 1px solid #3b82f6; /* blue-500 */
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .console {
+            background-color: #111827; /* gray-900 */
+            border-top: 1px solid #374151; /* gray-700 */
+            min-height: 100px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .animated-component {
+            transition: all 0.7s ease-in-out;
+        }
+        .fade-in {
+            opacity: 1 !important;
+        }
+        .path-line {
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <!-- Main Title -->
+    <header class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-4">RAN Cortex: An Interactive Guide</h1>
+        <p class="text-lg text-green-400">Transforming RAN Intelligence with Memory</p>
+        <p class="text-sm text-green-600 mt-2">Based on the paper by Sebastian Barros (May 1st, 2025)</p>
+    </header>
+
+    <!-- The Problem: Stateless RANs -->
+    <section class="mb-16">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">The Problem: Stateless RANs</h2>
+        <p class="text-lg leading-relaxed mb-8 max-w-4xl mx-auto text-center">
+            Modern AI agents in Radio Access Networks (xApps/rApps) are powerful but have a critical flaw: they are <strong class="text-green-200">stateless</strong>. They treat every event as new, unable to remember past situations. This is like a doctor diagnosing a patient without access to their medical history—inefficient and prone to repeating mistakes.
+        </p>
+        
+        <div class="grid md:grid-cols-2 gap-8 items-start">
+            <!-- Stateless Model -->
+            <div class="border border-green-800 p-6 rounded-lg bg-green-900/10">
+                <h3 class="text-2xl font-bold text-green-200 mb-4 text-center">Traditional Stateless RAN</h3>
+                <div id="stateless-animation-container" class="relative h-48 flex justify-between items-center px-4">
+                    <div class="text-center">State</div>
+                    <div class="flex-grow h-0.5 bg-green-800 mx-2"></div>
+                    <div class="text-center">xApp</div>
+                    <div id="stateless-dot" class="dot w-4 h-4 bg-green-400 rounded-full" style="transform: translate(-120px, -50%);"></div>
+                </div>
+                 <button id="run-stateless" class="w-full mt-4 bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Run Simulation
+                </button>
+            </div>
+
+            <!-- Stateful Model with RAN Cortex -->
+            <div class="border border-green-500 p-6 rounded-lg bg-green-900/20">
+                <h3 class="text-2xl font-bold text-green-200 mb-4 text-center">RAN with Cortex Memory</h3>
+                <div id="stateful-animation-container" class="relative h-48">
+                    <div class="absolute top-1/2 left-4 -translate-y-1/2">State</div>
+                    <div class="absolute top-8 left-1/2 -translate-x-1/2">Cortex</div>
+                    <div class="absolute top-1/2 right-4 -translate-y-1/2">xApp</div>
+                    <div id="stateful-dot" class="dot w-4 h-4 bg-green-300 rounded-full" style="transform: translate(-130px, 0px);"></div>
+                </div>
+                <button id="run-stateful" class="w-full mt-4 bg-green-500 hover:bg-green-400 text-black font-bold py-2 px-4 rounded-lg transition-colors">
+                    Run Simulation
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Solution: RAN Cortex Architecture -->
+    <section class="mb-16">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">The Solution: RAN Cortex Architecture</h2>
+        <p class="text-lg leading-relaxed mb-8 max-w-4xl mx-auto text-center">
+            RAN Cortex gives the network a <strong class="text-green-200">memory</strong>. It's a modular layer that records past network events and allows AI agents to query this history. Let's walk through the components that make this possible.
+        </p>
+
+        <!-- Interactive 4-Step Visualization -->
+        <div class="border border-green-700 p-6 rounded-lg bg-green-900/10 min-h-[350px] md:min-h-[300px]">
+            <div id="recall-visualization" class="relative h-full">
+                <!-- Step 1: Context Encoder -->
+                <div id="step1" class="animated-component opacity-0 w-full" style="display: none;">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">Step 1: Context Encoder</h3>
+                    <p class="mb-4">The current network state (KPIs, logs, etc.) is transformed into a compact, numerical representation called a vector embedding.</p>
+                    <div class="flex justify-center items-center gap-8 h-24 mt-8">
+                        <div id="raw-state" class="animated-component p-4 border border-dashed border-blue-400 rounded-lg text-center">Current<br>Network State</div>
+                        <div class="text-2xl text-green-400">&rarr;</div>
+                        <div id="encoded-vector" class="animated-component vector w-24 h-24 bg-blue-900/50 border-2 border-blue-400 rounded-lg flex items-center justify-center text-center p-2 opacity-0" style="transform: scale(0.5);">Vector<br>Embedding</div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Recall Engine & Memory Store -->
+                <div id="step2" class="animated-component opacity-0 w-full" style="display: none;">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">Step 2: Recall Engine & Memory Store</h3>
+                    <p class="mb-4">The new vector is sent to the Recall Engine, which searches the Vector Memory Store for the most similar past events.</p>
+                    <div class="flex flex-col md:flex-row gap-6 items-center mt-4">
+                        <div id="query-vector-step2" class="vector w-24 h-24 bg-blue-900/50 border-2 border-blue-400 rounded-lg flex items-center justify-center text-center p-2 flex-shrink-0">New Vector</div>
+                        <div class="text-5xl text-green-600 hidden md:block">&rarr;</div>
+                        <div class="text-5xl text-green-600 md:hidden">&darr;</div>
+                        <div id="memory-store" class="grid grid-cols-3 sm:grid-cols-4 gap-4 p-4 bg-gray-900 rounded-lg flex-grow">
+                            <!-- JS will populate these -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Policy Interface -->
+                 <div id="step3" class="animated-component opacity-0 w-full" style="display: none;">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">Step 3: Policy Interface</h3>
+                    <p class="mb-4">The retrieved memories (including past actions and outcomes) are bundled into an actionable context and sent back to the xApp via the Policy Interface.</p>
+                    <div class="flex justify-center items-center gap-8 h-48">
+                        <div id="retrieved-context" class="animated-component opacity-0 p-4 border border-dashed border-green-400 rounded-lg text-center bg-green-900/30">Retrieved Context:<br>- Past Action: 'none'<br>- Past Outcome: 'SLA_violation'</div>
+                        <div class="text-2xl text-green-400">&rarr;</div>
+                        <div class="p-4 rounded-lg text-center text-2xl font-bold text-green-100">xApp</div>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Parallel Systems -->
+                 <div id="step4" class="animated-component opacity-0 w-full" style="display: none;">
+                    <h3 class="text-xl font-bold text-green-200 mb-2">Step 4: Scalability in Parallel Systems</h3>
+                    <p class="mb-4">Cortex is designed for scale. Multiple, independent agents across different network slices or RICs can query the same shared memory store concurrently.</p>
+                    <div class="flex justify-center items-center h-48 relative">
+                        <div class="absolute top-0 left-10 text-center">xApp A<br>(Slice 1)</div>
+                        <div class="absolute bottom-0 left-10 text-center">rApp C<br>(Analytics)</div>
+                        <svg width="100%" height="100%" class="absolute">
+                           <line x1="80" y1="20" x2="50%" y2="50%" stroke="#059669" stroke-width="2" class="path-line" />
+                           <line x1="80" y1="170" x2="50%" y2="50%" stroke="#059669" stroke-width="2" class="path-line" />
+                           <line x1="calc(100% - 80px)" y1="20" x2="50%" y2="50%" stroke="#059669" stroke-width="2" class="path-line" />
+                        </svg>
+                        <div class="p-4 rounded-lg text-center text-xl font-bold text-green-100 bg-green-900/50">Shared<br>Cortex Memory</div>
+                        <div class="absolute top-0 right-10 text-center">xApp B<br>(Slice 2)</div>
+                    </div>
+                </div>
+
+            </div>
+             <button id="run-recall-steps" class="w-full md:w-auto mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Start Visualization
+            </button>
+        </div>
+    </section>
+    
+    <!-- Interactive Coding Tutorial -->
+    <section class="mb-16">
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Interactive Tutorial: Querying Cortex</h2>
+        <p class="text-lg leading-relaxed mb-8 max-w-4xl mx-auto text-center">
+            This API is the <strong class="text-green-200">Policy Interface</strong> in action. It allows an xApp or rApp to programmatically query the Cortex memory. Simulate how a developer would use it below.
+        </p>
+        <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg border border-green-800 overflow-hidden">
+            <div class="p-4">
+                <p class="text-green-300 font-semibold mb-2">xApp Code Editor (Simulation)</p>
+                <div id="code-editor" class="code-editor p-4 rounded-md text-green-400 text-sm h-48 overflow-y-auto" contenteditable="true"></div>
+            </div>
+            <div class="p-4 bg-gray-900/50">
+                <button id="run-code" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Execute Query
+                </button>
+            </div>
+            <div class="console p-4">
+                <p class="text-green-400 font-semibold mb-2">> Console Output:</p>
+                <div id="console-output" class="text-sm text-gray-300 whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Future Directions Outro -->
+    <section>
+        <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Future Directions: Decentralized & Consistent Memory</h2>
+        <p class="text-lg leading-relaxed mb-6 max-w-4xl mx-auto text-center">
+            The principles behind RAN Cortex open the door to even more advanced, distributed intelligence. The future of network memory isn't just a single database, but a decentralized, consistent fabric of shared experience.
+        </p>
+        <div class="grid md:grid-cols-2 gap-8">
+            <a href="#" class="block p-6 rounded-lg border border-green-800 bg-green-900/20 hover:bg-green-900/40 hover:border-green-600 transition-colors duration-300">
+                <h3 class="text-xl font-bold text-green-200 mb-3">Federated Memory Networks</h3>
+                <p class="text-lg">
+                    Imagine each RIC maintaining its own private Cortex memory. Using principles from <strong class="text-green-300">Federated Learning</strong>, agents could collaboratively build more robust models from their collective memories without ever sharing the raw, sensitive state data. This enhances privacy while creating a richer, network-wide intelligence.
+                </p>
+            </a>
+             <a href="#" class="block p-6 rounded-lg border border-green-800 bg-green-900/20 hover:bg-green-900/40 hover:border-green-600 transition-colors duration-300">
+                <h3 class="text-xl font-bold text-green-200 mb-3">Conflict-Free Consistency with CRDTs</h3>
+                <p class="text-lg">
+                    In a highly distributed system with many agents writing to memory simultaneously, how do you prevent conflicts? <strong class="text-green-300">Conflict-free Replicated Data Types (CRDTs)</strong> are data structures that guarantee eventual consistency without needing a central coordinator. Implementing the memory store as a CRDT would ensure that all agents eventually see the same history, enabling robust, decentralized learning.
+                </p>
+            </a>
+        </div>
+    </section>
+    
+    <!-- Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Stateless/Stateful Animation ---
+            const statelessDot = document.getElementById('stateless-dot');
+            document.getElementById('run-stateless').addEventListener('click', () => {
+                statelessDot.style.transition = 'none';
+                statelessDot.style.transform = `translate(-${statelessDot.parentElement.offsetWidth / 2 - 20}px, -50%)`;
+                setTimeout(() => {
+                    statelessDot.style.transition = 'transform 1s ease-in-out';
+                    statelessDot.style.transform = `translate(${statelessDot.parentElement.offsetWidth / 2 - 20}px, -50%)`;
+                }, 100);
+            });
+
+            const statefulDot = document.getElementById('stateful-dot');
+            document.getElementById('run-stateful').addEventListener('click', () => {
+                 statefulDot.style.transition = 'none';
+                 statefulDot.style.transform = `translate(-${statefulDot.parentElement.offsetWidth/2 - 20}px, 0px)`; // Start left
+                 setTimeout(() => {
+                    statefulDot.style.transition = 'transform 1s ease-in-out';
+                    statefulDot.style.transform = 'translate(0px, -60px)'; // Move to Cortex
+                    setTimeout(() => {
+                        statefulDot.style.transform = `translate(${statefulDot.parentElement.offsetWidth/2 - 20}px, 0px)`; // Move to xApp
+                    }, 1100);
+                 }, 100);
+            });
+            
+            // --- Step-by-step Recall Visualization ---
+            const recallStepsBtn = document.getElementById('run-recall-steps');
+            const steps = [document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3'), document.getElementById('step4')];
+            let currentStep = -1;
+
+            const memoryStore = document.getElementById('memory-store');
+            const memoryVectors = [];
+            // Clear memory store before populating to prevent duplicates on edit
+            memoryStore.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const vec = document.createElement('div');
+                vec.className = 'vector w-20 h-20 bg-gray-800 rounded-lg flex items-center justify-center text-center p-1 text-xs';
+                vec.textContent = `Memory ${i + 1}`;
+                vec.dataset.similarity = Math.random();
+                memoryStore.appendChild(vec);
+                memoryVectors.push(vec);
+            }
+            
+            function runNextStep() {
+                currentStep++;
+
+                // Reset condition
+                if (currentStep >= steps.length) {
+                    currentStep = -1;
+                    steps.forEach(s => {
+                        s.classList.remove('fade-in');
+                        s.style.display = 'none';
+                    });
+
+                    memoryVectors.forEach(v => v.classList.remove('highlight-vector'));
+                    document.getElementById('raw-state').style.transform = 'scale(1)';
+                    const encodedVector = document.getElementById('encoded-vector');
+                    encodedVector.style.opacity = 0;
+                    encodedVector.style.transform = 'scale(0.5)';
+                    const retrievedContext = document.getElementById('retrieved-context');
+                    retrievedContext.style.opacity = 0;
+                    retrievedContext.style.transform = 'none';
+
+                    recallStepsBtn.textContent = 'Start Visualization';
+                    return;
+                }
+
+                steps.forEach((s, i) => {
+                    if(i !== currentStep) {
+                        s.style.display = 'none';
+                        s.classList.remove('fade-in');
+                    }
+                });
+                
+                const stepToShow = steps[currentStep];
+                stepToShow.style.display = 'block';
+                setTimeout(() => stepToShow.classList.add('fade-in'), 50);
+
+                recallStepsBtn.textContent = (currentStep === steps.length - 1) ? 'Restart Visualization' : 'Next Step';
+
+                if (currentStep === 0) { // Encode
+                    const rawState = document.getElementById('raw-state');
+                    const encodedVector = document.getElementById('encoded-vector');
+                    rawState.style.transform = 'scale(1)';
+                    encodedVector.style.opacity = 0;
+                    encodedVector.style.transform = 'scale(0.5)';
+                    setTimeout(() => {
+                        rawState.style.transform = 'scale(0)';
+                        encodedVector.style.opacity = 1;
+                        encodedVector.style.transform = 'scale(1)';
+                    }, 500);
+                } else if (currentStep === 1) { // Recall
+                    setTimeout(() => {
+                        memoryVectors.forEach(v => v.classList.remove('highlight-vector'));
+                        memoryVectors.sort((a, b) => b.dataset.similarity - a.dataset.similarity);
+                        memoryVectors[0].classList.add('highlight-vector');
+                        memoryVectors[1].classList.add('highlight-vector');
+                    }, 1000);
+                } else if (currentStep === 2) { // Interface
+                    const retrievedContext = document.getElementById('retrieved-context');
+                    retrievedContext.style.opacity = 0;
+                    retrievedContext.style.transform = 'none';
+                    setTimeout(() => {
+                        retrievedContext.style.opacity = 1;
+                        retrievedContext.style.transform = 'translateX(-20px) scale(1.1)';
+                    }, 500);
+                } else if (currentStep === 3) { // Parallel
+                     const paths = document.querySelectorAll('#step4 .path-line');
+                     paths.forEach(p => {
+                         p.style.strokeDashoffset = 1000;
+                         setTimeout(() => p.style.strokeDashoffset = 0, 200);
+                     });
+                }
+            }
+
+            recallStepsBtn.addEventListener('click', runNextStep);
+
+            // --- Interactive Code Tutorial ---
+            const codeEditor = document.getElementById('code-editor');
+            const runCodeBtn = document.getElementById('run-code');
+            const consoleOutput = document.getElementById('console-output');
+
+            const initialCode = `// Get current network state
+const currentState = {
+    cellId: 'alpha-001',
+    ueCount: 450,
+    avgCQI: 5.2,
+    eventType: 'handover_spike'
+};
+
+// Query RAN Cortex for similar past events
+const pastContext = await cortex.recall({
+    state: currentState,
+    top_k: 2 // Find 2 most similar events
+});
+
+// Use recalled context to inform policy
+console.log("Retrieved Context:", pastContext);
+
+if (pastContext.recommendation === 'reduce_handovers') {
+    adjustHandoverParameters();
+    console.log("Policy updated: Handover parameters adjusted.")
+}`;
+            
+            codeEditor.textContent = initialCode;
+
+            runCodeBtn.addEventListener('click', () => {
+                consoleOutput.innerHTML = '<span class="text-yellow-400">Executing query...</span>';
+                const userCode = codeEditor.textContent;
+                
+                setTimeout(() => {
+                    const fakeResponse = {
+                        retrieved_memories: [
+                            { state: { eventType: 'handover_spike', ueCount: 435 }, outcome: 'minor_latency_increase', action_taken: 'none' },
+                            { state: { eventType: 'handover_spike', ueCount: 510 }, outcome: 'SLA_violation', action_taken: 'none' }
+                        ],
+                        recommendation: 'reduce_handovers'
+                    };
+                    let output = `<span class="text-green-300">Query successful. Retrieved Context:</span>\n${JSON.stringify(fakeResponse, null, 2)}`;
+                    
+                    if(userCode.includes("adjustHandoverParameters()")) {
+                        output += `\n<span class="text-cyan-400">Policy updated: Handover parameters adjusted.</span>`;
+                    }
+
+                    consoleOutput.innerHTML = output;
+                }, 1500);
+            });
+        });
+    </script>
+</body>
+</html>

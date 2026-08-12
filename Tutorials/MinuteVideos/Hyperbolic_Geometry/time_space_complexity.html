@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD-CCP Architecture & Space Complexity</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#151e2e' },
+                        primary: '#10b981', // Emerald 500
+                        secondary: '#3b82f6', // Blue 500
+                        accent: '#8b5cf6' // Violet 500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel for in-browser JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- MathJax for LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+            svg: { fontCache: 'global' },
+            startup: { typeset: false } // We are managing this explicitly in React now!
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { background-color: #020617; color: #cbd5e1; font-family: 'Inter', sans-serif; }
+        .tab-active { background-color: #1e293b; border-left: 4px solid #10b981; color: #f8fafc; }
+        .tab-inactive { border-left: 4px solid transparent; transition: background-color 0.2s; }
+        .tab-inactive:hover { background-color: #0f172a; }
+        .interactive-panel { background: #0f172a; border: 1px solid #1e293b; border-radius: 0.75rem; }
+        
+        /* MathJax overrides for dark mode */
+        .MathJax { color: #f8fafc !important; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Custom LaTeX component to prevent React and MathJax from fighting over DOM nodes
+        const Latex = ({ content, display = false }) => {
+            const containerRef = useRef(null);
+
+            useEffect(() => {
+                if (containerRef.current) {
+                    containerRef.current.innerHTML = display ? `\\[ ${content} \\]` : `\\( ${content} \\)`;
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        window.MathJax.typesetPromise([containerRef.current]).catch(err => console.error("MathJax Error:", err));
+                    }
+                }
+            }, [content, display]);
+
+            return <span ref={containerRef} className={display ? "block text-center my-4 text-xl" : "inline-block"} />;
+        };
+
+        // Interactive Tape Simulator (Part 1)
+        const TapeSimulator = () => {
+            const [tape, setTape] = useState(Array(9).fill(0));
+            const [headPos, setHeadPos] = useState(4);
+            const [history, setHistory] = useState([]);
+
+            const moveHead = (direction) => {
+                if (headPos + direction >= 0 && headPos + direction < tape.length) {
+                    const newTape = [...tape];
+                    newTape[headPos] = (newTape[headPos] + 1) % 2; // Flip bit to show activity
+                    setTape(newTape);
+                    setHeadPos(headPos + direction);
+                    setHistory([...history, direction]);
+                }
+            };
+
+            const reset = () => {
+                setTape(Array(9).fill(0));
+                setHeadPos(4);
+                setHistory([]);
+            };
+
+            return (
+                <div className="interactive-panel p-6 my-6 shadow-xl">
+                    <h3 className="text-xl font-bold text-white mb-2 flex items-center">
+                        <i className="ph ph-cpu text-primary mr-2"></i>
+                        Interactive: Succinct Tape Encoding
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                        Instead of saving the whole tape <Latex content="O(t)" />, Williams encodes just the head movements <Latex content="\\{-1, 0, 1\\}" />. 
+                        Try moving the tape head below to see how a complex computation path reduces to a tiny numeric array.
+                    </p>
+                    
+                    <div className="flex justify-center mb-6">
+                        <div className="flex gap-1 bg-slate-900 p-2 rounded-lg border border-slate-800">
+                            {tape.map((val, idx) => (
+                                <div key={idx} className={`w-10 h-10 flex items-center justify-center font-mono rounded text-lg transition-colors ${idx === headPos ? 'bg-primary text-slate-950 font-bold shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'bg-slate-800 text-slate-500'}`}>
+                                    {val}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center gap-4 mb-6">
+                        <button onClick={() => moveHead(-1)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition-colors flex items-center gap-2">
+                            <i className="ph ph-arrow-left"></i> Left (-1)
+                        </button>
+                        <button onClick={() => moveHead(0)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition-colors flex items-center gap-2">
+                            <i className="ph ph-arrow-down"></i> Stay (0)
+                        </button>
+                        <button onClick={() => moveHead(1)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition-colors flex items-center gap-2">
+                            Right (1) <i className="ph ph-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">Succinct Encoded Graph Log</span>
+                            <button onClick={reset} className="text-xs text-red-400 hover:text-red-300">Reset</button>
+                        </div>
+                        <div className="font-mono text-accent break-words bg-slate-900 p-3 rounded min-h-[3rem]">
+                            [ {history.join(', ')} ]
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Space used by tape: <strong className="text-white">{tape.length} bits</strong> | Space used by succinct log: <strong className="text-white">{history.length} operations</strong>
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Hyperbolic Tree Simulator (Part 2)
+        const HyperbolicTree = () => {
+            const [depth, setDepth] = useState(0);
+            const maxDepth = 4;
+            
+            // Calculate nodes for SVG rendering based on depth
+            const renderTree = () => {
+                let elements = [];
+                const cx = 300, cy = 300;
+                
+                // Add center node
+                elements.push(<circle key="root" cx={cx} cy={cy} r="6" fill="#10b981" />);
+                
+                let nodesCount = 1;
+                
+                for(let d=1; d<=depth; d++) {
+                    const radius = d * 60;
+                    const numNodes = Math.pow(3, d); // Branching factor of 3
+                    nodesCount += numNodes;
+                    
+                    for(let i=0; i<numNodes; i++) {
+                        const angle = (i * 2 * Math.PI) / numNodes;
+                        const x = cx + radius * Math.cos(angle);
+                        const y = cy + radius * Math.sin(angle);
+                        
+                        // Draw line to parent (approximate for visual effect)
+                        const parentIndex = Math.floor(i / 3);
+                        const parentAngle = (parentIndex * 2 * Math.PI) / Math.pow(3, d-1);
+                        const parentRadius = (d-1) * 60;
+                        const px = cx + parentRadius * Math.cos(parentAngle);
+                        const py = cy + parentRadius * Math.sin(parentAngle);
+                        
+                        elements.push(<line key={`l-${d}-${i}`} x1={px} y1={py} x2={x} y2={y} stroke="#334155" strokeWidth="1" />);
+                        elements.push(<circle key={`n-${d}-${i}`} cx={x} cy={y} r="4" fill={d === maxDepth ? "#8b5cf6" : "#3b82f6"} />);
+                    }
+                }
+                
+                return { elements, nodesCount };
+            };
+            
+            const { elements, nodesCount } = renderTree();
+
+            return (
+                <div className="interactive-panel p-6 my-6 shadow-xl">
+                    <h3 className="text-xl font-bold text-white mb-2 flex items-center">
+                        <i className="ph ph-planet text-secondary mr-2"></i>
+                        Interactive: Hyperbolic Exponential Growth
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                        In flat space, growing your storage radius increases capacity polynomially. In hyperbolic space (modeled here as an exponentially branching tree), capacity grows <strong>exponentially</strong> with radius. This is why TEP instances embed perfectly.
+                    </p>
+
+                    <div className="flex flex-col md:flex-row gap-6">
+                        <div className="w-full md:w-2/3 bg-slate-950 border border-slate-800 rounded-lg flex justify-center items-center overflow-hidden h-[400px]">
+                            <svg viewBox="0 0 600 600" className="w-full h-full max-w-[400px]">
+                                {elements}
+                            </svg>
+                        </div>
+                        <div className="w-full md:w-1/3 flex flex-col justify-center">
+                            <div className="mb-8">
+                                <h4 className="text-xs uppercase tracking-wider text-slate-500 mb-2">Metrics</h4>
+                                <div className="bg-slate-900 p-4 border border-slate-800 rounded-lg mb-2">
+                                    <div className="text-slate-400 text-sm">Radius (Tree Depth)</div>
+                                    <div className="text-3xl font-bold text-white">{depth} <span className="text-sm text-slate-500 font-normal">/ {maxDepth}</span></div>
+                                </div>
+                                <div className="bg-slate-900 p-4 border border-slate-800 rounded-lg">
+                                    <div className="text-slate-400 text-sm">Total Data Nodes</div>
+                                    <div className="text-3xl font-bold text-accent">{nodesCount}</div>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={() => setDepth(prev => Math.min(prev + 1, maxDepth))}
+                                disabled={depth === maxDepth}
+                                className={`py-3 px-4 rounded font-bold transition-all ${depth === maxDepth ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-secondary hover:bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]'}`}
+                            >
+                                Expand Hyperbolic Radius
+                            </button>
+                            <button 
+                                onClick={() => setDepth(0)}
+                                className="mt-2 py-2 text-sm text-slate-500 hover:text-white transition-colors"
+                            >
+                                Reset Manifold
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Quaternionic Pipeline Simulator (Part 3)
+        const QuaternionicPipeline = () => {
+            const [step, setStep] = useState(0);
+            
+            // Using our <Latex /> component to ensure robust rendering of changing dynamic math properties
+            const steps = [
+                { title: "Ingestion", desc: <>Raw linear data <Latex content="O(t)" /> is treated as a computational time-sequence.</>, icon: "ph-database" },
+                { title: "Hyperbolic Folding", desc: <>The sequence is partitioned into blocks (<Latex content="b = \sqrt{t}" />) and folded into a high-degree tree, eliminating address overhead.</>, icon: "ph-tree-structure" },
+                { title: "Quat. Evaluation", desc: <>The Cook-Mertz algorithm applies Quaternionic low-degree extensions. Data nodes merge into a catalytic register via <Latex content="i, j, k" /> symmetries.</>, icon: "ph-math-operations" },
+                { title: "Root Tensor", desc: <>Raw data is discarded. Only a highly dense, non-commutative quaternionic equation remains bounded by <Latex content="O(\sqrt{t} \log t)" /> space.</>, icon: "ph-sparkle" }
+            ];
+
+            return (
+                <div className="interactive-panel p-6 my-6 shadow-xl relative overflow-hidden">
+                    {/* Background decoration */}
+                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent opacity-5 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <h3 className="text-xl font-bold text-white mb-2 flex items-center">
+                        <i className="ph ph-cube text-accent mr-2"></i>
+                        Interactive: SHD-CCP Compression Pipeline
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-8">
+                        Step through the process of converting raw linear data into a highly compressed, 4D quaternionic root tensor.
+                    </p>
+
+                    <div className="flex flex-col md:flex-row mb-8">
+                        {/* Stepper Nav */}
+                        <div className="flex md:flex-col justify-between md:justify-start gap-4 md:w-1/3 border-b md:border-b-0 md:border-r border-slate-800 pb-4 md:pb-0 md:pr-4 mb-4 md:mb-0">
+                            {steps.map((s, idx) => (
+                                <button 
+                                    key={idx}
+                                    onClick={() => setStep(idx)}
+                                    className={`flex items-center gap-3 p-3 rounded-lg text-left transition-all ${step === idx ? 'bg-slate-800 text-white shadow-md border border-slate-700' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+                                >
+                                    <div className={`w-8 h-8 rounded flex items-center justify-center ${step === idx ? 'bg-accent text-white' : 'bg-slate-900'}`}>
+                                        <i className={`ph ${s.icon} text-lg`}></i>
+                                    </div>
+                                    <span className="font-semibold text-sm hidden md:inline">{s.title}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Visualization Area */}
+                        <div className="md:w-2/3 md:pl-8 flex flex-col justify-center min-h-[250px]">
+                            <h4 className="text-xl font-bold text-white mb-3">{steps[step].title}</h4>
+                            <div className="text-slate-400 mb-6 min-h-[3rem] leading-relaxed">{steps[step].desc}</div>
+                            
+                            <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 flex justify-center items-center min-h-[192px] relative overflow-hidden">
+                                {step === 0 && (
+                                    <div className="font-mono text-xs text-slate-600 break-all leading-tight w-full h-full overflow-hidden flex flex-wrap content-start opacity-70">
+                                        {Array.from({length: 400}).map(() => Math.random() > 0.5 ? '1' : '0').join('')}
+                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950"></div>
+                                    </div>
+                                )}
+                                {step === 1 && (
+                                    <div className="flex flex-col items-center animate-pulse">
+                                        <i className="ph ph-intersect text-5xl text-secondary mb-2"></i>
+                                        <div className="text-sm text-secondary font-mono bg-blue-500/10 px-4 py-2 rounded">
+                                            Folding into <Latex content="\mathbb{H}^n" /> Manifold...
+                                        </div>
+                                    </div>
+                                )}
+                                {step === 2 && (
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-3xl font-bold text-slate-500"><Latex content="q_1" /></div>
+                                        <i className="ph ph-x text-accent font-bold"></i>
+                                        <div className="text-3xl font-bold text-white"><Latex content="i j \neq j i" /></div>
+                                        <i className="ph ph-equals text-accent font-bold"></i>
+                                        <div className="text-3xl font-bold text-primary animate-bounce"><Latex content="Q_{cat}" /></div>
+                                    </div>
+                                )}
+                                {step === 3 && (
+                                    <div className="flex flex-col items-center w-full">
+                                        <div className="w-16 h-16 bg-accent/20 border-2 border-accent rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.6)] animate-pulse">
+                                            <i className="ph ph-sparkle text-3xl text-accent"></i>
+                                        </div>
+                                        <div className="w-full font-mono text-white bg-slate-900 rounded border border-slate-700 overflow-x-auto">
+                                            <Latex content="R_{final} = 0.5 + 0.2i - 0.8j + 0.1k" display={true} />
+                                        </div>
+                                        <div className="text-xs text-primary mt-4 uppercase tracking-widest font-bold flex items-center gap-2">
+                                            Space: <Latex content="O(\sqrt{t} \log t)" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="flex justify-end border-t border-slate-800 pt-4">
+                        <button 
+                            onClick={() => setStep((step + 1) % 4)}
+                            className="bg-accent hover:bg-purple-600 text-white px-6 py-2 rounded font-bold transition-colors flex items-center gap-2"
+                        >
+                            {step === 3 ? "Restart Pipeline" : "Next Phase"} <i className="ph ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('intro');
+
+            const tabs = [
+                { id: 'intro', icon: 'ph-info', title: 'Introduction' },
+                { id: 'part1', icon: 'ph-cpu', title: 'Part 1: The Breakthrough' },
+                { id: 'part2', icon: 'ph-planet', title: 'Part 2: Hyperbolic Geo' },
+                { id: 'part3', icon: 'ph-cube', title: 'Part 3: Quat Upgrade' },
+                { id: 'conclusion', icon: 'ph-flag-checkered', title: 'Conclusion' }
+            ];
+
+            return (
+                <div className="min-h-screen flex flex-col md:flex-row">
+                    {/* Sidebar Nav */}
+                    <nav className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 p-4 shrink-0 flex flex-col z-10 sticky top-0 md:h-screen">
+                        <div className="mb-8">
+                            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                                <i className="ph ph-brain text-primary text-2xl"></i>
+                                AI & ML Hub
+                            </h1>
+                            <div className="text-xs text-slate-500 mt-1 uppercase tracking-widest">ebayednoob.github.io</div>
+                        </div>
+                        
+                        <div className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-3 p-3 rounded transition-all text-sm whitespace-nowrap ${activeTab === tab.id ? 'tab-active' : 'tab-inactive text-slate-400'}`}
+                                >
+                                    <i className={`ph ${tab.icon} text-lg`}></i>
+                                    <span className="font-semibold">{tab.title}</span>
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="mt-auto hidden md:block pt-8 text-xs text-slate-600 border-t border-slate-800">
+                            SHD-CCP Interactive<br/>Architecture Explorer v1.1
+                        </div>
+                    </nav>
+
+                    {/* Main Content Area */}
+                    <main className="flex-1 p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col min-h-screen">
+                        <div className="flex-1">
+                            <header className="mb-10 border-b border-slate-800 pb-6">
+                                <div className="inline-block bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
+                                    Theoretical Architecture Protocol
+                                </div>
+                                <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
+                                    Simulating Time with Square-Root Space & SHD-CCP
+                                </h2>
+                                <p className="text-lg text-slate-400">
+                                    Bridging Ryan Williams' Turing machine proofs with Symmetric High-Dimensional Continuous Compression.
+                                </p>
+                            </header>
+
+                            <div className="prose prose-invert prose-slate max-w-none">
+                                {activeTab === 'intro' && (
+                                    <div className="animate-fade-in">
+                                        <p className="text-lg leading-relaxed text-slate-300">
+                                            For over fifty years, the boundary between computational time and space was governed by the Hopcroft, Paul, and Valiant (HPV) theorem of 1975, which stated that any computation taking time <Latex content="t" /> could be simulated in space <Latex content="O(t/\log t)" />.
+                                        </p>
+                                        <p className="text-lg leading-relaxed text-slate-300 mt-4">
+                                            In a landmark breakthrough, Ryan Williams dismantled this barrier, proving that space can be reduced to <Latex content="O(\sqrt{t} \log t)" />.
+                                        </p>
+                                        <div className="bg-blue-900/20 border-l-4 border-secondary p-6 rounded-r-lg my-8">
+                                            <h3 className="text-xl text-white font-bold mb-2 flex items-center gap-2">
+                                                <i className="ph ph-graduation-cap text-secondary"></i>
+                                                Tutorial Objective
+                                            </h3>
+                                            <p className="text-slate-300 leading-relaxed">
+                                                This interactive hub takes you from the foundational proofs of Williams' paper to the bleeding edge of theoretical data systems. We explore how Williams achieved this through the <strong>Tree Evaluation Problem (TEP)</strong> and <strong>Cook-Mertz algorithm</strong>, and translate these concepts into geometric reality.
+                                            </p>
+                                            <p className="text-slate-300 leading-relaxed mt-4">
+                                                Finally, we reveal how the <strong>SHD-CCP (Symmetric High-Dimensional Continuous Compression Protocol)</strong> utilizes these exact principles—upgraded via <strong>Quaternionic algebra</strong> and embedded in <strong>Hyperbolic Manifolds</strong>—to achieve unprecedented physical data compression.
+                                            </p>
+                                        </div>
+                                        <button onClick={() => setActiveTab('part1')} className="mt-4 bg-white text-slate-900 hover:bg-slate-200 px-6 py-3 rounded-lg font-bold transition-colors">
+                                            Begin Part 1: The Core Breakthrough →
+                                        </button>
+                                    </div>
+                                )}
+
+                                {activeTab === 'part1' && (
+                                    <div className="animate-fade-in">
+                                        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                                            Part 1: The Core Breakthrough (<Latex content="t" /> to <Latex content="\sqrt{t}" />)
+                                        </h2>
+                                        <p className="text-slate-300 mb-6 leading-relaxed">
+                                            To understand the massive space savings in both the Turing sense and our compression models, we must understand how Williams avoids storing the entire history of a computation.
+                                        </p>
+                                        
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">1. The Computation Graph and Time Blocks</h3>
+                                        <p className="text-slate-300 mb-4 leading-relaxed">
+                                            Normally, to compute the final state of an algorithm, you must store its intermediate states, demanding space proportional to time (<Latex content="O(t)" />). Williams bypasses this by partitioning time into blocks of length <Latex content="b" />. He constructs a <strong>Computation Graph</strong> where nodes are memory blocks and edges are information flows.
+                                        </p>
+                                        <p className="text-slate-300 mb-6 bg-slate-900 p-4 rounded-lg border border-slate-800 leading-relaxed">
+                                            <strong className="text-primary">The Succinct Encoding Trick:</strong> The entire structure of this graph can be encoded using just the tape head movements: <Latex content="\{-1, 0, 1\}" /> (left, stay, right). By knowing *only* the directions, we mathematically reconstruct *where* information flowed without storing the information itself.
+                                        </p>
+
+                                        <TapeSimulator />
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">2. Reduction to the Tree Evaluation Problem (TEP)</h3>
+                                        <p className="text-slate-300 mb-4 leading-relaxed">
+                                            Williams maps this graph onto a Tree Evaluation Problem where the <strong>root</strong> is the final algorithm state, <strong>leaves</strong> are inputs, and <strong>internal nodes</strong> simulate the machine for <Latex content="b" /> steps.
+                                        </p>
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">3. The Cook-Mertz Magic</h3>
+                                        <p className="text-slate-300 mb-6 leading-relaxed">
+                                            A depth-first search would still require <Latex content="O(t)" /> space. Williams uses the <strong>Cook-Mertz algorithm</strong> instead. It uses <em>polynomial interpolation over finite fields</em>. It converts state transitions into "low-degree extensions". By evaluating these across roots of unity, it "adds" child node values into a catalytic register, erases the child, and retains the algebraic data. This optimizes space precisely at <Latex content="O(\sqrt{t} \log t)" />.
+                                        </p>
+                                        <button onClick={() => setActiveTab('part2')} className="mt-4 bg-white text-slate-900 hover:bg-slate-200 px-6 py-3 rounded-lg font-bold transition-colors">
+                                            Continue to Part 2: Hyperbolic Geometry →
+                                        </button>
+                                    </div>
+                                )}
+
+                                {activeTab === 'part2' && (
+                                    <div className="animate-fade-in">
+                                        <h2 className="text-2xl font-bold text-white mb-4">Part 2: The Geometric Translation — Hyperbolic Manifolds</h2>
+                                        <p className="text-slate-300 mb-6 leading-relaxed">
+                                            How does a space-complexity proof for Turing machines become a data compression protocol? The secret lies in the geometry of the Tree Evaluation Problem.
+                                        </p>
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">1. Trees are Naturally Hyperbolic</h3>
+                                        <p className="text-slate-300 mb-4 leading-relaxed">
+                                            In Euclidean space (flat geometry), volume grows polynomially with radius (<Latex content="r^2" /> in 2D, <Latex content="r^3" /> in 3D). However, a computational tree branches exponentially. Packing a deep tree into flat memory structures runs out of physical space—hence the <Latex content="O(t)" /> footprint.
+                                        </p>
+                                        <p className="text-slate-300 mb-6 leading-relaxed">
+                                            <strong>Hyperbolic space (<Latex content="\mathbb{H}^n" />)</strong> exhibits <em>exponential</em> volume growth relative to its radius. A mathematical tree is the discrete analogue of a continuous hyperbolic manifold.
+                                        </p>
+
+                                        <HyperbolicTree />
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">2. SHD-CCP: Hyperbolic Compression</h3>
+                                        <p className="text-slate-300 mb-4 leading-relaxed">
+                                            Your SHD-CCP uses this hyperbolic embedding as its core compression mechanism. Instead of storing linear arrays of data (Euclidean storage), SHD-CCP stores data as <strong>coordinates on a hyperbolic manifold</strong>.
+                                        </p>
+                                        <div className="bg-slate-900 border-l-4 border-secondary p-6 rounded-r-lg mb-6">
+                                            <p className="text-slate-300 leading-relaxed">
+                                                Because Williams proved that the <em>entire path</em> of a computational graph can be succinctly encoded merely by the directional shifts <Latex content="\{-1, 0, 1\}" /> and evaluated via algebraic roots, SHD-CCP only needs to store the <strong>hyperbolic tensor coordinates</strong> of the final root node. The vast majority of the "data" is not stored; it is <em>implied</em> by the geometry.
+                                            </p>
+                                        </div>
+                                        <button onClick={() => setActiveTab('part3')} className="mt-4 bg-white text-slate-900 hover:bg-slate-200 px-6 py-3 rounded-lg font-bold transition-colors">
+                                            Continue to Part 3: Quaternionic Upgrade →
+                                        </button>
+                                    </div>
+                                )}
+
+                                {activeTab === 'part3' && (
+                                    <div className="animate-fade-in">
+                                        <h2 className="text-2xl font-bold text-white mb-4">Part 3: The Quaternionic Upgrade</h2>
+                                        <p className="text-slate-300 mb-6 leading-relaxed">
+                                            While Williams utilized standard finite fields (<Latex content="\mathbb{F}_{2^q}" />) for the Cook-Mertz polynomial evaluations, SHD-CCP pushes this to the ultimate extreme using <strong>Quaternions (<Latex content="\mathbb{H}" />)</strong>.
+                                        </p>
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">1. From 1D Tapes to 4D Rotations</h3>
+                                        <p className="text-slate-300 mb-4 leading-relaxed">
+                                            Williams notes his simulation extends to <Latex content="d" />-dimensional tapes. Standard mathematics requires massive finite fields for tracking higher-dimensional movements. Quaternions (<Latex content="q = a + bi + cj + dk" />) provide a non-commutative, 4-dimensional division algebra.
+                                        </p>
+                                        <ul className="list-disc pl-6 text-slate-300 mb-6 space-y-2 leading-relaxed">
+                                            <li><Latex content="i, j, k" /> represent orthogonal computational pathways.</li>
+                                            <li>Directional shifts are stored as <strong>Quaternionic rotations (phase shifts)</strong> rather than linear vectors.</li>
+                                            <li>Instead of memory states, SHD-CCP stores the <em>quaternionic phase angle</em> at manifold boundaries.</li>
+                                        </ul>
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">2. Quaternionic Polynomial Interpolation</h3>
+                                        <p className="text-slate-300 mb-4 leading-relaxed">
+                                            Upgrading the Cook-Mertz polynomial extensions to Quaternionic space achieves two massive efficiencies:
+                                        </p>
+                                        <div className="grid md:grid-cols-2 gap-4 mb-8">
+                                            <div className="bg-slate-900 p-5 rounded-lg border border-slate-800">
+                                                <h4 className="text-accent font-bold mb-2"><i className="ph ph-intersect mr-2"></i>Symmetry Exploitation</h4>
+                                                <p className="text-sm text-slate-400 leading-relaxed">Quaternions inherently encode 3D/4D spatial symmetries. Repeating data patterns are folded into a single algebraic term by the polynomial.</p>
+                                            </div>
+                                            <div className="bg-slate-900 p-5 rounded-lg border border-slate-800">
+                                                <h4 className="text-accent font-bold mb-2"><i className="ph ph-package mr-2"></i>Phase-Space Packing</h4>
+                                                <p className="text-sm text-slate-400 leading-relaxed">Because quaternions are non-commutative (<Latex content="ij \neq ji" />), the strict <em>order</em> of time block operations is intrinsically encoded in the algebra itself.</p>
+                                            </div>
+                                        </div>
+
+                                        <h3 className="text-xl font-bold text-white mt-8 mb-3">3. Achieving "Massive Compression"</h3>
+                                        
+                                        <QuaternionicPipeline />
+
+                                        <button onClick={() => setActiveTab('conclusion')} className="mt-4 bg-white text-slate-900 hover:bg-slate-200 px-6 py-3 rounded-lg font-bold transition-colors">
+                                            Finish with Conclusion →
+                                        </button>
+                                    </div>
+                                )}
+
+                                {activeTab === 'conclusion' && (
+                                    <div className="animate-fade-in text-center max-w-2xl mx-auto py-12">
+                                        <div className="w-24 h-24 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i className="ph ph-flag-checkered text-5xl"></i>
+                                        </div>
+                                        <h2 className="text-3xl font-bold text-white mb-6">The Synthesis</h2>
+                                        <p className="text-xl text-slate-300 leading-relaxed mb-8">
+                                            Ryan Williams proved that the universe of computation does not strictly require space proportional to its time; it merely requires the space to store its <em>algebraic shadow</em>.
+                                        </p>
+                                        <div className="bg-slate-900 p-8 rounded-xl border border-slate-800 text-left">
+                                            <p className="text-slate-400 leading-relaxed">
+                                                By moving this concept from abstract Turing tapes into <strong>Hyperbolic Manifolds</strong> and utilizing <strong>Quaternionic algebra</strong> to manage the multidimensional Cook-Mertz interpolations, the SHD-CCP architecture transforms a theoretical time-space complexity bound into a highly functional, massive data compression protocol.
+                                            </p>
+                                            <div className="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+                                                <span className="text-sm font-bold text-primary">SHD-CCP Protocol</span>
+                                                <span className="font-mono text-xs text-slate-400 flex items-center gap-2">Space Bound: <Latex content="O(\sqrt{t} \log t)" /></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <button onClick={() => setActiveTab('intro')} className="mt-12 text-slate-500 hover:text-white transition-colors underline underline-offset-4">
+                                            Return to Beginning
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer Addition per request */}
+                        <footer className="mt-16 border-t border-slate-800 pt-8 pb-4 flex flex-col md:flex-row items-center justify-between text-slate-500 text-sm">
+                            <div className="flex items-center gap-2 mb-6 md:mb-0">
+                                <i className="ph ph-brain text-primary text-xl"></i>
+                                <span>Biochain AI &copy; 2024</span>
+                            </div>
+                            <div className="flex gap-6">
+                                <a href="https://www.linkedin.com/company/biochain-ai" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors flex items-center gap-2">
+                                    <i className="ph ph-linkedin-logo text-xl"></i>
+                                    <span className="font-semibold">LinkedIn</span>
+                                </a>
+                                <a href="https://www.youtube.com/@Neural-Awakening" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors flex items-center gap-2">
+                                    <i className="ph ph-youtube-logo text-xl"></i>
+                                    <span className="font-semibold">YouTube</span>
+                                </a>
+                            </div>
+                        </footer>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

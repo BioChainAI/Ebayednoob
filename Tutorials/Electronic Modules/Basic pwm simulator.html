@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWM Circuit Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .component {
+            cursor: grab;
+            user-select: none;
+        }
+        .component.dragging {
+            cursor: grabbing;
+            opacity: 0.7;
+        }
+        #circuit-canvas {
+            background-color: #111827; /* gray-900 */
+            border-radius: 0.5rem;
+            border: 1px solid #064e3b; /* green-800 */
+            cursor: default;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="container mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl lg:text-4xl font-bold text-green-200">PWM Circuit Simulator</h1>
+            <p class="text-green-400 mt-2">Right-click &amp; drag to pan. Ctrl+Click a wire to add a bend point.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Components & Controls -->
+            <div class="lg:col-span-1 bg-gray-900 p-6 rounded-lg border border-green-800 self-start">
+                <h2 class="text-xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Components</h2>
+                <div id="component-toolbar" class="space-y-4">
+                    <div id="signal-generator" class="component p-4 bg-gray-800 border border-green-700 rounded-lg text-center text-green-300 hover:bg-gray-700" draggable="true">
+                        <p class="font-semibold">Signal Gen</p>
+                        <p class="text-xs">(PWM)</p>
+                    </div>
+                    <div id="dc-supply" class="component p-4 bg-gray-800 border border-green-700 rounded-lg text-center text-green-300 hover:bg-gray-700" draggable="true">
+                        <p class="font-semibold">DC Supply</p>
+                    </div>
+                    <div id="resistor" class="component p-4 bg-gray-800 border border-green-700 rounded-lg text-center text-green-300 hover:bg-gray-700" draggable="true">
+                        <p class="font-semibold">Resistor</p>
+                    </div>
+                    <div id="led" class="component p-4 bg-gray-800 border border-green-700 rounded-lg text-center text-green-300 hover:bg-gray-700" draggable="true">
+                        <p class="font-semibold">LED</p>
+                    </div>
+                    <div id="pwm-board" class="component p-4 bg-gray-800 border border-green-700 rounded-lg text-center text-green-300 hover:bg-gray-700" draggable="true">
+                        <p class="font-semibold">PWM Board</p>
+                    </div>
+                </div>
+
+                <h2 class="text-xl font-semibold text-green-300 mb-4 mt-8 border-b border-green-800 pb-2">Controls</h2>
+                <div class="space-y-4">
+                    <button id="preset-btn" class="w-full bg-green-800 text-green-200 py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">Load Preset</button>
+                    <button id="run-sim-btn" class="w-full bg-green-700 text-green-100 py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">Run Simulation</button>
+                    <button id="clear-canvas-btn" class="w-full bg-red-800 text-red-200 py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">Clear Canvas</button>
+                </div>
+                 <div id="properties-panel" class="mt-8">
+                    <h2 class="text-xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Properties</h2>
+                    <div id="properties-content" class="text-green-400">Select a component to see its properties.</div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- Circuit Canvas -->
+                <div class="bg-gray-900 p-4 rounded-lg border border-green-800">
+                    <h2 class="text-xl font-semibold text-green-300 mb-4">Circuit Diagram</h2>
+                    <canvas id="circuit-canvas" width="600" height="800"></canvas>
+                </div>
+
+                <!-- Spectrum Analysis Container -->
+                <div id="spectrum-analysis-container" class="space-y-8">
+                    <!-- Spectrum charts will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('circuit-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.addEventListener('contextmenu', e => e.preventDefault());
+            const clearButton = document.getElementById('clear-canvas-btn');
+            const runButton = document.getElementById('run-sim-btn');
+            const presetButton = document.getElementById('preset-btn');
+            const propertiesPanel = document.getElementById('properties-content');
+            const spectrumContainer = document.getElementById('spectrum-analysis-container');
+
+            let componentsOnCanvas = [];
+            let wires = [];
+            let selectedComponent = null;
+            let draggingComponent = null;
+            let isDragging = false;
+            let dragStart = { x: 0, y: 0 };
+            let draggingBendPoint = null;
+            
+            let isWiring = false;
+            let wireStart = null;
+            let wirePreviewEnd = { x: 0, y: 0 };
+            const TERMINAL_RADIUS = 5;
+            const BEND_POINT_RADIUS = 4;
+
+            let isSimulating = false;
+            let animationFrameId = null;
+
+            // --- Viewport State for Pan & Zoom ---
+            let view = {
+                scale: 1, // Keep scale at 1
+                pan: { x: 0, y: 0 }
+            };
+            let isPanning = false;
+            let panStart = { x: 0, y: 0 };
+
+            // --- Component Drag and Drop ---
+            const componentToolbar = document.getElementById('component-toolbar');
+            componentToolbar.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('component')) {
+                    let width = 100, height = 60;
+                    if(e.target.id === 'pwm-board') { width = 150; height = 80; }
+                    if(e.target.id === 'signal-generator') { width = 150; height = 100; }
+                    draggingComponent = {
+                        id: e.target.id,
+                        type: e.target.id.replace('-', '_'),
+                        text: e.target.querySelector('p').textContent,
+                        width: width, height: height
+                    };
+                    e.dataTransfer.setData('text/plain', e.target.id);
+                    e.target.classList.add('dragging');
+                }
+            });
+
+             componentToolbar.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('component')) {
+                    e.target.classList.remove('dragging');
+                    draggingComponent = null;
+                }
+            });
+
+            canvas.addEventListener('dragover', (e) => { e.preventDefault(); });
+
+            canvas.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggingComponent) {
+                    const worldPos = screenToWorld(e.clientX, e.clientY);
+                    
+                    const newComponent = {
+                        ...draggingComponent,
+                        x: worldPos.x - draggingComponent.width / 2,
+                        y: worldPos.y - draggingComponent.height / 2,
+                        uid: Date.now(),
+                        properties: getDefaultProperties(draggingComponent.type)
+                    };
+                    componentsOnCanvas.push(newComponent);
+                    if (newComponent.type === 'pwm_board') {
+                        updateSpectrumCharts();
+                    }
+                    drawCanvas();
+                }
+            });
+            
+            function getDefaultProperties(type) {
+                switch(type) {
+                    case 'signal_generator': return { frequency: 1000, dutyCycle: 50, amplitude: 5 };
+                    case 'dc_supply': return { voltage: 12 };
+                    case 'resistor': return { resistance: 220 };
+                    case 'led': return { forwardVoltage: 2, forwardCurrent: 20, isOn: false };
+                    case 'pwm_board': return { isOn: false };
+                    default: return {};
+                }
+            }
+
+            // --- Canvas Interaction ---
+            canvas.addEventListener('mousedown', (e) => {
+                const worldPos = screenToWorld(e.clientX, e.clientY);
+                
+                // Pan with right mouse button
+                if (e.button === 2) {
+                    isPanning = true;
+                    panStart = { x: e.clientX, y: e.clientY };
+                    canvas.style.cursor = 'grabbing';
+                    return;
+                }
+
+                if (isSimulating) return;
+
+                // Add bend point with Ctrl + Left Click
+                if (e.button === 0 && e.ctrlKey) { 
+                    addBendPoint(worldPos.x, worldPos.y);
+                    return;
+                }
+                
+                for (const wire of wires) {
+                    for (let i = 0; i < wire.bendPoints.length; i++) {
+                        const bp = wire.bendPoints[i];
+                        if (Math.hypot(worldPos.x - bp.x, worldPos.y - bp.y) <= BEND_POINT_RADIUS + 2) {
+                            isDragging = true;
+                            draggingBendPoint = { wire, index: i };
+                            return;
+                        }
+                    }
+                }
+
+                const clickedTerminal = getClickedTerminal(worldPos.x, worldPos.y);
+                if (clickedTerminal) {
+                    isWiring = true;
+                    wireStart = clickedTerminal;
+                    return;
+                }
+
+                selectedComponent = null;
+                for (let i = componentsOnCanvas.length - 1; i >= 0; i--) {
+                    const comp = componentsOnCanvas[i];
+                    if (worldPos.x > comp.x && worldPos.x < comp.x + comp.width &&
+                        worldPos.y > comp.y && worldPos.y < comp.y + comp.height) {
+                        selectedComponent = comp;
+                        isDragging = true;
+                        dragStart.x = worldPos.x - comp.x;
+                        dragStart.y = worldPos.y - comp.y;
+                        break;
+                    }
+                }
+                updatePropertiesPanel();
+                drawCanvas();
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                const worldPos = screenToWorld(e.clientX, e.clientY);
+
+                if (isPanning) {
+                    const dx = e.clientX - panStart.x;
+                    const dy = e.clientY - panStart.y;
+                    view.pan.x += dx;
+                    view.pan.y += dy;
+                    panStart = { x: e.clientX, y: e.clientY };
+                    drawCanvas();
+                    return;
+                }
+
+                if (isSimulating) return;
+
+                if (isDragging && selectedComponent) {
+                    selectedComponent.x = worldPos.x - dragStart.x;
+                    selectedComponent.y = worldPos.y - dragStart.y;
+                    drawCanvas();
+                } else if (isDragging && draggingBendPoint) {
+                    draggingBendPoint.wire.bendPoints[draggingBendPoint.index] = { x: worldPos.x, y: worldPos.y };
+                    drawCanvas();
+                }
+                
+                if (isWiring) {
+                    wirePreviewEnd = worldPos;
+                    drawCanvas();
+                }
+            });
+
+            canvas.addEventListener('mouseup', (e) => {
+                if (isPanning) {
+                    isPanning = false;
+                    canvas.style.cursor = 'default';
+                }
+
+                isDragging = false;
+                draggingBendPoint = null;
+                
+                if (isWiring) {
+                    const worldPos = screenToWorld(e.clientX, e.clientY);
+                    const clickedTerminal = getClickedTerminal(worldPos.x, worldPos.y);
+
+                    if (clickedTerminal && (clickedTerminal.component.uid !== wireStart.component.uid || clickedTerminal.component.type === 'rail')) {
+                        wires.push({ start: wireStart, end: clickedTerminal, bendPoints: [], uid: Date.now(), isActive: false });
+                    }
+                    isWiring = false;
+                    wireStart = null;
+                    drawCanvas();
+                }
+            });
+            
+            canvas.addEventListener('dblclick', (e) => {
+                if (isSimulating) return;
+                const worldPos = screenToWorld(e.clientX, e.clientY);
+
+                for (let i = 0; i < wires.length; i++) {
+                    for (let j = wires[i].bendPoints.length - 1; j >= 0; j--) {
+                        const bp = wires[i].bendPoints[j];
+                        if (Math.hypot(worldPos.x - bp.x, worldPos.y - bp.y) <= BEND_POINT_RADIUS + 2) {
+                            wires[i].bendPoints.splice(j, 1);
+                            drawCanvas();
+                            return;
+                        }
+                    }
+                }
+
+                for (let i = componentsOnCanvas.length - 1; i >= 0; i--) {
+                    const comp = componentsOnCanvas[i];
+                    if (worldPos.x > comp.x && worldPos.x < comp.x + comp.width &&
+                        worldPos.y > comp.y && worldPos.y < comp.y + comp.height) {
+                        const isPwmBoard = comp.type === 'pwm_board';
+                        removeComponent(comp.uid);
+                        if(selectedComponent && selectedComponent.uid === comp.uid){
+                            selectedComponent = null;
+                            updatePropertiesPanel();
+                        }
+                        if (isPwmBoard) {
+                            updateSpectrumCharts();
+                        }
+                        drawCanvas();
+                        return;
+                    }
+                }
+            });
+
+            function screenToWorld(screenX, screenY) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (screenX - rect.left - view.pan.x) / view.scale;
+                const y = (screenY - rect.top - view.pan.y) / view.scale;
+                return { x, y };
+            }
+            
+            function removeComponent(uid) {
+                wires = wires.filter(w => w.start.component.uid !== uid && w.end.component.uid !== uid);
+                componentsOnCanvas = componentsOnCanvas.filter(c => c.uid !== uid);
+            }
+
+            // --- Drawing ---
+            function drawCanvas() {
+                ctx.save();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#111827';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.translate(view.pan.x, view.pan.y);
+                ctx.scale(view.scale, view.scale);
+
+                drawGrid();
+                drawVoltageRails();
+                drawWires();
+                if (isWiring && wireStart) {
+                    drawWirePreview();
+                }
+                componentsOnCanvas.forEach(comp => drawComponent(comp));
+
+                ctx.restore();
+            }
+
+            function drawGrid() {
+                const gridSize = 20;
+                ctx.beginPath();
+                ctx.strokeStyle = '#064e3b';
+                ctx.lineWidth = 0.5 / view.scale;
+
+                const viewLeft = -view.pan.x / view.scale;
+                const viewTop = -view.pan.y / view.scale;
+                const viewRight = viewLeft + canvas.width / view.scale;
+                const viewBottom = viewTop + canvas.height / view.scale;
+
+                for (let x = Math.floor(viewLeft / gridSize) * gridSize; x < viewRight; x += gridSize) {
+                    ctx.moveTo(x, viewTop);
+                    ctx.lineTo(x, viewBottom);
+                }
+                for (let y = Math.floor(viewTop / gridSize) * gridSize; y < viewBottom; y += gridSize) {
+                    ctx.moveTo(viewLeft, y);
+                    ctx.lineTo(viewRight, y);
+                }
+                ctx.stroke();
+            }
+
+            function drawVoltageRails() {
+                const railYTop = 20;
+                const railYBottom = 780;
+                
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3 / view.scale;
+                ctx.beginPath(); ctx.moveTo(-10000, railYTop); ctx.lineTo(10000, railYTop); ctx.stroke();
+                ctx.font = `bold ${14 / view.scale}px Inter`; ctx.fillStyle = '#ef4444'; ctx.fillText('V+', -view.pan.x / view.scale + 10, railYTop - 8 / view.scale);
+
+                ctx.strokeStyle = '#a5f3fc'; ctx.lineWidth = 3 / view.scale;
+                ctx.beginPath(); ctx.moveTo(-10000, railYBottom); ctx.lineTo(10000, railYBottom); ctx.stroke();
+                ctx.font = `bold ${14 / view.scale}px Inter`; ctx.fillStyle = '#a5f3fc'; ctx.fillText('GND', -view.pan.x / view.scale + 10, railYBottom + 15 / view.scale);
+
+                ctx.fillStyle = '#4b5563';
+                for(let x = -10000; x < 10000; x += 100) {
+                    ctx.beginPath(); ctx.arc(x, railYTop, TERMINAL_RADIUS / view.scale, 0, 2 * Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.arc(x, railYBottom, TERMINAL_RADIUS / view.scale, 0, 2 * Math.PI); ctx.fill();
+                }
+            }
+            
+            function getSignalGenTerminals(component) {
+                const { x, y, width: w, height: h } = component;
+                return {
+                    'positive': { x: x + w / 4, y: y, color: '#ef4444', labelX: x + w / 4, labelY: y - 10, textAlign: 'center' },
+                    'negative': { x: x + (3 * w / 4), y: y, color: '#a5f3fc', labelX: x + (3 * w / 4), labelY: y - 10, textAlign: 'center' },
+                    'SIG OUT':  { x: x + w / 2, y: y + h, color: '#6ee7b7', labelX: x + w / 2, labelY: y + h + 10, textAlign: 'center' },
+                };
+            }
+
+            function getPwmBoardTerminals(component) {
+                const { x, y, width: w, height: h } = component;
+                return {
+                    'SIG IN':  { x: x, y: y + h / 2, color: '#6ee7b7', labelX: x - 10, labelY: y + h / 2, textAlign: 'right' },
+                    'DC+ IN':  { x: x + w / 4, y: y, color: '#ef4444', labelX: x + w / 4, labelY: y - 10, textAlign: 'center' },
+                    'DC- IN':  { x: x + (3 * w / 4), y: y, color: '#a5f3fc', labelX: x + (3 * w / 4), labelY: y - 10, textAlign: 'center' },
+                    'DC+ OUT': { x: x + w, y: y + h / 4, color: '#ef4444', labelX: x + w + 10, labelY: y + h / 4, textAlign: 'left' },
+                    'DC- OUT': { x: x + w, y: y + (3 * h / 4), color: '#a5f3fc', labelX: x + w + 10, labelY: y + (3 * h / 4), textAlign: 'left' },
+                };
+            }
+
+            function getTerminalPosition(component, terminalName) {
+                if (component.type === 'rail') return { x: component.x, y: component.y };
+                const terminals = getComponentTerminals(component);
+                return terminals[terminalName] ? { x: terminals[terminalName].x, y: terminals[terminalName].y } : null;
+            }
+
+            function getComponentTerminals(component) {
+                if (component.type === 'pwm_board') return getPwmBoardTerminals(component);
+                if (component.type === 'signal_generator') return getSignalGenTerminals(component);
+                return {
+                    'positive': { x: component.x, y: component.y + component.height / 2, color: '#ef4444' },
+                    'negative': { x: component.x + component.width, y: component.y + component.height / 2, color: '#a5f3fc' }
+                };
+            }
+            
+            function getClickedTerminal(mouseX, mouseY) {
+                for(const comp of componentsOnCanvas) {
+                    const terminals = getComponentTerminals(comp);
+                    for (const name in terminals) {
+                         const pos = terminals[name];
+                         if (pos && Math.hypot(mouseX - pos.x, mouseY - pos.y) <= (TERMINAL_RADIUS + 2) / view.scale) {
+                             return { component: comp, name: name };
+                         }
+                    }
+                }
+                const railYTop = 20;
+                const railYBottom = 780;
+                const railNodeRadius = (TERMINAL_RADIUS + 2) / view.scale;
+                for(let x = Math.floor(mouseX / 100) * 100 - 100; x < mouseX + 100; x += 100) {
+                     if (Math.hypot(mouseX - x, mouseY - railYTop) <= railNodeRadius) {
+                        return { component: { uid: `V_RAIL_POS_${x}`, type: 'rail', x: x, y: railYTop }, name: 'V+' };
+                    }
+                    if (Math.hypot(mouseX - x, mouseY - railYBottom) <= railNodeRadius) {
+                        return { component: { uid: `V_RAIL_NEG_${x}`, type: 'rail', x: x, y: railYBottom }, name: 'GND' };
+                    }
+                }
+                return null;
+            }
+
+            function drawComponent(comp) {
+                let color = getComponentColor(comp.type);
+                if (comp.type === 'led' && comp.properties.isOn) {
+                    color = 'rgba(252, 165, 165, 1)';
+                    ctx.shadowColor = 'rgba(239, 68, 68, 0.7)';
+                    ctx.shadowBlur = 15;
+                }
+                
+                ctx.fillStyle = color;
+                ctx.strokeStyle = (selectedComponent && selectedComponent.uid === comp.uid) ? '#34d399' : '#047857';
+                ctx.lineWidth = ((selectedComponent && selectedComponent.uid === comp.uid) ? 3 : 2) / view.scale;
+                ctx.beginPath();
+                ctx.roundRect(comp.x, comp.y, comp.width, comp.height, [8]);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                
+                ctx.fillStyle = '#d1fae5';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                if (comp.type === 'signal_generator') {
+                    // Draw screen and text for signal generator
+                    const screenX = comp.x + 5;
+                    const screenY = comp.y + 5;
+                    const screenW = comp.width - 10;
+                    const screenH = comp.height - 35;
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(screenX, screenY, screenW, screenH);
+                    
+                    ctx.fillStyle = '#6ee7b7';
+                    ctx.font = `${12 / view.scale}px "Courier New", monospace`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`Freq: ${comp.properties.frequency} Hz`, screenX + 10, screenY + screenH / 3);
+                    ctx.fillText(`Duty: ${comp.properties.dutyCycle} %`, screenX + 10, screenY + (screenH * 2 / 3));
+
+                } else {
+                    ctx.font = `${14 / view.scale}px Inter`;
+                    ctx.fillText(comp.text, comp.x + comp.width / 2, comp.y + comp.height / 2);
+                }
+
+                
+                const terminals = getComponentTerminals(comp);
+                for(const name in terminals) {
+                    const term = terminals[name];
+                    if(!term.x) continue;
+                    ctx.fillStyle = term.color;
+                    ctx.beginPath();
+                    ctx.arc(term.x, term.y, TERMINAL_RADIUS / view.scale, 0, 2 * Math.PI);
+                    ctx.fill();
+                    if(term.labelX && view.scale > 0.5) {
+                        ctx.font = `${10 / view.scale}px Inter`;
+                        ctx.textAlign = term.textAlign;
+                        ctx.textBaseline = term.labelY < comp.y + comp.height / 2 ? 'bottom' : 'top';
+                        ctx.fillStyle = '#a7f3d0';
+                        ctx.fillText(name, term.labelX, term.labelY);
+                    }
+                }
+            }
+            
+            function drawWires() {
+                wires.forEach(wire => {
+                    ctx.strokeStyle = wire.isActive ? '#34d399' : '#059669';
+                    ctx.lineWidth = (wire.isActive ? 4 : 2) / view.scale;
+                    const startPos = getTerminalPosition(wire.start.component, wire.start.name);
+                    const endPos = getTerminalPosition(wire.end.component, wire.end.name);
+                    if (startPos && endPos) {
+                        ctx.beginPath();
+                        ctx.moveTo(startPos.x, startPos.y);
+                        wire.bendPoints.forEach(bp => ctx.lineTo(bp.x, bp.y));
+                        ctx.lineTo(endPos.x, endPos.y);
+                        ctx.stroke();
+                        ctx.fillStyle = '#2dd4bf';
+                        wire.bendPoints.forEach(bp => {
+                            ctx.beginPath();
+                            ctx.arc(bp.x, bp.y, BEND_POINT_RADIUS / view.scale, 0, 2 * Math.PI);
+                            ctx.fill();
+                        });
+                    }
+                });
+            }
+
+            function addBendPoint(mouseX, mouseY) {
+                let closestWire = null;
+                let minDistance = Infinity;
+                let closestPoint = null;
+                wires.forEach(wire => {
+                    const points = [getTerminalPosition(wire.start.component, wire.start.name), ...wire.bendPoints, getTerminalPosition(wire.end.component, wire.end.name)];
+                    for (let i = 0; i < points.length - 1; i++) {
+                        const p1 = points[i]; const p2 = points[i+1];
+                        if (!p1 || !p2) continue;
+                        const dx = p2.x - p1.x; const dy = p2.y - p1.y;
+                        const lenSq = dx * dx + dy * dy;
+                        const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((mouseX - p1.x) * dx + (mouseY - p1.y) * dy) / lenSq));
+                        const projX = p1.x + t * dx; const projY = p1.y + t * dy;
+                        const dist = Math.hypot(mouseX - projX, mouseY - projY);
+                        if (dist < minDistance && dist < 10 / view.scale) {
+                             minDistance = dist; closestWire = wire;
+                             closestPoint = { x: projX, y: projY, index: i };
+                        }
+                    }
+                });
+                if (closestWire) {
+                    closestWire.bendPoints.splice(closestPoint.index, 0, {x: closestPoint.x, y: closestPoint.y});
+                    drawCanvas();
+                }
+            }
+            
+            function drawWirePreview() {
+                const startPos = getTerminalPosition(wireStart.component, wireStart.name);
+                if (!startPos) return;
+                ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 2 / view.scale;
+                ctx.setLineDash([5 / view.scale, 5 / view.scale]);
+                ctx.beginPath();
+                ctx.moveTo(startPos.x, startPos.y);
+                ctx.lineTo(wirePreviewEnd.x, wirePreviewEnd.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            function getComponentColor(type) {
+                 switch(type) {
+                    case 'signal_generator': return 'rgba(37, 99, 235, 0.5)';
+                    case 'dc_supply': return 'rgba(5, 150, 105, 0.5)';
+                    case 'resistor': return 'rgba(202, 138, 4, 0.5)';
+                    case 'led': return 'rgba(220, 38, 38, 0.4)';
+                    case 'pwm_board': return 'rgba(124, 58, 237, 0.5)';
+                    default: return 'rgba(107, 114, 128, 0.5)';
+                }
+            }
+            
+            function updatePropertiesPanel() {
+                if(selectedComponent) {
+                    propertiesPanel.innerHTML = '';
+                    const props = selectedComponent.properties;
+                    if (Object.keys(props).length === 0 || selectedComponent.type === 'led' || !props.hasOwnProperty('frequency')) {
+                         propertiesPanel.innerHTML = '<p>This component has no editable properties.</p><p class="text-xs mt-2 text-green-600">Double-click a component or wire bend-point to remove it.</p>';
+                         return;
+                    }
+                    for(const key in props) {
+                        if (key === 'isOn' || key === 'amplitude') continue;
+                        const propDiv = document.createElement('div');
+                        propDiv.className = 'mb-2';
+                        const label = document.createElement('label');
+                        label.className = 'block text-sm font-medium text-green-400';
+                        label.textContent = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'mt-1 block w-full rounded-md bg-gray-800 border-green-700 text-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm';
+                        input.value = props[key];
+                        input.dataset.key = key;
+                        input.addEventListener('change', (e) => {
+                            const newVal = parseFloat(e.target.value);
+                            if(!isNaN(newVal)){
+                                selectedComponent.properties[e.target.dataset.key] = newVal;
+                                if (isSimulating) { // Redraw component text if sim is running
+                                    drawCanvas();
+                                }
+                            }
+                        });
+                        propDiv.appendChild(label);
+                        propDiv.appendChild(input);
+                        propertiesPanel.appendChild(propDiv);
+                    }
+                } else {
+                    propertiesPanel.innerHTML = '<p>Select a component to see its properties.</p><p class="text-xs mt-2 text-green-600">Double-click a component or wire bend-point to remove it. Ctrl+Click a wire to add a bend-point.</p>';
+                }
+            }
+
+            // --- Simulation & Spectrum ---
+            runButton.addEventListener('click', toggleSimulation);
+            
+            clearButton.addEventListener('click', () => {
+                stopSimulation();
+                componentsOnCanvas = [];
+                wires = [];
+                selectedComponent = null;
+                updatePropertiesPanel();
+                drawCanvas();
+                updateSpectrumCharts();
+            });
+
+            presetButton.addEventListener('click', loadPreset);
+
+            function toggleSimulation() {
+                isSimulating = !isSimulating;
+                if (isSimulating) {
+                    runButton.textContent = 'Stop Simulation';
+                    runButton.classList.replace('bg-green-700', 'bg-red-700');
+                    runButton.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
+                    selectedComponent = null;
+                    updatePropertiesPanel();
+                    animationFrameId = requestAnimationFrame(simulationLoop);
+                } else {
+                    stopSimulation();
+                }
+            }
+            
+            function stopSimulation() {
+                isSimulating = false;
+                runButton.textContent = 'Run Simulation';
+                runButton.classList.replace('bg-red-700', 'bg-green-700');
+                runButton.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                wires.forEach(w => w.isActive = false);
+                componentsOnCanvas.forEach(c => {
+                    if (c.properties.isOn) c.properties.isOn = false;
+                });
+                drawCanvas();
+            }
+
+            function simulationLoop(timestamp) {
+                if (!isSimulating) return;
+
+                wires.forEach(w => w.isActive = false);
+                componentsOnCanvas.forEach(c => {
+                    if (c.properties.hasOwnProperty('isOn')) c.properties.isOn = false;
+                });
+                
+                const connections = new Map();
+                wires.forEach(w => {
+                    const startUid = w.start.component.uid;
+                    const endUid = w.end.component.uid;
+                    if (!connections.has(startUid)) connections.set(startUid, []);
+                    if (!connections.has(endUid)) connections.set(endUid, []);
+                    connections.get(startUid).push({ wire: w, targetUid: endUid, targetName: w.end.name, sourceName: w.start.name });
+                    connections.get(endUid).push({ wire: w, targetUid: startUid, targetName: w.start.name, sourceName: w.end.name });
+                });
+
+                const pwmBoards = componentsOnCanvas.filter(c => c.type === 'pwm_board');
+                
+                pwmBoards.forEach(board => {
+                    const signalGen = findSignalSourceForBoard(board);
+                    if (signalGen) {
+                        const { frequency, dutyCycle } = signalGen.properties;
+                        const spectrumData = calculatePWMSpectrum(frequency, dutyCycle / 100);
+                        drawWaveform(frequency, dutyCycle, `waveform-svg-${board.uid}`);
+                        drawSpectrum(spectrumData, frequency, `spectrum-svg-${board.uid}`);
+
+                        const period = 1 / frequency;
+                        const timeInPeriod = (timestamp / 1000) % period;
+                        const isPwmHigh = timeInPeriod < (period * (dutyCycle / 100));
+                        
+                        if (isPwmHigh) {
+                            traceCircuitForBoard(board, connections);
+                        }
+                    }
+                });
+                
+                drawCanvas();
+                animationFrameId = requestAnimationFrame(simulationLoop);
+            }
+            
+            function findSignalSourceForBoard(board) {
+                const sigInWire = wires.find(w => (w.start.component.uid === board.uid && w.start.name === 'SIG IN') || (w.end.component.uid === board.uid && w.end.name === 'SIG IN'));
+                if (!sigInWire) return null;
+
+                const sourceTerminal = sigInWire.start.component.uid === board.uid ? sigInWire.end : sigInWire.start;
+                const sourceComp = componentsOnCanvas.find(c => c.uid === sourceTerminal.component.uid);
+
+                if (sourceComp && sourceComp.type === 'signal_generator') {
+                    return sourceComp;
+                }
+                return null;
+            }
+
+            function traceCircuitForBoard(board, connections) {
+                const q = [{ component: board, name: 'DC+ OUT' }];
+                const visitedWires = new Set();
+                
+                while (q.length > 0) {
+                    const { component, name } = q.shift();
+                    const componentConnections = connections.get(component.uid) || [];
+
+                    for (const conn of componentConnections) {
+                        if (conn.sourceName === name && !visitedWires.has(conn.wire.uid)) {
+                            conn.wire.isActive = true;
+                            visitedWires.add(conn.wire.uid);
+                            
+                            const nextComp = componentsOnCanvas.find(c => c.uid === conn.targetUid);
+                            if (nextComp) {
+                                if (nextComp.type === 'led') nextComp.properties.isOn = true;
+                                
+                                const terminals = Object.keys(getComponentTerminals(nextComp));
+                                const otherTermName = terminals.find(t => t !== conn.targetName);
+                                if (otherTermName) {
+                                    q.push({ component: nextComp, name: otherTermName });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            function calculatePWMSpectrum(f0, D) {
+                const N = 50;
+                const data = [{ frequency: 0, amplitude: D }];
+                for (let n = 1; n <= N; n++) {
+                    const freq = n * f0;
+                    const amplitude = (2 / (n * Math.PI)) * Math.abs(Math.sin(n * Math.PI * D));
+                    if (amplitude > 1e-6) data.push({ frequency: freq, amplitude: amplitude });
+                }
+                return data;
+            }
+
+            function updateSpectrumCharts() {
+                spectrumContainer.innerHTML = '';
+                const pwmBoards = componentsOnCanvas.filter(c => c.type === 'pwm_board');
+                
+                if (pwmBoards.length === 0) {
+                    spectrumContainer.innerHTML = '<p class="text-center text-green-600">Add a PWM Board to see spectrum analysis.</p>';
+                }
+
+                pwmBoards.forEach(board => {
+                    const chartWrapper = document.createElement('div');
+                    chartWrapper.className = 'bg-gray-900 p-6 rounded-lg border border-green-800';
+                    
+                    const title = document.createElement('h2');
+                    title.className = 'text-xl font-semibold text-green-300 mb-4';
+                    title.textContent = `Analysis for Board #${board.uid}`;
+                    
+                    const waveformContainer = document.createElement('div');
+                    waveformContainer.className = 'bg-gray-800 p-4 rounded-lg mb-4';
+                    const waveformSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    waveformSvg.id = `waveform-svg-${board.uid}`;
+                    waveformSvg.setAttribute('width', '100%');
+                    waveformSvg.setAttribute('height', '100');
+                    waveformContainer.appendChild(waveformSvg);
+
+                    const spectrumContainerDiv = document.createElement('div');
+                    spectrumContainerDiv.className = 'bg-gray-800 p-4 rounded-lg';
+                    const spectrumSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    spectrumSvg.id = `spectrum-svg-${board.uid}`;
+                    spectrumSvg.setAttribute('width', '100%');
+                    spectrumSvg.setAttribute('height', '300');
+                    spectrumContainerDiv.appendChild(spectrumSvg);
+
+                    chartWrapper.appendChild(title);
+                    chartWrapper.appendChild(waveformContainer);
+                    chartWrapper.appendChild(spectrumContainerDiv);
+                    spectrumContainer.appendChild(chartWrapper);
+                });
+            }
+            
+            function drawWaveform(frequency, dutyCycle, svgId) {
+                const svg = d3.select(`#${svgId}`);
+                if (svg.empty()) return;
+
+                const { width, height } = svg.node().getBoundingClientRect();
+                if (width === 0) return;
+                svg.selectAll("*").remove();
+                const margin = { top: 10, right: 10, bottom: 20, left: 30 };
+
+                const period = 1 / frequency;
+                const t_on = period * (dutyCycle / 100);
+
+                const data = [
+                    {t: 0, v: 0},
+                    {t: 0, v: 1},
+                    {t: t_on, v: 1},
+                    {t: t_on, v: 0},
+                    {t: period, v: 0}
+                ];
+
+                const xScale = d3.scaleLinear().domain([0, period]).range([margin.left, width - margin.right]);
+                const yScale = d3.scaleLinear().domain([-0.1, 1.1]).range([height - margin.bottom, margin.top]);
+                const axisColor = "#6ee7b7";
+
+                svg.append("g").attr("transform", `translate(0,${height - margin.bottom})`).call(d3.axisBottom(xScale).ticks(5, ".2s")).attr("color", axisColor).selectAll("text").attr("fill", axisColor);
+                svg.append("g").attr("transform", `translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(2)).attr("color", axisColor).selectAll("text").attr("fill", axisColor);
+
+                const line = d3.line().x(d => xScale(d.t)).y(d => yScale(d.v));
+                svg.append("path").datum(data).attr("fill", "none").attr("stroke", "#f87171").attr("stroke-width", 2).attr("d", line);
+
+                svg.append("text").attr("x", width/2).attr("y", height - 2).attr("fill", axisColor).attr("text-anchor", "middle").style("font-size", "12px").text("Time (s)");
+            }
+
+            function drawSpectrum(data, fundamentalFreq, svgId) {
+                const svg = d3.select(`#${svgId}`);
+                if (svg.empty()) return;
+
+                const { width, height } = svg.node().getBoundingClientRect();
+                if (width === 0) return;
+                svg.selectAll("*").remove();
+                const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+                const xScale = d3.scaleLinear().domain([0, d3.max(data, d => d.frequency) * 1.1]).range([margin.left, width - margin.right]);
+                const yScale = d3.scaleLinear().domain([0, d3.max(data, d => d.amplitude) * 1.1]).range([height - margin.bottom, margin.top]);
+                const axisColor = "#6ee7b7";
+
+                svg.append("g").attr("transform", `translate(0,${height - margin.bottom})`).call(d3.axisBottom(xScale).ticks(10, ".1s").tickFormat(d => `${d/1000}k`)).attr("color", axisColor).selectAll("text").attr("fill", axisColor);
+                svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("fill", axisColor).attr("text-anchor", "middle").text("Frequency (Hz)");
+                svg.append("g").attr("transform", `translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(5)).attr("color", axisColor).selectAll("text").attr("fill", axisColor);
+                svg.append("text").attr("transform", "rotate(-90)").attr("y", 15).attr("x", -height / 2).attr("fill", axisColor).attr("text-anchor", "middle").text("Amplitude");
+
+                svg.selectAll("rect.bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => xScale(d.frequency) - 2).attr("y", d => yScale(d.amplitude)).attr("width", 4).attr("height", d => height - margin.bottom - yScale(d.amplitude)).attr("fill", d => d.frequency === 0 ? "#a78bfa" : (d.frequency === fundamentalFreq ? "#f87171" : "#60a5fa"));
+
+                // Add harmonic labels
+                svg.selectAll("text.harmonic-label").data(data).enter()
+                    .filter(d => d.frequency > 0 && (d.frequency / fundamentalFreq) % 2 !== 0)
+                    .append("text")
+                    .attr("class", "harmonic-label")
+                    .attr("x", d => xScale(d.frequency))
+                    .attr("y", d => yScale(d.amplitude) - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#a7f3d0")
+                    .style("font-size", "10px")
+                    .text(d => {
+                        const harmonicOrder = Math.round(d.frequency / fundamentalFreq);
+                        if (harmonicOrder === 1) return "Fundamental";
+                        if (harmonicOrder === 3) return "3rd Harmonic";
+                        if (harmonicOrder === 5) return "5th Harmonic";
+                        return null;
+                    });
+            }
+            
+            function loadPreset() {
+                stopSimulation();
+                
+                const dc = { id:'dc-supply', type:'dc_supply', text:'DC Supply', width:100, height:60, x:50, y:50, uid:1, properties:getDefaultProperties('dc_supply') };
+                const sg = { id:'signal-generator', type:'signal_generator', text:'Signal Gen', width:150, height:100, x:50, y:200, uid:2, properties:{...getDefaultProperties('signal_generator'), frequency: 40} };
+                const board = { id:'pwm-board', type:'pwm_board', text:'PWM Board', width:150, height:80, x:225, y:150, uid:3, properties:getDefaultProperties('pwm_board') };
+                
+                const leds = [];
+                const resistors = [];
+                for(let i=0; i<4; i++) {
+                    resistors.push({ id:'resistor', type:'resistor', text:'Resistor', width:100, height:60, x:400, y:80 + i*100, uid:10+i, properties:getDefaultProperties('resistor') });
+                    leds.push({ id:'led', type:'led', text:'LED', width:100, height:60, x:500, y:80 + i*100, uid:20+i, properties:getDefaultProperties('led') });
+                }
+                
+                componentsOnCanvas = [dc, sg, board, ...resistors, ...leds];
+
+                wires = [
+                    { start:{component:dc, name:'positive'}, end:{component:{uid:'V_RAIL_POS_150', type:'rail', x:150, y:20}}, bendPoints:[], uid:101, isActive:false },
+                    { start:{component:dc, name:'negative'}, end:{component:{uid:'V_RAIL_NEG_150', type:'rail', x:150, y:780}}, bendPoints:[], uid:102, isActive:false },
+                    { start:{component:sg, name:'SIG OUT'}, end:{component:board, name:'SIG IN'}, bendPoints:[{x:125, y:310}, {x:225, y:310}], uid:103, isActive:false },
+                    { start:{component:{uid:'V_RAIL_POS_250', type:'rail', x:250, y:20}, name:'V+'}, end:{component:board, name:'DC+ IN'}, bendPoints:[], uid:104, isActive:false },
+                    { start:{component:{uid:'V_RAIL_NEG_300', type:'rail', x:300, y:780}, name:'GND'}, end:{component:board, name:'DC- IN'}, bendPoints:[], uid:105, isActive:false },
+                ];
+
+                for(let i=0; i<4; i++) {
+                    const yPos = 110 + i * 100;
+                    wires.push({ start:{component:board, name:'DC+ OUT'}, end:{component:resistors[i], name:'positive'}, bendPoints:[{x:380, y:170}, {x:380, y:yPos}], uid:200+i, isActive:false });
+                    wires.push({ start:{component:resistors[i], name:'negative'}, end:{component:leds[i], name:'positive'}, bendPoints:[], uid:300+i, isActive:false });
+                    wires.push({ start:{component:leds[i], name:'negative'}, end:{component:{uid:'V_RAIL_NEG_550', type:'rail', x:550, y:780}}, bendPoints:[{x:600, y:yPos}], uid:400+i, isActive:false });
+                }
+
+                updatePropertiesPanel();
+                updateSpectrumCharts();
+                drawCanvas();
+            }
+
+            // Initial state
+            updatePropertiesPanel();
+            updateSpectrumCharts();
+            drawCanvas();
+        });
+    </script>
+</body>
+</html>

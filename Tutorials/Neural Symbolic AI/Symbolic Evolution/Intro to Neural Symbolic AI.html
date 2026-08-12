@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Tutorial: Neural-Symbolic AI</title>
+    
+    <!-- Tailwind CSS and Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX for LaTeX Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMeaMurHnH2shfxCnhtGz14TXrvU+pKiMcfKScwhGdrNenGI4" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIgsOcwrBwl+bMrNrq4fAUiY1elIOHcDdXbCQu1aAPQNADDK" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax5AScKprq27eyFSokGDTxk/XtWH1Y/iSJK" crossorigin="anonymous"></script>
+
+    <!-- three.js for 3D graphics -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.156.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.156.1/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Custom Styles -->
+    <style>
+        /* This style block is intentionally minimal as per instructions. */
+        .katex-display {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0.5rem 0;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -100;
+            }
+        }
+        .model-update {
+             transition: all 1s ease-in-out;
+            stroke-dasharray: 5, 5;
+            animation: dash 2s linear infinite;
+        }
+        @keyframes glow {
+            0% { filter: drop-shadow(0 0 2px #34d399); }
+            50% { filter: drop-shadow(0 0 8px #34d399); }
+            100% { filter: drop-shadow(0 0 2px #34d399); }
+        }
+        .glowing {
+            animation: glow 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500" style="font-family: 'Inter', sans-serif;">
+
+    <div>
+        <!-- Collapsible Sidebar Navigation -->
+        <nav id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-black/90 backdrop-blur-md p-6 border-r border-green-900 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+            <h2 class="text-xl font-bold text-green-200 mb-6">Tutorial Index</h2>
+            <ul class="space-y-3">
+                <li><a href="#page1" class="nav-link text-green-400 hover:text-green-300 underline">1. The Two Minds of AI</a></li>
+                <li><a href="#page2" class="nav-link text-green-400 hover:text-green-300 underline">2. A Brief History</a></li>
+                <li><a href="#page3" class="nav-link text-green-400 hover:text-green-300 underline">3. Motivation</a></li>
+                <li><a href="#page4" class="nav-link text-green-400 hover:text-green-300 underline">4. Math I: RoPE & Rotations</a></li>
+                <li><a href="#page5" class="nav-link text-green-400 hover:text-green-300 underline">5. Math II: Hyperbolic Geometry</a></li>
+                <li><a href="#page6" class="nav-link text-green-400 hover:text-green-300 underline">6. Math III: Quaternions</a></li>
+                <li><a href="#page7" class="nav-link text-green-400 hover:text-green-300 underline">7. The Hardware Renaissance</a></li>
+                <li><a href="#page8" class="nav-link text-green-400 hover:text-green-300 underline">8. The Grand Synthesis</a></li>
+                <li><a href="#page9" class="nav-link text-green-400 hover:text-green-300 underline">9. Conclusion & Future</a></li>
+            </ul>
+        </nav>
+
+        <!-- Hamburger button for mobile nav -->
+        <button id="menu-toggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 border border-green-600 rounded-md">
+            <svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+
+        <!-- Main Content -->
+        <main class="lg:pl-72 p-4 sm:p-6 md:p-8">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-6 !leading-tight">Neural-Symbolic AI: An Expanded Interactive Tutorial</h1>
+                <p class="text-lg leading-relaxed">Welcome to this expanded guide to Neural-Symbolic AI. We'll dive deeper into the core concepts, explore the pivotal hardware and mathematical breakthroughs, and bring it all to life with enhanced animations and interactivity.</p>
+
+                <!-- PAGE 1 -->
+                <section id="page1" class="py-12">
+                     <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. The Two Minds of AI</h2>
+                    <p class="mb-8 text-lg leading-relaxed">At its heart, Neural-Symbolic AI integrates two different ways of "thinking." This section provides an animated look at how each system processes information differently.</p>
+                                        
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">🧠 Interactive Simulation: System 1 vs. System 2</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- System 1: Neural Network -->
+                            <div>
+                                <h5 class="text-center font-bold text-green-300 mb-2">System 1: Neural Pattern Recognition</h5>
+                                <p class="text-sm text-center mb-4">Fast, parallel, intuitive. Watch how inputs activate a network to produce an answer.</p>
+                                <svg id="system1-NN" class="w-full h-80"></svg>
+                                <div class="text-center mt-4">
+                                    <button id="runNN" class="bg-gray-800 border border-green-600 hover:bg-green-900/50 text-green-300 font-bold py-2 px-4 rounded">See a "Cat"</button>
+                                </div>
+                            </div>
+                            <!-- System 2: Symbolic Reasoner -->
+                            <div>
+                                <h5 class="text-center font-bold text-green-300 mb-2">System 2: Symbolic Logic</h5>
+                                <p class="text-sm text-center mb-4">Slow, sequential, deliberate. Watch how facts are applied to a rule to reach a conclusion.</p>
+                                <svg id="system2-Logic" class="w-full h-80"></svg>
+                                <div class="text-center mt-4">
+                                    <button id="runLogic" class="bg-gray-800 border border-green-600 hover:bg-green-900/50 text-green-300 font-bold py-2 px-4 rounded">Reason about "Socrates"</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 2 -->
+                <section id="page2" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. A Tale of Two Paradigms: A Brief History</h2>
+                    <p class="mb-8 text-lg leading-relaxed">The quest for Neural-Symbolic integration was born from the historical limitations of each approach on its own.</p>
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">🗺️ Interactive Zone: A Clickable Timeline</h4>
+                        <div id="timelineContainer" class="flex flex-wrap gap-4 justify-center"></div>
+                        <div id="timelineContent" class="mt-6 p-4 bg-gray-900 rounded-md min-h-[100px] transition-all duration-300 text-green-400">
+                            Select a decade to see key events.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 3 -->
+                <section id="page3" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Why Bother? The Motivation for Integration</h2>
+                    <p class="mb-8 text-lg leading-relaxed">Why combine these two fields? Because each one solves a problem the other creates. The goal is an AI that learns from the world like a neural network, but reasons about what it has learned like a symbolic system.</p>
+                    <div class="overflow-x-auto my-8">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-900">
+                                    <th class="p-3 border border-green-800 text-green-300">Pure Neural Networks (System 1)</th>
+                                    <th class="p-3 border border-green-800 text-green-300">Pure Symbolic AI (System 2)</th>
+                                    <th class="p-3 border border-green-800 text-green-300">Neural-Symbolic Goal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border border-green-900"><td class="p-3">✅ Learns from data</td><td class="p-3">❌ Needs rules to be hand-coded</td><td class="p-3">Learn rules from data</td></tr>
+                                <tr class="border border-green-900 bg-gray-900/50"><td class="p-3">✅ Robust to noisy input</td><td class="p-3">❌ Brittle; fails on unseen cases</td><td class="p-3">Generalize better from learned patterns</td></tr>
+                                <tr class="border border-green-900"><td class="p-3">❌ Opaque "black box"</td><td class="p-3">✅ Interpretable and explainable</td><td class="p-3">Provide explanations for data-driven decisions</td></tr>
+                                <tr class="border border-green-900 bg-gray-900/50"><td class="p-3">❌ Struggles with abstract reasoning</td><td class="p-3">✅ Excellent at logical deduction</td><td class="p-3">Reason about learned concepts abstractly</td></tr>
+                                <tr class="border border-green-900"><td class="p-3">❌ Data-hungry</td><td class="p-3">✅ Can work with little to no data</td><td class="p-3">Learn effectively from fewer examples</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- PAGE 4 -->
+                <section id="page4" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Math I: RoPE & Rotations</h2>
+                    <p class="mb-4 text-lg leading-relaxed">Rotary Positional Embeddings (RoPE) encode position by rotating feature vectors. This idea builds on a rich mathematical history.</p>
+                    <p class="mb-4 text-lg leading-relaxed"><strong>Mathematical Breakthrough (1748):</strong> Leonhard Euler published his famous formula, $e^{ix} = \cos x + i \sin x$. This masterpiece connects complex exponentiation with trigonometric functions, providing the mathematical language for describing rotations in a 2D plane (the complex plane). RoPE is a direct application of this 18th-century insight to high-dimensional machine learning.</p>
+                    <p class="mb-4 text-lg leading-relaxed">The core idea remains: the attention score between a query at position $m$ and a key at position $n$ depends only on their relative position, $n-m$. $$ (q'_m)^T (k'_n) = q^T R_{n-m} k $$</p>
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">💡 Interactive Zone: Vector Rotation in the Complex Plane</h4>
+                        <canvas id="ropeCanvas" class="w-full h-72 bg-gray-900 rounded-md"></canvas>
+                        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="ropeSliderM" class="block mb-2 text-green-400">Query Position (m): <span id="ropeValueM" class="text-green-200">1</span></label>
+                                <input id="ropeSliderM" type="range" min="0" max="10" value="1" class="w-full">
+                            </div>
+                             <div>
+                                <label for="ropeSliderN" class="block mb-2 text-green-400">Key Position (n): <span id="ropeValueN" class="text-green-200">3</span></label>
+                                <input id="ropeSliderN" type="range" min="0" max="10" value="3" class="w-full">
+                            </div>
+                        </div>
+                        <div id="ropeDotProduct" class="mt-4 text-center font-mono p-2 bg-black rounded text-green-400"></div>
+                    </div>
+                </section>
+
+                <!-- PAGE 5 -->
+                <section id="page5" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Math II: Hyperbolic Geometry</h2>
+                     <p class="mb-4 text-lg leading-relaxed">Hyperbolic space is ideal for embedding hierarchies. This concept stems from one of the most significant revolutions in mathematics.</p>
+                    <p class="mb-4 text-lg leading-relaxed"><strong>Mathematical Breakthrough (c. 1830):</strong> For centuries, Euclid's fifth postulate (the "parallel postulate") was a cornerstone of geometry. In the 19th century, mathematicians János Bolyai and Nikolai Lobachevsky independently demonstrated that one could create a consistent, logical geometry by *negating* this postulate. This gave birth to hyperbolic geometry, a "curved" space where parallel lines can diverge. Bernhard Riemann later formalized the mathematics of curved spaces in general (1854), paving the way for Einstein's theory of relativity and, now, for advanced AI embeddings.</p>
+                    <p class="mb-4 text-lg leading-relaxed">We visualize this using a Poincaré disk. The distance between two points $u$ and $v$ explodes as they approach the boundary: $$d(u, v) = \text{arccosh} \left( 1 + 2 \frac{\|u-v\|^2_2}{(1-\|u\|^2_2)(1-\|v\|^2_2)} \right)$$</p>
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">💡 Interactive Zone: Geodesics in Curved Space</h4>
+                        <canvas id="poincareCanvas" class="w-full h-96 bg-gray-900 rounded-md cursor-pointer"></canvas>
+                         <div id="poincareDistances" class="mt-4 text-center font-mono p-2 bg-black rounded text-green-400"></div>
+                    </div>
+                </section>
+
+                <!-- PAGE 6 -->
+                <section id="page6" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6. Math III: Quaternions</h2>
+                    <p class="mb-4 text-lg leading-relaxed">Quaternions ($q = a + bi + cj + dk$) are a 4D number system that elegantly represents 3D rotations.</p>
+                    <p class="mb-4 text-lg leading-relaxed"><strong>Mathematical Breakthrough (1843):</strong> William Rowan Hamilton was famously walking across Brougham Bridge in Dublin when he had a flash of insight. He realized that to extend complex numbers (2D) to handle 3D space, he needed *four* dimensions and a non-commutative multiplication rule ($ij = k$, but $ji = -k$). He carved the fundamental formula $i^2 = j^2 = k^2 = ijk = -1$ into the bridge's stone. This discovery is now essential for 3D graphics, robotics, and increasingly, AI.</p>
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">🌀 Interactive Zone: Quaternion Rotator vs. Euler Angles</h4>
+                        <p class="text-sm mb-4">Quaternions solve the "gimbal lock" problem that can plague Euler (X, Y, Z) rotations. Try rotating the right cube's Pitch to 90 degrees, then try to use Yaw. Notice how it behaves like Roll. The quaternion-controlled cube on the left does not have this problem.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h5 class="text-center font-bold text-green-300 mb-2">Quaternion Control (Left)</h5>
+                                <div id="quaternionCanvasContainer" class="w-full h-64 bg-black rounded-md border border-green-900"></div>
+                            </div>
+                            <div>
+                                <h5 class="text-center font-bold text-green-300 mb-2">Euler Angle Control (Right)</h5>
+                                <div id="eulerCanvasContainer" class="w-full h-64 bg-black rounded-md border border-green-900"></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-green-400">
+                            <div><label>Pitch (X-axis): <span id="valPitch" class="text-green-200">0</span>°</label><input type="range" id="eulerPitch" min="-180" max="180" step="1" value="0" class="w-full"></div>
+                            <div><label>Yaw (Y-axis): <span id="valYaw" class="text-green-200">0</span>°</label><input type="range" id="eulerYaw" min="-180" max="180" step="1" value="0" class="w-full"></div>
+                            <div><label>Roll (Z-axis): <span id="valRoll" class="text-green-200">0</span>°</label><input type="range" id="eulerRoll" min="-180" max="180" step="1" value="0" class="w-full"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 7 -->
+                 <section id="page7" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">7. The Hardware Renaissance: The Great Enabler</h2>
+                    <p class="mb-4 text-lg leading-relaxed">Why is Neural-Symbolic AI surging *now*? A primary reason is the revolution in hardware and distributed systems. Concepts that were computationally infeasible are now practical, enabling the fusion of learning and reasoning at scale.</p>
+                    
+                    <h3 class="text-2xl font-semibold text-green-300 mt-6 mb-2">Parallel Processing with GPUs</h3>
+                    <p class="mb-4 text-lg leading-relaxed">Symbolic AI often involves searching through vast graphs or applying many rules. On a traditional CPU, this is a slow, one-at-a-time process. A modern GPU, with its thousands of cores, can explore thousands of graph paths or test thousands of rules simultaneously. This massive parallelism has made symbolic methods competitive again. <a href="Tutorials/AI and Machine Learning Hub/NVIDIA RAPIDS for Spark/Page 1-NVIDIA RAPIDS for Spark.html" class="text-green-400 hover:text-green-300 underline">A look into NVIDIA Spark parallel processing</a>.</p>
+
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">⚙️ Animation: CPU vs. GPU Task Processing</h4>
+                        <svg id="parallelismAnimation" class="w-full h-48"></svg>
+                        <div class="text-center mt-4">
+                            <button id="runParallelismAnim" class="bg-gray-800 border border-green-600 hover:bg-green-900/50 text-green-300 font-bold py-2 px-4 rounded">Run Animation</button>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-2xl font-semibold text-green-300 mt-6 mb-2">Federated Systems & Knowledge Graphs</h3>
+                    <p class="mb-4 text-lg leading-relaxed">One of the biggest bottlenecks for symbolic AI was building the knowledge base. Federated learning provides a groundbreaking solution. Instead of moving massive, private datasets to a central server, the AI model is sent to the data. This allows a global knowledge graph to be built and refined from the collective experience of millions of users, without any single user's private data ever leaving their device. It enables the creation of symbolic systems at a scale never before possible.</p>
+                    <div class="border-2 border-dashed border-green-800 bg-gray-900/50 p-6 rounded-lg my-8">
+                        <h4 class="text-xl font-bold text-green-300 mb-4">🌐 Animation: Federated Knowledge Building</h4>
+                        <svg id="federatedAnimation" class="w-full h-72"></svg>
+                         <div class="text-center mt-4">
+                            <button id="runFederatedAnim" class="bg-gray-800 border border-green-600 hover:bg-green-900/50 text-green-300 font-bold py-2 px-4 rounded">Run Animation</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 8 -->
+                <section id="page8" class="py-12">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">8. The Grand Synthesis</h2>
+                    <p class="mb-4 text-lg leading-relaxed">The true power emerges when we combine these threads. Imagine an AI that can:</p>
+                    <ol class="list-decimal list-inside space-y-2 text-lg">
+                        <li>Use **federated learning** on a global scale to build a massive, decentralized **knowledge graph**.</li>
+                        <li>Embed this graph into **hyperbolic space** using a neural network running on **parallel GPUs**.</li>
+                        <li>Use a Transformer with **Rotary Positional Embeddings** to understand a user's natural language query.</li>
+                        <li>Translate that query into a logical traversal across the hyperbolic knowledge graph, finding an answer that is both contextually relevant (from the neural network) and logically sound (from the symbolic graph).</li>
+                    </ol>
+                    <p class="mt-4 text-lg leading-relaxed">This is the vision of modern Neural-Symbolic AI—a seamless fusion of learning, representation, and reasoning, enabled by breakthroughs in both mathematics and hardware.</p>
+                </section>
+
+                <!-- PAGE 9 -->
+                <section id="page9" class="py-12">
+                     <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">9. Conclusion & Future Outlook</h2>
+                    <p class="text-lg leading-relaxed">We have journeyed from the core concepts of AI's "two minds" to the deep mathematical and hardware foundations making their fusion a reality. The path forward involves tightening this integration, developing new algorithms that are "neuro-symbolic" from the ground up, and building hardware specifically designed for these hybrid workloads. The future of AI is not just about bigger neural networks; it's about smarter, more structured, and more trustworthy systems. The Neural-Symbolic paradigm is a critical step on that path.</p>
+                </section>
+            </div>
+        </main>
+    </div>
+
+<script type="module">
+// Import three.js
+import * as THREE from 'three';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Sidebar Toggle Logic ---
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.getElementById('menu-toggle');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+    }
+
+    // Hide sidebar on link click on mobile
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 1024) { // 1024px is lg breakpoint
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    });
+
+
+    // Render math equations after the DOM is fully loaded
+    if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ]
+        });
+    }
+
+    // --- Page 1: System 1 & 2 Animations ---
+    const nnSVG = document.getElementById('system1-NN');
+    const logicSVG = document.getElementById('system2-Logic');
+    
+    function setupNN() {
+        if (!nnSVG) return;
+        const w = nnSVG.clientWidth;
+        const h = nnSVG.clientHeight;
+        const layers = [
+            { count: 3, x: w * 0.1, labels: ["Ears", "Whiskers", "Tail"] },
+            { count: 4, x: w * 0.5 },
+            { count: 2, x: w * 0.9, labels: ["Cat", "Dog"] }
+        ];
+
+        let svgHTML = '<defs><g id="nn-paths">';
+        for (let i = 0; i < layers.length - 1; i++) {
+            for (let j = 0; j < layers[i].count; j++) {
+                for (let k = 0; k < layers[i+1].count; k++) {
+                    const y1 = (h / (layers[i].count + 1)) * (j + 1);
+                    const y2 = (h / (layers[i+1].count + 1)) * (k + 1);
+                    svgHTML += `<path class="nn-path" d="M ${layers[i].x} ${y1} L ${layers[i+1].x} ${y2}" stroke="#166534" stroke-width="1"/>`;
+                }
+            }
+        }
+        svgHTML += '</g></defs><use href="#nn-paths"/>';
+
+        layers.forEach((layer, i) => {
+            for (let j = 0; j < layer.count; j++) {
+                const cx = layer.x;
+                const cy = (h / (layer.count + 1)) * (j + 1);
+                svgHTML += `<circle id="n${i}-${j}" class="nn-node" cx="${cx}" cy="${cy}" r="10" fill="#134e4a" stroke="#10b981" stroke-width="2"/>`;
+                if(layer.labels) {
+                    svgHTML += `<text x="${cx + (i === 0 ? -45 : 20)}" y="${cy + 5}" fill="#a7f3d0" font-size="12">${layer.labels[j]}</text>`;
+                }
+            }
+        });
+        nnSVG.innerHTML = svgHTML;
+    }
+
+    function runNNAnimation() {
+        if (!nnSVG) return;
+        nnSVG.querySelectorAll('.nn-node, .nn-path').forEach(el => {
+            el.classList.remove('active', 'glowing');
+            if(el.tagName === 'circle') el.style.fill = '#134e4a';
+        });
+        const useEl = nnSVG.querySelector('use');
+        if (useEl) useEl.classList.remove('active');
+
+        document.getElementById('n0-0').style.fill = '#2dd4bf';
+        document.getElementById('n0-1').style.fill = '#2dd4bf';
+        
+        setTimeout(() => { if (useEl) useEl.classList.add('active'); }, 100);
+        setTimeout(() => {
+            for(let i=0; i<4; i++) document.getElementById(`n1-${i}`).style.fill = '#2dd4bf';
+        }, 600);
+        setTimeout(() => {
+             document.getElementById('n2-0').style.fill = '#a7f3d0';
+             document.getElementById('n2-0').classList.add('glowing');
+        }, 1100);
+    }
+    
+    function setupLogic() {
+        if (!logicSVG) return;
+        const w = logicSVG.clientWidth;
+        const h = logicSVG.clientHeight;
+        logicSVG.innerHTML = `
+            <style>.logic-text { font-family: monospace; fill: #a7f3d0; font-size: 12px; }</style>
+            <g id="logic-group">
+                <rect id="fact1" class="logic-box" x="10" y="20" width="${w-20}" height="30" rx="5" fill="#134e4a" stroke="#10b981"/>
+                <text class="logic-text" x="20" y="40">Fact: is_a(Socrates, man)</text>
+                <rect id="fact2" class="logic-box" x="10" y="70" width="${w-20}" height="30" rx="5" fill="#134e4a" stroke="#10b981"/>
+                <text class="logic-text" x="20" y="90">Fact: all(man, mortal)</text>
+                
+                <rect id="rule" class="logic-box" x="10" y="140" width="${w-20}" height="50" rx="5" fill="#134e4a" stroke="#10b981"/>
+                <text class="logic-text" x="20" y="160">Rule: is_a(X, man) & all(man, mortal)</text>
+                <text class="logic-text" x="20" y="175">      -> is(X, mortal)</text>
+                
+                <rect id="conclusion" class="logic-box" x="10" y="230" width="${w-20}" height="30" rx="5" fill="#134e4a" stroke="#10b981"/>
+                <text class="logic-text" x="20" y="250">Conclusion: is(Socrates, mortal)</text>
+                
+                <path id="p1" class="logic-path" d="M ${w/2} 50 L ${w/2} 140" stroke="#16a34a" stroke-width="2"/>
+                <path id="p2" class="logic-path" d="M ${w/2} 100 L ${w/2} 140" stroke="#16a34a" stroke-width="2"/>
+                <path id="p3" class="logic-path" d="M ${w/2} 190 L ${w/2} 230" stroke="#16a34a" stroke-width="2"/>
+            </g>
+        `;
+    }
+
+    function runLogicAnimation() {
+        if (!logicSVG) return;
+        logicSVG.querySelectorAll('.logic-box').forEach(el => {
+            el.classList.remove('glowing');
+            el.style.fill = '#134e4a';
+        });
+        logicSVG.querySelectorAll('.logic-path').forEach(el => el.style.strokeDashoffset = '1000');
+
+        setTimeout(() => {
+            document.getElementById('fact1').style.fill = '#15803d';
+            document.getElementById('p1').style.strokeDashoffset = '0';
+        }, 500);
+        setTimeout(() => {
+            document.getElementById('fact2').style.fill = '#15803d';
+            document.getElementById('p2').style.strokeDashoffset = '0';
+        }, 1500);
+        setTimeout(() => {
+            document.getElementById('rule').style.fill = '#facc15';
+            document.getElementById('p3').style.strokeDashoffset = '0';
+        }, 2500);
+        setTimeout(() => {
+            document.getElementById('conclusion').style.fill = '#a7f3d0';
+            document.getElementById('conclusion').classList.add('glowing');
+        }, 3500);
+    }
+
+    if(nnSVG) {
+        setupNN();
+        document.getElementById('runNN').onclick = runNNAnimation;
+    }
+    if(logicSVG) {
+        setupLogic();
+        document.getElementById('runLogic').onclick = runLogicAnimation;
+    }
+
+    const timelineContainer = document.getElementById('timelineContainer');
+    if (timelineContainer) {
+        const btnClasses = "bg-gray-800 border border-green-700 hover:bg-green-900/50 text-green-300 font-bold py-2 px-4 rounded";
+        const timelineData = {
+            "1960s": `
+                <strong class="text-green-200">Symbolic AI & LISP.</strong> This era was defined by logic and rules. Simple navigation, like for Shakey the robot, could be implemented in LISP. The logic was explicit: define a state and the actions that change it.
+                <p class="mt-2 text-sm">A robot at position (X, Y) could have a function to move it:</p>
+                <pre class="bg-black text-gray-200 p-2 rounded-md overflow-x-auto mt-2 font-mono text-xs"><code>(defun move-north (state)
+  (let ((x (getf state :x))
+        (y (getf state :y)))
+    (list :x x :y (+ y 1))))
+; This returns a new state, one step north.
+; A plan was a sequence of such functions.</code></pre>`,
+            "1980s": `
+                <strong class="text-green-200">The Connectionist Revival & Backpropagation.</strong> Neural networks learned from data via backpropagation. The core idea is to calculate an error (how wrong the network's prediction is) and propagate this error backward through the network, slightly adjusting each connection's weight to reduce the error.
+                <p class="mt-2 text-sm">The weight update rule for a single weight $w_{ij}$ is:</p>
+                <div class="text-xs">$$ w_{ij} \\leftarrow w_{ij} - \\eta \\frac{\\partial E}{\\partial w_{ij}} $$</div>
+                <p class="mt-2 text-xs">Where $\\eta$ is the learning rate and $\\frac{\\partial E}{\\partial w_{ij}}$ is the error gradient—how much a change in the weight affects the total error. It's a process of guided, gradual correction.</p>`,
+            "2010s": `
+                <strong class="text-green-200">Deep Learning & High-Dimensional Space.</strong> The revolution was in representation. Instead of hand-crafting features, deep learning models learned to project data into high-dimensional "embedding" spaces. For example, words were no longer just characters; they became vectors in a 300-dimensional space. In this space, vector arithmetic could capture semantic relationships:
+                <p class="mt-2 text-sm">vector('King') - vector('Man') + vector('Woman') ≈ vector('Queen')</p>
+                <p class="mt-1 text-sm">This ability to represent abstract concepts as points in a geometric space revolutionized predictive behavior, enabling models to understand context and nuance.</p>`,
+            "2020s": `
+                <strong class="text-green-200">Neuro-Symbolic & 4D Simulation.</strong> The latest surge leverages parallel processing (GPUs) to run simulations in not just 3D space, but 4D spacetime and beyond. By combining neural networks with mathematical tools like Quaternions (for 3D rotation) and Hyperbolic Geometry (for hierarchies), we can create predictive models that understand not just *what* an object is, but its properties, relationships, and potential future states over time. This fusion of pattern recognition with structured, multi-dimensional simulation is a key step towards more general AI. </p>`
+        };
+        Object.keys(timelineData).forEach(decade => {
+            const btn = document.createElement('button');
+            btn.className = btnClasses;
+            btn.textContent = decade;
+            btn.onclick = () => { 
+                document.getElementById('timelineContent').innerHTML = timelineData[decade]; 
+                if (window.renderMathInElement) {
+                    renderMathInElement(document.getElementById('timelineContent'), {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ]
+                    });
+                }
+            };
+            timelineContainer.appendChild(btn);
+        });
+    }
+
+    const ropeCanvas = document.getElementById('ropeCanvas');
+    if (ropeCanvas) {
+        const ropeCtx = ropeCanvas.getContext('2d');
+        const mSlider = document.getElementById('ropeSliderM');
+        const nSlider = document.getElementById('ropeSliderN');
+        const ropeTheta = Math.PI / 12;
+
+        function drawRoPE() {
+            const w = ropeCanvas.width = ropeCanvas.clientWidth;
+            const h = ropeCanvas.height = ropeCanvas.clientHeight;
+            const center = { x: w / 2, y: h / 2 };
+            const radius = Math.min(w, h) * 0.35;
+            const m = parseInt(mSlider.value);
+            const n = parseInt(nSlider.value);
+            document.getElementById('ropeValueM').textContent = m;
+            document.getElementById('ropeValueN').textContent = n;
+            ropeCtx.clearRect(0, 0, w, h);
+            ropeCtx.strokeStyle = '#14532d';
+            ropeCtx.beginPath();
+            ropeCtx.moveTo(0, center.y); ropeCtx.lineTo(w, center.y);
+            ropeCtx.moveTo(center.x, 0); ropeCtx.lineTo(center.x, h);
+            ropeCtx.stroke();
+            ropeCtx.fillStyle = '#166534';
+            ropeCtx.fillText('Real', w - 40, center.y - 10);
+            ropeCtx.fillText('Imaginary', center.x + 10, 20);
+            const q_rot = { x: Math.cos(m * ropeTheta), y: Math.sin(m * ropeTheta) };
+            const k_rot = { x: Math.cos(n * ropeTheta), y: Math.sin(n * ropeTheta) };
+            ropeCtx.strokeStyle = '#111827';
+            ropeCtx.beginPath();
+            ropeCtx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+            ropeCtx.stroke();
+
+            function drawVector(vec, color, label) {
+                ropeCtx.strokeStyle = color;
+                ropeCtx.fillStyle = color;
+                ropeCtx.lineWidth = 3;
+                ropeCtx.beginPath();
+                ropeCtx.moveTo(center.x, center.y);
+                ropeCtx.lineTo(center.x + vec.x * radius, center.y + vec.y * radius);
+                ropeCtx.stroke();
+                ropeCtx.fillText(label, center.x + vec.x * radius * 1.15, center.y + vec.y * radius * 1.15);
+            }
+            drawVector(q_rot, '#34d399', `q' (m=${m})`);
+            drawVector(k_rot, '#facc15', `k' (n=${n})`);
+            const dot = q_rot.x * k_rot.x + q_rot.y * k_rot.y;
+            const relative_dot = Math.cos((n-m)*ropeTheta);
+            document.getElementById('ropeDotProduct').innerHTML = `Dot Product = ${dot.toFixed(3)} | cos((${n}-${m})θ) = ${relative_dot.toFixed(3)}`;
+        }
+        mSlider.oninput = drawRoPE;
+        nSlider.oninput = drawRoPE;
+        drawRoPE();
+    }
+
+    const poincareCanvas = document.getElementById('poincareCanvas');
+    if (poincareCanvas) {
+        const poincareCtx = poincareCanvas.getContext('2d');
+        const distEl = document.getElementById('poincareDistances');
+        let points = [{x: 0.2, y: 0.3}, {x: -0.4, y: -0.1}];
+        let draggingPoint = null;
+
+        function drawPoincare() {
+            const w = poincareCanvas.width = poincareCanvas.clientWidth;
+            const h = poincareCanvas.height = poincareCanvas.clientHeight;
+            const center = { x: w / 2, y: h / 2 };
+            const r = Math.min(w, h) * 0.45;
+            poincareCtx.clearRect(0, 0, w, h);
+            poincareCtx.strokeStyle = '#14532d';
+            poincareCtx.lineWidth = 2;
+            poincareCtx.beginPath(); poincareCtx.arc(center.x, center.y, r, 0, 2 * Math.PI); poincareCtx.stroke();
+            const p1 = points[0]; const p2 = points[1];
+            function toScreen(p) { return { x: center.x + p.x * r, y: center.y + p.y * r }; }
+            const s1 = toScreen(p1); const s2 = toScreen(p2);
+            poincareCtx.strokeStyle = '#6ee7b7'; poincareCtx.lineWidth = 2;
+            poincareCtx.beginPath();
+            const p1_sq = p1.x*p1.x + p1.y*p1.y;
+            const p2_sq = p2.x*p2.x + p2.y*p2.y;
+            const d = 2 * (p1.x * p2.y - p1.y * p2.x);
+            if(Math.abs(d) < 1e-5) {
+                poincareCtx.moveTo(s1.x, s1.y); poincareCtx.lineTo(s2.x, s2.y);
+            } else {
+                const arc_c_x = (p1.y * (1 + p2_sq) - p2.y * (1 + p1_sq)) / d;
+                const arc_c_y = (p2.x * (1 + p1_sq) - p1.x * (1 + p2_sq)) / d;
+                const arc_r = Math.hypot(p1.x - arc_c_x, p1.y - arc_c_y);
+                const start_angle = Math.atan2(p1.y - arc_c_y, p1.x - arc_c_x);
+                const end_angle = Math.atan2(p2.y - arc_c_y, p2.x - arc_c_x);
+                poincareCtx.arc(center.x + arc_c_x*r, center.y + arc_c_y*r, arc_r*r, start_angle, end_angle);
+            }
+            poincareCtx.stroke();
+            poincareCtx.fillStyle = '#34d399'; poincareCtx.beginPath(); poincareCtx.arc(s1.x, s1.y, 8, 0, 2*Math.PI); poincareCtx.fill();
+            poincareCtx.fillStyle = '#facc15'; poincareCtx.beginPath(); poincareCtx.arc(s2.x, s2.y, 8, 0, 2*Math.PI); poincareCtx.fill();
+            const euclid_dist_sq = (p1.x-p2.x)**2 + (p1.y-p2.y)**2;
+            const denom = (1 - p1_sq) * (1 - p2_sq);
+            let h_dist = "∞";
+            if (denom > 1e-9) h_dist = Math.acosh(1 + 2 * euclid_dist_sq / denom).toFixed(3);
+            distEl.innerHTML = `Euclidean Dist: ${Math.sqrt(euclid_dist_sq).toFixed(3)} | Hyperbolic Dist (Geodesic): ${h_dist}`;
+        }
+        
+        poincareCanvas.onmousedown = (e) => {
+            const rect = poincareCanvas.getBoundingClientRect(); const c = { x: poincareCanvas.width / 2, y: poincareCanvas.height / 2 }; const r = Math.min(poincareCanvas.width, poincareCanvas.height) * 0.45; const clickPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            points.forEach((p, i) => { const s = { x: c.x + p.x * r, y: c.y + p.y * r }; if (Math.hypot(s.x - clickPos.x, s.y - clickPos.y) < 10) draggingPoint = i; });
+        };
+        poincareCanvas.onmousemove = (e) => {
+            if (draggingPoint === null) return;
+            const rect = poincareCanvas.getBoundingClientRect(); const c = { x: poincareCanvas.width / 2, y: poincareCanvas.height / 2 }; const r = Math.min(poincareCanvas.width, poincareCanvas.height) * 0.45; const movePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            let diskX = (movePos.x - c.x) / r; let diskY = (movePos.y - c.y) / r; const norm = Math.hypot(diskX, diskY);
+            if (norm >= 1) { diskX /= (norm + 1e-6); diskY /= (norm + 1e-6); }
+            points[draggingPoint] = { x: diskX, y: diskY }; drawPoincare();
+        };
+        poincareCanvas.onmouseup = poincareCanvas.onmouseleave = () => { draggingPoint = null; };
+        drawPoincare();
+    }
+
+    const qContainer = document.getElementById('quaternionCanvasContainer');
+    const eContainer = document.getElementById('eulerCanvasContainer');
+    if (qContainer && eContainer) {
+        let qScene, qCam, qRenderer, qCube, eScene, eCam, eRenderer, eCube;
+        function setupScene(container) {
+            const scene = new THREE.Scene(); scene.background = new THREE.Color(0x000000);
+            const cam = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000); cam.position.z = 2.5;
+            const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(container.clientWidth, container.clientHeight); container.appendChild(renderer.domElement);
+            const geometry = new THREE.BoxGeometry(1.25, 0.75, 0.25);
+            const material = new THREE.MeshStandardMaterial({ color: 0x10b981, metalness: 0.3, roughness: 0.5 });
+            const cube = new THREE.Mesh(geometry, material); scene.add(cube);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8); scene.add(ambient);
+            const point = new THREE.PointLight(0xffffff, 1.0); point.position.set(2, 3, 4); scene.add(point);
+            return { scene, cam, renderer, cube };
+        }
+        ({ scene: qScene, cam: qCam, renderer: qRenderer, cube: qCube } = setupScene(qContainer));
+        ({ scene: eScene, cam: eCam, renderer: eRenderer, cube: eCube } = setupScene(eContainer));
+        function animate() { requestAnimationFrame(animate); qRenderer.render(qScene, qCam); eRenderer.render(eScene, eCam); }
+        function updateRotations() {
+            const pitch = parseFloat(document.getElementById('eulerPitch').value) * Math.PI / 180;
+            const yaw = parseFloat(document.getElementById('eulerYaw').value) * Math.PI / 180;
+            const roll = parseFloat(document.getElementById('eulerRoll').value) * Math.PI / 180;
+            document.getElementById('valPitch').textContent = Math.round(pitch * 180 / Math.PI);
+            document.getElementById('valYaw').textContent = Math.round(yaw * 180 / Math.PI);
+            document.getElementById('valRoll').textContent = Math.round(roll * 180 / Math.PI);
+            eCube.rotation.set(pitch, yaw, roll, 'XYZ');
+            const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+            const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+            const qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), roll);
+            qCube.quaternion.copy(qy).multiply(qx).multiply(qz);
+        }
+        ['eulerPitch', 'eulerYaw', 'eulerRoll'].forEach(id => document.getElementById(id).oninput = updateRotations);
+        animate(); updateRotations();
+    }
+    
+    const parallelismAnimSVG = document.getElementById('parallelismAnimation');
+    if (parallelismAnimSVG) {
+        document.getElementById('runParallelismAnim').onclick = () => {
+            parallelismAnimSVG.innerHTML = ''; const tasks = Array(8).fill(0); const w = parallelismAnimSVG.clientWidth;
+            parallelismAnimSVG.innerHTML += `<text x="10" y="30" fill="#a7f3d0">CPU (Sequential)</text>`;
+            tasks.forEach((_, i) => {
+                const block = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                block.setAttribute('x', 10 + i * 25); block.setAttribute('y', 40); block.setAttribute('width', 20); block.setAttribute('height', 20);
+                block.setAttribute('fill', '#134e4a'); block.setAttribute('stroke', '#15803d');
+                parallelismAnimSVG.appendChild(block);
+                setTimeout(() => block.setAttribute('fill', '#facc15'), i * 200);
+            });
+            parallelismAnimSVG.innerHTML += `<text x="10" y="100" fill="#a7f3d0">GPU (Parallel)</text>`;
+            tasks.forEach((_, i) => {
+                const block = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                block.setAttribute('x', 10 + i * (w/9)); block.setAttribute('y', 110);
+                block.setAttribute('width', 20); block.setAttribute('height', 20);
+                block.setAttribute('fill', '#134e4a'); block.setAttribute('stroke', '#15803d');
+                parallelismAnimSVG.appendChild(block);
+                setTimeout(() => block.setAttribute('fill', '#34d399'), 200);
+            });
+        };
+    }
+    
+    const federatedAnimSVG = document.getElementById('federatedAnimation');
+    if (federatedAnimSVG) {
+        document.getElementById('runFederatedAnim').onclick = () => {
+            const w = federatedAnimSVG.clientWidth; const h = federatedAnimSVG.clientHeight;
+            const center = { x: w / 2, y: h / 2 };
+            const nodes = [ { x: w * 0.2, y: h * 0.2 }, { x: w * 0.8, y: h * 0.2 }, { x: w * 0.2, y: h * 0.8 }, { x: w * 0.8, y: h * 0.8 } ];
+            federatedAnimSVG.innerHTML = `
+                <defs><circle id="node-def" r="20" fill="#134e4a" stroke="#10b981"><title>Private Data</title></circle></defs>
+                <circle cx="${center.x}" cy="${center.y}" r="30" fill="#166534" stroke="#6ee7b7"><title>Global Model</title></circle>
+                <text x="${center.x}" y="${center.y+5}" fill="white" font-size="20" text-anchor="middle">🌍</text>
+                ${nodes.map((n, i) => `<use href="#node-def" id="fnode${i}" x="${n.x}" y="${n.y}"><title>User Device ${i+1}</title></use>`).join('')}
+                ${nodes.map((n, i) => `<path class="model-update" id="update${i}" d="M ${center.x},${center.y} L ${n.x},${n.y}" stroke="#6ee7b7" stroke-width="2" opacity="0"/>`).join('')}
+            `;
+            setTimeout(() => { nodes.forEach((_, i) => document.getElementById(`fnode${i}`).setAttribute('fill', '#15803d')); }, 500);
+            setTimeout(() => {
+                nodes.forEach((_, i) => {
+                    document.getElementById(`fnode${i}`).setAttribute('fill', '#facc15');
+                    const path = document.getElementById(`update${i}`);
+                    path.setAttribute('opacity', '1'); path.setAttribute('d', `M ${nodes[i].x},${nodes[i].y} L ${center.x},${center.y}`);
+                });
+            }, 2000);
+            setTimeout(() => { document.querySelector('[fill="#166534"]').setAttribute('fill', '#16a34a'); }, 3500);
+        };
+    }
+});
+</script>
+
+</body>
+</html>

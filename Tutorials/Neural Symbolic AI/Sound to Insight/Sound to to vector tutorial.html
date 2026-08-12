@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI in Psychotherapy: A New Approach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Animations */
+        .vector-bar { transition: width 0.5s ease-in-out; }
+        .fade-in { animation: fadeIn 1s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Flowchart Animation Styles */
+        .flow-box {
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+            position: relative;
+            z-index: 10;
+        }
+        .flow-box.highlight {
+            border-color: #4ade80; /* green-400 */
+            box-shadow: 0 0 15px #4ade80;
+        }
+        
+        /* SSWE Animation Styles */
+        #context-vector-c {
+            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+        }
+        .mfcc-bar {
+            transition: all 0.5s ease;
+        }
+
+        /* Utterance Classifier Animation */
+        .word-vec {
+            transition: all 0.5s ease;
+        }
+        .attention-weight {
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <div class="container mx-auto max-w-5xl">
+
+        <!-- Header -->
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-green-200 mb-4">Tutorial: From Sound to Insight</h1>
+            <p class="text-lg md:text-xl text-green-400 max-w-3xl mx-auto">Exploring an End-to-End AI that understands psychotherapy conversations without reading a single word.</p>
+            <p class="text-sm text-green-600 mt-2">Based on the paper by Singla et al. (2020)</p>
+        </header>
+
+        <!-- The Problem & The Solution -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-6 border-b border-green-800 pb-2">Two Ways to Understand a Conversation</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Traditional Approach -->
+                <div class="bg-gray-900 p-6 rounded-lg border border-green-800 fade-in">
+                    <h3 class="text-xl font-semibold mb-3 text-red-400">The Traditional Way</h3>
+                    <p class="text-green-500 mb-4">This method relies on a pipeline of tools, where errors can accumulate.</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center"><span class="bg-red-900 border border-red-700 text-red-300 font-bold rounded-full h-8 w-8 flex items-center justify-center mr-3">1</span> Speech to Text (ASR)</li>
+                        <li class="flex items-center"><span class="bg-red-900 border border-red-700 text-red-300 font-bold rounded-full h-8 w-8 flex items-center justify-center mr-3">2</span> Text to Word Embeddings</li>
+                        <li class="flex items-center"><span class="bg-red-900 border border-red-700 text-red-300 font-bold rounded-full h-8 w-8 flex items-center justify-center mr-3">3</span> Predict Behavior Code</li>
+                    </ul>
+                    <p class="mt-4 text-sm text-green-600"><strong>Drawbacks:</strong> Requires costly and error-prone transcriptions, loses rich vocal cues, and raises privacy concerns.</p>
+                </div>
+                <!-- Proposed Approach -->
+                <div class="bg-gray-900 p-6 rounded-lg border-2 border-green-500 fade-in" style="animation-delay: 0.2s;">
+                    <h3 class="text-xl font-semibold mb-3 text-green-300">The End-to-End Approach</h3>
+                    <p class="text-green-500 mb-4">This novel method learns directly from the sound of the voice.</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center"><span class="bg-green-900 border border-green-700 text-green-300 font-bold rounded-full h-8 w-8 flex items-center justify-center mr-3">1</span> Speech to "Sound" Vectors</li>
+                        <li class="flex items-center"><span class="bg-green-900 border border-green-700 text-green-300 font-bold rounded-full h-8 w-8 flex items-center justify-center mr-3">2</span> Predict Behavior Code</li>
+                    </ul>
+                    <p class="mt-4 text-sm text-green-600"><strong>Advantages:</strong> Faster, cheaper, privacy-preserving, and captures non-verbal cues like tone and pace.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulation -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-8 border-b border-green-800 pb-2">Interactive Simulation</h2>
+            <div class="mb-6">
+                <label for="utterance-select" class="block text-sm font-medium text-green-400 mb-2">Select a Therapist Utterance:</label>
+                <select id="utterance-select" class="w-full p-2 bg-gray-800 border border-green-700 text-green-300 rounded-md focus:ring-green-500 focus:border-green-500">
+                    <option value="How did that make you feel?">How did that make you feel?</option>
+                    <option value="So you're feeling frustrated.">So you're feeling frustrated.</option>
+                    <option value="Tell me more about that.">Tell me more about that.</option>
+                    <option value="On one hand you want to change, but on the other hand it's difficult.">On one hand you want to change, but on the other hand it's difficult.</option>
+                </select>
+            </div>
+            <div class="text-center mb-8">
+                <button id="process-btn" class="bg-green-800 text-green-200 font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 border border-green-600">Process Audio</button>
+            </div>
+            <div id="simulation-output" class="mt-6 space-y-8">
+                <div id="step1-segmentation" class="hidden fade-in">
+                    <h3 class="text-xl font-semibold text-green-300 mb-3">Step 1: Word Segmentation (from Audio)</h3>
+                    <div id="word-segments" class="flex flex-wrap gap-2 p-4 bg-gray-950 rounded-lg border border-green-900"></div>
+                </div>
+                <div id="step2-vectorization" class="hidden fade-in">
+                    <h3 class="text-xl font-semibold text-green-300 mb-3">Step 2: Encoding Words to Vectors</h3>
+                    <div id="word-vectors" class="space-y-4 p-4 bg-gray-950 rounded-lg border border-green-900"></div>
+                </div>
+                <div id="step3-classification" class="hidden fade-in">
+                    <h3 class="text-xl font-semibold text-green-300 mb-3">Step 3: Classification</h3>
+                     <div class="flex items-center justify-center p-6 bg-gray-950 rounded-lg border border-green-900">
+                        <p class="mr-4 text-green-400">The model analyzes the vector patterns and predicts...</p>
+                        <div id="final-prediction" class="text-2xl font-bold text-green-200 bg-green-800 py-2 px-4 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Animation for Figure 1 (Fixed Version) -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-4 border-b border-green-800 pb-2">Visualizing The Pipeline</h2>
+            <p class="text-center text-green-400 mb-8">Click the button to see how data flows from speech to the final prediction.</p>
+            <div class="text-center mb-8">
+                <button id="run-flow-animation" class="bg-green-800 text-green-200 font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 border border-green-600">Animate Flow</button>
+            </div>
+            <div id="pipeline-container" class="relative w-full min-h-[450px] flex flex-col items-center justify-between py-4">
+                <!-- SVG Overlay for Arrows -->
+                <svg id="pipeline-svg" class="absolute top-0 left-0 w-full h-full" style="z-index: 5;"></svg>
+
+                <!-- Layer 1: Input -->
+                <div class="relative" style="z-index: 10;">
+                    <div id="flow-speech" class="flow-box border-2 border-green-800 rounded-lg p-3 text-center w-48">Speech Features</div>
+                </div>
+
+                <!-- Layer 2: Processing -->
+                <div class="relative w-full flex justify-around items-start" style="z-index: 10;">
+                    <!-- Left Path: Previous Works -->
+                    <div class="flex flex-col items-center space-y-8 mt-8">
+                        <div id="flow-asr" class="flow-box border-2 border-green-800 rounded-lg p-3 text-center w-48 text-red-400">Transcript / ASR</div>
+                        <div id="flow-word-embeddings" class="flow-box border-2 border-green-800 rounded-lg p-3 text-center w-48 text-red-400">Pretrained Word Embeddings</div>
+                    </div>
+                    <!-- Right Path: Our Approach -->
+                    <div class="flex flex-col items-center space-y-8 mt-8">
+                        <div id="flow-segmentation" class="flow-box border-2 border-green-800 rounded-lg p-3 text-center w-48 text-green-300">Word Segmentation</div>
+                        <div id="flow-s2v" class="flow-box border-2 border-green-800 rounded-lg p-3 text-center w-48 text-green-300">Speech-2-Vector Encoder</div>
+                    </div>
+                </div>
+
+                <!-- Layer 3: Output -->
+                <div class="relative" style="z-index: 10;">
+                    <h3 class="text-xl font-semibold text-green-300 mb-3 text-center">Output</h3>
+                    <div id="flow-predictor" class="flow-box border-2 border-green-800 rounded-lg p-3 text-center w-48">Behavior Code Predictor</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Animation for Figure 2 -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-4 border-b border-green-800 pb-2">The Speech Signal to Word Encoder (SSWE)</h2>
+            <p class="text-center text-green-400 mb-8">This animation shows how a spoken word is encoded into a context vector, which is then used to predict surrounding words.</p>
+             <div class="text-center mb-8">
+                <button id="run-sswe-animation" class="bg-green-800 text-green-200 font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 border border-green-600">Animate Encoder</button>
+            </div>
+            <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
+                <!-- Encoder -->
+                <div id="sswe-encoder" class="w-full md:w-1/2 bg-gray-950 p-6 rounded-lg border-2 border-green-800 text-center">
+                    <h3 class="text-2xl font-semibold text-green-300 mb-4">Encoder</h3>
+                    <div class="flow-box p-3 border border-green-800 rounded mb-4" id="sswe-input">Input Speech Signal for one word</div>
+                    <div class="text-green-400 text-4xl mb-4 transform rotate-90 md:rotate-0">↓</div>
+                    <div class="flow-box p-3 border border-green-800 rounded mb-4" id="sswe-bilstm">Bi-directional LSTM Layer</div>
+                    <div class="text-green-400 text-4xl mb-4 transform rotate-90 md:rotate-0">↓</div>
+                    <div class="flow-box p-3 border-2 border-green-500 rounded font-bold text-xl" id="sswe-context">Context Vector (C)</div>
+                </div>
+                <!-- Decoder -->
+                <div id="sswe-decoder" class="w-full md:w-1/2 bg-gray-950 p-6 rounded-lg border-2 border-green-800 text-center">
+                    <h3 class="text-2xl font-semibold text-green-300 mb-4">Decoder</h3>
+                    <div class="flow-box p-3 border border-green-800 rounded mb-4" id="sswe-lstm">LSTM Layer</div>
+                    <div class="text-green-400 text-4xl mb-4 transform rotate-90 md:rotate-0">↓</div>
+                    <div class="flow-box p-3 border border-green-800 rounded mb-4" id="sswe-dense">Dense Layer</div>
+                    <div class="text-green-400 text-4xl mb-4 transform rotate-90 md:rotate-0">↓</div>
+                    <div class="flow-box p-3 border border-green-800 rounded" id="sswe-output">Predicted Speech for Context Words</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Animated Section: How the Encoder Learns -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-4 border-b border-green-800 pb-2">How the Speech Signal to Word Encoder Learns</h2>
+            <p class="text-center text-green-400 mb-8">The encoder learns without transcripts, using an objective similar to Word2Vec's skip-gram. It learns to predict a word's context (surrounding words) just from its sound.</p>
+            <div class="text-center mb-8">
+                <button id="run-learning-animation" class="bg-green-800 text-green-200 font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 border border-green-600">Animate Learning</button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Step 1: The Goal -->
+                <div id="learn-step-1" class="p-4 bg-gray-950 rounded-lg border border-green-900 opacity-0 transition-opacity duration-500">
+                    <h3 class="font-semibold text-green-300 mb-2">1. The Goal: Predict The Context</h3>
+                    <p class="text-green-400">Given the audio for a single word, the model's goal is to generate the audio for the words that came before and after it.</p>
+                    <div class="flex justify-center items-center gap-2 mt-4 text-center">
+                        <div class="flow-box p-2 border border-green-800 rounded">Context Word</div>
+                        <div class="flow-box p-2 border-2 border-green-500 rounded font-bold">Input Word</div>
+                        <div class="flow-box p-2 border border-green-800 rounded">Context Word</div>
+                    </div>
+                </div>
+
+                <!-- Step 2: The Input -->
+                <div id="learn-step-2" class="p-4 bg-gray-950 rounded-lg border border-green-900 opacity-0 transition-opacity duration-500">
+                    <h3 class="font-semibold text-green-300 mb-2">2. The Input: From Waveform to Features</h3>
+                    <p class="text-green-400 mb-4">The audio for the input word is sliced into tiny 25ms frames. For each frame, a set of 13 MFCC (Mel-frequency cepstral coefficients) features are extracted. This turns the sound into a sequence of numerical vectors.</p>
+                    <div class="flex items-center gap-4">
+                        <svg class="w-1/4 h-16 text-green-500" viewBox="0 0 100 40"><path d="M0 20 Q 5 0, 10 20 T 20 20 Q 25 0, 30 20 T 40 20 Q 45 40, 50 20 T 60 20 Q 65 0, 70 20 T 80 20 Q 85 40, 90 20 T 100 20" stroke="currentColor" fill="none" stroke-width="2"></path></svg>
+                        <div class="text-green-400 text-2xl">→</div>
+                        <div id="mfcc-container" class="w-3/4 flex gap-1 h-16 items-end p-2 bg-gray-800 rounded">
+                            <!-- MFCC bars generated by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3: The Process -->
+                 <div id="learn-step-3" class="p-4 bg-gray-950 rounded-lg border border-green-900 opacity-0 transition-opacity duration-500">
+                    <h3 class="font-semibold text-green-300 mb-2">3. The Process: Sequence-to-Sequence</h3>
+                    <p class="text-green-400 mb-4">This sequence of MFCC vectors is fed into the SSWE model (Encoder → Context Vector → Decoder) to generate a prediction of the context words' audio features.</p>
+                </div>
+
+                <!-- Step 4: The Learning -->
+                <div id="learn-step-4" class="p-4 bg-gray-950 rounded-lg border border-green-900 opacity-0 transition-opacity duration-500">
+                    <h3 class="font-semibold text-green-300 mb-2">4. The Learning: Minimizing The Error</h3>
+                    <p class="text-green-400 mb-4">The model compares its predicted audio features with the actual audio features of the context words. The difference (mean squared error) is calculated. This error signal is used to update the model's parameters via an optimizer like Adam, making its predictions better over time.</p>
+                    <div class="flex justify-around items-center text-center">
+                        <div>
+                            <p class="text-green-300 mb-2">Predicted Audio</p>
+                            <div class="h-16 w-24 bg-gray-800 rounded p-1 flex items-end gap-1"><div class="w-2 h-1/2 bg-red-500"></div><div class="w-2 h-3/4 bg-red-500"></div><div class="w-2 h-1/4 bg-red-500"></div></div>
+                        </div>
+                        <div class="text-red-400 text-2xl font-bold">≠</div>
+                        <div>
+                            <p class="text-green-300 mb-2">Actual Audio</p>
+                            <div class="h-16 w-24 bg-gray-800 rounded p-1 flex items-end gap-1"><div class="w-2 h-1/3 bg-green-500"></div><div class="w-2 h-2/3 bg-green-500"></div><div class="w-2 h-1/2 bg-green-500"></div></div>
+                        </div>
+                        <div class="text-green-400 text-2xl">→</div>
+                        <div class="text-center">
+                             <p class="text-green-300 mb-2">Calculate Loss</p>
+                             <div class="text-red-400 text-3xl font-mono">Σ(X-Y)²</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Utterance Classifier -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-4 border-b border-green-800 pb-2">The Utterance Classifier: From Words to Meaning</h2>
+            <p class="text-center text-green-400 mb-8">Once the encoder can create a vector for each word, the classifier's job is to look at the entire sequence of vectors (the utterance) and predict its behavioral code.</p>
+            <div class="text-center mb-8">
+                <button id="run-classifier-animation" class="bg-green-800 text-green-200 font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 border border-green-600">Animate Classifier</button>
+            </div>
+
+            <!-- Classifier Animation -->
+            <div id="classifier-container" class="space-y-4 flex flex-col items-center">
+                <!-- Final Prediction -->
+                <div id="classifier-step-5" class="w-full text-center opacity-0 transition-opacity duration-500">
+                    <p class="text-green-300 mb-2">Prediction (p)</p>
+                    <div id="classifier-prediction" class="flow-box p-3 border-2 border-green-800 rounded inline-block">...</div>
+                </div>
+                <div id="classifier-arrow-4" class="text-green-400 text-4xl opacity-0 transition-opacity duration-500">↓</div>
+
+                <!-- Dense Layer -->
+                <div id="classifier-step-4" class="w-full text-center opacity-0 transition-opacity duration-500">
+                    <div class="flow-box p-3 border-2 border-green-800 rounded inline-block">Dense Layer</div>
+                </div>
+                <div id="classifier-arrow-3" class="text-green-400 text-4xl opacity-0 transition-opacity duration-500">↓</div>
+
+                <!-- Self-Attention -->
+                <div id="classifier-step-3" class="w-full text-center opacity-0 transition-opacity duration-500">
+                    <div id="classifier-s-vector" class="flow-box p-3 border-2 border-green-800 rounded inline-block font-bold text-xl">Sentence Vector (S)</div>
+                    <div class="text-green-400 text-4xl mt-2">↑</div>
+                    <div class="flow-box p-3 border-2 border-green-800 rounded mt-2">Self-Attention Layer</div>
+                </div>
+                <div id="classifier-arrow-2" class="text-green-400 text-4xl opacity-0 transition-opacity duration-500">↑</div>
+
+                <!-- Bi-LSTM -->
+                <div id="classifier-step-2" class="w-full text-center opacity-0 transition-opacity duration-500">
+                    <div class="flow-box p-3 border-2 border-green-800 rounded">Bidirectional LSTM Layer</div>
+                </div>
+                <div id="classifier-arrow-1" class="text-green-400 text-4xl opacity-0 transition-opacity duration-500">↑</div>
+
+                <!-- Word Vectors -->
+                <div id="classifier-step-1" class="w-full text-center opacity-0 transition-opacity duration-500">
+                    <p class="text-green-300 mb-2">Word-level Speech-2-Vector encoder</p>
+                    <div id="word-vec-container" class="flex justify-center gap-4 items-end h-20">
+                        <!-- Word vectors generated by JS -->
+                    </div>
+                    <div class="text-green-400 text-4xl mt-2">↑</div>
+                    <p class="text-green-300 mt-2">Segmented Speech Utterance</p>
+                </div>
+            </div>
+
+            <!-- Dataset Info -->
+            <div class="mt-16">
+                 <h3 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Training Data: Motivational Interviewing</h3>
+                 <p class="text-green-400 leading-relaxed mb-6">The classifier is trained on a specialized dataset from Motivational Interviewing (MI) psychotherapy sessions. This dataset contains approximately 160 hours of audio from 337 sessions. Expert human coders have segmented the audio into utterances (complete thoughts) and assigned a behavioral code to each one. The model learns to predict these codes.</p>
+                 <div class="overflow-x-auto">
+                    <table class="min-w-full bg-gray-950 border border-green-800">
+                        <thead>
+                            <tr class="bg-gray-800">
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">Code</th>
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">Description</th>
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300"># Train</th>
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300"># Test</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="py-2 px-4 border-b border-green-900">FA</td><td class="py-2 px-4 border-b border-green-900">Facilitate</td><td class="py-2 px-4 border-b border-green-900">1194</td><td class="py-2 px-4 border-b border-green-900">496</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">GI</td><td class="py-2 px-4 border-b border-green-900">Giving Information</td><td class="py-2 px-4 border-b border-green-900">12241</td><td class="py-2 px-4 border-b border-green-900">4643</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">RES</td><td class="py-2 px-4 border-b border-green-900">Simple Reflection</td><td class="py-2 px-4 border-b border-green-900">4594</td><td class="py-2 px-4 border-b border-green-900">1902</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">REC</td><td class="py-2 px-4 border-b border-green-900">Complex Reflection</td><td class="py-2 px-4 border-b border-green-900">3613</td><td class="py-2 px-4 border-b border-green-900">1235</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">QUC</td><td class="py-2 px-4 border-b border-green-900">Closed Question (Yes/No)</td><td class="py-2 px-4 border-b border-green-900">4393</td><td class="py-2 px-4 border-b border-green-900">2066</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">QUO</td><td class="py-2 px-4 border-b border-green-900">Open Question (Wh-type)</td><td class="py-2 px-4 border-b border-green-900">3871</td><td class="py-2 px-4 border-b border-green-900">1445</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">MIA</td><td class="py-2 px-4 border-b border-green-900">MI Adherent</td><td class="py-2 px-4 border-b border-green-900">2948</td><td class="py-2 px-4 border-b border-green-900">1521</td></tr>
+                            <tr><td class="py-2 px-4">MIN</td><td class="py-2 px-4">MI Non-adherent</td><td class="py-2 px-4">890</td><td class="py-2 px-4">433</td></tr>
+                        </tbody>
+                    </table>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Section: Training Details -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-4 border-b border-green-800 pb-2">Training Details: Building the Models</h2>
+            <p class="text-center text-green-400 mb-8">This section outlines the specific hyperparameters and settings used to train the two core components of the system.</p>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Encoder Training -->
+                <div class="bg-gray-950 p-6 rounded-lg border border-green-900">
+                    <h3 class="text-2xl font-semibold text-green-300 mb-4">Speech-2-Vector Encoder</h3>
+                    <ul class="space-y-4 font-mono text-green-400">
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Framework:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The core software library (e.g., PyTorch) used to build and train the model.</div>
+                            <code class="text-green-200">PyTorch</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Mechanism:</span>
+                             <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A special technique, like Attention, that helps the model focus on important parts of the input data.</div>
+                            <code class="text-green-200">Attention</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Context Window:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The number of surrounding words the encoder tries to predict from a single input word.</div>
+                            <code class="text-green-200">4 words</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Optimizer:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The algorithm that updates the model's internal parameters to minimize errors during training.</div>
+                            <code class="text-green-200">SGD</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Learning Rate:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A value that controls how much the model's parameters are adjusted during each training update.</div>
+                            <code class="text-green-200">1e-3</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Batch Size:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The number of training examples (word, context pairs) processed in one iteration.</div>
+                            <code class="text-green-200">64 pairs</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">LSTM Dimension:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The number of hidden units in the LSTM cells, defining the model's memory capacity.</div>
+                            <code class="text-green-200">50</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Output Dimension:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The final size of the vector that represents a single word's sound.</div>
+                            <code class="text-green-200">200</code>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Classifier Training -->
+                <div class="bg-gray-950 p-6 rounded-lg border border-green-900">
+                    <h3 class="text-2xl font-semibold text-green-300 mb-4">Utterance Classifier</h3>
+                     <ul class="space-y-4 font-mono text-green-400">
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Framework:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The core software library (e.g., PyTorch) used to build and train the neural network model.</div>
+                            <code class="text-green-200">PyTorch</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Optimizer:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The algorithm that updates the model's internal parameters to minimize errors during training.</div>
+                            <code class="text-green-200">Adam</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Learning Rate:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A value that controls how much the model's parameters are adjusted during each training update.</div>
+                            <code class="text-green-200">0.001</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">LR Decay:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Gradually reducing the learning rate during training to improve stability and convergence.</div>
+                            <code class="text-green-200">0.98 / 10k steps</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Batch Size:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The number of complete utterances processed in one iteration of training.</div>
+                            <code class="text-green-200">40 utterances</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">LSTM Dimension:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The number of hidden units in the LSTM cells, defining the model's memory capacity.</div>
+                            <code class="text-green-200">50</code>
+                        </li>
+                        <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Dropout:</span>
+                            <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A regularization method to prevent overfitting by randomly ignoring neurons during training.</div>
+                            <code class="text-green-200">0.3</code>
+                        </li>
+                         <li class="flex justify-between items-center relative group">
+                            <span class="border-b border-dashed border-green-700 cursor-help">Dense Layer:</span>
+                             <div class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A fully connected neural network layer used for the final classification.</div>
+                            <code class="text-green-200">100 dims</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="mt-12">
+                <h3 class="text-2xl font-semibold text-green-300 mb-4 text-center">Comparative Results</h3>
+                <p class="text-center text-green-400 mb-6">The results show that embeddings learned directly from speech (Speech2Vec) outperform traditional text-based embeddings (Word2Vec), especially when fine-tuned on in-domain data.</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-gray-950 border border-green-800">
+                        <thead>
+                            <tr class="bg-gray-800">
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">Embedding Type</th>
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">Training Data</th>
+                                <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">F1-Score</th>
+                            </tr>
+                        </thead>
+                        <tbody class="font-mono">
+                            <tr><td class="py-2 px-4 border-b border-green-900">Word2Vec</td><td class="py-2 px-4 border-b border-green-900">Google-wiki</td><td class="py-2 px-4 border-b border-green-900">0.53</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">Word2Vec</td><td class="py-2 px-4 border-b border-green-900">In-domain</td><td class="py-2 px-4 border-b border-green-900">0.56</td></tr>
+                            <tr><td class="py-2 px-4 border-b border-green-900">Speech2Vec</td><td class="py-2 px-4 border-b border-green-900">LibreSpeech</td><td class="py-2 px-4 border-b border-green-900">0.58</td></tr>
+                            <tr><td class="py-2 px-4">Speech2Vec</td><td class="py-2 px-4">Libre+Indomain*</td><td class="py-2 px-4">0.60</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Results & Analysis -->
+        <section class="bg-gray-900 p-8 rounded-lg border border-green-800 mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 text-center mb-4 border-b border-green-800 pb-2">Results & Analysis: Transcription vs. No Transcription</h2>
+            <p class="text-center text-green-400 mb-8 leading-relaxed">The ultimate test is how well the transcription-free model performs against traditional methods. Psychotherapy conversations are unique; the <span class="relative group"><span class="border-b border-dashed border-green-700 cursor-help">tone, pace, and emotion (prosody)</span><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The rhythm, stress, and intonation of speech. It's the 'how' something is said, not just 'what' is said.</span></span> carry as much meaning as the words themselves. This is where a speech-only approach can shine.</p>
+            
+            <div class="overflow-x-auto mb-8">
+                <table class="min-w-full bg-gray-950 border border-green-800">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">Model</th>
+                            <th class="py-2 px-4 border-b border-green-800 text-left text-green-300">Pretrain Data</th>
+                            <th class="py-2 px-4 border-b border-green-800 text-left text-green-300 relative group"><span class="border-b border-dashed border-green-700 cursor-help">F1-Score</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A metric that balances precision (how many selected items are relevant) and recall (how many relevant items are selected). Higher is better.</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-mono">
+                        <tr><td class="py-2 px-4 border-b border-green-900 relative group"><span class="border-b border-dashed border-green-700 cursor-help">Majority class</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">A baseline model that always predicts the most frequent class in the training data. A good model should perform significantly better than this.</span></td><td class="py-2 px-4 border-b border-green-900">-</td><td class="py-2 px-4 border-b border-green-900">0.33</td></tr>
+                        <tr class="bg-gray-900"><td colspan="3" class="px-4 py-1 text-green-300 font-bold">Single-modality</td></tr>
+                        <tr><td class="py-2 px-4 border-b border-green-900">Word2Vec</td><td class="py-2 px-4 border-b border-green-900 relative group"><span class="border-b border-dashed border-green-700 cursor-help">In-domain</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Data that comes from the same specific topic or context as the target task (in this case, psychotherapy sessions).</span></td><td class="py-2 px-4 border-b border-green-900">0.56</td></tr>
+                        <tr><td class="py-2 px-4 border-b border-green-900"><span class="relative group"><span class="border-b border-dashed border-green-700 cursor-help">Prosodic</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Features related to the rhythm, stress, and intonation of speech (e.g., pitch, energy, speaking rate).</span></span></td><td class="py-2 px-4 border-b border-green-900 relative group"><span class="border-b border-dashed border-green-700 cursor-help">In-domain</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Data that comes from the same specific topic or context as the target task (in this case, psychotherapy sessions).</span></td><td class="py-2 px-4 border-b border-green-900">0.42</td></tr>
+                        <tr class="bg-gray-900"><td colspan="3" class="px-4 py-1 text-green-300 font-bold relative group"><span class="border-b border-dashed border-green-700 cursor-help">Multimodal</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Models that use more than one type of data, such as both text (lexical) and sound (prosodic) features.</span></td></tr>
+                        <tr><td class="py-2 px-4 border-b border-green-900">Word2Vec+Prosodic</td><td class="py-2 px-4 border-b border-green-900 relative group"><span class="border-b border-dashed border-green-700 cursor-help">In-domain</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Data that comes from the same specific topic or context as the target task (in this case, psychotherapy sessions).</span></td><td class="py-2 px-4 border-b border-green-900">0.58</td></tr>
+                        <tr><td class="py-2 px-4 border-b border-green-900">Speech2Vec</td><td class="py-2 px-4 border-b border-green-900">Libre+Indomain*</td><td class="py-2 px-4 border-b border-green-900">0.60</td></tr>
+                        <tr class="bg-red-900 bg-opacity-40"><td colspan="3" class="px-4 py-1 text-red-300 font-bold">Speech-only (Our approach)</td></tr>
+                        <tr class="bg-red-900 bg-opacity-20"><td class="py-2 px-4 border-b border-green-900">SSWE</td><td class="py-2 px-4 border-b border-green-900 relative group"><span class="border-b border-dashed border-green-700 cursor-help">In-domain</span><span class="absolute bottom-full left-0 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">Data that comes from the same specific topic or context as the target task (in this case, psychotherapy sessions).</span></td><td class="py-2 px-4 border-b border-green-900">0.49</td></tr>
+                        <tr class="bg-red-900 bg-opacity-20"><td class="py-2 px-4 border-b border-green-900">SSWE</td><td class="py-2 px-4 border-b border-green-900">Libre+Indomain*</td><td class="py-2 px-4 border-b border-green-900">0.56</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-semibold text-green-300 mb-4">Key Takeaways</h3>
+                <ul class="space-y-4 text-green-400">
+                    <li class="p-4 bg-gray-950 rounded-lg border border-green-900">
+                        <strong class="text-green-200">1. Speech is Competitive:</strong> The most important result is that the speech-only SSWE model (F1-score of 0.56) performs nearly as well as transcription-based models like Word2Vec (0.56) and even multimodal models (0.58). This proves that it's possible to get rich, contextual analysis without ever needing to transcribe the audio, which is a huge step forward for privacy and efficiency.
+                    </li>
+                    <li class="p-4 bg-gray-950 rounded-lg border border-green-900">
+                        <strong class="text-green-200">2. The Power of Sound:</strong> Models that incorporate acoustic information (like Word2Vec+Prosodic at 0.58 and Speech2Vec at 0.60) consistently outperform models that only use text (Word2Vec at 0.56) or only use basic prosody (0.42). This confirms that the nuances in the human voice are critical for accurately classifying behaviors in therapy.
+                    </li>
+                    <li class="p-4 bg-gray-950 rounded-lg border border-green-900">
+                        <strong class="text-green-200">3. The Danger of Overfitting:</strong> An interesting result is that when the SSWE encoder was fine-tuned during classifier training (* marked results), performance sometimes dropped. The hypothesis is that the model started <span class="relative group"><span class="border-b border-dashed border-green-700 cursor-help">overfitting</span><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">When a model learns the training data too well, including its noise and random fluctuations, and fails to perform well on new, unseen data.</span></span> to <span class="relative group"><span class="border-b border-dashed border-green-700 cursor-help">speaker-specific vocal patterns</span><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The unique vocal characteristics of an individual, like their pitch, accent, or speed, which are not related to the general meaning of their words.</span></span> instead of <span class="relative group"><span class="border-b border-dashed border-green-700 cursor-help">generalizing</span><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-2 bg-gray-800 text-green-300 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">The ability of a model to apply what it has learned from the training data to make accurate predictions on new, unseen data.</span></span> to the behavioral content. This highlights a key challenge: building models that can distinguish between a person's unique voice and the universal characteristics of a specific therapeutic behavior (like asking a question).
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <footer class="text-center mt-16">
+            <h2 class="text-3xl font-semibold text-green-300 mb-6 border-b border-green-800 pb-2">Why This Matters</h2>
+            <p class="text-lg text-green-400 max-w-3xl mx-auto leading-relaxed">
+                This transcription-free approach represents a significant step forward. It can lead to faster, more affordable tools for training therapists, providing feedback, and ensuring quality of care. By preserving privacy and capturing the full richness of spoken communication, this technology opens new doors for <a href="#" class="text-green-400 hover:text-green-300 underline">computational mental health</a>.
+            </p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- Interactive Simulation Script ---
+        const processBtn = document.getElementById('process-btn');
+        const utteranceSelect = document.getElementById('utterance-select');
+        const step1 = document.getElementById('step1-segmentation');
+        const step2 = document.getElementById('step2-vectorization');
+        const step3 = document.getElementById('step3-classification');
+        const wordSegmentsContainer = document.getElementById('word-segments');
+        const wordVectorsContainer = document.getElementById('word-vectors');
+        const finalPredictionContainer = document.getElementById('final-prediction');
+        const utteranceData = {
+            "How did that make you feel?": { code: "Open Question", words: ["How", "did", "that", "make", "you", "feel?"] },
+            "So you're feeling frustrated.": { code: "Simple Reflection", words: ["So", "you're", "feeling", "frustrated."] },
+            "Tell me more about that.": { code: "Facilitate", words: ["Tell", "me", "more", "about", "that."] },
+            "On one hand you want to change, but on the other hand it's difficult.": { code: "Complex Reflection", words: ["On", "one", "hand", "you", "want", "to", "change,", "but", "on", "the", "other", "hand", "it's", "difficult."] }
+        };
+
+        function resetSimulation() {
+            step1.classList.add('hidden');
+            step2.classList.add('hidden');
+            step3.classList.add('hidden');
+            wordSegmentsContainer.innerHTML = '';
+            wordVectorsContainer.innerHTML = '';
+            finalPredictionContainer.innerHTML = '';
+        }
+
+        function runSimulation() {
+            resetSimulation();
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            const selectedUtterance = utteranceSelect.value;
+            const data = utteranceData[selectedUtterance];
+
+            setTimeout(() => {
+                step1.classList.remove('hidden');
+                data.words.forEach(word => {
+                    const wordEl = document.createElement('span');
+                    wordEl.className = 'bg-gray-800 text-green-300 py-1 px-3 rounded-md border border-green-700';
+                    wordEl.textContent = word;
+                    wordSegmentsContainer.appendChild(wordEl);
+                });
+            }, 500);
+
+            setTimeout(() => {
+                step2.classList.remove('hidden');
+                data.words.forEach(word => {
+                    const vectorEl = document.createElement('div');
+                    vectorEl.className = 'flex items-center p-2';
+                    const wordLabel = document.createElement('span');
+                    wordLabel.className = 'w-1/4 font-medium text-green-400';
+                    wordLabel.textContent = word;
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'w-3/4 bg-gray-800 rounded-full h-4 border border-green-900';
+                    const bar = document.createElement('div');
+                    const randomWidth = 40 + Math.random() * 60;
+                    bar.className = 'bg-green-600 h-full rounded-full vector-bar';
+                    bar.style.width = '0%';
+                    setTimeout(() => bar.style.width = `${randomWidth}%`, 100);
+                    barContainer.appendChild(bar);
+                    vectorEl.appendChild(wordLabel);
+                    vectorEl.appendChild(barContainer);
+                    wordVectorsContainer.appendChild(vectorEl);
+                });
+            }, 1500);
+
+            setTimeout(() => {
+                step3.classList.remove('hidden');
+                finalPredictionContainer.textContent = data.code;
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process Audio';
+            }, 2500);
+        }
+        processBtn.addEventListener('click', runSimulation);
+        utteranceSelect.addEventListener('change', resetSimulation);
+
+        // --- Flowchart Animation Script ---
+        const runFlowBtn = document.getElementById('run-flow-animation');
+        const pipelineContainer = document.getElementById('pipeline-container');
+        const svg = document.getElementById('pipeline-svg');
+
+        function drawLine(fromEl, toEl, options = {}) {
+            const { id, dashed = false, color = '#4ade80' } = options;
+            const containerRect = pipelineContainer.getBoundingClientRect();
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+
+            const x1 = fromRect.left + fromRect.width / 2 - containerRect.left;
+            const y1 = fromRect.bottom - containerRect.top + 5; // Add margin
+            const x2 = toRect.left + toRect.width / 2 - containerRect.left;
+            const y2 = toRect.top - containerRect.top - 5; // Add margin
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            if (id) line.id = id;
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '2');
+            
+            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            line.style.strokeDasharray = length;
+            line.style.strokeDashoffset = length;
+            line.style.transition = 'stroke-dashoffset 0.5s ease-in-out';
+            
+            if (dashed) {
+                line.setAttribute('stroke-dasharray', `7, 7`);
+                line.style.strokeDasharray = `7, 7`;
+                line.style.transition = 'opacity 0.5s ease-in-out';
+                line.style.opacity = 0;
+            }
+
+            svg.appendChild(line);
+            return line;
+        }
+
+        function resetFlowAnimation() {
+            svg.innerHTML = '';
+            document.querySelectorAll('#pipeline-container .flow-box').forEach(box => box.classList.remove('highlight'));
+        }
+
+        runFlowBtn.addEventListener('click', () => {
+            runFlowBtn.disabled = true;
+            resetFlowAnimation();
+            
+            const speech = document.getElementById('flow-speech');
+            const asr = document.getElementById('flow-asr');
+            const seg = document.getElementById('flow-segmentation');
+            const emb = document.getElementById('flow-word-embeddings');
+            const s2v = document.getElementById('flow-s2v');
+            const pred = document.getElementById('flow-predictor');
+
+            // Draw all lines initially
+            const arrowSpeechAsr = drawLine(speech, asr, {color: '#f87171'});
+            const arrowSpeechSeg = drawLine(speech, seg);
+            const arrowAsrEmb = drawLine(asr, emb, {color: '#f87171'});
+            const arrowSegS2v = drawLine(seg, s2v);
+            const arrowSegEmb = drawLine(seg, emb, { dashed: true });
+            const arrowEmbPred = drawLine(emb, pred, {color: '#f87171'});
+            const arrowS2vPred = drawLine(s2v, pred);
+
+            const highlight = (el, delay) => setTimeout(() => el.classList.add('highlight'), delay);
+            const animateArrow = (arrow, delay) => setTimeout(() => {
+                if (arrow.style.strokeDasharray === '7, 7') {
+                     arrow.style.opacity = 1;
+                } else {
+                    arrow.style.strokeDashoffset = 0;
+                }
+            }, delay);
+
+            // 1. Highlight Speech
+            highlight(speech, 500);
+
+            // 2. Split
+            animateArrow(arrowSpeechAsr, 1000);
+            animateArrow(arrowSpeechSeg, 1000);
+            highlight(asr, 1500);
+            highlight(seg, 1500);
+            
+            // 3. Process Paths
+            animateArrow(arrowAsrEmb, 2000);
+            animateArrow(arrowSegS2v, 2000);
+            highlight(emb, 2500);
+            highlight(s2v, 2500);
+
+            // 4. Crossover Path
+            animateArrow(arrowSegEmb, 3000);
+
+            // 5. Combine to Predictor
+            animateArrow(arrowEmbPred, 3500);
+            animateArrow(arrowS2vPred, 3500);
+            highlight(pred, 4000);
+            
+            setTimeout(() => {
+                runFlowBtn.disabled = false;
+            }, 4500);
+        });
+        
+        // --- SSWE Animation Script ---
+        const runSsWEBtn = document.getElementById('run-sswe-animation');
+        
+        function resetSSWEAnimation() {
+             document.querySelectorAll('#sswe-encoder .flow-box, #sswe-decoder .flow-box').forEach(box => {
+                box.classList.remove('highlight');
+            });
+        }
+
+        runSsWEBtn.addEventListener('click', () => {
+            runSsWEBtn.disabled = true;
+            resetSSWEAnimation();
+
+            const highlight = (id, delay) => {
+                setTimeout(() => {
+                    document.getElementById(id).classList.add('highlight');
+                }, delay);
+            };
+
+            // Encoder path
+            highlight('sswe-input', 500);
+            highlight('sswe-bilstm', 1500);
+            highlight('sswe-context', 2500);
+
+            // Decoder path
+            highlight('sswe-lstm', 3500);
+            highlight('sswe-dense', 4500);
+            highlight('sswe-output', 5500);
+
+            setTimeout(() => {
+                runSsWEBtn.disabled = false;
+            }, 6000);
+        });
+
+        // --- Learning Animation Script ---
+        const runLearningBtn = document.getElementById('run-learning-animation');
+        const mfccContainer = document.getElementById('mfcc-container');
+
+        function resetLearningAnimation() {
+            for(let i = 1; i <= 4; i++) {
+                document.getElementById(`learn-step-${i}`).style.opacity = 0;
+            }
+            mfccContainer.innerHTML = '';
+        }
+
+        runLearningBtn.addEventListener('click', () => {
+            runLearningBtn.disabled = true;
+            resetLearningAnimation();
+
+            const showStep = (stepNum, delay) => {
+                setTimeout(() => {
+                    document.getElementById(`learn-step-${stepNum}`).style.opacity = 1;
+                }, delay);
+            };
+
+            showStep(1, 500);
+            showStep(2, 1500);
+            setTimeout(() => {
+                for (let i = 0; i < 20; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'w-2 bg-green-700 mfcc-bar';
+                    bar.style.height = '0%';
+                    mfccContainer.appendChild(bar);
+                    setTimeout(() => {
+                         bar.style.height = `${Math.random() * 80 + 20}%`;
+                    }, i * 50);
+                }
+            }, 1600);
+            showStep(3, 3000);
+            showStep(4, 4000);
+
+            setTimeout(() => {
+                runLearningBtn.disabled = false;
+            }, 5000);
+        });
+
+        // --- Classifier Animation Script ---
+        const runClassifierBtn = document.getElementById('run-classifier-animation');
+        const wordVecContainer = document.getElementById('word-vec-container');
+        
+        function resetClassifierAnimation() {
+            wordVecContainer.innerHTML = '';
+            for(let i = 1; i <= 5; i++) {
+                document.getElementById(`classifier-step-${i}`).style.opacity = 0;
+                document.getElementById(`classifier-step-${i}`).classList.remove('highlight');
+            }
+            for(let i = 1; i <= 4; i++) {
+                document.getElementById(`classifier-arrow-${i}`).style.opacity = 0;
+            }
+            document.getElementById('classifier-prediction').textContent = '...';
+        }
+
+        runClassifierBtn.addEventListener('click', () => {
+            runClassifierBtn.disabled = true;
+            resetClassifierAnimation();
+
+            const show = (elId, delay) => setTimeout(() => document.getElementById(elId).style.opacity = 1, delay);
+            const highlight = (elId, delay) => setTimeout(() => document.getElementById(elId).classList.add('highlight'), delay);
+            
+            // Step 1: Show word vectors
+            show('classifier-step-1', 500);
+            setTimeout(() => {
+                const words = ['W1', 'W2', 'W3', 'Wn'];
+                words.forEach((word, i) => {
+                    const vecEl = document.createElement('div');
+                    vecEl.className = 'word-vec flex flex-col items-center gap-2';
+                    vecEl.innerHTML = `
+                        <div class="attention-weight h-4 bg-green-500 rounded-full" style="width: 8px;"></div>
+                        <div class="flow-box p-2 border border-green-800 rounded">${word}</div>
+                    `;
+                    wordVecContainer.appendChild(vecEl);
+                });
+            }, 600);
+
+            // Step 2: Bi-LSTM
+            show('classifier-arrow-1', 1500);
+            show('classifier-step-2', 2000);
+            highlight('classifier-step-2', 2500);
+
+            // Step 3: Self-Attention
+            show('classifier-arrow-2', 3000);
+            show('classifier-step-3', 3500);
+            setTimeout(() => {
+                document.querySelectorAll('.attention-weight').forEach((el, i) => {
+                    el.style.opacity = (i === 1 || i === 2) ? 1 : 0.3; // Highlight W2 and W3
+                    el.style.width = (i === 1 || i === 2) ? '24px' : '8px';
+                });
+                highlight('classifier-step-3', 500);
+            }, 4000);
+
+
+            // Step 4: Dense Layer
+            show('classifier-arrow-3', 5000);
+            show('classifier-step-4', 5500);
+            highlight('classifier-step-4', 6000);
+
+            // Step 5: Prediction
+            show('classifier-arrow-4', 6500);
+            show('classifier-step-5', 7000);
+            highlight('classifier-step-5', 7500);
+            setTimeout(() => {
+                 document.getElementById('classifier-prediction').textContent = 'Open Question';
+            }, 7500);
+
+
+            setTimeout(() => {
+                runClassifierBtn.disabled = false;
+            }, 8000);
+        });
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Geometric Lattice Projection Simulator (3x3x3)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-color: #111827; /* gray-900 */
+            color: #F9FAFB; /* gray-50 */
+        }
+        canvas {
+            background-color: #000;
+            display: block;
+            border-radius: 0.5rem;
+            border: 1px solid #374151; /* gray-700 */
+            width: 100%;
+            height: 100%;
+        }
+        #mainCanvasContainer {
+            width: 100%;
+            max-width: 1000px;
+            height: 700px; 
+            margin-bottom: 1.5rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid #374151;
+            cursor: grab;
+        }
+        #mainCanvasContainer:active {
+            cursor: grabbing;
+        }
+        .info, .key-panel, .controls, .report-panel, .generator-panel {
+            background-color: #1F2937; /* gray-800 */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #374151;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .controls .span-3 { grid-column: span 3 / span 3; }
+        .controls label {
+            white-space: nowrap;
+            color: #D1D5DB; /* gray-300 */
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .controls input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 0.5rem;
+            background: #374151; /* gray-700 */
+            border-radius: 0.25rem;
+            outline: none;
+        }
+        .controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .controls input[type="range"]::-moz-range-thumb {
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        /* Key Generator Panel */
+        .key-panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 1rem 1.5rem;
+        }
+        .key-panel-grid .span-2 { grid-column: span 2 / span 2; }
+        
+        .key-panel label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #9CA3AF; /* gray-400 */
+            margin-bottom: 0.25rem;
+        }
+        .key-panel input[type="number"] {
+            width: 100%;
+            background-color: #374151; /* gray-700 */
+            color: #F9FAFB; /* gray-50 */
+            border: 1px solid #4B5563; /* gray-600 */
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            font-family: monospace;
+        }
+        .key-panel input[type="range"] {
+             width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 0.5rem;
+            background: #374151; /* gray-700 */
+            border-radius: 0.25rem;
+            outline: none;
+            margin-top: 0.5rem;
+        }
+        .key-panel input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .key-panel input[type="range"]::-moz-range-thumb {
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .key-panel select {
+            width: 100%;
+            background-color: #374151; /* gray-700 */
+            color: #F9FAFB; /* gray-50 */
+            border: 1px solid #4B5563; /* gray-600 */
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            font-family: monospace;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            background-color: #374151; /* gray-700 */
+            color: #F9FAFB; /* gray-50 */
+            border: 1px solid #4B5563; /* gray-600 */
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            font-family: monospace;
+        }
+        input[type="text"]:read-only {
+            background-color: #111827; /* gray-900 */
+        }
+        
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        .input-group-header {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+        }
+        .input-group-header label {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        .input-group-header .value-display {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #E5E7EB; /* gray-200 */
+        }
+        .key-panel-grid .quat-group {
+            grid-column: span 1 / span 1; 
+        }
+
+        /* 3x3 Lattice Grid */
+        .lattice-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+        }
+        .lattice-wrapper {
+            max-width: 1000px;
+            width: 100%;
+        }
+        .lattice-wrapper h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #9CA3AF; /* gray-400 */
+        }
+        .node-panel {
+            background-color: #1F2937; /* gray-800 */
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #374151;
+        }
+        .node-panel.focus-node {
+            border-color: #3B82F6; /* blue-500 */
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            background-color: #1d2533;
+        }
+        .node-panel h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+        .node-panel label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #9CA3AF; /* gray-400 */
+            margin-bottom: 0.25rem;
+        }
+        .node-panel button {
+            width: 100%;
+            margin-top: 0.75rem;
+        }
+        .btn-loadgen {
+            margin-top: 0.5rem !important;
+            background-color: #10B981; /* green-500 */
+        }
+        .btn-loadgen:hover {
+            background-color: #059669; /* green-600 */
+        }
+        .node-readout {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #D1D5DB; /* gray-300 */
+            margin-top: 0.5rem;
+            background: #111827;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            min-height: 2.5rem;
+            word-wrap: break-word;
+        }
+        
+        .btn {
+            background-color: #3B82F6; /* blue-500 */
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #2563EB; /* blue-600 */
+        }
+        .btn.pause {
+            background-color: #EF4444; /* red-500 */
+        }
+        .btn.pause:hover {
+            background-color: #DC2626; /* red-600 */
+        }
+        .btn.secondary {
+            background-color: #4B5563; /* gray-600 */
+        }
+        .btn.secondary:hover {
+            background-color: #374151; /* gray-700 */
+        }
+        
+        .hidden {
+            display: none;
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 0.5rem;
+            color: #9CA3AF; /* gray-400 */
+            border: 1px solid #4B5563; /* gray-600 */
+            border-radius: 50%;
+            width: 1.15rem;
+            height: 1.15rem;
+            text-align: center;
+            font-size: 0.8rem;
+            line-height: 1rem;
+            cursor: help;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: #111827; /* gray-900 */
+            color: #F9FAFB; /* gray-50 */
+            text-align: left;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            position: absolute;
+            z-index: 10;
+            bottom: 150%;
+            left: 50%;
+            margin-left: -150px; /* Center tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            border: 1px solid #4B5563;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+    </style>
+    <!-- THREE.js and OrbitControls -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- This div wraps the entire simulation app -->
+    <div id="mainApp" class="flex flex-col items-center w-full">
+        <div class="info">
+            <h1 class="text-2xl font-bold text-white text-center">3D Geometric Lattice Projection Simulator (3x3x3)</h1>
+            <p class="text-sm text-gray-400 text-center mt-2">
+                A unified simulation merging 27 lattice nodes with 324 local emitters, particle gravity, and vortex physics.
+            </p>
+        </div>
+
+        <!-- Global Controls -->
+        <div class="controls">
+            <div>
+                <label for="driftSlider">Drift/Diffusion (0.0 - 1.0)</label>
+                <input type="range" id="driftSlider" min="0" max="1" step="0.01" value="0.1">
+            </div>
+            <div>
+                <label for="coherenceSlider">Coherence Tolerance (Freq ID ±)</label>
+                <input type="range" id="coherenceSlider" min="0" max="5" step="1" value="1">
+            </div>
+            <div>
+                <label for="frictionSlider">System Friction (0.0 - 0.5)</label>
+                <input type="range" id="frictionSlider" min="0.0" max="0.5" step="0.01" value="0.1">
+            </div>
+
+            <div class="span-3">
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="playPauseButton" class="btn">Play</button>
+                    <button id="resetButton" class="btn secondary">Reset Simulation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Canvas Container -->
+        <div id="mainCanvasContainer">
+            <!-- The 3D canvas will be created by three.js and appended here -->
+        </div>
+
+        <!-- Collapsible Key Generator -->
+        <div class="w-full max-w-[1000px] mb-6">
+            <button id="toggleGeneratorButton" class="btn secondary w-full">Show Key Generator</button>
+            <div id="keyGeneratorPanel" class="generator-panel hidden mt-4">
+                <h2 class="text-xl font-semibold mb-4 text-white">SHD-CCP Key Generator</h2>
+                
+                <div class="key-panel-grid">
+                    
+                    <div class="input-group span-2">
+                        <div class="input-group-header">
+                            <label for="keyScalerSlider">Payload Scaler ("Intensity")
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>MASTER INTENSITY (0.1x - 2.0x).</b><br>
+                                        Global multiplier for 'Amp ID' (Pulse) and 'Spin ID' (Twistor). High values create chaotic, "maxed out" simulations.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyScalerValue" class="value-display">16384</span>
+                        </div>
+                        <input type="range" id="keyScalerSlider" min="0" max="65535" value="16384" step="1">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-header">
+                            <label for="keyFreqIdSlider">Freq ID ("Resonance")
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>HIGH-FREQ RESONANCE (LOGS ONLY).</b><br>
+                                        Sets node 'color' for coherence & time dilation. Controls the 12 emitters, which are *only* recorded by the logs.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyFreqIdValue" class="value-display">8</span>
+                        </div>
+                        <input type="range" id="keyFreqIdSlider" min="0" max="31" value="8" step="1">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-header">
+                            <label for="keySpinIdSlider">Spin ID ("Twistor")
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>GEOMETRIC TWISTOR (FIELD & LOGS).</b><br>
+                                        Controls the 'wrapping' (vortex) strength. This force warps the *particle field*, and that 'warp' is then *encoded* onto the logs.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keySpinIdValue" class="value-display">0</span>
+                        </div>
+                        <input type="range" id="keySpinIdSlider" min="0" max="7" value="0" step="1">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-header">
+                            <label for="keyFormIdSlider">Form ID ("Shape/Orbit")
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>VISUALS & EMITTER ORBITS.</b><br>
+                                        Sets the node's wireframe shape AND the orbital pattern of its 12 local emitters.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyFormIdValue" class="value-display">12</span>
+                        </div>
+                        <input type="range" id="keyFormIdSlider" min="0" max="15" value="12" step="1">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-header">
+                            <label for="keyAmpIdSlider">Amp ID ("Pulse")
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>LATTICE PULSE (FIELD & LOGS).</b><br>
+                                        Controls the low-frequency 'in/out' (Lattice Breath) of the *particle field*. This "pulse" is also *encoded* onto the logs.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyAmpIdValue" class="value-display">3</span>
+                        </div>
+                        <input type="range" id="keyAmpIdSlider" min="0" max="7" value="3" step="1">
+                    </div>
+
+                    <div class="input-group quat-group">
+                        <div class="input-group-header">
+                            <label for="keyQuatWSlider">Quaternion W
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>INITIAL SPIN (W).</b><br>
+                                        Sets the 'W' component of the node's (and its emitters') starting 3D orientation.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyQuatWValue" class="value-display">128</span>
+                        </div>
+                        <input type="range" id="keyQuatWSlider" min="0" max="255" value="128" step="1">
+                    </div>
+
+                    <div class="input-group quat-group">
+                        <div class="input-group-header">
+                            <label for="keyQuatXSlider">Quaternion X
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>INITIAL SPIN (X).</b><br>
+                                        Sets the 'X' component of the node's (and its emitters') starting 3D orientation.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyQuatXValue" class="value-display">128</span>
+                        </div>
+                        <input type="range" id="keyQuatXSlider" min="0" max="255" value="128" step="1">
+                    </div>
+
+                    <div class="input-group quat-group">
+                        <div class="input-group-header">
+                            <label for="keyQuatYSlider">Quaternion Y
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>INITIAL SPIN (Y).</b><br>
+                                        Sets the 'Y' component of the node's (and its emitters') starting 3D orientation.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyQuatYValue" class="value-display">128</span>
+                        </div>
+                        <input type="range" id="keyQuatYSlider" min="0" max="255" value="128" step="1">
+                    </div>
+
+                    <div class="input-group quat-group">
+                        <div class="input-group-header">
+                            <label for="keyQuatZSlider">Quaternion Z
+                                <div class="tooltip">?
+                                    <span class="tooltip-text">
+                                        <b>INITIAL SPIN (Z).</b><br>
+                                        Sets the 'Z' component of the node's (and its emitters') starting 3D orientation.
+                                    </span>
+                                </div>
+                            </label>
+                            <span id="keyQuatZValue" class="value-display">128</span>
+                        </div>
+                        <input type="range" id="keyQuatZSlider" min="0" max="255" value="128" step="1">
+                    </div>
+
+                    <div class="input-group">
+                         <label for="keyParity">Parity
+                            <div class="tooltip">?
+                                <span class="tooltip-text">
+                                    <b>EMITTER SPIN DIRECTION.</b><br>
+                                    Reverses the 'spin' direction of the 12 local emitters.
+                                </span>
+                            </div>
+                         </label>
+                         <select id="keyParity">
+                            <option value="0">0 (Forward)</option>
+                            <option value="1">1 (Reverse)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="keyGenButton" class="opacity-0">Generate</label>
+                        <button id="keyGenButton" class="btn">Generate Key</button>
+                    </div>
+
+                    <div class="span-2">
+                        <label for="keyOutput">Generated 64-Bit Key (16-char Hex)</label>
+                        <input type="text" id="keyOutput" readonly class="bg-gray-900 border-gray-700">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Master Populate Panel -->
+        <div class="key-panel">
+            <h2 class="text-xl font-semibold mb-4 text-white">Master Key Loader</h2>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="col-span-2">
+                    <label for="masterKeyInput">Master Key (16-char Hex)</label>
+                    <input type="text" id="masterKeyInput" placeholder="Paste key to populate all 27 nodes...">
+                </div>
+                <div>
+                    <label for="populateAllButton" class="opacity-0">Populate</label>
+                    <button id="populateAllButton" class="btn">Populate All Nodes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3x3x3 Node Lattice Panel -->
+        <div class="lattice-wrapper">
+            <h2>Top Layer (k=0)</h2>
+            <div class="lattice-grid" id="latticeGridTop"></div>
+            <h2 class="mt-6">Middle Layer (k=1)</h2>
+            <div class="lattice-grid" id="latticeGridMiddle"></div>
+            <h2 class="mt-6">Bottom Layer (k=2)</h2>
+            <div class="lattice-grid" id="latticeGridBottom"></div>
+        </div>
+        
+        <!-- 3 Log Canvases -->
+        <h3 class="text-lg font-semibold mt-8 mb-2 text-white">Central Node [1, 1, 1] Log (X-axis)</h3>
+        <canvas id="logCanvasX" class="w-full max-w-[1000px]"></canvas>
+        
+        <h3 class="text-lg font-semibold mt-4 mb-2 text-white">Central Node [1, 1, 1] Log (Y-axis)</h3>
+        <canvas id="logCanvasY" class="w-full max-w-[1000px]"></canvas>
+        
+        <h3 class="text-lg font-semibold mt-4 mb-2 text-white">Central Node [1, 1, 1] Log (Z-axis)</h3>
+        <canvas id="logCanvasZ" class="w-full max-w-[1000px]"></canvas>
+
+    </div> <!-- End #mainApp wrapper -->
+
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Get all DOM Elements ---
+        const canvasContainer = document.getElementById('mainCanvasContainer');
+        
+        const logCanvasX = document.getElementById('logCanvasX');
+        const logCtxX = logCanvasX.getContext('2d');
+        const logCanvasY = document.getElementById('logCanvasY');
+        const logCtxY = logCanvasY.getContext('2d');
+        const logCanvasZ = document.getElementById('logCanvasZ');
+        const logCtxZ = logCanvasZ.getContext('2d');
+        
+        const latticeGridTop = document.getElementById('latticeGridTop');
+        const latticeGridMiddle = document.getElementById('latticeGridMiddle');
+        const latticeGridBottom = document.getElementById('latticeGridBottom');
+        
+        const driftSlider = document.getElementById('driftSlider');
+        const coherenceSlider = document.getElementById('coherenceSlider');
+        const frictionSlider = document.getElementById('frictionSlider'); 
+        const playPauseButton = document.getElementById('playPauseButton');
+        const resetButton = document.getElementById('resetButton');
+
+        // --- Key Generator ---
+        const toggleGeneratorButton = document.getElementById('toggleGeneratorButton');
+        const keyGeneratorPanel = document.getElementById('keyGeneratorPanel');
+        const keyGenButton = document.getElementById('keyGenButton');
+        const keyOutput = document.getElementById('keyOutput');
+        
+        const keyGenInputs = {
+            scaler: {
+                slider: document.getElementById('keyScalerSlider'),
+                value: document.getElementById('keyScalerValue'),
+                input: document.getElementById('keyScalerSlider') // Use slider as the number input
+            },
+            freqId: {
+                slider: document.getElementById('keyFreqIdSlider'),
+                value: document.getElementById('keyFreqIdValue'),
+                input: document.getElementById('keyFreqIdSlider')
+            },
+            spinId: {
+                slider: document.getElementById('keySpinIdSlider'),
+                value: document.getElementById('keySpinIdValue'),
+                input: document.getElementById('keySpinIdSlider')
+            },
+            formId: {
+                slider: document.getElementById('keyFormIdSlider'),
+                value: document.getElementById('keyFormIdValue'),
+                input: document.getElementById('keyFormIdSlider')
+            },
+            ampId: {
+                slider: document.getElementById('keyAmpIdSlider'),
+                value: document.getElementById('keyAmpIdValue'),
+                input: document.getElementById('keyAmpIdSlider')
+            },
+            quatW: {
+                slider: document.getElementById('keyQuatWSlider'),
+                value: document.getElementById('keyQuatWValue'),
+                input: document.getElementById('keyQuatWSlider')
+            },
+            quatX: {
+                slider: document.getElementById('keyQuatXSlider'),
+                value: document.getElementById('keyQuatXValue'),
+                input: document.getElementById('keyQuatXSlider')
+            },
+            quatY: {
+                slider: document.getElementById('keyQuatYSlider'),
+                value: document.getElementById('keyQuatYValue'),
+                input: document.getElementById('keyQuatYSlider')
+            },
+            quatZ: {
+                slider: document.getElementById('keyQuatZSlider'),
+                value: document.getElementById('keyQuatZValue'),
+                input: document.getElementById('keyQuatZSlider')
+            },
+            parity: document.getElementById('keyParity') // This is a select
+        };
+
+        // --- Master Populate ---
+        const masterKeyInput = document.getElementById('masterKeyInput');
+        const populateAllButton = document.getElementById('populateAllButton');
+
+        // --- Global State ---
+        let width = 1000;
+        let height = 700; 
+        let logWidth = 1000;
+        let logHeight = 150;
+        let masterIntensity = 1.0; // From Payload Scaler
+
+        function resizeCanvases() {
+            width = Math.min(1000, window.innerWidth - 32);
+            width = Math.max(width, 300); 
+            height = 700;
+            logWidth = width;
+            
+            [logCanvasX, logCanvasY, logCanvasZ].forEach(c => {
+                c.width = logWidth;
+                c.height = logHeight;
+            });
+            
+            if (renderer) {
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            }
+        }
+
+        // --- Simulation Parameters ---
+        let isPlaying = false;
+        let globalTime = 0.0; // Use a global time for realDeltaTime AND global pulse
+        let lastTimestamp = 0;
+        
+        let particleCloud, particleMaterial, particleGeometry, latticeWireframe;
+        const particleCount = 8000; // 20x20x20 grid
+        const particleHomePositions = new Float32Array(particleCount * 3);
+        const gridBounds = { min: -150, max: 150 };
+        const sectorSize = (gridBounds.max - gridBounds.min) / 3.0; // 100
+        const NUM_EMITTERS_PER_NODE = 12;
+
+        let logX = []; 
+        let logY = []; 
+        let logZ = []; 
+
+        // --- Data Tables (for parser) ---
+        const freqIdTable = [
+            {w: 1.0, k: 0.1}, {w: 1.0, k: 0.5}, {w: 1.0, k: 1.0}, {w: 3.0, k: 0.2},
+            {w: 3.0, k: 0.6}, {w: 5.0, k: 0.1}, {w: 5.0, k: 0.4}, {w: 5.0, k: 0.8},
+            {w: 7.0, k: 0.2}, {w: 7.0, k: 0.5}, {w: 7.0, k: 0.9}, {w: 9.0, k: 0.3},
+            {w: 9.0, k: 0.7}, {w: 11.0, k: 0.4}, {w: 11.0, k: 1.0}, {w: 13.0, k: 0.5},
+            {w: 13.0, k: 0.8}, {w: 15.0, k: 0.2}, {w: 15.0, k: 0.6}, {w: 15.0, k: 0.9},
+            {w: 17.0, k: 0.3}, {w: 17.0, k: 0.7}, {w: 17.0, k: 1.0}, {w: 19.0, k: 0.4},
+            {w: 19.0, k: 0.8}, {w: 20.0, k: 0.1}, {w: 20.0, k: 0.3}, {w: 20.0, k: 0.5},
+            {w: 20.0, k: 0.7}, {w: 20.0, k: 0.8}, {w: 20.0, k: 0.9}, {w: 20.0, k: 1.0}
+        ];
+        
+        const formGeometries = [];
+        const radius = 15;
+        formGeometries[0] = new THREE.TetrahedronGeometry(radius, 0);
+        formGeometries[1] = new THREE.BoxGeometry(radius, radius, radius);
+        formGeometries[2] = new THREE.OctahedronGeometry(radius, 0);
+        formGeometries[3] = new THREE.IcosahedronGeometry(radius, 0);
+        formGeometries[4] = new THREE.DodecahedronGeometry(radius, 0);
+        formGeometries[5] = new THREE.TetrahedronGeometry(radius, 1);
+        formGeometries[6] = new THREE.OctahedronGeometry(radius, 1);
+        formGeometries[7] = new THREE.IcosahedronGeometry(radius, 1);
+        formGeometries[8] = new THREE.BoxGeometry(radius * 1.2, radius * 1.2, radius * 1.2, 2, 2, 2);
+        formGeometries[9] = new THREE.IcosahedronGeometry(radius, 1); // Re-use
+        formGeometries[10] = new THREE.BoxGeometry(radius * 1.4, radius * 1.4, radius * 1.4, 3, 3, 3);
+        formGeometries[11] = new THREE.IcosahedronGeometry(radius, 2);
+        formGeometries[12] = new THREE.DodecahedronGeometry(radius, 1);
+        formGeometries[13] = new THREE.SphereGeometry(radius, 4, 2); // Reserved
+        formGeometries[14] = new THREE.SphereGeometry(radius, 4, 2); // Reserved
+        formGeometries[15] = new THREE.SphereGeometry(radius, 4, 2); // Reserved
+
+
+        // --- Lattice Node Class ---
+        class LatticeNode {
+            constructor(x, y, z, gridPos) {
+                this.position = new THREE.Vector3(x, y, z);
+                this.gridPos = gridPos; 
+                this.key = "0000000000000000";
+                this.unpackedKey = null;
+                
+                // Physics Properties
+                this.freqID = 0;
+                this.ampID = 0;   // "Pulse"
+                this.spinID = 0;  // "Twistor"
+                this.formID = 0;  // "Shape/Orbit"
+                this.w = 0; // Wave Freq
+                this.k = 0; // Wave Number
+                this.parity = 0;
+                this.localTime = 0.0; 
+                this.energy = 0.0; 
+                this.nextEnergy = 0.0; 
+                this.orientation = new THREE.Quaternion(); 
+                this.color = new THREE.Color(0x808080); 
+
+                // 3D Visuals
+                this.mesh = new THREE.Group();
+                this.mesh.position.set(x, y, z);
+
+                const sphereGeom = new THREE.SphereGeometry(6, 16, 16); 
+                this.material = new THREE.MeshStandardMaterial({ 
+                    color: this.color,
+                    emissive: this.color,
+                    emissiveIntensity: 0.0,
+                    metalness: 0.2,
+                    roughness: 0.5,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                this.sphereMesh = new THREE.Mesh(sphereGeom, this.material);
+                this.mesh.add(this.sphereMesh);
+                
+                this.wireframeMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0xffffff, 
+                    transparent: true, 
+                    opacity: 0.5 
+                });
+                this.wireframeMesh = new THREE.LineSegments(
+                    new THREE.BufferGeometry(), 
+                    this.wireframeMaterial
+                );
+                this.mesh.add(this.wireframeMesh);
+                
+                this.emitters = [];
+                const emitterGeom = new THREE.SphereGeometry(1.5, 6, 6);
+                const emitterMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
+                for(let i = 0; i < NUM_EMITTERS_PER_NODE; i++) {
+                    const emitter = {
+                        mesh: new THREE.Mesh(emitterGeom, emitterMat),
+                        pos: new THREE.Vector3()
+                    };
+                    this.emitters.push(emitter);
+                    this.mesh.add(emitter.mesh); 
+                }
+            }
+
+            loadKey(hexKey) {
+                this.key = hexKey;
+                try {
+                    this.unpackedKey = parseKey(hexKey);
+                    
+                    // Unpack physics parameters
+                    this.freqID = Number(this.unpackedKey.freqId);
+                    this.ampID = (Number(this.unpackedKey.ampId) / 7.0); // "Pulse" (0-1)
+                    this.spinID = Number(this.unpackedKey.spinId); // "Twistor" (0-7)
+                    this.formID = Number(this.unpackedKey.formId); // Shape 0-15
+                    this.parity = Number(this.unpackedKey.parity);
+                    
+                    const freqs = freqIdTable[this.freqID];
+                    this.w = freqs.w;
+                    this.k = freqs.k;
+                    this.energy = this.ampID * 2.0 * masterIntensity; // Initial energy burst
+                    
+                    const qx = (Number(this.unpackedKey.quatX) - 127.5) / 127.5;
+                    const qy = (Number(this.unpackedKey.quatY) - 127.5) / 127.5;
+                    const qz = (Number(this.unpackedKey.quatZ) - 127.5) / 127.5;
+                    const qw = (Number(this.unpackedKey.quatW) - 127.5) / 127.5;
+                    this.orientation.set(qx, qy, qz, qw).normalize();
+                    
+                    this.color.setHSL(this.freqID / 32.0, 1.0, 0.5);
+                    this.material.color = this.color;
+                    this.material.emissive = this.color;
+                    
+                    this.updateGeometricForm();
+                    
+                    const readout = document.getElementById(`readout-${this.gridPos.i}-${this.gridPos.j}-${this.gridPos.k}`);
+                    readout.innerHTML = `FreqID: ${this.freqID} (Res)<br>SpinID: ${this.spinID} (Twist)<br>AmpID: ${Number(this.unpackedKey.ampId)} (Pulse)`;
+                    
+                } catch (e) {
+                    console.error(`Failed to load key for node [${this.gridPos.i}, ${this.gridPos.j}, ${this.gridPos.k}]: ${e.message}`);
+                    const readout = document.getElementById(`readout-${this.gridPos.i}-${this.gridPos.j}-${this.gridPos.k}`);
+                    readout.innerHTML = `<span class="text-red-400">Error: Invalid Key</span>`;
+                }
+            }
+            
+            updateGeometricForm() {
+                const formId = this.formID;
+                const geometry = formGeometries[formId] || formGeometries[15]; 
+                
+                const wireframeGeom = new THREE.WireframeGeometry(geometry);
+                this.wireframeMesh.geometry.dispose();
+                this.wireframeMesh.geometry = wireframeGeom;
+            }
+
+            calculateLocalPhysics(realDeltaTime) {
+                // This function just updates emitter orbits and local time
+                const timeDilation = (1.0 + this.w * 0.05) * (1.0 + masterIntensity * 0.5);
+                this.localTime += realDeltaTime * timeDilation;
+                
+                const t = this.localTime * (this.parity === 1 ? -1 : 1);
+                const r = 25; 
+                const num = NUM_EMITTERS_PER_NODE;
+                const tempVec = new THREE.Vector3();
+
+                // Form ID 5 ("barbell")
+                if (this.formID === 5) {
+                    for (let i = 0; i < num; i++) {
+                        const node_t = t + (i * Math.PI * 2 / num);
+                        tempVec.set(r * Math.cos(node_t), r * Math.sin(2 * node_t) / 2, r * Math.sin(node_t));
+                        this.emitters[i].pos.copy(tempVec);
+                        this.emitters[i].mesh.position.copy(tempVec);
+                    }
+                } 
+                // Form ID 12 ("valence shells")
+                else if (this.formID === 12) {
+                    const r_shell = r;
+                    for (let i = 0; i < num; i++) {
+                        const y = 1 - (i / (num - 1)) * 2; 
+                        const radius = Math.sqrt(1 - y * y);
+                        const phi = (i * (3. - Math.sqrt(5.))) * Math.PI; 
+                        tempVec.set(
+                            r_shell * radius * Math.cos(phi + t * 0.1),
+                            r_shell * y,
+                            r_shell * radius * Math.sin(phi + t * 0.1)
+                        );
+                        this.emitters[i].pos.copy(tempVec);
+                        this.emitters[i].mesh.position.copy(tempVec);
+                    }
+                }
+                // Form ID 1 (modulo9 rotation - just an example)
+                else if (this.formID === 1) {
+                     for (let i = 0; i < num; i++) {
+                        const angle = t + (i * (Math.PI * 2) / num);
+                        const radius = r * (1 + Math.sin(t + i * 9) * 0.2); // modulo9
+                        tempVec.set(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+                        this.emitters[i].pos.copy(tempVec);
+                        this.emitters[i].mesh.position.copy(tempVec);
+                    }
+                }
+                // Default: Simple Circle
+                else {
+                    for (let i = 0; i < num; i++) {
+                        const angle = t + (i * (Math.PI * 2) / num);
+                        tempVec.set(r * Math.cos(angle), 0, r * Math.sin(angle));
+                        this.emitters[i].pos.copy(tempVec);
+                        this.emitters[i].mesh.position.copy(tempVec);
+                    }
+                }
+            }
+
+            calculateLatticePhysics(nodes, drift, tolerance, friction, deltaTime) {
+                // This function calculates energy transfer and spin alignment
+                if (this.energy <= 0) return;
+
+                let energyToTransfer = 0;
+                let coherentNeighbors = 0;
+                let alignmentQuaternion = new THREE.Quaternion();
+                
+                for (let di = -1; di <= 1; di++) {
+                    for (let dj = -1; dj <= 1; dj++) {
+                        for (let dk = -1; dk <= 1; dk++) {
+                            if (di === 0 && dj === 0 && dk === 0) continue;
+                            const ni = this.gridPos.i + di;
+                            const nj = this.gridPos.j + dj;
+                            const nk = this.gridPos.k + dk;
+                            
+                            if (ni >= 0 && ni < 3 && nj >= 0 && nj < 3 && nk >= 0 && nk < 3) {
+                                const neighbor = nodes[ni][nj][nk];
+                                if (Math.abs(this.freqID - neighbor.freqID) <= tolerance) {
+                                    coherentNeighbors++;
+                                    let transfer = this.energy * (this.ampID * masterIntensity + 0.1) * drift * deltaTime;
+                                    energyToTransfer += transfer; 
+                                    neighbor.nextEnergy += transfer;
+                                    alignmentQuaternion.slerp(neighbor.orientation, 1.0 / coherentNeighbors);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (coherentNeighbors > 0) {
+                    this.orientation.slerp(alignmentQuaternion, 0.01 * drift * deltaTime * 100);
+                }
+                
+                this.nextEnergy -= energyToTransfer;
+                this.nextEnergy -= this.energy * friction * deltaTime;
+                this.nextEnergy += (this.ampID * masterIntensity * 0.01) * deltaTime; // Sustain
+            }
+
+            applyEnergyStep() {
+                this.energy = Math.max(0, this.nextEnergy);
+            }
+
+            updateVisuals() {
+                const energyNorm = Math.min(this.energy, 5.0) / 5.0; 
+                
+                this.mesh.setRotationFromQuaternion(this.orientation);
+                
+                this.material.emissiveIntensity = energyNorm * 2.0;
+                this.wireframeMaterial.opacity = 0.2 + energyNorm * 0.8;
+                
+                const scale = 1.0 + energyNorm * 0.5; 
+                this.mesh.scale.set(scale, scale, scale);
+            }
+        }
+        
+        // 3D ARRAY
+        let latticeNodes = [
+            [ [], [], [] ],
+            [ [], [], [] ],
+            [ [], [], [] ]
+        ];
+        
+        // --- Re-usable Vectors for Physics ---
+        const tempDispVec = new THREE.Vector3();
+        const tempTwistAxis = new THREE.Vector3();
+        const tempRotQuat = new THREE.Quaternion();
+        const tempEmitterPos = new THREE.Vector3(); 
+        const tempLogPos = new THREE.Vector3();
+
+        // --- THREE.js Scene Setup ---
+        let scene, camera, renderer, controls;
+        
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 2000);
+            camera.position.z = 350;
+            camera.position.y = 150;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            canvasContainer.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.1;
+
+            // Create 3D Particle Cloud
+            particleGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const baseColor = new THREE.Color(0x4B5563);
+
+            let i = 0;
+            for (let x = 0; x < 20; x++) {
+                for (let y = 0; y < 20; y++) {
+                    for (let z = 0; z < 20; z++) {
+                        const px = gridBounds.min + (x / 19) * (gridBounds.max - gridBounds.min);
+                        const py = gridBounds.min + (y / 19) * (gridBounds.max - gridBounds.min);
+                        const pz = gridBounds.min + (z / 19) * (gridBounds.max - gridBounds.min);
+                        
+                        positions[i * 3] = px;
+                        particleHomePositions[i * 3] = px;
+                        positions[i * 3 + 1] = py;
+                        particleHomePositions[i * 3 + 1] = py;
+                        positions[i * 3 + 2] = pz;
+                        particleHomePositions[i * 3 + 2] = pz;
+                        
+                        baseColor.toArray(colors, i * 3);
+                        i++;
+                    }
+                }
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particleMaterial = new THREE.PointsMaterial({ 
+                size: 1.5, 
+                vertexColors: true, 
+                sizeAttenuation: true 
+            });
+            particleCloud = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particleCloud);
+
+            // Create 27 Lattice Nodes
+            const nodeSpacing = 100;
+            for (let i = 0; i < 3; i++) { // X
+                for (let j = 0; j < 3; j++) { // Y
+                    for (let k = 0; k < 3; k++) { // Z
+                        const x = (i - 1) * nodeSpacing;
+                        const y = (j - 1) * nodeSpacing;
+                        const z = (k - 1) * nodeSpacing;
+                        const node = new LatticeNode(x, y, z, {i, j, k});
+                        latticeNodes[i][j][k] = node;
+                        scene.add(node.mesh); // Add the group to the scene
+                    }
+                }
+            }
+            
+            // Create 3x3x3 Wireframe Lattice
+            const latticeGeom = new THREE.BoxGeometry(
+                nodeSpacing * 3, 
+                nodeSpacing * 3, 
+                nodeSpacing * 3, 
+                3, 3, 3
+            );
+            const latticeMat = new THREE.MeshBasicMaterial({ 
+                color: 0x374151, // gray-700
+                wireframe: true, 
+                transparent: true, 
+                opacity: 0.5 
+            });
+            latticeWireframe = new THREE.Mesh(latticeGeom, latticeMat);
+            scene.add(latticeWireframe);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient
+            scene.add(ambientLight);
+        }
+
+        // --- UI Setup ---
+        function setupLatticeUI() {
+            latticeGridTop.innerHTML = '';
+            latticeGridMiddle.innerHTML = '';
+            latticeGridBottom.innerHTML = '';
+            
+            const grids = [latticeGridTop, latticeGridMiddle, latticeGridBottom];
+            
+            for (let k = 0; k < 3; k++) { // Layer (Z)
+                for (let j = 0; j < 3; j++) { // Col (Y)
+                    for (let i = 0; i < 3; i++) { // Row (X)
+                        const isFocus = (i === 1 && j === 1 && k === 1);
+                        const panel = document.createElement('div');
+                        panel.className = `node-panel ${isFocus ? 'focus-node' : ''}`;
+                        panel.innerHTML = `
+                            <h3>Node [${i}, ${j}, ${k}] ${isFocus ? '- FOCUS' : ''}</h3>
+                            <label for="key-${i}-${j}-${k}">Geometric Key (16-char Hex)</label>
+                            <input type="text" id="key-${i}-${j}-${k}" placeholder="0000...">
+                            <button id="btn-${i}-${j}-${k}" class="btn secondary">Load Key</button>
+                            <!-- NEW "Load to Gen" Button -->
+                            <button id="btn-loadgen-${i}-${j}-${k}" class="btn btn-loadgen">Load to Generator</button>
+                            <div id="readout-${i}-${j}-${k}" class="node-readout">FreqID: N/A<br>SpinID: N/A<br>AmpID: N/A</div>
+                        `;
+                        grids[k].appendChild(panel);
+                        
+                        // Load Key Button
+                        document.getElementById(`btn-${i}-${j}-${k}`).onclick = () => {
+                            const key = document.getElementById(`key-${i}-${j}-${k}`).value;
+                            latticeNodes[i][j][k].loadKey(key);
+                        };
+                        
+                        // NEW: Load to Generator Button
+                        document.getElementById(`btn-loadgen-${i}-${j}-${k}`).onclick = () => {
+                            const key = document.getElementById(`key-${i}-${j}-${k}`).value;
+                            if (key.length !== 16) {
+                                alert("Please load a valid 16-char key into the node first.");
+                                return;
+                            }
+                            try {
+                                const unpackedData = parseKey(key);
+                                populateGenerator(unpackedData);
+                                // Show generator if hidden
+                                if (keyGeneratorPanel.classList.contains('hidden')) {
+                                    toggleGeneratorButton.click();
+                                }
+                                keyGenButton.scrollIntoView({ behavior: 'smooth' });
+                            } catch (e) {
+                                alert("Error parsing key: " + e.message);
+                            }
+                        };
+                    }
+                }
+            }
+        }
+        
+        // --- Populate All Button ---
+        populateAllButton.onclick = () => {
+            const masterKey = masterKeyInput.value.trim();
+            if (masterKey.length !== 16) {
+                alert("Master Key must be 16 hex characters.");
+                return;
+            }
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    for (let k = 0; k < 3; k++) {
+                        document.getElementById(`key-${i}-${j}-${k}`).value = masterKey;
+                        latticeNodes[i][j][k].loadKey(masterKey);
+                    }
+                }
+            }
+        };
+
+        // --- Key Generator ---
+        toggleGeneratorButton.onclick = () => {
+            const panel = keyGeneratorPanel;
+            const btn = toggleGeneratorButton;
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                btn.innerText = "Hide Key Generator";
+                btn.classList.add('secondary');
+            } else {
+                panel.classList.add('hidden');
+                btn.innerText = "Show Key Generator";
+                btn.classList.remove('secondary');
+            }
+        };
+        
+        // NEW: Populate Generator from Key
+        function populateGenerator(data) {
+            keyGenInputs.scaler.slider.value = Number(data.scaler);
+            keyGenInputs.freqId.slider.value = Number(data.freqId);
+            keyGenInputs.spinId.slider.value = Number(data.spinId);
+            keyGenInputs.formId.slider.value = Number(data.formId);
+            keyGenInputs.ampId.slider.value = Number(data.ampId);
+            keyGenInputs.parity.value = Number(data.parity);
+            keyGenInputs.quatW.slider.value = Number(data.quatW);
+            keyGenInputs.quatX.slider.value = Number(data.quatX);
+            keyGenInputs.quatY.slider.value = Number(data.quatY);
+            keyGenInputs.quatZ.slider.value = Number(data.quatZ);
+
+            Object.keys(keyGenInputs).forEach(key => {
+                if (key === 'parity') return;
+                syncGenInputs(keyGenInputs[key].slider, key);
+            });
+            updateMasterIntensity();
+        }
+        
+        function syncGenInputs(source, name) {
+            const group = keyGenInputs[name];
+            if (!group) return;
+            const value = source.value;
+            group.slider.value = value;
+            group.value.innerText = value;
+            
+            if (name === 'scaler') {
+                updateMasterIntensity();
+            }
+        }
+
+        Object.keys(keyGenInputs).forEach(key => {
+            if (key === 'parity') return; 
+            const group = keyGenInputs[key];
+            group.slider.addEventListener('input', (e) => syncGenInputs(e.target, key));
+        });
+        
+        keyGenButton.onclick = () => {
+            try {
+                const scaler = BigInt(Math.round(Number(keyGenInputs.scaler.slider.value))) & 0xFFFFn;
+                const freqId = BigInt(Math.round(Number(keyGenInputs.freqId.slider.value))) & 0x1Fn;
+                const spinId = BigInt(Math.round(Number(keyGenInputs.spinId.slider.value))) & 0x7n;
+                const formId = BigInt(Math.round(Number(keyGenInputs.formId.slider.value))) & 0xFn;
+                const ampId = BigInt(Math.round(Number(keyGenInputs.ampId.slider.value))) & 0x7n;
+                const parity = BigInt(Math.round(Number(keyGenInputs.parity.value))) & 0x1n;
+                const quatW = BigInt(Math.round(Number(keyGenInputs.quatW.slider.value))) & 0xFFn;
+                const quatX = BigInt(Math.round(Number(keyGenInputs.quatX.slider.value))) & 0xFFn;
+                const quatY = BigInt(Math.round(Number(keyGenInputs.quatY.slider.value))) & 0xFFn;
+                const quatZ = BigInt(Math.round(Number(keyGenInputs.quatZ.slider.value))) & 0xFFn;
+                
+                let key64 = 0n;
+                key64 |= (scaler << 48n);
+                key64 |= (freqId << 43n);
+                key64 |= (spinId << 40n);
+                key64 |= (formId << 36n);
+                key64 |= (ampId  << 33n);
+                key64 |= (parity << 32n);
+                key64 |= (quatW  << 24n);
+                key64 |= (quatX  << 16n);
+                key64 |= (quatY  << 8n);
+                key64 |= (quatZ);
+                
+                keyOutput.value = key64.toString(16).padStart(16, '0').toUpperCase();
+            } catch (e) {
+                keyOutput.value = `Error: ${e.message}`;
+            }
+        };
+
+        function updateMasterIntensity() {
+            const scalerValue = Number(keyGenInputs.scaler.slider.value);
+            // Map 0-65535 to 0.1x - 2.0x
+            masterIntensity = 0.1 + (scalerValue / 65535) * 1.9;
+        }
+
+        // --- Key Parser Logic (Full) ---
+        function parseKey(hexKey) {
+            if (hexKey.length !== 16) throw new Error("Key must be 16 hex chars.");
+            const key64 = BigInt('0x' + hexKey);
+            return {
+                scaler: (key64 >> 48n) & 0xFFFFn,
+                freqId: (key64 >> 43n) & 0x1Fn,
+                spinId: (key64 >> 40n) & 0x7n,
+                formId: (key64 >> 36n) & 0xFn,
+                ampId:  (key64 >> 33n) & 0x7n,
+                parity: (key64 >> 32n) & 0x1n,
+                quatW:  (key64 >> 24n) & 0xFFn,
+                quatX:  (key64 >> 16n) & 0xFFn,
+                quatY:  (key64 >> 8n) & 0xFFn,
+                quatZ:  key64 & 0xFFn
+            };
+        }
+
+        // --- Playback/Reset Functions ---
+        playPauseButton.onclick = () => {
+            isPlaying = !isPlaying;
+            playPauseButton.innerText = isPlaying ? 'Pause' : 'Play';
+            playPauseButton.classList.toggle('pause', isPlaying);
+            if (isPlaying) {
+                lastTimestamp = performance.now();
+                animate();
+            }
+        };
+
+        resetButton.onclick = () => {
+            if (isPlaying) playPauseButton.click();
+            globalTime = 0.0;
+            logX = [];
+            logY = [];
+            logZ = [];
+            latticeNodes.flat().flat().forEach(node => {
+                if(node) {
+                    node.energy = 0;
+                    node.nextEnergy = 0;
+                    node.localTime = 0;
+                    if (node.unpackedKey) {
+                         const qx = (Number(node.unpackedKey.quatX) - 127.5) / 127.5;
+                         const qy = (Number(node.unpackedKey.quatY) - 127.5) / 127.5;
+                         const qz = (Number(node.unpackedKey.quatZ) - 127.5) / 127.5;
+                         const qw = (Number(node.unpackedKey.quatW) - 127.5) / 127.5;
+                         node.orientation.set(qx, qy, qz, qw).normalize();
+                    } else {
+                         node.orientation.set(0, 0, 0, 1);
+                    }
+                    node.updateVisuals(); 
+                }
+            });
+            drawLogs();
+        };
+        
+        // --- 3D Core Physics & Drawing ---
+        
+        function update(realDeltaTime) {
+            if (!isPlaying) return;
+            
+            const physicsDeltaTime = 0.016; 
+            globalTime += physicsDeltaTime; 
+            
+            const drift = Number(driftSlider.value);
+            const tolerance = Number(coherenceSlider.value);
+            const friction = Number(frictionSlider.value); 
+
+            // 1. Calculate energy transfer & spin alignment
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    for (let k = 0; k < 3; k++) {
+                        const node = latticeNodes[i][j][k];
+                        node.nextEnergy = node.energy; 
+                        node.calculateLatticePhysics(latticeNodes, drift, tolerance, friction, physicsDeltaTime);
+                    }
+                }
+            }
+            
+            // 2. Apply new energy values & update local emitters
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    for (let k = 0; k < 3; k++) {
+                        latticeNodes[i][j][k].applyEnergyStep();
+                        latticeNodes[i][j][k].calculateLocalPhysics(realDeltaTime);
+                    }
+                }
+            }
+            
+            // 3. Update Particle Displacements (Visualization)
+            const positions = particleGeometry.getAttribute('position');
+            const colors = particleGeometry.getAttribute('color');
+            const tempColor = new THREE.Color();
+            const centralStrain = new THREE.Vector3(0, 0, 0); // NEW: To measure "Lattice Warp"
+            let centralParticleCount = 0;
+            
+            // --- Log Calculation Vectors ---
+            // These will be the sum of all 3 signals
+            const disp_LatticeBreath = new THREE.Vector3(0, 0, 0);
+            const disp_LocalWaves = new THREE.Vector3(0, 0, 0);
+            // We'll calculate disp_ParticleStrain in the loop
+            
+            const focusNodePos = latticeNodes[1][1][1].position;
+            tempLogPos.copy(focusNodePos); // Use the exact center for logs
+            
+            // --- Particle Field Loop ---
+            for (let p = 0; p < particleCount; p++) {
+                const idx = p * 3;
+                const homeX = particleHomePositions[idx];
+                const homeY = particleHomePositions[idx + 1];
+                const homeZ = particleHomePositions[idx + 2];
+                
+                tempDispVec.set(0, 0, 0); 
+                let totalEnergy = 0;
+                let avgColor = { r: 0.1, g: 0.1, b: 0.1 }; 
+                
+                const p_i = Math.min(2, Math.max(0, Math.floor((homeX - gridBounds.min) / sectorSize)));
+                const p_j = Math.min(2, Math.max(0, Math.floor((homeY - gridBounds.min) / sectorSize)));
+                const p_k = Math.min(2, Math.max(0, Math.floor((homeZ - gridBounds.min) / sectorSize)));
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        for (let k = 0; k < 3; k++) {
+                            const node = latticeNodes[i][j][k];
+                            const nodeTwist = node.spinID * masterIntensity; 
+                            const nodePulse = node.ampID * masterIntensity; // NEW: Pulse
+                            
+                            if (nodePulse <= 0.01 && nodeTwist <= 0.01) continue;
+                            
+                            // A) Calculate Local Vortex (Twistor)
+                            if (p_i === i && p_j === j && p_k === k) { // Is particle in this node's cube?
+                                const vortexStrength = nodeTwist * 0.1;
+                                tempTwistAxis.set(0, 1, 0).applyQuaternion(node.orientation);
+                                tempRotQuat.setFromAxisAngle(tempTwistAxis, vortexStrength * 0.05 * physicsDeltaTime * 100);
+                                tempDispVec.applyQuaternion(tempRotQuat);
+                            }
+                            
+                            // B) Calculate "Lattice Breath" (Pulse)
+                            if (nodePulse > 0.01) {
+                                const distI = Math.abs(p_i - i);
+                                const distJ = Math.abs(p_j - j);
+                                const distK = Math.abs(p_k - k);
+                                let influence = 0.0;
+                                if (distI === 0 && distJ === 0 && distK === 0) influence = 1.0; 
+                                else if (distI <= 1 && distJ <= 1 && distK <= 1) influence = drift; 
+                                
+                                if (influence > 0) {
+                                    totalEnergy += node.energy * influence;
+                                    avgColor.r += node.color.r * node.energy * influence;
+                                    avgColor.g += node.color.g * node.energy * influence;
+                                    avgColor.b += node.color.b * node.energy * influence;
+                                    
+                                    const dx = homeX - node.position.x;
+                                    const dy = homeY - node.position.y;
+                                    const dz = homeZ - node.position.z;
+                                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) + 0.1;
+                                    
+                                    // NEW: Low-frequency "Pulse"
+                                    const pulseValue = nodePulse * 10.0 * Math.sin(globalTime * 0.5) * influence;
+                                    
+                                    tempDispVec.x += (dx / dist) * pulseValue;
+                                    tempDispVec.y += (dy / dist) * pulseValue;
+                                    tempDispVec.z += (dz / dist) * pulseValue;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Set final particle position
+                positions.array[idx] = homeX + tempDispVec.x;
+                positions.array[idx + 1] = homeY + tempDispVec.y;
+                positions.array[idx + 2] = homeZ + tempDispVec.z;
+                
+                // NEW: Calculate Particle Strain for logs
+                if (p_i === 1 && p_j === 1 && p_k === 1) { // If particle is in central cube
+                    centralStrain.add(tempDispVec);
+                    centralParticleCount++;
+                }
+                
+                if (totalEnergy > 0) {
+                    tempColor.setRGB(avgColor.r / totalEnergy, avgColor.g / totalEnergy, avgColor.b / totalEnergy);
+                    tempColor.toArray(colors, idx);
+                } else {
+                    tempColor.setRGB(0.1, 0.1, 0.1); 
+                    tempColor.toArray(colors, idx);
+                }
+            }
+            
+            // --- Log Calculation Loop (The "Signature") ---
+            
+            // 1. Calculate Particle Strain
+            if (centralParticleCount > 0) {
+                centralStrain.divideScalar(centralParticleCount); 
+            }
+            
+            // 2. Calculate signals from all 27 nodes
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    for (let k = 0; k < 3; k++) {
+                        const node = latticeNodes[i][j][k];
+                        if (node.energy <= 0.01) continue;
+                        
+                        // Signal 2: "Lattice Breath" from neighbors
+                        if (i !== 1 || j !== 1 || k !== 1) { 
+                            const dx = tempLogPos.x - node.position.x;
+                            const dy = tempLogPos.y - node.position.y;
+                            const dz = tempLogPos.z - node.position.z;
+                            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) + 0.1;
+                            const pulseValue = (node.ampID * masterIntensity) * 10.0 * Math.sin(globalTime * 0.5);
+                            disp_LatticeBreath.x += (dx / dist) * pulseValue;
+                            disp_LatticeBreath.y += (dy / dist) * pulseValue;
+                            disp_LatticeBreath.z += (dz / dist) * pulseValue;
+                        }
+
+                        // Signal 3: "Local Resonance" from all 324 emitters
+                        for(const emitter of node.emitters) {
+                            emitter.mesh.getWorldPosition(tempEmitterPos);
+                            const dx = tempLogPos.x - tempEmitterPos.x;
+                            const dy = tempLogPos.y - tempEmitterPos.y;
+                            const dz = tempLogPos.z - tempEmitterPos.z;
+                            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) + 0.1;
+                            const waveValue = node.energy * Math.sin(node.k * dist - node.localTime * node.w);
+                            disp_LocalWaves.x += (dx / dist) * waveValue;
+                            disp_LocalWaves.y += (dy / dist) * waveValue;
+                            disp_LocalWaves.z += (dz / dist) * waveValue;
+                        }
+                    }
+                }
+            }
+            
+            positions.needsUpdate = true;
+            colors.needsUpdate = true;
+            
+            // --- Update Logs (Sum of all 3 signals) ---
+            logX.push(disp_LatticeBreath.x + disp_LocalWaves.x + centralStrain.x);
+            logY.push(disp_LatticeBreath.y + disp_LocalWaves.y + centralStrain.y);
+            logZ.push(disp_LatticeBreath.z + disp_LocalWaves.z + centralStrain.z);
+            if (logX.length > logWidth + 50) logX.shift();
+            if (logY.length > logWidth + 50) logY.shift();
+            if (logZ.length > logWidth + 50) logZ.shift();
+        }
+
+        function draw() {
+            // Update 3D object visuals
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    for(let k = 0; k < 3; k++) {
+                        latticeNodes[i][j][k].updateVisuals();
+                    }
+                }
+            }
+            drawLogs();
+            controls.update(); 
+            renderer.render(scene, camera);
+        }
+        
+        function drawLogs() {
+            const recentLogX = logX.slice(-logWidth);
+            const recentLogY = logY.slice(-logWidth);
+            const recentLogZ = logZ.slice(-logWidth);
+            const maxDispX = Math.max(0.1, ...recentLogX.map(Math.abs));
+            const maxDispY = Math.max(0.1, ...recentLogY.map(Math.abs));
+            const maxDispZ = Math.max(0.1, ...recentLogZ.map(Math.abs));
+            
+            drawSingleLog(logCtxX, logX, logHeight, maxDispX);
+            drawSingleLog(logCtxY, logY, logHeight, maxDispY);
+            drawSingleLog(logCtxZ, logZ, logHeight, maxDispZ);
+        }
+        
+        function drawSingleLog(logCtx, logData, canvasHeight, maxDisplacement) {
+            const canvasWidth = logCtx.canvas.width;
+            logCtx.fillStyle = '#000';
+            logCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            const logCenter = canvasHeight / 2;
+            
+            // Draw boundary lines
+            logCtx.strokeStyle = '#1F2937'; 
+            logCtx.lineWidth = 1;
+            logCtx.beginPath();
+            logCtx.moveTo(0, canvasHeight * 0.1);
+            logCtx.lineTo(canvasWidth, canvasHeight * 0.1);
+            logCtx.stroke();
+            logCtx.beginPath();
+            logCtx.moveTo(0, canvasHeight * 0.9);
+            logCtx.lineTo(canvasWidth, canvasHeight * 0.9);
+            logCtx.stroke();
+            
+            // Draw center line
+            logCtx.beginPath();
+            logCtx.strokeStyle = '#374151'; 
+            logCtx.lineWidth = 1;
+            logCtx.moveTo(0, logCenter);
+            logCtx.lineTo(canvasWidth, logCenter);
+            logCtx.stroke();
+            
+            // Draw wave
+            logCtx.beginPath();
+            logCtx.strokeStyle = '#3B82F6'; 
+            logCtx.lineWidth = 2;
+            let dataScale = 1.0;
+            if (maxDisplacement > 0.01) { 
+                dataScale = (canvasHeight * 0.4) / maxDisplacement;
+            }
+            for (let i = 0; i < canvasWidth; i++) {
+                const logIndex = logData.length - 1 - i;
+                if (logIndex < 0) break;
+                const value = (logData[logIndex] || 0) * dataScale; 
+                const x = canvasWidth - 1 - i;
+                const y = logCenter - value; 
+                if (i === 0) logCtx.moveTo(x, y);
+                else logCtx.lineTo(x, y);
+            }
+            logCtx.stroke();
+        }
+        
+        function animate() {
+            if (!isPlaying) return; 
+            requestAnimationFrame(animate);
+            
+            const timestamp = performance.now();
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const realDeltaTime = (timestamp - lastTimestamp) * 0.001;
+            lastTimestamp = timestamp;
+            
+            update(realDeltaTime); 
+            draw(); 
+        }
+
+        // --- Start ---
+        initThree();
+        setupLatticeUI();
+        resizeCanvases();
+        window.onresize = resizeCanvases;
+        
+        updateMasterIntensity();
+        keyGenButton.click();
+        
+        draw(); // Initial draw
+
+    </script>
+</body>
+</html>

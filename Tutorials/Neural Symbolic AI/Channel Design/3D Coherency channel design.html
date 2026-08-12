@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Designing a 3-D Coherency Channel with 3-Phase/Dimension Frequencies</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- D3.js and Three.js for Section 7 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- MathJax Configuration -->
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'code']
+      }
+    };
+    </script>
+    
+    <!-- MathJax Library -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        /* Custom style for canvas glow effect */
+        .canvas-glow {
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
+        }
+        /* Custom styles for sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #1F2937; /* bg-gray-800 */
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type=range]:hover {
+            opacity: 1;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #34D399; /* text-green-400 */
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #34D399;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        /* Styles for Section 7 Visualization */
+        .custom-select { 
+            background-color: #064e3b; 
+            border: 1px solid #047857; 
+            color: #a7f3d0; padding: 0.5rem 1rem; 
+            border-radius: 0.5rem; 
+            -webkit-appearance: none; 
+            -moz-appearance: none; 
+            appearance: none; 
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236ee7b7' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); 
+            background-position: right 0.5rem center; 
+            background-repeat: no-repeat; 
+            background-size: 1.5em 1.5em; 
+        }
+        .chart-container { min-height: 550px; }
+        /* SVG Hover styles */
+        .interactive-point { cursor: pointer; }
+        .state-point { transition: all 0.2s ease-in-out; }
+        .state-label { transition: all 0.2s ease-in-out; fill: #A7F3D0; font-size: 5px; font-family: 'Inter', sans-serif; }
+        .phasor-line { stroke: rgba(52, 211, 153, 0.4); stroke-width: 0.75; stroke-dasharray: 2 2; }
+        .interactive-point:hover .state-point { stroke: #FFFFFF; stroke-width: 1.5px; }
+        .interactive-point:hover .state-label { fill: #FFFFFF; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8">
+
+    <h1 class="text-3xl md:text-4xl font-bold text-green-200 mb-6 text-center">Designing a 3-D Coherency Channel with 3-Phase/Dimension Frequencies</h1>
+    
+    <p class="text-lg leading-relaxed mb-8 max-w-4xl mx-auto text-center">
+        This tutorial outlines a triply-indexed, frequency-domain protocol that assigns each semantic dimension its own carrier, uses three 120°-separated PSK states per carrier, modulates frequency deviation proportional to data activity, and returns carriers to a “quiet” baseline when idle.
+    </p>
+
+    <hr class="border-green-800 my-12 max-w-5xl mx-auto">
+
+    <section class="mb-12 flex flex-col items-center">
+        <div class="w-full max-w-5xl text-center">
+            <h2 class="text-2xl font-semibold text-green-300 mb-2">Interactive Modulation Demonstration</h2>
+            <p class="text-green-400 mb-6">
+                This shows how 3-PSK encodes data by changing signal phase and how frequency deviation marks activity. After 1 second, the signal returns to baseline. Adjust drift and diffusion to see their effect on the return speed and stability.
+            </p>
+        </div>
+        <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-center">
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <p class="text-lg mb-2 text-center font-semibold text-green-300">Phase State Controls</p>
+                <p class="text-center mb-4">Current State: <span id="currentState" class="font-bold">State 0 (0°)</span></p>
+                <div class="flex justify-center space-x-2">
+                    <button id="btnState0" class="flex-1 bg-green-600 hover:bg-green-500 text-black font-bold py-2 px-3 rounded-lg shadow-md shadow-green-500/20 transition-all duration-200">State 0</button>
+                    <button id="btnState1" class="flex-1 bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-lg shadow-md shadow-green-500/20 transition-all duration-200">State 1</button>
+                    <button id="btnState2" class="flex-1 bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-lg shadow-md shadow-green-500/20 transition-all duration-200">State 2</button>
+                </div>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg space-y-3">
+                <div class="w-full">
+                    <label for="driftSlider" class="font-semibold text-green-300">Drift (Return Speed): <span id="driftValue">0.10</span></label>
+                    <input type="range" id="driftSlider" min="0.01" max="0.2" value="0.1" step="0.01">
+                </div>
+                <div class="w-full">
+                    <label for="diffusionSlider" class="font-semibold text-green-300">Diffusion (Noise): <span id="diffusionValue">0.01</span></label>
+                    <input type="range" id="diffusionSlider" min="0" max="0.05" value="0.01" step="0.001">
+                </div>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg">
+                 <label for="baseFreqInput" class="font-semibold text-green-300">Base Node Frequency (MHz)</label>
+                 <input type="number" id="baseFreqInput" value="100" class="w-full bg-gray-800 text-white p-2 rounded-md border border-green-700 mt-1 mb-3">
+                 <button id="runButton" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg shadow-md shadow-blue-500/20 transition-all duration-200">Run Spectrum</button>
+            </div>
+        </div>
+        <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex flex-col items-center">
+                <h3 class="text-xl font-semibold text-green-300 mb-2">Phase Constellation</h3>
+                <canvas id="pskCanvas" width="400" height="400" class="bg-gray-900 rounded-full border-2 border-green-800 canvas-glow"></canvas>
+            </div>
+            <div class="flex flex-col items-center">
+                <h3 class="text-xl font-semibold text-green-300 mb-2">Frequency Spectrum</h3>
+                <canvas id="spectrumCanvas" width="400" height="400" class="bg-gray-900 rounded-lg border-2 border-green-800 canvas-glow"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <hr class="border-green-800 my-12 max-w-4xl mx-auto">
+
+    <div class="max-w-4xl mx-auto">
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">1. Carrier & Phase Assignment</h2>
+            <div class="space-y-6 text-base leading-relaxed">
+                <div>
+                    <h3 class="font-semibold text-green-400">1. Dimensions</h3>
+                    <ul class="list-disc list-inside ml-4">
+                        <li>$D_1, D_2, D_3$ (semantic axes)</li>
+                    </ul>
+                    <p class="mt-2 bg-gray-900 p-3 rounded-md border-l-4 border-green-700">
+                        <strong class="text-green-300">What is a Semantic Axis?</strong><br>
+                        In this context, a "semantic axis" represents a distinct category or dimension of meaning. Think of them as independent channels for different types of information. For example, $D_1$ could represent 'Object ID,' $D_2$ could be 'Action Type,' and $D_3$ could signify 'Urgency Level.' By assigning each a unique carrier frequency, we can transmit and decode these different streams of meaning simultaneously without interference.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-400">2. Carriers</h3>
+                    <ul class="list-disc list-inside ml-4">
+                        <li>$f_1, f_2, f_3$ (one per axis; choose orthogonal FDM spacing)</li>
+                        <li>Baseline idle frequency: $f_{i0}$ = nominal carrier</li>
+                    </ul>
+                    <div class="mt-4 bg-gray-900 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold text-green-300 mb-2 text-center">Orthogonal FDM Spacing</h4>
+                        <canvas id="fdmCanvas" width="500" height="250" class="bg-black rounded"></canvas>
+                        <p class="text-sm text-center text-green-500 mt-2">This graph shows how three orthogonal carriers ($f_1, f_2, f_3$) are spaced in the frequency domain. The peak of each carrier's spectrum aligns with the nulls (zero-crossings) of the others, preventing interference.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-400">3. Phase States (3-PSK)</h3>
+                    <p>On each carrier $f_i$, we represent three semantic sub-states via instantaneous phase $\Phi \in \{0^\circ, 120^\circ, 240^\circ\}$. Each phase shift is assigned a unique numerical value, which can then be mapped to a specific meaning for that semantic axis.</p>
+                    <p class="mt-2">For example, if we are transmitting information on the 'Action Type' axis ($D_2$), the three phase states could represent the following commands:</p>
+                    <div class="overflow-x-auto mt-4">
+                        <table class="min-w-full bg-gray-900 border border-green-700">
+                            <thead class="bg-gray-800">
+                                <tr>
+                                    <th class="px-4 py-2 border-b border-r border-green-700 text-left text-green-300">Phase Shift</th>
+                                    <th class="px-4 py-2 border-b border-r border-green-700 text-left text-green-300">Assigned Value ($s_i$)</th>
+                                    <th class="px-4 py-2 border-b border-green-700 text-left text-green-300">Example Meaning for Axis $D_2$ (Action Type)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2 border-b border-r border-green-700">$0^\circ$ (Baseline)</td>
+                                    <td class="px-4 py-2 border-b border-r border-green-700">0</td>
+                                    <td class="px-4 py-2 border-b border-green-700">'Observe' or 'Idle'</td>
+                                </tr>
+                                <tr class="bg-gray-800/50">
+                                    <td class="px-4 py-2 border-b border-r border-green-700">$120^\circ$</td>
+                                    <td class="px-4 py-2 border-b border-r border-green-700">1</td>
+                                    <td class="px-4 py-2 border-b border-green-700">'Approach' or 'Engage'</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 border-r border-green-700">$240^\circ$</td>
+                                    <td class="px-4 py-2 border-r border-green-700">2</td>
+                                    <td class="px-4 py-2">'Avoid' or 'Disengage'</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">2. Edge-Node: Streaming & Modulation</h2>
+            <div class="space-y-4 text-base leading-relaxed">
+                 <p><strong class="text-green-400">1. Data Mapping:</strong> Each input tick produces a semantic triplet $(s_1, s_2, s_3)$.</p>
+                <p><strong class="text-green-400">2. Frequency Deviation:</strong> For axis $i$, define $\Delta f_i = k \cdot \|m_i(t)\|$, where $m_i(t)$ is instantaneous data magnitude.</p>
+                <ul class="list-disc list-inside ml-4">
+                    <li>Idle: $m_i=0 \rightarrow f_i(t) = f_{i0}$</li>
+                    <li>Active: $f_i(t) = f_{i0} + \Delta f_i$</li>
+                </ul>
+                <p><strong class="text-green-400">3. Signal Generation:</strong> For each $i$, transmit the sum of $x_1, x_2, x_3$.</p>
+                <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto">
+                    $$x_i(t) = A \cdot \cos[2\pi \cdot f_i(t) \cdot t + \Phi(s_i(t))]$$
+                </div>
+                <p><strong class="text-green-400">4. Return to Baseline:</strong> When no new data in channel $i$ for $T_{\text{idle}}$, ramp $\Delta f_i \rightarrow 0$ and revert $\Phi \rightarrow 0^\circ$.</p>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">3. Central Hub: Triggering & Decoding</h2>
+            <div class="space-y-4 text-base leading-relaxed">
+                <div>
+                    <h3 class="font-semibold text-green-400">1. Receiver Bank: Tuning with a GPU</h3>
+                    <p class="mt-2">In a modern Software-Defined Radio (SDR) context, a "receiver bank" isn't a collection of physical hardware filters. Instead, it's a highly efficient software process running on a parallel processor like a GPU. The goal is to monitor the entire spectrum at once and digitally "tune" into our carriers ($f_1, f_2, f_3$) to decode their phases.</p>
+                    <p class="mt-2">Here’s how it works in a GPU-accelerated pipeline:</p>
+                    <ol class="list-decimal list-inside mt-2 space-y-2 bg-gray-900 p-4 rounded-md">
+                        <li><strong>Digitization:</strong> The raw, wideband analog signal from the antenna is first digitized by an Analog-to-Digital Converter (ADC), creating a stream of complex numbers (I/Q samples).</li>
+                        <li><strong>GPU Channelization (FFT):</strong> This stream is moved to GPU memory. The GPU performs a Fast Fourier Transform (FFT) on large blocks of samples using a highly optimized library like NVIDIA's cuFFT. This FFT acts as a "channelizer," converting the time-domain signal into thousands of narrow frequency bins. This is equivalent to running thousands of digital down-converters in parallel.</li>
+                        <li><strong>Parallel Bin Processing:</strong> The GPU assigns thousands of threads to process these frequency bins simultaneously. Each thread is responsible for a specific bin. Our system only needs to monitor the bins corresponding to our carriers ($f_1, f_2, f_3$) and their potential deviations.</li>
+                        <li><strong>Decoding in Threads:</strong> A thread watching a target frequency bin performs the final decoding steps:
+                            <ul class="list-disc list-inside ml-6 mt-1">
+                                <li>It monitors the bin's magnitude to detect a frequency deviation ($\Delta f_i$), which triggers an event.</li>
+                                <li>It extracts the complex (I/Q) value from the bin.</li>
+                                <li>It calculates the phase using the `atan2(Q, I)` function to recover the semantic state ($s_i$).</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <div class="mt-4 bg-gray-900 p-4 rounded-lg flex flex-col items-center">
+                         <h4 class="text-lg font-semibold text-green-300 mb-2">GPU Receiver Pipeline</h4>
+                         <svg width="100%" viewBox="0 0 300 100" class="bg-black p-2 rounded">
+                            <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#34D399" />
+                                </marker>
+                            </defs>
+                            <path d="M 15 50 L 285 50" stroke="#34D399" stroke-width="1" marker-end="url(#arrow)"></path>
+                            <g>
+                                <rect x="20" y="40" width="40" height="20" fill="#1F2937" stroke="#34D399" stroke-width="0.5"></rect>
+                                <text x="40" y="51" font-size="6" fill="#A7F3D0" text-anchor="middle">ADC</text>
+                            </g>
+                            <g>
+                                <rect x="80" y="30" width="50" height="40" fill="#1F2937" stroke="#34D399" stroke-width="0.5"></rect>
+                                <text x="105" y="48" font-size="6" fill="#A7F3D0" text-anchor="middle">GPU</text>
+                                <text x="105" y="56" font-size="6" fill="#A7F3D0" text-anchor="middle">Memory</text>
+                            </g>
+                             <g>
+                                <rect x="150" y="30" width="50" height="40" fill="#1F2937" stroke="#34D399" stroke-width="0.5"></rect>
+                                <text x="175" y="48" font-size="6" fill="#A7F3D0" text-anchor="middle">cuFFT</text>
+                                <text x="175" y="56" font-size="6" fill="#A7F3D0" text-anchor="middle">(Channelizer)</text>
+                            </g>
+                            <g>
+                                <rect x="220" y="20" width="60" height="60" fill="#1F2937" stroke="#34D399" stroke-width="0.5"></rect>
+                                <text x="250" y="35" font-size="5" fill="#A7F3D0" text-anchor="middle">Parallel Threads</text>
+                                <path d="M 230 45 L 240 45 M 230 55 L 240 55 M 230 65 L 240 65" stroke="#34D399" stroke-width="0.5"></path>
+                                <text x="258" y="46" font-size="5" fill="#A7F3D0" text-anchor="middle">Decode $s_1$</text>
+                                <text x="258" y="56" font-size="5" fill="#A7F3D0" text-anchor="middle">Decode $s_2$</text>
+                                <text x="258" y="66" font-size="5" fill="#A7F3D0" text-anchor="middle">Decode $s_3$</text>
+                            </g>
+                         </svg>
+                    </div>
+                </div>
+
+                <p class="pt-4"><strong class="text-green-400">2. Event Trigger:</strong></p>
+                <ul class="list-disc list-inside ml-4">
+                    <li>Monitor each target frequency bin’s power.</li>
+                    <li>On power > threshold AND frequency shift detected $\rightarrow$ start semantic event for $D_i$.</li>
+                    <li>On power drop OR frequency returns to baseline $\rightarrow$ end event; timestamp end.</li>
+                </ul>
+                <p><strong class="text-green-400">3. Phase Extraction:</strong> Within event window, extract instantaneous phase $\Phi_i(t)$ from the complex value of the active frequency bin and quantize to nearest of $\{0^\circ, 120^\circ, 240^\circ\}$ to recover $s_i$.</p>
+                
+                <div class="mt-4 bg-gray-900 p-4 rounded-lg flex flex-col items-center">
+                    <h4 class="text-lg font-semibold text-green-300 mb-2">Phase-to-State Mapping</h4>
+                    <svg id="phaseStateSVG" width="300" height="300" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" stroke="rgba(52, 211, 153, 0.3)" stroke-width="0.5" fill="none"></circle>
+                        <line x1="10" y1="50" x2="90" y2="50" stroke="rgba(52, 211, 153, 0.3)" stroke-width="0.5"></line>
+                        <line x1="50" y1="10" x2="50" y2="90" stroke="rgba(52, 211, 153, 0.3)" stroke-width="0.5"></line>
+                        <line x1="50" y1="50" x2="90" y2="50" class="phasor-line"></line>
+                        <line x1="50" y1="50" x2="30" y2="15.36" class="phasor-line"></line>
+                        <line x1="50" y1="50" x2="30" y2="84.64" class="phasor-line"></line>
+                        <g class="interactive-point">
+                            <title>Phase: 0° | Recovers State: s_i = 0</title>
+                            <circle cx="90" cy="50" r="5" fill="#6EE7B7" class="state-point"></circle>
+                            <text x="93" y="46" class="state-label">0° (s=0)</text>
+                        </g>
+                        <g class="interactive-point">
+                            <title>Phase: 120° | Recovers State: s_i = 1</title>
+                            <circle cx="30" cy="15.36" r="5" fill="#34D399" class="state-point"></circle>
+                            <text x="25" y="11" class="state-label">120° (s=1)</text>
+                        </g>
+                        <g class="interactive-point">
+                            <title>Phase: 240° | Recovers State: s_i = 2</title>
+                            <circle cx="30" cy="84.64" r="5" fill="#2dd4bf" class="state-point"></circle>
+                             <text x="25" y="94" class="state-label">240° (s=2)</text>
+                        </g>
+                    </svg>
+                    <p class="text-sm text-center text-green-500 mt-2">Hover over the points to see how the detected phase angle is mapped back to its corresponding semantic state.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">4. Quaternion Fusion & Data Packing</h2>
+            <div class="space-y-6 text-base leading-relaxed">
+                <div>
+                    <p>The true power of this system comes from fusing the low-frequency semantic state data with a high-frequency stream of orientation data (quaternions). This creates a single, context-rich data stream where a small amount of semantic data provides meaning for a large block of orientation data.</p>
+                    <div class="mt-4 bg-gray-900 p-4 rounded-lg flex flex-col items-center">
+                         <h4 class="text-lg font-semibold text-green-300 mb-2">Fused Data Stream Visualization</h4>
+                         <svg width="100%" viewBox="0 0 300 100" class="bg-black p-2 rounded">
+                            <text x="5" y="20" font-size="6" fill="#A7F3D0">Quaternions (High-Freq)</text>
+                            <rect x="5" y="25" width="290" height="15" fill="#1F2937" />
+                            <g fill="#6EE7B7"><rect x="10" y="28" width="4" height="9" /><rect x="16" y="28" width="4" height="9" /><rect x="22" y="28" width="4" height="9" /><rect x="28" y="28" width="4" height="9" /><rect x="34" y="28" width="4" height="9" /><rect x="40" y="28" width="4" height="9" /><rect x="46" y="28" width="4" height="9" /><rect x="52" y="28" width="4" height="9" /></g>
+                             <g fill="#34D399"><rect x="120" y="28" width="4" height="9" /><rect x="126" y="28" width="4" height="9" /><rect x="132" y="28" width="4" height="9" /><rect x="138" y="28" width="4" height="9" /><rect x="144" y="28" width="4" height="9" /><rect x="150" y="28" width="4" height="9" /></g>
+                             <g fill="#2dd4bf"><rect x="240" y="28" width="4" height="9" /><rect x="246" y="28" width="4" height="9" /><rect x="252" y="28" width="4" height="9" /><rect x="258" y="28" width="4" height="9" /></g>
+                            <text x="5" y="65" font-size="6" fill="#A7F3D0">Semantic State (Low-Freq)</text>
+                            <rect x="5" y="70" width="290" height="15" fill="#1F2937" />
+                            <rect x="10" y="73" width="50" height="9" fill="#6EE7B7" /><text x="35" y="80" font-size="5" fill="black" text-anchor="middle">State (s=0)</text>
+                            <rect x="120" y="73" width="50" height="9" fill="#34D399" /><text x="145" y="80" font-size="5" fill="black" text-anchor="middle">State (s=1)</text>
+                            <rect x="240" y="73" width="50" height="9" fill="#2dd4bf" /><text x="265" y="80" font-size="5" fill="black" text-anchor="middle">State (s=2)</text>
+                            <path d="M 35 70 L 35 40" stroke="#6EE7B7" stroke-width="0.5" stroke-dasharray="2 2"></path>
+                            <path d="M 145 70 L 145 40" stroke="#34D399" stroke-width="0.5" stroke-dasharray="2 2"></path>
+                            <path d="M 265 70 L 265 40" stroke="#2dd4bf" stroke-width="0.5" stroke-dasharray="2 2"></path>
+                         </svg>
+                         <p class="text-sm text-center text-green-500 mt-2">A single, low-frequency semantic state change provides the context for many high-frequency quaternion samples.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-400">Data Packing & Bit-Level Representation</h3>
+                    <p>The key to efficiency is how this fused data is packed. We don't need to send full descriptions or floating-point numbers. With 3 states per axis, we have $3^3 = 27$ total possible semantic states. This can be encoded in just 5 bits ($2^4=16$, $2^5=32$). Quaternions, which represent rotation, also don't need full precision for every sample; we can send a highly compressed delta (change) from the previous sample.</p>
+                    <div class="overflow-x-auto mt-4">
+                        <table class="min-w-full bg-gray-900 border border-green-700">
+                             <thead class="bg-gray-800"><tr><th class="px-4 py-2 border-b border-r border-green-700 text-left text-green-300">Field</th><th class="px-4 py-2 border-b border-r border-green-700 text-left text-green-300">Bits</th><th class="px-4 py-2 border-b border-green-700 text-left text-green-300">Description</th></tr></thead>
+                            <tbody>
+                                <tr><td class="px-4 py-2 border-b border-r border-green-700">State Change Flag</td><td class="px-4 py-2 border-b border-r border-green-700">1</td><td class="px-4 py-2 border-b border-green-700">`1` if the semantic state has changed, `0` otherwise.</td></tr>
+                                <tr class="bg-gray-800/50"><td class="px-4 py-2 border-b border-r border-green-700">Semantic State Index</td><td class="px-4 py-2 border-b border-r border-green-700">5</td><td class="px-4 py-2 border-b border-green-700">An index from 0-26 representing the combined state $(s_1, s_2, s_3)$. Only present if flag is `1`.</td></tr>
+                                <tr><td class="px-4 py-2 border-b border-r border-green-700">Quaternion Delta</td><td class="px-4 py-2 border-b border-r border-green-700">16</td><td class="px-4 py-2 border-b border-green-700">A compressed, quantized value representing the change from the last quaternion.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-400">Codex Integration via Lookup Tables (LUTs)</h3>
+                    <p>The ultra-lean data stream is decoded at the receiver using a **Lookup Table (LUT)**. The 5-bit semantic index directly points to an entry in this table, which contains the full, human-readable meaning. This is incredibly fast and efficient.</p>
+                    <div class="mt-4 bg-gray-900 p-4 rounded-lg flex flex-col items-center">
+                         <h4 class="text-lg font-semibold text-green-300 mb-2">Lookup Table (LUT) Decoding</h4>
+                         <svg width="100%" viewBox="0 0 200 60" class="bg-black p-2 rounded">
+                            <text x="5" y="10" font-size="6" fill="#A7F3D0">Incoming Stream</text>
+                            <rect x="5" y="25" width="40" height="12" fill="#1F2937" stroke="#34D399" stroke-width="0.5"></rect>
+                            <text x="25" y="32" font-size="5" fill="#6EE7B7" text-anchor="middle">Index: 19</text>
+                            <path d="M 50 31 L 70 31" stroke="#34D399" stroke-width="1" marker-end="url(#arrow)"></path>
+                            <text x="75" y="10" font-size="6" fill="#A7F3D0">Semantic Codex (LUT)</text>
+                            <rect x="75" y="15" width="120" height="35" fill="#1F2937" stroke="#34D399" stroke-width="0.5"></rect>
+                            <text x="80" y="25" font-size="4" fill="#A7F3D0">... (previous entries)</text>
+                            <text x="80" y="35" font-size="5" fill="#6EE7B7">19: { ObjID: 7, Action: Avoid, Urgency: Low }</text>
+                            <text x="80" y="45" font-size="4" fill="#A7F3D0">... (subsequent entries)</text>
+                         </svg>
+                    </div>
+                </div>
+                 <div>
+                    <h3 class="font-semibold text-green-400">Performance & Compression Advantages</h3>
+                    <ul class="list-disc list-inside mt-2 space-y-3">
+                        <li><strong class="text-green-300">Faster than FP16 Processing:</strong> The performance gain comes not from faster math, but from *less work*. Instead of processing full-precision data, the receiver uses the 5-bit integer as a direct memory offset to access the LUT. This single integer lookup is orders of magnitude faster than the multiple floating-point operations required to parse a complex data structure. Data movement from memory to the processor is minimized, which is often the biggest bottleneck.</li>
+                        <li><strong class="text-green-300">Increased Compression Rates:</strong> This is a form of highly specialized, domain-specific compression. Instead of sending the string `"Action: Approach"`, we send the integer `1`. This "semantic compression" far exceeds what general-purpose algorithms like ZIP can achieve on this type of data, as the system is designed around a known, finite set of meanings. The combination of semantic indexing and delta-encoding for continuous data (quaternions) results in an extremely dense information stream.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">5. Contextual Stream Composition</h2>
+            <div class="space-y-4 text-base leading-relaxed">
+                <p><strong class="text-green-400">1. Time-Stamped Tuples:</strong> Produce an ordered record where $q_{\text{avg}}$ is the average rotation over $[t_{\text{start}}, t_{\text{end}}]$.</p>
+                <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto">$$ \{ t_{\text{start}}, t_{\text{end}}, q_{\text{avg}}, (s_1,s_2,s_3) \} $$</div>
+                <p><strong class="text-green-400">2. Compression into Contextual Pathway:</strong></p>
+                <ul class="list-disc list-inside ml-4">
+                    <li>Delta-encode quaternion frames.</li>
+                    <li>Run-length encode repeated $(s_1, s_2, s_3)$ states.</li>
+                    <li>Pack into a continuous “contextual stream” font.</li>
+                </ul>
+                <div class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto">$$ [\Delta q_1, (s_1,s_2,s_3)], [\Delta q_2, (s'_1,s'_2,s'_3)], \dots $$</div>
+                <p><strong class="text-green-400">3. Storage Trigger:</strong> Only store when any $\Delta f_i$ or $\Delta q$ exceeds a motion/data threshold → event-driven database.</p>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">6. Practical Considerations & Extensions</h2>
+            <ul class="list-disc list-inside space-y-2 text-base leading-relaxed">
+                <li><strong class="text-green-400">Synchronization:</strong> Distribute a 10 MHz reference (or GPS-disciplined clock) to nodes for phase coherence. For more info, see <a href="#" class="text-green-400 hover:text-green-300 underline">timing protocols</a>.</li>
+                <li><strong class="text-green-400">Hopping & Multiplex:</strong> To avoid interference, assign each triplet a pseudo-random time slot or hop sequence across carriers.</li>
+                <li><strong class="text-green-400">Error Control:</strong> Append a CRC/HMAC per event packet to ensure integrity.</li>
+                <li><strong class="text-green-400">Scalability:</strong> For $N$ dimensions, generalize to $N$ carriers × $M$-phase PSK per axis.</li>
+                <li><strong class="text-green-400">Adaptive Gain:</strong> Dynamically scale $\Delta f_i$ to encode data rate changes or semantic importance.</li>
+            </ul>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">7. Advanced Application: Multi-Step Compression & State-Space Trajectories</h2>
+            <div class="space-y-6 text-base leading-relaxed">
+                 <p>We can now synthesize the concepts from this tutorial into a complete, high-level application. The 3-dimensional semantic space $(s_1, s_2, s_3)$ can be visualized as a point in a 3D state-space. As the system's context evolves, this point carves a trajectory. By analyzing and compressing this trajectory itself, we achieve a powerful form of **multi-step compression**.</p>
+                 <p>Instead of transmitting every state change and quaternion delta, we can transmit a compact representation of the *path* the system is taking through its state-space. This path, or 'attractor', represents a learned, stable pattern of behavior. This is a fundamental concept in current research on compressing complex 3D and temporal data, as it shifts the focus from compressing individual points to compressing the emergent, holistic behavior of the system.</p>
+                 <p class="bg-gray-900 p-3 rounded-md border-l-4 border-green-700">The simulation below demonstrates this principle. The visualization shows three parallel processing sequences (kernels), each corresponding to a semantic axis. As the simulation runs, you can observe how the system learns and how energy flows between the different states, which is the basis for creating a compressible, learned pattern.</p>
+            </div>
+            
+            <div class="max-w-screen-2xl mx-auto mt-8">
+                <header class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-green-300">Symbolic Evolution of a Multi-Sequence System</h3>
+                </header>
+
+                <section class="p-6 bg-gray-900 border border-green-800 rounded-lg">
+                    <h4 class="text-xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Simulation Controls</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 p-4 border border-green-800 rounded-lg bg-gray-900/50">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:col-span-2 gap-4">
+                            <div>
+                                <label for="execution-mode" class="block mb-2 font-semibold text-green-300">Execution Mode</label>
+                                <select id="execution-mode" class="custom-select w-full">
+                                    <option value="sequential">Sequential</option>
+                                    <option value="parallel" selected>Parallel</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="nodes-per-circle" class="block mb-2 font-semibold text-green-300">Nodes Per Sequence</label>
+                                <select id="nodes-per-circle" class="custom-select w-full">
+                                    <option value="3">3</option>
+                                    <option value="6">6</option>
+                                    <option value="9">9</option>
+                                    <option value="12" selected>12</option>
+                                </select>
+                            </div>
+                             <div>
+                                <div class="flex justify-between font-semibold text-green-300 mb-2 text-sm"><span>Forward Drift</span><span id="forward-drift-value">0.10</span></div>
+                                <input type="range" id="forward-drift-slider" min="0" max="1" value="0.1" step="0.05">
+                            </div>
+                            <div>
+                                <div class="flex justify-between font-semibold text-green-300 mb-2 text-sm"><span>Reverse Drift</span><span id="reverse-drift-value">0.10</span></div>
+                                <input type="range" id="reverse-drift-slider" min="0" max="1" value="0.1" step="0.05">
+                            </div>
+                            <div class="col-span-full">
+                               <div class="flex justify-between font-semibold text-green-300 mb-2 text-sm"><span>Uncertainty</span><span id="uncertainty-value">0.20</span></div>
+                               <input type="range" id="uncertainty-slider" min="0" max="1" value="0.2" step="0.05">
+                           </div>
+                        </div>
+                        <div class="space-y-4 flex flex-col justify-end">
+                            <button id="automate-button" class="bg-green-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors w-full">Start Automation</button>
+                            <button id="next-frame-button" class="bg-green-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors w-full">Manual Step</button>
+                            <button id="reset-button" class="bg-blue-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors w-full">Reset Simulation</button>
+                        </div>
+                    </div>
+
+                     <div class="border border-green-700 rounded-md p-2 bg-black chart-container">
+                         <div id="sequence-simulation"></div>
+                     </div>
+                </section>
+                
+                <div class="text-center mt-8">
+                    <a href="https://ebayednoob.github.io/Tutorials/Neural%20Symbolic%20AI/Symbolic%20Evolution/Multi%20Sequence%20Quaternion%20Evolution.html" 
+                       class="inline-block bg-purple-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-purple-600 transition-colors text-lg shadow-lg shadow-purple-500/30">
+                        Multi-sequence quaternion memory
+                    </a>
+                </div>
+
+                <section class="p-6 bg-gray-900 border border-green-800 rounded-lg mt-8">
+                    <h4 class="text-xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Step-by-Step Data Flow</h4>
+                    <div class="space-y-8">
+                        <!-- Step 1 -->
+                        <div class="flex items-center gap-6">
+                            <div class="flex-shrink-0 w-1/3"><svg viewBox="0 0 100 60" class="bg-black rounded-md"><path d="M 20 30 q 30 -30 60 0" stroke="#6EE7B7" fill="none" stroke-width="2" stroke-dasharray="4 2"/><path d="M 50 30 l -5 -5 m 5 5 l 5 -5" stroke="#6EE7B7" stroke-width="2"/><text x="50" y="50" text-anchor="middle" fill="#A7F3D0" font-size="8">Drone Turns</text></svg></div>
+                            <div><h5 class="text-lg font-semibold text-green-300">Step 1: Physical Event</h5><p>A real-world event occurs, such as a drone initiating a turn. This event has a specific context (e.g., Object ID 5, Action: Turn, Urgency: Normal).</p></div>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="flex items-center gap-6">
+                            <div class="flex-shrink-0 w-1/3"><svg viewBox="0 0 100 60" class="bg-black rounded-md"><path d="M 10 30 H 90" stroke="#34D399" stroke-width="0.5"/><path d="M 10 30 C 30 10, 50 50, 70 30" stroke="#A7F3D0" fill="none" stroke-width="1.5"/><text x="50" y="50" text-anchor="middle" fill="#A7F3D0" font-size="8">$f_1, \Phi=0^\circ$; $f_2, \Phi=120^\circ$; ...</text></svg></div>
+                            <div><h5 class="text-lg font-semibold text-green-300">Step 2: RF Modulation</h5><p>The edge device translates this context into signals on its three semantic channels. It sets the phase on each carrier frequency (e.g., $\Phi=120^\circ$ on $f_2$ for 'Turn') and initiates a frequency deviation to signal that active data is being transmitted.</p></div>
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="flex items-center gap-6">
+                            <div class="flex-shrink-0 w-1/3"><svg viewBox="0 0 100 60" class="bg-black rounded-md"><rect x="10" y="10" width="80" height="40" fill="#1F2937" stroke="#34D399" stroke-width="0.5"/><text x="50" y="25" text-anchor="middle" font-size="8" fill="#A7F3D0">GPU FFT</text><path d="M 20 40 v -15 l 10 10 l 10 -20 l 10 15" fill="none" stroke="#6EE7B7" stroke-width="1.5"/><text x="50" y="50" text-anchor="middle" fill="#A7F3D0" font-size="8">Output: (s1, s2, s3)</text></svg></div>
+                            <div><h5 class="text-lg font-semibold text-green-300">Step 3: GPU Demodulation</h5><p>The central hub's GPU performs an FFT on the incoming signal, isolates the active carriers, and decodes the phase shifts into a simple semantic triplet, such as (5, 1, 0).</p></div>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="flex items-center gap-6">
+                            <div class="flex-shrink-0 w-1/3"><svg viewBox="0 0 100 60" class="bg-black rounded-md"><text x="15" y="20" font-size="6" fill="#A7F3D0">(5,1,0)</text><path d="M 30 25 L 45 25" stroke="#34D399" stroke-width="1" marker-end="url(#arrow)"/><g fill="#6EE7B7"><rect x="50" y="20" width="3" height="10"/><rect x="55" y="20" width="3" height="10"/><rect x="60" y="20" width="3" height="10"/><rect x="65" y="20" width="3" height="10"/></g><text x="50" y="50" text-anchor="middle" fill="#A7F3D0" font-size="8">Context + Quaternions</text></svg></div>
+                            <div><h5 class="text-lg font-semibold text-green-300">Step 4: Quaternion Fusion</h5><p>This low-frequency semantic triplet (5, 1, 0) is fused with the high-frequency stream of quaternion rotation data, providing context for the drone's movement.</p></div>
+                        </div>
+                         <!-- Step 5 -->
+                        <div class="flex items-center gap-6">
+                            <div class="flex-shrink-0 w-1/3"><svg viewBox="0 0 100 60" class="bg-black rounded-md"><text x="25" y="20" text-anchor="middle" font-size="6" fill="#A7F3D0">Packed Bits</text><rect x="10" y="25" width="30" height="10" fill="#1F2937" stroke="#34D399" stroke-width="0.5"/><path d="M 45 30 L 60 30" stroke="#34D399" stroke-width="1" marker-end="url(#arrow)"/><text x="77" y="20" text-anchor="middle" font-size="6" fill="#A7F3D0">LUT</text><rect x="65" y="25" width="25" height="10" fill="#1F2937" stroke="#34D399" stroke-width="0.5"/><text x="50" y="50" text-anchor="middle" fill="#A7F3D0" font-size="8">Final Meaning</text></svg></div>
+                            <div><h5 class="text-lg font-semibold text-green-300">Step 5: Data Packing & LUT</h5><p>The combined data is packed into a highly compressed format. The semantic triplet becomes a 5-bit index, which points to a Lookup Table (LUT) to instantly retrieve the full meaning, completing the data flow.</p></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- SCRIPT FOR TOP ANIMATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const pskCanvas = document.getElementById('pskCanvas');
+            if (!pskCanvas) return;
+            const pskCtx = pskCanvas.getContext('2d');
+            const spectrumCanvas = document.getElementById('spectrumCanvas');
+            const spectrumCtx = spectrumCanvas.getContext('2d');
+            const fdmCanvas = document.getElementById('fdmCanvas');
+            const fdmCtx = fdmCanvas.getContext('2d');
+            const currentStateSpan = document.getElementById('currentState');
+            const buttons = [
+                document.getElementById('btnState0'),
+                document.getElementById('btnState1'),
+                document.getElementById('btnState2')
+            ];
+            const driftSlider = document.getElementById('driftSlider');
+            const diffusionSlider = document.getElementById('diffusionSlider');
+            const driftValueSpan = document.getElementById('driftValue');
+            const diffusionValueSpan = document.getElementById('diffusionValue');
+            const baseFreqInput = document.getElementById('baseFreqInput');
+            const runButton = document.getElementById('runButton');
+            const pskCenterX = pskCanvas.width / 2;
+            const pskCenterY = pskCanvas.height / 2;
+            const pskRadius = pskCanvas.width / 2 - 40;
+            const phaseStates = [
+                { angle: 0, label: '0°', state: 'State 0 (0°)' },
+                { angle: 2 * Math.PI / 3, label: '120°', state: 'State 1 (120°)' },
+                { angle: 4 * Math.PI / 3, label: '240°', state: 'State 2 (240°)' }
+            ];
+            let currentAngle = 0, targetAngle = 0, activeStateIndex = 0, resetTimer = null;
+            let isSpectrumRunning = false, baseFrequency = 100, currentFrequency = 100, targetFrequency = 100;
+            const freqDeviation = 20;
+            let drift = 0.1, diffusion = 0.01;
+
+            function drawFdmGraph() {
+                if(!fdmCanvas) return;
+                const w = fdmCanvas.width, h = fdmCanvas.height;
+                fdmCtx.clearRect(0, 0, w, h);
+                fdmCtx.strokeStyle = 'rgba(52, 211, 153, 0.3)';
+                fdmCtx.lineWidth = 1;
+                fdmCtx.beginPath(); fdmCtx.moveTo(0, h / 2); fdmCtx.lineTo(w, h / 2); fdmCtx.stroke();
+                function drawSinc(center, color) {
+                    fdmCtx.beginPath(); fdmCtx.strokeStyle = color; fdmCtx.lineWidth = 2;
+                    for (let x = 0; x < w; x++) {
+                        const t = (x - center) * 0.1;
+                        const y = t === 0 ? h / 4 : (h / 4) * Math.sin(t) / t;
+                        fdmCtx.lineTo(x, h / 2 - y);
+                    }
+                    fdmCtx.stroke();
+                }
+                const spacing = w / 4;
+                drawSinc(spacing, '#2dd4bf');
+                drawSinc(2 * spacing, '#34d399');
+                drawSinc(3 * spacing, '#a7f3d0');
+            }
+
+            function drawPskConstellation() {
+                pskCtx.clearRect(0, 0, pskCanvas.width, pskCanvas.height);
+                pskCtx.beginPath(); pskCtx.strokeStyle = 'rgba(52, 211, 153, 0.3)'; pskCtx.lineWidth = 1;
+                pskCtx.arc(pskCenterX, pskCenterY, pskRadius, 0, 2 * Math.PI);
+                pskCtx.moveTo(pskCenterX - pskRadius - 10, pskCenterY); pskCtx.lineTo(pskCenterX + pskRadius + 10, pskCenterY);
+                pskCtx.moveTo(pskCenterX, pskCenterY - pskRadius - 10); pskCtx.lineTo(pskCenterX, pskCenterY + pskRadius + 10);
+                pskCtx.stroke();
+                phaseStates.forEach((state, index) => {
+                    const x = pskCenterX + pskRadius * Math.cos(state.angle);
+                    const y = pskCenterY + pskRadius * Math.sin(state.angle);
+                    pskCtx.beginPath(); pskCtx.fillStyle = index === activeStateIndex ? '#6EE7B7' : '#34D399';
+                    pskCtx.arc(x, y, 8, 0, 2 * Math.PI); pskCtx.fill();
+                    pskCtx.fillStyle = '#A7F3D0'; pskCtx.font = '16px Inter'; pskCtx.textAlign = 'center';
+                    const labelX = pskCenterX + (pskRadius + 25) * Math.cos(state.angle);
+                    const labelY = pskCenterY + (pskRadius + 25) * Math.sin(state.angle);
+                    pskCtx.fillText(state.label, labelX, labelY);
+                });
+                const phasorX = pskCenterX + pskRadius * Math.cos(currentAngle);
+                const phasorY = pskCenterY + pskRadius * Math.sin(currentAngle);
+                pskCtx.beginPath(); pskCtx.moveTo(pskCenterX, pskCenterY); pskCtx.lineTo(phasorX, phasorY);
+                pskCtx.strokeStyle = '#6EE7B7'; pskCtx.lineWidth = 4; pskCtx.stroke();
+                pskCtx.beginPath(); pskCtx.fillStyle = '#6EE7B7'; pskCtx.arc(phasorX, phasorY, 6, 0, 2 * Math.PI); pskCtx.fill();
+            }
+
+            function drawSpectrum() {
+                spectrumCtx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+                if (!isSpectrumRunning) {
+                     spectrumCtx.fillStyle = 'rgba(167, 243, 208, 0.7)'; spectrumCtx.font = '20px Inter';
+                     spectrumCtx.textAlign = 'center'; spectrumCtx.fillText('Click "Run Spectrum" to start', spectrumCanvas.width / 2, spectrumCanvas.height / 2);
+                    return;
+                }
+                const w = spectrumCanvas.width, h = spectrumCanvas.height, padding = 40;
+                spectrumCtx.strokeStyle = 'rgba(52, 211, 153, 0.3)'; spectrumCtx.lineWidth = 1;
+                spectrumCtx.beginPath(); spectrumCtx.moveTo(padding, h - padding); spectrumCtx.lineTo(w - padding, h - padding);
+                spectrumCtx.moveTo(padding, h - padding); spectrumCtx.lineTo(padding, padding); spectrumCtx.stroke();
+                spectrumCtx.fillStyle = '#A7F3D0'; spectrumCtx.font = '14px Inter'; spectrumCtx.textAlign = 'center';
+                spectrumCtx.fillText('Frequency', w / 2, h - 10);
+                spectrumCtx.save(); spectrumCtx.rotate(-Math.PI / 2); spectrumCtx.fillText('Amplitude', -h / 2, 15); spectrumCtx.restore();
+                const freqRange = 60;
+                const freqToX = (f) => padding + ((f - (baseFrequency - freqRange / 2)) / freqRange) * (w - 2 * padding);
+                const peakX = freqToX(currentFrequency);
+                const peakWidth = 30;
+                spectrumCtx.beginPath(); spectrumCtx.moveTo(peakX - peakWidth, h - padding);
+                spectrumCtx.lineTo(peakX, padding + 20); spectrumCtx.lineTo(peakX + peakWidth, h - padding);
+                spectrumCtx.fillStyle = 'rgba(52, 211, 153, 0.5)'; spectrumCtx.fill();
+                spectrumCtx.strokeStyle = '#6EE7B7'; spectrumCtx.lineWidth = 2; spectrumCtx.stroke();
+            }
+
+            function animate() {
+                let angleDiff = targetAngle - currentAngle;
+                if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                currentAngle += angleDiff * drift + (Math.random() - 0.5) * diffusion;
+                if(isSpectrumRunning) {
+                    let freqDiff = targetFrequency - currentFrequency;
+                    currentFrequency += freqDiff * drift + (Math.random() - 0.5) * (diffusion * 50);
+                }
+                drawPskConstellation();
+                drawSpectrum();
+                requestAnimationFrame(animate);
+            }
+
+            function setState(index) {
+                clearTimeout(resetTimer);
+                targetAngle = phaseStates[index].angle; activeStateIndex = index;
+                currentStateSpan.textContent = phaseStates[index].state;
+                if (index === 0) targetFrequency = baseFrequency;
+                if (index === 1) targetFrequency = baseFrequency + freqDeviation;
+                if (index === 2) targetFrequency = baseFrequency - freqDeviation;
+                resetTimer = setTimeout(() => {
+                    targetAngle = phaseStates[0].angle; activeStateIndex = 0;
+                    currentStateSpan.textContent = phaseStates[0].state;
+                    targetFrequency = baseFrequency;
+                }, 1000);
+                buttons.forEach((btn, i) => {
+                    btn.classList.toggle('bg-green-600', i === index); btn.classList.toggle('text-black', i === index);
+                    btn.classList.toggle('bg-green-700', i !== index); btn.classList.toggle('text-white', i !== index);
+                });
+            }
+            buttons.forEach((button, index) => button.addEventListener('click', () => setState(index)));
+            driftSlider.addEventListener('input', (e) => { drift = parseFloat(e.target.value); driftValueSpan.textContent = drift.toFixed(2); });
+            diffusionSlider.addEventListener('input', (e) => { diffusion = parseFloat(e.target.value); diffusionValueSpan.textContent = diffusion.toFixed(3); });
+            runButton.addEventListener('click', () => {
+                isSpectrumRunning = true; baseFrequency = parseFloat(baseFreqInput.value) || 100;
+                currentFrequency = baseFrequency; targetFrequency = baseFrequency;
+                runButton.textContent = "Spectrum Running"; runButton.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+                runButton.classList.add('bg-gray-600'); runButton.disabled = true;
+            });
+            baseFreqInput.addEventListener('change', () => {
+                if(!isSpectrumRunning) { baseFrequency = parseFloat(baseFreqInput.value) || 100; currentFrequency = baseFrequency; targetFrequency = baseFrequency; }
+            });
+            animate();
+            drawFdmGraph();
+        });
+
+        // --- SCRIPT FOR SECTION 7 VISUALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+             if (!document.getElementById('sequence-simulation')) return;
+
+             function setupSliderListeners() {
+                const sliders = [
+                    { sliderId: 'forward-drift-slider', valueId: 'forward-drift-value' },
+                    { sliderId: 'reverse-drift-slider', valueId: 'reverse-drift-value' },
+                    { sliderId: 'uncertainty-slider', valueId: 'uncertainty-value' }
+                ];
+                sliders.forEach(({ sliderId, valueId }) => {
+                    const slider = document.getElementById(sliderId);
+                    const valueSpan = document.getElementById(valueId);
+                    if (slider && valueSpan) {
+                        valueSpan.textContent = (+slider.value).toFixed(2);
+                        slider.addEventListener('input', () => { valueSpan.textContent = (+slider.value).toFixed(2); });
+                    }
+                });
+            }
+
+            function setupMasterSimulation() {
+                const d3Containers = { sequence: '#sequence-simulation' };
+                const d3Svgs = {
+                    sequence: d3.select(d3Containers.sequence).append("svg").attr("viewBox", `0 0 600 600`),
+                };
+                
+                let allNodes = [];
+                let currentFrame = 0, nodesPerCircle = 12, executionMode = 'parallel';
+                let simulationFinished = false, isAutomated = false;
+                let automationInterval = null;
+
+                const numCircles = 3;
+                const centralNode = { id: 'Calculation', x: 300, y: 300 };
+                const circleRadius = 100, layoutRadius = 180;
+                const circleCenters = [
+                    { x: 300, y: 300 - layoutRadius * 0.8 },
+                    { x: 300 - layoutRadius * Math.cos(Math.PI / 6), y: 300 + layoutRadius * Math.sin(Math.PI / 6) },
+                    { x: 300 + layoutRadius * Math.cos(Math.PI / 6), y: 300 + layoutRadius * Math.sin(Math.PI / 6) },
+                ];
+                const nodeGroup = d3Svgs.sequence.append("g"), triangleGroup = d3Svgs.sequence.append("g");
+                const labelGroup = d3Svgs.sequence.append("g");
+                
+                function initialize() {
+                    stopAutomation();
+                    currentFrame = 0; simulationFinished = false;
+                    d3.select('#next-frame-button').text("Manual Step").classed("bg-blue-800", false).classed("bg-green-800", true);
+                    allNodes = []; 
+                    
+                    nodesPerCircle = +d3.select('#nodes-per-circle').node().value;
+                    executionMode = d3.select('#execution-mode').node().value;
+
+                    for (let c = 0; c < numCircles; c++) {
+                        for (let i = 0; i < nodesPerCircle; i++) {
+                            const angle = (i / nodesPerCircle) * 2 * Math.PI - Math.PI / 2;
+                            const isForward = i < nodesPerCircle / 2;
+                            const type = isForward ? 'forward' : 'reverse';
+                            const nodeIndexInCircle = isForward ? i : i - Math.floor(nodesPerCircle / 2);
+                            const label = `S${c+1}-${type[0].toUpperCase()}${nodeIndexInCircle + 1}`;
+                            allNodes.push({ id: label, x: circleCenters[c].x + circleRadius * Math.cos(angle), y: circleCenters[c].y + circleRadius * Math.sin(angle), weight: 0.1, circle: c, type: type });
+                        }
+                    }
+                    drawStaticElements();
+                    drawFrame(currentFrame);
+                }
+                
+                function advanceFrame() {
+                    if (simulationFinished) { stopAutomation(); return; }
+                    const forwardDrift = +d3.select('#forward-drift-slider').node().value;
+                    const reverseDrift = +d3.select('#reverse-drift-slider').node().value;
+                    const uncertainty = +d3.select('#uncertainty-slider').node().value;
+                    let activeNodes = [];
+                    if (executionMode === 'sequential') {
+                        if (currentFrame < allNodes.length) activeNodes.push(allNodes[currentFrame]);
+                    } else {
+                        const stepInCircle = currentFrame % nodesPerCircle;
+                        for(let c=0; c<numCircles; c++){ activeNodes.push(allNodes[c * nodesPerCircle + stepInCircle]); }
+                    }
+                    activeNodes.forEach(node => {
+                        const circleStartIndex = node.circle * nodesPerCircle;
+                        const indexInCircle = allNodes.indexOf(node) % nodesPerCircle;
+                        const prevNodeIndex = circleStartIndex + ((indexInCircle - 1 + nodesPerCircle) % nodesPerCircle);
+                        const prevNode = allNodes[prevNodeIndex];
+                        node.weight += forwardDrift * 0.1; prevNode.weight += reverseDrift * 0.1;
+                    });
+                    allNodes.forEach(node => {
+                        node.weight += (Math.random() - 0.5) * uncertainty * 0.1;
+                        node.weight = Math.max(0.01, Math.min(1, node.weight));
+                    });
+                    
+                    currentFrame++;
+                    const cycleLimit = executionMode === 'sequential' ? (nodesPerCircle * numCircles) : nodesPerCircle;
+                    
+                    if (currentFrame >= cycleLimit) {
+                       currentFrame = 0; // Loop simulation
+                    }
+                    
+                    drawFrame(currentFrame);
+                }
+                
+                function drawStaticElements() {
+                    nodeGroup.selectAll("*").remove();
+                    labelGroup.selectAll("*").remove();
+                    const displayNodes = [centralNode, ...allNodes];
+                    nodeGroup.selectAll("g.static-node").data(displayNodes, d => d.id)
+                        .join(enter => {
+                            const g = enter.append("g").attr("class", "static-node").attr("transform", d => `translate(${d.x}, ${d.y})`);
+                            g.append("circle").attr("r", d => d.id === 'Calculation' ? 25 : 15).attr("stroke", d => d.id === 'Calculation' ? "#6ee7b7" : '#047857').attr("stroke-width", 2).attr("fill", d => d.id === 'Calculation' ? '#16a34a' : '#059669');
+                            g.append("text").text(d => d.id).attr("fill", "#ecfdf5").attr("text-anchor", "middle").attr("dy", d => d.id === 'Calculation' ? 5 : 25).style("font-size", "10px");
+                        });
+                    
+                    const labelOffset = 25;
+                    labelGroup.append("text").attr("x", circleCenters[0].x).attr("y", circleCenters[0].y - circleRadius - labelOffset).text("0°").attr("fill", "#6EE7B7").attr("font-size", "16px").attr("text-anchor", "middle").attr("font-weight", "bold");
+                    labelGroup.append("text").attr("x", circleCenters[1].x - circleRadius - labelOffset).attr("y", circleCenters[1].y).text("120°").attr("fill", "#34D399").attr("font-size", "16px").attr("text-anchor", "end").attr("alignment-baseline", "middle").attr("font-weight", "bold");
+                    labelGroup.append("text").attr("x", circleCenters[2].x + circleRadius + labelOffset).attr("y", circleCenters[2].y).text("240°").attr("fill", "#2dd4bf").attr("font-size", "16px").attr("text-anchor", "start").attr("alignment-baseline", "middle").attr("font-weight", "bold");
+                }
+
+                function drawFrame(frameIndex) {
+                    triangleGroup.selectAll("*").remove();
+                    let activeNodes = [];
+                    if (executionMode === 'sequential') {
+                        if (frameIndex < allNodes.length) activeNodes.push(allNodes[frameIndex]);
+                    } else {
+                        const stepInCircle = frameIndex % nodesPerCircle;
+                        for (let c = 0; c < numCircles; c++) { activeNodes.push(allNodes[c * nodesPerCircle + stepInCircle]); }
+                    }
+                    let displayNodes = [], frameLinks = [];
+                    activeNodes.forEach(activeNode => {
+                        const circleStartIndex = activeNode.circle * nodesPerCircle;
+                        const indexInCircle = allNodes.indexOf(activeNode) % nodesPerCircle;
+                        const prevNodeIndex = circleStartIndex + ((indexInCircle - 1 + nodesPerCircle) % nodesPerCircle);
+                        const prevNode = allNodes[prevNodeIndex];
+                        const activeCircleCenter = circleCenters[activeNode.circle];
+                        const currentNode = { id: `Current-${activeNode.circle}`, x: activeCircleCenter.x, y: activeCircleCenter.y, type: 'current', weight: (activeNode.weight + prevNode.weight) / 2 };
+                        displayNodes.push(currentNode, activeNode, prevNode);
+                        frameLinks.push(
+                            { source: currentNode, target: activeNode, weight: activeNode.weight, type: 'forward' },
+                            { source: currentNode, target: prevNode, weight: prevNode.weight, type: 'reverse' },
+                            { source: currentNode, target: centralNode, weight: currentNode.weight, type: 'coherency' }
+                        );
+                    });
+                    triangleGroup.selectAll("line.frame-link").data(frameLinks).join("line").attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y).attr("stroke", d => d.type === 'forward' ? '#34d399' : d.type === 'reverse' ? '#f59e0b' : '#a7f3d0').attr("stroke-width", 2).attr("stroke-dasharray", "4 2");
+                    triangleGroup.selectAll("text.frame-text").data(frameLinks).join("text").attr("x", d => (d.source.x + d.target.x) / 2).attr("y", d => (d.source.y + d.target.y) / 2).text(d => d.weight.toFixed(2)).attr("fill", "#f0fdf4").attr("text-anchor", "middle").attr("dy", -5).style("font-size", "11px");
+                    triangleGroup.selectAll("g.frame-node").data(displayNodes, d => d.id).join("g").attr("transform", d => `translate(${d.x},${d.y})`).each(function(d) {
+                        const g = d3.select(this);
+                        if(d.type === 'current') {
+                            g.append("circle").attr("r", 35).attr("stroke", "#047857").attr("stroke-width", 1).attr("stroke-dasharray", "2 2").attr("fill", "none");
+                            g.append("circle").attr("r", 45).attr("stroke", "#047857").attr("stroke-width", 0.5).attr("stroke-dasharray", "2 4").attr("fill", "none");
+                            g.append("circle").attr("r", 55).attr("stroke", "#064e3b").attr("stroke-width", 0.5).attr("stroke-dasharray", "1 5").attr("fill", "none");
+                        }
+                        const coherency = Math.max(0.01, d.weight || 0.5);
+                        g.append("circle").attr("r", d.type === 'current' ? 22 : 18).attr("stroke", d.type === 'current' ? '#a7f3d0' : (d.type === 'forward' ? '#34d399' : '#f59e0b')).attr("stroke-width", 3).attr("fill", d.type === 'current' ? `hsl(100, 100%, ${Math.min(80, coherency * 150 + 25)}%)` : (d.type === 'forward' ? '#10b981' : '#b45309'));
+                        g.append("text").text(d.id.split('-')[0]).attr("fill", "#000").attr("text-anchor", "middle").attr("dy", 5).style("font-size", "10px");
+                    });
+                }
+
+                function stopAutomation(){
+                    if(automationInterval) clearInterval(automationInterval);
+                    isAutomated = false;
+                    d3.select('#automate-button').text("Start Automation").classed("bg-green-700", true).classed("bg-red-700", false);
+                }
+
+                d3.select('#automate-button').on('click', function(){
+                    isAutomated = !isAutomated;
+                    if(isAutomated){
+                        d3.select(this).text("Stop Automation").classed("bg-red-700", true).classed("bg-green-700", false);
+                        if(simulationFinished) initialize();
+                        automationInterval = setInterval(advanceFrame, 100);
+                    } else { stopAutomation(); }
+                });
+
+                d3.select('#next-frame-button').on('click', () => { if(simulationFinished) return; if(!isAutomated) advanceFrame(); });
+                d3.select('#reset-button').on('click', () => { initialize(); });
+                d3.selectAll('#execution-mode, #nodes-per-circle').on('change', () => { initialize(); });
+                
+                initialize();
+            }
+
+            setupMasterSimulation();
+            setupSliderListeners();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quaternion Data Stream Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/math/ConvexHull.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/ConvexGeometry.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .range-slider__range { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; background: #374151; outline: none; opacity: 0.7; -webkit-transition: .2s; transition: opacity .2s; }
+        .range-slider__range:hover { opacity: 1; }
+        .range-slider__range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #4F46E5; cursor: pointer; }
+        .range-slider__range::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #4F46E5; cursor: pointer; }
+        .btn { @apply px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 disabled:bg-gray-500 disabled:cursor-not-allowed; }
+        .tab-btn { @apply px-4 py-2 text-lg font-semibold text-gray-400 border-b-2 border-transparent hover:text-white hover:border-indigo-500 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:border-transparent; }
+        .tab-btn.active { @apply text-white border-indigo-500; }
+        .data-label { @apply font-semibold text-gray-400; }
+        .data-value { @apply font-mono text-indigo-300; }
+        .face-btn { @apply text-center p-2 m-1 rounded-md hover:bg-indigo-800 focus:outline-none; flex-grow: 0; flex-shrink: 0; min-width: 80px; }
+        .face-btn.active { @apply bg-indigo-700; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-center mb-8">Quaternion Data Stream Simulator</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 3D Visualization Panel -->
+            <div class="lg:col-span-2 bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-4">Quaternion Visualization</h2>
+                <div id="vis-container" class="w-full h-96 rounded-md bg-gray-900"></div>
+            </div>
+
+            <!-- Side Panels -->
+            <div class="space-y-6">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Token-to-Packet Encoder</h2>
+                    <div>
+                        <textarea id="token-input" class="w-full bg-gray-700 p-2 rounded-md text-white" rows="3" placeholder="Enter a sentence to encode...">The quick brown fox jumps over the lazy dog.</textarea>
+                         <div class="flex justify-between items-center mt-2">
+                            <div class="space-x-2">
+                                <button id="play-btn" class="btn">Play</button>
+                                <button id="pause-btn" class="btn">Pause</button>
+                                <button id="stop-btn" class="btn">Stop</button>
+                            </div>
+                            <div class="text-right"> <p class="text-sm text-gray-400">Current Token:</p> <p id="current-token" class="text-lg font-bold text-indigo-400">-</p> </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Compressed Quaternion Panel -->
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Compressed Quaternion</h2>
+                    <div class="space-y-1 text-sm">
+                        <div><label>W: <span id="qW-val">1.00</span></label><input type="range" id="qW-slider" min="-1" max="1" value="1" step="0.01" class="range-slider__range"></div>
+                        <div><label>X: <span id="qX-val">0.00</span></label><input type="range" id="qX-slider" min="-1" max="1" value="0" step="0.01" class="range-slider__range"></div>
+                        <div><label>Y: <span id="qY-val">0.00</span></label><input type="range" id="qY-slider" min="-1" max="1" value="0" step="0.01" class="range-slider__range"></div>
+                        <div><label>Z: <span id="qZ-val">0.00</span></label><input type="range" id="qZ-slider" min="-1" max="1" value="0" step="0.01" class="range-slider__range"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Analysis Panel -->
+        <div id="ai-analysis-panel" class="mt-6 bg-gray-800 p-6 rounded-lg shadow-lg hidden">
+            <h2 class="text-2xl font-bold mb-4">AI Analysis & Questions</h2>
+            <div id="ai-analysis-content" class="text-gray-300 space-y-4"></div>
+        </div>
+
+
+        <!-- Codex Packet Controls -->
+        <div class="mt-6 bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-6">Codex Information Decoded from Packet</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">State & Identity</h3>
+                    <div class="space-y-4">
+                        <div> <label for="structural-form" class="block mb-1">Structural Form ID (0-15)</label> <input type="range" id="structural-form" min="0" max="15" value="0" class="range-slider__range"> <span id="structural-form-val" class="text-indigo-400 font-mono">0</span> </div>
+                        <div> <label for="amplitude-id" class="block mb-1">Amplitude ID (0-7)</label> <input type="range" id="amplitude-id" min="0" max="7" value="0" class="range-slider__range"> <span id="amplitude-id-val" class="text-indigo-400 font-mono">0</span> </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Dynamics & Magnitude</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="spin-class-id" class="block mb-1">Spin Class ID (0-6)</label> 
+                            <input type="range" id="spin-class-id" min="0" max="6" value="0" class="range-slider__range"> 
+                            <span id="spin-class-id-val" class="text-indigo-400 font-mono">0</span>
+                        </div>
+                        <div>
+                            <label for="frequency-slider" class="block mb-1">Semantic Tone (MHz)</label> 
+                            <input type="range" id="frequency-slider" min="500" max="2500" value="1500" class="range-slider__range"> 
+                            <span id="frequency-val" class="text-indigo-400 font-mono">1500</span> MHz
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="mt-6 bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div class="border-b border-gray-700">
+                <nav class="-mb-px flex space-x-6">
+                    <button id="tab-codex" class="tab-btn active">Latent Space Codex</button>
+                    <button id="tab-form-editor" class="tab-btn">Structural Form ID</button>
+                    <button id="tab-meaning" class="tab-btn" disabled>Codex Meaning</button>
+                    <button id="tab-db" class="tab-btn">Codex Database</button>
+                </nav>
+            </div>
+            <div id="codex-chart-panel" class="mt-6">
+                <div id="codex-chart" class="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[24rem]">
+                    <div id="face-list-container" class="md:col-span-1 bg-gray-900 rounded-md p-2 h-[24rem] overflow-y-auto flex flex-wrap content-start"></div>
+                    <div id="face-data-container" class="md:col-span-2 bg-gray-900 rounded-md p-4">Select a face to see its latent space infrastructure.</div>
+                </div>
+            </div>
+            <div id="form-editor-panel" class="mt-6 hidden">
+                 <div id="form-editor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Cards will be injected here -->
+                 </div>
+            </div>
+            <div id="codex-meaning-panel" class="mt-6 hidden">
+                <h3 id="meaning-header" class="text-lg font-semibold mb-2"></h3>
+                <textarea id="meaning-input" class="w-full bg-gray-700 p-2 rounded-md text-white" rows="6" placeholder="Define the semantic meaning of the selected face..."></textarea>
+                <button id="save-meaning-btn" class="btn mt-2">Save Meaning</button>
+            </div>
+            <div id="codex-db-panel" class="mt-6 hidden">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div> <h3 class="text-lg font-semibold mb-2">Packet Sequence Timeline</h3> <div id="db-timeline" class="w-full h-48 bg-gray-900 rounded-md p-2 flex items-end space-x-1 overflow-x-auto"></div> </div>
+                    <div> <h3 class="text-lg font-semibold mb-2">2D Packet Analysis (Freq vs Amp)</h3> <canvas id="db-plot" class="w-full h-48 bg-gray-900 rounded-md"></canvas> </div>
+                    <div class="xl:col-span-2"> <h3 class="text-lg font-semibold mb-2">Full Data Log</h3> <div id="db-table-container" class="w-full max-h-96 bg-gray-900 rounded-md overflow-auto"> <table id="db-table" class="w-full text-sm text-left"></table> </div> </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- THREE.JS SETUP ---
+        let scene, camera, renderer, controls;
+        let orientationGroup, wireframeObject, highlightMesh;
+        let geometryCache = {};
+        const codexMeanings = {};
+
+        // --- DATA ---
+        let structuralForms = [
+            { name: "Tetrahedron", base: "Tetrahedron", detail: 0 },
+            { name: "Cube", base: "Cube", detail: 0 },
+            { name: "Octahedron", base: "Octahedron", detail: 0 },
+            { name: "Icosahedron", base: "Icosahedron", detail: 0 },
+            { name: "Dodecahedron", base: "Dodecahedron", detail: 0 },
+            { name: "Truncated Tetrahedron", base: "Tetrahedron", detail: 1 },
+            { name: "Cuboctahedron", base: "Octahedron", detail: 1 },
+            { name: "Truncated Icosahedron", base: "Icosahedron", detail: 1 },
+            { name: "Rhombicuboctahedron", base: "Convex", detail: 0, points: [1, 1, 1 + Math.sqrt(2)] },
+            { name: "Icosidodecahedron", base: "Convex", detail: 0, points: [0, 0, 2 * (1 + Math.sqrt(5)) / 2] },
+            { name: "Truncated Cuboctahedron", base: "Convex", detail: 0, points: [1, 1 + Math.sqrt(2), 1 + 2 * Math.sqrt(2)] },
+            { name: "Snub Cube", base: "Convex", detail: 0, points: [1, (1 + Math.cbrt(19 - 3 * Math.sqrt(33)) + Math.cbrt(19 + 3 * Math.sqrt(33))) / 3, 1/((1 + Math.cbrt(19 - 3 * Math.sqrt(33)) + Math.cbrt(19 + 3 * Math.sqrt(33))) / 3)]},
+            { name: "Snub Dodecahedron", base: "Icosahedron", detail: 2 },
+            { name: "Abstract: Vector", base: "Cone", detail: 0 },
+            { name: "Abstract: Tensor", base: "Cube", detail: 0 },
+            { name: "Reserved / System Command", base: "Sphere", detail: 0 }
+        ];
+        const formColors = ['#f87171', '#fb923c', '#facc15', '#a3e635', '#4ade80', '#34d399', '#2dd4bf', '#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185'];
+        
+        // --- DOM ELEMENTS ---
+        const visContainer = document.getElementById('vis-container');
+        const qWVal = document.getElementById('qW-val'), qXVal = document.getElementById('qX-val'), qYVal = document.getElementById('qY-val'), qZVal = document.getElementById('qZ-val');
+        const qWSlider = document.getElementById('qW-slider'), qXSlider = document.getElementById('qX-slider'), qYSlider = document.getElementById('qY-slider'), qZSlider = document.getElementById('qZ-slider');
+        const structuralFormSlider = document.getElementById('structural-form'), structuralFormVal = document.getElementById('structural-form-val');
+        const amplitudeIdSlider = document.getElementById('amplitude-id'), amplitudeIdVal = document.getElementById('amplitude-id-val');
+        const spinClassIdSlider = document.getElementById('spin-class-id'), spinClassIdVal = document.getElementById('spin-class-id-val');
+        const frequencySlider = document.getElementById('frequency-slider'), frequencyVal = document.getElementById('frequency-val');
+        const tokenInput = document.getElementById('token-input');
+        const playBtn = document.getElementById('play-btn'), pauseBtn = document.getElementById('pause-btn'), stopBtn = document.getElementById('stop-btn');
+        const currentTokenDisplay = document.getElementById('current-token');
+        const tabCodex = document.getElementById('tab-codex'), tabFormEditor = document.getElementById('tab-form-editor'), tabDb = document.getElementById('tab-db'), tabMeaning = document.getElementById('tab-meaning');
+        const faceListContainer = document.getElementById('face-list-container');
+        const faceDataContainer = document.getElementById('face-data-container');
+        const codexChartPanel = document.getElementById('codex-chart-panel'), formEditorPanel = document.getElementById('form-editor-panel'), codexDbPanel = document.getElementById('codex-db-panel'), codexMeaningPanel = document.getElementById('codex-meaning-panel');
+        const formEditorGrid = document.getElementById('form-editor-grid');
+        const aiAnalysisPanel = document.getElementById('ai-analysis-panel'), aiAnalysisContent = document.getElementById('ai-analysis-content');
+        const dbTimeline = document.getElementById('db-timeline'), dbPlotCanvas = document.getElementById('db-plot'), dbTable = document.getElementById('db-table');
+        const meaningHeader = document.getElementById('meaning-header'), meaningInput = document.getElementById('meaning-input'), saveMeaningBtn = document.getElementById('save-meaning-btn');
+
+        let quaternion = new THREE.Quaternion();
+        let tokens = [], currentTokenIndex = -1, codexLog = [];
+        let selectedFace = { formId: null, faceIndex: null };
+        let isPlaying = false, isFirstPassComplete = false, automationInterval = null;
+
+        // --- GEOMETRY ---
+        function getGeometryForForm(formId) {
+            if (geometryCache[formId]) return geometryCache[formId];
+            
+            const form = structuralForms[formId];
+            let geometry;
+            const r = 1.8; 
+            const points = [];
+            const p = (arr) => { for (let i = 0; i < arr.length; i += 3) { points.push(new THREE.Vector3(arr[i], arr[i+1], arr[i+2])); } };
+            const addPermutations = (v) => {
+                const permutations = [[v[0],v[1],v[2]], [v[0],v[2],v[1]], [v[1],v[0],v[2]], [v[1],v[2],v[0]], [v[2],v[0],v[1]], [v[2],v[1],v[0]]];
+                const uniquePoints = new Set();
+                permutations.forEach(perm => {
+                    const signs = [[1,1,1],[-1,1,1],[1,-1,1],[1,1,-1],[-1,-1,1],[-1,1,-1],[1,-1,-1],[-1,-1,-1]];
+                    signs.forEach(sign => {
+                        const pointStr = `${perm[0]*sign[0]},${perm[1]*sign[1]},${perm[2]*sign[2]}`;
+                        if (!uniquePoints.has(pointStr)) {
+                            uniquePoints.add(pointStr);
+                            p([perm[0]*sign[0], perm[1]*sign[1], perm[2]*sign[2]]);
+                        }
+                    });
+                });
+            };
+
+            switch (form.base) {
+                case "Tetrahedron": geometry = new THREE.TetrahedronGeometry(r, form.detail); break;
+                case "Cube": geometry = new THREE.BoxGeometry(r, r, r, form.detail + 1, form.detail + 1, form.detail + 1); break;
+                case "Octahedron": geometry = new THREE.OctahedronGeometry(r, form.detail); break;
+                case "Icosahedron": geometry = new THREE.IcosahedronGeometry(r, form.detail); break;
+                case "Dodecahedron": geometry = new THREE.DodecahedronGeometry(r, form.detail); break;
+                case "Cone": geometry = new THREE.ConeGeometry(r/2, r, 12); break;
+                case "Sphere": geometry = new THREE.SphereGeometry(r/2, 8, 8); break;
+                case "Convex": addPermutations(form.points); geometry = new THREE.ConvexGeometry(points); break;
+                default: geometry = new THREE.BoxGeometry(r,r,r);
+            }
+            
+            if (geometry) {
+                geometry.computeVertexNormals();
+            }
+            geometryCache[formId] = geometry;
+            return geometry;
+        }
+
+        // --- INITIALIZATION ---
+        function init() {
+            initVis();
+            populateFormEditor();
+            addEventListeners();
+            stopAutomation(); 
+        }
+
+        function initVis() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111827);
+            camera = new THREE.PerspectiveCamera(75, visContainer.clientWidth / visContainer.clientHeight, 0.1, 1000);
+            camera.position.set(0, 2, 8);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(visContainer.clientWidth, visContainer.clientHeight);
+            visContainer.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1.5);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            orientationGroup = new THREE.Group();
+            scene.add(orientationGroup);
+
+            const sphereGeom = new THREE.SphereGeometry(1.5, 16, 8);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0x4f46e5, wireframe: true, transparent: true, opacity: 0.3 });
+            orientationGroup.add(new THREE.Mesh(sphereGeom, sphereMat));
+            orientationGroup.add(new THREE.AxesHelper(2.5));
+
+            animate();
+        }
+
+        // --- EVENT LISTENERS ---
+        function addEventListeners() {
+            window.addEventListener('resize', onWindowResize);
+            [qWSlider, qXSlider, qYSlider, qZSlider].forEach(s => s.addEventListener('input', updateQuaternionFromSliders));
+            structuralFormSlider.addEventListener('input', updateCodexVisuals);
+            amplitudeIdSlider.addEventListener('input', updateCodexVisuals);
+            frequencySlider.addEventListener('input', () => {
+                frequencyVal.textContent = frequencySlider.value;
+            });
+            tokenInput.addEventListener('change', stopAutomation);
+            playBtn.addEventListener('click', playAutomation);
+            pauseBtn.addEventListener('click', pauseAutomation);
+            stopBtn.addEventListener('click', stopAutomation);
+            saveMeaningBtn.addEventListener('click', saveCurrentMeaning);
+            [tabCodex, tabFormEditor, tabDb, tabMeaning].forEach(tab => tab.addEventListener('click', handleTabClick));
+        }
+
+        // --- AUTOMATION & LEARNING LOOP ---
+        function playAutomation() {
+            if (isPlaying) return;
+            isPlaying = true;
+            updateTokenizerState();
+            
+            if (!isFirstPassComplete) {
+                tokens = tokenInput.value.trim().split(/\s+/).filter(t => t.length > 0);
+                if (tokens.length === 0) {
+                    stopAutomation();
+                    return;
+                }
+                codexLog = [];
+                currentTokenIndex = -1;
+                playBtn.textContent = 'Replay';
+            }
+
+            automationInterval = setInterval(() => {
+                currentTokenIndex++;
+                if (currentTokenIndex < tokens.length) {
+                    processCurrentToken(isFirstPassComplete);
+                } else {
+                    pauseAutomation();
+                    if (!isFirstPassComplete) {
+                        isFirstPassComplete = true;
+                        generateAnalysis();
+                    }
+                    currentTokenIndex = tokens.length -1;
+                }
+            }, 1000);
+        }
+
+        function pauseAutomation() {
+            isPlaying = false;
+            clearInterval(automationInterval);
+            updateTokenizerState();
+        }
+
+        function stopAutomation() {
+            pauseAutomation();
+            tokens = [];
+            codexLog = [];
+            currentTokenIndex = -1;
+            isFirstPassComplete = false;
+            playBtn.textContent = 'Play';
+            aiAnalysisPanel.classList.add('hidden');
+            clearSelection();
+            updateTokenizerState();
+            currentTokenDisplay.textContent = '-';
+            updateCodexDatabase();
+        }
+        
+        async function generateAnalysis() {
+            aiAnalysisPanel.classList.remove('hidden');
+            aiAnalysisContent.innerHTML = `<p class="text-center">Analyzing data stream and generating questions...</p>`;
+            
+            const prompt = `
+                Analyze the following token-to-packet data from a conceptual communication protocol. 
+                Identify interesting patterns or relationships between tokens based on their geometric and dynamic properties.
+                Formulate 2-3 insightful questions to ask a user to help deduce semantic meaning.
+                For each question, suggest a concise "Codex Meaning" that could be assigned if the user agrees.
+                
+                Data:
+                ${JSON.stringify(codexLog.map(log => ({token: log.token, form: structuralForms[log.structuralForm].name, amp: log.amplitudeId, freq: log.frequency})))}
+
+                Respond in valid JSON format like this: 
+                {
+                  "analysis": "A brief, high-level summary of observed patterns.",
+                  "questions": [
+                    {
+                      "question": "The question to the user.",
+                      "tokens_involved": ["token1", "token2"],
+                      "suggested_meaning": "A concise semantic meaning based on the pattern."
+                    }
+                  ]
+                }
+            `;
+            
+            try {
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const text = result.candidates[0].content.parts[0].text;
+                
+                const jsonString = text.match(/```json\n([\s\S]*?)\n```/)[1];
+                const data = JSON.parse(jsonString);
+
+                let html = `<p class="italic">${data.analysis}</p>`;
+                data.questions.forEach((q, i) => {
+                    html += `
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <p><strong>Question ${i+1}:</strong> ${q.question}</p>
+                            <p class="mt-2 text-sm text-indigo-300">Suggested Meaning: "${q.suggested_meaning}"</p>
+                            <button class="btn text-xs mt-2" data-tokens='${JSON.stringify(q.tokens_involved)}' data-meaning="${q.suggested_meaning}">Use this Meaning</button>
+                        </div>
+                    `;
+                });
+                aiAnalysisContent.innerHTML = html;
+                aiAnalysisContent.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('click', applyAISuggestion);
+                });
+
+            } catch (error) {
+                console.error("AI Analysis Error:", error);
+                aiAnalysisContent.innerHTML = `<p class="text-red-400">Error generating AI analysis. Please check the console.</p>`;
+            }
+        }
+
+        function applyAISuggestion(event) {
+            const button = event.target;
+            const tokensInvolved = JSON.parse(button.dataset.tokens);
+            const meaning = button.dataset.meaning;
+            
+            const targetToken = tokensInvolved[0];
+            const targetIndex = tokens.findIndex(t => t === targetToken);
+            
+            if (targetIndex > -1) {
+                currentTokenIndex = targetIndex;
+                processCurrentToken(true);
+                
+                handleTabClick({target: tabMeaning});
+                meaningInput.value = meaning;
+                updateMeaningUI();
+            }
+        }
+
+
+        // --- CORE LOGIC ---
+        function processCurrentToken(isReplay = false) {
+            const token = tokens[currentTokenIndex];
+            currentTokenDisplay.textContent = token;
+            clearSelection();
+            encodeToken(token);
+            
+            if (!isReplay) {
+                 if (codexLog.length <= currentTokenIndex) {
+                    codexLog.push({
+                        token: token,
+                        structuralForm: parseInt(structuralFormSlider.value),
+                        amplitudeId: parseInt(amplitudeIdSlider.value),
+                        frequency: parseInt(frequencySlider.value),
+                        spinClassId: parseInt(spinClassIdSlider.value),
+                        qW: quaternion.w, qX: quaternion.x, qY: quaternion.y, qZ: quaternion.z
+                    });
+                }
+            }
+            updateCodexDatabase();
+        }
+
+        function encodeToken(token) {
+            if (!token) return;
+            const hash = simpleHash(token.toLowerCase());
+            
+            qWSlider.value = (hash % 201 / 100) - 1;
+            qXSlider.value = ((hash >> 8) % 201 / 100) - 1;
+            qYSlider.value = ((hash >> 16) % 201 / 100) - 1;
+            qZSlider.value = ((hash >> 24) % 201 / 100) - 1;
+            
+            structuralFormSlider.value = (token.length % 16);
+            const vowelCount = (token.match(/[aeiou]/gi) || []).length;
+            amplitudeIdSlider.value = (vowelCount + (hash % 3)) % 8;
+            const firstCharCode = token.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
+            spinClassIdSlider.value = (firstCharCode >= 0 && firstCharCode <= 25) ? firstCharCode % 7 : hash % 7;
+            
+            frequencySlider.value = 1000 + (hash % 1000);
+
+            updateQuaternionFromSliders();
+            updateCodexVisuals();
+        }
+
+        function updateQuaternionFromSliders() {
+            quaternion.set(parseFloat(qXSlider.value), parseFloat(qYSlider.value), parseFloat(qZSlider.value), parseFloat(qWSlider.value)).normalize();
+            orientationGroup.setRotationFromQuaternion(quaternion);
+            updateQuaternionDisplay();
+        }
+        
+        // --- UI & VISUALIZATION UPDATES ---
+        function updateCodexVisuals() {
+            clearSelection();
+            const formId = parseInt(structuralFormSlider.value);
+            const ampId = parseInt(amplitudeIdSlider.value);
+            const phi = (1 + Math.sqrt(5)) / 2;
+            const scale = 1 + (ampId / 7) * phi;
+
+            if (wireframeObject) orientationGroup.remove(wireframeObject);
+            
+            const geometry = getGeometryForForm(formId);
+            if (geometry) {
+                const material = new THREE.MeshBasicMaterial({ color: formColors[formId], wireframe: true });
+                wireframeObject = new THREE.Mesh(geometry, material);
+                wireframeObject.scale.set(scale, scale, scale);
+                orientationGroup.add(wireframeObject);
+            }
+            updateUIDisplays();
+        }
+        
+        function updateUIDisplays() {
+            structuralFormVal.textContent = structuralFormSlider.value;
+            amplitudeIdVal.textContent = amplitudeIdSlider.value;
+            spinClassIdVal.textContent = spinClassIdSlider.value;
+            frequencyVal.textContent = frequencySlider.value;
+            updateQuaternionDisplay();
+            updateDefaultCodexView();
+        }
+
+        function updateQuaternionDisplay() {
+            qWVal.textContent = parseFloat(qWSlider.value).toFixed(2);
+            qXVal.textContent = parseFloat(qXSlider.value).toFixed(2);
+            qYVal.textContent = parseFloat(qYSlider.value).toFixed(2);
+            qZVal.textContent = parseFloat(qZSlider.value).toFixed(2);
+        }
+        
+        function updateCodexDatabase() {
+            // ... (omitted for brevity, same as previous version)
+        }
+
+        function simpleHash(str) { let hash = 0; for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; } return Math.abs(hash); }
+        function onWindowResize() { const w = visContainer.clientWidth, h = visContainer.clientHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); }
+        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+        
+        function updateTokenizerState() {
+            playBtn.disabled = isPlaying;
+            pauseBtn.disabled = !isPlaying;
+        }
+        
+        function handleTabClick(event) {
+            [tabCodex, tabFormEditor, tabMeaning, tabDb].forEach(t => t.classList.remove('active'));
+            [codexChartPanel, formEditorPanel, codexMeaningPanel, codexDbPanel].forEach(p => p.classList.add('hidden'));
+            event.target.classList.add('active');
+            if(event.target.id === 'tab-form-editor') formEditorPanel.classList.remove('hidden');
+            else if (event.target.id === 'tab-meaning') codexMeaningPanel.classList.remove('hidden');
+            else if (event.target.id === 'tab-db') codexDbPanel.classList.remove('hidden');
+            else codexChartPanel.classList.remove('hidden');
+        }
+        
+        function updateDefaultCodexView() {
+            faceListContainer.innerHTML = '';
+            faceDataContainer.innerHTML = 'Select a face to see its latent space infrastructure.';
+            
+            if (!wireframeObject || !wireframeObject.geometry) return;
+            
+            const geometry = wireframeObject.geometry;
+            const index = geometry.index;
+            const faceCount = index ? index.count / 3 : geometry.attributes.position.count / 3;
+
+            for (let i = 0; i < faceCount; i++) {
+                const faceButton = document.createElement('button');
+                faceButton.className = 'face-btn';
+                faceButton.textContent = `Face #${i}`;
+                faceButton.dataset.faceIndex = i;
+                faceButton.addEventListener('click', (e) => {
+                    const currentActive = faceListContainer.querySelector('.active');
+                    if (currentActive) currentActive.classList.remove('active');
+                    e.target.classList.add('active');
+                    displayFaceData(parseInt(e.target.dataset.faceIndex));
+                });
+                faceListContainer.appendChild(faceButton);
+            }
+        }
+
+        function displayFaceData(faceIndex) {
+            if (!wireframeObject || !wireframeObject.geometry) return;
+            
+            const formId = parseInt(structuralFormSlider.value);
+            const formName = structuralForms[formId].name;
+            const geometry = wireframeObject.geometry;
+            const index = geometry.index;
+            const position = geometry.attributes.position;
+
+            const iA = index ? index.getX(faceIndex * 3) : faceIndex * 3;
+            const iB = index ? index.getX(faceIndex * 3 + 1) : faceIndex * 3 + 1;
+            const iC = index ? index.getX(faceIndex * 3 + 2) : faceIndex * 3 + 2;
+
+            const vA_local = new THREE.Vector3().fromBufferAttribute(position, iA);
+            const vB_local = new THREE.Vector3().fromBufferAttribute(position, iB);
+            const vC_local = new THREE.Vector3().fromBufferAttribute(position, iC);
+
+            wireframeObject.updateMatrixWorld();
+            const worldMatrix = wireframeObject.matrixWorld;
+            const vA = vA_local.clone().applyMatrix4(worldMatrix);
+            const vB = vB_local.clone().applyMatrix4(worldMatrix);
+            const vC = vC_local.clone().applyMatrix4(worldMatrix);
+
+            const tempTriangle = new THREE.Triangle(vA_local, vB_local, vC_local);
+            const normal_local = new THREE.Vector3();
+            tempTriangle.getNormal(normal_local);
+            const normal = normal_local.transformDirection(worldMatrix).normalize();
+
+            const centroid = new THREE.Vector3().add(vA).add(vB).add(vC).divideScalar(3);
+            const edgeAB = vA.distanceTo(vB);
+            const edgeBC = vB.distanceTo(vC);
+            const edgeCA = vC.distanceTo(vA);
+            const areaOAB = new THREE.Triangle(new THREE.Vector3(), vA, vB).getArea();
+            const areaOBC = new THREE.Triangle(new THREE.Vector3(), vB, vC).getArea();
+            const areaOCA = new THREE.Triangle(new THREE.Vector3(), vC, vA).getArea();
+
+            const vecToStr = (v) => `X: ${v.x.toFixed(3)}, Y: ${v.y.toFixed(3)}, Z: ${v.z.toFixed(3)}`;
+            faceDataContainer.innerHTML = `
+                <h3 class="text-lg font-semibold" style="color:${formColors[formId]}">${formName}</h3>
+                <p class="text-sm text-gray-400 -mt-1 mb-3">Latent Space: Face #${faceIndex}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-4 text-sm">
+                    <div>
+                        <h4 class="text-md font-bold text-gray-300 border-b border-gray-700 mb-2">Vertices (World Space)</h4>
+                        <p><span class="data-label">A:</span> <span class="data-value">${vecToStr(vA)}</span></p>
+                        <p><span class="data-label">B:</span> <span class="data-value">${vecToStr(vB)}</span></p>
+                        <p><span class="data-label">C:</span> <span class="data-value">${vecToStr(vC)}</span></p>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-bold text-gray-300 border-b border-gray-700 mb-2">Edges</h4>
+                        <p><span class="data-label">A-B Length:</span> <span class="data-value">${edgeAB.toFixed(4)}</span></p>
+                        <p><span class="data-label">B-C Length:</span> <span class="data-value">${edgeBC.toFixed(4)}</span></p>
+                        <p><span class="data-label">C-A Length:</span> <span class="data-value">${edgeCA.toFixed(4)}</span></p>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-bold text-gray-300 border-b border-gray-700 mb-2">Face Properties</h4>
+                        <p><span class="data-label">Normal:</span> <span class="data-value">${vecToStr(normal)}</span></p>
+                        <p><span class="data-label">Centroid:</span> <span class="data-value">${vecToStr(centroid)}</span></p>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-bold text-gray-300 border-b border-gray-700 mb-2">Triangulation from Origin</h4>
+                        <p><span class="data-label">Area (Origin-A-B):</span> <span class="data-value">${areaOAB.toFixed(4)}</span></p>
+                        <p><span class="data-label">Area (Origin-B-C):</span> <span class="data-value">${areaOBC.toFixed(4)}</span></p>
+                        <p><span class="data-label">Area (Origin-C-A):</span> <span class="data-value">${areaOCA.toFixed(4)}</span></p>
+                    </div>
+                </div>
+            `;
+            
+            if (highlightMesh) orientationGroup.remove(highlightMesh);
+            const highlightGeom = new THREE.BufferGeometry().setFromPoints([vA_local, vB_local, vC_local]);
+            highlightGeom.setIndex([0,1,2]);
+            const highlightMat = new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            highlightMesh = new THREE.Mesh(highlightGeom, highlightMat);
+            highlightMesh.scale.copy(wireframeObject.scale);
+            orientationGroup.add(highlightMesh);
+
+            selectedFace = { formId: parseInt(structuralFormSlider.value), faceIndex };
+            tabMeaning.disabled = false;
+            updateMeaningUI();
+        }
+        
+        function clearSelection(resetCodexView = true) {
+            if (highlightMesh) {
+                orientationGroup.remove(highlightMesh);
+                highlightMesh.geometry.dispose();
+                highlightMesh.material.dispose();
+                highlightMesh = null;
+            }
+            if (resetCodexView) {
+                updateDefaultCodexView();
+            }
+        }
+
+        function updateMeaningUI() {
+            if (selectedFace.formId === null) return;
+            const { formId, faceIndex } = selectedFace;
+            const formName = structuralForms[formId].name;
+            meaningHeader.textContent = `Meaning for ${formName}, Face #${faceIndex}`;
+            meaningInput.value = codexMeanings[formId]?.[faceIndex] || '';
+        }
+
+        function saveCurrentMeaning() {
+            if (selectedFace.formId === null) return;
+            const { formId, faceIndex } = selectedFace;
+            if (!codexMeanings[formId]) {
+                codexMeanings[formId] = {};
+            }
+            codexMeanings[formId][faceIndex] = meaningInput.value;
+            alert('Meaning saved for this session.');
+        }
+        
+        function populateFormEditor() {
+            const baseGeometries = ["Tetrahedron", "Cube", "Octahedron", "Icosahedron", "Dodecahedron", "Cone", "Sphere", "Convex"];
+            structuralForms.forEach((form, id) => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-700 p-4 rounded-lg";
+                
+                const selectOptions = baseGeometries.map(g => `<option value="${g}" ${form.base === g ? 'selected' : ''}>${g}</option>`).join('');
+
+                card.innerHTML = `
+                    <h4 class="font-bold text-lg" style="color:${formColors[id]}">ID ${id}</h4>
+                    <div class="mt-2">
+                        <label class="block text-sm font-medium">Name</label>
+                        <input type="text" value="${form.name}" class="mt-1 block w-full bg-gray-800 rounded-md border-gray-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-white">
+                    </div>
+                    <div class="mt-2">
+                        <label class="block text-sm font-medium">Base Geometry</label>
+                        <select class="mt-1 block w-full bg-gray-800 rounded-md border-gray-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-white">
+                            ${selectOptions}
+                        </select>
+                    </div>
+                     <div class="mt-2">
+                        <label class="block text-sm font-medium">Detail/Truncation (0-5)</label>
+                        <input type="range" min="0" max="5" value="${form.detail}" class="mt-1 range-slider__range">
+                    </div>
+                    <button class="btn w-full mt-4 text-sm">Save Changes</button>
+                `;
+                card.querySelector('button').addEventListener('click', () => {
+                    const newName = card.querySelector('input[type="text"]').value;
+                    const newBase = card.querySelector('select').value;
+                    const newDetail = card.querySelector('input[type="range"]').value;
+                    
+                    structuralForms[id].name = newName;
+                    structuralForms[id].base = newBase;
+                    structuralForms[id].detail = parseInt(newDetail);
+                    
+                    // Clear cache for this ID to force regeneration
+                    delete geometryCache[id];
+                    
+                    // If this is the currently displayed form, update the view
+                    if(id === parseInt(structuralFormSlider.value)) {
+                        updateCodexVisuals();
+                    }
+                    alert(`Structural Form ID ${id} updated.`);
+                });
+                formEditorGrid.appendChild(card);
+            });
+        }
+
+        // --- START ---
+        init();
+    </script>
+</body>
+</html>

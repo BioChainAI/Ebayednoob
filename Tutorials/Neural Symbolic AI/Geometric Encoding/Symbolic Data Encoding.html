@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Symbolic Data Encoding</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- three.js for 3D rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        .three-canvas {
+            width: 100%;
+            height: 250px;
+            border-radius: 0.5rem;
+            border: 1px solid #047857; /* A green-700 border */
+            cursor: grab;
+        }
+        .three-canvas:active {
+            cursor: grabbing;
+        }
+        .property-table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+        }
+        .property-table th, .property-table td {
+            border: 1px solid #065f46;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .property-table th {
+            background-color: #064e3b;
+            color: #a7f3d0;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500" style="font-family: 'Inter', sans-serif;">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 bg-gray-900/50 p-4 md:p-6 border-b md:border-b-0 md:border-r border-green-900">
+            <h2 class="text-2xl font-bold text-green-300 mb-6">Tiers</h2>
+            <nav id="navigation" class="flex flex-row md:flex-col gap-2">
+                <!-- Navigation Links will be injected by JS -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+            <h1 class="text-4xl font-bold text-green-200 mb-6">Tutorial: Symbolic Data Encoding</h1>
+            
+            <div id="content-container">
+                <!-- Tier 1: The Platonic Primitives -->
+                <section id="tier-1" class="content-section mb-8">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Tier 1: The Platonic Primitives (The 5 Axioms)</h2>
+                    <p class="text-lg leading-relaxed mb-6">
+                        These are the most fundamental shapes. They are perfectly regular, with all faces, edges, and vertices being identical. They are ideal for representing pure, unmodified, or foundational concepts.
+                    </p>
+                    
+                    <!-- Tetrahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 0: Tetrahedron</h3>
+                        <p class="mb-4">The simplest solid. Represents a single, indivisible concept, a foundational axiom, or a point of origin.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-tetrahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            As the most fundamental unit, a tetrahedron's latent space is not for storage but for representation. The object *is* the data. Its state vector (position, rotation, scale) represents a single, atomic concept. The payload would contain a direct pointer to a high-dimensional embedding vector that defines the concept itself.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                            <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>4</td></tr>
+                                    <tr><td>Edges</td><td>6</td></tr>
+                                    <tr><td>Faces</td><td>4 (Triangles)</td></tr>
+                                    <tr><td>Vertex Coordinates</td><td>(1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = &radic;3 &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = a&sup3; / (6&radic;2)</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Start with an equilateral triangle primitive as your base. Select the central vertex point where the three corners would meet if you were folding a net. Extrude this vertex upwards, perpendicular to the base plane. Finally, create three new triangular faces by connecting this new vertex to each of the three original base vertices.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 0,
+  "shape": "Tetrahedron",
+  "concept": "truth",
+  "payload": {
+    "type": "embedding_pointer",
+    "vector_id": "78a4f2b1-5d62-4f3c-b8a9-4b1e3a2c7d9e"
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- Cube -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 1: Cube (Hexahedron)</h3>
+                        <p class="mb-4">Represents structured, orthogonal, or man-made concepts.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-cube" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            The 6 faces of the cube are ideal for storing structured key-value data. Each face can be assigned a distinct category (e.g., 'cause', 'effect', 'subject', 'object', 'time', 'location'). Data is then mapped as a texture or field onto the corresponding face, encoding a complete, structured event.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>8</td></tr>
+                                    <tr><td>Edges</td><td>12</td></tr>
+                                    <tr><td>Faces</td><td>6 (Squares)</td></tr>
+                                    <tr><td>Vertex Coordinates</td><td>All permutations of (±1, ±1, ±1)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 6a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Create a square primitive on the ground plane. Select the square face and extrude it upwards along its normal axis. Set the extrusion height to be exactly equal to the length of the square's sides. This action generates the four side faces and the top face, completing the cube.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 1,
+  "shape": "Cube",
+  "concept": "legal_ruling",
+  "payload": {
+    "face_map": {
+      "+X": { "key": "Plaintiff", "value": "Corp A" },
+      "-X": { "key": "Defendant", "value": "Entity B" },
+      "+Y": { "key": "Ruling", "value": "In Favour of Plaintiff" },
+      "-Y": { "key": "Justification", "value": "Breach of Contract" },
+      "+Z": { "key": "Date", "value": "2025-07-06" },
+      "-Z": { "key": "Jurisdiction", "value": "District Court" }
+    }
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- Octahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 2: Octahedron</h3>
+                        <p class="mb-4">The dual of the cube. Represents a point of connection, a hub, or a set of balanced relationships.</p>
+                         <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-octahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            The octahedron's latent space is perfect for graph data. The 6 vertices represent nodes in a network. The 12 edges represent the relationships between them, where the edge's properties (length, thickness, color) can encode the weight, type, or direction of the relationship. The center of the solid represents the unifying concept of the network.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>6</td></tr>
+                                    <tr><td>Edges</td><td>12</td></tr>
+                                    <tr><td>Faces</td><td>8 (Triangles)</td></tr>
+                                    <tr><td>Vertex Coordinates</td><td>All permutations of (±1, 0, 0)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 2&radic;3 &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (&radic;2 / 3) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Create a square primitive in the XY plane, centered at the origin. Create a single vertex point directly above the square's center (the positive Z axis) and another directly below (the negative Z axis). Form two pyramids by creating triangular faces connecting each of the two new vertices to all four vertices of the central square.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 2,
+  "shape": "Octahedron",
+  "concept": "supply_chain_hub",
+  "payload": {
+    "nodes": [
+      { "vertex": 0, "id": "Manufacturer" },
+      { "vertex": 1, "id": "Distributor" },
+      { "vertex": 2, "id": "Retailer" }
+    ],
+    "edges": [
+      { "from": 0, "to": 1, "type": "sends_product", "weight": 0.9 },
+      { "from": 1, "to": 2, "type": "fulfills_order", "weight": 0.7 }
+    ]
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- Icosahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 3: Icosahedron</h3>
+                        <p class="mb-4">Represents a complex but monolithic concept that has many facets of the same type.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-icosahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                           With 20 identical triangular faces, the icosahedron is ideal for storing a list of homogenous data points or attributes describing a single entity. Each face can hold one record from a dataset, such as a single frame's sensor readings, a word embedding from a sentence, or a detailed facet of a complex emotion.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>12</td></tr>
+                                    <tr><td>Edges</td><td>30</td></tr>
+                                    <tr><td>Faces</td><td>20 (Triangles)</td></tr>
+                                    <tr><td>Vertex Coordinates</td><td>(0, ±1, ±φ) and all cyclic permutations. Where φ = (1 + √5) / 2.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 5&radic;3 &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (5/12)(3 + &radic;5) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This is constructed from 12 vertices defined by three intersecting, mutually perpendicular golden-ratio rectangles. Once the 12 vertices are placed in 3D space, you can begin to form the 20 triangular faces by connecting each vertex to its five nearest neighbors. It's often easier to start with a primitive and ensure it has 20 faces and 12 vertices where 5 faces meet at each vertex.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 3,
+  "shape": "Icosahedron",
+  "concept": "emotion_joy",
+  "payload": {
+    "facets": [
+      { "face": 0, "attribute": "intensity", "value": 0.95 },
+      { "face": 1, "attribute": "duration_ms", "value": 5000 },
+      { "face": 2, "attribute": "trigger", "value": "positive_feedback" },
+      { "face": 3, "attribute": "physiological_response", "value": "increased_heart_rate" }
+    ]
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- Dodecahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 4: Dodecahedron</h3>
+                        <p class="mb-4">Represents high-level containers or domains of knowledge.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-dodecahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                           The 12 large pentagonal faces serve as high-level "domains" or "chapters." Each face doesn't hold raw data, but rather acts as a portal, holding a link or pointer to another symbolic solid that contains the details for that domain. This allows for hierarchical and recursive data structures.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                         <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>20</td></tr>
+                                    <tr><td>Edges</td><td>30</td></tr>
+                                    <tr><td>Faces</td><td>12 (Pentagons)</td></tr>
+                                    <tr><td>Vertex Coordinates</td><td>(±1, ±1, ±1), (0, ±1/φ, ±φ), (±φ, 0, ±1/φ), (±1/φ, ±φ, 0). Where φ = (1 + √5) / 2.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 3&radic;(25 + 10&radic;5) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (1/4)(15 + 7&radic;5) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                           Start with a regular pentagon as a base. Extrude its five edges outwards and upwards to form five new pentagonal faces, creating a "bowl" shape. Duplicate this bowl, rotate it 180 degrees, and position it above the first. Align the rims of the two bowls and weld the corresponding vertices to seal the shape.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 4,
+  "shape": "Dodecahedron",
+  "concept": "domain_philosophy",
+  "payload": {
+    "domains": [
+      { "face": 0, "name": "Metaphysics", "link_to_symbol_id": 4, "link_uuid": "..." },
+      { "face": 1, "name": "Epistemology", "link_to_symbol_id": 3, "link_uuid": "..." },
+      { "face": 2, "name": "Ethics", "link_to_symbol_id": 12, "link_uuid": "..." }
+    ]
+  }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Tier 2: The First Modifiers -->
+                <section id="tier-2" class="content-section mb-8 hidden">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Tier 2: The First Modifiers</h2>
+                     <p class="text-lg leading-relaxed mb-6">
+                        These shapes introduce a second type of face, making them perfect for representing a primary concept that has been modified.
+                    </p>
+                    <!-- Truncated Tetrahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 5: Truncated Tetrahedron</h3>
+                        <p class="mb-4">A foundational idea with a caveat or a set of defined interactions.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-truncated-tetrahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Data is segregated by face type. The 4 large hexagonal faces (derived from the original tetrahedron faces) hold the core concept's data. The 4 new triangular faces (created by the truncation) hold metadata that modifies or qualifies the core concept, such as exceptions, conditions, or sources.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>12</td></tr>
+                                    <tr><td>Edges</td><td>18</td></tr>
+                                    <tr><td>Faces</td><td>8 (4 Triangles, 4 Hexagons)</td></tr>
+                                    <tr><td>Math</td><td>Truncate a Tetrahedron by cutting off 1/3 of each edge at the vertices.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 7&radic;3 &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (23 / (12&radic;2)) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Begin with a Tetrahedron model. Apply a 'bevel' or 'chamfer' operation to its four vertices. Set the bevel amount so that the cut extends one-third of the way along each edge from the vertex. This operation will convert the original four triangular faces into hexagons and create four new triangular faces where the vertices used to be.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 5,
+  "shape": "Truncated Tetrahedron",
+  "concept": "axiom_of_liberty",
+  "payload": {
+    "core_data_hexagons": [
+      { "face": 0, "statement": "Individuals are free to act." }
+    ],
+    "qualifiers_triangles": [
+      { "face": 0, "condition": "If no harm is caused to others." },
+      { "face": 1, "source": "J.S. Mill" }
+    ]
+  }
+}</code></pre>
+                    </div>
+                    <!-- Cuboctahedron -->
+                     <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 6: Cuboctahedron</h3>
+                        <p class="mb-4">Represents a state of balance, a dynamic process, or a concept that is both structured and relational.</p>
+                         <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-cuboctahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This shape's latent space represents a system in equilibrium. The 6 square faces hold the stable, structural components or entities of the system. The 8 triangular faces hold the dynamic, relational data that describes the interactions between the structured components.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>12</td></tr>
+                                    <tr><td>Edges</td><td>24</td></tr>
+                                    <tr><td>Faces</td><td>14 (8 Triangles, 6 Squares)</td></tr>
+                                    <tr><td>Math</td><td>Truncate a Cube (or Octahedron) by cutting off 1/2 of each edge at the vertices.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = (6 + 2&radic;3) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (5&radic;2 / 3) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Start with a Cube. Apply a 'bevel' or 'chamfer' operation to its eight vertices. Set the bevel amount so that the cut extends exactly to the midpoint of each edge. This operation will shrink the original square faces and create eight new triangular faces where the vertices were. The result is a shape with 6 square and 8 triangular faces.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 6,
+  "shape": "Cuboctahedron",
+  "concept": "ecosystem_balance",
+  "payload": {
+    "structural_components_squares": [
+      { "face": 0, "entity": "Sunlight" },
+      { "face": 1, "entity": "Plants" },
+      { "face": 2, "entity": "Herbivores" }
+    ],
+    "dynamic_relations_triangles": [
+      { "face": 0, "process": "Photosynthesis", "from": "Sunlight", "to": "Plants" },
+      { "face": 1, "process": "Consumption", "from": "Plants", "to": "Herbivores" }
+    ]
+  }
+}</code></pre>
+                    </div>
+                    <!-- Truncated Icosahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 7: Truncated Icosahedron (Buckyball)</h3>
+                        <p class="mb-4">The quintessential "data packet." A highly stable and efficient container for a subject-predicate style relationship.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-truncated-icosahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This is the ultimate data packet structure. The 12 pentagonal faces serve as "headers" or "primary keys" for the data packet (e.g., source, destination, timestamp). The 20 hexagonal faces serve as the "payload," holding the actual data records or attributes related to the headers.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>60</td></tr>
+                                    <tr><td>Edges</td><td>90</td></tr>
+                                    <tr><td>Faces</td><td>32 (12 Pentagons, 20 Hexagons)</td></tr>
+                                    <tr><td>Math</td><td>Truncate an Icosahedron by cutting off 1/3 of each edge at the vertices.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                         <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 3(10&radic;3 + &radic;(25 + 10&radic;5)) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (1/4)(125 + 43&radic;5) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Begin with a regular Icosahedron model. Apply a 'bevel' or 'chamfer' operation to its 12 vertices. Set the bevel amount to cut one-third of the way along each edge from the vertex. This transforms the 20 original triangular faces into hexagons and creates 12 new pentagonal faces at the vertices, perfectly matching the pattern of a soccer ball.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 7,
+  "shape": "Truncated Icosahedron",
+  "concept": "network_packet",
+  "payload": {
+    "headers_pentagons": {
+      "source_ip": "192.168.1.10",
+      "dest_ip": "203.0.113.5",
+      "protocol": "TCP"
+    },
+    "data_hexagons": [
+      { "segment": 1, "data": "..." },
+      { "segment": 2, "data": "..." }
+    ]
+  }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Tier 3: The Compound Concepts -->
+                <section id="tier-3" class="content-section mb-8 hidden">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Tier 3: The Compound Concepts</h2>
+                    <p class="text-lg leading-relaxed mb-6">
+                        Used for encoding compound ideas, full sentences, or complex events with multiple interacting parts.
+                    </p>
+                    <!-- Rhombicuboctahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 8: Rhombicuboctahedron</h3>
+                        <p class="mb-4">Represents a mix of fundamental data (triangles) and structured data (squares).</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-rhombicuboctahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This shape describes a complex event with defined parameters and fundamental truths. The 18 square faces are used to store the clearly defined, measurable parameters of the event. The 8 triangular faces store the underlying, fundamental concepts or physical laws that govern the event.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>24</td></tr>
+                                    <tr><td>Edges</td><td>48</td></tr>
+                                    <tr><td>Faces</td><td>26 (8 Triangles, 18 Squares)</td></tr>
+                                    <tr><td>Math</td><td>An expansion (or cantellation) of a cube or octahedron.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = (18 + 2&radic;3) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (1/3)(12 + 10&radic;2) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Start with a Cube. Apply an 'expand' operation, which pulls each face outwards from the center. This creates gaps along the original edges and at the original vertices. Fill the 12 edge-gaps with new square faces and the 8 vertex-gaps with new triangular faces to complete the solid.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 8,
+  "shape": "Rhombicuboctahedron",
+  "concept": "particle_collision_event",
+  "payload": {
+    "parameters_squares": [
+      { "param": "energy_level_gev", "value": 13000 },
+      { "param": "particle_type_1", "value": "proton" },
+      { "param": "particle_type_2", "value": "proton" }
+    ],
+    "fundamentals_triangles": [
+      { "law": "Conservation of Momentum" },
+      { "law": "Conservation of Energy" }
+    ]
+  }
+}</code></pre>
+                    </div>
+                    <!-- Icosidodecahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 9: Icosidodecahedron</h3>
+                        <p class="mb-4">Represents a high-level domain (pentagons) combined with many fundamental facets (triangles).</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-icosidodecahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This shape encodes a complex theory or narrative. The 12 pentagonal faces hold the core principles or major plot points of the narrative. The 20 triangular faces hold the numerous supporting details, evidence, or minor events that flesh out and connect the core principles.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>30</td></tr>
+                                    <tr><td>Edges</td><td>60</td></tr>
+                                    <tr><td>Faces</td><td>32 (20 Triangles, 12 Pentagons)</td></tr>
+                                    <tr><td>Math</td><td>A rectification (deep truncation) of an icosahedron or dodecahedron.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = (5&radic;3 + 3&radic;(25 + 10&radic;5)) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (1/6)(45 + 17&radic;5) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This is the dual-truncation of an Icosahedron and a Dodecahedron. Start with either solid and apply a 'bevel' or 'chamfer' to its vertices. Set the bevel amount to cut exactly to the midpoint of each edge. The original faces will shrink, and new faces will be created from the vertices, resulting in a perfect mix of 20 triangles and 12 pentagons.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 9,
+  "shape": "Icosidodecahedron",
+  "concept": "theory_of_evolution",
+  "payload": {
+    "core_principles_pentagons": [
+      { "face": 0, "principle": "Natural Selection" },
+      { "face": 1, "principle": "Common Descent" }
+    ],
+    "supporting_details_triangles": [
+      { "face": 0, "detail": "Fossil Record Evidence" },
+      { "face": 1, "detail": "Genetic Homology" }
+    ]
+  }
+}</code></pre>
+                    </div>
+                    <!-- Truncated Cuboctahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 10: Truncated Cuboctahedron</h3>
+                        <p class="mb-4">A "maximal information" packet, encoding a highly complex event or system.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-truncated-cuboctahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            For maximum information density, its three face types store three distinct classes of data. The 6 octagonal faces hold high-level contextual information. The 8 hexagonal faces hold relational or process-oriented data. The 12 square faces hold specific, granular, and quantitative data points.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>48</td></tr>
+                                    <tr><td>Edges</td><td>72</td></tr>
+                                    <tr><td>Faces</td><td>26 (12 Squares, 8 Hexagons, 6 Octagons)</td></tr>
+                                    <tr><td>Math</td><td>A truncation of a cuboctahedron. Also called a Great Rhombicuboctahedron.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p><strong>Surface Area (A):</strong> A = 12(2 + 2&radic;2 + &radic;3) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> V = (22 + 14&radic;2) &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Begin with a Cuboctahedron model. Apply a 'bevel' or 'chamfer' operation to all 12 of its vertices. This complex truncation transforms the original square faces into octagons, the original triangular faces into hexagons, and introduces 12 new square faces at the former vertices.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 10,
+  "shape": "Truncated Cuboctahedron",
+  "concept": "corporate_merger_event",
+  "payload": {
+    "context_octagons": [ { "context": "Regulatory Environment" } ],
+    "processes_hexagons": [ { "process": "Shareholder Vote" } ],
+    "data_points_squares": [ { "metric": "Final Valuation", "value": "4.5B USD" } ]
+  }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Tier 4: The Chiral Qualifiers -->
+                <section id="tier-4" class="content-section mb-8 hidden">
+                    <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Tier 4: The Chiral Qualifiers</h2>
+                    <p class="text-lg leading-relaxed mb-6">
+                        These shapes have "handedness" (chirality), allowing the encoding of perspective, causality, or intrinsic bias.
+                    </p>
+                     <!-- Snub Cube -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 11: Snub Cube</h3>
+                        <p class="mb-4">A structured concept (Cube) with an inherent directional twist or bias.</p>
+                         <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-snub-cube" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            The 6 square faces store the core structured data of an event. The chirality (a root-level property of the object) encodes the perspective or bias (e.g., 'cause-to-effect' vs 'effect-to-cause'). The 32 triangular faces store the transitional or "flow" data that connects the structured points, representing the process of the biased view.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>24</td></tr>
+                                    <tr><td>Edges</td><td>60</td></tr>
+                                    <tr><td>Faces</td><td>38 (32 Triangles, 6 Squares)</td></tr>
+                                    <tr><td>Math</td><td>A snubification (or cantellation-alternation) of a cube.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                           <p class="text-sm">Note: Exact formulas require solving cubic equations. Below are standard numerical forms.</p>
+                            <p><strong>Surface Area (A):</strong> A = (6 + 8&radic;3) &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> &asymp; 7.889 &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This is a 'snubification' operation. Start with a Cube's 6 faces. Pull them apart and twist each one slightly in the same direction (e.g., clockwise) around its center. Then, bridge the gaps between these twisted faces by generating 32 new triangular faces. The direction of the twist determines if the result is left- or right-handed.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 11,
+  "shape": "Snub Cube",
+  "concept": "causal_reasoning",
+  "chirality": "right-handed",
+  "payload": {
+    "structured_points_squares": [
+      { "point": "A", "state": "Lightning Strike" },
+      { "point": "B", "state": "Forest Fire" }
+    ],
+    "causal_flow_triangles": [
+      { "flow_step": 1, "process": "Ignition" },
+      { "flow_step": 2, "process": "Spread" }
+    ]
+  }
+}</code></pre>
+                    </div>
+                    <!-- Snub Dodecahedron -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-green-300 mb-2">ID 12: Snub Dodecahedron</h3>
+                        <p class="mb-4">A high-level domain (Dodecahedron) with an inherent chiral quality.</p>
+                        <div class="three-canvas-container mt-4 mb-4">
+                            <div id="view-snub-dodecahedron" class="three-canvas"></div>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Latent Space Data Storage</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            This shape encodes a highly nuanced argument. The 12 pentagonal faces hold the main arguments or theses. The object's chirality represents the overall stance (e.g., 'pro' or 'con'). The vast array of 80 triangular faces holds the intricate web of supporting evidence, counter-arguments, and logical connections that form the body of the argument.
+                        </p>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Geometric Properties</h4>
+                        <div class="overflow-x-auto">
+                           <table class="property-table">
+                                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Vertices</td><td>60</td></tr>
+                                    <tr><td>Edges</td><td>150</td></tr>
+                                    <tr><td>Faces</td><td>92 (80 Triangles, 12 Pentagons)</td></tr>
+                                    <tr><td>Math</td><td>A snubification of a dodecahedron.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Key Formulas (edge length = a)</h4>
+                        <div class="text-green-400 space-y-1 bg-gray-900/50 p-4 rounded-md">
+                            <p class="text-sm">Note: Exact formulas are highly complex. Below are standard numerical forms.</p>
+                            <p><strong>Surface Area (A):</strong> &asymp; 100.99 &middot; a&sup2;</p>
+                            <p><strong>Volume (V):</strong> &asymp; 37.61 &middot; a&sup3;</p>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-300 mt-6 mb-2">Construction Guide</h4>
+                        <p class="text-green-400 leading-relaxed">
+                            Perform a 'snubification' on a Dodecahedron. Separate its 12 pentagonal faces, twist each slightly in the same direction, and then fill the resulting gaps. This requires generating 80 new triangular faces to bridge the twisted pentagons. The result is one of the most complex and beautiful Archimedean solids, with a distinct chirality.
+                        </p>
+                        <pre class="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto mt-4"><code>{
+  "id": 12,
+  "shape": "Snub Dodecahedron",
+  "concept": "moral_argument_trolley_problem",
+  "chirality": "utilitarian_stance",
+  "payload": {
+    "theses_pentagons": [
+      { "thesis": "Act to maximize well-being." },
+      { "thesis": "Inaction is also a choice." }
+    ],
+    "nuances_triangles": [
+      { "nuance": "Counter-argument from deontology." },
+      { "nuance": "Variable of personal relationship to victims." }
+    ]
+  }
+}</code></pre>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // --- NAVIGATION SCRIPT ---
+        document.addEventListener('DOMContentLoaded', function () {
+            const navigation = document.getElementById('navigation');
+            const contentContainer = document.getElementById('content-container');
+            const sections = contentContainer.querySelectorAll('.content-section');
+            const sectionData = [
+                { id: 'tier-1', title: 'Tier 1: Primitives' },
+                { id: 'tier-2', title: 'Tier 2: Modifiers' },
+                { id: 'tier-3', title: 'Tier 3: Compounds' },
+                { id: 'tier-4', title: 'Tier 4: Qualifiers' }
+            ];
+
+            // Populate navigation
+            sectionData.forEach((data, index) => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = data.title;
+                link.dataset.target = data.id;
+                link.className = 'nav-link block w-full text-left p-2 rounded-md transition-colors duration-200 hover:bg-green-800/50 text-green-400';
+                navigation.appendChild(link);
+            });
+
+            const navLinks = navigation.querySelectorAll('.nav-link');
+
+            function styleActiveLink(activeLink) {
+                navLinks.forEach(link => {
+                    link.classList.remove('bg-green-700/70', 'text-green-100', 'font-semibold');
+                });
+                if (activeLink) {
+                   activeLink.classList.add('bg-green-700/70', 'text-green-100', 'font-semibold');
+                }
+            }
+
+            function showContent(targetId) {
+                sections.forEach(section => {
+                    section.classList.toggle('hidden', section.id !== targetId);
+                });
+            }
+
+            navigation.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetLink = e.target.closest('.nav-link');
+                if (targetLink) {
+                    const targetId = targetLink.dataset.target;
+                    showContent(targetId);
+                    styleActiveLink(targetLink);
+                    // Re-initialize viewers in the now-visible section
+                    initThreeDViews(document.getElementById(targetId));
+                }
+            });
+
+            // Initialize first tab
+            const firstLink = navLinks[0];
+            styleActiveLink(firstLink);
+            showContent(firstLink.dataset.target);
+            initThreeDViews(document.getElementById(firstLink.dataset.target));
+        });
+
+        // --- 3D VIEW SCRIPT ---
+        const runningAnimations = new Map();
+
+        function initThreeDViews(containerElement) {
+            const viewers = containerElement.querySelectorAll('.three-canvas');
+            viewers.forEach(viewer => {
+                // Only initialize if it hasn't been already
+                if (!runningAnimations.has(viewer.id)) {
+                    setupThreeDView(viewer);
+                }
+            });
+        }
+
+        function setupThreeDView(container) {
+            // Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 3;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Material
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x34d399, // A nice green
+                wireframe: true,
+            });
+
+            // Geometry
+            let geometry;
+            // Note: For many Archimedean solids, three.js does not have built-in geometries.
+            // I am using approximations for visual demonstration purposes.
+            switch (container.id) {
+                case 'view-tetrahedron':
+                    geometry = new THREE.TetrahedronGeometry(1.5);
+                    break;
+                case 'view-cube':
+                    geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                    break;
+                case 'view-octahedron':
+                    geometry = new THREE.OctahedronGeometry(1.5);
+                    break;
+                case 'view-icosahedron':
+                    geometry = new THREE.IcosahedronGeometry(1.5);
+                    break;
+                case 'view-dodecahedron':
+                    geometry = new THREE.DodecahedronGeometry(1.5);
+                    break;
+                case 'view-truncated-tetrahedron':
+                    geometry = new THREE.TetrahedronGeometry(1.5, 1);
+                    break;
+                case 'view-cuboctahedron':
+                     geometry = new THREE.OctahedronGeometry(1.2, 1);
+                    break;
+                case 'view-truncated-icosahedron':
+                    geometry = new THREE.IcosahedronGeometry(1.5, 1);
+                    break;
+                case 'view-rhombicuboctahedron':
+                    geometry = new THREE.BoxGeometry(1.2, 1.2, 1.2, 2, 2, 2);
+                    break;
+                case 'view-icosidodecahedron':
+                    geometry = new THREE.DodecahedronGeometry(1.5, 1);
+                    break;
+                case 'view-truncated-cuboctahedron':
+                     geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5, 2, 2, 2);
+                    break;
+                case 'view-snub-cube':
+                     geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5, 4, 4, 4);
+                    break;
+                case 'view-snub-dodecahedron':
+                    geometry = new THREE.DodecahedronGeometry(1.5, 2);
+                    break;
+                default:
+                    geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            }
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            // Animation loop
+            const animate = () => {
+                if (!runningAnimations.has(container.id)) return;
+                requestAnimationFrame(animate);
+                mesh.rotation.x += 0.001;
+                mesh.rotation.y += 0.002;
+                renderer.render(scene, camera);
+            };
+
+            // Mouse controls for rotation
+            let isMouseDown = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            container.addEventListener('mousedown', e => { isMouseDown = true; previousMousePosition = { x: e.offsetX, y: e.offsetY }; });
+            container.addEventListener('mouseup', e => { isMouseDown = false; });
+            container.addEventListener('mouseleave', e => { isMouseDown = false; });
+            container.addEventListener('mousemove', e => {
+                if (!isMouseDown) return;
+                const deltaMove = {
+                    x: e.offsetX - previousMousePosition.x,
+                    y: e.offsetY - previousMousePosition.y
+                };
+                mesh.rotation.y += deltaMove.x * 0.005;
+                mesh.rotation.x += deltaMove.y * 0.005;
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+            // Mouse control for zoom (scrolling)
+            container.addEventListener('wheel', e => {
+                e.preventDefault();
+                camera.position.z += e.deltaY * 0.01;
+                // Clamp zoom to prevent clipping or disappearing
+                camera.position.z = Math.min(Math.max(1.5, camera.position.z), 10);
+            });
+
+            // Handle window resize
+            const onResize = () => {
+                if(container.clientWidth > 0 && container.clientHeight > 0) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            };
+            const resizeObserver = new ResizeObserver(onResize);
+            resizeObserver.observe(container);
+
+            // Start animation
+            runningAnimations.set(container.id, { 
+                stop: () => {
+                    resizeObserver.disconnect();
+                    runningAnimations.delete(container.id);
+                } 
+            });
+            animate();
+        }
+    </script>
+</body>
+</html>

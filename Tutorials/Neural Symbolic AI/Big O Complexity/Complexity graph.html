@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Interactive Big-O Complexity</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for animation -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+          MathJax.startup.promise.then(() => {
+            setTimeout(() => MathJax.typeset(), 200);
+          });
+        }
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Custom styles for MathJax to match the theme */
+        .mjx-chtml { color: #A3E635; } /* lime-400 */
+        /* Style for the slider thumb */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #BEF264; /* lime-300 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #166534; /* green-800 */
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #BEF264;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #166534;
+        }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8" style="font-family: 'Inter', sans-serif;">
+
+    <h1 class="text-4xl font-bold text-green-200 mb-6 text-center">Tutorial: Interactive Big-O Complexity</h1>
+    <p class="text-lg text-center text-green-400 mb-10 max-w-4xl mx-auto">
+        An animated guide to understanding how the efficiency of algorithms changes as input size grows. Use the legend or the explorer below to step through each complexity class.
+    </p>
+
+    <div class="max-w-5xl mx-auto">
+
+        <section class="mb-8">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">The Animated Graph</h2>
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <canvas id="complexityChart"></canvas>
+            </div>
+             <div class="text-center mt-4">
+                <button id="replayButton" class="bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded-lg transition-colors">
+                    Replay Animation
+                </button>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Understanding the Curves</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                Each line on the graph represents a different "order" of complexity, commonly expressed using Big-O notation. Here’s what each one means:
+            </p>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-2xl font-semibold text-green-200">1. Constant Time - $O(1)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        The algorithm takes the same amount of time regardless of the input size. This is the holy grail of efficiency.
+                        <br><strong>Example:</strong> Accessing an element in an array by its index.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-green-200">2. Logarithmic Time - $O(\log n)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        The time taken increases very slowly as the input size grows. The algorithm's runtime is proportional to the logarithm of the input size. This is extremely efficient for large datasets.
+                        <br><strong>Example:</strong> Finding an element in a sorted array using binary search.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-green-200">3. Linear Time - $O(n)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        The runtime grows in direct proportion to the input size. If the input doubles, the time taken doubles. This is a common and generally acceptable complexity.
+                        <br><strong>Example:</strong> Finding the largest element in an unsorted array.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-green-200">4. Log-Linear Time - $O(n \log n)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        Slightly worse than linear time. This complexity often appears in efficient sorting algorithms. It scales well but is noticeably slower than linear time for very large inputs.
+                        <br><strong>Example:</strong> Efficient sorting algorithms like Merge Sort or Quick Sort.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-green-200">5. Quadratic Time - $O(n^2)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        The runtime is proportional to the square of the input size. If the input size doubles, the runtime quadruples. This becomes slow very quickly and is impractical for large datasets.
+                        <br><strong>Example:</strong> Comparing every element in a list to every other element (e.g., a simple bubble sort).
+                    </p>
+                </div>
+                 <div>
+                    <h3 class="text-2xl font-semibold text-green-200">6. Exponential Time - $O(2^n)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        The runtime doubles with each addition to the input size. These algorithms are only feasible for very small input sizes.
+                        <br><strong>Example:</strong> Solving the Traveling Salesman problem using a brute-force approach.
+                    </p>
+                </div>
+                 <div>
+                    <h3 class="text-2xl font-semibold text-green-200">7. Factorial Time - $O(n!)$</h3>
+                    <p class="text-lg leading-relaxed mt-2">
+                        The cost grows astronomically. Infeasible for all but the smallest values of N.
+                        <br><strong>Example:</strong> Generating all possible permutations of a list.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Step-by-Step Calculation Explorer</h2>
+            <div class="bg-gray-900 p-6 rounded-lg">
+                <div id="explorer-content" class="text-center">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button id="prevButton" class="bg-green-700 hover:bg-green-800 text-green-100 font-bold py-2 px-4 rounded-lg transition-colors">Previous</button>
+                    <div class="flex-grow mx-4">
+                         <label for="n-slider" class="block text-center text-green-300 mb-2">Input Size N = <span id="n-value-display">10</span></label>
+                         <input id="n-slider" type="range" min="1" max="20" value="10" class="w-full h-2 bg-green-900 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <button id="nextButton" class="bg-green-700 hover:bg-green-800 text-green-100 font-bold py-2 px-4 rounded-lg transition-colors">Next</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('complexityChart').getContext('2d');
+        let chart;
+        let animationTimers = [];
+
+        // --- Helper Functions ---
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+                if (result > 100000) return Infinity; // Cap to prevent overflow
+            }
+            return result;
+        }
+
+        const explorerData = [
+            {
+                name: 'Constant Time',
+                formula: 'O(1)',
+                calc: n => 1,
+                color: '#10B981',
+            },
+            {
+                name: 'Logarithmic Time',
+                formula: 'O(\\log n)',
+                calc: n => Math.log2(n),
+                color: '#34D399',
+            },
+            {
+                name: 'Linear Time',
+                formula: 'O(n)',
+                calc: n => n,
+                color: '#6EE7B7',
+            },
+            {
+                name: 'Log-Linear Time',
+                formula: 'O(n \\log n)',
+                calc: n => n * Math.log2(n),
+                color: '#FBBF24',
+            },
+            {
+                name: 'Quadratic Time',
+                formula: 'O(n^2)',
+                calc: n => n * n,
+                color: '#F87171',
+            },
+            {
+                name: 'Exponential Time',
+                formula: 'O(2^n)',
+                calc: n => Math.pow(2, n),
+                color: '#EC4899',
+            },
+            {
+                name: 'Factorial Time',
+                formula: 'O(n!)',
+                calc: n => factorial(n),
+                color: '#A78BFA',
+            }
+        ];
+
+        // --- Chart Data and Configuration ---
+        const labels = Array.from({ length: 21 }, (_, i) => i);
+        const maxSteps = 150;
+        const defaultBorderWidth = 2;
+        const highlightedBorderWidth = 6;
+
+        const visualDatasets = explorerData.map(d => ({
+            label: `${d.formula.replace(/\\/g, '')} - ${d.name}`,
+            data: d.name === 'Constant Time' ? labels.map(() => 1) :
+                  d.name === 'Logarithmic Time' ? labels.map(n => n > 0 ? Math.log2(n) * 5 : 0) :
+                  d.name === 'Linear Time' ? labels.map(n => n * 4) :
+                  d.name === 'Log-Linear Time' ? labels.map(n => n > 0 ? n * Math.log2(n) * 1.5 : 0) :
+                  d.name === 'Quadratic Time' ? labels.map(n => 0.4 * n * n) :
+                  d.name === 'Exponential Time' ? labels.map(n => Math.pow(2, n) * 0.1) :
+                  labels.map(n => factorial(n) * 0.05),
+            borderColor: d.color,
+            borderWidth: defaultBorderWidth,
+            pointRadius: 0,
+            tension: 0.1,
+        }));
+
+
+        const chartConfig = {
+            type: 'line',
+            data: { labels: labels, datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#A3E635', // Lime 400
+                            font: { size: 14 }
+                        },
+                        onClick: (e, legendItem, legend) => {
+                            currentIndex = legendItem.datasetIndex;
+                            updateExplorer();
+                        }
+                    },
+                    title: { display: true, text: 'Growth of Algorithmic Complexities', color: '#D9F99D', font: { size: 18 } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Input Size (N)', color: '#A3E635' }, ticks: { color: '#A3E635' }, grid: { color: 'rgba(74, 222, 128, 0.2)' } },
+                    y: { title: { display: true, text: 'Number of Steps (Cost)', color: '#A3E635' }, ticks: { color: '#A3E635' }, grid: { color: 'rgba(74, 222, 128, 0.2)' }, min: 0, max: maxSteps }
+                },
+                animation: { duration: 1500, easing: 'easeInOutQuad' }
+            }
+        };
+
+        function playAnimation() {
+            animationTimers.forEach(timerId => clearTimeout(timerId));
+            animationTimers = [];
+            if (chart) chart.destroy();
+
+            const newChartConfig = JSON.parse(JSON.stringify(chartConfig));
+            chart = new Chart(ctx, newChartConfig);
+            
+            let delay = 0;
+            const datasetsToAnimate = JSON.parse(JSON.stringify(visualDatasets));
+            
+            datasetsToAnimate.forEach(dataset => {
+                const timerId = setTimeout(() => {
+                    if (chart && chart.data) {
+                        chart.data.datasets.push(dataset);
+                        chart.update('none');
+                    }
+                }, delay);
+                animationTimers.push(timerId);
+                delay += 400;
+            });
+        }
+
+        // --- Explorer Logic ---
+        let currentIndex = 0;
+        const explorerContent = document.getElementById('explorer-content');
+        const nSlider = document.getElementById('n-slider');
+        const nValueDisplay = document.getElementById('n-value-display');
+
+        function updateExplorer() {
+            const item = explorerData[currentIndex];
+            const n = parseInt(nSlider.value);
+            const cost = item.calc(n);
+            const displayCost = Number.isFinite(cost) ? cost.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'Extremely Large';
+
+            const description = explorerData[currentIndex].name === 'Constant Time' ? 'The cost is always the same, no matter the input size N. This is the most efficient complexity.' :
+                                explorerData[currentIndex].name === 'Logarithmic Time' ? 'The cost increases very slowly as N grows. Doubling N only adds one step.' :
+                                explorerData[currentIndex].name === 'Linear Time' ? 'The cost grows in a direct 1-to-1 relationship with the input size N.' :
+                                explorerData[currentIndex].name === 'Log-Linear Time' ? 'A common complexity for efficient sorting algorithms. Scales well but is worse than linear.' :
+                                explorerData[currentIndex].name === 'Quadratic Time' ? 'The cost is the square of N. Doubling N quadruples the cost. Quickly becomes impractical.' :
+                                explorerData[currentIndex].name === 'Exponential Time' ? 'The cost doubles with each new item added to the input. Only feasible for very small N.' :
+                                'The cost grows astronomically. Infeasible for all but the smallest values of N.';
+
+            explorerContent.innerHTML = `
+                <h3 class="text-2xl font-bold" style="color: ${item.color};">${item.name}</h3>
+                <div class="text-4xl my-4 text-lime-300">$\\bf{${item.formula}}$</div>
+                <p class="text-lg text-green-400 leading-relaxed mb-4">${description}</p>
+                <div class="bg-gray-800 p-4 rounded-lg text-xl">
+                    <p>For N = <span class="font-bold text-white">${n}</span>, the calculated cost is approximately:</p>
+                    <p class="text-3xl font-mono text-lime-300 mt-2">${displayCost}</p>
+                </div>
+            `;
+            MathJax.typesetPromise([explorerContent]);
+
+            if (chart && chart.data.datasets.length) {
+                chart.data.datasets.forEach((dataset, index) => {
+                    dataset.borderWidth = (index === currentIndex) ? highlightedBorderWidth : defaultBorderWidth;
+                });
+                chart.update('none');
+            }
+        }
+
+        document.getElementById('prevButton').addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + explorerData.length) % explorerData.length;
+            updateExplorer();
+        });
+
+        document.getElementById('nextButton').addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % explorerData.length;
+            updateExplorer();
+        });
+
+        nSlider.addEventListener('input', () => {
+            nValueDisplay.textContent = nSlider.value;
+            updateExplorer();
+        });
+
+        document.getElementById('replayButton').addEventListener('click', () => {
+            playAnimation();
+            setTimeout(() => {
+                currentIndex = 0;
+                updateExplorer();
+            }, 500);
+        });
+
+        // Initial setup
+        playAnimation();
+        setTimeout(() => {
+             updateExplorer();
+        }, 500);
+
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Mathematical Basis for Neuron Pruning - 3D State Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        MathJax = {
+          tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+          svg: { fontCache: 'global' }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #34d399; cursor: pointer; border-radius: 50%; margin-top: -6px; }
+        input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #34d399; cursor: pointer; border-radius: 50%; }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 8px; background: #064e3b; border-radius: 5px; outline: none; }
+        .custom-select { background-color: #064e3b; border: 1px solid #047857; color: #a7f3d0; padding: 0.5rem 1rem; border-radius: 0.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236ee7b7' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; }
+        #quaternion-chart canvas { display: block; width: 100%; height: 100%; }
+        .chart-container { min-height: 400px; }
+    </style>
+</head>
+<body class="bg-black text-green-500 p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-screen-2xl mx-auto">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-green-300">Symbolic Evolution of a Multi-Sequence System</h1>
+            <p class="text-xl mt-4 text-green-500">Visualizing a System's "Wave Function" with Quaternions</p>
+        </header>
+
+        <section class="p-6 bg-gray-900 border border-green-800 rounded-lg">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Simulation Controls</h2>
+            <p class="text-lg leading-relaxed mb-4">
+               This simulation models the learning process of a complex system with three parallel information pathways. You can control the learning parameters, execution mode, and run automated cycles to observe how the system's state evolves over time.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border border-green-800 rounded-lg bg-gray-900/50">
+                <div>
+                    <label for="execution-mode" class="block mb-2 font-semibold text-green-300">Execution Mode</label>
+                    <select id="execution-mode" class="custom-select w-full">
+                        <option value="sequential">Sequential</option>
+                        <option value="parallel">Parallel</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="nodes-per-circle" class="block mb-2 font-semibold text-green-300">Nodes Per Sequence</label>
+                    <select id="nodes-per-circle" class="custom-select w-full">
+                        <option value="3">3</option>
+                        <option value="6">6</option>
+                        <option value="9">9</option>
+                        <option value="12" selected>12</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="iteration-cycles" class="block mb-2 font-semibold text-green-300">Iteration Cycles</label>
+                    <select id="iteration-cycles" class="custom-select w-full">
+                        <option value="1">1</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="360">360</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="automate-button" class="bg-green-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-600 transition-colors w-full">Start Automation</button>
+                </div>
+                <div class="flex items-end">
+                    <button id="reset-button" class="bg-blue-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors w-full">Reset Simulation</button>
+                </div>
+            </div>
+
+             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                 <div class="border border-green-700 rounded-md p-2 bg-black chart-container">
+                     <div id="sequence-simulation"></div>
+                 </div>
+                 <div class="border border-green-700 rounded-md p-2 bg-black chart-container flex flex-col">
+                     <div class="grid md:grid-cols-2 gap-x-8 gap-y-4 p-4">
+                         <div>
+                             <div class="flex justify-between font-semibold text-green-300 mb-2 text-sm"><span>Forward Drift</span><span id="forward-drift-value">0.10</span></div>
+                             <input type="range" id="forward-drift-slider" min="0" max="1" value="0.1" step="0.05">
+                         </div>
+                         <div>
+                             <div class="flex justify-between font-semibold text-green-300 mb-2 text-sm"><span>Reverse Drift</span><span id="reverse-drift-value">0.10</span></div>
+                             <input type="range" id="reverse-drift-slider" min="0" max="1" value="0.1" step="0.05">
+                         </div>
+                          <div class="col-span-full">
+                             <div class="flex justify-between font-semibold text-green-300 mb-2 text-sm"><span>Uncertainty</span><span id="uncertainty-value">0.20</span></div>
+                             <input type="range" id="uncertainty-slider" min="0" max="1" value="0.2" step="0.05">
+                         </div>
+                          <div class="col-span-full text-center">
+                             <button id="next-frame-button" class="bg-green-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors w-full">Manual Step</button>
+                         </div>
+                    </div>
+                     <div id="learned-state-chart" class="flex-grow"></div>
+                 </div>
+                 <div class="border border-green-700 rounded-md p-2 bg-black chart-container relative">
+                     <div id="quaternion-chart" class="w-full h-full"></div>
+                     <div class="absolute top-2 left-2 text-xs text-green-300 bg-black/50 p-1 rounded">
+                        <div>X (i): S1 Energy</div>
+                        <div>Y (j): S2 Energy</div>
+                        <div>Z (k): S3 Energy</div>
+                     </div>
+                 </div>
+                 <div class="border border-green-700 rounded-md p-2 bg-black chart-container">
+                    <div id="cycle-log-chart" class="w-full h-full"></div>
+                 </div>
+             </div>
+        </section>
+
+        <section class="p-6 bg-gray-900 border border-green-800 rounded-lg mt-8">
+            <h2 class="text-2xl font-semibold text-green-300 mb-4 border-b border-green-800 pb-2">Visualizing the System State</h2>
+            <div class="grid md:grid-cols-2 gap-8 text-lg">
+                <div>
+                    <h3 class="text-xl font-semibold text-green-300 mb-2">The 3D State-Space Plot</h3>
+                    <p class="leading-relaxed">
+                        This chart provides a holistic, symbolic view of the entire system's state. Instead of tracking individual nodes, we distill their collective energy into a single point in a 3D state-space, where each axis represents the total energy (sum of weights) of a sequence. The path this point takes reveals the system's dynamic behavior.
+                    </p>
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li><strong>Predictable Trajectory:</strong> As the system learns a pattern, the path in this space will become a tight, predictable loop known as an 'attractor'. This indicates stability and a learned state. The more defined the path, the stronger the prediction.</li>
+                        <li><strong>Chaotic Exploration:</strong> A new or uncertain system will show a wide, erratic trajectory as it explores the state-space, searching for a stable pattern. High 'Uncertainty' will cause the path to fluctuate wildly.</li>
+                        <li><strong>State Transitions:</strong> A sudden shift from one stable loop to another signifies a 'phase transition'—the system has abandoned one learned pattern and converged on a new one.</li>
+                    </ul>
+                </div>
+                 <div>
+                    <h3 class="text-xl font-semibold text-green-300 mb-2">The 2D Cycle Energy Log</h3>
+                    <p class="leading-relaxed">
+                       This chart tracks the system's evolution on a macro scale. At the end of each cycle, we calculate the magnitude of the state vector (its distance from the origin in the 3D plot). This value represents the system's total "confidence" or "activation energy".
+                    </p>
+                     <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li><strong>Convergence:</strong> A curve that rises and then flattens indicates the system is learning and converging on a stable energy state. It has become confident in a learned pattern.</li>
+                        <li><strong>Volatility:</strong> A constantly fluctuating curve suggests the system is unstable or the learning parameters are too chaotic for it to find a stable solution.</li>
+                        <li><strong>Catastrophic Forgetting:</strong> A sharp drop in the curve after it was stable could represent a catastrophic forgetting event, where new information or high uncertainty destroys a previously learned pattern.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        function setupSliderListeners() {
+            const sliders = [
+                { sliderId: 'forward-drift-slider', valueId: 'forward-drift-value' },
+                { sliderId: 'reverse-drift-slider', valueId: 'reverse-drift-value' },
+                { sliderId: 'uncertainty-slider', valueId: 'uncertainty-value' }
+            ];
+            sliders.forEach(({ sliderId, valueId }) => {
+                const slider = document.getElementById(sliderId);
+                const valueSpan = document.getElementById(valueId);
+                if (slider && valueSpan) {
+                    valueSpan.textContent = (+slider.value).toFixed(2);
+                    slider.addEventListener('input', () => { valueSpan.textContent = (+slider.value).toFixed(2); });
+                }
+            });
+        }
+
+        function setupMasterSimulation() {
+            // --- D3 Vars ---
+            const d3Containers = {
+                sequence: '#sequence-simulation',
+                weights: '#learned-state-chart',
+                cycles: '#cycle-log-chart'
+            };
+            const d3Svgs = {
+                sequence: d3.select(d3Containers.sequence).append("svg").attr("viewBox", `0 0 600 600`),
+                weights: d3.select(d3Containers.weights).append("svg").attr("viewBox", `0 0 500 400`),
+                cycles: d3.select(d3Containers.cycles).append("svg").attr("viewBox", `0 0 500 400`)
+            };
+            
+            // --- Three.js Vars ---
+            let scene, camera, renderer, controls, trajectoryLine, currentPosMarker;
+            const quaternionHistory = [];
+            
+            // --- State Vars ---
+            let allNodes = [], cycleHistory = [];
+            let currentFrame = 0, currentCycle = 1, totalCycles = 1, nodesPerCircle = 12, executionMode = 'sequential';
+            let simulationFinished = false, isAutomated = false;
+            let automationInterval = null;
+
+            const numCircles = 3;
+            const centralNode = { id: 'Calculation', x: 300, y: 300 };
+            const circleRadius = 100, layoutRadius = 180;
+            const circleCenters = [
+                { x: 300, y: 300 - layoutRadius * 0.8 },
+                { x: 300 - layoutRadius * Math.cos(Math.PI / 6), y: 300 + layoutRadius * Math.sin(Math.PI / 6) },
+                { x: 300 + layoutRadius * Math.cos(Math.PI / 6), y: 300 + layoutRadius * Math.sin(Math.PI / 6) },
+            ];
+            const nodeGroup = d3Svgs.sequence.append("g"), triangleGroup = d3Svgs.sequence.append("g");
+
+            function setupQuaternionChart() {
+                const container = document.getElementById('quaternion-chart');
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setClearColor(0x000000, 0);
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(renderer.domElement);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                camera.position.set(5, 5, 5);
+                controls.update();
+
+                const axesHelper = new THREE.AxesHelper(5);
+                scene.add(axesHelper);
+                
+                scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7.5);
+                scene.add(directionalLight);
+                
+                trajectoryLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
+                scene.add(trajectoryLine);
+
+                currentPosMarker = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshLambertMaterial({color: 0xecfdf5, emissive: 0x6ee7b7}));
+                scene.add(currentPosMarker);
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    const canvas = renderer.domElement;
+                    const width = canvas.clientWidth;
+                    const height = canvas.clientHeight;
+                    if (canvas.width !== width || canvas.height !== height) {
+                        renderer.setSize(width, height, false);
+                        camera.aspect = width / height;
+                        camera.updateProjectionMatrix();
+                    }
+                    controls.update();
+                    renderer.render(scene, camera);
+                };
+                animate();
+            }
+            
+            function initialize() {
+                stopAutomation();
+                currentFrame = 0;
+                currentCycle = 1;
+                simulationFinished = false;
+                d3.select('#next-frame-button').text("Manual Step").classed("bg-blue-800", false).classed("bg-green-800", true);
+                allNodes = [];
+                cycleHistory = [];
+                
+                nodesPerCircle = +d3.select('#nodes-per-circle').node().value;
+                executionMode = d3.select('#execution-mode').node().value;
+                totalCycles = +d3.select('#iteration-cycles').node().value;
+
+                for (let c = 0; c < numCircles; c++) {
+                    for (let i = 0; i < nodesPerCircle; i++) {
+                        const angle = (i / nodesPerCircle) * 2 * Math.PI - Math.PI / 2;
+                        const isForward = i < nodesPerCircle / 2;
+                        const type = isForward ? 'forward' : 'reverse';
+                        const nodeIndexInCircle = isForward ? i : i - Math.floor(nodesPerCircle / 2);
+                        const label = `S${c+1}-${type[0].toUpperCase()}${nodeIndexInCircle + 1}`;
+                        allNodes.push({ id: label, x: circleCenters[c].x + circleRadius * Math.cos(angle), y: circleCenters[c].y + circleRadius * Math.sin(angle), weight: 0.1, circle: c, type: type });
+                    }
+                }
+                
+                quaternionHistory.length = 0;
+                updateQuaternionPlot();
+                drawStaticElements();
+                drawFrame(currentFrame);
+                updateLearnedStateChart();
+                updateCycleChart();
+            }
+
+            function calculateSystemQuaternion() {
+                const energy = [0, 0, 0];
+                allNodes.forEach(node => { energy[node.circle] += node.weight; });
+                const maxEnergy = nodesPerCircle; 
+                return new THREE.Vector3(energy[0] / maxEnergy * 5, energy[1] / maxEnergy * 5, energy[2] / maxEnergy * 5);
+            }
+
+            function updateQuaternionPlot() {
+                const points = quaternionHistory.map(q => new THREE.Vector3(q.x, q.y, q.z));
+                trajectoryLine.geometry.setFromPoints(points);
+                // FIX: Explicitly tell three.js to re-calculate the bounding sphere of the line
+                trajectoryLine.geometry.computeBoundingSphere();
+                if (points.length > 0) {
+                    currentPosMarker.position.copy(points[points.length - 1]);
+                    currentPosMarker.visible = true;
+                } else {
+                    currentPosMarker.visible = false;
+                }
+            }
+            
+            function updateCycleChart() {
+                 const svg = d3Svgs.cycles;
+                 svg.selectAll("*").remove();
+                 const margin = {top: 40, right: 30, bottom: 50, left: 60};
+                 const width = 500 - margin.left - margin.right;
+                 const height = 400 - margin.top - margin.bottom;
+
+                 const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                 
+                 g.append("text").attr("x", width/2).attr("y", -15).attr("text-anchor", "middle").text("Cycle Energy Log").attr("fill", "#a7f3d0");
+
+                 if (cycleHistory.length === 0) return;
+
+                 const x = d3.scaleLinear().domain([1, Math.max(totalCycles, cycleHistory.length)]).range([0, width]);
+                 const y = d3.scaleLinear().domain([0, d3.max(cycleHistory, d => d.magnitude) * 1.1 || 1]).range([height, 0]);
+
+                 g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5)).selectAll("text, line, path").attr("stroke", "#047857").attr("fill", "#a7f3d0");
+                 g.append("g").call(d3.axisLeft(y).ticks(5)).selectAll("text, line, path").attr("stroke", "#047857").attr("fill", "#a7f3d0");
+                 
+                 g.append("path").datum(cycleHistory)
+                    .attr("fill", "none").attr("stroke", "#34d399").attr("stroke-width", 1.5)
+                    .attr("d", d3.line().x(d => x(d.cycle)).y(d => y(d.magnitude)));
+            }
+            
+            function advanceFrame() {
+                if (simulationFinished) { stopAutomation(); return; }
+
+                const forwardDrift = +d3.select('#forward-drift-slider').node().value;
+                const reverseDrift = +d3.select('#reverse-drift-slider').node().value;
+                const uncertainty = +d3.select('#uncertainty-slider').node().value;
+
+                let activeNodes = [];
+                if (executionMode === 'sequential') {
+                   if (currentFrame < allNodes.length) activeNodes.push(allNodes[currentFrame]);
+                } else {
+                   const stepInCircle = currentFrame % nodesPerCircle;
+                   for(let c=0; c<numCircles; c++){ activeNodes.push(allNodes[c * nodesPerCircle + stepInCircle]); }
+                }
+                activeNodes.forEach(node => {
+                    const circleStartIndex = node.circle * nodesPerCircle;
+                    const indexInCircle = allNodes.indexOf(node) % nodesPerCircle;
+                    const prevNodeIndex = circleStartIndex + ((indexInCircle - 1 + nodesPerCircle) % nodesPerCircle);
+                    const prevNode = allNodes[prevNodeIndex];
+                    node.weight += forwardDrift * 0.1;
+                    prevNode.weight += reverseDrift * 0.1;
+                });
+                allNodes.forEach(node => {
+                    node.weight += (Math.random() - 0.5) * uncertainty * 0.1;
+                    node.weight = Math.max(0.01, Math.min(1, node.weight));
+                });
+                
+                quaternionHistory.push(calculateSystemQuaternion());
+                
+                currentFrame++;
+                const cycleLimit = executionMode === 'sequential' ? (nodesPerCircle * numCircles) : nodesPerCircle;
+                
+                if (currentFrame >= cycleLimit) {
+                    const finalQuaternion = quaternionHistory[quaternionHistory.length-1];
+                    cycleHistory.push({ cycle: currentCycle, magnitude: finalQuaternion.length() });
+                    updateCycleChart();
+
+                    if (currentCycle >= totalCycles) {
+                        simulationFinished = true;
+                        stopAutomation();
+                        d3.select('#next-frame-button').text("Finished").classed("bg-green-800", false).classed("bg-blue-800", true);
+                    } else {
+                        currentCycle++;
+                        currentFrame = 0;
+                        quaternionHistory.length = 0; 
+                    }
+                }
+                
+                if(!simulationFinished) {
+                    drawFrame(currentFrame);
+                }
+                updateLearnedStateChart();
+                updateQuaternionPlot();
+            }
+            
+            function drawStaticElements() {
+                const svg = d3Svgs.sequence;
+                nodeGroup.selectAll("*").remove();
+                const displayNodes = [centralNode, ...allNodes];
+                nodeGroup.selectAll("g.static-node").data(displayNodes, d => d.id)
+                    .join(enter => {
+                        const g = enter.append("g").attr("class", "static-node").attr("transform", d => `translate(${d.x}, ${d.y})`);
+                        g.append("circle").attr("r", d => d.id === 'Calculation' ? 25 : 15).attr("stroke", d => d.id === 'Calculation' ? "#6ee7b7" : '#047857').attr("stroke-width", 2).attr("fill", d => d.id === 'Calculation' ? '#16a34a' : '#059669');
+                        g.append("text").text(d => d.id).attr("fill", "#ecfdf5").attr("text-anchor", "middle").attr("dy", d => d.id === 'Calculation' ? 5 : 25).style("font-size", "10px");
+                    });
+            }
+
+            function drawFrame(frameIndex) {
+                triangleGroup.selectAll("*").remove();
+                let activeNodes = [];
+                if (executionMode === 'sequential') {
+                    if (frameIndex < allNodes.length) activeNodes.push(allNodes[frameIndex]);
+                } else {
+                    const stepInCircle = frameIndex % nodesPerCircle;
+                    for (let c = 0; c < numCircles; c++) { activeNodes.push(allNodes[c * nodesPerCircle + stepInCircle]); }
+                }
+
+                let displayNodes = [], frameLinks = [];
+                activeNodes.forEach(activeNode => {
+                    const circleStartIndex = activeNode.circle * nodesPerCircle;
+                    const indexInCircle = allNodes.indexOf(activeNode) % nodesPerCircle;
+                    const prevNodeIndex = circleStartIndex + ((indexInCircle - 1 + nodesPerCircle) % nodesPerCircle);
+                    const prevNode = allNodes[prevNodeIndex];
+                    const activeCircleCenter = circleCenters[activeNode.circle];
+                    const currentNode = { id: `Current-${activeNode.circle}`, x: activeCircleCenter.x, y: activeCircleCenter.y, type: 'current', weight: (activeNode.weight + prevNode.weight) / 2 };
+                    displayNodes.push(currentNode, activeNode, prevNode);
+                    frameLinks.push(
+                        { source: currentNode, target: activeNode, weight: activeNode.weight, type: 'forward' },
+                        { source: currentNode, target: prevNode, weight: prevNode.weight, type: 'reverse' },
+                        { source: currentNode, target: centralNode, weight: currentNode.weight, type: 'coherency' }
+                    );
+                });
+
+                triangleGroup.selectAll("line.frame-link").data(frameLinks).join("line").attr("class", "frame-link").attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y).attr("stroke", d => d.type === 'forward' ? '#34d399' : d.type === 'reverse' ? '#f59e0b' : '#a7f3d0').attr("stroke-width", 2).attr("stroke-dasharray", "4 2");
+                triangleGroup.selectAll("text.frame-text").data(frameLinks).join("text").attr("class", "frame-text").attr("x", d => (d.source.x + d.target.x) / 2).attr("y", d => (d.source.y + d.target.y) / 2).text(d => d.weight.toFixed(2)).attr("fill", "#f0fdf4").attr("text-anchor", "middle").attr("dy", -5).style("font-size", "11px");
+                triangleGroup.selectAll("g.frame-node").data(displayNodes, d => d.id).join("g").attr("class", "frame-node").attr("transform", d => `translate(${d.x},${d.y})`).each(function(d) {
+                    const g = d3.select(this);
+                    const coherency = Math.max(0.01, d.weight || 0.5);
+                    g.append("circle").attr("r", d.type === 'current' ? 22 : 18).attr("stroke", d.type === 'current' ? '#a7f3d0' : (d.type === 'forward' ? '#34d399' : '#f59e0b')).attr("stroke-width", 3).attr("fill", d.type === 'current' ? `hsl(100, 100%, ${Math.min(80, coherency * 150 + 25)}%)` : (d.type === 'forward' ? '#10b981' : '#b45309'));
+                    g.append("text").text(d.id.split('-')[0]).attr("fill", "#000").attr("text-anchor", "middle").attr("dy", 5).style("font-size", "10px");
+                });
+            }
+
+            function updateLearnedStateChart() {
+                const svg = d3Svgs.weights;
+                svg.selectAll("*").remove();
+                const margin = {top: 20, right: 20, bottom: 80, left: 45};
+                const width = 500 - margin.left - margin.right;
+                const height = 400 - margin.top - margin.bottom;
+                const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                const x = d3.scaleBand().domain(allNodes.map(d => d.id)).range([0, width]).padding(0.1);
+                const y = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+
+                g.append("g").call(d3.axisLeft(y).ticks(5).tickSize(-width)).selectAll("line, path").attr("stroke", "#047857").attr("stroke-dasharray", "2,2");
+                g.select(".domain").attr("stroke", "none");
+                g.selectAll("text").attr("fill", "#a7f3d0");
+
+                g.append("g").attr("transform", `translate(0, ${height})`).call(d3.axisBottom(x))
+                    .selectAll("text").attr("transform", "rotate(-65)").style("text-anchor", "end").attr("fill", "#a7f3d0").style("font-size","8px");
+
+                g.selectAll(".bar").data(allNodes).enter().append("rect").attr("class", "bar").attr("x", d => x(d.id)).attr("y", d => y(d.weight)).attr("width", x.bandwidth()).attr("height", d => height - y(d.weight)).attr("fill", d => d.circle === 0 ? '#2dd4bf' : d.circle === 1 ? '#60a5fa' : '#c084fc');
+            }
+
+            function stopAutomation(){
+                if(automationInterval) clearInterval(automationInterval);
+                isAutomated = false;
+                d3.select('#automate-button').text("Start Automation").classed("bg-green-700", true).classed("bg-red-700", false);
+            }
+
+            d3.select('#automate-button').on('click', function(){
+                isAutomated = !isAutomated;
+                if(isAutomated){
+                    d3.select(this).text("Stop Automation").classed("bg-red-700", true).classed("bg-green-700", false);
+                    if(simulationFinished) initialize();
+                    automationInterval = setInterval(advanceFrame, 100);
+                } else {
+                    stopAutomation();
+                }
+            });
+
+            d3.select('#next-frame-button').on('click', () => { if(simulationFinished) { return; } if(!isAutomated) advanceFrame(); });
+            d3.select('#reset-button').on('click', () => { initialize(); });
+            d3.selectAll('#execution-mode, #nodes-per-circle, #iteration-cycles').on('change', () => { initialize(); });
+            
+            setupQuaternionChart();
+            initialize();
+        }
+
+        setupMasterSimulation();
+        setupSliderListeners();
+    });
+</script>
+</body>
+</html>
