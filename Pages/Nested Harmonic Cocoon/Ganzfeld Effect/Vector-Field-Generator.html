@@ -1,0 +1,1045 @@
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interlaced Field Generator | Nested Harmonic Cocoon</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+background: #0a0a0a;
+color: #fff;
+overflow: hidden;
+height: 100vh;
+display: flex;
+}
+
+
+#canvas-container {
+flex: 1;
+position: relative;
+overflow: hidden;
+}
+
+
+canvas {
+display: block;
+width: 100%;
+height: 100%;
+}
+
+
+#controls {
+width: 320px;
+background: rgba(20, 20, 20, 0.95);
+border-left: 1px solid #333;
+overflow-y: auto;
+padding: 0;
+}
+
+
+.control-section {
+border-bottom: 1px solid #333;
+}
+
+
+.section-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 12px 16px;
+background: rgba(30, 30, 30, 0.8);
+cursor: pointer;
+user-select: none;
+transition: background 0.2s;
+}
+
+
+.section-header:hover {
+background: rgba(40, 40, 40, 0.9);
+}
+
+
+.section-header h3 {
+font-size: 13px;
+font-weight: 500;
+color: #fff;
+text-transform: none;
+}
+
+
+.section-toggle {
+font-size: 10px;
+color: #888;
+transition: transform 0.2s;
+}
+
+
+.section-toggle.collapsed {
+transform: rotate(-90deg);
+}
+
+
+.section-content {
+padding: 12px 16px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+
+.section-content.collapsed {
+display: none;
+}
+
+
+.control-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+}
+
+
+.control-label {
+font-size: 12px;
+color: #aaa;
+flex-shrink: 0;
+}
+
+
+.color-input-wrapper {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+
+input[type="color"] {
+width: 32px;
+height: 24px;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+background: transparent;
+}
+
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+padding: 0;
+}
+
+
+input[type="color"]::-webkit-color-swatch {
+border: 1px solid #555;
+border-radius: 4px;
+}
+
+
+.color-value {
+font-size: 11px;
+color: #888;
+font-family: monospace;
+min-width: 60px;
+text-align: right;
+}
+
+
+.slider-wrapper {
+display: flex;
+align-items: center;
+gap: 10px;
+flex: 1;
+}
+
+
+input[type="range"] {
+flex: 1;
+height: 4px;
+-webkit-appearance: none;
+background: #444;
+border-radius: 2px;
+outline: none;
+}
+
+
+input[type="range"]::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 14px;
+height: 14px;
+background: #fff;
+border-radius: 50%;
+cursor: pointer;
+transition: transform 0.1s;
+}
+
+
+input[type="range"]::-webkit-slider-thumb:hover {
+transform: scale(1.1);
+}
+
+
+.slider-value {
+font-size: 11px;
+color: #888;
+font-family: monospace;
+min-width: 50px;
+text-align: right;
+}
+
+
+.checkbox-wrapper {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+
+input[type="checkbox"] {
+width: 18px;
+height: 18px;
+accent-color: #ff0044;
+cursor: pointer;
+}
+
+
+select {
+background: #333;
+color: #fff;
+border: 1px solid #555;
+border-radius: 4px;
+padding: 4px 8px;
+font-size: 12px;
+cursor: pointer;
+min-width: 80px;
+}
+
+
+select:focus {
+outline: none;
+border-color: #ff0044;
+}
+
+
+#title-bar {
+position: absolute;
+top: 0;
+left: 0;
+right: 320px;
+padding: 16px 20px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+pointer-events: none;
+z-index: 10;
+}
+
+
+#title-bar h1 {
+font-size: 18px;
+font-weight: 600;
+color: #fff;
+text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+
+.export-btn {
+pointer-events: auto;
+background: rgba(255, 0, 68, 0.9);
+color: #fff;
+border: none;
+padding: 10px 20px;
+border-radius: 6px;
+font-size: 13px;
+font-weight: 500;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+
+.export-btn:hover {
+background: rgba(255, 0, 68, 1);
+transform: translateY(-1px);
+box-shadow: 0 4px 15px rgba(255, 0, 68, 0.4);
+}
+
+
+/* Scrollbar styling */
+#controls::-webkit-scrollbar {
+width: 6px;
+}
+
+
+#controls::-webkit-scrollbar-track {
+background: #1a1a1a;
+}
+
+
+#controls::-webkit-scrollbar-thumb {
+background: #444;
+border-radius: 3px;
+}
+
+
+#controls::-webkit-scrollbar-thumb:hover {
+background: #555;
+}
+</style>
+</head>
+<body>
+<div style="display:flex; flex-direction:column; width:100%;">
+<div style="flex-shrink:0; background:#000; border-bottom:1px solid #333; padding:6px 14px; font-size:11px; color:#4ade80; font-family: 'Courier New', monospace; display:flex; justify-content:space-between; align-items:center;">
+<a href="index.html" style="color:#4ade80; text-decoration:none;">&larr; GANZFELD EFFECT</a>
+<span style="opacity:0.4; letter-spacing:0.1em;">NESTED HARMONIC COCOON</span>
+</div>
+<div style="flex:1; display:flex; overflow:hidden;">
+<div id="canvas-container">
+<canvas id="vectorCanvas"></canvas>
+<div id="title-bar">
+<h1>Interlaced Field Generator</h1>
+<button class="export-btn" onclick="exportImage()">Export Image</button>
+</div>
+</div>
+
+
+<div id="controls">
+<!-- Colors Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>Colors</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Background Top</span>
+<div class="color-input-wrapper">
+<input type="color" id="bgTop" value="#0a0a1a">
+<span class="color-value" id="bgTopValue">#0a0a1a</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Background Bottom</span>
+<div class="color-input-wrapper">
+<input type="color" id="bgBottom" value="#1a0001">
+<span class="color-value" id="bgBottomValue">#1a0001</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Grid & Nodes</span>
+<div class="color-input-wrapper">
+<input type="color" id="nodeColor" value="#ff0044">
+<span class="color-value" id="nodeColorValue">#ff0044</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Accent Color</span>
+<div class="color-input-wrapper">
+<input type="color" id="accentColor" value="#ffffff">
+<span class="color-value" id="accentColorValue">#ffffff</span>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Grid Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>Grid</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Grid Density</span>
+<div class="slider-wrapper">
+<input type="range" id="gridDensity" min="5" max="25" value="12" step="1">
+<span class="slider-value" id="gridDensityValue">12</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Node Size</span>
+<div class="slider-wrapper">
+<input type="range" id="nodeSize" min="0.1" max="0.8" value="0.35" step="0.01">
+<span class="slider-value" id="nodeSizeValue">0.35</span>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Animation Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>Animation</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Speed</span>
+<div class="slider-wrapper">
+<input type="range" id="speed" min="3" max="10" value="1" step="0.1">
+<span class="slider-value" id="speedValue">1.0</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Pulse Speed</span>
+<div class="slider-wrapper">
+<input type="range" id="pulseSpeed" min="0" max="40" value="8" step="0.5">
+<span class="slider-value" id="pulseSpeedValue">9.9</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Pulse Strength</span>
+<div class="slider-wrapper">
+<input type="range" id="pulseStrength" min="0" max="2" value="0.8" step="0.1">
+<span class="slider-value" id="pulseStrengthValue">0.8</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Glow</span>
+<div class="slider-wrapper">
+<input type="range" id="glow" min="0" max="30" value="15" step="1">
+<span class="slider-value" id="glowValue">15</span>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Movement & Effects Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>Movement & Effects</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Node Movement</span>
+<div class="slider-wrapper">
+<input type="range" id="nodeMovement" min="0" max="50" value="0" step="1">
+<span class="slider-value" id="nodeMovementValue">0</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Rotation</span>
+<div class="slider-wrapper">
+<input type="range" id="rotation" min="0" max="2" value="0" step="0.1">
+<span class="slider-value" id="rotationValue">0.0</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Distortion</span>
+<div class="slider-wrapper">
+<input type="range" id="distortion" min="0" max="100" value="0" step="1">
+<span class="slider-value" id="distortionValue">0</span>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Mirror Effect Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>Mirror Effect</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Active</span>
+<div class="checkbox-wrapper">
+<input type="checkbox" id="mirrorActive">
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Axis</span>
+<select id="mirrorAxis">
+<option value="x">x</option>
+<option value="y">y</option>
+<option value="both">both</option>
+</select>
+</div>
+</div>
+</div>
+
+
+<!-- VHS Effect Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>VHS Effect</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Active</span>
+<div class="checkbox-wrapper">
+<input type="checkbox" id="vhsActive">
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Scanline Intensity</span>
+<div class="slider-wrapper">
+<input type="range" id="scanlineIntensity" min="0" max="1" value="0.2" step="0.05">
+<span class="slider-value" id="scanlineIntensityValue">0.20</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Scanline Count</span>
+<div class="slider-wrapper">
+<input type="range" id="scanlineCount" min="10" max="200" value="80" step="5">
+<span class="slider-value" id="scanlineCountValue">80</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Color Shift</span>
+<div class="slider-wrapper">
+<input type="range" id="colorShift" min="0" max="10" value="2" step="0.5">
+<span class="slider-value" id="colorShiftValue">2.0</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Jitter Amount</span>
+<div class="slider-wrapper">
+<input type="range" id="jitterAmount" min="0" max="5" value="0.5" step="0.1">
+<span class="slider-value" id="jitterAmountValue">0.50</span>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Noise/Glitch Effect Section -->
+<div class="control-section">
+<div class="section-header" onclick="toggleSection(this)">
+<h3>Noise/Glitch Effect</h3>
+<span class="section-toggle">▼</span>
+</div>
+<div class="section-content">
+<div class="control-row">
+<span class="control-label">Active</span>
+<div class="checkbox-wrapper">
+<input type="checkbox" id="glitchActive">
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Pixel Size</span>
+<div class="slider-wrapper">
+<input type="range" id="pixelSize" min="0.1" max="20" value="4" step="0.5">
+<span class="slider-value" id="pixelSizeValue">4</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Noise Intensity</span>
+<div class="slider-wrapper">
+<input type="range" id="noiseIntensity" min="0" max="1" value="0.15" step="0.05">
+<span class="slider-value" id="noiseIntensityValue">0.15</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Glitch Frequency</span>
+<div class="slider-wrapper">
+<input type="range" id="glitchFrequency" min="0" max="1" value="0.15" step="0.05">
+<span class="slider-value" id="glitchFrequencyValue">0.15</span>
+</div>
+</div>
+<div class="control-row">
+<span class="control-label">Glitch Strength</span>
+<div class="slider-wrapper">
+<input type="range" id="glitchStrength" min="0" max="0.5" value="0.08" step="0.01">
+<span class="slider-value" id="glitchStrengthValue">0.08</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<script>
+// Canvas setup
+const canvas = document.getElementById('vectorCanvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+
+
+// Settings object
+const settings = {
+bgTop: '#0a0a1a',
+bgBottom: '#1a0001',
+nodeColor: '#ff0044',
+accentColor: '#ffffff',
+gridDensity: 4,
+nodeSize: 0.35,
+speed: 1,
+pulseSpeed: 8,
+pulseStrength: 0.8,
+glow: 15,
+nodeMovement: 0,
+rotation: 0,
+distortion: 0,
+mirrorActive: false,
+mirrorAxis: 'x',
+vhsActive: false,
+scanlineIntensity: 0.2,
+scanlineCount: 80,
+colorShift: 2,
+jitterAmount: 0.5,
+glitchActive: false,
+pixelSize: 1,
+noiseIntensity: 0.15,
+glitchFrequency: 0.15,
+glitchStrength: 0.08
+};
+
+
+// Resize canvas
+function resizeCanvas() {
+const container = document.getElementById('canvas-container');
+canvas.width = container.clientWidth;
+canvas.height = container.clientHeight;
+}
+
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+
+// Toggle section
+function toggleSection(header) {
+const content = header.nextElementSibling;
+const toggle = header.querySelector('.section-toggle');
+content.classList.toggle('collapsed');
+toggle.classList.toggle('collapsed');
+}
+
+
+// Setup all event listeners
+function setupControls() {
+// Color inputs
+setupColorInput('bgTop', 'bgTopValue');
+setupColorInput('bgBottom', 'bgBottomValue');
+setupColorInput('nodeColor', 'nodeColorValue');
+setupColorInput('accentColor', 'accentColorValue');
+
+
+// Slider inputs
+setupSlider('gridDensity', 'gridDensityValue');
+setupSlider('nodeSize', 'nodeSizeValue');
+setupSlider('speed', 'speedValue');
+setupSlider('pulseSpeed', 'pulseSpeedValue');
+setupSlider('pulseStrength', 'pulseStrengthValue');
+setupSlider('glow', 'glowValue');
+setupSlider('nodeMovement', 'nodeMovementValue');
+setupSlider('rotation', 'rotationValue');
+setupSlider('distortion', 'distortionValue');
+setupSlider('scanlineIntensity', 'scanlineIntensityValue');
+setupSlider('scanlineCount', 'scanlineCountValue');
+setupSlider('colorShift', 'colorShiftValue');
+setupSlider('jitterAmount', 'jitterAmountValue');
+setupSlider('pixelSize', 'pixelSizeValue');
+setupSlider('noiseIntensity', 'noiseIntensityValue');
+setupSlider('glitchFrequency', 'glitchFrequencyValue');
+setupSlider('glitchStrength', 'glitchStrengthValue');
+
+
+// Checkbox inputs
+setupCheckbox('mirrorActive');
+setupCheckbox('vhsActive');
+setupCheckbox('glitchActive');
+
+
+// Select input
+document.getElementById('mirrorAxis').addEventListener('change', (e) => {
+settings.mirrorAxis = e.target.value;
+});
+}
+
+
+function setupColorInput(id, valueId) {
+const input = document.getElementById(id);
+const valueDisplay = document.getElementById(valueId);
+input.addEventListener('input', (e) => {
+settings[id] = e.target.value;
+valueDisplay.textContent = e.target.value;
+});
+}
+
+
+function setupSlider(id, valueId) {
+const input = document.getElementById(id);
+const valueDisplay = document.getElementById(valueId);
+input.addEventListener('input', (e) => {
+const val = parseFloat(e.target.value);
+settings[id] = val;
+valueDisplay.textContent = val.toFixed(id === 'gridDensity' || id === 'glow' || id === 'nodeMovement' || id === 'distortion' || id === 'pixelSize' || id === 'scanlineCount' ? 0 : 2);
+});
+}
+
+
+function setupCheckbox(id) {
+const input = document.getElementById(id);
+input.addEventListener('change', (e) => {
+settings[id] = e.target.checked;
+});
+}
+
+
+// Hex to RGB
+function hexToRgb(hex) {
+const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+return result ? {
+r: parseInt(result[1], 16),
+g: parseInt(result[2], 16),
+b: parseInt(result[3], 16)
+} : { r: 255, g: 0, b: 68 };
+}
+
+
+// Draw gradient background
+function drawBackground() {
+const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+gradient.addColorStop(0, settings.bgTop);
+gradient.addColorStop(1, settings.bgBottom);
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+
+// Draw grid lines
+function drawGrid() {
+const cols = settings.gridDensity;
+const rows = Math.floor(cols * (canvas.height / canvas.width));
+const cellWidth = canvas.width / cols;
+const cellHeight = canvas.height / rows;
+
+
+ctx.strokeStyle = hexToRgba(settings.nodeColor, 0.15);
+ctx.lineWidth = 1;
+
+
+// Vertical lines
+for (let i = 0; i <= cols; i++) {
+const x = i * cellWidth;
+ctx.beginPath();
+ctx.moveTo(x, 0);
+ctx.lineTo(x, canvas.height);
+ctx.stroke();
+}
+
+
+// Horizontal lines
+for (let i = 0; i <= rows; i++) {
+const y = i * cellHeight;
+ctx.beginPath();
+ctx.moveTo(0, y);
+ctx.lineTo(canvas.width, y);
+ctx.stroke();
+}
+}
+
+
+// Helper for rgba
+function hexToRgba(hex, alpha) {
+const rgb = hexToRgb(hex);
+return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+
+// Draw nodes
+function drawNodes() {
+const cols = settings.gridDensity;
+const rows = Math.floor(cols * (canvas.height / canvas.width));
+const cellWidth = canvas.width / cols;
+const cellHeight = canvas.height / rows;
+const baseRadius = Math.min(cellWidth, cellHeight) * settings.nodeSize * 1;
+
+
+const rgb = hexToRgb(settings.nodeColor);
+
+
+for (let row = 0; row < rows; row++) {
+for (let col = 0; col < cols; col++) {
+const centerX = col * cellWidth + cellWidth / 1;
+const centerY = row * cellHeight + cellHeight / 2;
+
+
+// Calculate pulse
+const pulsePhase = (row + col) * 0.3 + time * settings.pulseSpeed * 10;
+const pulse = 1 + Math.sin(pulsePhase) * settings.pulseStrength * 0.3;
+const radius = baseRadius * pulse;
+
+
+// Movement offset
+let offsetX = 0, offsetY = 0;
+if (settings.nodeMovement > 0) {
+offsetX = Math.sin(time * 0.5 + row * 0.5) * settings.nodeMovement;
+offsetY = Math.cos(time * 0.5 + col * 0.5) * settings.nodeMovement;
+}
+
+
+// Distortion
+let distortedX = centerX + offsetX;
+let distortedY = centerY + offsetY;
+
+
+if (settings.distortion > 0) {
+const distX = (distortedX - canvas.width / 2) / canvas.width;
+const distY = (distortedY - canvas.height / 2) / canvas.height;
+distortedX += distX * settings.distortion * Math.sin(time + row * 0.2);
+distortedY += distY * settings.distortion * Math.cos(time + col * 0.2);
+}
+
+
+// Rotation
+if (settings.rotation > 0) {
+const angle = time * settings.rotation * 0.5;
+const dx = distortedX - canvas.width / 2;
+const dy = distortedY - canvas.height / 2;
+distortedX = canvas.width / 2 + dx * Math.cos(angle) - dy * Math.sin(angle);
+distortedY = canvas.height / 2 + dx * Math.sin(angle) + dy * Math.cos(angle);
+}
+
+
+// Draw glow
+if (settings.glow > 0) {
+const glowGradient = ctx.createRadialGradient(
+distortedX, distortedY, 0,
+distortedX, distortedY, radius * (1 + settings.glow * 0.1)
+);
+glowGradient.addColorStop(0, hexToRgba(settings.nodeColor, 0.6));
+glowGradient.addColorStop(0.5, hexToRgba(settings.nodeColor, 0.2));
+glowGradient.addColorStop(1, hexToRgba(settings.nodeColor, 0));
+ctx.fillStyle = glowGradient;
+ctx.beginPath();
+ctx.arc(distortedX, distortedY, radius * (1 + settings.glow * 0.1), 0, Math.PI * 2);
+ctx.fill();
+}
+
+
+// Draw node
+ctx.fillStyle = settings.nodeColor;
+ctx.beginPath();
+ctx.arc(distortedX, distortedY, radius, 0, Math.PI * 2);
+ctx.fill();
+
+
+// Draw accent highlight
+const accentRgb = hexToRgb(settings.accentColor);
+ctx.fillStyle = `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.4)`;
+ctx.beginPath();
+ctx.arc(distortedX - radius * 0.3, distortedY - radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+ctx.fill();
+}
+}
+}
+
+
+// Apply mirror effect
+function applyMirrorEffect() {
+if (!settings.mirrorActive) return;
+
+
+const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const data = imageData.data;
+const width = canvas.width;
+const height = canvas.height;
+
+
+if (settings.mirrorAxis === 'x' || settings.mirrorAxis === 'both') {
+for (let y = 0; y < height; y++) {
+for (let x = 0; x < width / 2; x++) {
+const leftIdx = (y * width + x) * 4;
+const rightIdx = (y * width + (width - 1 - x)) * 4;
+data[rightIdx] = data[leftIdx];
+data[rightIdx + 1] = data[leftIdx + 1];
+data[rightIdx + 2] = data[leftIdx + 2];
+data[rightIdx + 3] = data[leftIdx + 3];
+}
+}
+}
+
+
+if (settings.mirrorAxis === 'y' || settings.mirrorAxis === 'both') {
+for (let y = 0; y < height / 2; y++) {
+for (let x = 0; x < width; x++) {
+const topIdx = (y * width + x) * 4;
+const bottomIdx = ((height - 1 - y) * width + x) * 4;
+data[bottomIdx] = data[topIdx];
+data[bottomIdx + 1] = data[topIdx + 1];
+data[bottomIdx + 2] = data[topIdx + 2];
+data[bottomIdx + 3] = data[topIdx + 3];
+}
+}
+}
+
+
+ctx.putImageData(imageData, 0, 0);
+}
+
+
+// Apply VHS effect
+function applyVHSEffect() {
+if (!settings.vhsActive) return;
+
+
+const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const data = imageData.data;
+const width = canvas.width;
+const height = canvas.height;
+
+
+// Jitter effect
+const jitter = Math.sin(time * 10) * settings.jitterAmount;
+
+
+// Scanlines
+const scanlineSpacing = height / settings.scanlineCount;
+for (let y = 0; y < height; y++) {
+const isScanline = Math.floor((y + jitter) / scanlineSpacing) % 2 === 0;
+const scanlineAlpha = isScanline ? settings.scanlineIntensity : 0;
+for (let x = 0; x < width; x++) {
+const idx = (y * width + x) * 4;
+// Apply scanline darkness
+if (scanlineAlpha > 0) {
+data[idx] *= (1 - scanlineAlpha);
+data[idx + 1] *= (1 - scanlineAlpha);
+data[idx + 2] *= (1 - scanlineAlpha);
+}
+
+
+// Color shift (RGB split)
+if (settings.colorShift > 0) {
+const shift = Math.floor(settings.colorShift);
+if (x + shift < width) {
+const shiftIdx = (y * width + (x + shift)) * 4;
+data[idx] = data[shiftIdx]; // Red channel shifted
+}
+if (x - shift >= 0) {
+const shiftIdx = (y * width + (x - shift)) * 4;
+data[idx + 2] = data[shiftIdx + 2]; // Blue channel shifted opposite
+}
+}
+}
+}
+
+
+ctx.putImageData(imageData, 0, 0);
+}
+
+
+// Apply glitch effect
+function applyGlitchEffect() {
+if (!settings.glitchActive) return;
+
+
+// Random glitch blocks
+if (Math.random() < settings.glitchFrequency) {
+const numGlitches = Math.floor(Math.random() * 5) + 1;
+for (let i = 0; i < numGlitches; i++) {
+const x = Math.random() * canvas.width;
+const y = Math.random() * canvas.height;
+const w = Math.random() * 100 + 20;
+const h = settings.pixelSize * (Math.random() * 5 + 1);
+const offsetX = (Math.random() - 0.5) * settings.glitchStrength * canvas.width;
+try {
+const imageData = ctx.getImageData(x, y, w, h);
+ctx.putImageData(imageData, x + offsetX, y);
+} catch (e) {
+// Ignore out of bounds errors
+}
+}
+}
+
+
+// Pixelation effect
+if (settings.pixelSize > 1) {
+const tempCanvas = document.createElement('canvas');
+const tempCtx = tempCanvas.getContext('2d');
+tempCanvas.width = canvas.width;
+tempCanvas.height = canvas.height;
+tempCtx.drawImage(canvas, 0, 0);
+
+
+ctx.imageSmoothingEnabled = false;
+const smallW = canvas.width / settings.pixelSize;
+const smallH = canvas.height / settings.pixelSize;
+ctx.drawImage(tempCanvas, 0, 0, smallW, smallH);
+ctx.drawImage(canvas, 0, 0, smallW, smallH, 0, 0, canvas.width, canvas.height);
+ctx.imageSmoothingEnabled = true;
+}
+
+
+// Noise
+if (settings.noiseIntensity > 0) {
+const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const data = imageData.data;
+for (let i = 0; i < data.length; i += 4) {
+if (Math.random() < settings.noiseIntensity) {
+const noise = (Math.random() - 0.5) * 50;
+data[i] = Math.max(0, Math.min(255, data[i] + noise));
+data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise));
+data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise));
+}
+}
+ctx.putImageData(imageData, 0, 0);
+}
+}
+
+
+// Animation loop
+function animate() {
+// Clear canvas
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+// Draw background
+drawBackground();
+
+
+// Draw grid
+drawGrid();
+
+
+// Draw nodes
+drawNodes();
+
+
+// Apply effects
+applyMirrorEffect();
+applyVHSEffect();
+applyGlitchEffect();
+
+
+// Update time
+time += 0.016 * settings.speed;
+
+
+animationId = requestAnimationFrame(animate);
+}
+
+
+// Export image
+function exportImage() {
+const link = document.createElement('a');
+link.download = 'vector-field-' + Date.now() + '.png';
+link.href = canvas.toDataURL();
+link.click();
+}
+
+
+// Initialize
+setupControls();
+animate();
+</script>
+</body>
+</html>
+

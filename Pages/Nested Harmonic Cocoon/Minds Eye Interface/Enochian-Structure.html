@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enochian // Voxel Structure</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; color: #4ade80; font-family: 'Courier New', Courier, monospace; }
+        .piano-key {
+            transition: all 0.1s;
+            cursor: pointer;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #14532d;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .piano-key:hover {
+            background: #22c55e;
+            color: black;
+            box-shadow: 0 0 15px #22c55e;
+            z-index: 50;
+        }
+        .piano-key-active {
+            background: #06b6d4 !important;
+            color: black !important;
+            box-shadow: 0 0 20px #06b6d4;
+            border-color: white;
+        }
+        .piano-key-synced {
+            background: rgba(74, 222, 128, 0.8) !important;
+            color: white !important;
+            box-shadow: 0 0 10px #4ade80;
+        }
+        .corner-key {
+            background: #b45309 !important;
+            color: black;
+        }
+        .corner-key:hover {
+            background: #fbbf24 !important;
+        }
+        .hud-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #15803d;
+            backdrop-filter: blur(4px);
+        }
+        .arc-path {
+            fill: none;
+            stroke-linecap: round;
+            vector-effect: non-scaling-stroke;
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+    <div class="flex-shrink-0 bg-black border-b border-green-800 text-[10px] text-green-500 px-3 py-1.5 flex justify-between items-center">
+        <a href="index.html" class="hover:text-white transition-colors">&larr; MIND'S EYE INTERFACE</a>
+        <span class="opacity-40 tracking-widest">NESTED HARMONIC COCOON</span>
+    </div>
+    <div id="root" class="flex-1 min-h-0"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- Icons ---
+        const IconWrapper = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            Play: (props) => <IconWrapper {...props}><polygon points="5 3 19 12 5 21 5 3"/></IconWrapper>,
+            Pause: (props) => <IconWrapper {...props}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></IconWrapper>,
+            Box: (props) => <IconWrapper {...props}><path d="M21 16.5l-7 4.5-7-4.5V7l7-4.5 7 4.5z"/><path d="M3.5 7.5l7 4.5 7-4.5"/><path d="M10.5 12v9"/><path d="M10.5 16.5l7-4.5"/></IconWrapper>,
+            Rotate: (props) => <IconWrapper {...props}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></IconWrapper>,
+            Target: (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></IconWrapper>,
+            Layers: (props) => <IconWrapper {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></IconWrapper>,
+            Hexagon: (props) => <IconWrapper {...props}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></IconWrapper>,
+            Zap: (props) => <IconWrapper {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconWrapper>,
+            Sliders: (props) => <IconWrapper {...props}><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></IconWrapper>,
+            Activity: (props) => <IconWrapper {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></IconWrapper>
+        };
+
+        // --- Audio Engine ---
+        class AudioEngine {
+            constructor() { this.ctx = null; }
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+            playNote(val, isPositive) {
+                if (!this.ctx) this.init();
+                const base = 110; 
+                const freq = base * (1 + (val-1)/12); 
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = isPositive ? 'sine' : 'square'; 
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+        }
+        const audio = new AudioEngine();
+
+        // --- Config ---
+        const GROUPS = [
+            { name: "G1", range: [2, 3, 4], color: "#22d3ee" },
+            { name: "G2", range: [5, 6, 7], color: "#4ade80" },
+            { name: "G3", range: [8, 9, 10], color: "#fbbf24" },
+            { name: "M", range: [11], color: "#a855f7" }
+        ];
+
+        // --- Wave Diagram ---
+        const ArcDiagram = ({ orientation = "top", waveConfig, selectedNode, pulseVal, syncWaves }) => {
+            const { groups, amplitude, opacity } = waveConfig;
+            const isVertical = orientation === "left" || orientation === "right";
+            
+            const renderArcs = () => {
+                const sourceIndices = new Set();
+
+                // 1. Manual Selection
+                if (selectedNode) {
+                    if (selectedNode.type === 'slice' && selectedNode.side === orientation) {
+                        sourceIndices.add(selectedNode.index);
+                    } else if (selectedNode.type === 'corner') {
+                        if(orientation === 'top') {
+                            if(selectedNode.x === 0) sourceIndices.add(0);
+                            if(selectedNode.x === 22) sourceIndices.add(22);
+                        }
+                    }
+                }
+
+                // 2. Auto Sync
+                if (syncWaves && pulseVal !== null) {
+                    for (let i = 0; i < 23; i++) {
+                        const val = 12 - Math.abs(11 - i);
+                        if (val === pulseVal) {
+                            sourceIndices.add(i);
+                        }
+                    }
+                }
+
+                const allStarts = Array.from({length: 23}, (_, i) => i);
+
+                return groups.flatMap(group => {
+                    if (!group.visible && waveConfig.groups) return []; 
+                    
+                    return allStarts.flatMap(startIdx => {
+                        const isActive = sourceIndices.has(startIdx);
+                        const directions = [1, -1];
+                        return directions.flatMap(dir => 
+                            group.range.map((dist, i) => {
+                                const p1 = startIdx;
+                                const p2 = startIdx + (dist * dir);
+                                if (p2 < 0 || p2 > 22) return null;
+
+                                const slot = 100/23;
+                                const c1 = (p1 + 0.5) * slot;
+                                const c2 = (p2 + 0.5) * slot;
+                                
+                                const span = Math.abs(p2 - p1);
+                                const arcH = span * 4 * amplitude; 
+
+                                let d = "";
+                                if (isVertical) {
+                                    const base = orientation === "left" ? 100 : 0;
+                                    const ctrl = orientation === "left" ? 100 - arcH : arcH;
+                                    d = `M ${base},${c1} Q ${ctrl},${(c1+c2)/2} ${base},${c2}`;
+                                } else {
+                                    const base = orientation === "top" ? 100 : 0;
+                                    const ctrl = orientation === "top" ? 100 - arcH : arcH;
+                                    d = `M ${c1},${base} Q ${(c1+c2)/2},${ctrl} ${c2},${base}`;
+                                }
+
+                                const baseAlpha = isActive ? 0.9 : 0.1;
+                                const strokeW = isActive ? 2 : 0.5;
+
+                                return (
+                                    <path 
+                                        key={`arc-${orientation}-${p1}-${p2}-${dir}`}
+                                        d={d}
+                                        stroke={group.color}
+                                        strokeWidth={strokeW}
+                                        fill="none"
+                                        opacity={baseAlpha * opacity}
+                                        className="arc-path"
+                                    />
+                                );
+                            })
+                        );
+                    });
+                });
+            };
+
+            return (
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="overflow-visible absolute inset-0 z-20 pointer-events-none">
+                    {renderArcs()}
+                </svg>
+            );
+        };
+
+        // --- Control Panel ---
+        const WaveControls = ({ config, setConfig, onClose }) => {
+            const toggleGroup = (idx) => {
+                const newGroups = [...config.groups];
+                newGroups[idx].visible = !newGroups[idx].visible;
+                setConfig({ ...config, groups: newGroups });
+            };
+
+            return (
+                <div className="absolute top-16 right-4 w-64 bg-black/90 border border-green-500 p-4 rounded shadow-2xl z-50 text-green-400 backdrop-blur-md">
+                    <div className="flex justify-between items-center mb-4 border-b border-green-800 pb-2">
+                        <h3 className="text-xs font-bold flex items-center gap-2"><Icons.Activity size={14}/> WAVE SETTINGS</h3>
+                        <button onClick={onClose} className="text-green-700 hover:text-white">x</button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold opacity-70">HARMONIC GROUPS</label>
+                            {config.groups.map((g, i) => (
+                                <button key={g.name} onClick={() => toggleGroup(i)} className={`w-full flex justify-between items-center px-2 py-1 text-[10px] border ${g.visible ? 'border-green-500 bg-green-900/30' : 'border-gray-800 text-gray-500'}`}>
+                                    <span style={{ color: g.visible ? g.color : 'inherit' }}>{g.name} ({g.desc})</span>
+                                    <span>{g.visible ? "ON" : "OFF"}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold opacity-70">AMPLITUDE</label>
+                            <input type="range" min="0.1" max="2.0" step="0.1" value={config.amplitude} onChange={(e) => setConfig({...config, amplitude: parseFloat(e.target.value)})} className="w-full accent-green-500 h-1 bg-gray-800 rounded"/>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Main App ---
+        function EnochianStructure() {
+            const [rotation, setRotation] = useState({ x: 0.6, y: 0.6 });
+            const [zoom, setZoom] = useState(0.8);
+            const [selection, setSelection] = useState(null);
+            const [isAutoRotate, setIsAutoRotate] = useState(false);
+            const [showNegative, setShowNegative] = useState(true);
+            const [showHexagram, setShowHexagram] = useState(true);
+            const [pulseTime, setPulseTime] = useState(0);
+            const [syncWaves, setSyncWaves] = useState(false);
+            const [showWaveCtrl, setShowWaveCtrl] = useState(false);
+            const [waveConfig, setWaveConfig] = useState({
+                amplitude: 1.0, opacity: 1.0,
+                groups: GROUPS.map(g => ({...g, visible: true}))
+            });
+            
+            const canvasRef = useRef(null);
+            const frameRef = useRef();
+            const [drag, setDrag] = useState({ active: false, x: 0, y: 0 });
+
+            // --- Data ---
+            const GRID_SIZE = 23;
+            const CENTER = 11;
+            
+            const voxels = useMemo(() => {
+                const v = [];
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        const valX = 12 - Math.abs(CENTER - x);
+                        const valZ = 12 - Math.abs(CENTER - z);
+                        const height = Math.max(valX, valZ);
+                        
+                        const cx = x - CENTER;
+                        const cz = z - CENTER;
+                        v.push({ x: cx, z: cz, yTop: height, yBot: 0, val: height, isNeg: false, gx: x, gz: z });
+                        v.push({ x: cx, z: cz, yTop: 0, yBot: -height, val: height, isNeg: true, gx: x, gz: z });
+                    }
+                }
+                return v;
+            }, []);
+
+            const hexagramLines = useMemo(() => {
+                const getH = (x, z) => Math.max(12 - Math.abs(11 - x), 12 - Math.abs(11 - z));
+                const pt = (x, z, neg) => ({ x: x-11, z: z-11, y: neg ? -getH(x,z) : getH(x,z) });
+                const makeHex = (neg) => {
+                    const t1 = [pt(11,0,neg), pt(0,19,neg), pt(22,19,neg)];
+                    const t2 = [pt(11,22,neg), pt(0,3,neg), pt(22,3,neg)];
+                    return [[t1[0], t1[1]], [t1[1], t1[2]], [t1[2], t1[0]], [t2[0], t2[1]], [t2[1], t2[2]], [t2[2], t2[0]]];
+                };
+                const b = 11.5; const h = 12;
+                const box = [
+                    [{x:-b,y:h,z:-b},{x:b,y:h,z:-b}], [{x:b,y:h,z:-b},{x:b,y:h,z:b}], 
+                    [{x:b,y:h,z:b},{x:-b,y:h,z:b}], [{x:-b,y:h,z:b},{x:-b,y:h,z:-b}],
+                    [{x:-b,y:-h,z:-b},{x:b,y:-h,z:-b}], [{x:b,y:-h,z:-b},{x:b,y:-h,z:b}],
+                    [{x:b,y:-h,z:b},{x:-b,y:-h,z:b}], [{x:-b,y:-h,z:b},{x:-b,y:-h,z:-b}],
+                    [{x:-b,y:h,z:-b},{x:-b,y:-h,z:-b}], [{x:b,y:h,z:-b},{x:b,y:-h,z:-b}],
+                    [{x:b,y:h,z:b},{x:b,y:-h,z:b}], [{x:-b,y:h,z:b},{x:-b,y:-h,z:b}]
+                ];
+                return { pos: makeHex(false), neg: makeHex(true), box };
+            }, []);
+
+            // --- Handlers ---
+            const handleStripClick = (side, index) => {
+                let axis = (side === 'top' || side === 'bottom') ? 'x' : 'z';
+                if (selection && selection.type === 'slice' && selection.side === side && selection.index === index) setSelection(null);
+                else {
+                    setSelection({ type: 'slice', axis, index, side });
+                    audio.playNote(12 - Math.abs(11-index), index <= 11);
+                }
+            };
+
+            const handleCornerClick = (cx, cz) => {
+                if (selection && selection.type === 'corner' && selection.x === cx && selection.z === cz) setSelection(null);
+                else {
+                    setSelection({ type: 'corner', x: cx, z: cz });
+                    audio.playNote(1, true);
+                }
+            };
+
+            useEffect(() => {
+                if (!isAutoRotate && !syncWaves) return;
+                let id;
+                const loop = () => {
+                    if (isAutoRotate) setRotation(r => ({ x: r.x, y: r.y + 0.005 }));
+                    if (syncWaves) setPulseTime(p => (p + 0.1) % 13);
+                    id = requestAnimationFrame(loop);
+                };
+                loop();
+                return () => cancelAnimationFrame(id);
+            }, [isAutoRotate, syncWaves]);
+
+            const curPulse = syncWaves ? (12 - Math.floor(pulseTime)) : null;
+
+            const render = () => {
+                const cvs = canvasRef.current;
+                if (!cvs) return;
+                const ctx = cvs.getContext('2d');
+                const w = cvs.width = window.innerWidth;
+                const h = cvs.height = window.innerHeight;
+                ctx.fillStyle = '#050505'; ctx.fillRect(0,0,w,h);
+
+                const scale = 20 * zoom;
+                const cx = w/2; const cy = h/2;
+                const { x: rx, y: ry } = rotation;
+                const proj = (x, y, z) => {
+                    let x1 = x*Math.cos(ry) - z*Math.sin(ry);
+                    let z1 = x*Math.sin(ry) + z*Math.cos(ry);
+                    let y2 = y*Math.cos(rx) - z1*Math.sin(rx);
+                    return { x: cx + x1*scale, y: cy - y2*scale, z: z1 };
+                };
+
+                // Wireframe
+                if (showHexagram) {
+                    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1; ctx.beginPath();
+                    hexagramLines.box.forEach(l => { const p1 = proj(l[0].x, l[0].y, l[0].z); const p2 = proj(l[1].x, l[1].y, l[1].z); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); });
+                    ctx.stroke();
+                }
+
+                const rotVox = voxels.map(v => {
+                    const p = proj(v.x, (v.yTop+v.yBot)/2, v.z);
+                    return { ...v, px: p.x, py: p.y, pz: p.z };
+                }).sort((a, b) => b.pz - a.pz);
+
+                rotVox.forEach(v => {
+                    if (v.isNeg && !showNegative) return;
+                    let isActive = false;
+                    if (selection) {
+                        if (selection.type === 'slice') {
+                            if (selection.axis === 'x' && v.gx === selection.index) isActive = true;
+                            if (selection.axis === 'z' && v.gz === selection.index) isActive = true;
+                        } else if (selection.type === 'corner') {
+                            if (v.gx === selection.x || v.gz === selection.z) isActive = true;
+                        }
+                    }
+                    if (curPulse !== null && v.val === curPulse) isActive = true;
+
+                    let fill = v.isNeg ? '#7f1d1d' : '#14532d';
+                    let strk = v.isNeg ? '#ef4444' : '#22c55e';
+                    if (isActive) { fill = '#06b6d4'; strk = '#ffffff'; }
+                    else if (selection) { fill = '#111'; strk = '#333'; }
+
+                    const w = 0.4; const hTop = v.yTop; const hBot = v.yBot;
+                    const projOffset = (dx, dy, dz) => {
+                        let ox1 = dx * Math.cos(ry) - dz * Math.sin(ry);
+                        let oz1 = dx * Math.sin(ry) + dz * Math.cos(ry);
+                        let oy2 = dy * Math.cos(rx) - oz1 * Math.sin(rx);
+                        return { x: cx + (v.x + ox1)*scale, y: cy - (v.yTop - (v.yTop-v.yBot)/2 + oy2)*scale }; 
+                    };
+                    
+                    // Simple Pillar Drawing
+                    const pTop = proj(v.x, v.yTop, v.z);
+                    const pBot = proj(v.x, v.yBot, v.z);
+                    
+                    ctx.lineWidth = 1; ctx.strokeStyle = strk; ctx.fillStyle = fill;
+                    ctx.globalAlpha = isActive ? 0.9 : 0.8;
+                    ctx.beginPath(); ctx.moveTo(pTop.x, pTop.y); ctx.lineTo(pBot.x, pBot.y); ctx.stroke();
+
+                    // Cap
+                    const sz = 0.45 * scale;
+                    ctx.globalAlpha = 1.0;
+                    const isSingularity = v.val === 12;
+                    const capColor = isActive ? '#cffafe' : (isSingularity ? (v.isNeg ? '#f87171':'#86efac') : fill);
+                    
+                    ctx.fillStyle = capColor;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(pTop.x, pTop.y - sz*0.5); ctx.lineTo(pTop.x + sz, pTop.y); ctx.lineTo(pTop.x, pTop.y + sz*0.5); ctx.lineTo(pTop.x - sz, pTop.y);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+                    // Text
+                    if (zoom > 0.3) {
+                        const isLight = isActive || isSingularity; // Use helper for contrast
+                        ctx.fillStyle = isLight ? 'black' : 'white';
+                        ctx.font = `bold ${Math.max(9, 11 * zoom)}px monospace`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText(v.val, pTop.x, pTop.y);
+                    }
+                });
+
+                if (showHexagram) {
+                    const drawHex = (lines, col) => {
+                        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.shadowBlur = 10; ctx.shadowColor = col;
+                        lines.forEach(l => {
+                            const p1 = proj(l[0].x, l[0].y, l[0].z); const p2 = proj(l[1].x, l[1].y, l[1].z);
+                            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                        });
+                        ctx.shadowBlur = 0;
+                    };
+                    drawHex(hexagramLines.pos, '#4ade80');
+                    if (showNegative) drawHex(hexagramLines.neg, '#ef4444');
+                }
+            };
+
+            useEffect(() => { render(); }, [rotation, zoom, selection, showNegative, showHexagram, curPulse]);
+
+            // --- Grid Helpers ---
+            const Strip = ({ side }) => {
+                const isVert = side === 'left' || side === 'right';
+                const indices = Array.from({length: 21}, (_, i) => i + 1); 
+                return (
+                    <div className={`flex ${isVert ? 'flex-col h-full w-8' : 'w-full h-8 flex-row'} bg-black/80 border border-green-900 pointer-events-auto`}>
+                        {indices.map(i => {
+                            const val = 12 - Math.abs(11 - i);
+                            const active = (selection && selection.type === 'slice' && selection.side === side && selection.index === i);
+                            const synced = (curPulse === val);
+                            return (
+                                <div key={i} onClick={() => handleStripClick(side, i)} className={`flex-1 flex items-center justify-center text-[8px] border-[0.5px] border-green-900/50 cursor-pointer hover:bg-green-500 hover:text-black transition-colors ${active ? 'bg-cyan-500 text-black font-bold' : ''} ${synced ? 'bg-green-500/50 text-white' : 'text-green-600'}`}>
+                                    {val}
+                                </div>
+                            )
+                        })}
+                    </div>
+                );
+            }
+
+            const Corner = ({ x, z }) => {
+                const active = selection && selection.type === 'corner' && selection.x === x && selection.z === z;
+                return ( <div onClick={() => handleCornerClick(x, z)} className={`w-8 h-8 flex items-center justify-center border border-green-700 cursor-pointer font-bold text-xs pointer-events-auto transition-colors ${active ? 'bg-cyan-500 text-black shadow-[0_0_15px_#06b6d4]' : 'bg-amber-700 text-black hover:bg-amber-500'}`}>1</div> )
+            }
+
+            const WaveContainer = ({ side }) => {
+                const style = {};
+                if(side==='top') { style.bottom = '100%'; style.left = 0; style.width = '100%'; style.height = '150px'; }
+                if(side==='bottom') { style.top = '100%'; style.left = 0; style.width = '100%'; style.height = '150px'; }
+                if(side==='left') { style.right = '100%'; style.top = 0; style.height = '100%'; style.width = '150px'; }
+                if(side==='right') { style.left = '100%'; style.top = 0; style.height = '100%'; style.width = '150px'; }
+                return ( <div className="absolute" style={style}><ArcDiagram orientation={side} waveConfig={waveConfig} selectedNode={selection} pulseVal={curPulse} syncWaves={syncWaves} /></div> )
+            }
+
+            return (
+                <div className="relative w-full h-full bg-black overflow-hidden">
+                    <canvas ref={canvasRef} className="absolute inset-0 z-0 cursor-move" onMouseDown={(e) => { setDrag({active:true, x:e.clientX, y:e.clientY}); setIsAutoRotate(false); }} onMouseMove={(e) => { if(drag.active) { const dx = e.clientX - drag.x; const dy = e.clientY - drag.y; setRotation(r => ({ x: r.x + dy*0.01, y: r.y + dx*0.01 })); setDrag({active:true, x:e.clientX, y:e.clientY}); } }} onMouseUp={() => setDrag({active:false})} onWheel={(e) => setZoom(z => Math.max(0.2, z - e.deltaY*0.001))} />
+
+                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start pointer-events-none z-50">
+                         <div className="hud-panel p-4 rounded text-green-500"><h1 className="text-xl font-bold flex items-center gap-2"><Icons.Box /> ENOCHIAN_STRUCTURE</h1></div>
+                        <div className="hud-panel p-2 rounded flex gap-2 pointer-events-auto">
+                            <button onClick={() => setSyncWaves(!syncWaves)} className={`flex items-center gap-2 px-3 py-1 border text-xs font-bold ${syncWaves ? 'bg-green-500 text-black' : 'text-green-500'}`}><Icons.Zap size={14}/> SYNC</button>
+                            <button onClick={() => setShowWaveCtrl(!showWaveCtrl)} className={`p-2 border ${showWaveCtrl ? 'border-green-500 text-green-400' : 'border-gray-700 text-gray-600'}`}><Icons.Sliders size={20}/></button>
+                            <button onClick={() => setShowHexagram(!showHexagram)} className="p-2 border border-green-800 text-green-500"><Icons.Hexagon size={18}/></button>
+                            <button onClick={() => setShowNegative(!showNegative)} className="p-2 border border-green-800 text-green-500"><Icons.Layers size={18}/></button>
+                        </div>
+                    </div>
+
+                    {showWaveCtrl && <WaveControls config={waveConfig} setConfig={setWaveConfig} onClose={() => setShowWaveCtrl(false)} />}
+
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-40">
+                        <div className="grid grid-cols-[32px_1fr_32px] grid-rows-[32px_1fr_32px] gap-0 w-[80%] h-[80%] max-w-[800px] max-h-[800px]">
+                            <div className="relative"><Corner x={0} z={0} /></div>
+                            <div className="relative"><WaveContainer side="top" /><Strip side="top" /></div>
+                            <div className="relative"><Corner x={22} z={0} /></div>
+                            <div className="relative"><WaveContainer side="left" /><Strip side="left" /></div>
+                            <div className="pointer-events-none"></div>
+                            <div className="relative"><Strip side="right" /><WaveContainer side="right" /></div>
+                            <div className="relative"><Corner x={0} z={22} /></div>
+                            <div className="relative"><Strip side="bottom" /><WaveContainer side="bottom" /></div>
+                            <div className="relative"><Corner x={22} z={22} /></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<EnochianStructure />);
+    </script>
+</body>
+</html>
