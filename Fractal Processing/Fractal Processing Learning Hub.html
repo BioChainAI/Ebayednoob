@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractal Processing Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #00ff41;
+        }
+
+        #neural-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        #tutorial-view-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 75%; /* 4:3 Aspect Ratio */
+        }
+
+        #tutorial-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-style {
+            background: rgba(0, 20, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 65, 0.2);
+        }
+
+        #notification-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            background-color: #0d4b26;
+            color: #adffc1;
+            z-index: 1000;
+            transition: bottom 0.5s ease-in-out;
+            font-weight: 500;
+            border: 1px solid #00ff41;
+        }
+
+        .focus-ring-green, .form-select:focus, .form-input:focus {
+            --tw-ring-color: #00ff41;
+            border-color: #00ff41;
+            box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.5);
+        }
+
+        /* Custom form styles */
+        .form-select, .form-input {
+             background-color: #021a08;
+             border: 1px solid #00ff41;
+             color: #adffc1;
+        }
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2300ff41' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Custom checkbox style */
+        .form-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            height: 1.25rem;
+            width: 1.25rem;
+            background-color: #021a08;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+        }
+        .form-checkbox:checked {
+            background-color: #00ff41;
+        }
+        .form-checkbox:checked::after {
+            content: '✔';
+            font-size: 0.8rem;
+            color: #000000;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .form-checkbox:disabled {
+            border-color: #0a3d1e;
+            background-color: #041f0c;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="neural-background"></canvas>
+    <div id="notification-bar"></div>
+
+    <div id="page-container" class="container mx-auto p-4 md:p-8 relative z-10">
+
+        <header class="text-center mb-8 relative">
+            <div class="absolute top-0 left-0 p-2 md:p-4 flex items-center space-x-4">
+                <a href=".." target="_blank" rel="noopener noreferrer" title="Visit Ebayednoob's Page">
+                    <img src="../Resources/Pictures/Logo Files/Ebayednoob-logo.png"
+                         onerror="this.src='https://placehold.co/48x48/000000/00FF41?text=E';"
+                         alt="Ebayednoob Logo"
+                         class="h-12 w-12 rounded-full object-cover hover:opacity-80 transition-opacity border-2 border-green-700">
+                </a>
+                <div id="auth-container" class="text-left">
+                    <p id="user-status" class="text-sm text-green-500 mb-1">Connecting...</p>
+                    <button id="auth-button" class="px-3 py-1 bg-green-800 text-green-200 rounded-md text-sm hover:bg-green-700 transition-colors">Sign In</button>
+                </div>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-bold text-green-400 pt-16 md:pt-0">Fractal Processing</h1>
+            <p class="mt-2 text-lg text-green-500">Recursive structures, self-similarity, and weave-based tensor architectures for high-dimensional data.</p>
+        </header>
+
+        <div id="main-content">
+             <div class="mb-8 p-4 rounded-lg card-style">
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <!-- Search Input -->
+                    <div>
+                        <label for="search-input" class="block text-sm font-medium text-green-300 mb-1">Search</label>
+                        <input type="text" id="search-input" placeholder="Search tutorials..." class="w-full px-3 py-2 form-input rounded-md focus:outline-none focus-ring-green">
+                    </div>
+                    <!-- Category Filter -->
+                    <div>
+                        <label for="category-filter" class="block text-sm font-medium text-green-300 mb-1">Category</label>
+                        <select id="category-filter" class="w-full px-3 py-2 form-select rounded-md focus:outline-none focus-ring-green"></select>
+                    </div>
+                    <!-- Date Sort -->
+                    <div>
+                        <label for="date-sort" class="block text-sm font-medium text-green-300 mb-1">Sort by</label>
+                        <select id="date-sort" class="w-full px-3 py-2 form-select rounded-md focus:outline-none focus-ring-green">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
+                    <!-- Incomplete Filter -->
+                    <div class="flex items-center justify-start pt-5">
+                         <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="show-incomplete-checkbox" class="form-checkbox">
+                            <label for="show-incomplete-checkbox" class="text-green-300 font-medium">Show incomplete only</label>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+            <div id="tutorials-section">
+                <div id="tutorials-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Tutorial cards will be injected here -->
+                </div>
+                <p id="no-results" class="text-center text-green-500 hidden mt-8">No tutorials found matching your search.</p>
+            </div>
+        </div>
+
+        <div id="tutorial-viewer" class="hidden mt-8">
+            <button id="back-button" class="mb-4 px-4 py-2 bg-green-800 text-green-200 rounded-lg hover:bg-green-700 transition-colors shadow-lg">
+                &larr; Back to Main Hub
+            </button>
+            <div id="tutorial-view-container" class="bg-black rounded-lg shadow-2xl overflow-hidden border border-green-800">
+                <iframe id="tutorial-iframe" src="" frameborder="0" class="w-full h-full"></iframe>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // --- FIREBASE IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnBBcdczugJzl_5u1aLJb-OiHvvtDgHvY",
+            authDomain: "gitlabs-3e081.firebaseapp.com",
+            projectId: "gitlabs-3e081",
+            storageBucket: "gitlabs-3e081.firebasestorage.app",
+            messagingSenderId: "46943115268",
+            appId: "1:46943115268:web:d6746d2cb953a2847d7d51",
+            measurementId: "G-M3MLTNVRH0"
+        };
+
+        // --- FIREBASE & APP INITIALIZATION ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- GLOBAL STATE ---
+        let currentUserId = null;
+        let userTutorialStatus = {};
+        let firestoreListener = null;
+
+        // --- TUTORIAL DATA ---
+        const tutorials = [
+            { id: 'weave-and-loom', title: 'SHD-CCP Jacquard Tensor Weave Architecture', category: 'Tensor Weaving', description: 'Projective block weaving for 6-sided SHD-CCP manifolds: mapping historical Jacquard loom topology onto a 6-face quaternion projection.', path: 'Weave and Loom/SHD-CCP Jacquard Tensor Weave Architecture.html', datePosted: '2025-09-05' }
+        ];
+
+        // --- DOM ELEMENT REFERENCES ---
+        const tutorialViewer = document.getElementById('tutorial-viewer');
+        const backButton = document.getElementById('back-button');
+        const tutorialIframe = document.getElementById('tutorial-iframe');
+        const tutorialsGrid = document.getElementById('tutorials-grid');
+        const searchInput = document.getElementById('search-input');
+        const noResultsMessage = document.getElementById('no-results');
+        const userStatus = document.getElementById('user-status');
+        const authButton = document.getElementById('auth-button');
+        const showIncompleteCheckbox = document.getElementById('show-incomplete-checkbox');
+        const notificationBar = document.getElementById('notification-bar');
+        const categoryFilter = document.getElementById('category-filter');
+        const dateSort = document.getElementById('date-sort');
+
+        // --- NOTIFICATION FUNCTION ---
+        function showNotification(message, isError = false) {
+            notificationBar.textContent = message;
+            notificationBar.style.backgroundColor = isError ? '#9B2C2C' : '#0d4b26';
+            notificationBar.style.color = isError ? '#FED7D7' : '#adffc1';
+            notificationBar.style.bottom = '20px';
+            setTimeout(() => {
+                notificationBar.style.bottom = '-100px';
+            }, 3000);
+        }
+
+        // --- FIREBASE AUTHENTICATION & DATA HANDLING ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUserId = user.uid;
+                userStatus.innerHTML = `Signed In<br><span class="text-xs text-green-600" title="${user.uid}">UID: ${user.uid.substring(0, 12)}...</span>`;
+                authButton.textContent = 'Sign Out';
+                listenToTutorialStatus(user.uid);
+            } else {
+                currentUserId = null;
+                userStatus.textContent = 'Signed Out';
+                authButton.textContent = 'Sign In';
+                userTutorialStatus = {};
+                if (firestoreListener) firestoreListener(); // Detach listener on sign out
+                updateDisplayedTutorials();
+            }
+        });
+
+        function listenToTutorialStatus(userId) {
+            if (firestoreListener) firestoreListener();
+            const docRef = doc(db, "artifacts", appId, "users", userId, "tutorial_statuses", "progress");
+            firestoreListener = onSnapshot(docRef, (docSnap) => {
+                userTutorialStatus = docSnap.exists() ? docSnap.data().completion || {} : {};
+                updateDisplayedTutorials();
+            });
+        }
+
+        async function updateTutorialCompletion(tutorialId, isComplete) {
+            if (!currentUserId) return showNotification("Please sign in to save your progress.", true);
+            const docRef = doc(db, "artifacts", appId, "users", currentUserId, "tutorial_statuses", "progress");
+            try {
+                await setDoc(docRef, { completion: { [tutorialId]: isComplete } }, { merge: true });
+                showNotification("Progress saved!");
+            } catch (error) {
+                console.error("Error updating tutorial status: ", error);
+                showNotification("Failed to save progress.", true);
+            }
+        }
+
+        async function performSignIn() {
+            try {
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) {
+                    await signInWithCustomToken(auth, token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                showNotification(`Error: ${error.message}`, true);
+            }
+        }
+
+        authButton.addEventListener('click', async () => {
+             if (auth.currentUser) {
+                await signOut(auth);
+                showNotification("Signed out.");
+            } else {
+                await performSignIn();
+            }
+        });
+
+        // --- UI & TUTORIAL MANAGEMENT ---
+        function populateCategoryFilter() {
+            const categories = [...new Set(tutorials.map(t => t.category))];
+            categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+            categories.sort().forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        function updateDisplayedTutorials() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const showIncomplete = showIncompleteCheckbox.checked;
+            const selectedCategory = categoryFilter.value;
+            const sortBy = dateSort.value;
+
+            let filteredTutorials = tutorials;
+
+            // 1. Filter by Category
+            if (selectedCategory !== 'all') {
+                filteredTutorials = filteredTutorials.filter(t => t.category === selectedCategory);
+            }
+
+            // 2. Filter by Search Term
+            if (searchTerm) {
+                filteredTutorials = filteredTutorials.filter(t =>
+                    t.title.toLowerCase().includes(searchTerm) ||
+                    t.description.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // 3. Filter by Completion Status
+            if (showIncomplete) {
+                filteredTutorials = filteredTutorials.filter(t => !userTutorialStatus[t.id]);
+            }
+
+            // 4. Sort by Date
+            filteredTutorials.sort((a, b) => {
+                const dateA = new Date(a.datePosted);
+                const dateB = new Date(b.datePosted);
+                return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+            });
+
+            renderTutorials(filteredTutorials);
+        }
+
+        function renderTutorials(tutorialsToRender) {
+            tutorialsGrid.innerHTML = '';
+            noResultsMessage.classList.toggle('hidden', tutorialsToRender.length > 0);
+
+            tutorialsToRender.forEach(tutorial => {
+                const isComplete = userTutorialStatus[tutorial.id] || false;
+                const card = document.createElement('div');
+                card.className = 'card-style p-6 rounded-lg shadow-lg hover:shadow-green-500/20 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between';
+
+                card.innerHTML = `
+                    <div class="cursor-pointer flex-grow" data-load-path="${tutorial.path}">
+                        <div class="flex justify-between items-start mb-2">
+                             <span class="inline-block bg-green-900/50 text-green-300 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tutorial.category}</span>
+                             <span class="text-xs text-green-600">${tutorial.datePosted}</span>
+                        </div>
+                        <h3 class="text-xl font-bold mt-2 mb-2 text-green-300">${tutorial.title}</h3>
+                        <p class="text-green-500">${tutorial.description}</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-green-800/50 flex justify-between items-center">
+                         <div class="font-semibold text-green-400">View Tutorial &rarr;</div>
+                         <div class="flex items-center space-x-2">
+                            <label for="complete-check-${tutorial.id}" class="text-sm text-green-400 select-none cursor-pointer">Complete</label>
+                            <input type="checkbox" id="complete-check-${tutorial.id}" data-tutorial-id="${tutorial.id}" class="form-checkbox tutorial-complete-checkbox"
+                                ${isComplete ? 'checked' : ''} ${!currentUserId ? 'disabled' : ''}>
+                         </div>
+                    </div>
+                `;
+                tutorialsGrid.appendChild(card);
+            });
+        }
+
+        // --- GLOBAL EVENT LISTENERS ---
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('[data-load-path]')) {
+                loadContent(e.target.closest('[data-load-path]').dataset.loadPath);
+            }
+            if (e.target.matches('.tutorial-complete-checkbox')) {
+                updateTutorialCompletion(e.target.dataset.tutorialId, e.target.checked);
+            }
+        });
+
+        backButton.addEventListener('click', () => {
+            document.getElementById('main-content').classList.remove('hidden');
+            tutorialViewer.classList.add('hidden');
+            tutorialIframe.src = 'about:blank';
+        });
+
+        [searchInput, categoryFilter, dateSort, showIncompleteCheckbox].forEach(el => {
+            el.addEventListener('input', updateDisplayedTutorials);
+        });
+
+        function loadContent(path) {
+            if (!path || path.startsWith('path/to/your/')) {
+                return showNotification('This is an example link. Please update it.', true);
+            }
+            document.getElementById('main-content').classList.add('hidden');
+            tutorialViewer.classList.remove('hidden');
+            tutorialIframe.src = path;
+            window.scrollTo(0, 0);
+        }
+
+        // --- INITIALIZATION ---
+        function initializePage() {
+            populateCategoryFilter();
+            updateDisplayedTutorials(); // Initial render with no user data
+            performSignIn(); // Trigger sign-in, which will then trigger onAuthStateChanged
+        }
+
+        initializePage();
+
+        // --- NEURAL NETWORK BACKGROUND ANIMATION ---
+        const canvas = document.getElementById('neural-background');
+        const ctx = canvas.getContext('2d');
+        let particlesArray, animationFrameId;
+
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor(x, y, dX, dY, size, color) { this.x = x; this.y = y; this.directionX = dX; this.directionY = dY; this.size = size; this.color = color; }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); }
+            update() {
+                if (this.x < 0 || this.x > canvas.width) this.directionX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.directionY *= -1;
+                this.x += this.directionX; this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function initAnimation() {
+            setCanvasSize();
+            particlesArray = [];
+            let num = Math.floor((canvas.height * canvas.width) / 9000);
+            for (let i = 0; i < num; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * (innerWidth - size * 2)) + size * 2;
+                let y = (Math.random() * (innerHeight - size * 2)) + size * 2;
+                let dX = (Math.random() * 0.4) - 0.2;
+                let dY = (Math.random() * 0.4) - 0.2;
+                particlesArray.push(new Particle(x, y, dX, dY, size, 'rgba(0, 255, 65, 0.5)'));
+            }
+        }
+
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            for (let p of particlesArray) p.update();
+            connect();
+        }
+
+        function connect() {
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dist = ((particlesArray[a].x - particlesArray[b].x) ** 2) + ((particlesArray[a].y - particlesArray[b].y) ** 2);
+                    if (dist < (canvas.width / 7) * (canvas.height / 7)) {
+                        let opacity = 1 - (dist / 20000);
+                        ctx.strokeStyle = `rgba(0, 255, 65, ${opacity})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            initAnimation();
+            animate();
+        });
+
+        window.onload = function() {
+            initAnimation();
+            animate();
+        };
+    </script>
+</body>
+</html>

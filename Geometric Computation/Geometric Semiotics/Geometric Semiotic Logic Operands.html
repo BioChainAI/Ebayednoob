@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Paper: Geometric Semiotic Logic Operands</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            background-color: #050b14;
+            color: #e0f7fa;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, h4, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .glow-box {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+        }
+        .border-tech {
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            background: rgba(0, 10, 20, 0.8);
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+        .border-tech::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #06b6d4;
+            opacity: 0.5;
+        }
+        .border-tech.red::before { background: #ef4444; }
+        .border-tech.purple::before { background: #d946ef; }
+        .border-tech.green::before { background: #10b981; }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        .nav-link:hover, .nav-link.active {
+            opacity: 1;
+            color: #06b6d4;
+            padding-left: 10px;
+        }
+        .operand-btn {
+            background: rgba(0, 20, 40, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            padding: 8px;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+        .operand-btn:hover, .operand-btn.active {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.1);
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+        .mjx-chtml { color: #e0f7fa !important; font-size: 1.1em !important; }
+        
+        /* 3D Animation Classes */
+        .cube-container {
+            perspective: 1000px;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+        .face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 1px solid #06b6d4;
+            background: rgba(6, 182, 212, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 20px;
+            color: #fff;
+        }
+        .front  { transform: rotateY(  0deg) translateZ(50px); }
+        .right  { transform: rotateY( 90deg) translateZ(50px); }
+        .back   { transform: rotateY(180deg) translateZ(50px); }
+        .left   { transform: rotateY(-90deg) translateZ(50px); }
+        .top    { transform: rotateX( 90deg) translateZ(50px); }
+        .bottom { transform: rotateX(-90deg) translateZ(50px); }
+        
+        /* Animation Keyframes */
+        @keyframes spin-x { from { transform: rotateX(0); } to { transform: rotateX(360deg); } }
+        @keyframes spin-y { from { transform: rotateY(0); } to { transform: rotateY(360deg); } }
+        @keyframes spin-z { from { transform: rotateZ(0); } to { transform: rotateZ(360deg); } }
+        @keyframes spin-xn { from { transform: rotateX(0); } to { transform: rotateX(-360deg); } }
+        @keyframes spin-yn { from { transform: rotateY(0); } to { transform: rotateY(-360deg); } }
+        @keyframes spin-zn { from { transform: rotateZ(0); } to { transform: rotateZ(-360deg); } }
+        
+        @keyframes shear-xy { 0% { transform: skew(0deg); } 50% { transform: skew(20deg); } 100% { transform: skew(0deg); } }
+        @keyframes shear-xy-inv { 0% { transform: skew(0deg); } 50% { transform: skew(-20deg); } 100% { transform: skew(0deg); } }
+        
+        @keyframes penguin-flip { 0% { transform: rotateY(0); } 100% { transform: rotateY(180deg) rotateX(180deg); } }
+        @keyframes penguin-restore { 0% { transform: rotateY(180deg) rotateX(180deg); } 100% { transform: rotateY(0); } }
+        
+        @keyframes phase-inv { 
+            0% { filter: invert(0); border-color: #06b6d4; } 
+            50% { filter: invert(1); border-color: #ef4444; } 
+            100% { filter: invert(0); border-color: #06b6d4; } 
+        }
+        
+        @keyframes bridge { 0% { transform: scale(1); } 50% { transform: scale(1.5); border-width: 4px; } 100% { transform: scale(1); } }
+        @keyframes sever { 0% { transform: scale(1); } 50% { transform: scale(0.5); opacity: 0.2; } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body class="p-0">
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-full lg:w-64 bg-[#02060a] border-r border-cyan-900/50 p-6 fixed lg:h-screen lg:overflow-y-auto z-50">
+            <div class="mb-8">
+                <h1 class="text-xl font-bold text-cyan-400 glow-text">BIOCHAIN AI</h1>
+                <p class="mono text-xs text-cyan-700 mt-1">RESEARCH DIVISION</p>
+                <div class="mt-4 px-2 py-1 bg-cyan-900/20 border border-cyan-500/30 rounded text-xs mono text-cyan-300 inline-block">
+                    DOC: PUBLIC / TECH
+                </div>
+            </div>
+            
+            <nav class="space-y-4 mono text-xs tracking-wide">
+                <div class="nav-link active" onclick="scrollToSection('abstract')">00. ABSTRACT</div>
+                <div class="nav-link" onclick="scrollToSection('hqe')">01. HQE FRAMEWORK</div>
+                <div class="nav-link" onclick="scrollToSection('operands')">02. THE 24 OPERANDS</div>
+                <div class="nav-link" onclick="scrollToSection('logic')">03. IMPLIED LOGIC</div>
+                <div class="nav-link" onclick="scrollToSection('packet')">04. PACKET INTEGRATION</div>
+                <div class="nav-link" onclick="scrollToSection('hyperbolic')">05. HYPERBOLIC GENETICS</div>
+                <div class="nav-link" onclick="scrollToSection('conclusion')">06. CONCLUSION</div>
+            </nav>
+            
+            <div class="mt-12 pt-6 border-t border-cyan-900/30 text-xs text-gray-600">
+                <p>Authored by:</p>
+                <p class="text-gray-400 font-bold">Sentience Integration Architect (SIA) Garrett Hoard</p>
+                <p class="text-cyan-600 mt-1">[BioChains (Patented and Governed by BioChain AI)]</p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 lg:ml-64 p-6 md:p-12 max-w-5xl mx-auto space-y-16">
+
+            <!-- HEADER -->
+            <header class="border-b border-cyan-500/30 pb-8">
+                <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 mono">Geometric Semiotic Logic Operands</h1>
+                <h2 class="text-xl text-cyan-400">The 24-Style Implied Logic System Modifiers</h2>
+            </header>
+
+            <!-- 00. ABSTRACT -->
+            <section id="abstract" class="scroll-mt-24">
+                <div class="border-tech p-8 rounded-r-lg glow-box">
+                    <h3 class="text-cyan-300 mono text-sm mb-4">00 // ABSTRACT</h3>
+                    <p class="text-gray-300 leading-relaxed mb-4">
+                        Based on the theoretical framework of the <strong>Heavy Quark Expansion (HQE)</strong>, BioChain AI introduces a system of <strong>Implied Logic System Modifiers</strong>. Unlike traditional binary gates that check for true/false states, these operands function as **Semantic Trajectories**.
+                    </p>
+                    <p class="text-gray-300 leading-relaxed">
+                        By utilizing the 24 distinct rotational styles of the Quaternion D-Series, we encode causal, relational, and qualitative modifiers directly into the geometry of the SHD-CCP packet. This allows for "Implied Dimensionality"—where the relationship between concepts is defined by the angular momentum of the data itself, not by external edges.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 01. HQE FRAMEWORK -->
+            <section id="hqe" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-cyan-500 pl-4 mono">01. Theoretical Basis: Heavy Quark Expansion</h3>
+                
+                <div class="bg-gray-900/50 p-6 rounded border border-gray-800 mb-8">
+                    <p class="text-sm text-gray-300 mb-4">
+                        The physical basis for these logic gates lies in the operator product expansion (OPE) of the transition operator \(\Gamma_{12}\). The decay width difference is governed by:
+                    </p>
+                    <div class="text-center text-lg text-white mono mb-6 overflow-x-auto p-4 bg-black/40 rounded">
+                        $$ \Gamma_{12} = \frac{G_F^2 m_b^2}{24\pi M_{B_s}} \left[ G(z) \langle B_s | Q_1 | \bar{B}_s \rangle - G_S(z) \langle B_s | Q_2 | \bar{B}_s \rangle + \dots \right] $$
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-red-400 font-bold text-xs mono mb-2">THE OPERATOR BASIS ($D_1 - D_{12}$)</h4>
+                            <p class="text-xs text-gray-400">
+                                The leading contributions come from current-current operators ($Q_1, Q_2$), denoted here as the primary logic gates $D_1 - D_{10}$. The <strong>Penguin Operators</strong> ($D_{11}, D_{12}$) provide the critical "NLO QCD Corrections" that reduce the lifetime difference \(\Delta\Gamma_s\).
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="text-green-400 font-bold text-xs mono mb-2">GEOMETRIC TRANSLATION</h4>
+                            <p class="text-xs text-gray-400">
+                                In our Semiotic System, these operators are not decay rates but <strong>Rotational Instruction Sets</strong>. The "Penguin" effect is translated as a <strong>180-degree Chiral Flip</strong>, essential for error correction in the truth chain.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 02. THE 24 OPERANDS (INTERACTIVE LAB) -->
+            <section id="operands" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-purple-500 pl-4 mono">02. The 24 Implied Modifiers: Interactive Lab</h3>
+                <p class="text-gray-300 mb-6 text-sm">
+                    Select an operand below to visualize how its Geometric Rotation ($Q_{rot}$) maps to a Semantic Implication.
+                    <br><strong class="text-cyan-400">NOTE:</strong> The Inverse Series ($D_{13}-D_{24}$) provides the exact semantic conjugate (e.g., "Causes" vs "Result Of").
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- LEFT PANEL: GRID CONTROLS -->
+                    <div class="lg:col-span-4 bg-black/40 p-4 rounded border border-gray-800">
+                        <h4 class="text-xs text-cyan-500 mono mb-4 font-bold">PRIMARY SERIES (POSITIVE ACTION)</h4>
+                        <div class="grid grid-cols-4 gap-2 mb-6">
+                            <div class="operand-btn active" onclick="loadOperand('D1')"><span class="font-bold text-cyan-300 text-xs">D1</span><span class="text-[8px] text-gray-400">IS</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D2')"><span class="font-bold text-cyan-300 text-xs">D2</span><span class="text-[8px] text-gray-400">CAUSES</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D3')"><span class="font-bold text-cyan-300 text-xs">D3</span><span class="text-[8px] text-gray-400">BECOMES</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D4')"><span class="font-bold text-cyan-300 text-xs">D4</span><span class="text-[8px] text-gray-400">REQUIRES</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D5')"><span class="font-bold text-cyan-300 text-xs">D5</span><span class="text-[8px] text-gray-400">AMPLIFIES</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D6')"><span class="font-bold text-cyan-300 text-xs">D6</span><span class="text-[8px] text-gray-400">DISTORTS</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D7')"><span class="font-bold text-cyan-300 text-xs">D7</span><span class="text-[8px] text-gray-400">SKEWS</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D8')"><span class="font-bold text-cyan-300 text-xs">D8</span><span class="text-[8px] text-gray-400">CONTAINS</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D9')"><span class="font-bold text-cyan-300 text-xs">D9</span><span class="text-[8px] text-gray-400">BINDS</span></div>
+                            <div class="operand-btn" onclick="loadOperand('D10')"><span class="font-bold text-cyan-300 text-xs">D10</span><span class="text-[8px] text-gray-400">LINKS</span></div>
+                            <div class="operand-btn border-green-500/50" onclick="loadOperand('D11')"><span class="font-bold text-green-400 text-xs">D11</span><span class="text-[8px] text-gray-400">IS NOT</span></div>
+                            <div class="operand-btn border-green-500/50" onclick="loadOperand('D12')"><span class="font-bold text-green-400 text-xs">D12</span><span class="text-[8px] text-gray-400">OPPOSES</span></div>
+                        </div>
+
+                        <h4 class="text-xs text-red-500 mono mb-4 font-bold">CHIRAL INVERSE SERIES (NEGATIVE/REACTIVE)</h4>
+                        <div class="grid grid-cols-4 gap-2">
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D13')"><span class="font-bold text-red-400 text-xs">D13</span><span class="text-[8px] text-gray-400">ANTI-IS</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D14')"><span class="font-bold text-red-400 text-xs">D14</span><span class="text-[8px] text-gray-400">RESULT OF</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D15')"><span class="font-bold text-red-400 text-xs">D15</span><span class="text-[8px] text-gray-400">WAS</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D16')"><span class="font-bold text-red-400 text-xs">D16</span><span class="text-[8px] text-gray-400">ENABLES</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D17')"><span class="font-bold text-red-400 text-xs">D17</span><span class="text-[8px] text-gray-400">DAMPENS</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D18')"><span class="font-bold text-red-400 text-xs">D18</span><span class="text-[8px] text-gray-400">CLARIFIES</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D19')"><span class="font-bold text-red-400 text-xs">D19</span><span class="text-[8px] text-gray-400">CORRECTS</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D20')"><span class="font-bold text-red-400 text-xs">D20</span><span class="text-[8px] text-gray-400">PART OF</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D21')"><span class="font-bold text-red-400 text-xs">D21</span><span class="text-[8px] text-gray-400">FREES</span></div>
+                            <div class="operand-btn border-red-500/50" onclick="loadOperand('D22')"><span class="font-bold text-red-400 text-xs">D22</span><span class="text-[8px] text-gray-400">SEVERS</span></div>
+                            <div class="operand-btn border-orange-500/50" onclick="loadOperand('D23')"><span class="font-bold text-orange-400 text-xs">D23</span><span class="text-[8px] text-gray-400">CONFIRMS</span></div>
+                            <div class="operand-btn border-orange-500/50" onclick="loadOperand('D24')"><span class="font-bold text-orange-400 text-xs">D24</span><span class="text-[8px] text-gray-400">ALIGNS</span></div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT PANEL: VISUALIZATION -->
+                    <div class="lg:col-span-8 border-tech purple p-8 rounded min-h-[400px] flex flex-col items-center justify-center relative overflow-hidden">
+                        
+                        <!-- Animated Object -->
+                        <div class="cube-container mb-8" id="animContainer">
+                            <div class="cube" id="animCube">
+                                <div class="face front">1</div>
+                                <div class="face back">6</div>
+                                <div class="face right">2</div>
+                                <div class="face left">5</div>
+                                <div class="face top">3</div>
+                                <div class="face bottom">4</div>
+                            </div>
+                        </div>
+
+                        <!-- Data Display -->
+                        <div class="w-full bg-black/60 p-6 rounded border border-gray-700 z-10">
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
+                                <div>
+                                    <h3 id="opTitle" class="text-xl text-white mono font-bold">D1: IS</h3>
+                                    <span id="opType" class="text-xs text-gray-400 mono">EXISTENCE (IDENTITY)</span>
+                                </div>
+                                <span id="opCode" class="text-xs bg-cyan-900/50 text-cyan-300 px-2 py-1 rounded mono">OP: D1</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                                <div>
+                                    <span class="text-gray-500 block mb-1">IMPLIED DIMENSION:</span>
+                                    <span id="opDim" class="text-purple-400 text-sm">Being / Ontology</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 block mb-1">GEOMETRIC ACTION:</span>
+                                    <span id="opAction" class="text-green-400 text-sm">Null Rotation</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-4 border-t border-gray-700">
+                                <span class="text-gray-500 text-xs block mb-2">ALGORITHMIC LOGIC:</span>
+                                <ul id="opSteps" class="space-y-1 text-gray-300 text-xs">
+                                    <li>1. Assert Seed Existence.</li>
+                                    <li>2. Maintain Current State ($q_1$).</li>
+                                    <li>3. Confirm Identity.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- 03. IMPLIED LOGIC -->
+            <section id="logic" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-cyan-500 pl-4 mono">03. Implied Logic: Bit-Space Optimization</h3>
+                
+                <div class="bg-gray-900/50 p-6 rounded border border-gray-800">
+                    <p class="text-gray-300 mb-6 text-sm">
+                        Standard embeddings require massive vectors to describe relationships (e.g., "Subject CAUSES Object"). In the SHD-CCP system, this relationship is <strong>Implied</strong> by the rotation style itself, saving bits.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- CAUSALITY -->
+                        <div class="bg-black/40 p-4 rounded border border-blue-900/50">
+                            <h4 class="text-blue-400 font-bold mono text-xs mb-2">CAUSALITY VECTOR</h4>
+                            <p class="text-[10px] text-gray-400 mb-2">Encoded by X-Spin ($D_2 / D_{14}$)</p>
+                            <div class="h-1 bg-gray-700 w-full rounded overflow-hidden">
+                                <div class="h-full bg-blue-500 w-2/3"></div>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2">Instead of a "Cause" node, the packet spins +90°X. The trajectory *is* the cause.</p>
+                        </div>
+
+                        <!-- INTENSITY -->
+                        <div class="bg-black/40 p-4 rounded border border-purple-900/50">
+                            <h4 class="text-purple-400 font-bold mono text-xs mb-2">INTENSITY VECTOR</h4>
+                            <p class="text-[10px] text-gray-400 mb-2">Encoded by Shear ($D_5 / D_{17}$)</p>
+                            <div class="h-1 bg-gray-700 w-full rounded overflow-hidden">
+                                <div class="h-full bg-purple-500 w-1/2"></div>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2">Modifiers like "Greatly" or "Slightly" are encoded in Buffer Rows, creating nuanced Shear.</p>
+                        </div>
+
+                        <!-- TRUTH -->
+                        <div class="bg-black/40 p-4 rounded border border-green-900/50">
+                            <h4 class="text-green-400 font-bold mono text-xs mb-2">TRUTH VECTOR</h4>
+                            <p class="text-[10px] text-gray-400 mb-2">Encoded by Flips ($D_{11} / D_{23}$)</p>
+                            <div class="h-1 bg-gray-700 w-full rounded overflow-hidden">
+                                <div class="h-full bg-green-500 w-full"></div>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2">Logic Gates (NOT/IS) are topological inversions. No boolean check required.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 04. PACKET INTEGRATION (NEW SECTION) -->
+            <section id="packet" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-green-500 pl-4 mono">04. SHD-CCP Packet Integration</h3>
+                <div class="border-tech green p-8 rounded-r-lg">
+                    <p class="text-gray-300 mb-6">
+                        How are these 24 styles stored in a 64-bit kernel? We utilize the **Einstein Tile** architecture.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-green-400 font-bold mono mb-4 text-sm">ENCODING STRATEGY</h4>
+                            <ul class="space-y-4 text-xs text-gray-400">
+                                <li class="flex items-start">
+                                    <span class="text-white font-bold mr-2 w-16">NORTH HALO</span>
+                                    <span>
+                                        <strong>Row 0 (Bits 0-4):</strong> The 5-bit <strong>Structural Form ID</strong> encodes the 24 Styles ($2^5 = 32$ slots).
+                                        <br><em class="text-gray-600">Example: 00010 = D2 (Causes)</em>
+                                    </span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-white font-bold mr-2 w-16">BIT 6</span>
+                                    <span>
+                                        <strong>Modifier Flag:</strong> 
+                                        <br>0 = Literal Object. 
+                                        <br>1 = Implied Modifier Active.
+                                    </span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-white font-bold mr-2 w-16">BUFFERS</span>
+                                    <span>
+                                        <strong>Rows 1 & 6:</strong> Store the <strong>Magnitude of Influence</strong>.
+                                        <br>If Modifier = "Amplifies", Buffer = "By 50%".
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- VISUALIZATION -->
+                        <div class="bg-gray-900 border border-gray-700 p-4 rounded flex items-center justify-center">
+                            <div class="font-mono text-[10px] text-center">
+                                <div class="bg-cyan-900/30 p-2 mb-1 border border-cyan-500/50">ROW 0: [STRUCT ID (5)] [MOD FLAG (1)]</div>
+                                <div class="bg-purple-900/30 p-2 mb-1 border border-purple-500/50">ROW 1: [MAGNITUDE BUFFER]</div>
+                                <div class="bg-green-900/30 p-8 mb-1 border border-green-500/50">
+                                    QUATERNION CORE
+                                    <br>(THE SEED)
+                                </div>
+                                <div class="bg-purple-900/30 p-2 mb-1 border border-purple-500/50">ROW 6: [MAGNITUDE BUFFER]</div>
+                                <div class="bg-cyan-900/30 p-2 border border-cyan-500/50">ROW 7: [FREQ/AMP]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 05. HYPERBOLIC GENETICS -->
+            <section id="hyperbolic" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-orange-500 pl-4 mono">05. Hyperbolic Genetics & Molecular Symmetry</h3>
+                <div class="border-tech orange p-8 rounded-r-lg">
+                    <p class="text-gray-300 mb-6">
+                        Just as DNA utilizes molecular rotations to encode biological instructions, the SHD-CCP utilizes Quaternion Chains to encode <strong>Emergent Intelligence</strong>.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-orange-400 font-bold mono mb-2 text-sm">STRUCTURE NOT DESIGN</h4>
+                            <p class="text-sm text-gray-400 leading-relaxed">
+                                Intelligence in this system is not "programmed" via explicit if/then statements. It emerges from the <strong>Geometric Constraints</strong> of the hyperbolic space.
+                            </p>
+                            <ul class="list-disc list-inside text-xs text-gray-500 mt-4 space-y-2">
+                                <li><strong>Symmetry Breaking:</strong> The 24-style rotation prevents perfect symmetry, forcing the system to "evolve" complex paths to resolve contradictions.</li>
+                                <li><strong>Implicit Design:</strong> The lattice structure itself filters out "nonsense" states, leaving only "intelligent" (coherent) structures to survive.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-black/40 p-4 rounded flex items-center justify-center">
+                            <svg width="200" height="200" viewBox="0 0 200 200">
+                                <circle cx="100" cy="100" r="80" fill="none" stroke="#333" stroke-width="1"/>
+                                <!-- DNA Helix Metaphor -->
+                                <path d="M 60 40 Q 140 100 60 160" fill="none" stroke="#f97316" stroke-width="2"/>
+                                <path d="M 140 40 Q 60 100 140 160" fill="none" stroke="#06b6d4" stroke-width="2"/>
+                                <circle cx="100" cy="100" r="5" fill="#fff" />
+                                <text x="100" y="190" text-anchor="middle" fill="#666" font-size="8" font-family="monospace">HYPERBOLIC DOUBLE HELIX</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 06. CONCLUSION -->
+            <section id="conclusion" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-cyan-500 pl-4 mono">06. Conclusion</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    By mapping the 12 Heavy Quark Operators and their chiral inverses to a 24-Style Quaternion Rotation Protocol, BioChain AI creates a computational system that mimics the <strong>combinatorial density of nature</strong>. This allows for the emergence of "True Context" not through probabilistic guessing, but through the rigorous, self-correcting geometry of the truth chain.
+                </p>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // UPDATED SEMANTIC OPERAND DATA
+        const operandData = {
+            'D1': { title: "D1: IS", type: "IDENTITY", quat: "q = 1 + 0i...", action: "Null Rotation", dim: "Ontology / Being", steps: ["1. Init Seed", "2. Maintain State", "3. Assert Existence"], anim: "none" },
+            
+            // CAUSAL (X-AXIS)
+            'D2': { title: "D2: CAUSES", type: "FORWARD CAUSAL", quat: "q = 0.7 + 0.7i...", action: "X-Spin +90°", dim: "Time / Action", steps: ["1. Apply Forward Torque", "2. Project Consequence", "3. Lock Future State"], anim: "spin-x" },
+            'D14': { title: "D14: RESULT OF", type: "REVERSE CAUSAL", quat: "Conj(D2)", action: "X-Spin -90°", dim: "History / Provenance", steps: ["1. Trace Backward", "2. Identify Origin", "3. Lock Past State"], anim: "spin-xn" },
+            
+            // EVOLUTION (Y-AXIS)
+            'D3': { title: "D3: BECOMES", type: "TRANSFORMATION", quat: "q = 0.7 + 0.7j...", action: "Y-Spin +90°", dim: "Evolution / Change", steps: ["1. Initiate Change", "2. Morph State", "3. Confirm New Identity"], anim: "spin-y" },
+            'D15': { title: "D15: WAS", type: "MEMORY", quat: "Conj(D3)", action: "Y-Spin -90°", dim: "Memory / Legacy", steps: ["1. Recall State", "2. Archive Identity", "3. Freeze Snapshot"], anim: "spin-yn" },
+            
+            // DEPENDENCY (Z-AXIS)
+            'D4': { title: "D4: REQUIRES", type: "DEPENDENCY", quat: "q = 0.7 + 0.7k...", action: "Z-Spin +90°", dim: "Necessity / Logic", steps: ["1. Scan Prereqs", "2. Lock Dependency", "3. Bind to Parent"], anim: "spin-z" },
+            'D16': { title: "D16: ENABLES", type: "AFFORDANCE", quat: "Conj(D4)", action: "Z-Spin -90°", dim: "Possibility / Potential", steps: ["1. Open Pathway", "2. Allow Child", "3. Unlock Potential"], anim: "spin-zn" },
+            
+            // INTENSITY (SHEARS)
+            'D5': { title: "D5: AMPLIFIES", type: "INTENSITY +", quat: "Shear(xy)", action: "Skew +20°", dim: "Magnitude / Volume", steps: ["1. Increase Amplitude", "2. Stretch Context", "3. Enhance Signal"], anim: "shear-xy" },
+            'D17': { title: "D17: DAMPENS", type: "INTENSITY -", quat: "Relax(xy)", action: "Skew -20°", dim: "Reduction / Silence", steps: ["1. Decrease Amplitude", "2. Compress Context", "3. Mute Signal"], anim: "shear-xy-inv" },
+            'D6': { title: "D6: DISTORTS", type: "BIAS +", quat: "Shear(yz)", action: "Skew +20°", dim: "Subjectivity / Bias", steps: ["1. Apply Bias", "2. Shift Perspective", "3. Color Context"], anim: "shear-xy" },
+            'D18': { title: "D18: CLARIFIES", type: "BIAS -", quat: "Relax(yz)", action: "Skew -20°", dim: "Objectivity / Truth", steps: ["1. Remove Bias", "2. Straighten Path", "3. Purify Signal"], anim: "shear-xy-inv" },
+            'D7': { title: "D7: SKEWS", type: "FOCUS +", quat: "Shear(zx)", action: "Skew +20°", dim: "Attention / Priority", steps: ["1. Shift Focus", "2. Highlight Feature", "3. Mask Background"], anim: "shear-xy" },
+            'D19': { title: "D19: CORRECTS", type: "FOCUS -", quat: "Relax(zx)", action: "Skew -20°", dim: "Correction / Balance", steps: ["1. Re-center", "2. Balance Features", "3. Restore Equilibrium"], anim: "shear-xy-inv" },
+            
+            // RELATIONAL (TOPOLOGY)
+            'D8': { title: "D8: CONTAINS", type: "HIERARCHY", quat: "Map(Torus)", action: "Wrap Manifold", dim: "Containment / Scope", steps: ["1. Define Boundary", "2. Enclose Object", "3. Nest Context"], anim: "spin-x" },
+            'D20': { title: "D20: PART OF", type: "MEMBER", quat: "Unwrap", action: "Flatten Manifold", dim: "Membership / Scale", steps: ["1. Identify Parent", "2. Link to Super-set", "3. Embed Context"], anim: "spin-xn" },
+            'D9': { title: "D9: BINDS", type: "ENTANGLEMENT", quat: "Knot(Trefoil)", action: "Entangle Path", dim: "Connection / Quantum", steps: ["1. Create Link", "2. Tangle States", "3. Sync Spin"], anim: "spin-z" },
+            'D21': { title: "D21: FREES", type: "RELEASE", quat: "Unknot", action: "Resolve Knot", dim: "Independence", steps: ["1. Break Link", "2. Untangle States", "3. Isolate Spin"], anim: "spin-zn" },
+            'D10': { title: "D10: LINKS", type: "REFERENCE", quat: "Bridge", action: "Create Bridge", dim: "Hyperlink / Pointer", steps: ["1. Generate Pointer", "2. Bridge Distance", "3. Reference Ext"], anim: "bridge" },
+            'D22': { title: "D22: SEVERS", type: "ISOLATION", quat: "Break", action: "Cut Connection", dim: "Stop / End", steps: ["1. Delete Pointer", "2. Collapse Bridge", "3. Terminate Ref"], anim: "sever" },
+            
+            // TRUTH (FLIPS)
+            'D11': { title: "D11: IS NOT", type: "NEGATION", quat: "Flip(X)", action: "180° Inversion", dim: "Negation / False", steps: ["1. Detect Assertion", "2. Invert Reality", "3. Flip Bit"], anim: "penguin-flip" },
+            'D23': { title: "D23: CONFIRMS", type: "ASSERTION", quat: "Restore(X)", action: "Revert Flip", dim: "Confirmation / True", steps: ["1. Validate Truth", "2. Restore Reality", "3. Lock Bit"], anim: "penguin-restore" },
+            'D12': { title: "D12: OPPOSES", type: "CONFLICT", quat: "Flip(Y)", action: "180° Y-Flip", dim: "Conflict / Anti", steps: ["1. Identify Opponent", "2. Rotate Stance", "3. Engage Inverse"], anim: "penguin-flip" },
+            'D24': { title: "D24: ALIGNS", type: "HARMONY", quat: "Restore(Y)", action: "Revert Y-Flip", dim: "Agreement / Pro", steps: ["1. Identify Ally", "2. Align Stance", "3. Merge Flow"], anim: "penguin-restore" },
+            
+            'D13': { title: "D13: ANTI-IS", type: "VOID", quat: "q = -1...", action: "Phase Shift -1", dim: "Null / Void", steps: ["1. Negate Existence", "2. Collapse Wave", "3. Zero Context"], anim: "phase-inv" },
+        };
+
+        function loadOperand(id) {
+            const data = operandData[id];
+            const cube = document.getElementById('animCube');
+            
+            // Update Text
+            document.getElementById('opTitle').textContent = data.title;
+            document.getElementById('opType').textContent = data.type;
+            document.getElementById('opCode').textContent = "OP: " + id;
+            document.getElementById('opDim').textContent = data.dim;
+            document.getElementById('opAction').textContent = data.action;
+            
+            const stepsList = document.getElementById('opSteps');
+            stepsList.innerHTML = '';
+            data.steps.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                stepsList.appendChild(li);
+            });
+
+            // Update Animation
+            cube.style.animation = 'none';
+            cube.offsetHeight; /* trigger reflow */
+            if (data.anim !== 'none') {
+                cube.style.animation = `${data.anim} 3s infinite linear`;
+            } else {
+                cube.style.transform = 'rotateX(0) rotateY(0)';
+            }
+
+            // Update Active Button State
+            document.querySelectorAll('.operand-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

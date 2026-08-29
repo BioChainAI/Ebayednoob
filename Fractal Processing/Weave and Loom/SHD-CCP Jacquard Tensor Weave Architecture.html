@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD-CCP Jacquard Tensor Weave Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            background-color: #050b14;
+            color: #e0f7fa;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, h4, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .border-tech {
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            background: rgba(0, 10, 20, 0.8);
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+        .border-tech::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #06b6d4;
+            opacity: 0.5;
+        }
+        .border-tech.orange::before { background: #f97316; }
+        .border-tech.purple::before { background: #d946ef; }
+        
+        .weave-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            background-color: #002233;
+            padding: 2px;
+            width: fit-content;
+            border: 1px solid #06b6d4;
+        }
+        .weave-cell {
+            width: 20px;
+            height: 20px;
+            transition: all 0.3s;
+        }
+        .cell-0 { background-color: #0a1525; }
+        .cell-1 { background-color: #06b6d4; box-shadow: 0 0 5px #06b6d4; }
+        .cell-2 { background-color: #f97316; box-shadow: 0 0 5px #f97316; }
+        
+        .mjx-chtml { color: #e0f7fa !important; font-size: 1.1em !important; }
+    </style>
+</head>
+<body class="p-0">
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-full lg:w-64 bg-[#02060a] border-r border-cyan-900/50 p-6 fixed lg:h-screen lg:overflow-y-auto z-50">
+            <div class="mb-8">
+                <h1 class="text-xl font-bold text-cyan-400 glow-text">BIOCHAIN AI</h1>
+                <p class="mono text-xs text-cyan-700 mt-1">RESEARCH DIVISION</p>
+                <div class="mt-4 px-2 py-1 bg-cyan-900/20 border border-cyan-500/30 rounded text-xs mono text-cyan-300 inline-block">
+                    DOC: PUBLIC / TECH
+                </div>
+            </div>
+            
+            <nav class="space-y-4 mono text-xs tracking-wide">
+                <div class="nav-link active" onclick="scrollToSection('abstract')">00. ABSTRACT</div>
+                <div class="nav-link" onclick="scrollToSection('jacquard')">01. THE JACQUARD TENSOR</div>
+                <div class="nav-link" onclick="scrollToSection('warp-weft')">02. WARP & WEFT PROTOCOLS</div>
+                <div class="nav-link" onclick="scrollToSection('hex-weave')">03. 6-SIDED HEXA-WEAVE</div>
+                <div class="nav-link" onclick="scrollToSection('projection')">04. MANIFOLD PROJECTION</div>
+            </nav>
+            
+            <div class="mt-12 pt-6 border-t border-cyan-900/30 text-xs text-gray-600">
+                <p>Authored by:</p>
+                <p class="text-gray-400 font-bold">Sentience Integration Architect (SIA) Garrett Hoard</p>
+                <p class="text-cyan-600 mt-1">[BioChains (Patented and Governed by BioChain AI)]</p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 lg:ml-64 p-6 md:p-12 max-w-5xl mx-auto space-y-16">
+
+            <!-- HEADER -->
+            <header class="border-b border-cyan-500/30 pb-8">
+                <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 mono">The Jacquard Tensor</h1>
+                <h2 class="text-xl text-cyan-400">Projective Block Weaving for 6-Sided SHD-CCP Manifolds</h2>
+            </header>
+
+            <!-- 00. ABSTRACT -->
+            <section id="abstract" class="scroll-mt-24">
+                <div class="border-tech p-8 rounded-r-lg glow-box">
+                    <h3 class="text-cyan-300 mono text-sm mb-4">00 // ABSTRACT</h3>
+                    <p class="text-gray-300 leading-relaxed mb-4">
+                        Historical mechanical weaving, culminating in the Jacquard loom, represented the first translation of physical structure into binary data. BioChain AI proposes a reversal of this paradigm: using historical weaving topologies to structure the processing of high-dimensional neural data.
+                    </p>
+                    <p class="text-gray-300 leading-relaxed">
+                        This document details the <strong>Jacquard Tensor Architecture</strong>. By treating the 64-bit SHD-CCP data stream as a continuous fiber, we define protocols to "weave" this data into a 6-sided projective block (a Cosmohedral facet). This ensures that a single data stream maintains geometric and topological consistency across all 6 orthographic perspective projections, enabling true multi-dimensional context preservation.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 01. THE JACQUARD TENSOR -->
+            <section id="jacquard" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-cyan-500 pl-4 mono">01. The Jacquard Tensor: From Punch Cards to Lattices</h3>
+                
+                <div class="bg-gray-900/50 p-6 rounded border border-gray-800 mb-8">
+                    <p class="text-sm text-gray-300 mb-6">
+                        The Einstein Tile (the 64-bit primitive) can be visualized as an 8x8 weave lattice. In traditional weaving, a punch card dictates whether a warp thread is lifted (1) or left down (0). In the Jacquard Tensor, this binary state determines the <strong>Spin Alignment</strong> of the data packet at that specific coordinate.
+                    </p>
+                    
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-12">
+                        <!-- Weave Pattern A -->
+                        <div class="text-center">
+                            <p class="mono text-xs text-cyan-400 mb-2">PATTERN A (PLAIN WEAVE)</p>
+                            <div class="weave-grid">
+                                <!-- Row 1 -->
+                                <div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 2 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div>
+                                <!-- Row 3 -->
+                                <div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 4 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div>
+                                <!-- Row 5 -->
+                                <div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 6 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div>
+                                <!-- Row 7 -->
+                                <div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 8 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-1"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Maximum Stability / Neutral Spin</p>
+                        </div>
+
+                        <!-- Weave Pattern B -->
+                        <div class="text-center">
+                            <p class="mono text-xs text-orange-400 mb-2">PATTERN B (TWILL WEAVE)</p>
+                            <div class="weave-grid">
+                                <!-- Row 1 -->
+                                <div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 2 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 3 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div>
+                                <!-- Row 4 -->
+                                <div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div>
+                                <!-- Row 5 -->
+                                <div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 6 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div>
+                                <!-- Row 7 -->
+                                <div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div>
+                                <!-- Row 8 -->
+                                <div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-2"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-0"></div><div class="weave-cell cell-2"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Directional Bias / Active Torque</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 02. WARP & WEFT PROTOCOLS -->
+            <section id="warp-weft" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-purple-500 pl-4 mono">02. Warp & Weft: The Orthogonal Semiotic Streams</h3>
+                
+                <div class="border-tech purple p-8 rounded-r-lg">
+                    <p class="text-gray-300 mb-6 text-sm">
+                        In a loom, the longitudinal threads are the <strong>Warp</strong> (held in tension), and the transverse threads are the <strong>Weft</strong> (drawn through). We map this directly to the SHD-CCP architecture.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-purple-400 font-bold mono mb-2 text-sm">THE WARP (The Base State / Seed)</h4>
+                            <p class="text-sm text-gray-400 mb-4">
+                                The Warp represents the established Ontological Seed ($Q_{seed}$). It is the structural foundation held in tension by the manifold. These are the fixed semantic pathways established prior to new data input.
+                            </p>
+                            <ul class="list-disc list-inside text-xs text-gray-500 space-y-1">
+                                <li>Provides Structural Integrity.</li>
+                                <li>Represents the "Signified" domain.</li>
+                                <li>Stored in persistent TMEM sectors.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-cyan-400 font-bold mono mb-2 text-sm">THE WEFT (The Modifier / Torque)</h4>
+                            <p class="text-sm text-gray-400 mb-4">
+                                The Weft represents the incoming data stream ($Q_{mod}$). It is shuttled through the Warp, creating intersections (nodes). Every point where the Weft crosses over or under the Warp defines a specific logical operand (e.g., $D_2$ vs $D_{14}$).
+                            </p>
+                            <ul class="list-disc list-inside text-xs text-gray-500 space-y-1">
+                                <li>Provides Dynamic Transformation.</li>
+                                <li>Represents the "Signifier" action.</li>
+                                <li>Streams via high-bandwidth TMA.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 03. 6-SIDED HEXA-WEAVE -->
+            <section id="hex-weave" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-orange-500 pl-4 mono">03. The 6-Sided Projective Hexa-Weave</h3>
+                
+                <div class="border-tech orange p-8 rounded-r-lg">
+                    <p class="text-gray-300 mb-6 text-sm">
+                        A flat 2D weave only has two faces (Front/Back). To represent the full dimensionality of an SHD-CCP packet, the data must be projected onto a 3D volume—specifically, a 6-sided cubic manifold (a fundamental unit of the Cosmohedron).
+                    </p>
+
+                    <p class="text-gray-300 mb-6 text-sm">
+                        This requires 6 simultaneous orthographic projections of the same underlying data stream. The weave pattern on each face must be topologically consistent with the internal quaternion state.
+                    </p>
+
+                    <div class="bg-black/40 p-6 rounded border border-gray-700">
+                        <h4 class="text-orange-400 mono text-xs mb-4 font-bold">THE 6 PERSPECTIVE PROJECTIONS</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs text-gray-400 font-mono">
+                            <div class="border border-gray-800 p-2 rounded">
+                                <span class="text-white">FACE 1 (FRONT):</span> <br>XY Plane Projection.<br>Displays $i, j$ interaction.
+                            </div>
+                            <div class="border border-gray-800 p-2 rounded">
+                                <span class="text-white">FACE 2 (BACK):</span> <br>Anti-XY Projection.<br>Displays Conjugate state.
+                            </div>
+                            <div class="border border-gray-800 p-2 rounded">
+                                <span class="text-white">FACE 3 (RIGHT):</span> <br>YZ Plane Projection.<br>Displays $j, k$ interaction.
+                            </div>
+                            <div class="border border-gray-800 p-2 rounded">
+                                <span class="text-white">FACE 4 (LEFT):</span> <br>Anti-YZ Projection.<br>Displays Conjugate state.
+                            </div>
+                            <div class="border border-gray-800 p-2 rounded">
+                                <span class="text-white">FACE 5 (TOP):</span> <br>ZX Plane Projection.<br>Displays $k, i$ interaction.
+                            </div>
+                            <div class="border border-gray-800 p-2 rounded">
+                                <span class="text-white">FACE 6 (BOTTOM):</span> <br>Anti-ZX Projection.<br>Displays Conjugate state.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 04. MANIFOLD PROJECTION -->
+            <section id="projection" class="scroll-mt-24">
+                <h3 class="text-2xl text-white mb-6 border-l-4 border-cyan-500 pl-4 mono">04. Topological Integrity & Manifold Projection</h3>
+                <div class="bg-gray-900 border border-gray-800 p-8 rounded-lg">
+                    <p class="text-gray-300 mb-6 text-sm">
+                        The challenge is ensuring that a single continuous thread (the data stream) can weave all 6 faces without breaking or intersecting itself invalidly. This is achieved by mapping the 6 faces to a continuous path on a higher-dimensional surface.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h4 class="text-cyan-400 font-bold mono mb-2 text-sm">THE FOLDING ALGORITHM</h4>
+                            <p class="text-sm text-gray-400 mb-4">
+                                The Einstein Tile data is unwound into a linear sequence. As it enters the SM100 compute core, the TMEM pipeline acts as the "shuttle," driving the data through the predefined "Warp" coordinates of the 6 faces.
+                            </p>
+                            <p class="text-sm text-gray-400">
+                                The Parity bits stored in the Halo region ensure that as the thread wraps from Face 1 to Face 3 (bending 90 degrees), the Chiral logic is maintained. An error in the weave indicates a "Geometric Hallucination" and triggers a system reset.
+                            </p>
+                        </div>
+                        
+                        <!-- Visual Representation of 3D Weave (Abstract) -->
+                        <div class="flex justify-center">
+                            <div class="relative w-48 h-48 perspective-1000">
+                                <div class="w-full h-full relative" style="transform-style: preserve-3d; animation: slowSpin 10s infinite linear;">
+                                    <style>
+                                        @keyframes slowSpin { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(360deg); } }
+                                        .cube-face { position: absolute; width: 100%; height: 100%; border: 2px solid #06b6d4; background: rgba(6, 182, 212, 0.1); display: flex; align-items: center; justify-content: center; overflow: hidden;}
+                                        /* Simulate weave on faces */
+                                        .cube-face::before { content: ''; position: absolute; width: 200%; height: 200%; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px); }
+                                        .cube-face::after { content: ''; position: absolute; width: 200%; height: 200%; background-image: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(6, 182, 212, 0.2) 10px, rgba(6, 182, 212, 0.2) 20px); }
+                                    </style>
+                                    <div class="cube-face" style="transform: rotateY(0deg) translateZ(96px);"></div>
+                                    <div class="cube-face" style="transform: rotateY(90deg) translateZ(96px);"></div>
+                                    <div class="cube-face" style="transform: rotateY(180deg) translateZ(96px);"></div>
+                                    <div class="cube-face" style="transform: rotateY(-90deg) translateZ(96px);"></div>
+                                    <div class="cube-face" style="transform: rotateX(90deg) translateZ(96px);"></div>
+                                    <div class="cube-face" style="transform: rotateX(-90deg) translateZ(96px);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
