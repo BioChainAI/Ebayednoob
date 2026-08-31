@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holographic 64-Voxel Memory Weave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            startup: {
+                pageReady: () => {
+                    if (window.MathJax && window.MathJax.startup) {
+                        return MathJax.startup.defaultPageReady();
+                    }
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #020617; color: #e2e8f0; font-family: 'Inter', sans-serif; user-select: none; }
+        #glcanvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        
+        .glass-panel {
+            position: absolute; background: rgba(10, 15, 25, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 10;
+            display: flex; flex-direction: column; overflow: hidden; transition: height 0.3s;
+        }
+        
+        .drag-header { 
+            padding: 10px 15px; background: rgba(2, 6, 23, 0.9); border-bottom: 1px solid #1e293b; font-size: 0.75rem; 
+            font-weight: bold; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; display: flex; 
+            justify-content: space-between; align-items: center; cursor: grab; 
+        }
+        .drag-header:active { cursor: grabbing; }
+        
+        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .btn { 
+            background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #fff; padding: 10px 12px; 
+            border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; 
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; 
+        }
+        .btn:hover:not(:disabled) { background: #1e293b; border-color: #38bdf8; color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        .btn.active { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #1e293b !important; color: #64748b !important; background: transparent !important; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #334155; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #38bdf8; cursor: pointer; margin-top: -5px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+
+        #tutorial-panel { top: 20px; left: 20px; width: 400px; max-height: 80vh; overflow-y: auto;}
+        #audio-panel { bottom: 20px; left: 20px; width: 340px; }
+        #mod-panel { top: 20px; right: 20px; width: 320px; }
+        #telemetry-panel { bottom: 20px; right: 20px; width: 380px; }
+        #sequencer-panel { bottom: 20px; left: 50%; transform: translateX(-50%); width: 500px; }
+
+        .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .scope-box { background: #020617; border: 1px solid #1e293b; border-radius: 6px; overflow: hidden; position: relative;}
+        .scope-label { position: absolute; top: 4px; left: 6px; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; z-index: 2;}
+        .scope-canvas { width: 100%; height: 40px; display: block; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 2px; }
+        
+        .math-block { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px; border: 1px solid #334155; margin: 8px 0; font-size: 0.85rem;}
+
+        .hud-label { position: absolute; background: rgba(15, 23, 42, 0.8); border: 1px solid #38bdf8; color: #38bdf8; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.5s; transform: translate(-50%, -50%); text-transform: uppercase; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);}
+        
+        .tab-btn { flex: 1; text-align: center; font-size: 9px; font-weight: bold; padding: 6px 0; cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; color: #64748b; }
+        .tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+        .tab-btn:hover:not(.active) { color: #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <!-- TUTORIAL PANEL -->
+    <div class="glass-panel" id="tutorial-panel">
+        <div class="drag-header">
+            <span>Holographic Memory Weave</span>
+            <div class="flex gap-2">
+                <span class="text-xs text-slate-500 font-mono" id="tut-progress">1/4</span>
+                <button class="text-slate-400 hover:text-white" onclick="document.getElementById('tut-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+            </div>
+        </div>
+        <div class="panel-content" id="tut-content">
+            <h2 id="tut-title" class="text-lg font-bold text-sky-400 leading-tight">1. The T2 Equatorial Canvas</h2>
+            <div id="tut-body" class="text-xs text-slate-300 space-y-3 leading-relaxed">
+                <p>To record topological data dynamically without phase-canceling collisions, we must isolate the recording surface to the geometric equator.</p>
+                <p>In the 5-toroid hierarchy ($T_0 \to T_4$), the <strong>$T_2$ Manifold</strong> serves as this exact perfect balance point. It is governed by the winding law:</p>
+                <div class="math-block">$$ W_2 = 16 - 2(2) = 12 \text{ Helical Wraps} $$</div>
+                <p>Watch as the outer Glial layers ($T_4, T_3$) and the dense Singularity layers ($T_1, T_0$) fade into ghost frames, isolating the $T_2$ glass-like scaffolding as our blank continuous record cylinder.</p>
+            </div>
+            <div class="flex justify-between mt-2 pt-3 border-t border-slate-700">
+                <button class="btn !w-auto !px-4" id="btn-prev" disabled><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                <button class="btn !w-auto !px-4 active" id="btn-next">Next <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULATION PANEL (TABBED) -->
+    <div class="glass-panel" id="mod-panel">
+        <div class="drag-header">
+            <span>Visual Modulation</span>
+            <button class="text-slate-400 hover:text-white" onclick="document.getElementById('mod-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="panel-content !p-0" id="mod-content">
+            <!-- Tabs -->
+            <div class="flex bg-slate-900 border-b border-slate-700">
+                <div class="tab-btn active" onclick="switchTab('weave', this)">THE WEAVE</div>
+                <div class="tab-btn" onclick="switchTab('manifold', this)">MANIFOLD</div>
+                <div class="tab-btn" onclick="switchTab('colors', this)">COLORS</div>
+            </div>
+
+            <!-- TAB 1: THE WEAVE -->
+            <div id="tab-weave" class="p-4 flex flex-col gap-3">
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Braid Glow</span><span id="v-glow">2.0</span></div>
+                    <input type="range" id="ctrl-glow" min="0" max="5.0" step="0.1" value="2.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Trail Persistence (Wake Length)</span><span id="v-length">0.5</span></div>
+                    <input type="range" id="ctrl-length" min="0.05" max="1.0" step="0.05" value="0.5">
+                </div>
+                <div class="border-t border-slate-700 pt-2">
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Voxel Torsion (Tumbler)</span><span id="v-tor">6.0</span></div>
+                    <input type="range" id="ctrl-torsion" min="0.0" max="20.0" step="0.5" value="6.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Voxel Tension (Spread)</span><span id="v-ten">12.0</span></div>
+                    <input type="range" id="ctrl-tension" min="1.0" max="30.0" step="1.0" value="12.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Audio Attenuation</span><span id="v-att">15.0</span></div>
+                    <input type="range" id="ctrl-attenuation" min="0.0" max="50.0" step="1.0" value="15.0">
+                </div>
+            </div>
+
+            <!-- TAB 2: MANIFOLD -->
+            <div id="tab-manifold" class="p-4 flex flex-col gap-3 hidden">
+                <div class="flex justify-between items-center text-[9px] text-slate-300 border-b border-slate-700 pb-2">
+                    <span>Auto-Rotate Manifold</span>
+                    <input type="checkbox" id="chk-rotate" checked class="w-3 h-3 accent-sky-400 cursor-pointer">
+                </div>
+                <div class="flex justify-between items-center text-[9px] text-slate-300 border-b border-slate-700 pb-2">
+                    <span>Forward Braid (Orthodromic)</span>
+                    <input type="checkbox" id="chk-fwd" checked class="w-3 h-3 accent-sky-400 cursor-pointer">
+                </div>
+                <div class="flex justify-between items-center text-[9px] text-slate-300 border-b border-slate-700 pb-2">
+                    <span>Inverse Braid (Antidromic)</span>
+                    <input type="checkbox" id="chk-inv" checked class="w-3 h-3 accent-sky-400 cursor-pointer">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>T2 Manifold Opacity</span><span id="v-t2-op">0.15</span></div>
+                    <input type="range" id="ctrl-t2-op" min="0.0" max="1.0" step="0.05" value="0.15">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Ghost Manifolds Opacity</span><span id="v-ghost-op">0.05</span></div>
+                    <input type="range" id="ctrl-ghost-op" min="0.0" max="0.5" step="0.05" value="0.05">
+                </div>
+            </div>
+
+            <!-- TAB 3: COLORS -->
+            <div id="tab-colors" class="p-4 flex flex-col gap-3 hidden">
+                <div class="bg-[#020617] p-2 rounded border border-slate-700 flex justify-between items-center text-[10px] text-sky-400 font-bold">
+                    <label for="auto-color" class="cursor-pointer">AUTO-SYNC CHROMATICS</label>
+                    <input type="checkbox" id="auto-color" checked class="w-3 h-3 accent-sky-400 cursor-pointer">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>W Col</span> <input type="color" id="col-w" value="#38bdf8" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>X Col</span> <input type="color" id="col-x" value="#f59e0b" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>Y Col</span> <input type="color" id="col-y" value="#10b981" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>Z Col</span> <input type="color" id="col-z" value="#f43f5e" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXCITATION SOURCE PANEL -->
+    <div class="glass-panel" id="audio-panel">
+        <div class="drag-header">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-satellite-dish"></i> Data Injection</span>
+            <button class="text-slate-400 hover:text-white" onclick="document.getElementById('audio-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="panel-content" id="audio-content">
+            <div class="flex gap-2 mb-2">
+                <button class="btn active flex-1 !mb-0" id="src-geo" onclick="setDataSource('GEO')"><i class="fa-solid fa-infinity"></i> INTRINSIC</button>
+                <button class="btn flex-1 !mb-0" id="src-audio" onclick="setDataSource('AUDIO')"><i class="fa-solid fa-music"></i> ACOUSTIC</button>
+            </div>
+            
+            <div id="ui-geo">
+                <div class="flex justify-between items-center text-[11px] text-slate-300 font-bold uppercase tracking-widest border-b border-slate-700 pb-2 mb-2">
+                    <span>Base Frequency ($\tau$)</span>
+                    <span id="val-tau" class="text-emerald-400 font-mono text-sm">1.00 Hz</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <input type="range" id="slider-tau" min="0.1" max="5.0" value="1.0" step="0.1">
+                </div>
+                <div class="text-[9px] text-slate-500 text-center leading-tight mt-2">
+                    Intrinsic winding geometry ($\Sigma W_n = 60$) derives state space purely from this master oscillation.
+                </div>
+            </div>
+
+            <div id="ui-audio" class="hidden">
+                <label for="audio-upload" class="btn"><i class="fa-solid fa-upload"></i> Load Reference Track</label>
+                <input type="file" id="audio-upload" accept="audio/*" class="hidden">
+                <audio id="audio-element" controls style="width: 100%; height: 32px; outline: none; border-radius: 6px; margin-top: 5px;"></audio>
+                <div class="text-[9px] text-slate-500 text-center leading-tight mt-2">
+                    Acoustic data is translated into W,X,Y,Z vectors, driving the tumbling dynamics of the 64-voxel read/write head.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GREAT YEAR SEQUENCER -->
+    <div class="glass-panel" id="sequencer-panel">
+        <div class="drag-header"><span>Great Year Sequencer (25,920 Frames)</span><i class="fa-solid fa-clock"></i></div>
+        <div class="panel-content !pt-2">
+            <div class="text-[9px] text-slate-500 mb-2 leading-tight">Controls the absolute position of the Etch-Head along the macroscopic timeline.</div>
+            
+            <div class="flex items-center gap-3">
+                <button class="btn !w-auto !px-4 active" id="btn-seq-play"><i class="fa-solid fa-pause"></i></button>
+                <input type="range" id="slider-frame" min="0" max="25919" value="0" step="1" class="flex-grow">
+                <div class="text-[10px] text-slate-400 font-mono w-24 text-right"><span id="val-frame" class="text-sky-400 font-bold">0</span> / 25920</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELEMETRY PANEL -->
+    <div class="glass-panel" id="telemetry-panel">
+        <div class="drag-header">
+            <span>4D Phase Telemetry</span>
+            <button class="text-slate-400 hover:text-white" onclick="document.getElementById('tel-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="panel-content !pt-2" id="tel-content">
+            <div class="text-[9px] text-slate-400 mb-2 leading-tight">
+                Real-time geometric history tracking the $W, X, Y, Z$ vector states (720-frame sliding window).
+            </div>
+            <div class="scope-grid">
+                <div class="scope-box" id="box-w" style="border-color: rgba(56, 189, 248, 0.3);">
+                    <div class="scope-label" id="label-w-2d" style="color: #38bdf8;">W (Scalar)</div>
+                    <canvas id="scope-w" class="scope-canvas"></canvas>
+                </div>
+                <div class="scope-box" id="box-x" style="border-color: rgba(245, 158, 11, 0.3);">
+                    <div class="scope-label" id="label-x-2d" style="color: #f59e0b;">X (Vector)</div>
+                    <canvas id="scope-x" class="scope-canvas"></canvas>
+                </div>
+                <div class="scope-box" id="box-y" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="scope-label" id="label-y-2d" style="color: #10b981;">Y (Vector)</div>
+                    <canvas id="scope-y" class="scope-canvas"></canvas>
+                </div>
+                <div class="scope-box" id="box-z" style="border-color: rgba(244, 63, 94, 0.3);">
+                    <div class="scope-label" id="label-z-2d" style="color: #f43f5e;">Z (Vector)</div>
+                    <canvas id="scope-z" class="scope-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN 3D CANVAS & HUD -->
+    <div id="glcanvas"></div>
+    <div id="label-t2" class="hud-label border-emerald-500 text-emerald-400">T2 Equatorial Canvas</div>
+
+    <script>
+        window.switchTab = function(tabId, btn) {
+            ['weave', 'manifold', 'colors'].forEach(id => {
+                document.getElementById('tab-' + id).classList.add('hidden');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            const btns = btn.parentElement.querySelectorAll('.tab-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
+
+        function makeDraggable(panelId) {
+            const panel = document.getElementById(panelId);
+            if(!panel) return;
+            const header = panel.querySelector('.drag-header');
+            let isDragging = false, startX, startY, initX, initY;
+            header.addEventListener('mousedown', e => {
+                if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I') return;
+                isDragging = true; startX = e.clientX; startY = e.clientY;
+                initX = panel.offsetLeft; initY = panel.offsetTop;
+                panel.style.bottom = 'auto'; panel.style.right = 'auto'; 
+                panel.style.left = initX + 'px'; panel.style.top = initY + 'px';
+            });
+            window.addEventListener('mousemove', e => {
+                if(!isDragging) return;
+                panel.style.left = (initX + (e.clientX - startX)) + 'px'; 
+                panel.style.top = (initY + (e.clientY - startY)) + 'px';
+            });
+            window.addEventListener('mouseup', () => isDragging = false);
+        }
+        ['tutorial-panel', 'audio-panel', 'telemetry-panel', 'mod-panel', 'sequencer-panel'].forEach(makeDraggable);
+
+        const geoState = {
+            isPlaying: true, tau: 1.0, 
+            globalFrame: 0, globalTime: 0,
+            historyArray: new Float32Array(25920 * 4), // 25920 frames, WXYZ
+            dataSource: 'GEO' // GEO or AUDIO
+        };
+
+        const audioState = {
+            ctx: null, analyser: null, source: null,
+            freqData: new Uint8Array(256) // Just need a small slice to get a 4-vector
+        };
+
+        const audioUI = {
+            upload: document.getElementById('audio-upload'), 
+            el: document.getElementById('audio-element'),
+            srcGeo: document.getElementById('src-geo'),
+            srcAudio: document.getElementById('src-audio'),
+            uiGeo: document.getElementById('ui-geo'),
+            uiAudio: document.getElementById('ui-audio')
+        };
+
+        window.setDataSource = function(src) {
+            geoState.dataSource = src;
+            if(src === 'AUDIO') {
+                audioUI.srcAudio.classList.add('active'); audioUI.srcGeo.classList.remove('active');
+                audioUI.uiAudio.classList.remove('hidden'); audioUI.uiGeo.classList.add('hidden');
+                if(audioUI.el.src && audioUI.el.duration) {
+                    geoState.globalFrame = Math.floor((audioUI.el.currentTime / audioUI.el.duration) * 25920);
+                }
+            } else {
+                audioUI.srcGeo.classList.add('active'); audioUI.srcAudio.classList.remove('active');
+                audioUI.uiGeo.classList.remove('hidden'); audioUI.uiAudio.classList.add('hidden');
+                if(!audioUI.el.paused) audioUI.el.pause();
+            }
+        };
+
+        function initAudio() {
+            if(!audioState.ctx) {
+                audioState.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                audioState.analyser = audioState.ctx.createAnalyser();
+                audioState.analyser.fftSize = 512; 
+                audioState.analyser.smoothingTimeConstant = 0.8;
+                audioState.source = audioState.ctx.createMediaElementSource(audioUI.el);
+                audioState.source.connect(audioState.analyser);
+                audioState.analyser.connect(audioState.ctx.destination);
+            }
+            if(audioState.ctx.state === 'suspended') audioState.ctx.resume();
+        }
+
+        audioUI.upload.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            audioUI.el.src = URL.createObjectURL(file);
+        });
+        audioUI.el.addEventListener('play', () => { initAudio(); geoState.isPlaying = true; syncPlayButtonUI(); });
+        audioUI.el.addEventListener('pause', () => { geoState.isPlaying = false; syncPlayButtonUI(); });
+
+        const UI = {
+            btnSeqPlay: document.getElementById('btn-seq-play'),
+            sliderFrame: document.getElementById('slider-frame'),
+            sliderTau: document.getElementById('slider-tau'),
+            valTau: document.getElementById('val-tau'),
+            scopes: {
+                W: { cvs: document.getElementById('scope-w'), ctx: document.getElementById('scope-w').getContext('2d'), col: '#38bdf8' },
+                X: { cvs: document.getElementById('scope-x'), ctx: document.getElementById('scope-x').getContext('2d'), col: '#f59e0b' },
+                Y: { cvs: document.getElementById('scope-y'), ctx: document.getElementById('scope-y').getContext('2d'), col: '#10b981' },
+                Z: { cvs: document.getElementById('scope-z'), ctx: document.getElementById('scope-z').getContext('2d'), col: '#f43f5e' }
+            }
+        };
+
+        Object.values(UI.scopes).forEach(s => { s.cvs.width = s.cvs.clientWidth; s.cvs.height = s.cvs.clientHeight; });
+
+        function syncPlayButtonUI() {
+            UI.btnSeqPlay.innerHTML = geoState.isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+            UI.btnSeqPlay.className = geoState.isPlaying ? "btn !w-auto !px-4 active" : "btn !w-auto !px-4";
+        }
+
+        UI.btnSeqPlay.addEventListener('click', () => {
+            geoState.isPlaying = !geoState.isPlaying;
+            syncPlayButtonUI();
+            if(geoState.dataSource === 'AUDIO' && audioUI.el.src) {
+                geoState.isPlaying ? audioUI.el.play() : audioUI.el.pause();
+            }
+        });
+
+        UI.sliderTau.addEventListener('input', (e) => { geoState.tau = parseFloat(e.target.value); UI.valTau.innerText = geoState.tau.toFixed(2) + ' Hz'; });
+
+        UI.sliderFrame.addEventListener('input', (e) => {
+            geoState.globalFrame = parseInt(e.target.value);
+            geoState.globalTime = geoState.globalFrame / 60.0; // 60fps base
+            if(geoState.dataSource === 'AUDIO' && audioUI.el.src && audioUI.el.duration) {
+                audioUI.el.currentTime = (geoState.globalFrame / 25920) * audioUI.el.duration;
+            }
+        });
+
+        function getRMS(arr, start, length) {
+            let sum = 0;
+            for(let i=start; i<start+length; i++) {
+                let v = arr[i] / 255.0;
+                sum += v*v;
+            }
+            return Math.sqrt(sum/length);
+        }
+
+        function updateGeometricData(time) {
+            let W=0, X=0, Y=0, Z=0;
+
+            if (geoState.dataSource === 'AUDIO' && audioState.analyser && !audioUI.el.paused) {
+                audioState.analyser.getByteFrequencyData(audioState.freqData);
+                // Extract 4 bands to represent W, X, Y, Z
+                W = getRMS(audioState.freqData, 0, 16) * 2.0; // Bass/Fund
+                X = getRMS(audioState.freqData, 16, 32) * 2.0;
+                Y = getRMS(audioState.freqData, 48, 64) * 2.0;
+                Z = getRMS(audioState.freqData, 112, 128) * 2.0;
+            } else {
+                // Intrinsic Mathematical Generation (Orbiting Hyperbolic curves)
+                let basePhase = time * Math.PI * 2 * geoState.tau;
+                W = 0.5 + Math.sin(basePhase) * 0.5;
+                X = Math.cos(basePhase * 1.5);
+                Y = Math.sin(basePhase * 2.0);
+                Z = Math.cos(basePhase * 3.0);
+            }
+
+            // Write into rolling history buffer at current frame
+            const idx = Math.floor(geoState.globalFrame) * 4;
+            // Prevent out-of-bounds due to floating point inaccuracies
+            if(idx >= 0 && idx < 25920 * 4) {
+                geoState.historyArray[idx]   = W;
+                geoState.historyArray[idx+1] = X;
+                geoState.historyArray[idx+2] = Y;
+                geoState.historyArray[idx+3] = Z;
+            }
+        }
+
+        function drawScopeLine(ctx, col, h, w, offset) {
+            ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+            
+            const windowSize = 720; // 1 Meso-cycle sliding window
+            
+            for(let i=0; i<w; i++) {
+                // Map pixel 'i' to the sliding window ending at current frame
+                let frameIdx = Math.floor(geoState.globalFrame - windowSize + (i / w) * windowSize);
+                
+                // Wrap safely around 25920 bounds
+                if (frameIdx < 0) frameIdx += 25920;
+                frameIdx = frameIdx % 25920;
+                
+                const val = geoState.historyArray[frameIdx * 4 + offset] || 0; 
+                const y = h/2 - (val * h * 0.4);
+                
+                if (i===0) ctx.moveTo(i, y); 
+                else ctx.lineTo(i, y);
+            }
+            ctx.stroke();
+            
+            // Draw playhead marker exactly at the active edge
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(w-2, 0, 2, h);
+        }
+
+        function updateScopes() {
+            const wCvs = UI.scopes.W.cvs, xCvs = UI.scopes.X.cvs, yCvs = UI.scopes.Y.cvs, zCvs = UI.scopes.Z.cvs;
+            const wCtx = UI.scopes.W.ctx, xCtx = UI.scopes.X.ctx, yCtx = UI.scopes.Y.ctx, zCtx = UI.scopes.Z.ctx;
+            const w = wCvs.width, h = wCvs.height;
+            
+            [wCtx, xCtx, yCtx, zCtx].forEach(ctx => {
+                ctx.clearRect(0,0,w,h);
+                ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
+                ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+            });
+
+            drawScopeLine(wCtx, UI.scopes.W.col, h, w, 0);
+            drawScopeLine(xCtx, UI.scopes.X.col, h, w, 1);
+            drawScopeLine(yCtx, UI.scopes.Y.col, h, w, 2);
+            drawScopeLine(zCtx, UI.scopes.Z.col, h, w, 3);
+        }
+
+        const Engine3D = (function() {
+            const container = document.getElementById('glcanvas');
+            const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x020617, 0.003);
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 80, 200);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; controls.autoRotate = false;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+            const centerLight = new THREE.PointLight(0x38bdf8, 2, 300); scene.add(centerLight);
+
+            const engineGroup = new THREE.Group(); scene.add(engineGroup);
+
+            // Stator Math Laws
+            const getRn = (n) => 5*n*n + 15*n + 15;
+            const getrn = (n) => 2*n + 4;
+            const getWn = (n) => 16 - 2*n;
+
+            // --- 5-Tier Stator Manifolds (Ghosted out except T2) ---
+            const tiers = [];
+            for(let n=0; n<5; n++) {
+                const Rn = getRn(n); const rn = getrn(n); const Wn = getWn(n);
+                const tierGroup = new THREE.Group();
+                if (n % 2 === 0) tierGroup.rotation.x = Math.PI / 2; else tierGroup.rotation.y = Math.PI / 2;
+
+                const tGeo = new THREE.TorusGeometry(Rn, rn, 16, 100);
+                const tMat = new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.05, wireframe: true }); 
+                const statorMesh = new THREE.Mesh(tGeo, tMat); 
+                tierGroup.add(statorMesh);
+                
+                engineGroup.add(tierGroup);
+                tiers.push({ n, Wn, Rn, rn, statorMesh, tierGroup });
+            }
+
+            // T2 is special (The Equatorial Canvas)
+            const T2 = tiers[2];
+
+            function updateHTMLHUD(object, htmlId, targetOpacity) {
+                const el = document.getElementById(htmlId); if (!el) return;
+                const pos = new THREE.Vector3();
+                if (object.isGroup) object.children[0].getWorldPosition(pos);
+                else object.getWorldPosition(pos);
+                pos.y += 20; // Float above
+                pos.project(camera);
+                if (pos.z > 1) { el.style.opacity = 0; return; }
+                const x = (pos.x * .5 + .5) * window.innerWidth; const y = (pos.y * -.5 + .5) * window.innerHeight;
+                el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.opacity = targetOpacity;
+            }
+
+            const historyTexture = new THREE.DataTexture(geoState.historyArray, 25920, 1, THREE.RGBAFormat, THREE.FloatType);
+            historyTexture.minFilter = THREE.NearestFilter; historyTexture.magFilter = THREE.NearestFilter;
+            
+            // Increased to 4320 points for high-resolution rendering over the 25,920 frame track
+            const POINTS_PER_STRAND = 4320; 
+            const strandGeo = new THREE.BufferGeometry();
+            const posArr = new Float32Array(POINTS_PER_STRAND * 3); const pIdxArr = new Float32Array(POINTS_PER_STRAND);
+            for(let i=0; i<POINTS_PER_STRAND; i++) { posArr[i*3]=0; posArr[i*3+1]=0; posArr[i*3+2]=0; pIdxArr[i] = i / (POINTS_PER_STRAND - 1.0); }
+            strandGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3)); strandGeo.setAttribute('pIdx', new THREE.BufferAttribute(pIdxArr, 1));
+            
+            const instGeoFwd = new THREE.InstancedBufferGeometry().copy(strandGeo); instGeoFwd.instanceCount = 64; 
+            const instGeoInv = new THREE.InstancedBufferGeometry().copy(strandGeo); instGeoInv.instanceCount = 64; 
+            
+            const sIdxArr = new Float32Array(64); for(let i=0; i<64; i++) sIdxArr[i] = i;
+            instGeoFwd.setAttribute('streamIndex', new THREE.InstancedBufferAttribute(sIdxArr, 1));
+            instGeoInv.setAttribute('streamIndex', new THREE.InstancedBufferAttribute(sIdxArr, 1));
+
+            const shaderUniforms = {
+                t_history: { value: historyTexture }, u_headPhase: { value: 0.0 },
+                u_glow: { value: 2.0 }, u_length: { value: 0.5 }, u_attenuation: { value: 15.0 },
+                u_torsion: { value: 6.0 }, u_tension: { value: 12.0 },
+                u_cW: { value: new THREE.Color(0x38bdf8) }, u_cX: { value: new THREE.Color(0xf59e0b) },
+                u_cY: { value: new THREE.Color(0x10b981) }, u_cZ: { value: new THREE.Color(0xf43f5e) },
+                u_isInverse: { value: 0.0 }
+            };
+
+            const weaveVert = `
+                attribute float pIdx; attribute float streamIndex;
+                uniform sampler2D t_history; uniform float u_headPhase;
+                uniform float u_attenuation; uniform float u_torsion; uniform float u_tension; uniform float u_length;
+                uniform float u_isInverse;
+                uniform vec3 u_cW; uniform vec3 u_cX; uniform vec3 u_cY; uniform vec3 u_cZ;
+                varying vec3 vColor; varying float vAlpha;
+
+                vec3 rotateX(vec3 p, float a) { float s=sin(a), c=cos(a); return vec3(p.x, p.y*c - p.z*s, p.y*s + p.z*c); }
+                vec3 rotateY(vec3 p, float a) { float s=sin(a), c=cos(a); return vec3(p.x*c + p.z*s, p.y, -p.x*s + p.z*c); }
+                vec3 rotateZ(vec3 p, float a) { float s=sin(a), c=cos(a); return vec3(p.x*c - p.y*s, p.x*s + p.y*c, p.z); }
+
+                void main() {
+                    // Fetch historical audio data for this point in time
+                    vec4 data = texture2D(t_history, vec2(pIdx, 0.5));
+                    
+                    // Base T2 Torus geometry: R=65, r=8, W=12
+                    float R2 = 65.0; float r2 = 8.0; float W2 = 12.0;
+                    
+                    // Invert time flow for Antidromic weave
+                    float t = pIdx;
+                    float dir = 1.0;
+                    if (u_isInverse > 0.5) {
+                        t = 1.0 - pIdx;
+                        dir = -1.0;
+                    }
+
+                    float theta = t * 3.14159 * 2.0;
+                    float phi = W2 * theta * dir;
+
+                    vec3 basePos = vec3(
+                        (R2 + r2 * cos(phi)) * cos(theta),
+                        (R2 + r2 * cos(phi)) * sin(theta),
+                        r2 * sin(phi)
+                    );
+                    
+                    // T2 is n=2 (even), apply Rot_x(PI/2)
+                    basePos = rotateX(basePos, 3.14159 / 2.0);
+
+                    // Reconstruct the 4x4x4 Voxel Cube Grid
+                    float ix = mod(streamIndex, 4.0) - 1.5;
+                    float iy = mod(floor(streamIndex / 4.0), 4.0) - 1.5;
+                    float iz = floor(streamIndex / 16.0) - 1.5;
+                    
+                    // W amplitude expands the cube
+                    vec3 localP = vec3(ix, iy, iz) * (1.0 + data.r * u_attenuation * 0.1); 
+
+                    // Tumble the cube based on time and audio vectors X,Y,Z
+                    float tumbleX = t * u_torsion * 5.0 + data.g * 2.0;
+                    float tumbleY = t * u_torsion * 7.0 + data.b * 2.0;
+                    float tumbleZ = t * u_torsion * 3.0 + data.a * 2.0;
+
+                    localP = rotateX(localP, tumbleX);
+                    localP = rotateY(localP, tumbleY);
+                    localP = rotateZ(localP, tumbleZ);
+
+                    vec3 finalPos = basePos + localP * u_tension;
+
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+
+                    // Coloring based on direction and audio
+                    if (u_isInverse > 0.5) {
+                        vColor = u_cZ * abs(data.a) * 2.0 + u_cY * abs(data.b);
+                    } else {
+                        vColor = u_cW * abs(data.r) * 2.0 + u_cX * abs(data.g);
+                    }
+                    vColor += vec3(0.1, 0.2, 0.4);
+
+                    // Wake Length Fade
+                    float dist = u_headPhase - pIdx;
+                    if (dist < 0.0) dist += 1.0; 
+                    
+                    float alpha = 1.0 - smoothstep(0.0, u_length, dist);
+                    if (dist > u_length) alpha = 0.0;
+                    
+                    // The very head glows brightly
+                    if (dist < 0.02) { vColor *= 3.0; alpha = 1.0; }
+
+                    vAlpha = alpha;
+                }
+            `;
+
+            const weaveFrag = `
+                uniform float u_glow;
+                varying vec3 vColor; varying float vAlpha;
+                void main() { gl_FragColor = vec4(clamp(vColor * u_glow, 0.0, 1.0), vAlpha); }
+            `;
+
+            const matFwd = new THREE.ShaderMaterial({
+                vertexShader: weaveVert, fragmentShader: weaveFrag, uniforms: shaderUniforms, 
+                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            
+            const uniformsInv = Object.assign({}, shaderUniforms, { u_isInverse: { value: 1.0 } });
+            const matInv = new THREE.ShaderMaterial({
+                vertexShader: weaveVert, fragmentShader: weaveFrag, uniforms: uniformsInv, 
+                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+
+            const meshFwd = new THREE.Line(instGeoFwd, matFwd); 
+            const meshInv = new THREE.Line(instGeoInv, matInv);
+            engineGroup.add(meshFwd); engineGroup.add(meshInv);
+
+            // The Etch Head (64 Glowing Boxes following the leader)
+            const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+            const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+            const etchHeadFwd = new THREE.InstancedMesh(headGeo, headMat, 64);
+            const etchHeadInv = new THREE.InstancedMesh(headGeo, headMat, 64);
+            engineGroup.add(etchHeadFwd); engineGroup.add(etchHeadInv);
+
+            const hDummy = new THREE.Object3D();
+
+            function updateEtchHeads(phase) {
+                // Calculate position mathematically to match shader head
+                const W2 = 12.0; const R2 = 65.0; const r2 = 8.0;
+                // Get latest audio data
+                const idx = Math.floor(phase * 25919) * 4;
+                const data = { r: geoState.historyArray[idx]||0, g: geoState.historyArray[idx+1]||0, b: geoState.historyArray[idx+2]||0, a: geoState.historyArray[idx+3]||0 };
+                
+                const drawHead = (mesh, pIdx, dir) => {
+                    const theta = pIdx * Math.PI * 2.0;
+                    const phi = W2 * theta * dir;
+                    let bX = (R2 + r2 * Math.cos(phi)) * Math.cos(theta);
+                    let bY = (R2 + r2 * Math.cos(phi)) * Math.sin(theta);
+                    let bZ = r2 * Math.sin(phi);
+                    // Rot_X
+                    let tY = bY*Math.cos(Math.PI/2) - bZ*Math.sin(Math.PI/2);
+                    let tZ = bY*Math.sin(Math.PI/2) + bZ*Math.cos(Math.PI/2);
+                    bY = tY; bZ = tZ;
+
+                    const tumbleX = pIdx * shaderUniforms.u_torsion.value * 10.0 + data.g * 5.0;
+                    const tumbleY = pIdx * shaderUniforms.u_torsion.value * 12.0 + data.b * 5.0;
+                    const tumbleZ = pIdx * shaderUniforms.u_torsion.value * 8.0 + data.a * 5.0;
+
+                    for(let i=0; i<64; i++) {
+                        let ix = (i % 4) - 1.5;
+                        let iy = Math.floor(i / 4) % 4 - 1.5;
+                        let iz = Math.floor(i / 16) - 1.5;
+                        
+                        let lx = ix; let ly = iy; let lz = iz;
+                        
+                        // RotX
+                        let sx=Math.sin(tumbleX), cx=Math.cos(tumbleX);
+                        let y1 = ly*cx - lz*sx; let z1 = ly*sx + lz*cx; ly=y1; lz=z1;
+                        // RotY
+                        let sy=Math.sin(tumbleY), cy=Math.cos(tumbleY);
+                        let x2 = lx*cy + lz*sy; let z2 = -lx*sy + lz*cy; lx=x2; lz=z2;
+                        // RotZ
+                        let sz=Math.sin(tumbleZ), cz=Math.cos(tumbleZ);
+                        let x3 = lx*cz - ly*sz; let y3 = lx*sz + ly*cz; lx=x3; ly=y3;
+
+                        hDummy.position.set(bX + lx*shaderUniforms.u_tension.value, bY + ly*shaderUniforms.u_tension.value, bZ + lz*shaderUniforms.u_tension.value);
+                        hDummy.rotation.set(tumbleX, tumbleY, tumbleZ);
+                        hDummy.scale.setScalar(1.0 + data.r * 2.0);
+                        hDummy.updateMatrix();
+                        mesh.setMatrixAt(i, hDummy.matrix);
+                        mesh.setColorAt(i, new THREE.Color().setHSL(i/64, 0.8, 0.5));
+                    }
+                    mesh.instanceMatrix.needsUpdate = true;
+                    mesh.instanceColor.needsUpdate = true;
+                };
+
+                drawHead(etchHeadFwd, phase, 1.0);
+                drawHead(etchHeadInv, 1.0 - phase, -1.0);
+            }
+
+            const clock = new THREE.Clock();
+
+            function render() {
+                requestAnimationFrame(render); controls.update(); const dt = clock.getDelta();
+                
+                if (geoState.isPlaying) {
+                    if (geoState.dataSource === 'AUDIO' && !audioUI.el.paused && audioUI.el.duration) {
+                        geoState.globalFrame = (audioUI.el.currentTime / audioUI.el.duration) * 25920;
+                    }
+                    else { geoState.globalFrame += (dt * 60 * geoState.tau); geoState.globalFrame %= 25920; }
+                    geoState.globalTime = geoState.globalFrame / 60.0;
+                    
+                    UI.sliderFrame.value = Math.floor(geoState.globalFrame); document.getElementById('val-frame').innerText = Math.floor(geoState.globalFrame);
+                    
+                    if (document.getElementById('chk-rotate').checked) {
+                        engineGroup.rotation.y += dt * 0.05 * geoState.tau;
+                        engineGroup.rotation.z = Math.sin(geoState.globalTime * 0.5) * 0.05;
+                    }
+
+                    updateGeometricData(geoState.globalTime); 
+                    if(historyTexture) historyTexture.needsUpdate = true; 
+                    updateScopes();
+                    
+                    const headPhase = geoState.globalFrame / 25920.0;
+                    shaderUniforms.u_headPhase.value = headPhase;
+                    updateEtchHeads(headPhase);
+                }
+
+                if (document.getElementById('auto-color').checked) {
+                    const h = (geoState.globalTime * 0.05) % 1.0;
+                    const cW = '#' + new THREE.Color().setHSL(h, 0.8, 0.5).getHexString(); const cX = '#' + new THREE.Color().setHSL((h+0.25)%1.0, 0.8, 0.5).getHexString();
+                    const cY = '#' + new THREE.Color().setHSL((h+0.5)%1.0, 0.8, 0.5).getHexString(); const cZ = '#' + new THREE.Color().setHSL((h+0.75)%1.0, 0.8, 0.5).getHexString();
+                    document.getElementById('col-w').value = cW; document.getElementById('col-x').value = cX; document.getElementById('col-y').value = cY; document.getElementById('col-z').value = cZ;
+                    applyColorUpdates(cW, cX, cY, cZ);
+                }
+                
+                updateHTMLHUD(T2.tierGroup, 'label-t2', T2.statorMesh.material.opacity > 0.01 ? 1.0 : 0.0);
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            render();
+
+            return {
+                setManifoldVisibility: (t2Op, ghostOp, showFwd, showInv) => {
+                    tiers.forEach(t => { t.statorMesh.material.opacity = (t.n === 2) ? t2Op : ghostOp; });
+                    meshFwd.visible = showFwd; etchHeadFwd.visible = showFwd;
+                    meshInv.visible = showInv; etchHeadInv.visible = showInv;
+                },
+                updateVisuals: (glow, len, tor, ten, att, cW, cX, cY, cZ) => {
+                    shaderUniforms.u_glow.value = parseFloat(glow); shaderUniforms.u_length.value = parseFloat(len);
+                    shaderUniforms.u_torsion.value = parseFloat(tor); shaderUniforms.u_tension.value = parseFloat(ten);
+                    shaderUniforms.u_attenuation.value = parseFloat(att);
+                    shaderUniforms.u_cW.value.set(cW); shaderUniforms.u_cX.value.set(cX); shaderUniforms.u_cY.value.set(cY); shaderUniforms.u_cZ.value.set(cZ);
+                    centerLight.color.set(cW);
+                }
+            };
+        })();
+        window.ChamberEngine = Engine3D; 
+
+        function applyColorUpdates(cw, cx, cy, cz) {
+            UI.scopes.W.col = cw; document.getElementById('label-w-2d').style.color = cw; document.getElementById('box-w').style.borderColor = cw;
+            UI.scopes.X.col = cx; document.getElementById('label-x-2d').style.color = cx; document.getElementById('box-x').style.borderColor = cx;
+            UI.scopes.Y.col = cy; document.getElementById('label-y-2d').style.color = cy; document.getElementById('box-y').style.borderColor = cy;
+            UI.scopes.Z.col = cz; document.getElementById('label-z-2d').style.color = cz; document.getElementById('box-z').style.borderColor = cz;
+        }
+
+        function applyVisualUpdates() {
+            const glow = document.getElementById('ctrl-glow').value; const len = document.getElementById('ctrl-length').value;
+            const tor = document.getElementById('ctrl-torsion').value; const ten = document.getElementById('ctrl-tension').value; const att = document.getElementById('ctrl-attenuation').value;
+            const t2Op = document.getElementById('ctrl-t2-op').value; const ghostOp = document.getElementById('ctrl-ghost-op').value;
+            const chkFwd = document.getElementById('chk-fwd').checked; const chkInv = document.getElementById('chk-inv').checked;
+            
+            const cw = document.getElementById('col-w').value; const cx = document.getElementById('col-x').value;
+            const cy = document.getElementById('col-y').value; const cz = document.getElementById('col-z').value;
+
+            document.getElementById('v-glow').innerText = glow; document.getElementById('v-length').innerText = len;
+            document.getElementById('v-tor').innerText = tor; document.getElementById('v-ten').innerText = ten; document.getElementById('v-att').innerText = att;
+            document.getElementById('v-t2-op').innerText = t2Op; document.getElementById('v-ghost-op').innerText = ghostOp;
+
+            applyColorUpdates(cw, cx, cy, cz);
+            if(window.ChamberEngine) {
+                window.ChamberEngine.updateVisuals(glow, len, tor, ten, att, cw, cx, cy, cz);
+                window.ChamberEngine.setManifoldVisibility(t2Op, ghostOp, chkFwd, chkInv);
+            }
+        }
+
+        ['ctrl-glow', 'ctrl-length', 'ctrl-torsion', 'ctrl-tension', 'ctrl-attenuation', 'ctrl-t2-op', 'ctrl-ghost-op', 'chk-fwd', 'chk-inv', 'col-w', 'col-x', 'col-y', 'col-z'].forEach(id => {
+            document.getElementById(id).addEventListener('input', applyVisualUpdates);
+        });
+
+        const tutorialSteps = [
+            {
+                title: "1. The T2 Equatorial Canvas",
+                content: `<p>To record topological data dynamically without phase-canceling collisions, we must isolate the recording surface to the geometric equator.</p><p>In the 5-toroid hierarchy ($T_0 \\to T_4$), the <strong>$T_2$ Manifold</strong> serves as this exact perfect balance point. It is governed by the winding law:</p><div class="math-block">$$ W_2 = 16 - 2(2) = 12 \\text{ Helical Wraps} $$</div><p>Watch as the outer Glial layers ($T_4, T_3$) and the dense Singularity layers ($T_1, T_0$) fade into ghost frames, isolating the $T_2$ glass-like scaffolding as our blank continuous record cylinder.</p>`,
+                action: (e) => { document.getElementById('ctrl-t2-op').value = 0.3; document.getElementById('ctrl-ghost-op').value = 0.02; document.getElementById('chk-fwd').checked = false; document.getElementById('chk-inv').checked = false; applyVisualUpdates(); }
+            },
+            {
+                title: "2. The 64-Voxel Crystalline Etch-Head",
+                content: `<p>We map our spatial audio parameters into a localized $4 \\times 4 \\times 4$ Quaternionic matrix. This creates a tumbling, breathing constellation of 64 brilliant points of light.</p><p>As the master clock drives the simulation forward (or as audio plays), this crystal read/write head travels along the $T_2$ orbital path, its internal voxels vibrating relative to the instantaneous $W, X, Y, Z$ acoustic parameters of the current micro-second.</p>`,
+                action: (e) => { document.getElementById('ctrl-t2-op').value = 0.15; document.getElementById('ctrl-length').value = 0.01; document.getElementById('chk-fwd').checked = true; document.getElementById('chk-inv').checked = false; applyVisualUpdates(); }
+            },
+            {
+                title: "3. The 64-Strand Braided Wake",
+                content: `<p>As the 64-voxel master cube propagates forward through time (orbiting the toroid), it leaves a persistent trail.</p><p>Every single one of the 64 voxels extrudes a continuous thread of energy. Because the master cube is tumbling (Torsion) and breathing (Tension) as it orbits, these 64 individual threads twist around each other, forming a complex, tubular braided cable representing our <strong>Forward (Orthodromic) Memory Stream</strong>.</p>`,
+                action: (e) => { document.getElementById('ctrl-length').value = 0.3; document.getElementById('ctrl-torsion').value = 4.0; document.getElementById('chk-fwd').checked = true; document.getElementById('chk-inv').checked = false; applyVisualUpdates(); }
+            },
+            {
+                title: "4. The Triadic Interaction Weave",
+                content: `<p>The engine utilizes 6 channels (3 Forward, 3 Inverse). When a Forward-traveling 64-strand braid crosses paths with an Inverse-traveling 64-strand braid on the $T_2$ manifold, they do not crash. They interpenetrate.</p><p>At the exact locus of intersection, the Forward threads weave <em>through</em> the Inverse threads. This creates a highly localized, brilliantly glowing <strong>Moiré interference knot</strong>.</p><p>To decode the audio, the system takes a 2D planar cross-section (a Poincaré slice) of the knot. The exact geometric spacing of the 64 sliced dots provides the absolute values of the $W, X, Y, Z$ vectors for that frame.</p>`,
+                action: (e) => { document.getElementById('ctrl-length').value = 0.6; document.getElementById('ctrl-torsion').value = 6.0; document.getElementById('chk-fwd').checked = true; document.getElementById('chk-inv').checked = true; applyVisualUpdates(); }
+            }
+        ];
+
+        let currentStep = 0;
+        function renderTutorial() {
+            const step = tutorialSteps[currentStep];
+            document.getElementById('tut-title').innerHTML = step.title; document.getElementById('tut-body').innerHTML = step.content; document.getElementById('tut-progress').innerText = `${currentStep + 1}/${tutorialSteps.length}`;
+            document.getElementById('btn-prev').disabled = currentStep === 0; document.getElementById('btn-next').disabled = currentStep === tutorialSteps.length - 1;
+            if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('tut-body')]).catch(err => console.log(err.message));
+            if(window.ChamberEngine) step.action(window.ChamberEngine);
+        }
+        document.getElementById('btn-prev').addEventListener('click', () => { if(currentStep > 0) { currentStep--; renderTutorial(); } });
+        document.getElementById('btn-next').addEventListener('click', () => { if(currentStep < tutorialSteps.length - 1) { currentStep++; renderTutorial(); } });
+
+        // Boot
+        applyVisualUpdates(); renderTutorial();
+
+    </script>
+</body>
+</html>

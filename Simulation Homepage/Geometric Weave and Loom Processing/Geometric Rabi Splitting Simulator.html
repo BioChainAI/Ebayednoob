@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Rabi Splitting: 5-Tier Cavity Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax initial typesetting complete');
+                    });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #020617; color: #e2e8f0; font-family: 'Inter', sans-serif; user-select: none; }
+        #glcanvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        
+        .glass-panel {
+            position: absolute; background: rgba(10, 15, 25, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 10;
+            display: flex; flex-direction: column; overflow: hidden; transition: height 0.3s;
+        }
+        
+        .drag-header { 
+            padding: 10px 15px; background: rgba(2, 6, 23, 0.9); border-bottom: 1px solid #1e293b; font-size: 0.75rem; 
+            font-weight: bold; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; display: flex; 
+            justify-content: space-between; align-items: center; cursor: grab; 
+        }
+        .drag-header:active { cursor: grabbing; }
+        
+        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .btn { 
+            background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #fff; padding: 10px 12px; 
+            border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; 
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; 
+        }
+        .btn:hover:not(:disabled) { background: #1e293b; border-color: #38bdf8; color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        .btn.active { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #38bdf8; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #1e293b !important; color: #64748b !important; background: transparent !important; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #334155; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #38bdf8; cursor: pointer; margin-top: -5px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+
+        #tutorial-panel { top: 20px; left: 20px; width: 400px; max-height: 50vh; overflow-y: auto;}
+        #audio-panel { bottom: 20px; left: 20px; width: 340px; }
+        #mod-panel { top: 20px; right: 20px; width: 320px; }
+        #telemetry-panel { bottom: 20px; right: 20px; width: 380px; }
+        #sequencer-panel { bottom: 20px; left: 50%; transform: translateX(-50%); width: 500px; }
+
+        .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .scope-box { background: #020617; border: 1px solid #1e293b; border-radius: 6px; overflow: hidden; position: relative;}
+        .scope-label { position: absolute; top: 4px; left: 6px; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; z-index: 2;}
+        .scope-canvas { width: 100%; height: 40px; display: block; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 2px; }
+        
+        .math-block { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px; border: 1px solid #334155; margin: 8px 0; font-size: 0.85rem;}
+
+        .hud-label { position: absolute; background: rgba(15, 23, 42, 0.8); border: 1px solid #38bdf8; color: #38bdf8; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.5s; transform: translate(-50%, -50%); text-transform: uppercase; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);}
+        
+        .tab-btn { flex: 1; text-align: center; font-size: 9px; font-weight: bold; padding: 6px 0; cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; color: #64748b; }
+        .tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+        .tab-btn:hover:not(.active) { color: #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <!-- TUTORIAL PANEL -->
+    <div class="glass-panel" id="tutorial-panel">
+        <div class="drag-header">
+            <span>Geometric Rabi Primer</span>
+            <div class="flex gap-2">
+                <span class="text-xs text-slate-500 font-mono" id="tut-progress">1/4</span>
+                <button class="text-slate-400 hover:text-white" onclick="document.getElementById('tut-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+            </div>
+        </div>
+        <div class="panel-content" id="tut-content">
+            <h2 id="tut-title" class="text-lg font-bold text-sky-400 leading-tight">1. The T0 Plasmonic Singularity</h2>
+            <div id="tut-body" class="text-xs text-slate-300 space-y-3 leading-relaxed">
+                <p>To achieve strong coupling without an external excitation source, we must construct a mathematically pure cavity.</p>
+                <p>Here we see the <strong>$T_0$ Plasmonic Core</strong>. This represents the absolute center of the Geometric Engine of Time. Its baseline topological invariant is defined by the winding law:</p>
+                <div class="math-block">$$ W_n = 16 - 2n \implies W_0 = 16 $$</div>
+                <p>This core acts as our foundational plasmonic resonator, waiting for the excitonic structure to be built around it.</p>
+            </div>
+            <div class="flex justify-between mt-2 pt-3 border-t border-slate-700">
+                <button class="btn !w-auto !px-4" id="btn-prev" disabled><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                <button class="btn !w-auto !px-4 active" id="btn-next">Next <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULATION PANEL (TABBED) -->
+    <div class="glass-panel" id="mod-panel">
+        <div class="drag-header">
+            <span>Visual Modulation</span>
+            <button class="text-slate-400 hover:text-white" onclick="document.getElementById('mod-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="panel-content !p-0" id="mod-content">
+            <!-- Tabs -->
+            <div class="flex bg-slate-900 border-b border-slate-700">
+                <div class="tab-btn active" onclick="switchTab('excitons', this)">EXCITONS</div>
+                <div class="tab-btn" onclick="switchTab('manifold', this)">MANIFOLD</div>
+                <div class="tab-btn" onclick="switchTab('colors', this)">COLORS</div>
+            </div>
+
+            <!-- TAB 1: EXCITONS -->
+            <div id="tab-excitons" class="p-4 flex flex-col gap-3">
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Cavity Glow</span><span id="v-glow">2.0</span></div>
+                    <input type="range" id="ctrl-glow" min="0" max="5.0" step="0.1" value="2.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Cavity Offset (Gap)</span><span id="v-off">15.0</span></div>
+                    <input type="range" id="ctrl-offset" min="0.0" max="100.0" step="1.0" value="15.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Signal Attenuation</span><span id="v-att">20.0</span></div>
+                    <input type="range" id="ctrl-attenuation" min="1.0" max="100.0" step="1.0" value="20.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Ensemble Opacity</span><span id="v-op">0.6</span></div>
+                    <input type="range" id="ctrl-opacity" min="0.1" max="1.0" step="0.05" value="0.6">
+                </div>
+                <div class="border-t border-slate-700 pt-2">
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Helical Torsion</span><span id="v-tor">4.0</span></div>
+                    <input type="range" id="ctrl-torsion" min="1.0" max="30.0" step="0.5" value="4.0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Radial Tension</span><span id="v-ten">80.0</span></div>
+                    <input type="range" id="ctrl-tension" min="10.0" max="250.0" step="5.0" value="80.0">
+                </div>
+                <div class="border-t border-slate-700 pt-2">
+                    <div class="flex justify-between text-[9px] text-emerald-400 font-bold mb-1"><span>Molecular Density (N)</span><span id="v-coils">3200</span></div>
+                    <input type="range" id="ctrl-coils" min="120" max="25920" step="120" value="3200">
+                </div>
+            </div>
+
+            <!-- TAB 2: MANIFOLD -->
+            <div id="tab-manifold" class="p-4 flex flex-col gap-3 hidden">
+                <div>
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Stator Opacity</span><span id="v-stator-op">0.05</span></div>
+                    <input type="range" id="ctrl-stator-op" min="0.0" max="1.0" step="0.05" value="0.05">
+                </div>
+                <div class="flex justify-between items-center text-[9px] text-slate-300">
+                    <span>Stator Color</span> <input type="color" id="col-stator" value="#334155" class="h-5 w-5 border-none p-0 bg-transparent cursor-pointer">
+                </div>
+                
+                <div class="border-t border-slate-700 pt-2">
+                    <div class="flex justify-between text-[9px] text-slate-400 font-bold mb-1"><span>Core Void Depth (Opacity)</span><span id="v-core">0.8</span></div>
+                    <input type="range" id="ctrl-core" min="0.0" max="1.0" step="0.05" value="0.8">
+                </div>
+
+                <div class="border-t border-slate-700 pt-2">
+                    <div class="flex justify-between text-[9px] text-fuchsia-400 font-bold mb-1"><span>Orthogonal Web Wrap</span><span id="v-wrap">0.0</span></div>
+                    <input type="range" id="ctrl-wrap-op" min="0.0" max="1.0" step="0.05" value="0.0">
+                    <div class="text-[8px] text-slate-500 mt-1 leading-tight">Projects spatial laser bindings between the 5 nested toroids during collapse.</div>
+                </div>
+                <div class="flex justify-between items-center text-[9px] text-slate-300">
+                    <span>Web Color</span> <input type="color" id="col-wrap" value="#ec4899" class="h-5 w-5 border-none p-0 bg-transparent cursor-pointer">
+                </div>
+            </div>
+
+            <!-- TAB 3: COLORS -->
+            <div id="tab-colors" class="p-4 flex flex-col gap-3 hidden">
+                <div class="bg-[#020617] p-2 rounded border border-slate-700 flex justify-between items-center text-[10px] text-sky-400 font-bold">
+                    <label for="auto-color" class="cursor-pointer">AUTO-SYNC CHROMATICS</label>
+                    <input type="checkbox" id="auto-color" class="w-3 h-3 accent-sky-400 cursor-pointer">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>W Col</span> <input type="color" id="col-w" value="#38bdf8" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>X Col</span> <input type="color" id="col-x" value="#f59e0b" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>Y Col</span> <input type="color" id="col-y" value="#10b981" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                    <div class="flex justify-between items-center text-[9px] text-slate-300"><span>Z Col</span> <input type="color" id="col-z" value="#f43f5e" class="h-6 w-6 border-none p-0 bg-transparent cursor-pointer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXCITATION SOURCE PANEL -->
+    <div class="glass-panel" id="audio-panel">
+        <div class="drag-header">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-satellite-dish"></i> Excitation Source</span>
+            <button class="text-slate-400 hover:text-white" onclick="document.getElementById('audio-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="panel-content" id="audio-content">
+            <div class="flex gap-2 mb-2">
+                <button class="btn active flex-1 !mb-0" id="src-geo" onclick="setDataSource('GEO')"><i class="fa-solid fa-infinity"></i> INTRINSIC</button>
+                <button class="btn flex-1 !mb-0" id="src-audio" onclick="setDataSource('AUDIO')"><i class="fa-solid fa-music"></i> ACOUSTIC</button>
+            </div>
+            
+            <div id="ui-geo">
+                <div class="flex justify-between items-center text-[11px] text-slate-300 font-bold uppercase tracking-widest border-b border-slate-700 pb-2 mb-2">
+                    <span>Base Frequency ($\tau$)</span>
+                    <span id="val-tau" class="text-emerald-400 font-mono text-sm">1.00 Hz</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <input type="range" id="slider-tau" min="0.1" max="5.0" value="1.0" step="0.1">
+                </div>
+                <div class="text-[9px] text-slate-500 text-center leading-tight mt-2">
+                    Intrinsic winding geometry ($\Sigma W_n = 60$) derives state space purely from this master oscillation.
+                </div>
+            </div>
+
+            <div id="ui-audio" class="hidden">
+                <label for="audio-upload" class="btn"><i class="fa-solid fa-upload"></i> Load Reference Track</label>
+                <input type="file" id="audio-upload" accept="audio/*" class="hidden">
+                <audio id="audio-element" controls style="width: 100%; height: 32px; outline: none; border-radius: 6px; margin-top: 5px;"></audio>
+                <div class="text-[9px] text-slate-500 text-center leading-tight mt-2">
+                    Acoustic data modulates the 5-Tier geometric wave functions, acting as exciton energy in the cavity.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 720-FRAME SEQUENCER -->
+    <div class="glass-panel" id="sequencer-panel">
+        <div class="drag-header"><span>Great Year Sequencer (25,920 Frames)</span><i class="fa-solid fa-clock"></i></div>
+        <div class="panel-content !pt-2">
+            <div class="text-[9px] text-slate-500 mb-2 leading-tight">Select an active geometric tier to automatically adjust the tracking window.</div>
+            
+            <div class="flex gap-1 mb-3">
+                <button class="btn flex-1 !px-0 !py-1 !mb-0 text-[8px] active" onclick="setTierWindow(0, 720, this)">T0 (720)</button>
+                <button class="btn flex-1 !px-0 !py-1 !mb-0 text-[8px]" onclick="setTierWindow(1, 2160, this)">T1 (2160)</button>
+                <button class="btn flex-1 !px-0 !py-1 !mb-0 text-[8px]" onclick="setTierWindow(2, 4320, this)">T2 (4320)</button>
+                <button class="btn flex-1 !px-0 !py-1 !mb-0 text-[8px]" onclick="setTierWindow(3, 8640, this)">T3 (8640)</button>
+                <button class="btn flex-1 !px-0 !py-1 !mb-0 text-[8px] border-emerald-500/50 text-emerald-400" onclick="setTierWindow(4, 25920, this)">T4 (25920)</button>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button class="btn !w-auto !px-4 active" id="btn-seq-play"><i class="fa-solid fa-pause"></i></button>
+                <input type="range" id="slider-frame" min="0" max="25919" value="0" step="1" class="flex-grow">
+                <div class="text-[10px] text-slate-400 font-mono w-24 text-right"><span id="val-frame" class="text-sky-400 font-bold">0</span> / 25920</div>
+            </div>
+
+            <div class="relative w-full h-5 bg-slate-800 rounded overflow-hidden border border-slate-700 mt-2">
+                <div class="absolute top-0 left-0 h-full bg-slate-600/50 w-0 pointer-events-none" id="track-progress"></div>
+                <div class="absolute top-0 h-full border-x border-sky-400 bg-sky-400/20 shadow-[0_0_10px_rgba(56,189,248,0.5)] transition-all duration-75 pointer-events-none" id="track-window" style="width: 2.77%; left: 0%;"></div>
+            </div>
+            <div class="flex justify-between mt-1 text-[9px] text-slate-500 font-mono font-bold">
+                <span id="window-start">Start: 0</span>
+                <span id="window-end">End: 720</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELEMETRY PANEL -->
+    <div class="glass-panel" id="telemetry-panel">
+        <div class="drag-header">
+            <span>4D Polaritonic State</span>
+            <button class="text-slate-400 hover:text-white" onclick="document.getElementById('tel-content').classList.toggle('hidden')"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="panel-content !pt-2" id="tel-content">
+            <div class="text-[9px] text-slate-400 mb-2 leading-tight">
+                Real-time geometric interference pattern mapped by summing the $W_n$ invariant across the 5 orthogonal tiers.
+            </div>
+            <div class="scope-grid">
+                <div class="scope-box" id="box-w" style="border-color: rgba(56, 189, 248, 0.3);">
+                    <div class="scope-label" id="label-w-2d" style="color: #38bdf8;">W (Scalar)</div>
+                    <canvas id="scope-w" class="scope-canvas"></canvas>
+                </div>
+                <div class="scope-box" id="box-x" style="border-color: rgba(245, 158, 11, 0.3);">
+                    <div class="scope-label" id="label-x-2d" style="color: #f59e0b;">X (Vector)</div>
+                    <canvas id="scope-x" class="scope-canvas"></canvas>
+                </div>
+                <div class="scope-box" id="box-y" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="scope-label" id="label-y-2d" style="color: #10b981;">Y (Vector)</div>
+                    <canvas id="scope-y" class="scope-canvas"></canvas>
+                </div>
+                <div class="scope-box" id="box-z" style="border-color: rgba(244, 63, 94, 0.3);">
+                    <div class="scope-label" id="label-z-2d" style="color: #f43f5e;">Z (Vector)</div>
+                    <canvas id="scope-z" class="scope-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN 3D CANVAS & HUD -->
+    <div id="glcanvas"></div>
+    <div id="label-au" class="hud-label">T0 Plasmonic Core</div>
+    <div id="label-w" class="hud-label">W Phase</div>
+    <div id="label-x" class="hud-label">X Phase</div>
+    <div id="label-y" class="hud-label">Y Phase</div>
+    <div id="label-z" class="hud-label">Z Phase</div>
+
+    <script>
+        window.switchTab = function(tabId, btn) {
+            ['excitons', 'manifold', 'colors'].forEach(id => {
+                document.getElementById('tab-' + id).classList.add('hidden');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            const btns = btn.parentElement.querySelectorAll('.tab-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
+
+        function makeDraggable(panelId) {
+            const panel = document.getElementById(panelId);
+            if(!panel) return;
+            const header = panel.querySelector('.drag-header');
+            let isDragging = false, startX, startY, initX, initY;
+            header.addEventListener('mousedown', e => {
+                if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I') return;
+                isDragging = true; startX = e.clientX; startY = e.clientY;
+                initX = panel.offsetLeft; initY = panel.offsetTop;
+                panel.style.bottom = 'auto'; panel.style.right = 'auto'; 
+                panel.style.left = initX + 'px'; panel.style.top = initY + 'px';
+            });
+            window.addEventListener('mousemove', e => {
+                if(!isDragging) return;
+                panel.style.left = (initX + (e.clientX - startX)) + 'px'; 
+                panel.style.top = (initY + (e.clientY - startY)) + 'px';
+            });
+            window.addEventListener('mouseup', () => isDragging = false);
+        }
+        ['tutorial-panel', 'audio-panel', 'telemetry-panel', 'mod-panel', 'sequencer-panel'].forEach(makeDraggable);
+
+        const geoState = {
+            isPlaying: true, tau: 1.0, 
+            globalFrame: 0, globalTime: 0,
+            windowSize: 720,
+            coilCount: 3200, visDataArray: new Float32Array(25920 * 4),
+            dataSource: 'GEO' // GEO or AUDIO
+        };
+
+        const audioState = {
+            ctx: null, analyser: null, source: null,
+            freqData: new Uint8Array(8192 / 2)
+        };
+
+        const audioUI = {
+            upload: document.getElementById('audio-upload'), 
+            el: document.getElementById('audio-element'),
+            srcGeo: document.getElementById('src-geo'),
+            srcAudio: document.getElementById('src-audio'),
+            uiGeo: document.getElementById('ui-geo'),
+            uiAudio: document.getElementById('ui-audio')
+        };
+
+        window.setDataSource = function(src) {
+            geoState.dataSource = src;
+            if(src === 'AUDIO') {
+                audioUI.srcAudio.classList.add('active'); audioUI.srcGeo.classList.remove('active');
+                audioUI.uiAudio.classList.remove('hidden'); audioUI.uiGeo.classList.add('hidden');
+                if(audioUI.el.src && audioUI.el.duration) {
+                    geoState.globalFrame = (audioUI.el.currentTime / audioUI.el.duration) * 25920;
+                }
+            } else {
+                audioUI.srcGeo.classList.add('active'); audioUI.srcAudio.classList.remove('active');
+                audioUI.uiGeo.classList.remove('hidden'); audioUI.uiAudio.classList.add('hidden');
+                if(!audioUI.el.paused) audioUI.el.pause();
+            }
+        };
+
+        function initAudio() {
+            if(!audioState.ctx) {
+                audioState.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                audioState.analyser = audioState.ctx.createAnalyser();
+                audioState.analyser.fftSize = 8192; 
+                audioState.analyser.smoothingTimeConstant = 0.8;
+                audioState.source = audioState.ctx.createMediaElementSource(audioUI.el);
+                audioState.source.connect(audioState.analyser);
+                audioState.analyser.connect(audioState.ctx.destination);
+            }
+            if(audioState.ctx.state === 'suspended') audioState.ctx.resume();
+        }
+
+        audioUI.upload.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            audioUI.el.src = URL.createObjectURL(file);
+        });
+        audioUI.el.addEventListener('play', () => { initAudio(); geoState.isPlaying = true; syncPlayButtonUI(); });
+        audioUI.el.addEventListener('pause', () => { geoState.isPlaying = false; syncPlayButtonUI(); });
+
+        const UI = {
+            btnSeqPlay: document.getElementById('btn-seq-play'),
+            sliderFrame: document.getElementById('slider-frame'),
+            sliderTau: document.getElementById('slider-tau'),
+            valTau: document.getElementById('val-tau'),
+            scopes: {
+                W: { cvs: document.getElementById('scope-w'), ctx: document.getElementById('scope-w').getContext('2d'), col: '#38bdf8' },
+                X: { cvs: document.getElementById('scope-x'), ctx: document.getElementById('scope-x').getContext('2d'), col: '#f59e0b' },
+                Y: { cvs: document.getElementById('scope-y'), ctx: document.getElementById('scope-y').getContext('2d'), col: '#10b981' },
+                Z: { cvs: document.getElementById('scope-z'), ctx: document.getElementById('scope-z').getContext('2d'), col: '#f43f5e' }
+            }
+        };
+
+        Object.values(UI.scopes).forEach(s => { s.cvs.width = s.cvs.clientWidth; s.cvs.height = s.cvs.clientHeight; });
+
+        function syncPlayButtonUI() {
+            UI.btnSeqPlay.innerHTML = geoState.isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+            UI.btnSeqPlay.className = geoState.isPlaying ? "btn !w-auto !px-4 active" : "btn !w-auto !px-4";
+        }
+
+        UI.btnSeqPlay.addEventListener('click', () => {
+            geoState.isPlaying = !geoState.isPlaying;
+            syncPlayButtonUI();
+            if(geoState.dataSource === 'AUDIO' && audioUI.el.src) {
+                geoState.isPlaying ? audioUI.el.play() : audioUI.el.pause();
+            }
+        });
+
+        UI.sliderTau.addEventListener('input', (e) => { geoState.tau = parseFloat(e.target.value); UI.valTau.innerText = geoState.tau.toFixed(2) + ' Hz'; });
+
+        UI.sliderFrame.addEventListener('input', (e) => {
+            geoState.globalFrame = parseFloat(e.target.value);
+            geoState.globalTime = geoState.globalFrame / 60.0;
+            if(geoState.dataSource === 'AUDIO' && audioUI.el.src && audioUI.el.duration) {
+                audioUI.el.currentTime = (geoState.globalFrame / 25920) * audioUI.el.duration;
+            }
+        });
+
+        window.setTierWindow = function(tier, size, btn) {
+            const btns = btn.parentElement.querySelectorAll('button');
+            btns.forEach(b => { b.classList.remove('active', 'border-emerald-500/50', 'text-emerald-400'); });
+            btn.classList.add('active');
+            if(tier === 4) btn.classList.add('border-emerald-500/50', 'text-emerald-400');
+
+            geoState.windowSize = size;
+            document.getElementById('track-window').style.width = (size / 25920 * 100) + '%';
+        };
+
+        const getRn = (n) => 5*n*n + 15*n + 15;
+        const getrn = (n) => 2*n + 4;
+        const getWn = (n) => 16 - 2*n;
+        const getPhases = (isFwd) => { const base = [0, (2*Math.PI)/3, (4*Math.PI)/3]; if (isFwd) return base; return base.map(p => p + Math.PI); };
+        const colorsFWD = [0x00ffff, 0x10b981, 0xec4899];
+        const colorsINV = [0x3b82f6, 0x84cc16, 0xf97316];
+
+        function updateGeometricData(time) {
+            if (geoState.dataSource === 'AUDIO' && audioState.analyser) {
+                if (!audioUI.el.paused) audioState.analyser.getByteFrequencyData(audioState.freqData);
+                else for(let i=0; i<audioState.freqData.length; i++) audioState.freqData[i] *= 0.9;
+            }
+
+            for(let i=0; i<geoState.coilCount; i++) {
+                let u = i / geoState.coilCount; 
+                let W = 0, X = 0, Y = 0, Z = 0;
+                
+                for(let n=0; n<5; n++) {
+                    let Wn = getWn(n);
+                    let theta_n = (2 * Math.PI * Wn * geoState.tau) * time;
+                    let spatial_phase = 2 * Math.PI * Wn * u;
+                    
+                    W += Math.sin(spatial_phase + theta_n); 
+                    X += Math.cos(spatial_phase + theta_n + (2*Math.PI/3)); 
+                    Y += Math.cos(spatial_phase + theta_n - (2*Math.PI/3)); 
+                    Z += Math.sin(spatial_phase - theta_n); 
+                }
+
+                if (geoState.dataSource === 'AUDIO') {
+                    let amp = 0;
+                    if (audioState.analyser) {
+                        const freqBoost = 1.0 + u * 3.0; 
+                        const binIdx = Math.floor(u * (audioState.freqData.length * 0.8));
+                        amp = (audioState.freqData[binIdx] / 255.0) * freqBoost;
+                    }
+                    W *= amp * 2.0; X *= amp * 2.0; Y *= amp * 2.0; Z *= amp * 2.0;
+                }
+                
+                const vIdx = i * 4;
+                geoState.visDataArray[vIdx]   = W / 5.0;
+                geoState.visDataArray[vIdx+1] = X / 5.0;
+                geoState.visDataArray[vIdx+2] = Y / 5.0;
+                geoState.visDataArray[vIdx+3] = Z / 5.0;
+            }
+        }
+
+        function drawScopeLine(ctx, col, h, w, offset, step) {
+            ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+            for(let i=0; i<w; i++) {
+                const idx = i * step * 4 + offset;
+                const val = geoState.visDataArray[idx]; 
+                const y = h/2 - (val * h * 0.4);
+                if (i===0) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+            }
+            ctx.stroke();
+        }
+
+        function updateScopes() {
+            const wCvs = UI.scopes.W.cvs, xCvs = UI.scopes.X.cvs, yCvs = UI.scopes.Y.cvs, zCvs = UI.scopes.Z.cvs;
+            const wCtx = UI.scopes.W.ctx, xCtx = UI.scopes.X.ctx, yCtx = UI.scopes.Y.ctx, zCtx = UI.scopes.Z.ctx;
+            const w = wCvs.width, h = wCvs.height;
+            
+            [wCtx, xCtx, yCtx, zCtx].forEach(ctx => {
+                ctx.clearRect(0,0,w,h);
+                ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
+                ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+            });
+
+            const step = Math.max(1, Math.floor(geoState.coilCount / w));
+            drawScopeLine(wCtx, UI.scopes.W.col, h, w, 0, step);
+            drawScopeLine(xCtx, UI.scopes.X.col, h, w, 1, step);
+            drawScopeLine(yCtx, UI.scopes.Y.col, h, w, 2, step);
+            drawScopeLine(zCtx, UI.scopes.Z.col, h, w, 3, step);
+        }
+
+        const Engine3D = (function() {
+            const container = document.getElementById('glcanvas');
+            const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x020617, 0.003);
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 50, 300);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; controls.autoRotate = false;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+            const centerLight = new THREE.PointLight(0x38bdf8, 2, 200); scene.add(centerLight);
+
+            let currentGlow = 2.0; let wrapTargetOpacity = 0.0;
+            const engineGroup = new THREE.Group(); scene.add(engineGroup);
+
+            // T0 Singularity & Void Core
+            const coreMesh = new THREE.Mesh(
+                new THREE.IcosahedronGeometry(8, 1),
+                new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x10b981, emissiveIntensity: 0.5, wireframe: true })
+            );
+            engineGroup.add(coreMesh);
+
+            const darkCoreGeo = new THREE.IcosahedronGeometry(7.8, 1);
+            const darkCoreMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.8 });
+            const darkCoreMesh = new THREE.Mesh(darkCoreGeo, darkCoreMat);
+            coreMesh.add(darkCoreMesh);
+
+            // Background Wedges
+            const wedgeGeo = new THREE.ConeGeometry(1, 15, 4); wedgeGeo.translate(0, -7.5, 0); wedgeGeo.rotateX(-Math.PI/2);
+            const wedgeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, transparent: true, opacity: 1.0 });
+            const wedgeCount = 800; const wedgeMesh = new THREE.InstancedMesh(wedgeGeo, wedgeMat, wedgeCount);
+            const wDummy = new THREE.Object3D();
+            for(let i=0; i<wedgeCount; i++) {
+                const phi = Math.acos(1.0 - 2.0 * i / wedgeCount);
+                const theta = Math.PI * (1.0 + Math.sqrt(5.0)) * i;
+                const r = 200.0;
+                wDummy.position.set(r * Math.sin(phi)*Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi)*Math.sin(theta));
+                wDummy.lookAt(new THREE.Vector3(0,0,0)); wDummy.updateMatrix(); wedgeMesh.setMatrixAt(i, wDummy.matrix);
+            }
+            scene.add(wedgeMesh);
+
+            // 4D Lift Arrows
+            const vectorGroup = new THREE.Group(); engineGroup.add(vectorGroup);
+            function createArrow(hexCol, dir, labelId) {
+                const arr = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), 0.1, hexCol, 3, 2);
+                arr.line.material.transparent = true; arr.line.material.opacity = 0;
+                arr.cone.material.transparent = true; arr.cone.material.opacity = 0;
+                vectorGroup.add(arr); return { arr, id: labelId, baseDir: dir.clone() };
+            }
+            const arrows = [
+                createArrow(0x38bdf8, new THREE.Vector3(1,1,1).normalize(), 'label-w'), 
+                createArrow(0xf59e0b, new THREE.Vector3(1,0,0), 'label-x'), 
+                createArrow(0x10b981, new THREE.Vector3(0,1,0), 'label-y'), 
+                createArrow(0xf43f5e, new THREE.Vector3(0,0,1), 'label-z')  
+            ];
+
+            function updateHTMLHUD(object, htmlId, targetOpacity) {
+                const el = document.getElementById(htmlId); if (!el) return;
+                const pos = new THREE.Vector3();
+                if (object instanceof THREE.ArrowHelper) object.cone.getWorldPosition(pos); 
+                else object.getWorldPosition(pos);
+                pos.project(camera);
+                if (pos.z > 1) { el.style.opacity = 0; return; }
+                const x = (pos.x * .5 + .5) * window.innerWidth; const y = (pos.y * -.5 + .5) * window.innerHeight;
+                el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.opacity = targetOpacity;
+            }
+
+            const tiers = [];
+            for(let n=0; n<5; n++) {
+                const Rn = getRn(n); const rn = getrn(n); const Wn = getWn(n);
+                const tierGroup = new THREE.Group();
+                if (n % 2 === 0) tierGroup.rotation.x = Math.PI / 2; else tierGroup.rotation.y = Math.PI / 2;
+
+                const tGeo = new THREE.TorusGeometry(Rn, rn, 16, 100);
+                const tMat = new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.0, wireframe: true }); 
+                const statorMesh = new THREE.Mesh(tGeo, tMat); tierGroup.add(statorMesh);
+
+                const spinGroup = new THREE.Group(); spinGroup.visible = false; 
+                const createCurve = (phase, chiral) => {
+                    const pts = []; const segments = 400;
+                    for(let i=0; i<=segments; i++) {
+                        const u = (i / segments) * Math.PI * 2; const v = chiral * Wn * u + phase; 
+                        pts.push(new THREE.Vector3((Rn + rn * Math.cos(v)) * Math.cos(u), (Rn + rn * Math.cos(v)) * Math.sin(u), rn * Math.sin(v)));
+                    }
+                    return new THREE.CatmullRomCurve3(pts);
+                };
+
+                getPhases(true).forEach((ph, i) => {
+                    const curve = createCurve(ph, 1);
+                    const mat = new THREE.MeshBasicMaterial({ color: colorsFWD[i], transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+                    spinGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 400, n===0?0.8:0.4, 6, true), mat));
+                });
+                getPhases(false).forEach((ph, i) => {
+                    const curve = createCurve(ph, -1);
+                    const mat = new THREE.MeshBasicMaterial({ color: colorsINV[i], transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
+                    spinGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 400, 0.4, 6, true), mat));
+                });
+
+                tierGroup.add(spinGroup); engineGroup.add(tierGroup);
+                tiers.push({ n, Wn, Rn, rn, statorMesh, spinGroup, tierGroup });
+            }
+
+            const wrapMaterial = new THREE.LineBasicMaterial({ color: 0xec4899, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending });
+            const wrapGeometry = new THREE.BufferGeometry();
+            const WRAP_POINTS = 100; // Points per phase connection
+            const totalLines = 4 * 3 * WRAP_POINTS; // 4 gaps, 3 phases, 100 points
+            const wrapPositions = new Float32Array(totalLines * 2 * 3); // 2 vertices per line, 3 coords per vertex
+            wrapGeometry.setAttribute('position', new THREE.BufferAttribute(wrapPositions, 3));
+            const wrapLines = new THREE.LineSegments(wrapGeometry, wrapMaterial);
+            engineGroup.add(wrapLines);
+
+            // N-Molecule Ensemble Buffer
+            const visDataTexture = new THREE.DataTexture(geoState.visDataArray, 25920, 1, THREE.RGBAFormat, THREE.FloatType);
+            visDataTexture.minFilter = THREE.NearestFilter; visDataTexture.magFilter = THREE.NearestFilter;
+            
+            const POINTS_PER_COIL = 50; const coilGeo = new THREE.BufferGeometry();
+            const posArr = new Float32Array(POINTS_PER_COIL * 3); const pIdxArr = new Float32Array(POINTS_PER_COIL);
+            for(let i=0; i<POINTS_PER_COIL; i++) { posArr[i*3]=0; posArr[i*3+1]=0; posArr[i*3+2]=0; pIdxArr[i] = i / (POINTS_PER_COIL - 1.0); }
+            coilGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3)); coilGeo.setAttribute('pIdx', new THREE.BufferAttribute(pIdxArr, 1));
+            
+            const instGeo = new THREE.InstancedBufferGeometry().copy(coilGeo); instGeo.instanceCount = geoState.coilCount; 
+            const sIdxArr = new Float32Array(25920); for(let i=0; i<25920; i++) sIdxArr[i] = i;
+            instGeo.setAttribute('streamIndex', new THREE.InstancedBufferAttribute(sIdxArr, 1));
+
+            const shaderUniforms = {
+                t_data: { value: visDataTexture }, u_time: { value: 0.0 }, u_totalCoils: { value: parseFloat(geoState.coilCount) },
+                u_glow: { value: 2.0 }, u_offset: { value: 15.0 }, u_attenuation: { value: 20.0 }, u_opacity: { value: 0.6 },
+                u_torsion: { value: 4.0 }, u_tension: { value: 80.0 },
+                u_cW: { value: new THREE.Color(0x38bdf8) }, u_cX: { value: new THREE.Color(0xf59e0b) },
+                u_cY: { value: new THREE.Color(0x10b981) }, u_cZ: { value: new THREE.Color(0xf43f5e) }
+            };
+
+            const coilMat = new THREE.ShaderMaterial({
+                vertexShader: `
+                    attribute float pIdx; attribute float streamIndex;
+                    uniform sampler2D t_data; uniform float u_time; uniform float u_totalCoils;
+                    uniform float u_offset; uniform float u_attenuation; uniform float u_torsion; uniform float u_tension;
+                    uniform vec3 u_cW; uniform vec3 u_cX; uniform vec3 u_cY; uniform vec3 u_cZ;
+                    varying vec3 vColor; varying float vAlpha;
+                    void main() {
+                        float u = streamIndex / u_totalCoils; vec4 data = texture2D(t_data, vec2(u, 0.5));
+                        float phi = acos(1.0 - 2.0 * streamIndex / u_totalCoils);
+                        float theta = 3.14159265 * (1.0 + sqrt(5.0)) * streamIndex;
+                        vec3 dir = vec3(sin(phi)*cos(theta), cos(phi), sin(phi)*sin(theta));
+                        vec3 up = vec3(0.0, 1.0, 0.0); if(abs(dir.y) > 0.99) up = vec3(1.0, 0.0, 0.0);
+                        vec3 uVec = normalize(cross(dir, up)); vec3 vVec = cross(dir, uVec);
+                        float distFromCore = pIdx; 
+                        float radiusBase = u_offset + (100.0 - u_offset) * distFromCore; 
+                        float spiralRadius = 2.0 * distFromCore; float spiralAngle = pIdx * 3.14159 * u_torsion + u_time * 5.0;
+                        vec3 basePos = dir * radiusBase + (uVec * cos(spiralAngle) + vVec * sin(spiralAngle)) * spiralRadius;
+                        vec3 finalPos = basePos;
+                        float deformStr = pow(distFromCore, 1.5); float tensionFactor = 100.0 / max(10.0, u_tension);
+                        vec3 radialPush = dir * (data.r * u_attenuation * tensionFactor * deformStr);
+                        vec3 tangentialShear = (uVec * data.g + vVec * data.b) * u_attenuation * tensionFactor * deformStr * 0.5;
+                        float radialSwell = data.a * u_attenuation * tensionFactor * 0.5 * deformStr;
+                        vec3 spiralSwell = (uVec * cos(spiralAngle) + vVec * sin(spiralAngle)) * radialSwell;
+                        finalPos += radialPush + tangentialShear + spiralSwell;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+                        vColor = vec3(0.1, 0.1, 0.2); 
+                        vColor += u_cW * abs(data.r) * 2.0; vColor += u_cX * abs(data.g); 
+                        vColor += u_cY * abs(data.b); vColor += u_cZ * abs(data.a); 
+                        vAlpha = (0.2 + pIdx * 0.8); 
+                    }
+                `,
+                fragmentShader: `
+                    uniform float u_opacity; uniform float u_glow;
+                    varying vec3 vColor; varying float vAlpha;
+                    void main() { gl_FragColor = vec4(clamp(vColor * u_glow, 0.0, 1.0), vAlpha * u_opacity); }
+                `,
+                uniforms: shaderUniforms, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+
+            const coilMesh = new THREE.Line(instGeo, coilMat); coilMesh.visible = false; scene.add(coilMesh);
+            const clock = new THREE.Clock(); let wedgeTargetOpacity = 1.0;
+
+            function render() {
+                requestAnimationFrame(render); controls.update(); const dt = clock.getDelta();
+                
+                if (geoState.isPlaying) {
+                    if (geoState.dataSource === 'AUDIO' && !audioUI.el.paused && audioUI.el.duration) geoState.globalFrame = (audioUI.el.currentTime / audioUI.el.duration) * 25920;
+                    else { geoState.globalFrame += (dt * 60 * geoState.tau); geoState.globalFrame %= 25920; }
+                    geoState.globalTime = geoState.globalFrame / 60.0;
+                    
+                    UI.sliderFrame.value = Math.floor(geoState.globalFrame); document.getElementById('val-frame').innerText = Math.floor(geoState.globalFrame);
+                    document.getElementById('track-progress').style.width = (geoState.globalFrame / 25920 * 100) + '%';
+                    let wStart = Math.floor(geoState.globalFrame); let wEnd = wStart + geoState.windowSize;
+                    document.getElementById('track-window').style.left = (wStart / 25920 * 100) + '%';
+                    document.getElementById('window-start').innerText = `Start: ${wStart}`; document.getElementById('window-end').innerText = `End: ${wEnd > 25920 ? wEnd % 25920 : wEnd}`;
+
+                    engineGroup.rotation.y = geoState.globalTime * 0.02 * geoState.tau;
+                    engineGroup.rotation.z = Math.sin(geoState.globalTime * 0.5) * 0.1;
+                    coreMesh.rotation.y = -geoState.globalTime * 0.05 * geoState.tau;
+                    coreMesh.rotation.x = geoState.globalTime * 0.03 * geoState.tau;
+
+                    tiers.forEach(t => { t.spinGroup.rotation.z = (2 * Math.PI * t.Wn * geoState.tau) * geoState.globalTime; });
+                    updateGeometricData(geoState.globalTime); if(visDataTexture) visDataTexture.needsUpdate = true; updateScopes();
+                    
+                    if (geoState.dataSource === 'AUDIO' && audioState.analyser && !audioUI.el.paused && coilMesh.visible) {
+                        let b = 0; for(let i=0; i<10; i++) b += audioState.freqData[i];
+                        const bi = (b / 10) / 255.0; coreMesh.scale.setScalar(1.0 + bi * 2.0); centerLight.intensity = currentGlow + bi * 4.0;
+                    } else { coreMesh.scale.setScalar(1.0); centerLight.intensity = currentGlow; }
+                }
+
+                if (document.getElementById('auto-color').checked) {
+                    const h = (geoState.globalTime * 0.05) % 1.0;
+                    const cW = '#' + new THREE.Color().setHSL(h, 0.8, 0.5).getHexString(); const cX = '#' + new THREE.Color().setHSL((h+0.25)%1.0, 0.8, 0.5).getHexString();
+                    const cY = '#' + new THREE.Color().setHSL((h+0.5)%1.0, 0.8, 0.5).getHexString(); const cZ = '#' + new THREE.Color().setHSL((h+0.75)%1.0, 0.8, 0.5).getHexString();
+                    document.getElementById('col-w').value = cW; document.getElementById('col-x').value = cX; document.getElementById('col-y').value = cY; document.getElementById('col-z').value = cZ;
+                    applyColorUpdates(cW, cX, cY, cZ);
+                }
+                
+                shaderUniforms.u_time.value = geoState.globalTime;
+                wrapMaterial.opacity += (wrapTargetOpacity - wrapMaterial.opacity) * 0.1;
+                
+                if(wrapMaterial.opacity > 0.01) {
+                    let wIdx = 0; const phases = getPhases(true);
+                    for (let n = 4; n > 0; n--) {
+                        for (let p = 0; p < 3; p++) {
+                            const ph = phases[p];
+                            for (let i = 0; i < WRAP_POINTS; i++) {
+                                const u = i / WRAP_POINTS; const uOffset = (i + 5) / WRAP_POINTS; // add slight spiral twist
+                                const getPt = (tierN, paramU) => {
+                                    const Wn = getWn(tierN); const Rn = getRn(tierN); const rn = getrn(tierN);
+                                    const tRot = (2 * Math.PI * Wn * geoState.tau) * geoState.globalTime;
+                                    const u_rad = paramU * Math.PI * 2; const v_rad = 1 * Wn * u_rad + ph;
+                                    let pt = new THREE.Vector3((Rn + rn * Math.cos(v_rad)) * Math.cos(u_rad), (Rn + rn * Math.cos(v_rad)) * Math.sin(u_rad), rn * Math.sin(v_rad));
+                                    pt.applyAxisAngle(new THREE.Vector3(0,0,1), tRot);
+                                    if (tierN % 2 === 0) pt.applyAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2); else pt.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/2);
+                                    return pt;
+                                };
+                                const pt1 = getPt(n, u); const pt2 = getPt(n-1, uOffset);
+                                wrapPositions[wIdx++] = pt1.x; wrapPositions[wIdx++] = pt1.y; wrapPositions[wIdx++] = pt1.z;
+                                wrapPositions[wIdx++] = pt2.x; wrapPositions[wIdx++] = pt2.y; wrapPositions[wIdx++] = pt2.z;
+                            }
+                        }
+                    }
+                    wrapGeometry.attributes.position.needsUpdate = true;
+                }
+
+                wedgeMat.opacity += (wedgeTargetOpacity - wedgeMat.opacity) * 0.05;
+                updateHTMLHUD(coreMesh, 'label-au', coreMesh.material.wireframe ? 1.0 : 0.0);
+                arrows.forEach((a, index) => {
+                    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), geoState.globalTime * 2.0 + (index * Math.PI / 2));
+                    a.arr.setDirection(a.baseDir.clone().applyQuaternion(q)); updateHTMLHUD(a.arr, a.id, a.arr.line.material.opacity);
+                });
+
+                scene.rotation.y = geoState.globalTime * 0.02; renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            render();
+
+            return {
+                toggleWedges: (show) => { wedgeTargetOpacity = show ? 1.0 : 0.0; },
+                setCoilsVisible: (show) => { coilMesh.visible = show; },
+                setStatorsVisible: (opac) => { tiers.forEach(t => t.statorMesh.material.opacity = opac); },
+                setSpinGroupsVisible: (show) => { tiers.forEach(t => t.spinGroup.visible = show); },
+                animateLift: (progress) => {
+                    arrows.forEach((a, index) => {
+                        const len = progress * 40; a.arr.setLength(len > 0.01 ? len : 0.01, progress * 8, progress * 4);
+                        a.arr.line.material.opacity = progress; a.arr.cone.material.opacity = progress;
+                        a.arr.setColor([shaderUniforms.u_cW.value, shaderUniforms.u_cX.value, shaderUniforms.u_cY.value, shaderUniforms.u_cZ.value][index]);
+                    });
+                },
+                updateVisuals: (glow, off, att, opacity, torsion, tension, cW, cX, cY, cZ) => {
+                    shaderUniforms.u_glow.value = parseFloat(glow); shaderUniforms.u_offset.value = parseFloat(off);
+                    shaderUniforms.u_attenuation.value = parseFloat(att); shaderUniforms.u_opacity.value = parseFloat(opacity);
+                    shaderUniforms.u_torsion.value = parseFloat(torsion); shaderUniforms.u_tension.value = parseFloat(tension);
+                    shaderUniforms.u_cW.value.set(cW); shaderUniforms.u_cX.value.set(cX); shaderUniforms.u_cY.value.set(cY); shaderUniforms.u_cZ.value.set(cZ);
+                    currentGlow = parseFloat(glow); centerLight.color.set(cW);
+                },
+                updateManifoldVisuals: (statorOp, statorCol, wrapOp, wrapCol, coreOp) => {
+                    tiers.forEach(t => { t.statorMesh.material.opacity = parseFloat(statorOp); t.statorMesh.material.color.set(statorCol); });
+                    wrapTargetOpacity = parseFloat(wrapOp); wrapMaterial.color.set(wrapCol);
+                    darkCoreMat.opacity = parseFloat(coreOp);
+                },
+                updateCoilCount: (count) => {
+                    const N = parseInt(count); geoState.coilCount = N; instGeo.instanceCount = N; shaderUniforms.u_totalCoils.value = parseFloat(N); 
+                }
+            };
+        })();
+        window.ChamberEngine = Engine3D; 
+
+        function applyColorUpdates(cw, cx, cy, cz) {
+            UI.scopes.W.col = cw; document.getElementById('label-w-2d').style.color = cw; document.getElementById('box-w').style.borderColor = cw;
+            UI.scopes.X.col = cx; document.getElementById('label-x-2d').style.color = cx; document.getElementById('box-x').style.borderColor = cx;
+            UI.scopes.Y.col = cy; document.getElementById('label-y-2d').style.color = cy; document.getElementById('box-y').style.borderColor = cy;
+            UI.scopes.Z.col = cz; document.getElementById('label-z-2d').style.color = cz; document.getElementById('box-z').style.borderColor = cz;
+        }
+
+        function applyVisualUpdates() {
+            // Excitons
+            const glow = document.getElementById('ctrl-glow').value; const off = document.getElementById('ctrl-offset').value;
+            const att = document.getElementById('ctrl-attenuation').value; const op = document.getElementById('ctrl-opacity').value;
+            const tor = document.getElementById('ctrl-torsion').value; const ten = document.getElementById('ctrl-tension').value; const coils = document.getElementById('ctrl-coils').value;
+            // Manifold
+            const statorOp = document.getElementById('ctrl-stator-op').value; const statorCol = document.getElementById('col-stator').value;
+            const coreOp = document.getElementById('ctrl-core').value; const wrapOp = document.getElementById('ctrl-wrap-op').value; const wrapCol = document.getElementById('col-wrap').value;
+            // Colors
+            const cw = document.getElementById('col-w').value; const cx = document.getElementById('col-x').value;
+            const cy = document.getElementById('col-y').value; const cz = document.getElementById('col-z').value;
+
+            document.getElementById('v-glow').innerText = glow; document.getElementById('v-off').innerText = off;
+            document.getElementById('v-att').innerText = att; document.getElementById('v-op').innerText = op;
+            document.getElementById('v-tor').innerText = tor; document.getElementById('v-ten').innerText = ten; document.getElementById('v-coils').innerText = coils;
+            document.getElementById('v-stator-op').innerText = statorOp; document.getElementById('v-core').innerText = coreOp; document.getElementById('v-wrap').innerText = wrapOp;
+
+            applyColorUpdates(cw, cx, cy, cz);
+            if(window.ChamberEngine) {
+                window.ChamberEngine.updateVisuals(glow, off, att, op, tor, ten, cw, cx, cy, cz);
+                window.ChamberEngine.updateManifoldVisuals(statorOp, statorCol, wrapOp, wrapCol, coreOp);
+                window.ChamberEngine.updateCoilCount(coils);
+            }
+        }
+
+        ['ctrl-glow', 'ctrl-offset', 'ctrl-attenuation', 'ctrl-opacity', 'ctrl-torsion', 'ctrl-tension', 'ctrl-coils', 'ctrl-stator-op', 'col-stator', 'ctrl-core', 'ctrl-wrap-op', 'col-wrap', 'col-w', 'col-x', 'col-y', 'col-z'].forEach(id => {
+            document.getElementById(id).addEventListener('input', applyVisualUpdates);
+        });
+
+        const tutorialSteps = [
+            {
+                title: "1. The T<sub>0</sub> Plasmonic Singularity",
+                content: `<p>To achieve strong coupling without an external excitation source, we must construct a mathematically pure cavity.</p><p>Here we see the <strong>$T_0$ Plasmonic Core</strong>. This represents the absolute center of the Geometric Engine of Time. Its baseline topological invariant is defined by the winding law:</p><div class="math-block">$$ W_n = 16 - 2n \\implies W_0 = 16 $$</div><p>This core acts as our foundational plasmonic resonator, waiting for the excitonic structure to be built around it.</p>`,
+                action: (engine) => { engine.toggleWedges(true); document.getElementById('ctrl-stator-op').value = 0.0; document.getElementById('ctrl-wrap-op').value = 0.0; applyVisualUpdates(); engine.setSpinGroupsVisible(false); engine.setCoilsVisible(false); engine.animateLift(0); }
+            },
+            {
+                title: "2. The 5-Tier Stator Manifold",
+                content: `<p>We introduce the <strong>Azo-Dye Excitons</strong>, which construct the 5-Tier Stator Manifold ($T_0$ through $T_4$).</p><p>Each subsequent tier is orthogonally embedded to prevent self-intersection, generating a massive macroscopic spatial cavity.</p><div class="math-block">$$ Rot(T_n) = \\begin{cases} Rot_x(\\pi/2) & \\text{if } n \\text{ is even} \\\\ Rot_y(\\pi/2) & \\text{if } n \\text{ is odd} \\end{cases} $$</div><p>These ghost toruses provide the orbital tracks for the excitons to ride along.</p>`,
+                action: (engine) => { engine.toggleWedges(true); document.getElementById('ctrl-stator-op').value = 0.1; document.getElementById('ctrl-wrap-op').value = 0.0; applyVisualUpdates(); engine.setSpinGroupsVisible(false); engine.setCoilsVisible(false); engine.animateLift(0); }
+            },
+            {
+                title: "3. 1D to 4D Topological Lift",
+                content: `<p><strong>Rabi Splitting</strong> occurs. The single resonance shatters into Forward (+1) and Inverse (-1) polariton branches.</p><p>As the geometry spins, the kinematic acceleration monotonically increases toward the core ($\\omega_0/\\omega_4 = 2$). The mathematical rotation of the 6-channel Dual-Helices lifts the 1-Dimensional time phase ($\\tau$) into 4 distinct Orthogonal Phase spaces.</p><p>Watch as the central node fractures into the $W, X, Y,$ and $Z$ vectors, tracking the anti-crossing mechanics of the polaritons. To visualize this coupling, we have activated the <strong>Orthogonal Wrap</strong> in the Manifold settings.</p>`,
+                action: (engine) => { 
+                    engine.toggleWedges(true); document.getElementById('ctrl-stator-op').value = 0.05; document.getElementById('ctrl-wrap-op').value = 0.4; applyVisualUpdates();
+                    engine.setSpinGroupsVisible(true); engine.setCoilsVisible(false); 
+                    let p = 0; const liftAnim = setInterval(() => { p += 0.02; if(p >= 1) { clearInterval(liftAnim); p = 1.0; } engine.animateLift(p); }, 16);
+                }
+            },
+            {
+                title: "4. Collective N-Molecule Ensemble",
+                content: `<p>To overcome the decay rate, the system relies on <strong>Collective Action</strong>, coupling an ensemble of $N$ molecules (the Platonic Great Year nodes) to the cavity.</p><p>These 25,920 nodes wrap the entire 5-tier geometry. In <strong>INTRINSIC</strong> mode, they are driven perfectly by the topological master clock ($\\tau$). In <strong>ACOUSTIC</strong> mode, you can upload an audio file to act as the excitation source, modulating the 5 geometric wave functions in real-time.</p><p>Use the <strong>Visual Modulation</strong> panel to twist the Torsion and Tension of the N-Molecules to explore the infinite possibilities of the Geometric Rabi Splitting engine.</p>`,
+                action: (engine) => { engine.toggleWedges(false); document.getElementById('ctrl-stator-op').value = 0.0; document.getElementById('ctrl-wrap-op').value = 0.0; applyVisualUpdates(); engine.setSpinGroupsVisible(false); engine.animateLift(0); engine.setCoilsVisible(true); }
+            }
+        ];
+
+        let currentStep = 0;
+        function renderTutorial() {
+            const step = tutorialSteps[currentStep];
+            document.getElementById('tut-title').innerHTML = step.title; document.getElementById('tut-body').innerHTML = step.content; document.getElementById('tut-progress').innerText = `${currentStep + 1}/${tutorialSteps.length}`;
+            document.getElementById('btn-prev').disabled = currentStep === 0; document.getElementById('btn-next').disabled = currentStep === tutorialSteps.length - 1;
+            if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('tut-body')]).catch(err => console.log(err.message));
+            if(window.ChamberEngine) step.action(window.ChamberEngine);
+        }
+        document.getElementById('btn-prev').addEventListener('click', () => { if(currentStep > 0) { currentStep--; renderTutorial(); } });
+        document.getElementById('btn-next').addEventListener('click', () => { if(currentStep < tutorialSteps.length - 1) { currentStep++; renderTutorial(); } });
+
+        // Boot
+        applyVisualUpdates(); renderTutorial();
+
+    </script>
+</body>
+</html>
