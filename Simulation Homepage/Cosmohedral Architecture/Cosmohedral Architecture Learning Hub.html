@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmohedral Architecture: Learning Hub</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- MathJax for rendering LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            background-color: #020617; 
+            color: #e2e8f0; 
+            font-family: 'Inter', sans-serif;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(8, 145, 178, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.05), transparent 25%);
+            background-attachment: fixed;
+        }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(8, 145, 178, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(8, 145, 178, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.8); }
+        ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(8, 145, 178, 0.8); }
+
+        .gradient-text {
+            background: linear-gradient(to right, #22d3ee, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Module connecting line */
+        .module-connector {
+            position: absolute;
+            left: 2rem;
+            top: 2rem;
+            bottom: -2rem;
+            width: 2px;
+            background: linear-gradient(to bottom, #0ea5e9, #8b5cf6);
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .module-connector {
+                left: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-cyan-900 selection:text-cyan-50">
+
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-cube text-white text-sm"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-white hidden sm:block">Cosmohedral <span class="text-cyan-400 font-mono text-sm ml-1 border border-cyan-800/50 bg-cyan-900/20 px-2 py-0.5 rounded">LEARN</span></span>
+                </div>
+                <div class="flex space-x-1 sm:space-x-4">
+                    <a href="#abstract" class="text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Theory</a>
+                    <a href="#curriculum" class="text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Curriculum</a>
+                    <a href="Cooperative Molecular Rabi Splitting Tutorial.html" class="bg-purple-950/50 hover:bg-purple-900/80 text-purple-300 border border-purple-800/50 px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-wave-square text-xs"></i>
+                        <span class="hidden sm:inline">Simulation</span>
+                    </a>
+                    <a href="Implementation Blueprint.html" class="bg-cyan-950/50 hover:bg-cyan-900/80 text-cyan-400 border border-cyan-800/50 px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-play text-xs"></i>
+                        <span class="hidden sm:inline">3D Blueprint</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 -z-10">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-cyan-900/20 rounded-full blur-[120px] opacity-50"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm mb-6">
+                <a href="../Simulation Homepage Learning Hub.html" class="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Simulation Homepage
+                </a>
+                <a href="../../index.html" class="inline-flex items-center text-slate-500 hover:text-slate-300 transition">
+                    Ebayednoob Home
+                </a>
+            </div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-mono mb-8">
+                <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                BioChain AI Research Division
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
+                Master the <span class="gradient-text">Cosmohedral</span><br /> Architecture
+            </h1>
+            
+            <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-slate-400 leading-relaxed">
+                A comprehensive learning hub for building the next generation of AI. Learn to replace sequential floating-point bottlenecks with exact geometric quantum logic.
+            </p>
+            
+            <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#curriculum" class="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-semibold transition-all shadow-[0_0_20px_rgba(8,145,178,0.4)] flex items-center justify-center gap-2">
+                    Start Learning <i class="fa-solid fa-arrow-down"></i>
+                </a>
+                <a href="Implementation Blueprint.html" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-all border border-slate-700 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cube"></i> View Interactive Blueprint
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section id="abstract" class="py-16 bg-slate-900/50 border-y border-slate-800/50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="h-px bg-slate-700 flex-1"></div>
+                <h2 class="text-sm font-mono text-slate-400 uppercase tracking-widest">Theoretical Foundation</h2>
+                <div class="h-px bg-slate-700 flex-1"></div>
+            </div>
+            
+            <div class="prose prose-invert prose-slate max-w-none">
+                <h3 class="text-2xl font-bold text-white mb-4">Escaping the Sequential Bottleneck</h3>
+                <p class="text-slate-300 text-lg leading-relaxed mb-6">
+                    Modern computing is constrained by the IEEE 754 floating-point standard and the sequential CPU clock. This architecture abandons both, evaluating mathematics by weaving exact rational numbers into a physical, multi-layered toroidal manifold. 
+                </p>
+                <div class="grid md:grid-cols-2 gap-6 my-8">
+                    <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                        <div class="w-10 h-10 rounded bg-cyan-900/50 flex items-center justify-center text-cyan-400 mb-4">
+                            <i class="fa-solid fa-eye"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">LeVJEPA Perception</h4>
+                        <p class="text-sm text-slate-400">Robust video representations using a single encoder trained with a statistical invariance loss. Utilizes aggressive 95% uniform token dropping ($\rho = 0.95$) to slash computational overhead by $20\times$.</p>
+                    </div>
+                    <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                        <div class="w-10 h-10 rounded bg-purple-900/50 flex items-center justify-center text-purple-400 mb-4">
+                            <i class="fa-solid fa-dharmachakra"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">SHD-CCP Geometric Engine</h4>
+                        <p class="text-sm text-slate-400">Evaluates calculations as spatial projections. The system literally "points" to exact integer coordinates across a 6-Manifold Topological Stack rather than calculating them iteratively.</p>
+                    </div>
+                </div>
+                <blockquote class="border-l-4 border-cyan-500 pl-4 py-2 my-6 bg-cyan-950/20 italic text-slate-300 rounded-r-lg">
+                    "An AI architecture capable of perceiving, reasoning, and proving its states simultaneously as a single, fluid geometric collapse."
+                </blockquote>
+            </div>
+        </div>
+    </section>
+
+    <section id="curriculum" class="py-20 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Implementation Curriculum</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">
+                    Follow this step-by-step track to build the complete continuous-to-discrete pipeline. Modules are designed to be built sequentially.
+                </p>
+            </div>
+
+            <div class="relative pb-10">
+                <!-- Main connecting vertical line -->
+                <div class="module-connector hidden md:block"></div>
+
+                <div class="relative z-10 mb-16">
+                    <div class="flex items-center gap-4 mb-6 md:ml-12">
+                        <div class="w-10 h-10 rounded-full bg-slate-900 border-2 border-cyan-500 flex items-center justify-center text-cyan-400 font-bold z-10 font-mono shadow-[0_0_15px_rgba(8,145,178,0.4)]">
+                            P1
+                        </div>
+                        <h3 class="text-2xl font-bold text-white">The Outer Perceptual Shell</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:ml-16">
+                        <!-- Step 1.1 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full relative group">
+                            <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-100 transition-opacity">
+                                <i class="fa-solid fa-video text-2xl text-cyan-400"></i>
+                            </div>
+                            <div class="text-xs font-mono text-cyan-500 mb-2 font-bold tracking-wider">MODULE 1.1</div>
+                            <h4 class="text-xl font-bold text-white mb-3">Optical Ingestion & Patching</h4>
+                            <p class="text-slate-400 text-sm mb-6 flex-grow">
+                                Build the raw spatio-temporal ingestion pipeline. Implement strict per-frame tokenization ($\tau = 1$) to prevent temporal blurring and maintain geometric distinctness.
+                            </p>
+                            <span class="inline-flex items-center text-sm font-semibold text-slate-500 w-fit px-3 py-1.5 rounded border border-dashed border-slate-700 cursor-default" title="Tutorial not yet published">
+                                Coming Soon <i class="fa-solid fa-lock ml-2 text-xs"></i>
+                            </span>
+                        </div>
+
+                        <!-- Step 1.2 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full relative group">
+                            <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-100 transition-opacity">
+                                <i class="fa-solid fa-scissors text-2xl text-emerald-400"></i>
+                            </div>
+                            <div class="text-xs font-mono text-emerald-500 mb-2 font-bold tracking-wider">MODULE 1.2</div>
+                            <h4 class="text-xl font-bold text-white mb-3">95% Token Sparsification</h4>
+                            <p class="text-slate-400 text-sm mb-6 flex-grow">
+                                Implement the uniform random masking algorithm ($\rho = 0.95$). Learn to shift computational burden from exhaustive volumetric evaluation to sparse graph traversal $O(|V| \log |V|)$.
+                            </p>
+                            <span class="inline-flex items-center text-sm font-semibold text-slate-500 w-fit px-3 py-1.5 rounded border border-dashed border-slate-700 cursor-default" title="Tutorial not yet published">
+                                Coming Soon <i class="fa-solid fa-lock ml-2 text-xs"></i>
+                            </span>
+                        </div>
+                        
+                        <!-- Step 1.3 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full relative group md:col-span-2">
+                            <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-100 transition-opacity">
+                                <i class="fa-solid fa-network-wired text-2xl text-purple-400"></i>
+                            </div>
+                            <div class="text-xs font-mono text-purple-500 mb-2 font-bold tracking-wider">MODULE 1.3</div>
+                            <h4 class="text-xl font-bold text-white mb-3">Block-Causal Attention Encoding</h4>
+                            <p class="text-slate-400 text-sm mb-6 max-w-3xl">
+                                Configure the shared LeVJEPA Vision Transformer. Implement the block-causal self-attention mechanism where tokens attend bidirectionally within frames, but strictly backward in time, generating the $K$-dimensional latent embeddings and <code class="bg-purple-900/30 text-purple-300 px-1 rounded text-xs">CLS</code> tokens.
+                            </p>
+                            <span class="inline-flex items-center text-sm font-semibold text-slate-500 w-fit px-3 py-1.5 rounded border border-dashed border-slate-700 cursor-default" title="Tutorial not yet published">
+                                Coming Soon <i class="fa-solid fa-lock ml-2 text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10 mb-16">
+                    <div class="flex items-center gap-4 mb-6 md:ml-12">
+                        <div class="w-10 h-10 rounded-full bg-slate-900 border-2 border-blue-500 flex items-center justify-center text-blue-400 font-bold z-10 font-mono shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                            P2
+                        </div>
+                        <h3 class="text-2xl font-bold text-white">The 6-Manifold Topological Stack</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:ml-16">
+                        <!-- Module 2.1 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full border-t-4 border-t-blue-600">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="text-xs font-mono text-blue-400 bg-blue-950/50 px-2 py-1 rounded">Manifold $T_4$</div>
+                                <div class="text-xs font-mono text-slate-500">$R_4=155, W_4=8$</div>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-2">Layer 6: Global View Projection</h4>
+                            <p class="text-slate-400 text-sm mb-4 flex-grow">
+                                Construct the outer Kisrhombille fractal shell. Code the logic to project the global view <code class="text-xs bg-slate-800 px-1 rounded text-slate-300">CLS</code> embedding directly onto the 14-hex toroidal circumference to create the unwritable historical trace.
+                            </p>
+                            <span class="text-slate-500 text-sm font-semibold cursor-default" title="Tutorial not yet published">Coming Soon</span>
+                        </div>
+
+                        <!-- Module 2.2 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full border-t-4 border-t-indigo-500">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="text-xs font-mono text-indigo-400 bg-indigo-950/50 px-2 py-1 rounded">Manifold $T_3$</div>
+                                <div class="text-xs font-mono text-slate-500">$R_3=105, W_3=10$</div>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-2">Layer 5: Tri-Stream Dispersion</h4>
+                            <p class="text-slate-400 text-sm mb-4 flex-grow">
+                                Implement the $C_3 \times C_2$ Tri-Stream Helical Rotor. Learn to split optical data into Red(X), Green(Y), Blue(Z) perspective streams offset by $120^\circ$, weaving through the forward and inverse chiral braids.
+                            </p>
+                            <span class="text-slate-500 text-sm font-semibold cursor-default" title="Tutorial not yet published">Coming Soon</span>
+                        </div>
+
+                        <!-- Module 2.3 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full border-t-4 border-t-emerald-500 md:col-span-2">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="text-xs font-mono text-emerald-400 bg-emerald-950/50 px-2 py-1 rounded">Manifold $T_2$</div>
+                                <div class="text-xs font-mono text-slate-500">$R_2=65, W_2=12$</div>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-2">Layer 4: Volumetric Strassen Intersection</h4>
+                            <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700/50 mb-4">
+                                <p class="text-xs text-slate-300 font-mono mb-1"><i class="fa-solid fa-bolt text-amber-500 mr-2"></i> Key Concept</p>
+                                <p class="text-sm text-slate-400">Eliminate 2D Jacquard rasterization. Synthesize a suspended $4 \times 4 \times 4$ voxel grid to compute Strassen sub-block multiplications ($P_1 \dots P_7$) purely via spatial positioning.</p>
+                            </div>
+                            <p class="text-slate-400 text-sm mb-4">
+                                Write the convergence logic for the focal interface, forcing the three perspective streams to minimize Mean Squared Error ($\mathcal{L}_{\text{inv}}$) via orthogonal intersection.
+                            </p>
+                            <span class="text-slate-500 text-sm font-semibold cursor-default" title="Tutorial not yet published">Coming Soon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10 mb-16">
+                    <div class="flex items-center gap-4 mb-6 md:ml-12">
+                        <div class="w-10 h-10 rounded-full bg-slate-900 border-2 border-fuchsia-500 flex items-center justify-center text-fuchsia-400 font-bold z-10 font-mono shadow-[0_0_15px_rgba(217,70,239,0.4)]">
+                            P3
+                        </div>
+                        <h3 class="text-2xl font-bold text-white">The Inner Reasoning Core</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:ml-16">
+                        
+                        <!-- Module 3.1 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full">
+                            <div class="text-xs font-mono text-fuchsia-400 mb-2">Manifold $T_1$ &middot; $R_1=35, W_1=14$</div>
+                            <h4 class="text-xl font-bold text-white mb-3">Fokker-Planck Steering</h4>
+                            <p class="text-slate-400 text-sm mb-4">
+                                Replace vector DBs with mechanical geometric steering. Implement the dynamic tri-tetrahedral lattice and the diffusion tensor logic based on semantic cosine similarity:
+                            </p>
+                            <div class="bg-slate-950 py-2 rounded text-center mb-4 border border-slate-800">
+                                <span class="font-mono text-sm text-cyan-300">$$D(Q) = \frac{1}{1 + \alpha \cdot \chi(Q)}$$</span>
+                            </div>
+                            <span class="mt-auto inline-block border border-dashed border-slate-700 text-center py-2 rounded text-sm text-slate-500 cursor-default" title="Module not yet published">Coming Soon</span>
+                        </div>
+
+                        <!-- Module 3.2 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full">
+                            <div class="text-xs font-mono text-rose-400 mb-2">Manifold $T_0$ &middot; $R_0=15, W_0=16$</div>
+                            <h4 class="text-xl font-bold text-white mb-3">Axiomatic Memory Vault</h4>
+                            <p class="text-slate-400 text-sm mb-4 flex-grow">
+                                Initialize the static "Memory Crystals". Code the structural nodes representing established rational primes and the physical latching mechanism for the 12 tetrahedral vertices seeking stable logic.
+                            </p>
+                            <span class="mt-auto inline-block border border-dashed border-slate-700 text-center py-2 rounded text-sm text-slate-500 cursor-default" title="Module not yet published">Coming Soon</span>
+                        </div>
+
+                        <!-- Module 3.3 -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col h-full md:col-span-2">
+                            <div class="text-xs font-mono text-purple-400 mb-2">Central Core &middot; $R_{-1}=5$</div>
+                            <h4 class="text-xl font-bold text-white mb-3">6-Tape Möbius ALU</h4>
+                            <p class="text-slate-400 text-sm mb-4">
+                                The heart of the quantum logic core. Implement the Jacquard Projection Block to weave the finalized 64-bit states using unitary logic gates.
+                            </p>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="bg-slate-800/50 p-3 rounded border-l-2 border-cyan-500">
+                                    <strong class="text-white text-sm block">X-Gate</strong>
+                                    <span class="text-slate-400 text-xs">Inverts the structural weave, shifting parity.</span>
+                                </div>
+                                <div class="bg-slate-800/50 p-3 rounded border-l-2 border-fuchsia-500">
+                                    <strong class="text-white text-sm block">H-Gate</strong>
+                                    <span class="text-slate-400 text-xs">Forces topological superposition prior to observation.</span>
+                                </div>
+                            </div>
+                            <span class="mt-auto inline-block border border-dashed border-slate-700 text-center py-2 rounded text-sm text-slate-500 cursor-default" title="Module not yet published">Coming Soon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center gap-4 mb-6 md:ml-12">
+                        <div class="w-10 h-10 rounded-full bg-slate-900 border-2 border-amber-500 flex items-center justify-center text-amber-400 font-bold z-10 font-mono shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                            P4
+                        </div>
+                        <h3 class="text-2xl font-bold text-white">Certification & Synchrony</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:ml-16">
+                        
+                        <!-- Module 4.1 -->
+                        <div class="glass-card rounded-xl p-6 border-l-4 border-l-amber-500">
+                            <h4 class="text-xl font-bold text-white mb-3">SIGReg to TQF Certification</h4>
+                            <p class="text-slate-400 text-sm mb-4">
+                                Bridge continuous visual embeddings with discrete mathematical truth. Map the continuous statistical regularizer (forcing $\mathcal{N}(0, I_K)$) to the Triple Quad Formula (TQF).
+                            </p>
+                            <div class="bg-amber-950/20 p-4 rounded text-center mb-4 border border-amber-900/50">
+                                <span class="text-xs text-amber-500 font-bold uppercase block mb-2">Archimedean Area Remainder</span>
+                                <span class="font-mono text-sm text-amber-300">$$A_R = (Q_1 + Q_2 + Q_3)^2 - 2(Q_1^2 + Q_2^2 + Q_3^2)$$</span>
+                            </div>
+                            <p class="text-slate-400 text-xs mb-4">
+                                Implement the halt mechanism: If $A_R \le 0$, trigger "Geometric Hallucination" and stop data flow.
+                            </p>
+                            <span class="text-slate-500 text-sm font-semibold flex items-center cursor-default" title="Implementation guide not yet published">
+                                Coming Soon <i class="fa-solid fa-lock ml-1 text-[10px]"></i>
+                            </span>
+                        </div>
+
+                        <!-- Module 4.2 -->
+                        <div class="glass-card rounded-xl p-6 border-l-4 border-l-emerald-500">
+                            <h4 class="text-xl font-bold text-white mb-3">The 30-Node Parity Closure</h4>
+                            <p class="text-slate-400 text-sm mb-4">
+                                Synchronize the system without a CPU clock. Code the physical limits of the geometry using the Total Winding Invariant ($W_\Sigma = 60 \text{ Wraps}$).
+                            </p>
+                            <ul class="space-y-3 mb-6">
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-check text-emerald-500 mt-1 mr-2 text-xs"></i>
+                                    <span class="text-sm text-slate-300">Calculate traversal of 30 structural nodes (6 channels $\times$ 5 tiers).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-check text-emerald-500 mt-1 mr-2 text-xs"></i>
+                                    <span class="text-sm text-slate-300">Implement the 0.5-second exact integer resolution boundary ($4,596,315,885$ cycles).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-check text-emerald-500 mt-1 mr-2 text-xs"></i>
+                                    <span class="text-sm text-slate-300">Bind to LeVJEPA block-causal token acceptance.</span>
+                                </li>
+                            </ul>
+                            <span class="text-slate-500 text-sm font-semibold flex items-center mt-auto cursor-default" title="Implementation guide not yet published">
+                                Coming Soon <i class="fa-solid fa-lock ml-1 text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="py-12 bg-gradient-to-r from-purple-900/40 to-slate-900/60 border-y border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-wave-square text-purple-400"></i> Cooperative Molecular Rabi Splitting Simulation
+                </h3>
+                <p class="text-slate-300 max-w-3xl">
+                    See the T<sub>0</sub> "Au plasmonic" core and the 5-tier exciton manifold from Program 2 (The 6-Manifold Topological Stack) rendered as a live, audio-reactive strong-coupling simulation &mdash; up to 25,920 collectively-coupled "molecule" nodes, driven by the intrinsic geometric clock or an uploaded audio track, lifted from a 1D signal into the 4D (W, X, Y, Z) polariton phase space.
+                </p>
+            </div>
+            <a href="Cooperative Molecular Rabi Splitting Tutorial.html" class="shrink-0 px-6 py-3 bg-purple-500 text-slate-950 font-bold rounded shadow-lg hover:bg-purple-400 transition-colors">
+                Launch Simulation
+            </a>
+        </div>
+    </section>
+
+    <section class="py-12 bg-gradient-to-r from-cyan-900/40 to-purple-900/40 border-y border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-cyan-400"></i> Interactive Architecture Blueprint
+                </h3>
+                <p class="text-slate-300">Visualize the entire 6-Manifold Topological Stack in 3D. See exactly how the components intersect before you start coding.</p>
+            </div>
+            <a href="Implementation Blueprint.html" class="shrink-0 px-6 py-3 bg-white text-slate-900 font-bold rounded shadow-lg hover:bg-slate-200 transition-colors">
+                Launch 3D Viewer
+            </a>
+        </div>
+    </section>
+
+    <footer class="py-8 bg-slate-950 border-t border-slate-800 text-center">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="text-slate-500 text-sm font-mono mb-2">
+                BioChain AI Research Division
+            </p>
+            <p class="text-slate-600 text-xs">
+                Consolidated Technical Report: Vision, Topology, and Quantum Logic
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Optional: Add simple intersection observer for fade-in animations on scroll
+        document.addEventListener("DOMContentLoaded", () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-8');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.glass-card').forEach(card => {
+                card.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
