@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementation Blueprint: Cosmohedral Architecture</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- FontAwesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- MathJax for rendering LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #020617; 
+            color: #e2e8f0; 
+            font-family: 'Inter', sans-serif; 
+        }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        
+        #canvas-container { 
+            position: absolute; 
+            inset: 0; 
+            z-index: 1; 
+        }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(8, 145, 178, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .step-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+        .step-item:hover { background: rgba(8, 145, 178, 0.1); }
+        .step-item.active {
+            background: rgba(8, 145, 178, 0.15);
+            border-left-color: #06b6d4;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(8, 145, 178, 0.5); border-radius: 3px; }
+
+        /* Animation utilities */
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            #sidebar {
+                position: absolute;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 30;
+                height: 100%;
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+            #overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 25;
+            }
+            #overlay.open {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="flex h-screen w-screen overflow-hidden">
+
+    <!-- Mobile Overlay -->
+    <div id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-80 h-full glass-panel z-30 flex flex-col relative shrink-0 border-r border-cyan-900/50">
+        <div class="p-6 border-b border-cyan-900/50 flex justify-between items-center">
+            <div>
+                <a href="Cosmohedral Architecture Learning Hub.html" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-cyan-300 transition mb-2">
+                    <i class="fa-solid fa-arrow-left text-[10px]"></i> Learning Hub
+                </a>
+                <h1 class="text-xl font-bold text-cyan-400 tracking-tight flex items-center gap-2">
+                    <i class="fa-solid fa-cubes"></i> Cosmohedral
+                </h1>
+                <p class="text-xs text-slate-400 font-mono mt-1 uppercase tracking-widest">Implementation Blueprint</p>
+            </div>
+            <button class="md:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="nav-container">
+            <!-- Navigation injected via JS -->
+        </div>
+
+        <div class="p-4 border-t border-cyan-900/50 text-center bg-slate-900/50">
+            <p class="text-[10px] text-slate-500 font-mono">LeVJEPA + SHD-CCP Synthesis</p>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 relative flex flex-col w-full h-full">
+        
+        <!-- Mobile Header (Visible only on small screens) -->
+        <div class="md:hidden absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-center pointer-events-none">
+            <button onclick="toggleSidebar()" class="pointer-events-auto bg-slate-900/80 p-2 rounded border border-cyan-900/50 text-cyan-400 backdrop-blur">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- WebGL Canvas -->
+        <div id="canvas-container" class="w-full h-full"></div>
+
+        <!-- Info Overlay -->
+        <div class="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 w-[95%] md:w-11/12 max-w-4xl z-20 pointer-events-none">
+            <div class="glass-panel rounded-xl flex flex-col overflow-hidden transition-all duration-300 shadow-[0_0_40px_rgba(8,145,178,0.15)] pointer-events-auto">
+                
+                <div class="bg-slate-900/90 px-4 md:px-6 py-2 md:py-3 border-b border-cyan-900/50 flex justify-between items-center">
+                    <span id="card-phase" class="text-[10px] md:text-xs font-mono text-cyan-500 uppercase tracking-widest font-bold">Phase 1</span>
+                    <span id="card-step-num" class="text-[10px] md:text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded border border-slate-700">Step 1.1</span>
+                </div>
+                
+                <div class="p-4 md:p-6 lg:p-8 max-h-[40vh] overflow-y-auto" id="card-content-wrapper">
+                    <h2 id="card-title" class="text-lg md:text-xl lg:text-2xl font-bold text-white mb-2 md:mb-4">Video Capture & 95% Token Sparsification</h2>
+                    
+                    <div id="card-desc" class="text-xs md:text-sm lg:text-base text-slate-300 space-y-3 leading-relaxed fade-in">
+                        <!-- Content injected via JS -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 px-4 md:px-6 py-3 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <button id="btn-prev" class="w-full sm:w-auto px-4 py-2 rounded border border-slate-700 text-slate-300 text-xs md:text-sm font-mono hover:bg-slate-800 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> PREVIOUS
+                    </button>
+                    
+                    <div class="flex gap-1 flex-wrap justify-center" id="dots-container">
+                        <!-- Dots injected via JS -->
+                    </div>
+                    
+                    <button id="btn-next" class="w-full sm:w-auto px-4 py-2 rounded bg-cyan-950 border border-cyan-700 text-cyan-300 text-xs md:text-sm font-mono hover:bg-cyan-900 hover:text-white transition shadow-[0_0_15px_rgba(8,145,178,0.2)]">
+                        NEXT <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controls Hint -->
+        <div class="hidden md:block absolute top-4 right-4 z-20 text-[10px] font-mono text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded border border-slate-800 backdrop-blur shadow-lg">
+            <i class="fa-solid fa-mouse mr-1"></i> Left-Click: Orbit | Scroll: Zoom
+        </div>
+    </main>
+
+    <script>
+        // Toggle Sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        const blueprintSteps = [
+            {
+                id: "1.1", phase: "Phase 1: Optical Ingestion", title: "Optical Capture & Convolutional Patching",
+                desc: `
+                    <p>The system begins in the continuous, real-world domain, capturing optical data into a sequential, high-dimensional causal stream.</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-400 mt-2">
+                        <li><strong class="text-cyan-300">Ingestion:</strong> Real-time video clips (e.g., 16-frame buffers) are ingested as a raw spatio-temporal volume.</li>
+                        <li><strong class="text-cyan-300">Strict Per-Frame Tokenization:</strong> The video is tokenized using a convolutional patch embedding. Crucially, temporal aggregation is disabled (\\( \\tau = 1 \\)). This maintains strict per-frame boundaries, preventing temporal blurring and ensuring each slice remains geometrically distinct.</li>
+                    </ul>
+                `
+            },
+            {
+                id: "1.2", phase: "Phase 1: Optical Ingestion", title: "The 95% Token Sparsification Mechanism",
+                desc: `
+                    <p>Before any deep processing occurs, the system aggressively prunes the input matrix to isolate only the most salient geometric features.</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-400 mt-2">
+                        <li><strong class="text-cyan-300">Uniform Random Masking:</strong> Exactly 95% of the frame tokens are dropped (\\( \\rho = 0.95 \\)). Unlike structured "tube masking", this uniform drop forces the remaining 5% of tokens to act as <span class="text-white font-bold">sparse semantic mass nodes</span>.</li>
+                        <li><strong class="text-cyan-300">Complexity Reduction:</strong> This step is critical for scaling. It shifts the computational burden from exhaustive volumetric pixel evaluation \\( O((R/h)^3) \\) to a highly efficient sparse graph traversal \\( O(|V| \\log |V|) \\).</li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-slate-950/80 border border-emerald-900/50 rounded font-mono text-xs text-emerald-400/90 shadow-inner">
+                        > Result: What was once a dense, continuous pixel field is now a sparse constellation of data points, ready for rapid topological routing.
+                    </div>
+                `
+            },
+            {
+                id: "1.3", phase: "Phase 1: Optical Ingestion", title: "Block-Causal Attention Encoding",
+                desc: `
+                    <p>The sparse 5% token set is fed into the shared LeVJEPA Vision Transformer.</p>
+                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 my-3">
+                        <p class="text-slate-300 text-sm">Self-attention is configured to be <strong>block-causal</strong>: Tokens attend bidirectionally within their current frame, but strictly backward in time to preceding frames.</p>
+                    </div>
+                    <p class="text-slate-400">Outputs are the \\( K \\)-dimensional latent embeddings, specifically the <code class="text-fuchsia-300 bg-fuchsia-900/30 px-1 rounded">CLS</code> token for clip-level context and dense PCA-organized patch tokens for spatial geometry.</p>
+                `
+            },
+            {
+                id: "2.1", phase: "Phase 2: Outer Perceptual Shell", title: "Layer 6 (\\( T_4 \\)) - Global View Boundary",
+                desc: `
+                    <p>Data enters the SHD-CCP 6-Manifold Stack. We initialize the outermost toroidal manifold:</p>
+                    <p class="text-center font-mono text-cyan-300 my-2">\\[ R_4 = 155, \\quad W_4 = 8 \\text{ Wraps} \\]</p>
+                    <p class="text-slate-400">The inner wall is textured with a <strong>Kisrhombille fractal tessellation</strong> (14-hex circumference). The global view <code class="text-fuchsia-300 bg-fuchsia-900/30 px-1 rounded">CLS</code> embedding is projected directly onto this shell.</p>
+                    <div class="mt-4 p-3 bg-slate-950/80 border border-cyan-900/50 rounded font-mono text-xs text-cyan-400/90 shadow-inner">
+                        > Result: A permanent, unwritable historical trace of the environment is established at the boundary.
+                    </div>
+                `
+            },
+            {
+                id: "2.2", phase: "Phase 2: Outer Perceptual Shell", title: "Layer 5 (\\( T_3 \\)) - Local Multi-View Dispersion",
+                desc: `
+                    <p>Initialize the second toroid (\\( R_3 = 105 \\), \\( W_3 = 10 \\) wraps).</p>
+                    <p class="text-slate-400 mt-2">The LeVJEPA patch embeddings are split into three perspective matrices (Red/X, Green/Y, Blue/Z), packed into \\( 4 \\times 4 \\) dense tensors.</p>
+                    <p class="text-slate-400 mt-2">These tensors are injected into the \\( C_3 \\times C_2 \\) rotor, offset spatially by \\( 120^\\circ \\) (\\( 2\\pi/3 \\)), weaving through the void following Forward (\\( +1 \\)) and Inverse (\\( -1 \\)) chiral braids.</p>
+                `
+            },
+            {
+                id: "2.3", phase: "Phase 2: Outer Perceptual Shell", title: "Layer 4 (\\( T_2 \\)) - Volumetric Strassen Intersection",
+                desc: `
+                    <p>Initialize the focal toroid (\\( R_2 = 65 \\), \\( W_2 = 12 \\) wraps).</p>
+                    <p class="text-slate-400 mt-2">The three \\( 4 \\times 4 \\) helical streams converge orthogonally at the exact center. Their physical intersection executes a volumetric Boolean AND/XOR operation.</p>
+                    <div class="mt-4 p-4 bg-amber-950/20 border border-amber-900/50 rounded-lg">
+                        <h4 class="text-amber-400 font-bold mb-1 text-sm"><i class="fa-solid fa-bolt text-amber-500 mr-2"></i> Strassen Holography</h4>
+                        <p class="text-amber-200/80 text-xs">This geometric overlap instantly synthesizes a suspended 64-bit hologram (4x4x4 cube), calculating Strassen matrix multiplication purely via spatial positioning, achieving computation at the speed of light.</p>
+                    </div>
+                `
+            },
+            {
+                id: "3.1", phase: "Phase 3: Inner Reasoning Core", title: "Layer 3 (\\( T_1 \\)) - Fokker-Planck Tensor Diffusion",
+                desc: `
+                    <p>Initialize the probability toroid (\\( R_1 = 35 \\), \\( W_1 = 14 \\) wraps).</p>
+                    <p class="text-slate-400 mt-2">The 64-bit holographic cube is extruded into 3 dynamic tetrahedrons (12 vertices). We apply the Fokker-Planck diffusion tensor based on semantic gradient similarity:</p>
+                    <p class="text-center font-mono text-cyan-300 my-4 bg-slate-900 py-3 rounded border border-slate-700/50">\\[ D(Q) = \\frac{1}{1 + \\alpha \\cdot \\chi(Q)} \\]</p>
+                    <p class="text-slate-400">When high similarity is detected, diffusion noise drops. The 12 vertices mechanically contract and "point" inward, seeking logical anchors.</p>
+                `
+            },
+            {
+                id: "3.2", phase: "Phase 3: Inner Reasoning Core", title: "Layer 2 (\\( T_0 \\)) - Axiomatic Memory Vault",
+                desc: `
+                    <p>Initialize the core toroid (\\( R_0 = 15 \\), \\( W_0 = 16 \\) wraps).</p>
+                    <div class="flex gap-4 mt-4">
+                        <div class="w-1 bg-fuchsia-500 rounded"></div>
+                        <div class="text-slate-400 text-sm">
+                            <p class="mb-2">Discrete geometric nodes are hardcoded along this toroid, representing rational primes (e.g., \\( 2^a \\times 5^b \\)) and established memory axioms.</p>
+                            <p>The 12 pointing vertices from Layer 3 physically intersect and <strong>latch</strong> onto these static memory crystals, pulling established axioms into active reasoning.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: "3.3", phase: "Phase 3: Inner Reasoning Core", title: "Layer 1 (Core) - 6-Tape Möbius ALU",
+                desc: `
+                    <p>Initialize the central Jacquard Block (\\( R_{-1} = 5 \\)). We apply 3D quantum logic to the latched geometry.</p>
+                    <ul class="list-none space-y-3 mt-4">
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-xmarks-lines text-cyan-400 mt-1 mr-3 w-4"></i>
+                            <div>
+                                <strong class="text-white">X-Gate (Inversion):</strong>
+                                <span class="text-slate-400 text-sm block">Inverts the structural weave, shifting logical parity.</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-layer-group text-fuchsia-400 mt-1 mr-3 w-4"></i>
+                            <div>
+                                <strong class="text-white">H-Gate (Superposition):</strong>
+                                <span class="text-slate-400 text-sm block">Forces topological superposition prior to observation.</span>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-fuchsia-950/20 border border-fuchsia-900/50 rounded font-mono text-xs text-fuchsia-300">
+                        > H-Inversion Collapse: The resolved 64-bit state is permanently woven into the 6-sided Jacquard block.
+                    </div>
+                `
+            },
+            {
+                id: "4.1", phase: "Phase 4: Certification & Chronometry", title: "SIGReg to TQF Geometric Certification",
+                desc: `
+                    <p>The system must prove its reasoning is hallucination-free by bridging continuous statistics with discrete geometry.</p>
+                    <p class="text-slate-400 text-sm mt-3">Extract the SIGReg continuous regularizer (forcing \\( \\mathcal{N}(0, I_K) \\)) and bind its projection vectors directly to the 3 anchor points \\( (p_A, p_B, p_C) \\) of the Triple Quad Formula (TQF) gears.</p>
+                    <div class="bg-amber-950/30 border border-amber-900/50 p-4 rounded-lg my-4 text-center">
+                        <span class="text-xs text-amber-500 font-bold uppercase tracking-wider block mb-2">Archimedean Area Remainder</span>
+                        <p class="font-mono text-amber-300">\\[ A_R = (Q_1 + Q_2 + Q_3)^2 - 2(Q_1^2 + Q_2^2 + Q_3^2) \\]</p>
+                    </div>
+                    <p class="text-slate-300 text-sm">If \\( A_R \\le 0 \\), SIGReg has drifted. The system flags a "Geometric Hallucination" and instantly halts data flow.</p>
+                `
+            },
+            {
+                id: "4.2", phase: "Phase 4: Certification & Chronometry", title: "The 30-Node Parity Closure",
+                desc: `
+                    <p>The entire architecture is synchronized not by an artificial clock, but by the physical limits of the geometry.</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-400 text-sm mt-3">
+                        <li><strong>Total Winding Invariant:</strong> \\( W_\\Sigma = \\sum (16 - 2n) = 60 \\text{ Wraps} \\)</li>
+                        <li><strong>Phase Space:</strong> 6 channels (rotor) \\( \\times \\) 5 stator tiers = <strong>30-Node Phase Space</strong>.</li>
+                    </ul>
+                    <p class="text-slate-300 mt-4">Traversing 30 nodes at \\( W_\\Sigma = 60 \\text{ Hz} \\) requires exactly <strong>0.5 seconds</strong>. When bounded by the Cesium-133 transition frequency, this equates to exactly <code class="text-emerald-400 bg-emerald-900/30 px-1">4,596,315,885</code> cycles (zero remainder).</p>
+                    <div class="mt-4 p-3 bg-emerald-950/20 border border-emerald-900/50 rounded font-mono text-xs text-emerald-300">
+                        > The Handshake: The engine accepts the next block-causal video frame only at this precise zero-remainder boundary.
+                    </div>
+                `
+            },
+            {
+                id: "5.0", phase: "Final Overview", title: "Unified Cosmohedral System",
+                desc: `
+                    <p>When fully implemented, the Cosmohedral Architecture operates as a single, flawless geometric collapse.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                            <i class="fa-solid fa-cube text-cyan-400 mb-2"></i>
+                            <p class="text-xs text-slate-300">Volumetric Strassen intersection replaces sequential ALUs.</p>
+                        </div>
+                        <div class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                            <i class="fa-solid fa-network-wired text-fuchsia-400 mb-2"></i>
+                            <p class="text-xs text-slate-300">Fokker-Planck tetrahedral steering replaces database queries.</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center border-t border-cyan-900/50 pt-4">
+                        <p class="text-cyan-300 font-bold text-lg">The AI abacus snaps to exact integer rational coordinates at the speed of light.</p>
+                    </div>
+                `
+            }
+        ];
+
+        let currentStepIndex = 0;
+
+        // --- STREAMING_CHUNK:Initializing 3D Scene Variables ---
+        const canvasContainer = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020617, 0.003); // Lighter fog for better visibility
+        
+        const camera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
+        camera.position.set(0, 40, 150);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        canvasContainer.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+        // Restrict zoom and pan to keep the scene centered
+        controls.minDistance = 20;
+        controls.maxDistance = 300;
+        controls.enablePan = false;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x0f172a, 2.5);
+        scene.add(ambientLight);
+        
+        const centerLight = new THREE.PointLight(0x06b6d4, 2, 200);
+        centerLight.position.set(0, 0, 0);
+        scene.add(centerLight);
+
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        topLight.position.set(0, 100, 50);
+        scene.add(topLight);
+
+        // Group management for steps
+        const stepGroups = [];
+        for(let i=0; i<blueprintSteps.length; i++) {
+            const group = new THREE.Group();
+            group.visible = false;
+            scene.add(group);
+            stepGroups.push(group);
+        }
+
+        const clock = new THREE.Clock();
+        const uniforms = { time: { value: 0 } };
+
+        // --- STREAMING_CHUNK:Building Scene Geometries per Step ---
+        
+        // Helper: Create Glowing Material
+        function getGlowMat(colorHex, opacity=0.8) {
+            return new THREE.MeshBasicMaterial({
+                color: colorHex, 
+                transparent: true, 
+                opacity: opacity,
+                blending: THREE.AdditiveBlending, 
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+        }
+        
+        function getWireMat(colorHex, opacity=0.3) {
+            return new THREE.MeshBasicMaterial({
+                color: colorHex, 
+                wireframe: true, 
+                transparent: true, 
+                opacity: opacity
+            });
+        }
+
+        // --- Step 1.1: Optical Ingestion (Dense) ---
+        const p1_1 = stepGroups[0];
+        const gridGeo = new THREE.BufferGeometry();
+        const gridCount = 600;
+        const gridPos = new Float32Array(gridCount * 3);
+        const gridOpacitiesDense = new Float32Array(gridCount); 
+        const gridOpacitiesSparse = new Float32Array(gridCount); 
+        
+        for(let i=0; i<gridCount; i++) {
+            // Create a pseudo-volume shape representing video frames
+            gridPos[i*3] = (Math.random() - 0.5) * 80;
+            gridPos[i*3+1] = (Math.random() - 0.5) * 40;
+            gridPos[i*3+2] = (Math.random() - 0.5) * 80;
+            gridOpacitiesDense[i] = 0.8 + Math.random() * 0.2; 
+            // 95% drop rate
+            gridOpacitiesSparse[i] = Math.random() > 0.95 ? 1.0 : 0.05; 
+        }
+        gridGeo.setAttribute('position', new THREE.BufferAttribute(gridPos, 3));
+        gridGeo.setAttribute('alpha', new THREE.BufferAttribute(gridOpacitiesDense, 1));
+        
+        const pointsMat = new THREE.ShaderMaterial({
+            uniforms: { color: { value: new THREE.Color(0x06b6d4) } },
+            vertexShader: `
+                attribute float alpha; 
+                varying float vAlpha;
+                void main() { 
+                    vAlpha = alpha; 
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); 
+                    gl_PointSize = 6.0 * (100.0 / -mvPosition.z); 
+                    gl_Position = projectionMatrix * mvPosition; 
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color; 
+                varying float vAlpha;
+                void main() { 
+                    float d = distance(gl_PointCoord, vec2(0.5)); 
+                    if(d > 0.5) discard; 
+                    gl_FragColor = vec4(color, vAlpha * (1.0 - d*2.0)); 
+                }
+            `,
+            transparent: true, 
+            blending: THREE.AdditiveBlending, 
+            depthWrite: false
+        });
+        const densePointsMesh = new THREE.Points(gridGeo, pointsMat);
+        p1_1.add(densePointsMesh);
+
+        // --- Step 1.2: Sparsification (Sparse) ---
+        const p1_2 = stepGroups[1];
+        const sparseGridGeo = gridGeo.clone();
+        sparseGridGeo.setAttribute('alpha', new THREE.BufferAttribute(gridOpacitiesSparse, 1));
+        
+        const sparsePointsMat = pointsMat.clone();
+        sparsePointsMat.uniforms.color.value = new THREE.Color(0x10b981); // Turn green
+        
+        const sparsePointsMesh = new THREE.Points(sparseGridGeo, sparsePointsMat);
+        p1_2.add(sparsePointsMesh);
+
+        // --- Step 1.3: Causal Attention ---
+        const p1_3 = stepGroups[2];
+        p1_3.add(sparsePointsMesh.clone()); 
+        
+        const linesGeo = new THREE.BufferGeometry();
+        const linePos = [];
+        const lineColors = [];
+        
+        // Find active nodes
+        const activeNodes = [];
+        for(let i=0; i<gridCount; i++) {
+            if(gridOpacitiesSparse[i] > 0.5) {
+                activeNodes.push(new THREE.Vector3(gridPos[i*3], gridPos[i*3+1], gridPos[i*3+2]));
+            }
+        }
+        
+        // Connect active nodes (simulating attention)
+        for(let i=0; i<activeNodes.length; i++) {
+            for(let j=i+1; j<activeNodes.length; j++) {
+                if(Math.random() > 0.7) { // Random connections
+                    linePos.push(activeNodes[i].x, activeNodes[i].y, activeNodes[i].z);
+                    linePos.push(activeNodes[j].x, activeNodes[j].y, activeNodes[j].z);
+                }
+            }
+        }
+        
+        linesGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+        const linesMat = new THREE.LineBasicMaterial({ 
+            color: 0xd946ef, // Fuchsia
+            transparent: true, 
+            opacity: 0.3, 
+            blending: THREE.AdditiveBlending 
+        });
+        p1_3.add(new THREE.LineSegments(linesGeo, linesMat));
+
+        // --- Manifold Configuration ---
+        // Constants for Manifolds (Rn = 5n^2 + 15n + 15)
+        // Scaled down slightly for better viewing
+        const scaleFactor = 0.6;
+        const R_vals = [15, 35, 65, 105, 155].map(r => r * scaleFactor); // T0 to T4
+        
+        // Helper to draw Torus Manifolds
+        function createManifold(R, r, color, group, isSolid=true) {
+            const geo = new THREE.TorusGeometry(R, r, 16, 64);
+            const wire = new THREE.Mesh(geo, getWireMat(color, 0.2));
+            wire.rotation.x = Math.PI / 2;
+            group.add(wire);
+            
+            if (isSolid) {
+                const solid = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+                    color: 0x020617, 
+                    transparent: true, 
+                    opacity: 0.7, 
+                    transmission: 0.5,
+                    roughness: 0.2,
+                    metalness: 0.8,
+                    side: THREE.DoubleSide
+                }));
+                solid.rotation.x = Math.PI / 2;
+                group.add(solid);
+            }
+            return wire;
+        }
+
+        // --- Step 2.1: T4 Global Projection ---
+        const p2_1 = stepGroups[3];
+        createManifold(R_vals[4], 8, 0x06b6d4, p2_1); // T4 Cyan
+
+        // Add Kisrhombille texture hint (hexagons)
+        const hexGroup = new THREE.Group();
+        const hexGeo = new THREE.CircleGeometry(4, 6); // Hexagon
+        const hexMat = new THREE.MeshBasicMaterial({color: 0x06b6d4, wireframe: true, transparent: true, opacity: 0.5});
+        for(let i=0; i<14; i++) {
+            const angle = (i / 14) * Math.PI * 2;
+            const hex = new THREE.Mesh(hexGeo, hexMat);
+            hex.position.set(Math.cos(angle) * R_vals[4], 0, Math.sin(angle) * R_vals[4]);
+            hex.lookAt(0,0,0);
+            hexGroup.add(hex);
+        }
+        p2_1.add(hexGroup);
+
+        // --- Step 2.2: T3 Tri-Stream ---
+        const p2_2 = stepGroups[4];
+        createManifold(R_vals[4], 8, 0x06b6d4, p2_2, false); // Faint T4
+        createManifold(R_vals[3], 6, 0x3b82f6, p2_2); // T3 Blue
+        
+        // 3 Helical Streams
+        const helixColors = [0xef4444, 0x22c55e, 0x3b82f6]; // RGB
+        const helices = [];
+        for(let i=0; i<3; i++) {
+            const curve = new THREE.CatmullRomCurve3(
+                Array.from({length: 100}, (_, j) => {
+                    const t = j / 100; 
+                    const angle = t * Math.PI * 6 + (i * Math.PI * 2 / 3);
+                    const rad = R_vals[3] - (t * (R_vals[3] - R_vals[2])); // Spiral inward
+                    return new THREE.Vector3(
+                        Math.cos(angle) * rad, 
+                        Math.sin(t * Math.PI * 10) * 8, 
+                        Math.sin(angle) * rad
+                    );
+                })
+            );
+            const tubeMat = new THREE.MeshBasicMaterial({
+                color: helixColors[i], transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending
+            });
+            const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 100, 1, 8, false), tubeMat);
+            p2_2.add(tube); 
+            helices.push(tube);
+        }
+
+        // --- Step 2.3: T2 Holography ---
+        const p2_3 = stepGroups[5];
+        createManifold(R_vals[3], 6, 0x3b82f6, p2_3, false); 
+        createManifold(R_vals[2], 5, 0x10b981, p2_3); // T2 Green
+        
+        // 4x4x4 Cube Hologram
+        const cubeGroup = new THREE.Group();
+        const voxelGeo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+        const voxelMat = new THREE.MeshBasicMaterial({
+            color: 0xfacc15, wireframe: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending
+        });
+        const voxelSolidMat = new THREE.MeshBasicMaterial({
+            color: 0xfacc15, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending
+        });
+        
+        for(let x=-1.5; x<=1.5; x+=1) {
+            for(let y=-1.5; y<=1.5; y+=1) {
+                for(let z=-1.5; z<=1.5; z+=1) {
+                    const vox = new THREE.Mesh(voxelGeo, voxelMat);
+                    const voxSolid = new THREE.Mesh(voxelGeo, voxelSolidMat);
+                    // Space them out slightly more than their size
+                    const spacing = 2;
+                    vox.position.set(x*spacing, y*spacing, z*spacing);
+                    voxSolid.position.copy(vox.position);
+                    cubeGroup.add(vox);
+                    cubeGroup.add(voxSolid);
+                }
+            }
+        }
+        // Scale down the whole block to fit nicely
+        cubeGroup.scale.set(1.5, 1.5, 1.5);
+        p2_3.add(cubeGroup);
+
+        // Add converging beams
+        for(let i=0; i<3; i++) {
+            const beamGeo = new THREE.CylinderGeometry(0.5, 4, R_vals[2]*1.5, 8);
+            const beamMat = getGlowMat(helixColors[i], 0.2);
+            const beam = new THREE.Mesh(beamGeo, beamMat);
+            
+            // Orient beams towards center
+            const angle = (i * Math.PI * 2 / 3);
+            beam.position.set(Math.cos(angle)*(R_vals[2]*0.75), 0, Math.sin(angle)*(R_vals[2]*0.75));
+            beam.lookAt(0,0,0);
+            beam.rotateX(Math.PI/2);
+            p2_3.add(beam);
+        }
+
+        // --- Step 3.1: T1 Fokker-Planck Steering ---
+        const p3_1 = stepGroups[6];
+        createManifold(R_vals[2], 5, 0x10b981, p3_1, false);
+        createManifold(R_vals[1], 4, 0xa855f7, p3_1); // T1 Purple
+        
+        // 3 Dynamic Tetrahedrons
+        const tetGroup = new THREE.Group();
+        const tetGeo = new THREE.TetrahedronGeometry(10, 0);
+        for(let i=0; i<3; i++) {
+            const tetWire = new THREE.Mesh(tetGeo, getWireMat(helixColors[i], 0.8));
+            const tetSolid = new THREE.Mesh(tetGeo, getGlowMat(helixColors[i], 0.1));
+            
+            const pos = new THREE.Vector3(Math.cos(i*Math.PI*2/3)*15, 0, Math.sin(i*Math.PI*2/3)*15);
+            tetWire.position.copy(pos);
+            tetSolid.position.copy(pos);
+            
+            tetGroup.add(tetWire);
+            tetGroup.add(tetSolid);
+        }
+        p3_1.add(tetGroup);
+        // Add a central glow representing probability density
+        const probGlow = new THREE.Mesh(new THREE.SphereGeometry(8, 32, 32), getGlowMat(0xffffff, 0.1));
+        p3_1.add(probGlow);
+
+        // --- Step 3.2: T0 Memory Vault ---
+        const p3_2 = stepGroups[7];
+        createManifold(R_vals[1], 4, 0xa855f7, p3_2, false);
+        createManifold(R_vals[0], 3, 0xf43f5e, p3_2); // T0 Rose
+        
+        // Clone tetrahedrons and make them point inward
+        const lockedTetGroup = tetGroup.clone();
+        // Modification will happen in animation loop
+        p3_2.add(lockedTetGroup);
+        
+        // Memory Crystals (16 along T0)
+        const crystalGroup = new THREE.Group();
+        const crystalGeo = new THREE.OctahedronGeometry(2.5, 0);
+        const crystalMat = getGlowMat(0xfacc15, 0.9);
+        const crystalWireMat = getWireMat(0xffffff, 0.5);
+        
+        for(let i=0; i<16; i++) {
+            const angle = (i/16)*Math.PI*2;
+            const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+            const cWire = new THREE.Mesh(crystalGeo, crystalWireMat);
+            
+            const pos = new THREE.Vector3(Math.cos(angle)*R_vals[0], 0, Math.sin(angle)*R_vals[0]);
+            crystal.position.copy(pos);
+            cWire.position.copy(pos);
+            
+            crystalGroup.add(crystal);
+            crystalGroup.add(cWire);
+        }
+        p3_2.add(crystalGroup);
+
+        // --- Step 3.3: Core Möbius ALU ---
+        const p3_3 = stepGroups[8];
+        createManifold(R_vals[0], 3, 0xf43f5e, p3_3, false);
+        
+        // Central Logic Core (Jacquard Block)
+        const coreSize = 8;
+        const coreGeo = new THREE.BoxGeometry(coreSize, coreSize, coreSize);
+        // Special material for the core
+        const coreMat = new THREE.MeshStandardMaterial({
+            color: 0x020617, 
+            emissive: 0xd946ef, // Fuchsia glow
+            emissiveIntensity: 0.5,
+            roughness: 0.1,
+            metalness: 0.9
+        });
+        const coreSolid = new THREE.Mesh(coreGeo, coreMat);
+        
+        const coreWireGeo = new THREE.BoxGeometry(coreSize*1.1, coreSize*1.1, coreSize*1.1);
+        const coreWire = new THREE.Mesh(coreWireGeo, getWireMat(0x22d3ee, 0.8)); // Cyan wire
+        
+        p3_3.add(coreSolid); 
+        p3_3.add(coreWire);
+
+        // Add 6 "tapes" extending from the core
+        for(let i=0; i<6; i++) {
+            const angle = (i/6)*Math.PI*2;
+            const tapeGeo = new THREE.PlaneGeometry(2, 20);
+            const tapeMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff, transparent: true, opacity: 0.2, side: THREE.DoubleSide
+            });
+            const tape = new THREE.Mesh(tapeGeo, tapeMat);
+            tape.position.set(Math.cos(angle)*15, 0, Math.sin(angle)*15);
+            tape.rotation.y = -angle + Math.PI/2;
+            tape.rotation.x = Math.PI/2;
+            // Möbius twist in animation
+            p3_3.add(tape);
+        }
+
+        // --- Step 4.1: TQF Certification ---
+        const p4_1 = stepGroups[9];
+        createManifold(R_vals[2], 5, 0x10b981, p4_1, false);
+        
+        // Highlight Triangle for TQF (Connecting 3 points on T2)
+        const tqfGroup = new THREE.Group();
+        
+        const ptA = new THREE.Vector3(R_vals[2], 0, 0);
+        const ptB = new THREE.Vector3(Math.cos(2.09)*R_vals[2], 0, Math.sin(2.09)*R_vals[2]); // ~120 deg
+        const ptC = new THREE.Vector3(Math.cos(4.18)*R_vals[2], 0, Math.sin(4.18)*R_vals[2]); // ~240 deg
+        
+        // Draw Triangle
+        const tqfTri = new THREE.BufferGeometry().setFromPoints([ptA, ptB, ptC, ptA]);
+        const tqfMesh = new THREE.Line(tqfTri, new THREE.LineBasicMaterial({color: 0xfacc15, linewidth: 3}));
+        tqfGroup.add(tqfMesh);
+        
+        // Add nodes at vertices
+        const nodeGeo = new THREE.SphereGeometry(2, 16, 16);
+        const nodeMat = getGlowMat(0xfacc15, 1);
+        [ptA, ptB, ptC].forEach(pt => {
+            const node = new THREE.Mesh(nodeGeo, nodeMat);
+            node.position.copy(pt);
+            tqfGroup.add(node);
+        });
+        
+        // Draw lines from center to vertices representing SIGReg vectors
+        [ptA, ptB, ptC].forEach(pt => {
+            const vecGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), pt]);
+            const vecLine = new THREE.Line(vecGeo, new THREE.LineBasicMaterial({
+                color: 0xffffff, transparent: true, opacity: 0.5, dashSize: 1, gapSize: 1
+            }));
+            vecLine.computeLineDistances();
+            tqfGroup.add(vecLine);
+        });
+
+        p4_1.add(tqfGroup);
+        
+        // --- Step 4.2: Parity Handshake (30 Node) ---
+        const p4_2 = stepGroups[10];
+        
+        // Draw all 5 Tori very faintly
+        R_vals.forEach((R, i) => {
+            createManifold(R, 1.5 + i, 0x334155, p4_2, false);
+        });
+        
+        // Create 30 nodes (6 channels x 5 tiers)
+        const nodePointsGroup = new THREE.Group();
+        const p4_2_nodes = [];
+        
+        for(let tier=0; tier<5; tier++) {
+            for(let channel=0; channel<6; channel++) {
+                const angle = (channel/6)*Math.PI*2 + (tier*0.2); // slight offset per tier
+                const radius = R_vals[tier];
+                
+                const nMesh = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 8), getGlowMat(0x0284c7, 0.4));
+                nMesh.position.set(Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
+                
+                nodePointsGroup.add(nMesh);
+                p4_2_nodes.push({mesh: nMesh, tier, channel});
+            }
+        }
+        p4_2.add(nodePointsGroup);
+
+        // A glowing pulse that will travel
+        const pulse = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16), getGlowMat(0x10b981, 1));
+        const pulseGlow = new THREE.PointLight(0x10b981, 2, 50);
+        pulse.add(pulseGlow);
+        p4_2.add(pulse);
+
+        // --- Step 5.0: Final System (Everything together) ---
+        const pFinal = stepGroups[11];
+        
+        // Draw all manifolds with their specific colors
+        const finalColors = [0xf43f5e, 0xa855f7, 0x10b981, 0x3b82f6, 0x06b6d4];
+        R_vals.forEach((R, i) => {
+            createManifold(R, 2 + i*1.2, finalColors[i], pFinal, true);
+        });
+        
+        // Add Core
+        const finalCore = coreSolid.clone();
+        const finalCoreWire = coreWire.clone();
+        pFinal.add(finalCore);
+        pFinal.add(finalCoreWire);
+        
+        // Add Hologram
+        const finalCube = cubeGroup.clone();
+        finalCube.scale.set(0.8, 0.8, 0.8);
+        pFinal.add(finalCube);
+        
+        // Add Crystals
+        pFinal.add(crystalGroup.clone());
+
+
+        // --- STREAMING_CHUNK:UI Interaction Logic ---
+
+        const navContainer = document.getElementById('nav-container');
+        const cardTitle = document.getElementById('card-title');
+        const cardDesc = document.getElementById('card-desc');
+        const cardPhase = document.getElementById('card-phase');
+        const cardStepNum = document.getElementById('card-step-num');
+        const dotsContainer = document.getElementById('dots-container');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+
+        // Build Nav and Dots dynamically
+        let currentPhase = "";
+        blueprintSteps.forEach((step, index) => {
+            // Sidebar Nav grouping by phase
+            if (step.phase !== currentPhase) {
+                const phaseHeader = document.createElement('h3');
+                phaseHeader.className = "text-[10px] md:text-xs font-mono text-cyan-600 mt-6 mb-2 uppercase border-b border-cyan-900/30 pb-1";
+                phaseHeader.innerText = step.phase;
+                navContainer.appendChild(phaseHeader);
+                currentPhase = step.phase;
+            }
+            
+            const navItem = document.createElement('div');
+            navItem.className = `step-item text-xs md:text-sm pl-3 py-2 text-slate-300 rounded-r border-l-2 mb-1`;
+            navItem.innerHTML = `<span class="font-mono text-cyan-500 mr-2 opacity-70">${step.id}</span> <span class="nav-title truncate block sm:inline">${step.title}</span>`;
+            navItem.onclick = () => setStep(index);
+            navContainer.appendChild(navItem);
+
+            // Dot for bottom bar
+            const dot = document.createElement('div');
+            // Make dots clickable
+            dot.onclick = () => setStep(index);
+            dot.className = `w-1.5 h-1.5 md:w-2 md:h-2 rounded-full cursor-pointer transition-all duration-300 ${index === 0 ? 'bg-cyan-400 scale-125 shadow-[0_0_8px_#06b6d4]' : 'bg-slate-700 hover:bg-slate-500'}`;
+            dotsContainer.appendChild(dot);
+        });
+
+        // Target camera configurations for each step
+        const stepCameraConfigs = [
+            { pos: new THREE.Vector3(0, 30, 100), target: new THREE.Vector3(0, 0, 0) }, // 1.1 Dense
+            { pos: new THREE.Vector3(0, 30, 100), target: new THREE.Vector3(0, 0, 0) }, // 1.2 Sparse
+            { pos: new THREE.Vector3(20, 40, 80), target: new THREE.Vector3(0, 0, 0) }, // 1.3 Causal
+            { pos: new THREE.Vector3(0, 120, 150), target: new THREE.Vector3(0, 0, 0) }, // 2.1 T4
+            { pos: new THREE.Vector3(0, 80, 120), target: new THREE.Vector3(0, 0, 0) }, // 2.2 T3
+            { pos: new THREE.Vector3(30, 40, 80), target: new THREE.Vector3(0, 0, 0) }, // 2.3 T2
+            { pos: new THREE.Vector3(0, 40, 60), target: new THREE.Vector3(0, 0, 0) }, // 3.1 T1
+            { pos: new THREE.Vector3(0, 30, 40), target: new THREE.Vector3(0, 0, 0) }, // 3.2 T0
+            { pos: new THREE.Vector3(15, 15, 25), target: new THREE.Vector3(0, 0, 0) }, // 3.3 Core
+            { pos: new THREE.Vector3(0, 60, 60), target: new THREE.Vector3(0, 0, 0) }, // 4.1 Certification
+            { pos: new THREE.Vector3(0, 100, 130), target: new THREE.Vector3(0, 0, 0) }, // 4.2 Parity
+            { pos: new THREE.Vector3(0, 70, 150), target: new THREE.Vector3(0, 0, 0) }  // 5.0 Final
+        ];
+
+        let targetCamPos = new THREE.Vector3();
+        let targetLookAt = new THREE.Vector3();
+
+        function setStep(index) {
+            if(index < 0 || index >= blueprintSteps.length) return;
+            currentStepIndex = index;
+            const step = blueprintSteps[index];
+
+            // Update UI Text
+            cardPhase.innerText = step.phase;
+            cardStepNum.innerText = step.id.includes('.') ? `Step ${step.id}` : 'Complete';
+            cardTitle.innerText = step.title;
+            
+            // Trigger reflow animation
+            cardDesc.classList.remove('fade-in');
+            void cardDesc.offsetWidth; 
+            cardDesc.innerHTML = step.desc;
+            cardDesc.classList.add('fade-in');
+
+            // Render MathJax if present
+            if(window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([cardDesc]).catch(err => console.log(err));
+            }
+
+            // Update Nav Active State
+            const navItems = document.querySelectorAll('.step-item');
+            navItems.forEach((el, i) => {
+                if(i === index) {
+                    el.classList.add('active', 'text-white', 'border-cyan-400', 'bg-cyan-900/20');
+                    el.classList.remove('text-slate-300');
+                    // Scroll into view if needed
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    el.classList.remove('active', 'text-white', 'border-cyan-400', 'bg-cyan-900/20');
+                    el.classList.add('text-slate-300');
+                }
+            });
+
+            // Update Dots
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                if(i === index) { 
+                    dot.className = 'w-1.5 h-1.5 md:w-2 md:h-2 rounded-full cursor-pointer transition-all duration-300 bg-cyan-400 scale-125 shadow-[0_0_8px_#06b6d4]'; 
+                } else { 
+                    dot.className = 'w-1.5 h-1.5 md:w-2 md:h-2 rounded-full cursor-pointer transition-all duration-300 bg-slate-700 hover:bg-slate-500'; 
+                }
+            });
+
+            // Update Buttons
+            btnPrev.disabled = index === 0;
+            if(index === 0) {
+                btnPrev.classList.replace('border-slate-700', 'border-slate-800');
+                btnPrev.classList.replace('text-slate-300', 'text-slate-600');
+            } else {
+                btnPrev.classList.replace('border-slate-800', 'border-slate-700');
+                btnPrev.classList.replace('text-slate-600', 'text-slate-300');
+            }
+
+            btnNext.disabled = index === blueprintSteps.length - 1;
+            if(index === blueprintSteps.length - 1) {
+                btnNext.innerHTML = 'FINISHED <i class="fa-solid fa-check ml-2"></i>';
+                btnNext.classList.replace('bg-cyan-950', 'bg-emerald-900/50');
+                btnNext.classList.replace('border-cyan-700', 'border-emerald-500/50');
+                btnNext.classList.replace('text-cyan-300', 'text-emerald-300');
+                btnNext.classList.remove('shadow-[0_0_15px_rgba(8,145,178,0.2)]');
+            } else {
+                btnNext.innerHTML = 'NEXT <i class="fa-solid fa-arrow-right ml-2"></i>';
+                btnNext.classList.replace('bg-emerald-900/50', 'bg-cyan-950');
+                btnNext.classList.replace('border-emerald-500/50', 'border-cyan-700');
+                btnNext.classList.replace('text-emerald-300', 'text-cyan-300');
+                btnNext.classList.add('shadow-[0_0_15px_rgba(8,145,178,0.2)]');
+            }
+
+            // Target Camera Position based on config
+            const config = stepCameraConfigs[index];
+            targetCamPos.copy(config.pos);
+            targetLookAt.copy(config.target);
+
+            // Toggle Scene Groups
+            stepGroups.forEach((g, i) => { g.visible = (i === index); });
+            
+            // Auto-close sidebar on mobile after selection
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if(sidebar.classList.contains('open')) {
+                    toggleSidebar();
+                }
+            }
+        }
+
+        btnPrev.addEventListener('click', () => setStep(currentStepIndex - 1));
+        btnNext.addEventListener('click', () => setStep(currentStepIndex + 1));
+
+
+        // --- STREAMING_CHUNK:Animation Loop ---
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+            uniforms.time.value = time;
+
+            // Lerp Camera smoothly
+            camera.position.lerp(targetCamPos, 0.03);
+            controls.target.lerp(targetLookAt, 0.03);
+            controls.update();
+
+            // Step specific animations
+            
+            // 1.1 & 1.2: Slow rotation of point clouds
+            if(currentStepIndex === 0) p1_1.rotation.y = time * 0.1;
+            if(currentStepIndex === 1) p1_2.rotation.y = time * 0.1;
+            if(currentStepIndex === 2) {
+                p1_3.rotation.y = time * 0.1;
+                // Pulsate attention lines
+                const lines = p1_3.children[1];
+                lines.material.opacity = 0.2 + Math.sin(time * 3) * 0.2;
+            }
+
+            // 2.2: T3 Helices spin
+            if(currentStepIndex === 4) {
+                helices.forEach((h, i) => { 
+                    // Move texture along tube (simulated by rotating group)
+                    p2_2.rotation.y = time * 0.5;
+                });
+            }
+            
+            // 2.3: Hologram Spin
+            if(currentStepIndex === 5) {
+                cubeGroup.rotation.x = time * 0.5;
+                cubeGroup.rotation.y = time * 0.7;
+                
+                // Pulsate beams
+                const beams = p2_3.children.slice(-3); // Last 3 are beams
+                beams.forEach((b, i) => {
+                    b.material.opacity = 0.1 + Math.abs(Math.sin(time * 5 + i)) * 0.2;
+                });
+            }
+            
+            // 3.1: Fokker-Planck Tetrahedrons
+            if(currentStepIndex === 6) {
+                tetGroup.rotation.y = -time * 0.5;
+                tetGroup.rotation.z = Math.sin(time) * 0.2;
+                
+                // Contraction animation based on similarity
+                const scale = 0.8 + Math.abs(Math.sin(time*2))*0.4;
+                tetGroup.scale.set(scale, scale, scale);
+                
+                // Pulsate probability glow
+                const glow = p3_1.children[p3_1.children.length-1];
+                glow.scale.setScalar(1 + Math.sin(time*4)*0.1);
+                glow.material.opacity = 0.05 + Math.abs(Math.sin(time*2))*0.1;
+            }
+            
+            // 3.2: Latching onto T0
+            if(currentStepIndex === 7) {
+                // Rotate crystals slightly
+                crystalGroup.rotation.y = time * 0.2;
+                
+                // Point tetrahedrons inward (they start large and shrink to latch)
+                lockedTetGroup.rotation.y = crystalGroup.rotation.y;
+                
+                // Simulating the "latch"
+                const phase = (time * 0.5) % 1;
+                if(phase < 0.5) {
+                    // Contracting
+                    const s = 1.5 - phase; 
+                    lockedTetGroup.scale.setScalar(s);
+                } else {
+                    // Latched and glowing
+                    lockedTetGroup.scale.setScalar(1.0);
+                    lockedTetGroup.children.forEach(c => {
+                        if(!c.material.wireframe) c.material.opacity = 0.3 + Math.sin(time*10)*0.2;
+                    });
+                }
+            }
+            
+            // 3.3: Core ALU
+            if(currentStepIndex === 8) {
+                // X-Gate (Inversion) & H-Gate (Superposition) visual representation
+                coreSolid.rotation.x = time * 0.8;
+                coreSolid.rotation.y = time * 1.2;
+                
+                coreWire.rotation.x = -time * 0.8;
+                coreWire.rotation.y = -time * 1.2;
+                
+                // Flash effect representing quantum collapse
+                coreSolid.material.emissiveIntensity = 0.3 + Math.pow(Math.sin(time * 8), 2) * 0.7;
+                
+                // Twist Möbius tapes
+                const tapes = p3_3.children.slice(2);
+                tapes.forEach((t, i) => {
+                    t.rotation.x = Math.PI/2 + time * 2; // Twist
+                });
+            }
+            
+            // 4.1: TQF Certification
+            if(currentStepIndex === 9) {
+                tqfGroup.rotation.y = time * 0.3;
+                
+                // Pulsate the triangle
+                const tri = tqfGroup.children[0];
+                tri.material.opacity = 0.5 + Math.sin(time * 6) * 0.5;
+                
+                // Make nodes glow
+                for(let i=1; i<=3; i++) {
+                    tqfGroup.children[i].scale.setScalar(1 + Math.abs(Math.sin(time*5+i))*0.5);
+                }
+            }
+            
+            // 4.2: Parity Handshake
+            if(currentStepIndex === 10) {
+                // Rotate the entire node structure slowly
+                nodePointsGroup.rotation.y = time * 0.1;
+                
+                // Pulse travelling across nodes
+                const phase = (time * 0.5) % 1.0; // 0 to 1 over 2 seconds
+                
+                // Find current node index (0 to 29)
+                const targetNodeIdx = Math.floor(phase * 30);
+                const targetNode = p4_2_nodes[targetNodeIdx];
+                
+                if(targetNode) {
+                    // Calculate position of target node considering global rotation
+                    const localPos = targetNode.mesh.position.clone();
+                    localPos.applyEuler(nodePointsGroup.rotation);
+                    
+                    // Move pulse to node
+                    pulse.position.lerp(localPos, 0.5);
+                    
+                    // Highlight current node
+                    p4_2_nodes.forEach((n, i) => {
+                        if(i === targetNodeIdx) {
+                            n.mesh.material.color.setHex(0x10b981);
+                            n.mesh.scale.setScalar(2);
+                            n.mesh.material.opacity = 1;
+                        } else {
+                            n.mesh.material.color.setHex(0x0284c7);
+                            n.mesh.scale.setScalar(1);
+                            n.mesh.material.opacity = 0.2;
+                        }
+                    });
+                }
+            }
+
+            // 5.0 Final Scene Assembly
+            if(currentStepIndex === 11) {
+                // Rotate different manifolds at different speeds for visual complexity
+                pFinal.children.forEach((child, i) => {
+                    if(i < 5*2) { // The tori (solid + wire)
+                        const tier = Math.floor(i/2);
+                        const speed = 0.1 + (tier * 0.05);
+                        child.rotation.z = time * speed * (i%2===0?1:-1); 
+                    }
+                });
+                
+                // Final Core Spin
+                finalCore.rotation.x = time;
+                finalCore.rotation.y = time * 1.5;
+                finalCoreWire.rotation.x = -time;
+                finalCoreWire.rotation.y = -time * 1.5;
+                
+                // Final Hologram Spin
+                finalCube.rotation.x = -time * 0.5;
+                finalCube.rotation.y = -time * 0.7;
+                
+                // Crystals
+                crystalGroup.rotation.y = -time * 0.2;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = canvasContainer.clientWidth;
+            const height = canvasContainer.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+
+        // Setup Initial View
+        setStep(0);
+        animate();
+
+    </script>
+</body>
+</html>
