@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vdWSH & The Geometric Clocks</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            startup: { typeset: false } // Disable auto-typeset, we handle it dynamically
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #020617; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        #canvas-container { position: absolute; inset: 0; z-index: 1; outline: none; }
+        .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(8, 145, 178, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(8, 145, 178, 0.5); border-radius: 3px; }
+    </style>
+</head>
+<body class="flex flex-col-reverse md:flex-row h-screen w-screen overflow-hidden">
+
+    <!-- Sidebar / Text Content -->
+    <aside class="w-full h-[45vh] md:h-full md:w-[28rem] lg:w-[32rem] glass-panel z-30 flex flex-col shrink-0 border-t md:border-t-0 md:border-r border-cyan-900/50 relative">
+        <div class="p-4 md:p-6 border-b border-cyan-900/50 flex justify-between items-center bg-slate-900/50 shrink-0">
+            <div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2">
+                    <a href="../Geometric Computation Learning Hub.html" class="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition">
+                        <i class="fa-solid fa-arrow-left mr-1 text-[10px]"></i> Geometric Computation
+                    </a>
+                    <a href="../../index.html" class="inline-flex items-center text-slate-500 hover:text-slate-300 transition">
+                        Ebayednoob Home
+                    </a>
+                </div>
+                <h1 class="text-lg md:text-xl font-bold text-cyan-400 tracking-tight flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> Homomorphic Scaling
+                </h1>
+                <p class="text-[10px] text-slate-400 font-mono mt-1 uppercase tracking-widest">vdWSH to Geometric Engine</p>
+            </div>
+        </div>
+
+        <!-- Dynamic Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6" id="tutorial-content">
+            <h2 id="step-title" class="text-xl md:text-2xl font-bold text-white mb-4">Initializing...</h2>
+            <div id="step-desc" class="text-xs md:text-sm text-slate-300 space-y-4 leading-relaxed font-light">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="p-4 border-t border-cyan-900/50 bg-slate-900/80 shrink-0">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xs font-mono text-cyan-500" id="step-counter">Step 1 / 6</span>
+                <div class="flex gap-2 items-center">
+                    <span class="text-[10px] text-slate-400 font-mono uppercase">Lifting Temp:</span>
+                    <span class="text-xs font-bold font-mono text-fuchsia-400 bg-fuchsia-900/30 px-2 py-1 rounded border border-fuchsia-500/30" id="temp-display">900°C</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-prev" class="flex-1 py-2 rounded border border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white transition font-mono text-xs md:text-sm disabled:opacity-30 disabled:cursor-not-allowed">PREV</button>
+                <button id="btn-next" class="flex-1 py-2 rounded bg-cyan-950 border border-cyan-700 text-cyan-300 hover:bg-cyan-900 hover:text-white transition shadow-[0_0_15px_rgba(8,145,178,0.2)] font-mono text-xs md:text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed">NEXT</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 relative w-full h-[55vh] md:h-full">
+        <div id="canvas-container"></div>
+        
+        <!-- View Toggle -->
+        <div class="absolute top-4 right-4 md:top-6 md:right-6 z-20 flex gap-2">
+            <button id="btn-toggle-view" class="px-3 py-2 md:px-4 md:py-2 bg-slate-900/80 border border-cyan-500/50 rounded text-cyan-300 font-mono text-[10px] md:text-xs hover:bg-slate-800 transition backdrop-blur shadow-lg">
+                <i class="fa-solid fa-cube mr-2"></i> Toggle Manifold View
+            </button>
+        </div>
+
+        <!-- Context Overlay (Ensured to not block clicks) -->
+        <div class="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-auto z-20 md:max-w-lg lg:max-w-xl pointer-events-none">
+            <div class="glass-panel p-3 md:p-4 rounded-lg border-l-4 border-l-fuchsia-500 shadow-2xl pointer-events-auto">
+                <h4 class="text-fuchsia-400 text-[10px] md:text-xs font-mono font-bold mb-1 uppercase tracking-wider">Source Material Translation</h4>
+                <p class="text-slate-300 text-[10px] md:text-[11px] leading-relaxed italic" id="quote-display">
+                    "A high-to-low temperature strategy for controllably growing stacks of multiple-layered vdW superconductor heterostructure (vdWSH) films at a wafer scale."
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // High-contrast, mathematically scaled layers representing both the vdWSH stack and Geometric Engine tiers
+        const layersData = [
+            { id: 1, name: "PtTe₂", type: "Single-Block Base", tier: "T0 (Core)", color: 0x94a3b8, size: 3.0, temp: "900°C", hexCol: "#94a3b8" },
+            { id: 2, name: "NbSe₂", type: "Double-Block", tier: "T1", color: 0x60a5fa, size: 4.5, temp: "800°C", hexCol: "#60a5fa" },
+            { id: 3, name: "MoSe₂", type: "Triple-Block", tier: "T2 (Focal)", color: 0xc084fc, size: 6.0, temp: "700°C", hexCol: "#c084fc" },
+            { id: 4, name: "MoS₂", type: "Four-Block", tier: "T3", color: 0xfacc15, size: 7.5, temp: "600°C", hexCol: "#facc15" },
+            { id: 5, name: "WS₂", type: "Five-Block", tier: "T4 (Outer)", color: 0xfb923c, size: 9.0, temp: "500°C", hexCol: "#fb923c" }
+        ];
+
+        const steps = [
+            {
+                title: "The Physics of the Stacking",
+                temp: "N/A",
+                quote: "Despite thousands of 2D materials being created... hardly any large 2D superconductors can be stacked intact into vdW heterostructures, greatly restricting applications.",
+                content: `
+                    <p>Building 2D van der Waals heterostructures (vdWSHs) traditionally relies on mechanically exfoliating micro-flakes. This is unscalable and imprecise.</p>
+                    <p>The breakthrough lies in a <strong>wafer-scale high-to-low temperature strategy</strong>. By carefully growing layers from highest synthesis temperature to lowest, the underlying atomic structures remain perfectly intact, preventing thermal degradation.</p>
+                    <div class="mt-4 p-3 bg-slate-950/80 border border-cyan-900/50 rounded shadow-inner">
+                        <strong class="text-cyan-400 text-[10px] md:text-xs font-mono uppercase tracking-widest">The Goal:</strong>
+                        <p class="text-xs mt-2 text-slate-400">Map this high-to-low physical growth sequence directly onto the 5-Tier architecture (\(T_0 \\dots T_4\)) of the Cosmohedral Geometric Engine.</p>
+                    </div>
+                `
+            },
+            {
+                title: "T0: The Base Block (PtTe₂)",
+                temp: "900°C",
+                quote: "In which 'high' and 'low' refer to the various growth temperatures needed for different 2D materials.",
+                content: `
+                    <p>We begin with <strong style="color: ${layersData[0].hexCol};">Platinum Ditelluride (PtTe₂)</strong>, grown at the highest temperature (\(900^\\circ\\text{C}\)).</p>
+                    <p><strong>The Lifting Clock:</strong> The Lifting Clock is a unidirectional chronometric vector defined by thermodynamics. Time in this geometric assembly only moves "forward" as energy states drop. You cannot reverse the clock and grow a high-temp material on top of a low-temp one without destroying the structure.</p>
+                    <p>In the Geometric Engine, this represents <strong>Tier 0 (The Core)</strong>, the absolute axiomatic foundation where the densest prime factors reside.</p>
+                `
+            },
+            {
+                title: "T1: Double-Block (NbSe₂)",
+                temp: "800°C",
+                quote: "We have successfully grown 27 double-block vdWSH films...",
+                content: `
+                    <p>We drop the temperature (advance the Lifting Clock) and grow <strong style="color: ${layersData[1].hexCol};">Niobium Diselenide (NbSe₂)</strong>.</p>
+                    <p><strong>Local Fractal Folding:</strong> As the NbSe₂ lattice forms over the PtTe₂, the van der Waals gap (measured at \(\\sim 3.7 \\text{ \\AA}\) in similar metal/2D stacks) forms an intact, damage-free boundary. The misaligned hexagonal lattices relax into minimum-energy Moiré superlattices.</p>
+                    <p>This physical atomic relaxation is exactly what we call <strong>Local Fractal Folding</strong>—continuous spatial probability snapping into discrete, structurally stable integer coordinates. This forms <strong>Tier 1 (\(T_1\))</strong>.</p>
+                `
+            },
+            {
+                title: "T2: Triple-Block (MoSe₂)",
+                temp: "700°C",
+                quote: "We have successfully grown 15 triple-block vdWSH films...",
+                content: `
+                    <p>The Lifting Clock advances again. We deposit <strong style="color: ${layersData[2].hexCol};">Molybdenum Diselenide (MoSe₂)</strong>.</p>
+                    <p>As layers increase, the system achieves wafer-scale proximity-induced superconductivity. The layers begin to share quantum states across the intact vdW interfaces.</p>
+                    <p>In our architecture, this forms <strong>Tier 2 (\(T_2\), The Focal Toroid)</strong>. Just as Strassen holography intersects exactly at \(T_2\), the middle of the 5-layer physical stack acts as the primary connective junction where internal (\(T_0, T_1\)) and external (\(T_3, T_4\)) data states physically converge.</p>
+                `
+            },
+            {
+                title: "T3: Four-Block (MoS₂)",
+                temp: "600°C",
+                quote: "We have successfully grown 5 four-block vdWSH films...",
+                content: `
+                    <p>We drop the temperature further, adding <strong style="color: ${layersData[3].hexCol};">Molybdenum Disulfide (MoS₂)</strong>.</p>
+                    <p>Notice the exponentially decreasing success rate in the physical world: 27 Double, 15 Triple, 5 Four-block. Maintaining pristine local fractal folding across four distinct lattice constants without thermal bleed is extraordinarily difficult.</p>
+                    <p>This maps to <strong>Tier 3 (\(T_3\))</strong>, the multi-view dispersion ring where incoming complex visual data is split before compression.</p>
+                `
+            },
+            {
+                title: "T4: Five-Block (WS₂)",
+                temp: "500°C",
+                quote: "We have successfully grown 3 five-block vdWSH films (where one block represents one 2D material).",
+                content: `
+                    <p>The final layer: <strong style="color: ${layersData[4].hexCol};">Tungsten Disulfide (WS₂)</strong>.</p>
+                    <p><strong>The Platonic Intrinsic Clock:</strong> Once all 5 layers are stacked perfectly intact via the Lifting Clock strategy, the entire 5-block heterostructure achieves a unified harmonic resonance. It vibrates as a single, scale-synchronized entity.</p>
+                    <p>This physical atomic resonance is the <strong>Platonic Intrinsic Clock</strong>. It is exactly homomorphic to the Geometric Engine's <strong>30-Node Parity Closure</strong>—where 5 tiers synchronize to exactly \(4,596,315,885\) Cesium-133 cycles, achieving zero-remainder temporal perfection.</p>
+                `
+            }
+        ];
+
+        let currentStep = 0;
+        let isManifoldView = false;
+
+        // --- STREAMING_CHUNK:Three.js Scene Initialization ---
+        const canvasContainer = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020617, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
+        
+        // Define camera targets for smooth Lerp transitions
+        let targetCamPos = new THREE.Vector3(0, 15, 25);
+        camera.position.copy(targetCamPos);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        canvasContainer.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
+        controls.target.set(0, 0, 0);
+
+        // Lights
+        scene.add(new THREE.AmbientLight(0x0f172a, 3.0));
+        const topLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        topLight.position.set(5, 10, 5);
+        scene.add(topLight);
+
+        // --- STREAMING_CHUNK:Geometry Construction (Planes & Toroids) ---
+        const planeGroup = new THREE.Group();
+        const manifoldGroup = new THREE.Group();
+        scene.add(planeGroup);
+        scene.add(manifoldGroup);
+        manifoldGroup.visible = false;
+
+        const planes = [];
+        const manifolds = [];
+
+        // Hex Texture Generator for 2D sheets
+        function getHexTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            
+            for(let x=0; x<128; x+=16) {
+                for(let y=0; y<128; y+=28) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 8, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(4, 4);
+            return tex;
+        }
+
+        const hexTex = getHexTexture();
+
+        // Build Planes and Toroids
+        layersData.forEach((layer, i) => {
+            // 2D Crystal Plane (vdWSH block) stacked vertically
+            const geo = new THREE.PlaneGeometry(layer.size, layer.size);
+            const mat = new THREE.MeshStandardMaterial({
+                color: layer.color,
+                transparent: true,
+                opacity: 0.9,
+                side: THREE.DoubleSide,
+                map: hexTex,
+                roughness: 0.2,
+                metalness: 0.6
+            });
+            const plane = new THREE.Mesh(geo, mat);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = (i * 1.5) - 3; // Space them vertically
+            
+            plane.scale.set(0.01, 0.01, 0.01); // Start hidden
+            plane.visible = false;
+
+            // Wireframe edge
+            const edges = new THREE.EdgesGeometry(geo);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
+            plane.add(line);
+            
+            planeGroup.add(plane);
+            planes.push(plane);
+
+            // 3D Toroidal Manifold Equivalent (Concentric, Coplanar rings mapping to the vertical stack)
+            const R_vals = [3, 5, 8, 12, 17];
+            const tGeo = new THREE.TorusGeometry(R_vals[i], 0.5 + (i*0.2), 16, 64);
+            const tMat = new THREE.MeshPhysicalMaterial({
+                color: layer.color,
+                transparent: true,
+                opacity: 0.8,
+                transmission: 0.4,
+                roughness: 0.1,
+                metalness: 0.8
+            });
+            const torus = new THREE.Mesh(tGeo, tMat);
+            torus.rotation.x = Math.PI / 2; // Flat on XZ plane
+            
+            const tEdges = new THREE.EdgesGeometry(tGeo);
+            const tLine = new THREE.LineSegments(tEdges, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 }));
+            torus.add(tLine);
+
+            manifoldGroup.add(torus);
+            manifolds.push(torus);
+        });
+
+        // Vertical "Lifting Clock" axis line intersecting the planes
+        const axisGeo = new THREE.CylinderGeometry(0.05, 0.05, 12, 8);
+        const axisMat = new THREE.MeshBasicMaterial({color: 0x06b6d4, transparent: true, opacity: 0.5});
+        const axis = new THREE.Mesh(axisGeo, axisMat);
+        planeGroup.add(axis);
+
+        // --- STREAMING_CHUNK:UI Control and Safe MathJax Rendering ---
+        const uiTitle = document.getElementById('step-title');
+        const uiDesc = document.getElementById('step-desc');
+        const uiCounter = document.getElementById('step-counter');
+        const uiTemp = document.getElementById('temp-display');
+        const uiQuote = document.getElementById('quote-display');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnToggle = document.getElementById('btn-toggle-view');
+
+        // Robust function to handle MathJax asynchronous loading gracefully
+        function renderMath() {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetClear([uiDesc]);
+                window.MathJax.typesetPromise([uiDesc]).catch(function (err) {
+                    console.error('MathJax Typeset Failed:', err.message);
+                });
+            } else {
+                // If MathJax isn't ready, retry in 100ms
+                setTimeout(renderMath, 100);
+            }
+        }
+
+        function updateUI() {
+            const step = steps[currentStep];
+            
+            // Text updates with reflow animation
+            uiDesc.classList.remove('fade-in');
+            void uiDesc.offsetWidth; 
+            uiTitle.innerText = step.title;
+            uiDesc.innerHTML = step.content;
+            uiQuote.innerText = `"${step.quote}"`;
+            uiTemp.innerText = step.temp;
+            uiCounter.innerText = `Step ${currentStep + 1} / 6`;
+            uiDesc.classList.add('fade-in');
+
+            renderMath();
+
+            btnPrev.disabled = currentStep === 0;
+            btnNext.disabled = currentStep === steps.length - 1;
+
+            // 3D Scene Updates
+            if(currentStep === 0) {
+                planes.forEach(p => p.visible = false);
+                manifolds.forEach(m => m.visible = false);
+            } else {
+                const targetPlanes = currentStep; 
+                planes.forEach((p, index) => {
+                    if (index < targetPlanes) {
+                        p.visible = true;
+                        if(p.scale.x < 0.5) p.userData.targetScale = 1.0;
+                    } else {
+                        p.userData.targetScale = 0.01; 
+                    }
+                });
+
+                manifolds.forEach((m, index) => {
+                    m.visible = (index < targetPlanes);
+                });
+            }
+        }
+
+        btnPrev.addEventListener('click', () => { if(currentStep > 0) { currentStep--; updateUI(); }});
+        btnNext.addEventListener('click', () => { if(currentStep < steps.length-1) { currentStep++; updateUI(); }});
+        
+        btnToggle.addEventListener('click', () => {
+            isManifoldView = !isManifoldView;
+            planeGroup.visible = !isManifoldView;
+            manifoldGroup.visible = isManifoldView;
+            
+            btnToggle.innerHTML = isManifoldView ? 
+                '<i class="fa-solid fa-layer-group mr-2"></i> Toggle Crystal Stack View' : 
+                '<i class="fa-solid fa-cube mr-2"></i> Toggle Manifold View';
+            
+            // Adjust target camera position for smooth transition
+            if(isManifoldView) {
+                targetCamPos.set(0, 25, 45); // Pulled back to frame wider toruses
+            } else {
+                targetCamPos.set(0, 15, 25); // Closer for vertical stack
+            }
+        });
+
+        // Initialize
+        updateUI();
+
+        // --- STREAMING_CHUNK:Animation and Resize Loop ---
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            controls.update();
+
+            // Smooth camera transition lerping
+            camera.position.lerp(targetCamPos, 0.05);
+
+            // Smooth scaling for planes
+            planes.forEach((p, i) => {
+                if(p.userData.targetScale !== undefined) {
+                    p.scale.lerp(new THREE.Vector3(p.userData.targetScale, p.userData.targetScale, p.userData.targetScale), 0.1);
+                    if(p.userData.targetScale === 0.01 && p.scale.x < 0.02) p.visible = false;
+                }
+                // Local Fractal Folding visualization (slight Moiré rotation per layer)
+                if(p.visible) {
+                    p.rotation.z = Math.sin(time * 0.5 + i) * 0.05;
+                }
+            });
+
+            // Homomorphic Manifold visualization
+            manifolds.forEach((m, i) => {
+                if(m.visible) {
+                    m.rotation.z = time * 0.2 * (i%2===0?1:-1); // Alternating parity rings
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        });
+    </script>
+</body>
+</html>
