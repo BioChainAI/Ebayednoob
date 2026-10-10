@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel - Ebayednoob</title>
+    <meta name="robots" content="noindex">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="../assets/css/site.css">
+    <style>
+        dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(2px); }
+        .side-link[aria-current="page"] { background: rgba(13, 148, 136, 0.18); color: #fff; border-color: #14b8a6; }
+        label.lbl { display: block; font-size: 0.8125rem; color: #9ca3af; margin-bottom: 0.25rem; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white selection:bg-blue-500 selection:text-white">
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="container mx-auto px-4 min-h-screen flex flex-col relative z-10">
+        <header class="py-4 sm:py-6 border-b border-gray-700/50 content-overlay rounded-b-xl sticky top-0 z-50">
+            <nav class="flex flex-wrap gap-y-3 justify-between items-center px-4 sm:px-6">
+                <a href="../index.html" class="flex items-center gap-3 transition-opacity hover:opacity-80" title="Back to the main site">
+                    <img src="../Resources/Pictures/Logo Files/Ebayednoob-logo.png" alt="Ebayednoob Logo" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/150x40/0a0a0a/ffffff?text=Ebayednoob';">
+                </a>
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <a href="../index.html" class="text-gray-300 hover:text-white transition-colors">Main site</a>
+                    <a href="../Pages/Research/index.html" class="text-gray-300 hover:text-white transition-colors">Our Research</a>
+                    <span class="nav-active text-white pb-1">Control Panel</span>
+                    <div id="header-user" class="hidden pl-4 border-l border-gray-700 items-center gap-3">
+                        <span id="header-email" class="text-sm text-gray-400 hidden md:inline"></span>
+                        <button id="header-logout" class="btn btn-danger btn-sm">Logout</button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow py-8">
+            <!-- Loading -->
+            <div id="view-loading" class="text-center text-gray-400 py-20">Checking your session…</div>
+
+            <!-- Login -->
+            <section id="view-login" class="hidden max-w-md mx-auto fade-in">
+                <div class="text-center mb-6">
+                    <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-300">Control Panel</h1>
+                    <p class="text-gray-400 mt-2">Sign in to manage your account. Admins also get the site management tools.</p>
+                </div>
+                <div class="panel p-6">
+                    <button id="google-login" class="btn w-full bg-white text-gray-900 hover:bg-gray-100">
+                        <svg viewBox="0 0 48 48" class="w-5 h-5" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+                        Continue with Google
+                    </button>
+                    <div class="flex items-center gap-3 my-5 text-xs text-gray-500"><span class="h-px flex-1 bg-gray-700"></span>or use email<span class="h-px flex-1 bg-gray-700"></span></div>
+                    <div class="inline-flex rounded-lg border border-gray-700 overflow-hidden mb-4 w-full" role="group">
+                        <button data-auth-mode="signin" aria-pressed="true" class="seg-btn flex-1 px-3 py-1.5 text-sm text-gray-300">Sign in</button>
+                        <button data-auth-mode="register" aria-pressed="false" class="seg-btn flex-1 px-3 py-1.5 text-sm text-gray-300 border-l border-gray-700">Create account</button>
+                    </div>
+                    <form id="email-form" class="space-y-3">
+                        <div id="name-row" class="hidden"><label class="lbl" for="auth-name">Display name</label><input id="auth-name" class="field" autocomplete="name"></div>
+                        <div><label class="lbl" for="auth-email">Email</label><input id="auth-email" type="email" required class="field" autocomplete="email"></div>
+                        <div><label class="lbl" for="auth-password">Password</label><input id="auth-password" type="password" required minlength="8" class="field" autocomplete="current-password"></div>
+                        <button id="email-submit" type="submit" class="btn btn-primary w-full">Sign in</button>
+                        <button id="forgot-btn" type="button" class="text-xs text-gray-400 hover:text-white w-full text-center">Forgot password?</button>
+                    </form>
+                    <p id="auth-error" class="hidden mt-4 text-sm text-red-300 bg-red-900/30 border border-red-700/50 rounded-lg px-3 py-2"></p>
+                </div>
+            </section>
+
+            <!-- Signed-in app -->
+            <section id="view-app" class="hidden fade-in">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <aside class="lg:w-64 shrink-0">
+                        <div class="panel p-4 mb-4 flex items-center gap-3">
+                            <img id="side-photo" alt="" class="w-11 h-11 rounded-full bg-gray-700 object-cover" referrerpolicy="no-referrer">
+                            <div class="min-w-0">
+                                <div id="side-name" class="font-semibold truncate"></div>
+                                <div id="side-role" class="text-xs"></div>
+                            </div>
+                        </div>
+                        <nav class="panel p-2 space-y-1" aria-label="Control panel sections">
+                            <div class="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-gray-500">Account</div>
+                            <a href="#overview" data-view="overview" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Overview</a>
+                            <a href="#profile" data-view="profile" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Profile &amp; preferences</a>
+                            <a href="#security" data-view="security" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Security</a>
+                            <div id="admin-nav" class="hidden">
+                                <div class="px-3 pt-4 pb-1 text-[11px] uppercase tracking-wider text-amber-400/80">Admin</div>
+                                <a href="#dashboard" data-view="dashboard" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Dashboard</a>
+                                <a href="#publications" data-view="publications" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Publications</a>
+                                <a href="#articles" data-view="articles" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Articles</a>
+                                <a href="#feed-curated" data-view="feed-curated" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Feed: curated items</a>
+                                <a href="#feed-automation" data-view="feed-automation" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Feed: automation</a>
+                                <a href="#users" data-view="users" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Users &amp; admins</a>
+                                <a href="#data" data-view="data" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Data tools</a>
+                            </div>
+                        </nav>
+                    </aside>
+                    <div id="view-root" class="flex-1 min-w-0"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center py-6 text-gray-500 text-sm">
+            <p>&copy; 2026 Ebayednoob. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <dialog id="editor" class="bg-gray-900 text-gray-100 border border-gray-700 rounded-xl p-0 w-[min(44rem,calc(100vw-2rem))] max-h-[90vh]">
+        <form id="editor-form" method="dialog" class="flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+                <h2 id="editor-title" class="text-lg font-semibold"></h2>
+                <button type="button" data-close class="text-gray-400 hover:text-white text-2xl leading-none" aria-label="Close">&times;</button>
+            </div>
+            <div id="editor-fields" class="px-6 py-4 space-y-4 overflow-y-auto custom-scrollbar"></div>
+            <div class="px-6 py-4 border-t border-gray-700 flex justify-end gap-2">
+                <button type="button" data-close class="btn btn-ghost">Cancel</button>
+                <button type="submit" value="save" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script type="module" src="control-panel.js"></script>
+</body>
+</html>
