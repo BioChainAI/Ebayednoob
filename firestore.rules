@@ -1,0 +1,85 @@
+rules_version = '2';
+
+// Security rules for the ebayednoob-github Firebase project.
+// Deploy: Firebase console > Firestore Database > Rules (paste this file), or
+//         `firebase deploy --only firestore:rules` from the repository root.
+//
+// Admins: the bootstrap admin below, plus any verified email that has a document at
+// admins/{lowercased email}. Admins are managed from control-panel/ (Users & admins).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function verifiedEmail() {
+      return signedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true;
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    // First admin. Google accounts for this address are always verified.
+    function isBootstrapAdmin() {
+      return verifiedEmail() && myEmail() == 'ghoard1@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin()
+        || (verifiedEmail() && exists(/databases/$(database)/documents/admins/$(myEmail())));
+    }
+
+    // ---- Accounts ----
+
+    // Each user owns their profile document (created by index.html and the Control Panel).
+    match /users/{uid} {
+      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if isAdmin();
+    }
+
+    // Tutorial progress written by the learning hubs:
+    // artifacts/{appId}/users/{uid}/tutorial_statuses/progress
+    match /artifacts/{appId}/users/{uid}/{rest=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+      allow read: if isAdmin();
+    }
+
+    // Admin grants, keyed by lowercased email.
+    match /admins/{email} {
+      allow get: if (verifiedEmail() && email == myEmail()) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() && email == email.lower();
+      allow delete: if isAdmin();
+    }
+
+    // ---- Research hub content ----
+    // Public pages query with where('status', '==', 'published'); drafts are admin-only.
+
+    match /publications/{id} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /articles/{id} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /feedItems/{id} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Stay Current automation settings (settings/feedConfig). Public read so the
+    // scheduled GitHub Action and visitors' "Refresh feed" can use them.
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

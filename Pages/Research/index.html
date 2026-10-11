@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Research - Ebayednoob</title>
+    <meta name="description" content="Ebayednoob research publications, a curated Stay Current feed of new science, and articles.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body class="bg-gray-900 text-white selection:bg-blue-500 selection:text-white">
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="container mx-auto px-4 min-h-screen flex flex-col relative z-10">
+
+        <!-- Header (matches the main page) -->
+        <header class="py-4 sm:py-6 border-b border-gray-700/50 content-overlay rounded-b-xl sticky top-0 z-50">
+            <nav class="flex flex-wrap gap-y-3 justify-between items-center px-4 sm:px-6">
+                <a href="../../index.html" class="block transition-opacity hover:opacity-80" title="Back to the main site">
+                    <img src="../../Resources/Pictures/Logo Files/Ebayednoob-logo.png" alt="Ebayednoob Logo" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/150x40/0a0a0a/ffffff?text=Ebayednoob';">
+                </a>
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <a href="../../index.html" class="text-gray-300 hover:text-white transition-colors">Main site</a>
+                    <span class="nav-active text-white pb-1">Our Research</span>
+                    <div id="auth-container" class="pl-4 border-l border-gray-700 flex items-center gap-3">
+                        <button id="login-btn" class="btn btn-blue">Login</button>
+                        <div id="user-profile" class="hidden items-center gap-3">
+                            <span id="user-email" class="text-sm text-gray-400 hidden md:inline"></span>
+                            <a id="panel-link" href="../../control-panel/index.html" class="btn btn-ghost btn-sm">Control Panel</a>
+                            <button id="logout-btn" class="btn btn-danger btn-sm">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow py-10 fade-in">
+            <!-- Hero -->
+            <section class="text-center mb-10">
+                <h1 class="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-300">Our Research</h1>
+                <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">Publications from the Ebayednoob lab, a live watch on the science shaping ethical general intelligence, and our long-form writing.</p>
+                <div id="admin-bar" class="hidden mt-5 inline-flex flex-wrap justify-center items-center gap-2 text-sm px-4 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-200">
+                    <span class="font-semibold">Admin</span>
+                    <a class="underline hover:text-white" href="../../control-panel/index.html#publications">Publications</a>
+                    <a class="underline hover:text-white" href="../../control-panel/index.html#feed-curated">Curated feed</a>
+                    <a class="underline hover:text-white" href="../../control-panel/index.html#feed-automation">Feed automation</a>
+                    <a class="underline hover:text-white" href="../../control-panel/index.html#articles">Articles</a>
+                </div>
+            </section>
+
+            <!-- Tabs -->
+            <div role="tablist" aria-label="Research sections" class="flex flex-wrap gap-2 mb-6 border-b border-gray-700/70">
+                <button role="tab" id="tab-publications" aria-controls="panel-publications" data-tab="publications" class="tab-btn px-4 py-2.5 text-gray-300 hover:text-white font-medium border-b-2 border-transparent rounded-t-lg">Publications</button>
+                <button role="tab" id="tab-stay-current" aria-controls="panel-stay-current" data-tab="stay-current" class="tab-btn px-4 py-2.5 text-gray-300 hover:text-white font-medium border-b-2 border-transparent rounded-t-lg">Stay Current</button>
+                <button role="tab" id="tab-articles" aria-controls="panel-articles" data-tab="articles" class="tab-btn px-4 py-2.5 text-gray-300 hover:text-white font-medium border-b-2 border-transparent rounded-t-lg">Articles</button>
+            </div>
+
+            <!-- Publications -->
+            <section role="tabpanel" id="panel-publications" aria-labelledby="tab-publications" class="hidden">
+                <div class="mb-5">
+                    <h2 class="text-2xl font-semibold text-teal-400">Publications</h2>
+                    <p class="text-gray-400 text-sm mt-1">Our ten most recent papers, simulations and reports. Everything older lives in the archive.</p>
+                </div>
+                <div id="publications-browser"></div>
+            </section>
+
+            <!-- Stay Current -->
+            <section role="tabpanel" id="panel-stay-current" aria-labelledby="tab-stay-current" class="hidden">
+                <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-teal-400">Stay Current</h2>
+                        <p class="text-gray-400 text-sm mt-1 max-w-2xl">The newest research across the fields we follow, scanned from open scholarly indexes and publisher feeds. Every item links to its original source.</p>
+                    </div>
+                    <button id="refresh-feed" class="group relative inline-flex items-center gap-3 self-start lg:self-auto rounded-xl p-[1.5px] bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-400 hover:shadow-[0_0_24px_rgba(45,212,191,0.35)] transition-shadow disabled:opacity-60">
+                        <span class="flex items-center gap-3 rounded-[10px] bg-gray-900/95 px-5 py-3">
+                            <span id="refresh-icon" class="text-teal-300"></span>
+                            <span class="text-left">
+                                <span class="block font-bold text-white leading-tight">Refresh feed</span>
+                                <span id="refresh-sub" class="block text-xs text-gray-400 leading-tight">Live scan of all sources</span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Control overview -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                    <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Mode</div><div id="stat-mode" class="text-lg font-semibold mt-1">—</div></div>
+                    <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Last scan</div><div id="stat-scan" class="text-lg font-semibold mt-1">—</div></div>
+                    <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Sources online</div><div id="stat-sources" class="text-lg font-semibold mt-1">—</div></div>
+                    <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Items tracked</div><div id="stat-items" class="text-lg font-semibold mt-1">—</div></div>
+                </div>
+
+                <div class="panel p-4 mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-semibold text-gray-200">Sources</h3>
+                        <span id="config-origin" class="text-xs text-gray-500"></span>
+                    </div>
+                    <ul id="source-status" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-sm"></ul>
+                </div>
+
+                <div class="panel p-4 mb-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-semibold text-gray-200">Topics</h3>
+                        <button id="topics-clear" class="text-xs text-gray-400 hover:text-white">Show all</button>
+                    </div>
+                    <div id="topic-chips" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div id="feed-browser"></div>
+
+                <aside class="panel p-5 mt-8 text-sm text-gray-300">
+                    <h3 class="font-semibold text-gray-100 mb-2">Where this material comes from</h3>
+                    <p class="text-gray-400 mb-3">Titles, author lists and abstract excerpts are taken from each source's public metadata. Every item names its source and links to the original record; read and cite the original. Items marked <span class="chip">Curated</span> were added by hand by the site admin.</p>
+                    <ul id="attribution-list" class="space-y-1"></ul>
+                </aside>
+            </section>
+
+            <!-- Articles -->
+            <section role="tabpanel" id="panel-articles" aria-labelledby="tab-articles" class="hidden">
+                <div class="mb-5">
+                    <h2 class="text-2xl font-semibold text-teal-400">Articles</h2>
+                    <p class="text-gray-400 text-sm mt-1">Long-form writing, first published on LinkedIn, with cross-posts on X, Medium, Substack and Patreon where available.</p>
+                </div>
+                <div id="articles-browser"></div>
+            </section>
+        </main>
+
+        <footer class="text-center py-6 text-gray-500 text-sm">
+            <p>&copy; 2026 Ebayednoob. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script type="module" src="research.js"></script>
+</body>
+</html>

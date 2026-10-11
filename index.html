@@ -108,6 +108,9 @@
                          </button>
                          <div id="user-profile" class="hidden items-center space-x-3">
                              <span id="user-email" class="text-sm text-gray-400"></span>
+                             <a href="control-panel/index.html" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                 Control Panel
+                             </a>
                              <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                                  Logout
                              </button>
@@ -350,13 +353,6 @@
                 const response = await fetch(filePath);
                 if (!response.ok) throw new Error(`Could not load ${filePath}. Status: ${response.status}`);
                 contentArea.innerHTML = await response.text();
-                
-                // If we've loaded the research page, we need to initialize its script
-                if (filePath === 'research.html') {
-                    const script = document.createElement('script');
-                    script.src = 'research.js'; // Assuming the logic is in research.js
-                    document.body.appendChild(script);
-                }
 
                 navButtons.forEach(btn => btn.classList.remove('nav-active'));
                 if(buttonToActivate) {
