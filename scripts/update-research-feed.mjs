@@ -82,9 +82,11 @@ for (const s of result.sourceStatus) {
 }
 
 const okCount = result.sourceStatus.filter((s) => s.ok).length;
+const articlesOk = articleResult.sourceStatus.some((s) => s.ok);
 if (!okCount) {
-    console.error("Every source failed; keeping the previous snapshot.");
-    process.exit(1);
+    console.error("Every Stay Current source failed; keeping the previous feed snapshot.");
+    // The article sync above is already saved; only fail the run if it failed too.
+    process.exit(articlesOk ? 0 : 1);
 }
 
 await writeFile(path.join(dataDir, "feed.json"), JSON.stringify({

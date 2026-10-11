@@ -9,7 +9,8 @@ export const PLATFORMS = {
     x: { label: "X", hosts: ["x.com", "twitter.com"] },
     medium: { label: "Medium", hosts: ["medium.com"] },
     patreon: { label: "Patreon", hosts: ["patreon.com"] },
-    other: { label: "Website", hosts: [] }
+    other: { label: "Website", hosts: [] },
+    site: { label: "Ebayednoob", hosts: [] } // pieces written in the Article Studio (never auto-detected)
 };
 
 export const DEFAULT_ARTICLE_SYNC = {
@@ -17,7 +18,7 @@ export const DEFAULT_ARTICLE_SYNC = {
     linkedinOnly: true,      // only show articles that have a LinkedIn version; others attach to them as cross-posts
     matchThreshold: 0.75,    // title similarity (0-1) needed to treat two posts as the same article
     maxDaysApart: 180,       // cross-posts published further apart than this are never merged
-    corsProxy: "https://api.allorigins.win/raw?url=",
+    corsProxy: "https://api.allorigins.win/raw?url= https://corsproxy.io/?url= https://api.codetabs.com/v1/proxy?quest=",
     archiveCap: 2000,
     hiddenUrls: [],
     sources: [
@@ -42,6 +43,7 @@ export function normalizeArticleConfig(cfg) {
         feedUrl: String(s.feedUrl || "").trim()
     })) : base.sources;
     out.hiddenUrls = toList(cfg.hiddenUrls);
+    if (!out.corsProxy || out.corsProxy.trim() === "https://api.allorigins.win/raw?url=") out.corsProxy = base.corsProxy;
     out.linkedinOnly = out.linkedinOnly !== false;
     const t = Number(out.matchThreshold);
     out.matchThreshold = Number.isFinite(t) && t > 0 && t <= 1 ? t : base.matchThreshold;
@@ -76,7 +78,13 @@ export function canonicalUrl(url) {
     if (host === "twitter.com") host = "x.com";
     if (host.endsWith(".linkedin.com")) host = "linkedin.com"; // uk.linkedin.com etc.
     const path = u.pathname.replace(/\/+$/, "") || "/";
-    return `https://${host}${path}`;
+    // Unknown sites may identify posts by query string (e.g. ?p=123, ?slug=...): keep it, minus tracking.
+    let search = "";
+    if (detectPlatform(`https://${host}/`) === "other") {
+        const params = [...u.searchParams].filter(([k]) => !/^(utm_|fbclid|gclid|ref$|trk$)/i.test(k)).sort(([a], [b]) => a.localeCompare(b));
+        if (params.length) search = `?${new URLSearchParams(params)}`;
+    }
+    return `https://${host}${path}${search}`;
 }
 
 // Public locations to read for a configured page. Writer dashboards and profile pages are
@@ -358,9 +366,14 @@ export function groupArticles(manualArticles, syncedItems, rawConfig) {
     const manualGroups = [];
     for (const a of manualArticles || []) {
         const primaryUrl = canonicalUrl(a.linkedinUrl);
+        const siteUrl = canonicalUrl(a.siteUrl);
         const ids = [];
         const extraLinks = [];
         if (primaryUrl) ids.push(add({ url: primaryUrl, platform: "linkedin", title: a.title, summary: a.summary || "", image: a.coverImage || "", published: a.date || null, manual: true, links: [] }));
+        if (siteUrl) {
+            ids.push(add({ url: siteUrl, platform: "site", title: a.title, summary: a.summary || "", image: a.coverImage || "", published: a.date || null, manual: true, links: [] }));
+            extraLinks.push(siteUrl);
+        }
         for (const [key, link] of Object.entries(a.crossposts || {})) {
             const u = canonicalUrl(link);
             if (u) {
@@ -416,12 +429,13 @@ export function groupArticles(manualArticles, syncedItems, rawConfig) {
     const out = [];
     for (const members of groups.values()) {
         const linkedin = members.find((m) => m.platform === "linkedin");
+        const site = members.find((m) => m.platform === "site");
         const manual = (linkedin && manualByUrl.get(linkedin.url)) || members.map((m) => manualByAnyUrl.get(m.url)).find(Boolean);
         const byDate = [...members].sort((a, b) => String(a.published || "9").localeCompare(String(b.published || "9")));
-        const primary = linkedin || byDate[0];
+        const primary = linkedin || site || byDate[0];
         const crossposts = {};
         for (const m of members) {
-            if (m === primary) continue;
+            if (m === primary || m.platform === "site") continue;
             const key = CROSSPOST_KEYS.includes(m.platform) ? m.platform : (m.platform === "linkedin" ? "linkedin" : new URL(m.url).hostname.replace(/^www\./, ""));
             if (!crossposts[key]) crossposts[key] = m.url;
         }
@@ -439,14 +453,17 @@ export function groupArticles(manualArticles, syncedItems, rawConfig) {
             primaryPlatform: primary.platform,
             primaryUrl: primary.url,
             linkedinUrl: linkedin ? (manual?.linkedinUrl || linkedin.url) : "",
+            siteUrl: site ? (manual?.siteUrl || site.url) : "",
             crossposts: { ...crossposts, ...(manual?.crossposts ? Object.fromEntries(Object.entries(manual.crossposts).filter(([, v]) => v)) : {}) },
             synced: members.some((m) => !m.manual),
             members: members.map((m) => ({ url: m.url, platform: m.platform, title: m.title, manual: !!m.manual }))
         });
     }
     out.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    // Your own Studio pieces always count as "yours", like LinkedIn articles.
+    const shown = (a) => a.linkedinUrl || a.siteUrl;
     return {
-        articles: config.linkedinOnly ? out.filter((a) => a.linkedinUrl) : out,
-        unmatched: config.linkedinOnly ? out.filter((a) => !a.linkedinUrl) : []
+        articles: config.linkedinOnly ? out.filter(shown) : out,
+        unmatched: config.linkedinOnly ? out.filter((a) => !shown(a)) : []
     };
 }

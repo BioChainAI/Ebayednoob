@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publication Studio - Ebayednoob</title>
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <link rel="stylesheet" href="../assets/css/site.css">
+    <style>
+        dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(2px); }
+        label.lbl { display: block; font-size: 0.8125rem; color: #9ca3af; margin-bottom: 0.25rem; }
+        #st-body { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.125rem; line-height: 1.8; resize: none; min-height: 60vh; }
+        #st-title { font-family: 'Source Serif 4', Georgia, serif; }
+        .tb-btn { min-width: 2.25rem; height: 2.25rem; padding: 0 0.5rem; border-radius: 0.5rem; color: #d1d5db; font-weight: 600; font-size: 0.875rem; }
+        .tb-btn:hover { background: rgba(75, 85, 99, 0.6); color: #fff; }
+        .arch-item[aria-current="true"] { border-color: #14b8a6; background: rgba(13, 148, 136, 0.12); }
+    </style>
+</head>
+<body class="bg-gray-950 text-white" data-kind="publications">
+    <div id="st-gate" class="min-h-screen flex items-center justify-center p-6">
+        <div class="panel p-8 max-w-md text-center">
+            <h1 class="text-2xl font-semibold text-teal-400">Publication Studio</h1>
+            <p id="st-gate-msg" class="text-gray-400 mt-2">Checking your session…</p>
+            <a href="index.html" class="btn btn-ghost btn-sm mt-4">Back to the Control Panel</a>
+        </div>
+    </div>
+
+    <div id="st-app" class="hidden h-screen flex flex-col">
+        <header class="shrink-0 z-40 content-overlay border-b border-gray-700/60">
+            <div class="flex flex-wrap items-center gap-3 px-4 py-3">
+                <a href="index.html#dashboard" class="text-gray-400 hover:text-white text-sm">← Control Panel</a>
+                <h1 class="font-semibold text-teal-300">Publication Studio</h1>
+                <span id="st-save-state" class="text-xs text-gray-500"></span>
+                <div class="ml-auto flex flex-wrap items-center gap-2">
+                    <button id="st-toggle-archive" class="btn btn-ghost btn-sm lg:hidden">Archive</button>
+                    <div class="inline-flex rounded-lg border border-gray-700 overflow-hidden" role="group" aria-label="Editor mode">
+                        <button data-mode="write" class="seg-btn px-3 py-1 text-sm text-gray-300">Write</button>
+                        <button data-mode="split" class="seg-btn px-3 py-1 text-sm text-gray-300 border-l border-gray-700 hidden md:block">Split</button>
+                        <button data-mode="preview" class="seg-btn px-3 py-1 text-sm text-gray-300 border-l border-gray-700">Preview</button>
+                    </div>
+                    <button id="st-github" class="btn btn-ghost btn-sm" title="GitHub archive settings">GitHub</button>
+                    <button id="st-save" class="btn btn-ghost btn-sm">Save draft</button>
+                    <button id="st-publish" class="btn btn-primary btn-sm">Publish</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-1 min-h-0">
+            <!-- Archive -->
+            <aside id="st-archive" class="hidden lg:flex flex-col w-72 shrink-0 border-r border-gray-800 bg-gray-900/60">
+                <div class="p-3 space-y-2 border-b border-gray-800">
+                    <button id="st-new" class="btn btn-primary btn-sm w-full">New publication</button>
+                    <input id="st-search" type="search" class="field !py-1.5 text-sm" placeholder="Search archive…" aria-label="Search archive">
+                    <div class="inline-flex w-full rounded-lg border border-gray-700 overflow-hidden text-xs" role="group" aria-label="Filter">
+                        <button data-filter="all" class="seg-btn flex-1 py-1 text-gray-300">All</button>
+                        <button data-filter="draft" class="seg-btn flex-1 py-1 text-gray-300 border-l border-gray-700">Drafts</button>
+                        <button data-filter="published" class="seg-btn flex-1 py-1 text-gray-300 border-l border-gray-700">Published</button>
+                    </div>
+                </div>
+                <div id="st-archive-list" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1"></div>
+                <div class="p-3 border-t border-gray-800 space-y-2 text-xs text-gray-500">
+                    <button id="st-sync-all" class="btn btn-ghost btn-sm w-full">Archive all published to GitHub</button>
+                    <a id="st-repo-link" target="_blank" rel="noopener noreferrer" class="block text-center text-teal-300 hover:underline">Browse the archive on GitHub</a>
+                </div>
+            </aside>
+
+            <!-- Editor -->
+            <main class="flex-1 min-w-0 flex">
+                <section id="st-write-pane" class="flex-1 min-w-0 overflow-y-auto custom-scrollbar">
+                    <div class="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+                        <input id="st-title" class="w-full bg-transparent text-3xl sm:text-4xl font-semibold text-white placeholder-gray-600 focus:outline-none" placeholder="Title">
+                        <input id="st-subtitle" class="w-full bg-transparent text-lg text-gray-300 placeholder-gray-600 mt-2 focus:outline-none" placeholder="Subtitle (optional)">
+                        <div id="st-toolbar" class="sticky top-0 z-10 mt-6 mb-2 flex flex-wrap gap-1 py-1.5 bg-gray-950/95 border-y border-gray-800" role="toolbar" aria-label="Formatting">
+                            <button class="tb-btn" data-fmt="h2" title="Heading">H2</button>
+                            <button class="tb-btn" data-fmt="h3" title="Subheading">H3</button>
+                            <button class="tb-btn" data-fmt="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                            <button class="tb-btn" data-fmt="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+                            <button class="tb-btn" data-fmt="strike" title="Strikethrough"><s>S</s></button>
+                            <button class="tb-btn" data-fmt="link" title="Link (Ctrl+K)">Link</button>
+                            <button class="tb-btn" data-fmt="quote" title="Quote">“ ”</button>
+                            <button class="tb-btn" data-fmt="ul" title="Bulleted list">• List</button>
+                            <button class="tb-btn" data-fmt="ol" title="Numbered list">1. List</button>
+                            <button class="tb-btn" data-fmt="code" title="Inline code">&lt;/&gt;</button>
+                            <button class="tb-btn" data-fmt="codeblock" title="Code block">{ }</button>
+                            <button class="tb-btn" data-fmt="math" title="Equation ($$…$$)">∑</button>
+                            <button class="tb-btn" data-fmt="table" title="Table">Table</button>
+                            <button class="tb-btn" data-fmt="hr" title="Divider">—</button>
+                            <button class="tb-btn" data-fmt="image" title="Image">Image</button>
+                        </div>
+                        <textarea id="st-body" class="w-full bg-transparent text-gray-100 placeholder-gray-600 focus:outline-none" placeholder="Tell your story… (Markdown supported: **bold**, _italic_, ## headings, lists, links, images, $math$)"></textarea>
+                        <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-gray-500 border-t border-gray-800 pt-2 mt-4"><span id="st-count" class="whitespace-nowrap"></span><span id="st-slug-info" class="break-all"></span></div>
+                    </div>
+                </section>
+                <section id="st-preview-pane" class="hidden flex-1 min-w-0 overflow-y-auto custom-scrollbar border-l border-gray-800 bg-gray-900/40">
+                    <article class="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+                        <img id="pv-cover" alt="" class="hidden w-full max-h-80 object-cover rounded-xl mb-6">
+                        <h1 id="pv-title" class="reader-title"></h1>
+                        <p id="pv-subtitle" class="reader-subtitle"></p>
+                        <div id="pv-body" class="prose-reader mt-6"></div>
+                    </article>
+                </section>
+            </main>
+
+            <!-- Details -->
+            <aside id="st-details" class="hidden xl:block w-80 shrink-0 border-l border-gray-800 bg-gray-900/60 overflow-y-auto custom-scrollbar p-4 space-y-4"></aside>
+        </div>
+    </div>
+
+    <dialog id="gh-dialog" class="bg-gray-900 text-gray-100 border border-gray-700 rounded-xl p-0 w-[min(32rem,calc(100vw-2rem))]">
+        <form id="gh-form" method="dialog" class="p-6 space-y-3">
+            <h2 class="text-lg font-semibold">GitHub archive</h2>
+            <p class="text-sm text-gray-400">Published pieces are committed to <code>content/</code> in the repository, building a permanent archive that also deploys with the site. Create a <a class="text-teal-300 hover:underline" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">fine-grained token</a> for this repository only, with <b>Contents: Read and write</b> (add <b>Actions: Read and write</b> to run the article sync from the Control Panel). It is stored only in this browser.</p>
+            <div class="grid grid-cols-3 gap-2">
+                <div><label class="lbl" for="gh-owner">Owner</label><input id="gh-owner" class="field" required></div>
+                <div><label class="lbl" for="gh-repo">Repository</label><input id="gh-repo" class="field" required></div>
+                <div><label class="lbl" for="gh-branch">Branch</label><input id="gh-branch" class="field" required></div>
+            </div>
+            <div><label class="lbl" for="gh-token">Token</label><input id="gh-token" type="password" class="field" autocomplete="off" placeholder="github_pat_…"></div>
+            <p id="gh-status" class="text-sm text-gray-400"></p>
+            <div class="flex justify-between gap-2">
+                <button type="button" id="gh-forget" class="btn btn-ghost btn-sm">Forget token</button>
+                <div class="flex gap-2"><button type="button" data-close class="btn btn-ghost btn-sm">Close</button><button type="submit" class="btn btn-primary btn-sm">Save &amp; test</button></div>
+            </div>
+        </form>
+    </dialog>
+
+    <input id="st-file" type="file" class="hidden">
+    <script type="module" src="studio.js"></script>
+</body>
+</html>

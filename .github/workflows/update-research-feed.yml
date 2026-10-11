@@ -7,6 +7,14 @@ on:
   schedule:
     - cron: "17 6 * * *"
   workflow_dispatch:
+  # Also run as soon as the sync code itself changes on main.
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/update-research-feed.mjs"
+      - "assets/js/feed-core.js"
+      - "assets/js/article-sync.js"
+      - ".github/workflows/update-research-feed.yml"
 
 permissions:
   contents: write

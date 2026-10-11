@@ -18,7 +18,7 @@ export const DEFAULT_FEED_CONFIG = {
     balanceTopics: true,      // round-robin across topics so one busy field can't fill all 10 slots
     requireTopicMatch: true,  // drop scanned items that match none of the enabled topics
     archiveCap: 1000,         // max items kept in the snapshot archive
-    corsProxy: "https://api.allorigins.win/raw?url=",
+    corsProxy: "https://api.allorigins.win/raw?url= https://corsproxy.io/?url= https://api.codetabs.com/v1/proxy?quest=",
     contactEmail: "",         // optional; sent to OpenAlex as `mailto` (polite pool)
     blockedUrls: [],
     topics: [
@@ -74,6 +74,8 @@ export function normalizeConfig(cfg) {
         const n = Number(out[k]);
         out[k] = Number.isFinite(n) && n > 0 ? Math.round(n) : base[k];
     }
+    // Settings saved before multi-proxy support used this single relay; upgrade to the list.
+    if (!out.corsProxy || out.corsProxy.trim() === "https://api.allorigins.win/raw?url=") out.corsProxy = base.corsProxy;
     out.balanceTopics = out.balanceTopics !== false;
     out.requireTopicMatch = out.requireTopicMatch !== false;
     return out;
@@ -223,9 +225,19 @@ export async function fetchText(url, { fetchImpl, cors, proxy, timeoutMs = 20000
             if (timer) clearTimeout(timer);
         }
     };
-    const viaProxy = () => {
-        if (!proxy) throw new Error("This source needs a CORS proxy, but none is configured");
-        return attempt(proxy.includes("{url}") ? proxy.replace("{url}", encodeURIComponent(url)) : proxy + encodeURIComponent(url));
+    // `proxy` may list several relays (space, comma or newline separated); each is tried in turn.
+    const viaProxy = async () => {
+        const proxies = String(proxy || "").split(/[\s,]+/).filter(Boolean);
+        if (!proxies.length) throw new Error("This source needs a CORS proxy, but none is configured");
+        let last;
+        for (const p of proxies) {
+            try {
+                return await attempt(p.includes("{url}") ? p.replace("{url}", encodeURIComponent(url)) : p + encodeURIComponent(url));
+            } catch (e) {
+                last = e;
+            }
+        }
+        throw new Error(`All CORS proxies failed (${last?.message || "unknown error"})`);
     };
     if (cors === "proxy") return viaProxy();
     if (cors === "direct" || !proxy) return attempt(url);

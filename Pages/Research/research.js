@@ -1,5 +1,6 @@
 // Research hub: Publications, Stay Current feed and Articles, each with its own archive.
-import { auth, db, signInWithGoogle, signOut, onAuthStateChanged, checkIsAdmin } from "../../assets/js/firebase.js";
+import { auth, db, signInWithGoogle, signOut, onAuthStateChanged, checkIsAdmin, sessionEmail } from "../../assets/js/firebase.js";
+import { loadGuest } from "../../assets/js/identity.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { startBackground } from "../../assets/js/background.js";
 import { createBrowser } from "../../assets/js/collection-browser.js";
@@ -104,8 +105,9 @@ const PLATFORM_LABEL = (key) => PLATFORMS[key]?.label || key;
 
 function renderArticle(a, layout) {
     const cover = resolveLink(a.coverImage);
-    const primary = resolveLink(a.linkedinUrl || a.primaryUrl);
-    const primaryPlatform = a.linkedinUrl ? "linkedin" : a.primaryPlatform;
+    const site = resolveLink(a.siteUrl);
+    const primary = resolveLink(a.linkedinUrl) || site || resolveLink(a.primaryUrl);
+    const primaryPlatform = a.linkedinUrl ? "linkedin" : site ? "site" : a.primaryPlatform;
     // Known platforms first, in a fixed order, then any other sites.
     const keys = Object.keys(a.crossposts || {}).sort((x, y) => {
         const order = CROSSPOST_PLATFORMS.map((p) => p.key);
@@ -121,11 +123,14 @@ function renderArticle(a, layout) {
         ${cover ? `<img src="${esc(cover)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="${layout === "list" ? "md:w-56 h-40 md:h-auto" : "h-40"} w-full object-cover bg-gray-800" onerror="this.remove()">` : ""}
         <div class="p-5 flex flex-col flex-1 min-w-0">
             <time datetime="${esc(a.date || "")}" class="text-xs text-gray-400">${esc(fmtDate(a.date))}</time>
-            <h3 class="text-xl font-semibold text-white leading-snug mt-1">${primary ? `<a href="${esc(primary)}" target="_blank" rel="noopener noreferrer" class="hover:text-teal-300">${esc(a.title)}</a>` : esc(a.title)}</h3>
+            <h3 class="text-xl font-semibold text-white leading-snug mt-1">${site || primary ? `<a href="${esc(site || primary)}" ${site ? "" : 'target="_blank" rel="noopener noreferrer"'} class="hover:text-teal-300">${esc(a.title)}</a>` : esc(a.title)}</h3>
             ${a.summary ? `<p class="text-sm text-gray-300 mt-2 line-clamp-3">${esc(a.summary)}</p>` : ""}
             ${a.tags?.length ? `<div class="flex flex-wrap gap-1.5 mt-3">${tagChips(a.tags)}</div>` : ""}
             <div class="mt-auto pt-4 space-y-2">
-                ${primary ? `<a href="${esc(primary)}" target="_blank" rel="noopener noreferrer" class="btn ${primaryPlatform === "linkedin" ? "btn-blue" : "btn-primary"} btn-sm">${ICONS[primaryPlatform] || ICONS.external}<span>Read on ${esc(PLATFORM_LABEL(primaryPlatform))}</span></a>` : ""}
+                <div class="flex flex-wrap gap-2">
+                    ${site ? `<a href="${esc(site)}" class="btn btn-primary btn-sm"><span>Read here</span></a>` : ""}
+                    ${primary && primary !== site ? `<a href="${esc(primary)}" target="_blank" rel="noopener noreferrer" class="btn ${primaryPlatform === "linkedin" ? "btn-blue" : "btn-ghost"} btn-sm">${ICONS[primaryPlatform] || ICONS.external}<span>Read on ${esc(PLATFORM_LABEL(primaryPlatform))}</span></a>` : ""}
+                </div>
                 ${crossposts ? `<div class="flex flex-wrap items-center gap-2"><span class="text-xs text-gray-400">Also read on</span>${crossposts}</div>` : ""}
             </div>
         </div>
@@ -350,8 +355,11 @@ async function curate(id) {
 
 const articleState = { manual: [], synced: [], config: null, scan: null, scanning: false };
 
+// Studio-written articles have a page on this site; give the grouping an absolute URL for it.
+const withSiteUrl = (a) => (a.siteUrl || (a.source === "studio" && a.slug) ? { ...a, siteUrl: resolveLink(a.siteUrl || `Pages/Research/read.html?kind=articles&slug=${encodeURIComponent(a.slug)}`) } : a);
+
 function refreshArticles() {
-    const { articles } = groupArticles(articleState.manual, articleState.synced, articleState.config);
+    const { articles } = groupArticles(articleState.manual.map(withSiteUrl), articleState.synced, articleState.config);
     browsers.articles.setItems(articles);
     const scan = articleState.scan;
     const statusById = new Map((scan?.sourceStatus || []).map((s) => [s.id, s]));
@@ -393,20 +401,31 @@ $("#refresh-articles-icon").innerHTML = ICONS.refresh;
 $("#login-btn").addEventListener("click", () => signInWithGoogle().catch((e) => toast(`Login failed: ${e.message}`, "error")));
 $("#logout-btn").addEventListener("click", () => signOut(auth));
 
+function applyTopicPrefs(prefs) {
+    if (Array.isArray(prefs) && prefs.length && !state.topics.size) prefs.forEach((t) => state.topics.add(t));
+}
+
 onAuthStateChanged(auth, async (user) => {
     state.user = user;
+    const guest = loadGuest();
     $("#login-btn").classList.toggle("hidden", !!user);
+    $("#guest-identity").classList.toggle("hidden", !!user);
+    $("#guest-identity").classList.toggle("md:inline", !user);
+    $("#guest-identity").textContent = guest?.username ? `${guest.username} · Guest Observer` : "Guest Observer";
     $("#user-profile").classList.toggle("hidden", !user);
     $("#user-profile").classList.toggle("flex", !!user);
-    $("#user-email").textContent = user?.email || "";
+    $("#user-email").textContent = user ? sessionEmail(user) : "";
     state.isAdmin = await checkIsAdmin(user);
     $("#admin-bar").classList.toggle("hidden", !state.isAdmin);
     if (user) {
         try {
             const snap = await getDoc(doc(db, "users", user.uid));
-            const prefs = snap.exists() ? snap.data().preferences?.feedTopics : null;
-            if (Array.isArray(prefs) && prefs.length && !state.topics.size) prefs.forEach((t) => state.topics.add(t));
+            const data = snap.exists() ? snap.data() : {};
+            if (data.username) $("#user-email").textContent = `${data.username}${state.isAdmin ? " · Admin" : ""}`;
+            applyTopicPrefs(data.preferences?.feedTopics);
         } catch { /* preferences are optional */ }
+    } else {
+        applyTopicPrefs(guest?.preferences?.feedTopics);
     }
     if (state.config) refreshFeedViews();
 });
