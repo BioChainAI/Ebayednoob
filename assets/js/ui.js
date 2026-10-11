@@ -36,7 +36,9 @@ export function hostOf(u) {
 export function fmtDate(v, opts = { year: "numeric", month: "short", day: "numeric" }) {
     if (!v) return "Undated";
     const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v}T00:00:00` : v);
-    return Number.isNaN(d.getTime()) ? "Undated" : d.toLocaleDateString(undefined, opts);
+    if (Number.isNaN(d.getTime())) return "Undated";
+    // toLocaleDateString rejects time options; use toLocaleString when a time is requested.
+    return opts.timeStyle || opts.hour ? d.toLocaleString(undefined, opts) : d.toLocaleDateString(undefined, opts);
 }
 
 export function timeAgo(v) {

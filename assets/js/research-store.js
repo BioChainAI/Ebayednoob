@@ -1,7 +1,7 @@
 // Firestore data layer for the Research hub. Public pages read only `status == "published"`
 // documents; the Control Panel (admins) reads and writes everything. The Firestore security
 // rules (firestore.rules) enforce the same split.
-import { db } from "./firebase.js";
+import { db, sessionEmail } from "./firebase.js";
 import {
     collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
@@ -57,7 +57,7 @@ export async function saveItem(name, id, data, user) {
     const docId = id || newId(data.title || "item");
     const payload = clean({ ...data, id: undefined });
     payload.updatedAt = serverTimestamp();
-    payload.updatedBy = user?.email || "";
+    payload.updatedBy = sessionEmail(user);
     if (!id) payload.createdAt = serverTimestamp();
     await setDoc(doc(db, name, docId), payload, { merge: true });
     return docId;
@@ -72,7 +72,7 @@ export async function importSeed(name, user) {
     const batch = writeBatch(db);
     for (const it of items) {
         const { id, ...rest } = it;
-        batch.set(doc(db, name, id || newId(it.title)), clean({ ...rest, status: rest.status || "published", createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: user?.email || "" }), { merge: true });
+        batch.set(doc(db, name, id || newId(it.title)), clean({ ...rest, status: rest.status || "published", createdAt: serverTimestamp(), updatedAt: serverTimestamp(), updatedBy: sessionEmail(user) }), { merge: true });
     }
     await batch.commit();
     return items.length;
@@ -98,7 +98,7 @@ export async function loadFeedConfig() {
 }
 
 export function saveFeedConfig(config, user) {
-    return setDoc(doc(db, "settings", "feedConfig"), clean({ ...normalizeConfig(config), updatedAt: new Date().toISOString(), updatedBy: user?.email || "" }));
+    return setDoc(doc(db, "settings", "feedConfig"), clean({ ...normalizeConfig(config), updatedAt: new Date().toISOString(), updatedBy: sessionEmail(user) }));
 }
 
 // ---------- Article sync settings (sources scanned for your own articles) ----------
@@ -117,5 +117,12 @@ export async function loadArticleSyncConfig() {
 }
 
 export function saveArticleSyncConfig(config, user) {
-    return setDoc(doc(db, "settings", "articleSync"), clean({ ...normalizeArticleConfig(config), updatedAt: new Date().toISOString(), updatedBy: user?.email || "" }));
+    return setDoc(doc(db, "settings", "articleSync"), clean({ ...normalizeArticleConfig(config), updatedAt: new Date().toISOString(), updatedBy: sessionEmail(user) }));
+}
+
+// One published Studio piece by slug (Research reader).
+export async function loadPublishedBySlug(name, slug) {
+    const snap = await getDocs(query(collection(db, name), where("status", "==", "published"), where("slug", "==", slug)));
+    const d = snap.docs[0];
+    return d ? { ...d.data(), id: d.id } : null;
 }

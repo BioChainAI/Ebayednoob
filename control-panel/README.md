@@ -56,3 +56,36 @@ feed URL; the platform is detected from the URL and can be changed.
   under "Not shown" with a **Save as article** button so you can attach the LinkedIn URL.
 - The daily workflow writes `Pages/Research/data/articles-feed.json` and keeps every post it has ever seen.
   Visitors can press **Check for new articles** for a live check.
+
+## Accounts, usernames and Guest Observers
+
+- **Members** (Google or email sign-in) choose a username the first time they open the Control Panel. Usernames
+  are unique (reserved in `usernames/{lowercased}`) and can change once every 7 days; `firestore.rules` enforce
+  both, using the server clock. The Profile page shows a live countdown to the next allowed change.
+- **Guest Observers** pick a username without signing in. It is stored only in that browser (localStorage) and
+  checked against member usernames, but not reserved. Guests never get admin features.
+- **Session & sync** shows what Google, Firebase Authentication and Firestore report for the session, why it
+  is or isn't an admin, and a **Sync now** button that refreshes everything from the Google account.
+
+### If your Google account shows as "Member" instead of "Administrator"
+Open **Session & sync**. If "Token email" is empty, Firebase is set to allow multiple accounts per email, so
+Google sessions carry no email for the rules to check. Either switch Authentication → Settings → **User account
+linking** to "Link accounts that use the same email" and sign in again, or add your UID (shown on that page) to
+`ownerUids()` in `firestore.rules` and `BOOTSTRAP_ADMIN_UIDS` in `assets/js/firebase.js`. The rules also
+accept the email Google supplies in the token's identities, which covers most such sessions.
+
+## Article Studio & Publication Studio (admins)
+
+Linked from the admin section of the Control Panel (`control-panel/article-studio.html`,
+`control-panel/publication-studio.html`). Write in Markdown with a formatting toolbar, live preview and
+`$math$` (KaTeX); drafts autosave to Firestore. **Publish** puts the piece on the site
+(`Pages/Research/read.html?kind=…&slug=…`) and, when GitHub is connected, commits it to `content/` (see
+`content/README.md`), building a permanent archive in the repository. The archive sidebar lists every draft and
+published piece; **Archive all published to GitHub** backfills anything not yet committed.
+
+GitHub connection: in a Studio press **GitHub** and paste a fine-grained personal access token limited to this
+repository with **Contents: Read and write** (add **Actions: Read and write** to start the article sync from the
+Control Panel). The token stays in that browser only.
+
+Cross-posting: the Studio copies the piece with formatting for LinkedIn, Substack, X Articles and Medium, opens
+their editors, and records the resulting URLs so the Articles page shows one entry with "Also read on" buttons.

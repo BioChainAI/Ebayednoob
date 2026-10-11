@@ -315,11 +315,11 @@
                 userProfileDiv.classList.remove('hidden');
                 userProfileDiv.classList.add('flex');
                 loginBtn.classList.add('hidden');
-                userEmailSpan.textContent = user.email;
+                userEmailSpan.textContent = user.email || user.providerData.find(p => p.email)?.email || "";
                 const userRef = doc(db, "users", user.uid);
                 getDoc(userRef).then(docSnap => {
                     if (!docSnap.exists()) {
-                        setDoc(userRef, { email: user.email, createdAt: new Date(), tutorialProgress: {} });
+                        setDoc(userRef, { email: user.email || user.providerData.find(p => p.email)?.email || "", createdAt: new Date(), tutorialProgress: {} });
                     }
                 });
             } else {

@@ -13,19 +13,37 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // The session's email: the account email claim, or (when the project keeps one account
+    // per sign-in provider and Google sessions carry no email claim) the provider identity.
+    // map.get(key, default) keeps missing claims from failing the whole rule.
+    function tokenEmail() {
+      let t = request.auth.token;
+      let claim = t.get('email', '');
+      return claim is string && claim != ''
+        ? claim.lower()
+        : string(t.get('firebase', {}).get('identities', {}).get('email', [''])[0]).lower();
+    }
+
     function verifiedEmail() {
-      return signedIn()
-        && request.auth.token.email is string
-        && request.auth.token.email_verified == true;
+      return signedIn() && tokenEmail() != '' && (
+        request.auth.token.get('email_verified', false) == true
+        || request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'google.com');
     }
 
     function myEmail() {
-      return request.auth.token.email.lower();
+      return tokenEmail();
+    }
+
+    // Optional: Firebase Auth UIDs that are always admins. Paste yours here (Control Panel →
+    // Session shows it) if email-based admin access does not apply to your sign-in.
+    function ownerUids() {
+      return [];
     }
 
     // First admin. Google accounts for this address are always verified.
     function isBootstrapAdmin() {
-      return verifiedEmail() && myEmail() == 'ghoard1@gmail.com';
+      return (signedIn() && request.auth.uid in ownerUids())
+        || (verifiedEmail() && myEmail() == 'ghoard1@gmail.com');
     }
 
     function isAdmin() {
@@ -33,13 +51,47 @@ service cloud.firestore {
         || (verifiedEmail() && exists(/databases/$(database)/documents/admins/$(myEmail())));
     }
 
+    // ---- Usernames ----
+    // A username change must reserve usernames/{lowercased} for this user in the same batch,
+    // stamp usernameChangedAt with the server time, and respect the 7-day limit.
+    function usernameFields() {
+      return ['username', 'usernameLower', 'usernameChangedAt'];
+    }
+
+    function validUsernameChange(uid, before) {
+      let d = request.resource.data;
+      return d.username is string
+        && d.username.matches('^[A-Za-z0-9_.-]{3,20}$')
+        && d.usernameLower == d.username.lower()
+        && d.usernameChangedAt == request.time
+        && (before == null || !('usernameChangedAt' in before)
+            || request.time > before.usernameChangedAt + duration.value(7, 'd'))
+        && getAfter(/databases/$(database)/documents/usernames/$(d.usernameLower)).data.uid == uid;
+    }
+
     // ---- Accounts ----
 
     // Each user owns their profile document (created by index.html and the Control Panel).
     match /users/{uid} {
       allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
-      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && (!request.resource.data.keys().hasAny(usernameFields())
+            || validUsernameChange(uid, null));
+      allow update: if signedIn() && request.auth.uid == uid
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(usernameFields())
+            || validUsernameChange(uid, resource.data));
       allow delete: if isAdmin();
+    }
+
+    // Username reservations (public reads let anyone, including guests, check availability).
+    match /usernames/{name} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && name == name.lower()
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.usernameLower == name;
+      allow delete: if (signedIn() && resource.data.uid == request.auth.uid) || isAdmin();
     }
 
     // Tutorial progress written by the learning hubs:
@@ -75,8 +127,8 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Stay Current automation settings (settings/feedConfig). Public read so the
-    // scheduled GitHub Action and visitors' "Refresh feed" can use them.
+    // Site settings: feedConfig (Stay Current), articleSync (article sources), studio.
+    // Public read so the scheduled GitHub Action and visitors' refresh buttons can use them.
     match /settings/{id} {
       allow read: if true;
       allow write: if isAdmin();

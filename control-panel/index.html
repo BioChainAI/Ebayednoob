@@ -31,9 +31,10 @@
                     <a href="../index.html" class="text-gray-300 hover:text-white transition-colors">Main site</a>
                     <a href="../Pages/Research/index.html" class="text-gray-300 hover:text-white transition-colors">Our Research</a>
                     <span class="nav-active text-white pb-1">Control Panel</span>
-                    <div id="header-user" class="hidden pl-4 border-l border-gray-700 items-center gap-3">
-                        <span id="header-email" class="text-sm text-gray-400 hidden md:inline"></span>
-                        <button id="header-logout" class="btn btn-danger btn-sm">Logout</button>
+                    <div class="pl-4 border-l border-gray-700 flex items-center gap-3">
+                        <span id="header-identity" class="text-sm text-gray-400 hidden md:inline">Guest Observer</span>
+                        <button id="header-signin" class="btn btn-blue btn-sm hidden">Sign in</button>
+                        <button id="header-logout" class="btn btn-danger btn-sm hidden">Logout</button>
                     </div>
                 </div>
             </nav>
@@ -48,6 +49,16 @@
                 <div class="text-center mb-6">
                     <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-300">Control Panel</h1>
                     <p class="text-gray-400 mt-2">Sign in to manage your account. Admins also get the site management tools.</p>
+                </div>
+                <div class="panel p-5 mb-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-gray-400">You are browsing as</div>
+                            <div class="font-semibold text-gray-100"><span id="guest-label">Guest Observer</span></div>
+                        </div>
+                        <button id="guest-continue" class="btn btn-ghost btn-sm">Continue as Guest Observer</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">A Guest Observer profile (username and feed topics) is stored only in this browser. Sign in to keep it with your account and unlock member features.</p>
                 </div>
                 <div class="panel p-6">
                     <button id="google-login" class="btn w-full bg-white text-gray-900 hover:bg-gray-100">
@@ -79,16 +90,21 @@
                             <div class="min-w-0">
                                 <div id="side-name" class="font-semibold truncate"></div>
                                 <div id="side-role" class="text-xs"></div>
+                                <div id="side-email" class="text-[11px] text-gray-500 truncate"></div>
                             </div>
                         </div>
                         <nav class="panel p-2 space-y-1" aria-label="Control panel sections">
                             <div class="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-gray-500">Account</div>
                             <a href="#overview" data-view="overview" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Overview</a>
                             <a href="#profile" data-view="profile" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Profile &amp; preferences</a>
-                            <a href="#security" data-view="security" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Security</a>
+                            <a href="#session" data-view="session" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Session &amp; sync</a>
+                            <a href="#security" data-view="security" data-member-only class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Security</a>
+                            <a href="#" id="side-signin" class="hidden side-link block px-3 py-2 rounded-lg text-blue-300 hover:text-white border border-transparent">Sign in</a>
                             <div id="admin-nav" class="hidden">
                                 <div class="px-3 pt-4 pb-1 text-[11px] uppercase tracking-wider text-amber-400/80">Admin</div>
                                 <a href="#dashboard" data-view="dashboard" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Dashboard</a>
+                                <a href="article-studio.html" class="block px-3 py-2 rounded-lg text-amber-200 hover:text-white border border-transparent">Article Studio ↗</a>
+                                <a href="publication-studio.html" class="block px-3 py-2 rounded-lg text-amber-200 hover:text-white border border-transparent">Publication Studio ↗</a>
                                 <a href="#publications" data-view="publications" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Publications</a>
                                 <a href="#articles" data-view="articles" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Articles</a>
                                 <a href="#article-sources" data-view="article-sources" class="side-link block px-3 py-2 rounded-lg text-gray-300 hover:text-white border border-transparent">Articles: sources</a>
@@ -108,6 +124,24 @@
             <p>&copy; 2026 Ebayednoob. All Rights Reserved.</p>
         </footer>
     </div>
+
+    <dialog id="username-dialog" class="bg-gray-900 text-gray-100 border border-gray-700 rounded-xl p-0 w-[min(30rem,calc(100vw-2rem))]">
+        <form id="username-form" method="dialog" class="p-6 space-y-4">
+            <div>
+                <h2 class="text-lg font-semibold">Choose your username</h2>
+                <p id="username-intro" class="text-sm text-gray-400 mt-1">This is how you appear across the site. You can change it once a week.</p>
+            </div>
+            <div>
+                <label class="lbl" for="username-input">Username</label>
+                <input id="username-input" class="field" autocomplete="username" maxlength="20" required>
+                <p id="username-status" class="text-xs mt-1 text-gray-500">3–20 letters, numbers, dots, dashes or underscores.</p>
+            </div>
+            <div class="flex justify-between gap-2">
+                <button type="button" id="username-cancel" class="btn btn-ghost">Sign out</button>
+                <button type="submit" id="username-save" class="btn btn-primary" disabled>Save username</button>
+            </div>
+        </form>
+    </dialog>
 
     <dialog id="editor" class="bg-gray-900 text-gray-100 border border-gray-700 rounded-xl p-0 w-[min(44rem,calc(100vw-2rem))] max-h-[90vh]">
         <form id="editor-form" method="dialog" class="flex flex-col max-h-[90vh]">

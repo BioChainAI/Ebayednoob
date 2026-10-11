@@ -1,6 +1,7 @@
 // Control Panel: account area for every signed-in user, plus site management for admins.
 // UI gating here is for convenience only; firestore.rules is what actually protects the data.
-import { auth, db, signInWithGoogle, signOut, onAuthStateChanged, checkIsAdmin, isBootstrapAdmin, BOOTSTRAP_ADMIN_EMAILS, normalizeEmail } from "../assets/js/firebase.js";
+import { auth, db, signInWithGoogle, signOut, onAuthStateChanged, getAdminStatus, BOOTSTRAP_ADMIN_EMAILS, normalizeEmail, sessionEmail } from "../assets/js/firebase.js";
+import { validateUsername, checkUsername, claimUsername, cooldownRemaining, formatDuration, loadGuest, saveGuest, clearGuest, setGuestUsername } from "../assets/js/identity.js";
 import {
     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail,
     sendEmailVerification, updateProfile
@@ -9,6 +10,7 @@ import {
     doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { startBackground } from "../assets/js/background.js";
+import { isConnected, dispatchWorkflow } from "../assets/js/github-store.js";
 import { loadAll, saveItem, deleteItem, importSeed, loadFeedConfig, saveFeedConfig, loadArticleSyncConfig, saveArticleSyncConfig, COLLECTIONS } from "../assets/js/research-store.js";
 import { DEFAULT_ARTICLE_SYNC, PLATFORMS, normalizeArticleConfig, syncArticles, groupArticles, mergeArticleItems, fetchPlan, fetchArticleMeta, detectPlatform } from "../assets/js/article-sync.js";
 import { DEFAULT_FEED_CONFIG, SOURCE_TYPES, normalizeConfig, scanFeed, toList, slugify, safeUrl } from "../assets/js/feed-core.js";
@@ -19,8 +21,12 @@ startBackground();
 const REPO = "BioChainAI/Ebayednoob";
 const FEED_WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/update-research-feed.yml`;
 
-const state = { user: null, profile: null, isAdmin: false, feedConfig: null };
-const root = $("#view-root");
+const state = { user: null, profile: null, isAdmin: false, adminStatus: null, guest: null, feedConfig: null };
+let viewTimers = [];
+// Each route renders into a fresh container. Views capture it when they start, so a slow view
+// that finishes after you navigate away writes into a detached element, not the new page.
+const viewHost = $("#view-root");
+let currentView = viewHost;
 
 // ---------- Auth screen ----------
 
@@ -84,60 +90,161 @@ $("#forgot-btn").addEventListener("click", async () => {
 
 const logout = () => signOut(auth);
 $("#header-logout").addEventListener("click", logout);
+$("#header-signin").addEventListener("click", () => showLogin());
+$("#side-signin").addEventListener("click", (e) => { e.preventDefault(); showLogin(); });
 
 function showScreen(name) {
     for (const s of ["loading", "login", "app"]) $(`#view-${s}`).classList.toggle("hidden", s !== name);
 }
 
+const displayName = () => state.profile?.username || state.guest?.username || "";
+
+function renderIdentity() {
+    const u = state.user;
+    const name = displayName();
+    const role = u ? (state.isAdmin ? "Administrator" : "Member") : "Guest Observer";
+    const email = u ? sessionEmail(u) : "";
+    $("#header-identity").textContent = u ? `${name || u.displayName || email || "Member"}${state.isAdmin ? " · Admin" : ""}` : (name ? `${name} · Guest Observer` : "Guest Observer");
+    $("#header-signin").classList.toggle("hidden", !!u || !$("#view-login").classList.contains("hidden"));
+    $("#header-logout").classList.toggle("hidden", !u);
+    $("#guest-label").textContent = name && !u ? `${name} (Guest Observer)` : "Guest Observer";
+    const initial = (name || u?.displayName || email || "G")[0].toUpperCase();
+    $("#side-photo").src = u?.photoURL || u?.providerData?.find((p) => p.photoURL)?.photoURL || `https://placehold.co/88x88/1f2937/5eead4?text=${encodeURIComponent(initial)}`;
+    $("#side-name").textContent = name || (u ? "Choose a username" : "Guest Observer");
+    $("#side-role").innerHTML = `<span class="${state.isAdmin ? "text-amber-300" : u ? "text-teal-300" : "text-gray-300"}">${role}</span>`;
+    $("#side-email").textContent = email;
+    $("#admin-nav").classList.toggle("hidden", !state.isAdmin);
+    $$("[data-member-only]").forEach((el) => el.classList.toggle("hidden", !u));
+    $("#side-signin").classList.toggle("hidden", !!u);
+}
+
+function showLogin() {
+    showScreen("login");
+    renderIdentity();
+}
+
+function enterGuest() {
+    state.guest = loadGuest() || { createdAt: new Date().toISOString() };
+    showScreen("app");
+    renderIdentity();
+    if (!state.guest.username) openUsernameDialog({ guest: true });
+    route();
+}
+$("#guest-continue").addEventListener("click", enterGuest);
+
 onAuthStateChanged(auth, async (user) => {
     state.user = user;
-    $("#header-user").classList.toggle("hidden", !user);
-    $("#header-user").classList.toggle("flex", !!user);
-    $("#header-email").textContent = user?.email || "";
+    state.profile = null;
+    state.isAdmin = false;
+    state.adminStatus = null;
+    state.guest = loadGuest();
     if (!user) {
-        state.isAdmin = false;
-        showScreen("login");
+        // Returning Guest Observers go straight in; everyone else sees the sign-in screen.
+        if (state.guest?.username) enterGuest();
+        else showLogin();
         return;
     }
     showScreen("loading");
     await recordLogin(user);
-    state.isAdmin = await checkIsAdmin(user);
-    if (state.isAdmin && isBootstrapAdmin(user)) await ensureBootstrapAdminDoc(user);
-    $("#admin-nav").classList.toggle("hidden", !state.isAdmin);
-    $("#side-photo").src = user.photoURL || `https://placehold.co/88x88/1f2937/5eead4?text=${encodeURIComponent((user.displayName || user.email || "?")[0].toUpperCase())}`;
-    $("#side-name").textContent = user.displayName || user.email;
-    $("#side-role").innerHTML = state.isAdmin ? `<span class="text-amber-300">Administrator</span>` : `<span class="text-teal-300">Member</span>`;
+    state.adminStatus = await getAdminStatus(user);
+    state.isAdmin = state.adminStatus.isAdmin;
+    if (state.isAdmin) await ensureAdminDoc(user);
     showScreen("app");
+    renderIdentity();
+    if (!state.profile?.username) openUsernameDialog({ guest: false });
     route();
 });
 
+// Copy Google/Firebase account details into users/{uid} on every visit.
 async function recordLogin(user) {
     const ref = doc(db, "users", user.uid);
     try {
         const snap = await getDoc(ref);
+        const google = user.providerData.find((p) => p.providerId === "google.com");
         const base = {
-            email: user.email || "",
-            displayName: user.displayName || "",
-            photoURL: user.photoURL || "",
+            email: sessionEmail(user),
+            displayName: user.displayName || google?.displayName || "",
+            photoURL: user.photoURL || google?.photoURL || "",
             providers: user.providerData.map((p) => p.providerId),
             lastLoginAt: serverTimestamp()
         };
         if (!snap.exists()) base.createdAt = serverTimestamp();
         await setDoc(ref, base, { merge: true });
-        state.profile = { ...(snap.exists() ? snap.data() : {}), ...base };
+        state.profile = { ...(snap.exists() ? snap.data() : {}), ...base, lastLoginAt: new Date().toISOString() };
     } catch (e) {
         console.warn("Could not record login:", e.message);
-        state.profile = { email: user.email };
+        state.profile = { email: sessionEmail(user), syncError: e.message };
     }
 }
 
-// Keep a visible admins/{email} record for the bootstrap admin so the Users screen lists it.
-async function ensureBootstrapAdminDoc(user) {
-    const ref = doc(db, "admins", normalizeEmail(user.email));
+// Keep a visible admins/{email} record for admins so the Users screen lists them.
+async function ensureAdminDoc(user) {
+    const email = state.adminStatus?.tokenEmail;
+    if (!email || state.adminStatus.via !== "bootstrap email") return;
     try {
-        const snap = await getDoc(ref);
-        if (!snap.exists()) await setDoc(ref, { email: normalizeEmail(user.email), addedBy: "bootstrap", addedAt: serverTimestamp(), bootstrap: true });
+        const ref = doc(db, "admins", email);
+        if (!(await getDoc(ref)).exists()) await setDoc(ref, { email, addedBy: "bootstrap", addedAt: serverTimestamp(), bootstrap: true });
     } catch { /* rules not deployed yet: harmless */ }
+}
+
+// ---------- Username dialog ----------
+
+function openUsernameDialog({ guest }) {
+    const dlg = $("#username-dialog");
+    const input = $("#username-input");
+    const status = $("#username-status");
+    const save = $("#username-save");
+    $("#username-intro").textContent = guest
+        ? "Guest Observer usernames are saved only in this browser. We check that the name isn't already taken by a member. You can change it once a week."
+        : "This is how you appear across the site. Usernames are unique and can be changed once a week.";
+    $("#username-cancel").textContent = guest ? "Back" : "Sign out";
+    const suggestion = guest ? "" : (loadGuest()?.username || (state.user?.displayName || "").replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 20));
+    input.value = suggestion;
+    let seq = 0;
+    const check = async () => {
+        const mine = ++seq;
+        const name = input.value.trim();
+        save.disabled = true;
+        const problem = validateUsername(name);
+        if (problem) {
+            status.textContent = problem;
+            status.className = "text-xs mt-1 text-amber-300";
+            return;
+        }
+        status.textContent = "Checking…";
+        status.className = "text-xs mt-1 text-gray-400";
+        const r = await checkUsername(name, state.user?.uid);
+        if (mine !== seq) return;
+        status.textContent = r.available ? "Available" : r.reason;
+        status.className = `text-xs mt-1 ${r.available ? "text-emerald-300" : "text-red-300"}`;
+        save.disabled = !r.available;
+    };
+    let t;
+    input.oninput = () => { clearTimeout(t); t = setTimeout(check, 300); };
+    $("#username-cancel").onclick = () => {
+        dlg.close();
+        if (guest) { state.guest = loadGuest(); if (!state.guest?.username) showLogin(); }
+        else logout();
+    };
+    dlg.oncancel = (e) => e.preventDefault(); // a username is required to continue
+    $("#username-form").onsubmit = async (e) => {
+        e.preventDefault();
+        save.disabled = true;
+        try {
+            if (guest) state.guest = await setGuestUsername(input.value);
+            else state.profile = await claimUsername(state.user, state.profile, input.value);
+            dlg.close();
+            renderIdentity();
+            route();
+            toast("Username saved.", "success");
+        } catch (err) {
+            status.textContent = err.message;
+            status.className = "text-xs mt-1 text-red-300";
+        }
+    };
+    dlg.showModal();
+    if (suggestion) check();
+    input.focus();
 }
 
 // ---------- Routing ----------
@@ -145,6 +252,7 @@ async function ensureBootstrapAdminDoc(user) {
 const VIEWS = {
     overview: renderOverview,
     profile: renderProfile,
+    session: renderSession,
     security: renderSecurity,
     dashboard: renderDashboard,
     publications: () => renderCollection("publications"),
@@ -157,18 +265,45 @@ const VIEWS = {
 };
 const ADMIN_VIEWS = new Set(["dashboard", "publications", "articles", "article-sources", "feed-curated", "feed-automation", "users", "data"]);
 
+const MEMBER_VIEWS = new Set(["security"]);
+
 function route() {
-    if (!state.user) return;
+    if (!state.user && !state.guest) return;
+    viewTimers.forEach(clearInterval);
+    viewTimers = [];
     let view = location.hash.replace(/^#/, "") || (state.isAdmin ? "dashboard" : "overview");
-    if (!VIEWS[view] || (ADMIN_VIEWS.has(view) && !state.isAdmin)) view = "overview";
+    if (!VIEWS[view] || (ADMIN_VIEWS.has(view) && !state.isAdmin) || (MEMBER_VIEWS.has(view) && !state.user)) view = "overview";
     $$(".side-link").forEach((a) => { if (a.dataset.view === view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    root.oninput = root.onchange = root.onclick = null; // drop handlers set by the previous view
+    const root = currentView = document.createElement("div");
+    viewHost.replaceChildren(root);
     root.innerHTML = `<div class="panel p-10 text-center text-gray-400">Loading…</div>`;
     Promise.resolve(VIEWS[view]()).catch((e) => {
         root.innerHTML = `<div class="panel p-6 border-red-700/60"><h2 class="text-lg font-semibold text-red-300">Could not load this section</h2><p class="text-gray-400 mt-2 text-sm">${esc(e.message)}</p><p class="text-gray-500 mt-2 text-xs">If this says “Missing or insufficient permissions”, deploy firestore.rules (see control-panel/README.md).</p></div>`;
     });
 }
 window.addEventListener("hashchange", route);
+
+// "Run now" buttons: start the sync workflow through the GitHub API when a token with
+// Actions access is saved (Studio → GitHub); otherwise open the workflow page.
+document.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-run-sync]");
+    if (!b) return;
+    if (!isConnected()) {
+        window.open(FEED_WORKFLOW_URL, "_blank", "noopener");
+        toast("On GitHub, press “Run workflow”. Connect GitHub in a Studio to start it from here.", "info");
+        return;
+    }
+    b.disabled = true;
+    try {
+        await dispatchWorkflow("update-research-feed.yml");
+        toast("Sync started. Results appear on the site in a few minutes.", "success");
+    } catch (err) {
+        toast(`${err.message}. The token may need “Actions: Read and write”.`, "error");
+        window.open(FEED_WORKFLOW_URL, "_blank", "noopener");
+    } finally {
+        b.disabled = false;
+    }
+});
 
 const heading = (title, sub = "", actions = "") => `
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-5">
@@ -190,21 +325,50 @@ async function loadTutorialProgress(uid) {
     }
 }
 
+const providerLabel = (id) => ({ "google.com": "Google", password: "Email & password" }[id] || id);
+
 async function renderOverview() {
+    const root = currentView;
     const u = state.user;
+    const name = displayName();
+    if (!u) {
+        const g = state.guest || {};
+        root.innerHTML = `
+            ${heading(`Welcome${name ? `, ${esc(name)}` : ""}`, "You are browsing as a Guest Observer.")}
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="panel p-5">
+                    <h2 class="font-semibold mb-3">Guest Observer profile</h2>
+                    <dl class="text-sm grid grid-cols-[8rem_1fr] gap-y-2">
+                        <dt class="text-gray-400">Username</dt><dd>${esc(g.username || "—")}</dd>
+                        <dt class="text-gray-400">Role</dt><dd>Guest Observer</dd>
+                        <dt class="text-gray-400">Stored</dt><dd>Only in this browser</dd>
+                        <dt class="text-gray-400">Since</dt><dd>${esc(fmtDate(g.createdAt))}</dd>
+                    </dl>
+                </div>
+                <div class="panel p-5">
+                    <h2 class="font-semibold mb-2">Get a member account</h2>
+                    <p class="text-sm text-gray-400">Sign in with Google or email to keep your username across devices, save tutorial progress and, for site admins, manage the site.</p>
+                    <button id="ov-signin" class="btn btn-blue btn-sm mt-3">Sign in</button>
+                </div>
+            </div>`;
+        $("#ov-signin").onclick = showLogin;
+        return;
+    }
     const progress = await loadTutorialProgress(u.uid);
     const done = progress.filter(([, v]) => v).length;
+    const email = sessionEmail(u);
     root.innerHTML = `
-        ${heading(`Welcome${u.displayName ? `, ${esc(u.displayName.split(" ")[0])}` : ""}`, "Your Ebayednoob account at a glance.")}
+        ${heading(`Welcome${name ? `, ${esc(name)}` : ""}`, "Your Ebayednoob account at a glance.")}
         <div class="grid md:grid-cols-2 gap-4">
             <div class="panel p-5">
                 <h2 class="font-semibold mb-3">Account</h2>
                 <dl class="text-sm grid grid-cols-[8rem_1fr] gap-y-2">
-                    <dt class="text-gray-400">Email</dt><dd class="break-all">${esc(u.email || "—")} ${u.emailVerified ? `<span class="chip">verified</span>` : `<span class="chip !text-amber-200 !border-amber-400/50 !bg-amber-500/10">unverified</span>`}</dd>
-                    <dt class="text-gray-400">Name</dt><dd>${esc(u.displayName || "—")}</dd>
-                    <dt class="text-gray-400">Sign-in</dt><dd>${u.providerData.map((x) => esc(x.providerId === "google.com" ? "Google" : x.providerId === "password" ? "Email & password" : x.providerId)).join(", ")}</dd>
+                    <dt class="text-gray-400">Username</dt><dd>${esc(name || "—")}</dd>
+                    <dt class="text-gray-400">Email</dt><dd class="break-all">${esc(email || "—")}</dd>
+                    <dt class="text-gray-400">Name</dt><dd>${esc(state.profile?.displayName || "—")}</dd>
+                    <dt class="text-gray-400">Sign-in</dt><dd>${u.providerData.map((x) => esc(providerLabel(x.providerId))).join(", ")}</dd>
                     <dt class="text-gray-400">Member since</dt><dd>${esc(fmtDate(u.metadata.creationTime))}</dd>
-                    <dt class="text-gray-400">Role</dt><dd>${state.isAdmin ? `<span class="text-amber-300 font-semibold">Administrator</span>` : "Member"}</dd>
+                    <dt class="text-gray-400">Role</dt><dd>${state.isAdmin ? `<span class="text-amber-300 font-semibold">Administrator</span>` : `Member <a href="#session" class="text-xs text-teal-300 hover:underline ml-1">why?</a>`}</dd>
                 </dl>
             </div>
             <div class="panel p-5">
@@ -213,8 +377,9 @@ async function renderOverview() {
                     <li><a class="text-teal-300 hover:underline" href="../Pages/Research/index.html#publications">Research publications</a></li>
                     <li><a class="text-teal-300 hover:underline" href="../Pages/Research/index.html#stay-current">Stay Current feed</a></li>
                     <li><a class="text-teal-300 hover:underline" href="../Pages/Research/index.html#articles">Articles</a></li>
-                    <li><a class="text-teal-300 hover:underline" href="#profile">Choose your feed topics</a></li>
-                    ${state.isAdmin ? `<li><a class="text-amber-300 hover:underline" href="#dashboard">Admin dashboard</a></li>` : ""}
+                    <li><a class="text-teal-300 hover:underline" href="#profile">Username &amp; feed topics</a></li>
+                    <li><a class="text-teal-300 hover:underline" href="#session">Session &amp; sync details</a></li>
+                    ${state.isAdmin ? `<li><a class="text-amber-300 hover:underline" href="#dashboard">Admin dashboard</a></li><li><a class="text-amber-300 hover:underline" href="article-studio.html">Article Studio</a> · <a class="text-amber-300 hover:underline" href="publication-studio.html">Publication Studio</a></li>` : ""}
                 </ul>
             </div>
             <div class="panel p-5 md:col-span-2">
@@ -224,32 +389,74 @@ async function renderOverview() {
         </div>`;
 }
 
+// Username card with a live countdown to the next allowed change.
+function usernameCardHtml() {
+    return `
+        <div class="panel p-5">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <div class="lbl">Username</div>
+                    <div class="text-xl font-semibold">${esc(displayName() || "—")}</div>
+                    <div class="text-xs text-gray-500 mt-1">${state.user ? "Unique across all members." : "Stored in this browser only; checked against member usernames."} One change per week.</div>
+                </div>
+                <div class="text-right">
+                    <div id="un-timer" class="text-sm"></div>
+                    <button id="un-change" class="btn btn-ghost btn-sm mt-2">Change username</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function startUsernameTimer() {
+    const changedAt = state.user ? state.profile?.usernameChangedAt : state.guest?.usernameChangedAt;
+    const tick = () => {
+        const el = $("#un-timer");
+        if (!el) return;
+        const wait = displayName() ? cooldownRemaining(changedAt) : 0;
+        el.innerHTML = wait ? `<span class="text-gray-400">Next change in</span> <span class="font-mono text-amber-200">${esc(formatDuration(wait))}</span>` : `<span class="text-emerald-300">You can change it now</span>`;
+        $("#un-change").disabled = !!wait;
+    };
+    tick();
+    viewTimers.push(setInterval(tick, 1000));
+    $("#un-change").onclick = () => openUsernameDialog({ guest: !state.user });
+}
+
 async function renderProfile() {
+    const root = currentView;
     if (!state.feedConfig) state.feedConfig = (await loadFeedConfig()).config;
-    const chosen = new Set(state.profile?.preferences?.feedTopics || []);
+    const prefs = state.user ? state.profile?.preferences : state.guest?.preferences;
+    const chosen = new Set(prefs?.feedTopics || []);
     const topics = state.feedConfig.topics.filter((t) => t.enabled);
     root.innerHTML = `
         ${heading("Profile & preferences")}
-        <form id="profile-form" class="panel p-5 space-y-5 max-w-2xl">
-            <div><label class="lbl" for="pf-name">Display name</label><input id="pf-name" class="field" value="${esc(state.user.displayName || "")}"></div>
-            <fieldset>
-                <legend class="lbl">Stay Current topics</legend>
-                <p class="text-xs text-gray-500 mb-2">When you are signed in, the Stay Current feed opens filtered to these topics. Leave all unchecked to see everything.</p>
-                <div class="grid sm:grid-cols-2 gap-2">
-                    ${topics.map((t) => `<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="topic" value="${esc(t.name)}" ${chosen.has(t.name) ? "checked" : ""} class="accent-teal-500"> ${esc(t.name)}</label>`).join("")}
-                </div>
-            </fieldset>
-            <button class="btn btn-primary">Save</button>
-        </form>`;
+        <div class="space-y-4 max-w-2xl">
+            ${usernameCardHtml()}
+            <form id="profile-form" class="panel p-5 space-y-5">
+                ${state.user ? `<div><label class="lbl" for="pf-name">Display name</label><input id="pf-name" class="field" value="${esc(state.profile?.displayName || state.user.displayName || "")}"></div>` : ""}
+                <fieldset>
+                    <legend class="lbl">Stay Current topics</legend>
+                    <p class="text-xs text-gray-500 mb-2">The Stay Current feed opens filtered to these topics. Leave all unchecked to see everything.</p>
+                    <div class="grid sm:grid-cols-2 gap-2">
+                        ${topics.map((t) => `<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="topic" value="${esc(t.name)}" ${chosen.has(t.name) ? "checked" : ""} class="accent-teal-500"> ${esc(t.name)}</label>`).join("")}
+                    </div>
+                </fieldset>
+                <button class="btn btn-primary">Save</button>
+            </form>
+        </div>`;
+    startUsernameTimer();
     $("#profile-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const name = $("#pf-name").value.trim();
         const feedTopics = $$('input[name="topic"]:checked').map((i) => i.value);
         try {
-            if (name !== (state.user.displayName || "")) await updateProfile(state.user, { displayName: name });
-            await setDoc(doc(db, "users", state.user.uid), { displayName: name, preferences: { feedTopics } }, { merge: true });
-            state.profile = { ...state.profile, displayName: name, preferences: { feedTopics } };
-            $("#side-name").textContent = name || state.user.email;
+            if (!state.user) {
+                state.guest = { ...state.guest, preferences: { feedTopics } };
+                saveGuest(state.guest);
+            } else {
+                const name = $("#pf-name").value.trim();
+                if (name !== (state.user.displayName || "")) await updateProfile(state.user, { displayName: name });
+                await setDoc(doc(db, "users", state.user.uid), { displayName: name, preferences: { feedTopics } }, { merge: true });
+                state.profile = { ...state.profile, displayName: name, preferences: { feedTopics } };
+            }
             toast("Profile saved.", "success");
         } catch (err) {
             toast(`Could not save: ${err.message}`, "error");
@@ -257,7 +464,91 @@ async function renderProfile() {
     });
 }
 
+// ---------- Session & sync ----------
+
+function kv(rows) {
+    return `<dl class="text-sm grid grid-cols-[10rem_1fr] gap-y-1.5">${rows.map(([k, v]) => `<dt class="text-gray-400">${esc(k)}</dt><dd class="break-all">${v}</dd>`).join("")}</dl>`;
+}
+
+async function renderSession() {
+    const root = currentView;
+    const u = state.user;
+    if (!u) {
+        const g = state.guest || {};
+        root.innerHTML = `
+            ${heading("Session & sync", "Guest Observer session: nothing is sent to the server.")}
+            <div class="space-y-4 max-w-3xl">
+                <div class="panel p-5">${kv([["Mode", "Guest Observer"], ["Username", esc(g.username || "—")], ["Stored in", "This browser (localStorage)"], ["Created", esc(fmtDate(g.createdAt))], ["Feed topics", esc((g.preferences?.feedTopics || []).join(", ") || "All")], ["Admin features", `<span class="text-gray-300">Not available to guests</span>`]])}</div>
+                <div class="panel p-5 flex flex-wrap gap-2">
+                    <button id="ss-signin" class="btn btn-blue btn-sm">Sign in to sync</button>
+                    <button id="ss-clear" class="btn btn-danger btn-sm">Delete guest profile</button>
+                </div>
+            </div>`;
+        $("#ss-signin").onclick = showLogin;
+        $("#ss-clear").onclick = () => {
+            if (!confirm("Delete the Guest Observer profile stored in this browser?")) return;
+            clearGuest();
+            state.guest = null;
+            showLogin();
+        };
+        return;
+    }
+    const st = state.adminStatus || {};
+    const google = u.providerData.find((p) => p.providerId === "google.com");
+    const p = state.profile || {};
+    const ok = (b) => (b ? `<span class="text-emerald-300">yes</span>` : `<span class="text-red-300">no</span>`);
+    const diagnosis = state.isAdmin
+        ? `<p class="text-emerald-300">Admin access granted via ${esc(st.via)}.</p>`
+        : `<div class="space-y-2 text-gray-300">
+            <p>You are signed in as a <b>Member</b>. ${st.notes?.length ? esc(st.notes.join(" ")) : `${esc(st.tokenEmail || "This email")} is not the bootstrap admin and is not in the admins list.`}</p>
+            ${!st.tokenEmail ? `<p>Your Google account reports <b>${esc(google?.email || "no email")}</b>, but the sign-in token the security rules see has no email. This happens when Firebase Authentication is set to allow multiple accounts per email. Fix it either way:</p>
+            <ol class="list-decimal pl-5 space-y-1">
+                <li>Firebase console → Authentication → Settings → <b>User account linking</b> → “Link accounts that use the same email”, then sign out and back in. Or:</li>
+                <li>Add your UID to <code>ownerUids()</code> in <code>firestore.rules</code> and to <code>BOOTSTRAP_ADMIN_UIDS</code> in <code>assets/js/firebase.js</code>: <code class="text-teal-200">'${esc(u.uid)}'</code></li>
+            </ol>` : ""}
+        </div>`;
+    root.innerHTML = `
+        ${heading("Session & sync", "What your Google account, Firebase Authentication and the site database currently report.", `<button id="ss-sync" class="btn btn-primary">Sync now</button>`)}
+        <div class="space-y-4 max-w-4xl">
+            <div class="panel p-5 ${state.isAdmin ? "border-emerald-600/50" : "border-amber-600/50"}">
+                <h2 class="font-semibold mb-2">Admin access</h2>${diagnosis}
+            </div>
+            <div class="panel p-5"><h2 class="font-semibold mb-3">Google account</h2>${google ? kv([
+                ["Name", esc(google.displayName || "—")], ["Email", esc(google.email || "—")],
+                ["Photo", google.photoURL ? `<img src="${esc(google.photoURL)}" alt="" referrerpolicy="no-referrer" class="w-8 h-8 rounded-full inline-block">` : "—"],
+                ["Google ID", esc(google.uid)]]) : `<p class="text-sm text-gray-400">This session did not sign in with Google.</p>`}</div>
+            <div class="panel p-5"><h2 class="font-semibold mb-3">Firebase Authentication</h2>${kv([
+                ["UID", `<code>${esc(u.uid)}</code> <button id="ss-copy" class="text-xs text-teal-300 hover:underline">copy</button>`],
+                ["Account email", esc(u.email || "(none)")], ["Email verified", ok(u.emailVerified)],
+                ["Token email", esc(st.tokenEmail || "(none)")], ["Token email trusted", ok(st.tokenEmailVerified)],
+                ["Signed in with", esc(providerLabel(st.signInProvider || "—"))],
+                ["Providers", esc(u.providerData.map((x) => providerLabel(x.providerId)).join(", "))],
+                ["Created", esc(fmtDate(u.metadata.creationTime, { dateStyle: "medium", timeStyle: "short" }))],
+                ["Last sign-in", esc(fmtDate(u.metadata.lastSignInTime, { dateStyle: "medium", timeStyle: "short" }))]])}</div>
+            <div class="panel p-5"><h2 class="font-semibold mb-3">Site database (Firestore users/${esc(u.uid.slice(0, 6))}…)</h2>${p.syncError ? `<p class="text-red-300 text-sm mb-2">Could not read or write your profile: ${esc(p.syncError)}</p>` : ""}${kv([
+                ["Username", esc(p.username || "—")], ["Username changed", esc(p.usernameChangedAt ? fmtDate(tsToDate(p.usernameChangedAt), { dateStyle: "medium", timeStyle: "short" }) : "—")],
+                ["Display name", esc(p.displayName || "—")], ["Stored email", esc(p.email || "—")],
+                ["Feed topics", esc((p.preferences?.feedTopics || []).join(", ") || "All")],
+                ["Joined", esc(fmtDate(tsToDate(p.createdAt)))], ["Last login", esc(p.lastLoginAt ? timeAgo(tsToDate(p.lastLoginAt)) : "—")]])}</div>
+        </div>`;
+    $("#ss-copy").onclick = () => navigator.clipboard?.writeText(u.uid).then(() => toast("UID copied.", "success"));
+    $("#ss-sync").onclick = async () => {
+        try {
+            await u.reload();
+            await recordLogin(auth.currentUser || u);
+            state.adminStatus = await getAdminStatus(auth.currentUser || u, { forceRefresh: true });
+            state.isAdmin = state.adminStatus.isAdmin;
+            renderIdentity();
+            toast("Synced with your Google account and the site database.", "success");
+            route();
+        } catch (err) {
+            toast(`Sync failed: ${err.message}`, "error");
+        }
+    };
+}
+
 function renderSecurity() {
+    const root = currentView;
     const u = state.user;
     const hasPassword = u.providerData.some((p) => p.providerId === "password");
     root.innerHTML = `
@@ -287,6 +578,7 @@ function renderSecurity() {
 // ---------- Admin: dashboard ----------
 
 async function renderDashboard() {
+    const root = currentView;
     const [pubs, arts, items, users, admins, feed] = await Promise.all([
         loadAll("publications"), loadAll("articles"), loadAll("feedItems"),
         getDocs(collection(db, "users")).then((s) => s.size).catch(() => "—"),
@@ -309,7 +601,7 @@ async function renderDashboard() {
         <div class="panel p-5 text-sm text-gray-300 space-y-2">
             <h2 class="font-semibold text-gray-100">Stay Current snapshot</h2>
             <p>A GitHub Action scans every enabled source daily using the settings saved under <a class="text-teal-300 hover:underline" href="#feed-automation">Feed: automation</a>, then publishes <code class="text-teal-200">Pages/Research/data/feed.json</code> and grows the archive. Visitors can also press “Refresh feed” for a live scan in their browser.</p>
-            <a class="btn btn-ghost btn-sm" href="${FEED_WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Run the snapshot workflow now</a>
+            <button data-run-sync class="btn btn-ghost btn-sm">Run the snapshot workflow now</button>
             ${failing.length ? `<p class="text-amber-300">Failing in the last snapshot: ${failing.map((f) => esc(`${f.name} (${f.error})`)).join(", ")}</p>` : ""}
         </div>`;
 }
@@ -378,7 +670,10 @@ function setPath(o, p, v) {
     cur[keys.at(-1)] = v;
 }
 
+const STUDIO_PAGES = { articles: "article-studio.html", publications: "publication-studio.html" };
+
 async function renderCollection(name) {
+    const root = currentView;
     const schema = SCHEMAS[name];
     if (name === "feedItems" && !state.feedConfig) state.feedConfig = (await loadFeedConfig()).config;
     const items = await loadAll(name);
@@ -395,6 +690,7 @@ async function renderCollection(name) {
                 <td class="py-2.5 pr-3 text-sm text-gray-400 whitespace-nowrap">${esc(fmtDate(it.date))}</td>
                 <td class="py-2.5 pr-3"><span class="chip ${it.status === "published" ? "" : "!text-gray-300 !border-gray-500/50 !bg-gray-600/20"}">${esc(it.status || "draft")}</span></td>
                 <td class="py-2.5 text-right whitespace-nowrap">
+                    ${STUDIO_PAGES[name] ? `<a href="${STUDIO_PAGES[name]}?id=${encodeURIComponent(it.id)}" class="btn btn-ghost btn-sm">Studio</a>` : ""}
                     <button data-edit="${esc(it.id)}" class="btn btn-ghost btn-sm">Edit</button>
                     <button data-toggle="${esc(it.id)}" class="btn btn-ghost btn-sm">${it.status === "published" ? "Unpublish" : "Publish"}</button>
                     <button data-delete="${esc(it.id)}" class="btn btn-danger btn-sm">Delete</button>
@@ -403,7 +699,7 @@ async function renderCollection(name) {
     };
 
     root.innerHTML = `
-        ${heading(schema.title, schema.sub, `<a class="btn btn-ghost" href="../Pages/Research/index.html#${name === "feedItems" ? "stay-current" : name}" target="_blank" rel="noopener">View page</a><button id="coll-new" class="btn btn-primary">New ${schema.noun}</button>`)}
+        ${heading(schema.title, schema.sub, `<a class="btn btn-ghost" href="../Pages/Research/index.html#${name === "feedItems" ? "stay-current" : name}" target="_blank" rel="noopener">View page</a>${STUDIO_PAGES[name] ? `<a class="btn btn-ghost" href="${STUDIO_PAGES[name]}">Write in Studio</a>` : ""}<button id="coll-new" class="btn btn-primary">${STUDIO_PAGES[name] ? "Quick add" : `New ${schema.noun}`}</button>`)}
         <div class="panel p-4">
             <input id="coll-search" type="search" class="field mb-3" placeholder="Search ${schema.noun}s…" aria-label="Search">
             <div class="overflow-x-auto"><table class="w-full text-left">
@@ -540,6 +836,7 @@ function addFetchDetailsButton(form) {
 // ---------- Admin: article sources ----------
 
 async function renderArticleSources() {
+    const root = currentView;
     const loaded = await loadArticleSyncConfig();
     let draft = structuredClone(loaded.config);
     let dirty = false;
@@ -612,12 +909,12 @@ async function renderArticleSources() {
                     <label class="flex items-start gap-2 text-sm md:col-span-3"><input type="checkbox" data-bind="linkedinOnly" ${draft.linkedinOnly ? "checked" : ""} class="accent-teal-500 mt-1"><span>Show LinkedIn articles only<br><span class="text-xs text-gray-500">Posts on other sites appear only as “Also read on” buttons on their LinkedIn article. Turn off to also list articles that exist only elsewhere.</span></span></label>
                     <div><label class="lbl" for="as-th">Title match strictness (0.5–1)</label><input id="as-th" type="number" step="0.05" min="0.5" max="1" data-bind="matchThreshold" data-num value="${esc(draft.matchThreshold)}" class="field"><p class="text-xs text-gray-500 mt-1">Higher means titles must match more closely. Default 0.75.</p></div>
                     <div><label class="lbl" for="as-days">Max days between cross-posts</label><input id="as-days" type="number" min="1" data-bind="maxDaysApart" data-num value="${esc(draft.maxDaysApart)}" class="field"><p class="text-xs text-gray-500 mt-1">Posts further apart are never combined.</p></div>
-                    <div><label class="lbl" for="as-proxy">CORS proxy for browser checks</label><input id="as-proxy" data-bind="corsProxy" value="${esc(draft.corsProxy)}" class="field"><p class="text-xs text-gray-500 mt-1">Used by “Check for new articles” and Test sync. The daily scan reads directly.</p></div>
+                    <div><label class="lbl" for="as-proxy">CORS proxy for browser checks</label><textarea id="as-proxy" data-bind="corsProxy" rows="3" class="field">${esc(draft.corsProxy.split(/[\s,]+/).join("\n"))}</textarea><p class="text-xs text-gray-500 mt-1">One relay per line, tried in order. Used by “Check for new articles” and Test sync. The daily scan reads directly.</p></div>
                     <div class="md:col-span-3"><label class="lbl" for="as-hidden">Hidden URLs (one per line)</label><textarea id="as-hidden" data-bind="hiddenUrls" data-list rows="3" class="field">${esc(draft.hiddenUrls.join("\n"))}</textarea><p class="text-xs text-gray-500 mt-1">Posts here are never shown or matched.</p></div>
                 </div>
                 <div class="flex flex-wrap gap-2 mt-4">
                     <button id="as-defaults" class="btn btn-ghost btn-sm">Reset to defaults</button>
-                    <a class="btn btn-ghost btn-sm" href="${FEED_WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Run the daily sync now</a>
+                    <button data-run-sync class="btn btn-ghost btn-sm">Run the daily sync now</button>
                 </div>
             </div>
             <div id="as-preview">${previewHtml()}</div>`;
@@ -676,7 +973,7 @@ async function renderArticleSources() {
                 draft = cfg;
                 dirty = false;
                 loaded.origin = "firestore";
-                loaded.updatedBy = state.user.email;
+                loaded.updatedBy = sessionEmail(state.user);
                 draw();
                 toast("Saved. The next sync will use these sources.", "success");
             } catch (err) { toast(`Could not save: ${err.message}`, "error"); }
@@ -719,6 +1016,7 @@ async function renderArticleSources() {
 // ---------- Admin: feed automation ----------
 
 async function renderAutomation() {
+    const root = currentView;
     const loaded = await loadFeedConfig();
     let draft = structuredClone(loaded.config);
     let dirty = false;
@@ -768,7 +1066,7 @@ async function renderAutomation() {
                 <div class="grid md:grid-cols-2 gap-4 mt-4">
                     <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-bind="balanceTopics" ${draft.balanceTopics ? "checked" : ""} class="accent-teal-500 mt-1"><span>Balance topics<br><span class="text-xs text-gray-500">Rotate through topics so one busy field can't fill the whole latest view.</span></span></label>
                     <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-bind="requireTopicMatch" ${draft.requireTopicMatch ? "checked" : ""} class="accent-teal-500 mt-1"><span>Require a topic match<br><span class="text-xs text-gray-500">Drop scanned items whose title/abstract match none of the keywords.</span></span></label>
-                    <div><label class="lbl" for="p-proxy">CORS proxy for browser scans</label><input id="p-proxy" data-bind="corsProxy" value="${esc(draft.corsProxy)}" class="field" placeholder="https://api.allorigins.win/raw?url="><p class="text-xs text-gray-500 mt-1">Prefix (or template with {url}) used when a source blocks direct browser access. The scheduled scan never uses it.</p></div>
+                    <div><label class="lbl" for="p-proxy">CORS proxy for browser scans</label><textarea id="p-proxy" data-bind="corsProxy" rows="3" class="field">${esc(draft.corsProxy.split(/[\s,]+/).join("\n"))}</textarea><p class="text-xs text-gray-500 mt-1">One relay per line (prefix, or template with {url}), tried in order when a source blocks direct browser access. The scheduled scan never uses it.</p></div>
                     <div><label class="lbl" for="p-mail">Contact email for APIs (optional)</label><input id="p-mail" data-bind="contactEmail" value="${esc(draft.contactEmail)}" class="field" type="email"><p class="text-xs text-gray-500 mt-1">Sent to OpenAlex as <code>mailto</code> for its faster “polite pool”.</p></div>
                     <div class="md:col-span-2"><label class="lbl" for="p-block">Blocked URLs (one per line)</label><textarea id="p-block" data-bind="blockedUrls" data-list rows="2" class="field">${esc(draft.blockedUrls.join("\n"))}</textarea></div>
                 </div>
@@ -791,7 +1089,7 @@ async function renderAutomation() {
                 <button id="au-export" class="btn btn-ghost btn-sm">Export JSON</button>
                 <label class="btn btn-ghost btn-sm cursor-pointer">Import JSON<input id="au-import" type="file" accept="application/json" class="hidden"></label>
                 <button id="au-defaults" class="btn btn-ghost btn-sm">Reset to defaults</button>
-                <a class="btn btn-ghost btn-sm" href="${FEED_WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Run snapshot workflow</a>
+                <button data-run-sync class="btn btn-ghost btn-sm">Run snapshot workflow</button>
             </div>
 
             <div id="au-results"></div>`;
@@ -848,7 +1146,7 @@ async function renderAutomation() {
                 state.feedConfig = cfg;
                 dirty = false;
                 loaded.origin = "firestore";
-                loaded.updatedBy = state.user.email;
+                loaded.updatedBy = sessionEmail(state.user);
                 draw();
                 toast("Settings saved. The next scan will use them.", "success");
             } catch (err) { toast(`Could not save: ${err.message}`, "error"); }
@@ -889,6 +1187,7 @@ function download(filename, data) {
 // ---------- Admin: users & admins ----------
 
 async function renderUsers() {
+    const root = currentView;
     const [usersSnap, adminsSnap] = await Promise.all([getDocs(collection(db, "users")), getDocs(collection(db, "admins"))]);
     const users = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => String(tsToDate(b.lastLoginAt) || "").localeCompare(String(tsToDate(a.lastLoginAt) || "")));
     const admins = new Map(adminsSnap.docs.map((d) => [d.id, d.data()]));
@@ -917,7 +1216,7 @@ async function renderUsers() {
                     const email = normalizeEmail(u.email);
                     const admin = admins.has(email);
                     return `<tr class="border-t border-gray-700/60">
-                        <td class="py-2 pr-3"><div class="text-gray-100">${esc(u.displayName || "—")}</div><div class="text-xs text-gray-500 break-all">${esc(u.email || u.uid)}</div></td>
+                        <td class="py-2 pr-3"><div class="text-gray-100">${u.username ? `@${esc(u.username)} · ` : ""}${esc(u.displayName || "—")}</div><div class="text-xs text-gray-500 break-all">${esc(u.email || u.uid)}</div></td>
                         <td class="py-2 pr-3 text-gray-400">${esc((u.providers || []).map((p) => (p === "google.com" ? "Google" : p === "password" ? "Email" : p)).join(", ") || "—")}</td>
                         <td class="py-2 pr-3 text-gray-400 whitespace-nowrap">${esc(fmtDate(tsToDate(u.createdAt)))}</td>
                         <td class="py-2 pr-3 text-gray-400 whitespace-nowrap">${u.lastLoginAt ? esc(timeAgo(tsToDate(u.lastLoginAt))) : "—"}</td>
@@ -931,7 +1230,7 @@ async function renderUsers() {
         email = normalizeEmail(email);
         if (!email) return;
         try {
-            await setDoc(doc(db, "admins", email), { email, addedBy: state.user.email, addedAt: serverTimestamp() });
+            await setDoc(doc(db, "admins", email), { email, addedBy: sessionEmail(state.user), addedAt: serverTimestamp() });
             toast(`${email} is now an admin.`, "success");
             renderUsers();
         } catch (err) { toast(err.message, "error"); }
@@ -940,7 +1239,7 @@ async function renderUsers() {
     root.querySelectorAll("[data-grant]").forEach((b) => b.addEventListener("click", () => grant(b.dataset.grant)));
     root.querySelectorAll("[data-revoke]").forEach((b) => b.addEventListener("click", async () => {
         const email = b.dataset.revoke;
-        if (email === normalizeEmail(state.user.email) && !confirm("Revoke your own admin access?")) return;
+        if (email === sessionEmail(state.user) && !confirm("Revoke your own admin access?")) return;
         if (!confirm(`Revoke admin access for ${email}?`)) return;
         try {
             await deleteDoc(doc(db, "admins", email));
@@ -953,6 +1252,7 @@ async function renderUsers() {
 // ---------- Admin: data tools ----------
 
 function renderDataTools() {
+    const root = currentView;
     root.innerHTML = `
         ${heading("Data tools")}
         <div class="space-y-4 max-w-3xl">
