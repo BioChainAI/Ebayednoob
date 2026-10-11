@@ -37,3 +37,22 @@ The daily workflow scans server-side and commits `Pages/Research/data/feed.json`
 **Refresh feed** on the page runs the same scan live in the visitor's browser; sources that block browser
 requests go through the CORS proxy configured under Feed: automation.
 If `main` is branch-protected, allow `github-actions[bot]` to push or the snapshot commit will fail.
+
+## Article sync (Articles tab)
+
+Configured under **Control Panel → Articles: sources** (stored in `settings/articleSync`). Each source is a page or
+feed URL; the platform is detected from the URL and can be changed.
+
+- **Substack / Medium:** any URL on the publication (even the writer dashboard) is read through its public RSS feed.
+- **LinkedIn / X:** their article lists are only shown to signed-in visitors, so automatic reading is best-effort.
+  If a source shows a red dot, either paste a **feed URL override** (an RSS/Atom feed for that profile, e.g. from
+  an RSS bridge service) or add the LinkedIn articles by hand under **Articles**. The **Fetch details** button in
+  the article editor fills in the title, summary, image and date from a public LinkedIn article URL.
+- **Combining cross-posts:** links you set by hand always win. Otherwise posts are combined when one links to the
+  other (for example "originally published on LinkedIn") or when their titles match closely and they were
+  published within the configured number of days. Two different posts from the same site are never combined.
+  LinkedIn is always the main link; other sites become "Also read on" buttons.
+- **LinkedIn only** (on by default): articles with no LinkedIn version are not listed. **Test sync** shows them
+  under "Not shown" with a **Save as article** button so you can attach the LinkedIn URL.
+- The daily workflow writes `Pages/Research/data/articles-feed.json` and keeps every post it has ever seen.
+  Visitors can press **Check for new articles** for a live check.

@@ -1,4 +1,5 @@
-# Refreshes the Research hub "Stay Current" snapshot (Pages/Research/data/feed*.json)
+# Refreshes the Research hub "Stay Current" snapshot (Pages/Research/data/feed*.json),
+# syncs your articles (articles-feed.json)
 # and redeploys the site. Runs daily and can be started manually from the Actions tab.
 name: Update research feed
 
@@ -37,7 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Pages/Research/data/feed.json Pages/Research/data/feed-archive.json
+          git add Pages/Research/data/feed.json Pages/Research/data/feed-archive.json Pages/Research/data/articles-feed.json
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else

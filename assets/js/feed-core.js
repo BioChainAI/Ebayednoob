@@ -194,14 +194,24 @@ export function parseXmlFeed(xml) {
             summary: stripHtml(tagContent(b, isAtom ? ["summary", "content"] : ["description", "content:encoded", "summary"])),
             authors: authors.map((a) => a.trim()).filter(Boolean),
             published: toIsoDate(stripHtml(tagContent(b, isAtom ? ["published", "updated"] : ["pubDate", "dc:date", "published", "prism:publicationDate"]))),
-            doi: stripHtml(tagContent(b, ["arxiv:doi", "prism:doi", "dc:identifier"])).replace(/^doi:\s*/i, "")
+            doi: stripHtml(tagContent(b, ["arxiv:doi", "prism:doi", "dc:identifier"])).replace(/^doi:\s*/i, ""),
+            ...bodyExtras(b)
         };
     });
 }
 
+// Links and the lead image inside an item's body, read before the HTML is stripped.
+// Used to spot cross-posts (e.g. a Substack post saying "originally published on LinkedIn").
+function bodyExtras(block) {
+    const body = decodeEntities(String(block).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"));
+    const links = [...new Set([...body.matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map((m) => decodeEntities(m[1])).filter((u) => /^https?:/i.test(u)))];
+    const img = body.match(/<(?:enclosure|media:content|media:thumbnail)\b[^>]*url\s*=\s*["']([^"']+)["']/i) || body.match(/<img\b[^>]*src\s*=\s*["']([^"']+)["']/i);
+    return { links, image: img ? decodeEntities(img[1]) : "" };
+}
+
 // ---------- Fetching ----------
 
-async function fetchText(url, { fetchImpl, cors, proxy, timeoutMs = 20000, accept }) {
+export async function fetchText(url, { fetchImpl, cors, proxy, timeoutMs = 20000, accept }) {
     const attempt = async (u) => {
         const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;

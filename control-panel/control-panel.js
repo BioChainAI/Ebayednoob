@@ -9,7 +9,8 @@ import {
     doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { startBackground } from "../assets/js/background.js";
-import { loadAll, saveItem, deleteItem, importSeed, loadFeedConfig, saveFeedConfig, COLLECTIONS } from "../assets/js/research-store.js";
+import { loadAll, saveItem, deleteItem, importSeed, loadFeedConfig, saveFeedConfig, loadArticleSyncConfig, saveArticleSyncConfig, COLLECTIONS } from "../assets/js/research-store.js";
+import { DEFAULT_ARTICLE_SYNC, PLATFORMS, normalizeArticleConfig, syncArticles, groupArticles, mergeArticleItems, fetchPlan, fetchArticleMeta, detectPlatform } from "../assets/js/article-sync.js";
 import { DEFAULT_FEED_CONFIG, SOURCE_TYPES, normalizeConfig, scanFeed, toList, slugify, safeUrl } from "../assets/js/feed-core.js";
 import { $, $$, esc, fmtDate, timeAgo, toast, fetchJson, resolveLink, SITE_ROOT, CROSSPOST_PLATFORMS } from "../assets/js/ui.js";
 
@@ -150,10 +151,11 @@ const VIEWS = {
     articles: () => renderCollection("articles"),
     "feed-curated": () => renderCollection("feedItems"),
     "feed-automation": renderAutomation,
+    "article-sources": renderArticleSources,
     users: renderUsers,
     data: renderDataTools
 };
-const ADMIN_VIEWS = new Set(["dashboard", "publications", "articles", "feed-curated", "feed-automation", "users", "data"]);
+const ADMIN_VIEWS = new Set(["dashboard", "publications", "articles", "article-sources", "feed-curated", "feed-automation", "users", "data"]);
 
 function route() {
     if (!state.user) return;
@@ -460,13 +462,16 @@ function fieldHtml(f, value) {
     }
 }
 
-function openEditor(name, item, onSaved) {
+// `prefill` seeds a new item (e.g. "Save as article" from the article sync preview).
+function openEditor(name, item, onSaved, prefill = null) {
     const schema = SCHEMAS[name];
     const dlg = $("#editor");
     const defaults = { status: "published", date: new Date().toISOString().slice(0, 10), type: "Paper" };
+    const values = item || prefill;
     $("#editor-title").textContent = item ? `Edit ${schema.noun}` : `New ${schema.noun}`;
-    $("#editor-fields").innerHTML = schema.fields.map((f) => fieldHtml(f, item ? getPath(item, f.key) : defaults[f.key])).join("");
+    $("#editor-fields").innerHTML = schema.fields.map((f) => fieldHtml(f, values ? (getPath(values, f.key) ?? defaults[f.key]) : defaults[f.key])).join("");
     const form = $("#editor-form");
+    if (name === "articles") addFetchDetailsButton(form);
 
     const close = () => dlg.close();
     $$("[data-close]", dlg).forEach((b) => (b.onclick = close));
@@ -496,6 +501,219 @@ function openEditor(name, item, onSaved) {
         }
     };
     dlg.showModal();
+}
+
+// Fill empty article fields from the LinkedIn page's public metadata (title, summary, image, date).
+function addFetchDetailsButton(form) {
+    const input = form.querySelector('[data-key="linkedinUrl"]');
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-ghost btn-sm mt-2";
+    btn.textContent = "Fetch details from this URL";
+    input.after(btn);
+    btn.onclick = async () => {
+        const url = input.value.trim();
+        if (!url) return toast("Paste the LinkedIn article URL first.", "error");
+        btn.disabled = true;
+        btn.textContent = "Fetching…";
+        try {
+            const { config } = await loadArticleSyncConfig();
+            const meta = await fetchArticleMeta(url, { proxy: config.corsProxy });
+            const fill = (key, v) => {
+                const el = form.querySelector(`[data-key="${key}"]`);
+                if (el && v && !el.value.trim()) el.value = v;
+            };
+            fill("title", meta.title);
+            fill("summary", meta.summary);
+            fill("coverImage", meta.image);
+            if (meta.published) form.querySelector('[data-key="date"]').value = meta.published.slice(0, 10);
+            toast(meta.title ? "Filled in what the page shares publicly. Review before saving." : "The page shared no details; fill them in by hand.", meta.title ? "success" : "error");
+        } catch (err) {
+            toast(`Could not read the page: ${err.message}`, "error");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Fetch details from this URL";
+        }
+    };
+}
+
+// ---------- Admin: article sources ----------
+
+async function renderArticleSources() {
+    const loaded = await loadArticleSyncConfig();
+    let draft = structuredClone(loaded.config);
+    let dirty = false;
+    let preview = null;
+
+    const platformOptions = (sel) => Object.entries(PLATFORMS).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${esc(v.label)}</option>`).join("");
+
+    const sourceRow = (s, i) => {
+        const plan = fetchPlan(s);
+        const reads = plan[0] ? `${plan[0].note ? `${plan[0].note}: ` : ""}${plan[0].url}` : "nothing (add a URL)";
+        return `
+        <div class="py-3 border-t border-gray-700/50 grid md:grid-cols-12 gap-2 items-center">
+            <label class="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" data-bind="sources.${i}.enabled" ${s.enabled ? "checked" : ""} class="accent-teal-500"> Enabled</label>
+            <input data-bind="sources.${i}.name" value="${esc(s.name)}" class="field md:col-span-3" placeholder="Name" aria-label="Source name">
+            <select data-bind="sources.${i}.platform" class="field md:col-span-2" aria-label="Platform">${platformOptions(s.platform)}</select>
+            <div class="md:col-span-5 flex gap-2 justify-end">
+                <button data-move="${i}:-1" class="btn btn-ghost btn-sm" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
+                <button data-move="${i}:1" class="btn btn-ghost btn-sm" ${i === draft.sources.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
+                <button data-remove="${i}" class="btn btn-danger btn-sm">Remove</button>
+            </div>
+            <input data-bind="sources.${i}.url" value="${esc(s.url)}" class="field md:col-span-6" placeholder="Page or profile URL, e.g. https://name.substack.com" aria-label="Page URL">
+            <input data-bind="sources.${i}.feedUrl" value="${esc(s.feedUrl)}" class="field md:col-span-6" placeholder="Feed URL override (optional RSS/Atom)" aria-label="Feed URL override">
+            <p class="text-xs text-gray-500 md:col-span-12 break-all">Reads: ${esc(reads)}</p>
+        </div>`;
+    };
+
+    const previewHtml = () => {
+        if (!preview) return "";
+        if (preview.error) return `<div class="panel p-5 text-red-300">${esc(preview.error)}</div>`;
+        const row = (a, unmatched) => `
+            <li class="py-3 border-t border-gray-700/50">
+                <div class="flex flex-wrap justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="font-medium text-gray-100">${esc(a.title || "(untitled)")}${a.manualId ? ` <span class="chip">saved article</span>` : ""}</div>
+                        <div class="text-xs text-gray-500">${esc(fmtDate(a.date))}</div>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        ${a.manualId ? "" : `<button data-save="${esc(a.id)}" class="btn btn-ghost btn-sm">Save as article</button>`}
+                        <button data-hide="${esc(a.id)}" class="btn btn-ghost btn-sm">Hide</button>
+                    </div>
+                </div>
+                <ul class="mt-1 text-xs space-y-0.5">${a.members.map((m) => `<li><span class="${m.platform === "linkedin" ? "text-blue-300" : "text-gray-400"}">${esc(PLATFORMS[m.platform]?.label || m.platform)}</span> · <a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer" class="text-teal-300 hover:underline break-all">${esc(m.url)}</a>${m.manual ? " <span class='text-gray-500'>(set by hand)</span>" : ""}</li>`).join("")}</ul>
+                ${unmatched ? `<p class="text-xs text-amber-300 mt-1">No LinkedIn version found, so this is not shown on the site. Save it as an article with its LinkedIn URL, or add the URL to an existing article's cross-posts.</p>` : ""}
+            </li>`;
+        return `
+            <div class="panel p-5 mb-4">
+                <h2 class="font-semibold mb-3">Sync preview</h2>
+                <ul class="text-sm space-y-1 mb-4">${preview.sourceStatus.map((st) => `<li class="flex gap-2"><span class="status-dot mt-1.5 ${st.ok ? "bg-emerald-400" : "bg-red-500"}"></span><span><b>${esc(st.name)}</b>: ${st.ok ? `${st.count} post(s) via <span class="break-all">${esc(st.via)}</span>` : esc(st.error)}</span></li>`).join("")}</ul>
+                <h3 class="text-sm font-semibold text-gray-200">Shown on the Articles page (${preview.groups.articles.length})</h3>
+                <ul class="mb-4">${preview.groups.articles.map((a) => row(a, false)).join("") || `<li class="text-sm text-gray-400 py-2">Nothing yet.</li>`}</ul>
+                ${preview.groups.unmatched.length ? `<h3 class="text-sm font-semibold text-amber-200">Not shown: no LinkedIn version (${preview.groups.unmatched.length})</h3><ul>${preview.groups.unmatched.map((a) => row(a, true)).join("")}</ul>` : ""}
+            </div>`;
+    };
+
+    const draw = () => {
+        root.innerHTML = `
+            ${heading("Articles: sources", `Pages and feeds scanned for your articles. Posts that are the same article on different sites are combined, with LinkedIn as the main link. Loaded from ${loaded.origin === "firestore" ? `Firestore${loaded.updatedBy ? ` (last saved by ${esc(loaded.updatedBy)})` : ""}` : "defaults: nothing saved yet"}.`,
+                `<button id="as-test" class="btn btn-ghost">Test sync</button><button id="as-save" class="btn btn-primary">Save settings</button>`)}
+            <div id="as-dirty" class="${dirty ? "" : "hidden"} mb-4 text-sm text-amber-200 bg-amber-500/10 border border-amber-500/40 rounded-lg px-3 py-2">Unsaved changes.</div>
+
+            <div class="panel p-5 mb-4">
+                <div class="flex items-center justify-between"><h2 class="font-semibold">Sources</h2><button id="as-add" class="btn btn-ghost btn-sm">Add source</button></div>
+                <p class="text-xs text-gray-500 mt-1 mb-2">Substack and Medium pages are read through their public RSS feeds automatically. LinkedIn and X only show article lists to signed-in visitors, so automatic reading may fail there. If it does, paste a feed URL override (for example from an RSS bridge service), or add those articles by hand under <a class="text-teal-300 hover:underline" href="#articles">Articles</a>; synced cross-posts still attach to them.</p>
+                ${draft.sources.map(sourceRow).join("") || `<p class="text-sm text-gray-400 py-2">No sources. Add one.</p>`}
+            </div>
+
+            <div class="panel p-5 mb-4">
+                <h2 class="font-semibold mb-3">Matching</h2>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <label class="flex items-start gap-2 text-sm md:col-span-3"><input type="checkbox" data-bind="linkedinOnly" ${draft.linkedinOnly ? "checked" : ""} class="accent-teal-500 mt-1"><span>Show LinkedIn articles only<br><span class="text-xs text-gray-500">Posts on other sites appear only as “Also read on” buttons on their LinkedIn article. Turn off to also list articles that exist only elsewhere.</span></span></label>
+                    <div><label class="lbl" for="as-th">Title match strictness (0.5–1)</label><input id="as-th" type="number" step="0.05" min="0.5" max="1" data-bind="matchThreshold" data-num value="${esc(draft.matchThreshold)}" class="field"><p class="text-xs text-gray-500 mt-1">Higher means titles must match more closely. Default 0.75.</p></div>
+                    <div><label class="lbl" for="as-days">Max days between cross-posts</label><input id="as-days" type="number" min="1" data-bind="maxDaysApart" data-num value="${esc(draft.maxDaysApart)}" class="field"><p class="text-xs text-gray-500 mt-1">Posts further apart are never combined.</p></div>
+                    <div><label class="lbl" for="as-proxy">CORS proxy for browser checks</label><input id="as-proxy" data-bind="corsProxy" value="${esc(draft.corsProxy)}" class="field"><p class="text-xs text-gray-500 mt-1">Used by “Check for new articles” and Test sync. The daily scan reads directly.</p></div>
+                    <div class="md:col-span-3"><label class="lbl" for="as-hidden">Hidden URLs (one per line)</label><textarea id="as-hidden" data-bind="hiddenUrls" data-list rows="3" class="field">${esc(draft.hiddenUrls.join("\n"))}</textarea><p class="text-xs text-gray-500 mt-1">Posts here are never shown or matched.</p></div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button id="as-defaults" class="btn btn-ghost btn-sm">Reset to defaults</button>
+                    <a class="btn btn-ghost btn-sm" href="${FEED_WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Run the daily sync now</a>
+                </div>
+            </div>
+            <div id="as-preview">${previewHtml()}</div>`;
+    };
+
+    const markDirty = () => { dirty = true; $("#as-dirty")?.classList.remove("hidden"); };
+
+    root.oninput = root.onchange = (e) => {
+        const el = e.target;
+        const path = el.dataset?.bind;
+        if (!path) return;
+        let v = el.type === "checkbox" ? el.checked : el.value;
+        if (el.dataset.list !== undefined) v = v.split(/\n/).map((x) => x.trim()).filter(Boolean);
+        if (el.dataset.num !== undefined) v = Number(v);
+        setPath(draft, path, v);
+        markDirty();
+        // Pasting a URL picks the platform for you.
+        if (e.type === "change" && path.endsWith(".url")) {
+            const src = getPath(draft, path.replace(/\.url$/, ""));
+            const p = detectPlatform(src.url);
+            if (p && p !== "other") src.platform = p;
+            if (!src.name || src.name === "New source") src.name = PLATFORMS[src.platform]?.label || "Website";
+            draw();
+        }
+    };
+
+    root.onclick = async (e) => {
+        const t = e.target.closest("button");
+        if (!t) return;
+        if (t.id === "as-add") {
+            draft.sources.push({ id: `src-${Date.now()}`, name: "New source", platform: "other", enabled: true, url: "", feedUrl: "" });
+            markDirty();
+            draw();
+        } else if (t.dataset.remove !== undefined) {
+            draft.sources.splice(Number(t.dataset.remove), 1);
+            markDirty();
+            draw();
+        } else if (t.dataset.move) {
+            const [i, d] = t.dataset.move.split(":").map(Number);
+            const [s] = draft.sources.splice(i, 1);
+            draft.sources.splice(i + d, 0, s);
+            markDirty();
+            draw();
+        } else if (t.id === "as-defaults") {
+            if (confirm("Replace the current (unsaved) settings with the defaults?")) {
+                draft = structuredClone(DEFAULT_ARTICLE_SYNC);
+                markDirty();
+                draw();
+            }
+        } else if (t.id === "as-save") {
+            const cfg = normalizeArticleConfig(draft);
+            const bad = cfg.sources.filter((s) => s.enabled && !safeUrl(s.url) && !safeUrl(s.feedUrl));
+            if (bad.length) return toast(`Add a valid URL for: ${bad.map((s) => s.name).join(", ")}`, "error");
+            try {
+                await saveArticleSyncConfig(cfg, state.user);
+                draft = cfg;
+                dirty = false;
+                loaded.origin = "firestore";
+                loaded.updatedBy = state.user.email;
+                draw();
+                toast("Saved. The next sync will use these sources.", "success");
+            } catch (err) { toast(`Could not save: ${err.message}`, "error"); }
+        } else if (t.id === "as-test") {
+            t.disabled = true;
+            t.textContent = "Syncing…";
+            try {
+                const [result, manual, snapshot] = await Promise.all([
+                    syncArticles(normalizeArticleConfig(draft)),
+                    loadAll("articles"),
+                    fetchJson(`${SITE_ROOT}Pages/Research/data/articles-feed.json`).catch(() => null)
+                ]);
+                const items = mergeArticleItems(snapshot?.items || [], result.items);
+                preview = { sourceStatus: result.sourceStatus, manual, items, groups: groupArticles(manual.filter((a) => a.status === "published"), items, draft) };
+            } catch (err) {
+                preview = { error: err.message };
+            }
+            t.disabled = false;
+            t.textContent = "Test sync";
+            $("#as-preview").innerHTML = previewHtml();
+        } else if (t.dataset.hide) {
+            const g = [...preview.groups.articles, ...preview.groups.unmatched].find((a) => a.id === t.dataset.hide);
+            if (!g || !confirm(`Hide “${g.title}” (${g.members.length} link${g.members.length === 1 ? "" : "s"})? Save settings to keep this.`)) return;
+            draft.hiddenUrls = [...new Set([...draft.hiddenUrls, ...g.members.map((m) => m.url)])];
+            preview.groups = groupArticles(preview.manual.filter((a) => a.status === "published"), preview.items, draft);
+            markDirty();
+            draw();
+        } else if (t.dataset.save) {
+            const g = [...preview.groups.articles, ...preview.groups.unmatched].find((a) => a.id === t.dataset.save);
+            if (!g) return;
+            openEditor("articles", null, () => toast("Article saved. Run Test sync again to see it combined.", "success"), {
+                title: g.title, date: g.date, summary: g.summary, coverImage: g.coverImage, linkedinUrl: g.linkedinUrl, crossposts: g.crossposts, status: "published"
+            });
+        }
+    };
+
+    draw();
 }
 
 // ---------- Admin: feed automation ----------
