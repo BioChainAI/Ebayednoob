@@ -4,11 +4,13 @@
 //     REST API, falling back to Pages/Research/data/feed-config.json.
 //   - Scans every enabled source with the same engine the browser uses (assets/js/feed-core.js).
 //   - Writes Pages/Research/data/feed.json (latest scan) and merges into feed-archive.json.
+//   - Syncs your own articles (settings/articleSync) into articles-feed.json.
 // Run locally with: node scripts/update-research-feed.mjs
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { scanFeed, normalizeConfig, mergeArchive } from "../assets/js/feed-core.js";
+import { syncArticles, normalizeArticleConfig, mergeArticleItems } from "../assets/js/article-sync.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = path.join(root, "Pages/Research/data");
@@ -36,22 +38,41 @@ async function readJson(file, fallback) {
     }
 }
 
-async function loadConfig() {
-    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/settings/feedConfig`;
+async function readSettings(name) {
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/settings/${name}`;
     try {
         const res = await fetch(url);
         if (res.ok) {
             const docJson = await res.json();
-            const cfg = fromFirestore({ mapValue: { fields: docJson.fields || {} } });
-            console.log("Using feed configuration from Firestore settings/feedConfig");
-            return { config: normalizeConfig(cfg), configSource: "firestore" };
+            console.log(`Using settings/${name} from Firestore`);
+            return fromFirestore({ mapValue: { fields: docJson.fields || {} } });
         }
-        console.warn(`Firestore config unavailable (HTTP ${res.status}); using feed-config.json`);
+        console.warn(`settings/${name} unavailable (HTTP ${res.status}); using defaults`);
     } catch (e) {
-        console.warn(`Firestore config unavailable (${e.message}); using feed-config.json`);
+        console.warn(`settings/${name} unavailable (${e.message}); using defaults`);
     }
+    return null;
+}
+
+async function loadConfig() {
+    const cfg = await readSettings("feedConfig");
+    if (cfg) return { config: normalizeConfig(cfg), configSource: "firestore" };
     return { config: normalizeConfig(await readJson(path.join(dataDir, "feed-config.json"), null)), configSource: "repository" };
 }
+
+// ---- Your own articles (LinkedIn, Substack, X, ...) ----
+const articleConfig = normalizeArticleConfig(await readSettings("articleSync"));
+const articleResult = await syncArticles(articleConfig, { useProxy: false, forceDirect: true });
+for (const s of articleResult.sourceStatus) {
+    console.log(`${s.ok ? "ok  " : "FAIL"} [articles] ${s.name}: ${s.count} item(s)${s.error ? ` — ${s.error}` : ""}`);
+}
+const articlesFile = path.join(dataDir, "articles-feed.json");
+const previousArticles = await readJson(articlesFile, { items: [] });
+await writeFile(articlesFile, JSON.stringify({
+    generatedAt: articleResult.scannedAt,
+    sourceStatus: articleResult.sourceStatus,
+    items: mergeArticleItems(previousArticles.items, articleResult.items, articleConfig.archiveCap)
+}, null, 2) + "\n");
 
 const { config, configSource } = await loadConfig();
 const result = await scanFeed(config, { useProxy: false, forceDirect: true, politeDelayMs: 1000 });

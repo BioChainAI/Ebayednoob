@@ -3,7 +3,8 @@ import { auth, db, signInWithGoogle, signOut, onAuthStateChanged, checkIsAdmin }
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { startBackground } from "../../assets/js/background.js";
 import { createBrowser } from "../../assets/js/collection-browser.js";
-import { loadPublished, loadFeedConfig, saveItem } from "../../assets/js/research-store.js";
+import { loadPublished, loadFeedConfig, saveItem, loadArticleSyncConfig } from "../../assets/js/research-store.js";
+import { syncArticles, groupArticles, mergeArticleItems, PLATFORMS } from "../../assets/js/article-sync.js";
 import { scanFeed, selectLatest, dedupe, SOURCE_TYPES, safeUrl } from "../../assets/js/feed-core.js";
 import { $, $$, esc, resolveLink, hostOf, fmtDate, timeAgo, toast, fetchJson, ICONS, CROSSPOST_PLATFORMS, SITE_ROOT } from "../../assets/js/ui.js";
 
@@ -99,23 +100,33 @@ browsers.publications = createBrowser($("#publications-browser"), {
 
 // ---------- Articles ----------
 
+const PLATFORM_LABEL = (key) => PLATFORMS[key]?.label || key;
+
 function renderArticle(a, layout) {
     const cover = resolveLink(a.coverImage);
-    const crossposts = CROSSPOST_PLATFORMS.map(({ key, label }) => {
-        const url = resolveLink(a.crossposts?.[key]);
-        return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm" title="Read on ${label}">${ICONS[key]}<span>${label}</span></a>` : "";
+    const primary = resolveLink(a.linkedinUrl || a.primaryUrl);
+    const primaryPlatform = a.linkedinUrl ? "linkedin" : a.primaryPlatform;
+    // Known platforms first, in a fixed order, then any other sites.
+    const keys = Object.keys(a.crossposts || {}).sort((x, y) => {
+        const order = CROSSPOST_PLATFORMS.map((p) => p.key);
+        return (order.indexOf(x) + 1 || 99) - (order.indexOf(y) + 1 || 99) || x.localeCompare(y);
+    });
+    const crossposts = keys.map((key) => {
+        const url = resolveLink(a.crossposts[key]);
+        const label = PLATFORM_LABEL(key);
+        return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm" title="Read on ${esc(label)}">${ICONS[key] || ICONS.external}<span>${esc(label)}</span></a>` : "";
     }).join("");
     return `
     <article class="panel overflow-hidden flex flex-col ${layout === "list" ? "md:flex-row" : ""} hover:border-teal-500/50 transition-colors">
-        ${cover ? `<img src="${esc(cover)}" alt="" loading="lazy" class="${layout === "list" ? "md:w-56 h-40 md:h-auto" : "h-40"} w-full object-cover bg-gray-800" onerror="this.remove()">` : ""}
+        ${cover ? `<img src="${esc(cover)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="${layout === "list" ? "md:w-56 h-40 md:h-auto" : "h-40"} w-full object-cover bg-gray-800" onerror="this.remove()">` : ""}
         <div class="p-5 flex flex-col flex-1 min-w-0">
             <time datetime="${esc(a.date || "")}" class="text-xs text-gray-400">${esc(fmtDate(a.date))}</time>
-            <h3 class="text-xl font-semibold text-white leading-snug mt-1">${esc(a.title)}</h3>
+            <h3 class="text-xl font-semibold text-white leading-snug mt-1">${primary ? `<a href="${esc(primary)}" target="_blank" rel="noopener noreferrer" class="hover:text-teal-300">${esc(a.title)}</a>` : esc(a.title)}</h3>
             ${a.summary ? `<p class="text-sm text-gray-300 mt-2 line-clamp-3">${esc(a.summary)}</p>` : ""}
             ${a.tags?.length ? `<div class="flex flex-wrap gap-1.5 mt-3">${tagChips(a.tags)}</div>` : ""}
-            <div class="flex flex-wrap gap-2 mt-auto pt-4">
-                ${resolveLink(a.linkedinUrl) ? `<a href="${esc(resolveLink(a.linkedinUrl))}" target="_blank" rel="noopener noreferrer" class="btn btn-blue btn-sm">${ICONS.linkedin}<span>Read on LinkedIn</span></a>` : ""}
-                ${crossposts}
+            <div class="mt-auto pt-4 space-y-2">
+                ${primary ? `<a href="${esc(primary)}" target="_blank" rel="noopener noreferrer" class="btn ${primaryPlatform === "linkedin" ? "btn-blue" : "btn-primary"} btn-sm">${ICONS[primaryPlatform] || ICONS.external}<span>Read on ${esc(PLATFORM_LABEL(primaryPlatform))}</span></a>` : ""}
+                ${crossposts ? `<div class="flex flex-wrap items-center gap-2"><span class="text-xs text-gray-400">Also read on</span>${crossposts}</div>` : ""}
             </div>
         </div>
     </article>`;
@@ -126,7 +137,7 @@ browsers.articles = createBrowser($("#articles-browser"), {
     noun: "article",
     dateOf: (a) => a.date,
     tagsOf: (a) => a.tags || [],
-    textOf: (a) => [a.title, a.summary, ...(a.tags || [])].join(" "),
+    textOf: (a) => [a.title, a.summary, ...(a.tags || []), ...Object.keys(a.crossposts || {}).map(PLATFORM_LABEL)].join(" "),
     render: renderArticle,
     empty: "No articles have been posted yet."
 });
@@ -335,6 +346,48 @@ async function curate(id) {
     }
 }
 
+// ---------- Article sync ----------
+
+const articleState = { manual: [], synced: [], config: null, scan: null, scanning: false };
+
+function refreshArticles() {
+    const { articles } = groupArticles(articleState.manual, articleState.synced, articleState.config);
+    browsers.articles.setItems(articles);
+    const scan = articleState.scan;
+    const statusById = new Map((scan?.sourceStatus || []).map((s) => [s.id, s]));
+    $("#article-sources").innerHTML = (articleState.config?.sources || []).filter((s) => s.enabled).map((s) => {
+        const st = statusById.get(s.id);
+        const color = !st ? "bg-gray-500" : st.ok ? "bg-emerald-400" : "bg-red-500";
+        const url = safeUrl(s.url);
+        const title = !st ? "Not checked yet" : st.ok ? `${st.count} post(s) found` : st.error;
+        return `<li class="flex items-center gap-2" title="${esc(title)}"><span class="status-dot ${color}"></span>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-teal-300">${esc(s.name)}</a>` : esc(s.name)}</li>`;
+    }).join("");
+    $("#article-sync-time").textContent = scan?.scannedAt ? `Last checked ${timeAgo(scan.scannedAt)}` : "";
+}
+
+async function checkArticles() {
+    if (articleState.scanning || !articleState.config) return;
+    articleState.scanning = true;
+    $("#refresh-articles").disabled = true;
+    $("#refresh-articles-icon").innerHTML = `<span class="inline-block spin">${ICONS.refresh}</span>`;
+    try {
+        const result = await syncArticles(articleState.config);
+        articleState.scan = result;
+        articleState.synced = mergeArticleItems(articleState.synced, result.items);
+        const failed = result.sourceStatus.filter((s) => !s.ok).length;
+        toast(failed ? `Checked: ${result.items.length} posts found; ${failed} site(s) could not be read.` : `Checked: ${result.items.length} posts found.`, failed ? "error" : "success");
+    } catch (e) {
+        toast(`Check failed: ${e.message}`, "error");
+    } finally {
+        articleState.scanning = false;
+        $("#refresh-articles").disabled = false;
+        $("#refresh-articles-icon").innerHTML = ICONS.refresh;
+        refreshArticles();
+    }
+}
+$("#refresh-articles").addEventListener("click", checkArticles);
+$("#refresh-articles-icon").innerHTML = ICONS.refresh;
+
 // ---------- Auth ----------
 
 $("#login-btn").addEventListener("click", () => signInWithGoogle().catch((e) => toast(`Login failed: ${e.message}`, "error")));
@@ -367,17 +420,23 @@ try {
 } catch { /* storage unavailable */ }
 
 const dataUrl = (f) => `${SITE_ROOT}Pages/Research/data/${f}`;
-const [pubs, arts, curated, cfg, snapshot, archive] = await Promise.all([
+const [pubs, arts, curated, cfg, snapshot, archive, articleCfg, articleFeed] = await Promise.all([
     loadPublished("publications"),
     loadPublished("articles"),
     loadPublished("feedItems"),
     loadFeedConfig(),
     fetchJson(dataUrl("feed.json")).catch(() => null),
-    fetchJson(dataUrl("feed-archive.json")).catch(() => null)
+    fetchJson(dataUrl("feed-archive.json")).catch(() => null),
+    loadArticleSyncConfig(),
+    fetchJson(dataUrl("articles-feed.json")).catch(() => null)
 ]);
 
 browsers.publications.setItems(pubs.items);
-browsers.articles.setItems(arts.items);
+articleState.manual = arts.items;
+articleState.config = articleCfg.config;
+articleState.synced = articleFeed?.items || [];
+articleState.scan = articleFeed?.generatedAt ? { scannedAt: articleFeed.generatedAt, sourceStatus: articleFeed.sourceStatus || [] } : null;
+refreshArticles();
 state.curated = curated.items;
 state.config = cfg.config;
 state.configOrigin = cfg.origin;

@@ -6,6 +6,7 @@ import {
     collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { normalizeConfig, slugify, hashId } from "./feed-core.js";
+import { normalizeArticleConfig } from "./article-sync.js";
 import { SITE_ROOT, fetchJson } from "./ui.js";
 
 export const COLLECTIONS = {
@@ -98,4 +99,23 @@ export async function loadFeedConfig() {
 
 export function saveFeedConfig(config, user) {
     return setDoc(doc(db, "settings", "feedConfig"), clean({ ...normalizeConfig(config), updatedAt: new Date().toISOString(), updatedBy: user?.email || "" }));
+}
+
+// ---------- Article sync settings (sources scanned for your own articles) ----------
+
+export async function loadArticleSyncConfig() {
+    try {
+        const snap = await getDoc(doc(db, "settings", "articleSync"));
+        if (snap.exists()) {
+            const { updatedAt, updatedBy, ...cfg } = snap.data();
+            return { config: normalizeArticleConfig(cfg), origin: "firestore", updatedBy };
+        }
+    } catch (e) {
+        console.warn("Article sync config read failed:", e.message);
+    }
+    return { config: normalizeArticleConfig(null), origin: "defaults" };
+}
+
+export function saveArticleSyncConfig(config, user) {
+    return setDoc(doc(db, "settings", "articleSync"), clean({ ...normalizeArticleConfig(config), updatedAt: new Date().toISOString(), updatedBy: user?.email || "" }));
 }
