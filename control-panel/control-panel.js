@@ -11,6 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { startBackground } from "../assets/js/background.js";
 import { isConnected, dispatchWorkflow } from "../assets/js/github-store.js";
+import { changeAdminAccess, loadAdminLog } from "../assets/js/admin-access.js";
 import { loadAll, saveItem, deleteItem, importSeed, loadFeedConfig, saveFeedConfig, loadArticleSyncConfig, saveArticleSyncConfig, COLLECTIONS } from "../assets/js/research-store.js";
 import { DEFAULT_ARTICLE_SYNC, PLATFORMS, normalizeArticleConfig, syncArticles, groupArticles, mergeArticleItems, fetchPlan, fetchArticleMeta, detectPlatform } from "../assets/js/article-sync.js";
 import { DEFAULT_FEED_CONFIG, SOURCE_TYPES, normalizeConfig, scanFeed, toList, slugify, safeUrl } from "../assets/js/feed-core.js";
@@ -177,14 +178,19 @@ async function recordLogin(user) {
     }
 }
 
-// Keep a visible admins/{email} record for admins so the Users screen lists them.
+// Record the bootstrap admin in admins/{email} and the admin log the first time they sign in,
+// so the log starts with the site owner.
 async function ensureAdminDoc(user) {
     const email = state.adminStatus?.tokenEmail;
     if (!email || state.adminStatus.via !== "bootstrap email") return;
     try {
-        const ref = doc(db, "admins", email);
-        if (!(await getDoc(ref)).exists()) await setDoc(ref, { email, addedBy: "bootstrap", addedAt: serverTimestamp(), bootstrap: true });
-    } catch { /* rules not deployed yet: harmless */ }
+        const snap = await getDoc(doc(db, "admins", email));
+        if (!snap.exists() || snap.data().active === false || !snap.data().logId) {
+            await changeAdminAccess(user, "bootstrap", { email, uid: user.uid, name: state.profile?.username || state.profile?.displayName || "", note: "Site owner (bootstrap admin)" });
+        }
+    } catch (e) {
+        console.warn("Could not record the bootstrap admin:", e.message);
+    }
 }
 
 // ---------- Username dialog ----------
@@ -582,7 +588,7 @@ async function renderDashboard() {
     const [pubs, arts, items, users, admins, feed] = await Promise.all([
         loadAll("publications"), loadAll("articles"), loadAll("feedItems"),
         getDocs(collection(db, "users")).then((s) => s.size).catch(() => "—"),
-        getDocs(collection(db, "admins")).then((s) => s.size).catch(() => "—"),
+        getDocs(collection(db, "admins")).then((s) => s.docs.filter((d) => d.data().active !== false).length).catch(() => "—"),
         fetchJson(`${SITE_ROOT}Pages/Research/data/feed.json`).catch(() => null)
     ]);
     const tile = (label, value, sub, href) => `<a href="${href}" class="panel p-4 block hover:border-teal-500/60"><div class="text-xs uppercase tracking-wide text-gray-400">${label}</div><div class="text-2xl font-semibold mt-1">${value}</div><div class="text-xs text-gray-500 mt-1">${sub}</div></a>`;
@@ -595,7 +601,7 @@ async function renderDashboard() {
             ${tile("Articles", arts.length, `${pub(arts)} published · ${arts.length - pub(arts)} draft`, "#articles")}
             ${tile("Curated feed items", items.length, `${items.filter((i) => i.pinned).length} pinned`, "#feed-curated")}
             ${tile("Users", users, "signed up", "#users")}
-            ${tile("Admins", admins, `bootstrap: ${esc(BOOTSTRAP_ADMIN_EMAILS.join(", "))}`, "#users")}
+            ${tile("Admins", admins, "active grants · see the admin log", "#users")}
             ${tile("Feed snapshot", feed?.generatedAt ? timeAgo(feed.generatedAt) : "none", feed?.generatedAt ? `${feed.items?.length || 0} items · ${failing.length} failing source(s)` : "run the workflow to create one", "#feed-automation")}
         </div>
         <div class="panel p-5 text-sm text-gray-300 space-y-2">
@@ -1186,67 +1192,183 @@ function download(filename, data) {
 
 // ---------- Admin: users & admins ----------
 
+const roleBadge = (role) => ({
+    owner: `<span class="chip !text-amber-200 !border-amber-400/50 !bg-amber-500/10">Owner</span>`,
+    admin: `<span class="chip !text-amber-200 !border-amber-400/50 !bg-amber-500/10">Admin</span>`,
+    revoked: `<span class="chip !text-gray-300 !border-gray-500/50 !bg-gray-600/20">Revoked</span>`,
+    member: `<span class="chip !text-gray-300 !border-gray-500/50 !bg-gray-600/20">Member</span>`
+}[role]);
+
+const actionBadge = (a) => ({
+    grant: `<span class="text-emerald-300 font-semibold">Granted</span>`,
+    revoke: `<span class="text-red-300 font-semibold">Revoked</span>`,
+    bootstrap: `<span class="text-amber-300 font-semibold">Owner recorded</span>`
+}[a] || esc(a));
+
 async function renderUsers() {
     const root = currentView;
-    const [usersSnap, adminsSnap] = await Promise.all([getDocs(collection(db, "users")), getDocs(collection(db, "admins"))]);
-    const users = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => String(tsToDate(b.lastLoginAt) || "").localeCompare(String(tsToDate(a.lastLoginAt) || "")));
-    const admins = new Map(adminsSnap.docs.map((d) => [d.id, d.data()]));
-    for (const e of BOOTSTRAP_ADMIN_EMAILS) if (!admins.has(e)) admins.set(e, { email: e, bootstrap: true });
+    const [usersSnap, adminsSnap, log] = await Promise.all([
+        getDocs(collection(db, "users")),
+        getDocs(collection(db, "admins")),
+        loadAdminLog().catch((e) => { console.warn("Admin log:", e.message); return null; })
+    ]);
+    const users = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+    const grants = new Map(adminsSnap.docs.map((d) => [d.id, d.data()]));
+    const isOwner = (email) => BOOTSTRAP_ADMIN_EMAILS.includes(email);
+    const roleOf = (email) => (isOwner(email) ? "owner" : grants.get(email)?.active === false ? "revoked" : grants.has(email) ? "admin" : "member");
+    const activeAdmins = [...new Set([...BOOTSTRAP_ADMIN_EMAILS, ...[...grants].filter(([, g]) => g.active !== false).map(([e]) => e)])];
+    const userByEmail = new Map(users.filter((u) => u.email).map((u) => [normalizeEmail(u.email), u]));
+    let q = "";
+    let filter = "all";
 
-    const isLocked = (email) => BOOTSTRAP_ADMIN_EMAILS.includes(email);
-    root.innerHTML = `
-        ${heading("Users & admins", "Grant or revoke admin access. Admins must sign in with a verified email that matches exactly.")}
-        <div class="panel p-5 mb-4">
-            <h2 class="font-semibold mb-3">Administrators</h2>
-            <ul class="divide-y divide-gray-700/60 mb-4">${[...admins].map(([email, a]) => `
-                <li class="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span class="break-all">${esc(email)} ${isLocked(email) ? `<span class="chip !text-amber-200 !border-amber-400/50 !bg-amber-500/10">bootstrap</span>` : ""}<span class="text-xs text-gray-500 block">${a.addedBy && a.addedBy !== "bootstrap" ? `added by ${esc(a.addedBy)}` : ""}</span></span>
-                    ${isLocked(email) ? `<span class="text-xs text-gray-500">set in firestore.rules</span>` : `<button data-revoke="${esc(email)}" class="btn btn-danger btn-sm">Revoke</button>`}
-                </li>`).join("")}</ul>
-            <form id="add-admin" class="flex flex-col sm:flex-row gap-2">
-                <input id="add-admin-email" type="email" required class="field" placeholder="email@example.com" aria-label="Email to make admin">
-                <button class="btn btn-primary shrink-0">Grant admin</button>
-            </form>
-        </div>
-        <div class="panel p-5">
-            <h2 class="font-semibold mb-3">Users (${users.length})</h2>
-            <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-                <thead><tr class="text-xs uppercase tracking-wide text-gray-400"><th class="pb-2">User</th><th class="pb-2">Sign-in</th><th class="pb-2">Joined</th><th class="pb-2">Last login</th><th class="pb-2"></th></tr></thead>
-                <tbody>${users.map((u) => {
-                    const email = normalizeEmail(u.email);
-                    const admin = admins.has(email);
-                    return `<tr class="border-t border-gray-700/60">
-                        <td class="py-2 pr-3"><div class="text-gray-100">${u.username ? `@${esc(u.username)} · ` : ""}${esc(u.displayName || "—")}</div><div class="text-xs text-gray-500 break-all">${esc(u.email || u.uid)}</div></td>
-                        <td class="py-2 pr-3 text-gray-400">${esc((u.providers || []).map((p) => (p === "google.com" ? "Google" : p === "password" ? "Email" : p)).join(", ") || "—")}</td>
-                        <td class="py-2 pr-3 text-gray-400 whitespace-nowrap">${esc(fmtDate(tsToDate(u.createdAt)))}</td>
-                        <td class="py-2 pr-3 text-gray-400 whitespace-nowrap">${u.lastLoginAt ? esc(timeAgo(tsToDate(u.lastLoginAt))) : "—"}</td>
-                        <td class="py-2 text-right whitespace-nowrap">${!email ? "" : admin ? (isLocked(email) ? `<span class="text-amber-300 text-xs">Admin</span>` : `<button data-revoke="${esc(email)}" class="btn btn-ghost btn-sm">Revoke admin</button>`) : `<button data-grant="${esc(email)}" class="btn btn-ghost btn-sm">Make admin</button>`}</td>
-                    </tr>`;
-                }).join("") || `<tr><td colspan="5" class="py-6 text-center text-gray-400">No users yet.</td></tr>`}</tbody>
-            </table></div>
-        </div>`;
-
-    const grant = async (email) => {
-        email = normalizeEmail(email);
-        if (!email) return;
-        try {
-            await setDoc(doc(db, "admins", email), { email, addedBy: sessionEmail(state.user), addedAt: serverTimestamp() });
-            toast(`${email} is now an admin.`, "success");
-            renderUsers();
-        } catch (err) { toast(err.message, "error"); }
+    const userRow = (u) => {
+        const email = normalizeEmail(u.email);
+        const role = email ? roleOf(email) : "member";
+        const g = grants.get(email);
+        let action;
+        if (!email) action = `<span class="text-xs text-gray-500" title="No email on this profile yet; it fills in at their next sign-in.">No email</span>`;
+        else if (role === "owner") action = `<span class="text-xs text-gray-500">Set in firestore.rules</span>`;
+        else if (role === "admin") action = `<button data-revoke="${esc(email)}" data-uid="${esc(u.uid)}" class="btn btn-ghost btn-sm">Revoke admin</button>`;
+        else action = `<button data-grant="${esc(email)}" data-uid="${esc(u.uid)}" class="btn btn-primary btn-sm">Make admin</button>`;
+        return `<tr class="border-t border-gray-700/60 align-top">
+            <td class="py-2.5 pr-3">
+                <div class="text-gray-100 font-medium">${u.username ? `@${esc(u.username)}` : `<span class="text-gray-500">no username</span>`}</div>
+                <div class="text-xs text-gray-400">${esc(u.displayName || "")}</div>
+                <div class="text-xs text-gray-500 break-all">${esc(u.email || u.uid)}</div>
+            </td>
+            <td class="py-2.5 pr-3">${roleBadge(role)}${g && role !== "owner" ? `<div class="text-[11px] text-gray-500 mt-1">${g.active === false ? `revoked by ${esc(g.revokedBy || "?")}` : `by ${esc(g.grantedBy || "?")}`}</div>` : ""}</td>
+            <td class="py-2.5 pr-3 text-gray-400 text-sm">${esc((u.providers || []).map(providerLabel).join(", ") || "—")}</td>
+            <td class="py-2.5 pr-3 text-gray-400 text-sm whitespace-nowrap">${esc(fmtDate(tsToDate(u.createdAt)))}</td>
+            <td class="py-2.5 pr-3 text-gray-400 text-sm whitespace-nowrap">${u.lastLoginAt ? esc(timeAgo(tsToDate(u.lastLoginAt))) : "—"}</td>
+            <td class="py-2.5 text-right whitespace-nowrap">${action}</td>
+        </tr>`;
     };
-    $("#add-admin").addEventListener("submit", (e) => { e.preventDefault(); grant($("#add-admin-email").value); });
-    root.querySelectorAll("[data-grant]").forEach((b) => b.addEventListener("click", () => grant(b.dataset.grant)));
-    root.querySelectorAll("[data-revoke]").forEach((b) => b.addEventListener("click", async () => {
-        const email = b.dataset.revoke;
-        if (email === sessionEmail(state.user) && !confirm("Revoke your own admin access?")) return;
-        if (!confirm(`Revoke admin access for ${email}?`)) return;
-        try {
-            await deleteDoc(doc(db, "admins", email));
-            toast(`Revoked admin for ${email}.`, "success");
-            renderUsers();
-        } catch (err) { toast(err.message, "error"); }
+
+    const draw = () => {
+        const needle = q.toLowerCase();
+        const list = users
+            .filter((u) => !needle || `${u.username || ""} ${u.displayName || ""} ${u.email || ""} ${u.uid}`.toLowerCase().includes(needle))
+            .filter((u) => {
+                const role = roleOf(normalizeEmail(u.email));
+                return filter === "all" || (filter === "admins" ? role === "owner" || role === "admin" : role === "member" || role === "revoked");
+            })
+            .sort((a, b) => String(tsToDate(b.lastLoginAt) || "").localeCompare(String(tsToDate(a.lastLoginAt) || "")));
+        $("#users-body", root).innerHTML = list.map(userRow).join("") || `<tr><td colspan="6" class="py-6 text-center text-gray-400">No users match.</td></tr>`;
+        $("#users-count", root).textContent = `${list.length} of ${users.length}`;
+    };
+
+    root.innerHTML = `
+        ${heading("Users & admins", "Every signed-in account, with one-click admin elevation. Each change is recorded permanently in the admin log.")}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Users</div><div class="text-2xl font-semibold mt-1">${users.length}</div></div>
+            <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Active admins</div><div class="text-2xl font-semibold mt-1">${activeAdmins.length}</div></div>
+            <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Log entries</div><div class="text-2xl font-semibold mt-1">${log ? log.length : "—"}</div></div>
+            <div class="panel p-4"><div class="text-xs uppercase tracking-wide text-gray-400">Guest Observers</div><div class="text-sm text-gray-400 mt-1">Stored in visitors' browsers only; not listed.</div></div>
+        </div>
+
+        <div class="panel p-5 mb-4">
+            <div class="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+                <h2 class="font-semibold">All users <span id="users-count" class="text-sm font-normal text-gray-400"></span></h2>
+                <input id="users-search" type="search" class="field md:ml-auto md:max-w-xs" placeholder="Search username, name, email…" aria-label="Search users">
+                <div class="inline-flex rounded-lg border border-gray-700 overflow-hidden text-sm" role="group" aria-label="Filter users">
+                    <button data-ufilter="all" aria-pressed="true" class="seg-btn px-3 py-1.5 text-gray-300">All</button>
+                    <button data-ufilter="admins" aria-pressed="false" class="seg-btn px-3 py-1.5 text-gray-300 border-l border-gray-700">Admins</button>
+                    <button data-ufilter="members" aria-pressed="false" class="seg-btn px-3 py-1.5 text-gray-300 border-l border-gray-700">Members</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+                <thead><tr class="text-xs uppercase tracking-wide text-gray-400"><th class="pb-2">User</th><th class="pb-2">Role</th><th class="pb-2">Sign-in</th><th class="pb-2">Joined</th><th class="pb-2">Last login</th><th class="pb-2"></th></tr></thead>
+                <tbody id="users-body"></tbody>
+            </table></div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4 mb-4">
+            <div class="panel p-5">
+                <h2 class="font-semibold mb-3">Current admins</h2>
+                <ul class="divide-y divide-gray-700/60">${activeAdmins.map((email) => {
+                    const g = grants.get(email) || {};
+                    const u = userByEmail.get(email);
+                    return `<li class="py-2 text-sm flex justify-between gap-3">
+                        <span class="min-w-0"><span class="text-gray-100">${u?.username ? `@${esc(u.username)} · ` : ""}${esc(email)}</span>
+                        <span class="block text-xs text-gray-500">${isOwner(email) ? "Owner (bootstrap admin in firestore.rules)" : `granted by ${esc(g.grantedBy || "?")}${g.grantedAt ? ` · ${esc(fmtDate(tsToDate(g.grantedAt)))}` : ""}`}</span></span>
+                        ${isOwner(email) ? roleBadge("owner") : `<button data-revoke="${esc(email)}" data-uid="${esc(g.uid || u?.uid || "")}" class="btn btn-ghost btn-sm shrink-0">Revoke</button>`}
+                    </li>`;
+                }).join("")}</ul>
+            </div>
+            <div class="panel p-5">
+                <h2 class="font-semibold mb-1">Grant by email</h2>
+                <p class="text-xs text-gray-500 mb-3">For someone who has not signed in yet. Their admin access starts when they sign in with this exact, verified email.</p>
+                <form id="add-admin" class="flex flex-col sm:flex-row gap-2">
+                    <input id="add-admin-email" type="email" required class="field" placeholder="email@example.com" aria-label="Email to make admin">
+                    <button class="btn btn-primary shrink-0">Grant admin</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 class="font-semibold">Admin log</h2>
+                ${log?.length ? `<button id="log-export" class="btn btn-ghost btn-sm">Download CSV</button>` : ""}
+            </div>
+            ${log === null ? `<p class="text-sm text-amber-300">The admin log could not be loaded. Publish the latest firestore.rules (they add the adminLog collection).</p>` : log.length ? `
+            <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+                <thead><tr class="text-xs uppercase tracking-wide text-gray-400"><th class="pb-2">When</th><th class="pb-2">Change</th><th class="pb-2">Account</th><th class="pb-2">By</th><th class="pb-2">Note</th></tr></thead>
+                <tbody>${log.map((e) => `<tr class="border-t border-gray-700/60 align-top">
+                    <td class="py-2 pr-3 text-gray-400 whitespace-nowrap">${esc(fmtDate(tsToDate(e.at), { dateStyle: "medium", timeStyle: "short" }))}</td>
+                    <td class="py-2 pr-3 whitespace-nowrap">${actionBadge(e.action)}</td>
+                    <td class="py-2 pr-3 break-all">${e.targetName ? `${esc(e.targetName)} · ` : ""}${esc(e.target)}</td>
+                    <td class="py-2 pr-3 break-all text-gray-300">${esc(e.by)}</td>
+                    <td class="py-2 text-gray-400">${esc(e.note || "")}</td>
+                </tr>`).join("")}</tbody>
+            </table></div>` : `<p class="text-sm text-gray-400">No changes recorded yet.</p>`}
+            <p class="text-xs text-gray-500 mt-3">Log entries are enforced by the security rules: stamped with the server time and the acting admin, and they can never be edited or deleted.</p>
+        </div>`;
+    draw();
+
+    $("#users-search", root).addEventListener("input", (e) => { q = e.target.value; draw(); });
+    $$("[data-ufilter]", root).forEach((b) => b.addEventListener("click", () => {
+        filter = b.dataset.ufilter;
+        $$("[data-ufilter]", root).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        draw();
     }));
+
+    const change = async (action, email, uid) => {
+        email = normalizeEmail(email);
+        const u = users.find((x) => x.uid === uid) || userByEmail.get(email);
+        const label = u?.username ? `@${u.username} (${email})` : email;
+        if (action === "revoke" && email === sessionEmail(state.user) && !confirm("Revoke your own admin access?")) return;
+        const note = prompt(`${action === "grant" ? "Make" : "Remove"} ${label} ${action === "grant" ? "an admin" : "as admin"}?\n\nOptional note for the admin log (reason):`, "");
+        if (note === null) return; // cancelled
+        try {
+            await changeAdminAccess(state.user, action, { email, uid: u?.uid || uid || "", name: u?.username || u?.displayName || "", note });
+            toast(`${label} ${action === "grant" ? "is now an admin" : "is no longer an admin"}. Logged.`, "success");
+            renderUsers();
+        } catch (err) {
+            toast(`${err.message}${/permission/i.test(err.message) ? " — publish the latest firestore.rules." : ""}`, "error");
+        }
+    };
+    // Assigned (not added): renderUsers() re-runs in the same container after each change.
+    root.onclick = (e) => {
+        const g = e.target.closest("[data-grant]");
+        const r = e.target.closest("[data-revoke]");
+        if (g) change("grant", g.dataset.grant, g.dataset.uid);
+        else if (r) change("revoke", r.dataset.revoke, r.dataset.uid);
+    };
+    $("#add-admin", root).addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = $("#add-admin-email", root).value;
+        if (roleOf(normalizeEmail(email)) === "admin" || isOwner(normalizeEmail(email))) return toast("That email is already an admin.", "info");
+        change("grant", email, "");
+    });
+    $("#log-export", root)?.addEventListener("click", () => {
+        const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const rows = [["when", "action", "account", "name", "by", "note"], ...log.map((e) => [tsToDate(e.at), e.action, e.target, e.targetName, e.by, e.note])];
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([rows.map((r) => r.map(cell).join(",")).join("\n")], { type: "text/csv" }));
+        a.download = `ebayednoob-admin-log-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
 }
 
 // ---------- Admin: data tools ----------

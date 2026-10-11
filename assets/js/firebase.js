@@ -65,7 +65,8 @@ export async function getAdminStatus(user, { forceRefresh = false } = {}) {
     if (BOOTSTRAP_ADMIN_EMAILS.includes(status.tokenEmail)) return { ...status, isAdmin: true, via: "bootstrap email" };
     try {
         const snap = await getDoc(doc(db, "admins", status.tokenEmail));
-        if (snap.exists()) return { ...status, isAdmin: true, via: "admins list" };
+        if (snap.exists() && snap.data().active !== false) return { ...status, isAdmin: true, via: "admins list" };
+        if (snap.exists()) status.notes.push("Your admin access was revoked.");
     } catch (e) {
         status.notes.push(`Could not check the admins list: ${e.message}`);
     }

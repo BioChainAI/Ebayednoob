@@ -213,12 +213,22 @@ function bodyExtras(block) {
 
 // ---------- Fetching ----------
 
-export async function fetchText(url, { fetchImpl, cors, proxy, timeoutMs = 20000, accept }) {
+const SERVER_USER_AGENT = "Mozilla/5.0 (compatible; EbayednoobResearchBot/1.0; +https://github.com/BioChainAI/Ebayednoob)";
+
+export async function fetchText(url, { fetchImpl, cors, proxy, timeoutMs = 30000, accept }) {
     const attempt = async (u) => {
         const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
         try {
-            const res = await fetchImpl(u, { signal: ctrl?.signal, headers: accept ? { Accept: accept } : undefined });
+            const headers = accept ? { Accept: accept } : {};
+            // Server-side runs (the GitHub Action) identify themselves; some hosts reject Node's
+            // default agent. Browsers ignore this header, so it only matters outside a page.
+            if (typeof window === "undefined") headers["User-Agent"] = SERVER_USER_AGENT;
+            let res = await fetchImpl(u, { signal: ctrl?.signal, headers });
+            if ((res.status === 429 || res.status === 503) && typeof window === "undefined") {
+                await new Promise((r) => setTimeout(r, 4000)); // rate limited: one polite retry
+                res = await fetchImpl(u, { signal: ctrl?.signal, headers });
+            }
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.text();
         } finally {

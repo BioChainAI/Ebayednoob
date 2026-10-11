@@ -46,9 +46,37 @@ service cloud.firestore {
         || (verifiedEmail() && myEmail() == 'ghoard1@gmail.com');
     }
 
+    // An active grant in admins/{email}. Revoked grants stay in place with active == false.
+    function hasAdminGrant() {
+      let path = /databases/$(database)/documents/admins/$(myEmail());
+      return exists(path) && get(path).data.get('active', true) == true;
+    }
+
     function isAdmin() {
-      return isBootstrapAdmin()
-        || (verifiedEmail() && exists(/databases/$(database)/documents/admins/$(myEmail())));
+      return isBootstrapAdmin() || (verifiedEmail() && hasAdminGrant());
+    }
+
+    // Every change to admins/{email} must be written together with a matching
+    // adminLog entry (same batch), so the log is a complete history of admin access.
+    function loggedAdminChange(email) {
+      let d = request.resource.data;
+      let logPath = /databases/$(database)/documents/adminLog/$(d.logId);
+      return d.logId is string
+        && d.active is bool
+        && d.email == email
+        && !exists(logPath)
+        && existsAfter(logPath)
+        && getAfter(logPath).data.target == email
+        && (d.active
+            ? getAfter(logPath).data.action in ['grant', 'bootstrap']
+            : getAfter(logPath).data.action == 'revoke');
+    }
+
+    // A profile's stored email must be the session's real email (or empty), so the
+    // Users list shows trustworthy addresses when an admin elevates someone.
+    function honestEmail() {
+      let e = request.resource.data.get('email', '');
+      return e == '' || e.lower() == myEmail();
     }
 
     // ---- Usernames ----
@@ -75,9 +103,11 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
       allow create: if signedIn() && request.auth.uid == uid
+        && honestEmail()
         && (!request.resource.data.keys().hasAny(usernameFields())
             || validUsernameChange(uid, null));
       allow update: if signedIn() && request.auth.uid == uid
+        && honestEmail()
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(usernameFields())
             || validUsernameChange(uid, resource.data));
       allow delete: if isAdmin();
@@ -101,12 +131,28 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Admin grants, keyed by lowercased email.
+    // Admin grants, keyed by lowercased email. Never deleted: revoking sets active = false.
     match /admins/{email} {
       allow get: if (verifiedEmail() && email == myEmail()) || isAdmin();
       allow list: if isAdmin();
-      allow create, update: if isAdmin() && email == email.lower();
-      allow delete: if isAdmin();
+      allow create, update: if isAdmin() && email == email.lower() && loggedAdminChange(email);
+      allow delete: if false;
+    }
+
+    // Append-only audit log of admin access changes. Entries are stamped with the
+    // server time and the acting admin, and can never be edited or removed.
+    match /adminLog/{entryId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.action in ['grant', 'revoke', 'bootstrap']
+        && request.resource.data.target is string
+        && request.resource.data.target == request.resource.data.target.lower()
+        && request.resource.data.by == myEmail()
+        && request.resource.data.byUid == request.auth.uid
+        && request.resource.data.at == request.time
+        && (request.resource.data.action != 'bootstrap'
+            || (isBootstrapAdmin() && request.resource.data.target == myEmail()));
+      allow update, delete: if false;
     }
 
     // ---- Research hub content ----

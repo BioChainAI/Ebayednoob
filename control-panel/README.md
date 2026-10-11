@@ -89,3 +89,17 @@ Control Panel). The token stays in that browser only.
 
 Cross-posting: the Studio copies the piece with formatting for LinkedIn, Substack, X Articles and Medium, opens
 their editors, and records the resulting URLs so the Articles page shows one entry with "Also read on" buttons.
+
+## Users, admins and the admin log
+
+**Control Panel → Users & admins** lists every account that has signed in (username, name, email, sign-in
+method, joined, last login, role) with search and an All / Admins / Members filter. **Make admin** and
+**Revoke admin** ask for an optional note, then write two records in one batch:
+
+- `admins/{email}`: the grant, with `active: true/false`. Grants are never deleted, so a revoked admin stays
+  visible as "Revoked".
+- `adminLog/{id}`: an append-only entry (grant / revoke / owner recorded, account, acting admin, note, time).
+
+The rules refuse a grant or revoke without its matching new log entry, stamp each entry with the server time and
+the acting admin's own email, and forbid editing or deleting entries. The log shows on the same screen and can be
+downloaded as CSV. Guest Observers exist only in visitors' browsers, so they are not listed.
