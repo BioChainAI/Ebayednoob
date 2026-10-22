@@ -1,0 +1,57 @@
+// Adds the floating site chrome (assets/js/page-chrome.js: Home, Google sign-in, social links)
+// to the pages listed in scripts/page-chrome-targets.json, or to the files given as arguments.
+//
+//   node scripts/install-page-chrome.mjs              install into every listed page
+//   node scripts/install-page-chrome.mjs <file.html>  install into one file (position "top")
+//   node scripts/install-page-chrome.mjs --check      exit 1 if a listed page is missing it
+//
+// Safe to run any number of times: an existing block (or a hand-pasted page-chrome.js script tag)
+// is replaced, never duplicated. The Pages deploy runs this, so a raw export pushed as-is still
+// goes live with the chrome.
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const MODULE = path.join(ROOT, "assets/js/page-chrome.js");
+const START = "<!-- page-chrome:start -->";
+const END = "<!-- page-chrome:end -->";
+
+const BLOCK_RE = /[ \t]*<!-- page-chrome:start -->[\s\S]*?<!-- page-chrome:end -->[ \t]*\r?\n?/g;
+const BARE_TAG_RE = /[ \t]*<script\b[^>]*page-chrome\.js[^>]*>\s*<\/script>[ \t]*\r?\n?/gi;
+
+function chromeBlock(file, position = "top") {
+    const rel = path.relative(path.dirname(path.resolve(ROOT, file)), MODULE).split(path.sep).map(encodeURIComponent).join("/");
+    return `${START}\n<script type="module" src="${rel}" data-position="${position}"></script>\n${END}\n`;
+}
+
+function inject(html, block) {
+    const clean = html.replace(BLOCK_RE, "").replace(BARE_TAG_RE, "");
+    const at = clean.toLowerCase().lastIndexOf("</body>");
+    return at === -1 ? `${clean.replace(/\s*$/, "\n")}${block}` : `${clean.slice(0, at)}${block}${clean.slice(at)}`;
+}
+
+async function targets(args) {
+    const files = args.filter((a) => !a.startsWith("--"));
+    if (files.length) return files.map((file) => ({ file, position: "top" }));
+    return JSON.parse(await readFile(path.join(ROOT, "scripts/page-chrome-targets.json"), "utf8"));
+}
+
+const args = process.argv.slice(2);
+const check = args.includes("--check");
+let stale = 0;
+for (const { file, position = "top" } of await targets(args)) {
+    const full = path.resolve(ROOT, file);
+    const html = await readFile(full, "utf8");
+    const next = inject(html, chromeBlock(file, position));
+    if (next === html) {
+        console.log(`ok        ${file}`);
+    } else if (check) {
+        stale++;
+        console.log(`missing   ${file}`);
+    } else {
+        await writeFile(full, next);
+        console.log(`installed ${file}`);
+    }
+}
+if (stale) process.exit(1);

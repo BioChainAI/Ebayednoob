@@ -33,6 +33,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      # Adds the Home / sign-in / social-links bar to the pages in scripts/page-chrome-targets.json,
+      # so a calculator export pushed without it still deploys with it.
+      - name: Add site chrome to listed pages
+        run: node scripts/install-page-chrome.mjs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

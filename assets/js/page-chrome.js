@@ -2,7 +2,8 @@
 // site (same Firebase project, local persistence) and social links. Everything renders inside a
 // shadow root, so the host page's CSS and this module's CSS never touch each other.
 //
-// Add it to any page with one line (path relative to that page):
+// Add it to any page with one line (path relative to that page), or list the page in
+// scripts/page-chrome-targets.json and let scripts/install-page-chrome.mjs add it:
 //   <script type="module" src="../../assets/js/page-chrome.js" data-position="top"></script>
 // Optional attributes on that script tag:
 //   data-position  "top" (default), "bottom-left" or "bottom-right"
@@ -92,6 +93,7 @@ function saveCollapsed(v) {
 }
 
 function mount() {
+    if (document.getElementById("ebayednoob-page-chrome")) return; // already on the page
     const script = document.querySelector('script[src*="page-chrome.js"]');
     const position = ["top", "bottom-left", "bottom-right"].includes(script?.dataset.position) ? script.dataset.position : "top";
     const home = script?.dataset.home || new URL("index.html", SITE_ROOT).href;
