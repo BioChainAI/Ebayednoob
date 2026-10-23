@@ -1,9 +1,12 @@
 # Updating the Geometric Harmonics Calculator
 
 The calculator is a single file: **`Pages/Geometric Calculator/index.html`**. It's your export with one
-small snippet at the end that loads the floating bar (Home button, Google sign-in shared with the main
-site, GitHub / X / YouTube / Patreon links, and the hide toggle). The bar itself lives in
-[`assets/js/page-chrome.js`](../../assets/js/page-chrome.js), never in the calculator file.
+small snippet at the end that loads the floating bar (Home button, a **Manual** button, Google sign-in
+shared with the main site, GitHub / X / YouTube / Patreon links, and the hide toggle). The bar itself lives
+in [`assets/js/page-chrome.js`](../../assets/js/page-chrome.js), never in the calculator file.
+
+The instruction manual is **`manual.html`** in the same folder. Its bar has an **Open Engine** button, so
+the two pages link to each other.
 
 `calculator.html` only redirects old links to `index.html`. Don't put new versions there.
 
@@ -25,7 +28,7 @@ Paste this just above the closing `</body>` tag of the new export:
 
 ```html
 <!-- page-chrome:start -->
-<script type="module" src="../../assets/js/page-chrome.js" data-position="top"></script>
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extra-href="manual.html" data-extra-label="Manual" data-extra-icon="book"></script>
 <!-- page-chrome:end -->
 ```
 
@@ -44,6 +47,9 @@ Running either more than once is harmless. An existing snippet, including a bare
 - `data-position`: `top` (default, centred between the calculator's side panels), `bottom-left` or
   `bottom-right`. For automatic installs, set `position` in `scripts/page-chrome-targets.json`.
 - `data-home`: a different address for the Home button (default: the site's main page).
+- `data-extra-href`, `data-extra-label`, `data-extra-icon` (`book` or `engine`): one extra button after
+  Home. This is how the calculator links to its manual and the manual links back. For automatic installs,
+  set `extra` in `scripts/page-chrome-targets.json`.
 - The social links are the `SOCIAL_LINKS` list at the top of `assets/js/page-chrome.js`. Change them
   there and every page using the bar picks the change up.
 
@@ -53,7 +59,11 @@ Add the page to `scripts/page-chrome-targets.json`:
 
 ```json
 [
-    { "file": "Pages/Geometric Calculator/index.html", "position": "top" },
+    {
+        "file": "Pages/Geometric Calculator/index.html",
+        "position": "top",
+        "extra": { "href": "manual.html", "label": "Manual", "icon": "book" }
+    },
     { "file": "Pages/Some Other Tool/index.html", "position": "bottom-right" }
 ]
 ```
@@ -67,3 +77,10 @@ The next deploy adds the bar. The script works out the right relative path to `p
 - The bar may be hidden. Look for a small round **•••** button at the top centre and click it.
   Phones start with it hidden.
 - Hard-refresh the page (Ctrl/Cmd + Shift + R). GitHub Pages can serve a cached copy for a few minutes.
+
+## Keeping the manual current
+
+`manual.html` is written for engine version 10. When a new version adds, renames or removes a control,
+update the matching chapter. The interactive labs in the manual (exact-vs-float, clutch, engram tile) copy
+the engine's formulas, so if the arithmetic, the clutch formulas or the engram hash change, update the
+script at the bottom of `manual.html` too.

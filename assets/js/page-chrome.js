@@ -8,6 +8,8 @@
 // Optional attributes on that script tag:
 //   data-position  "top" (default), "bottom-left" or "bottom-right"
 //   data-home      URL for the Home button (default: the site's index.html)
+//   data-extra-href, data-extra-label, data-extra-icon ("book" or "engine")
+//                  one extra button after Home, e.g. a tool's manual (relative to the page)
 
 const SITE_ROOT = new URL("../../", import.meta.url).href;
 const STORE_KEY = "ebayednoob-page-chrome-collapsed";
@@ -29,6 +31,8 @@ const ICONS = {
     youtube: svg('<path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/>'),
     patreon: svg('<path d="M15.39 0C10.98 0 7.4 3.59 7.4 8.01c0 4.4 3.58 7.97 7.99 7.97 4.4 0 7.97-3.57 7.97-7.97C23.36 3.59 19.79 0 15.39 0zM.64 24h3.92V0H.64v24z"/>'),
     google: svg('<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>', "0 0 48 48", ""),
+    book: svg('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
+    engine: svg('<circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8"'),
     hide: svg('<path d="m15 18-6-6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
     grip: svg('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>')
 };
@@ -59,6 +63,7 @@ a:hover, button:hover { background: rgba(45, 212, 191, 0.16); color: #fff; }
 a:focus-visible, button:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 1px; }
 .icon { padding: 0; width: 30px; }
 svg { width: 16px; height: 16px; flex: none; }
+.extra { color: #5eead4; }
 .signin { background: #fff; color: #1f2937; font-weight: 600; }
 .signin:hover { background: #e5e7eb; color: #111827; }
 .avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: #0d9488; color: #fff;
@@ -97,6 +102,9 @@ function mount() {
     const script = document.querySelector('script[src*="page-chrome.js"]');
     const position = ["top", "bottom-left", "bottom-right"].includes(script?.dataset.position) ? script.dataset.position : "top";
     const home = script?.dataset.home || new URL("index.html", SITE_ROOT).href;
+    const extra = script?.dataset.extraHref
+        ? { href: script.dataset.extraHref, label: script.dataset.extraLabel || "More", icon: ICONS[script.dataset.extraIcon] ? script.dataset.extraIcon : "book" }
+        : null;
 
     const host = document.createElement("div");
     host.id = "ebayednoob-page-chrome";
@@ -107,6 +115,7 @@ function mount() {
             <button class="icon expand" type="button" title="Show site menu" aria-label="Show site menu" aria-expanded="false">${ICONS.grip}</button>
             <div class="full">
                 <a href="${esc(home)}" title="Back to the main site">${ICONS.home}<span class="label">Home</span></a>
+                ${extra ? `<a class="extra" href="${esc(extra.href)}" title="${esc(extra.label)}">${ICONS[extra.icon]}<span class="label">${esc(extra.label)}</span></a>` : ""}
                 <span class="sep"></span>
                 ${SOCIAL_LINKS.map((l) => `<a class="icon" href="${esc(l.href)}" target="_blank" rel="noopener noreferrer" title="${esc(l.label)}" aria-label="${esc(l.label)}">${ICONS[l.icon]}</a>`).join("")}
                 <span class="sep"></span>

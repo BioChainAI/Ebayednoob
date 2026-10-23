@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Engine Manual - Ebayednoob</title>
+    <meta name="description" content="Instruction manual and explainer for the Geometric Harmonics Calculator: the 5-tier toroidal engine, its exact rational arithmetic, TQF triangulation, differential clutch and 64-bit engram.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #020617;
+            --panel: #0b1222;
+            --panel-2: #0f172a;
+            --line: rgba(34, 211, 238, 0.16);
+            --line-strong: rgba(34, 211, 238, 0.38);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --faint: #64748b;
+            --cyan: #22d3ee;
+            --fuchsia: #e879f9;
+            --amber: #fbbf24;
+            --rose: #fb7185;
+            --emerald: #34d399;
+            --sky: #38bdf8;
+            --purple: #c084fc;
+            --t4: #f43f5e; --t3: #f59e0b; --t2: #10b981; --t1: #a855f7; --t0: #38bdf8;
+            --mono: 'Fira Code', ui-monospace, monospace;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+        body {
+            margin: 0; background: var(--bg); color: var(--text);
+            font: 16px/1.7 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(1200px 600px at 85% -10%, rgba(232, 121, 249, 0.10), transparent 60%),
+                radial-gradient(900px 600px at -10% 20%, rgba(34, 211, 238, 0.10), transparent 60%);
+        }
+        a { color: var(--cyan); text-decoration-color: rgba(34, 211, 238, 0.4); text-underline-offset: 3px; }
+        a:hover { color: #67e8f9; }
+        code, kbd, .mono { font-family: var(--mono); font-size: 0.88em; }
+        code { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(51, 65, 85, 0.7); border-radius: 5px; padding: 0.05em 0.35em; color: #a5f3fc; }
+        kbd { background: #1e293b; border: 1px solid #334155; border-bottom-width: 2px; border-radius: 5px; padding: 0.05em 0.4em; color: #e2e8f0; }
+        strong { color: #f8fafc; }
+        h1, h2, h3, h4 { line-height: 1.25; color: #f8fafc; }
+        h2 { font-size: 1.75rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+        h3 { font-size: 1.2rem; margin: 2rem 0 0.5rem; color: #cffafe; }
+        h4 { font-size: 1rem; margin: 1.4rem 0 0.4rem; color: #e0f2fe; }
+        p { margin: 0.7rem 0; }
+        ul, ol { padding-left: 1.4rem; }
+        li { margin: 0.25rem 0; }
+        hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+        /* Hero */
+        .hero { padding: 92px 20px 40px; text-align: center; border-bottom: 1px solid var(--line); }
+        .eyebrow { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.4rem); margin: 0.6rem auto 0.8rem; max-width: 900px; letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #67e8f9, #e879f9 55%, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .hero p.lede { max-width: 720px; margin: 0 auto; color: #cbd5e1; font-size: 1.08rem; }
+        .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1.6rem; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-size: 0.95rem; }
+        .btn-primary { background: linear-gradient(90deg, #0891b2, #a21caf); color: #fff; }
+        .btn-primary:hover { color: #fff; filter: brightness(1.1); }
+        .btn-ghost { border-color: var(--line-strong); color: #cffafe; background: rgba(8, 47, 73, 0.35); }
+        .btn-ghost:hover { background: rgba(8, 47, 73, 0.6); color: #fff; }
+        .hero-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1.8rem; }
+        .stat { font-family: var(--mono); font-size: 0.8rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(15, 23, 42, 0.7); color: #cbd5e1; }
+        .stat b { color: var(--cyan); }
+
+        /* Layout */
+        .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 40px; max-width: 1240px; margin: 0 auto; padding: 32px 20px 80px; }
+        .toc { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 90px); overflow-y: auto; padding-right: 6px; font-size: 0.88rem; }
+        .toc-title { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+        .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+        .toc li { margin: 0; }
+        .toc a { display: block; padding: 5px 10px; border-left: 2px solid rgba(51, 65, 85, 0.6); color: var(--muted); text-decoration: none; }
+        .toc a:hover { color: #e2e8f0; border-left-color: #475569; }
+        .toc a.active { color: var(--cyan); border-left-color: var(--cyan); background: rgba(8, 47, 73, 0.35); }
+        .toc .part { margin: 14px 0 4px 10px; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fuchsia); }
+        .toc-mobile { display: none; }
+        main { min-width: 0; max-width: 860px; }
+
+        section.chapter { padding: 8px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
+        section.chapter:last-of-type { border-bottom: 0; }
+        .chapter-num { font-family: var(--mono); font-size: 0.78rem; color: var(--fuchsia); letter-spacing: 0.1em; }
+        .chapter-intro { color: #cbd5e1; font-size: 1.04rem; }
+
+        /* Callouts */
+        .callout { border: 1px solid; border-radius: 12px; padding: 14px 16px; margin: 1.2rem 0; background: rgba(15, 23, 42, 0.75); }
+        .callout > :first-child { margin-top: 0; }
+        .callout > :last-child { margin-bottom: 0; }
+        .callout .label { display: inline-block; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+        .plain { border-color: rgba(52, 211, 153, 0.4); } .plain .label { color: var(--emerald); }
+        .tryit { border-color: rgba(34, 211, 238, 0.45); background: rgba(8, 47, 73, 0.3); } .tryit .label { color: var(--cyan); }
+        .note { border-color: rgba(251, 191, 36, 0.45); } .note .label { color: var(--amber); }
+        .deep { border-color: rgba(192, 132, 252, 0.45); } .deep .label { color: var(--purple); }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; margin: 1rem 0; border: 1px solid var(--line); border-radius: 12px; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(51, 65, 85, 0.5); vertical-align: top; }
+        th { background: rgba(15, 23, 42, 0.95); color: #a5f3fc; font-weight: 600; font-size: 0.82rem; white-space: nowrap; }
+        tr:last-child td { border-bottom: 0; }
+        td.num, th.num { text-align: right; font-family: var(--mono); white-space: nowrap; }
+        .tier-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+        /* Cards / figures */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: rgba(15, 23, 42, 0.7); }
+        .card h4 { margin-top: 0; }
+        .card p { margin: 0.3rem 0 0; font-size: 0.93rem; color: #cbd5e1; }
+        figure { margin: 1.4rem 0; }
+        figure svg { display: block; width: 100%; height: auto; }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 8px; text-align: center; }
+        .steps { counter-reset: step; list-style: none; padding: 0; }
+        .steps > li { counter-increment: step; position: relative; padding: 4px 0 10px 46px; }
+        .steps > li::before { content: counter(step); position: absolute; left: 0; top: 4px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+            font-family: var(--mono); font-weight: 600; font-size: 0.85rem; color: #020617; background: linear-gradient(135deg, #22d3ee, #e879f9); }
+        .tag { font-family: var(--mono); font-size: 0.74rem; padding: 1px 7px; border-radius: 5px; border: 1px solid; white-space: nowrap; }
+        .tag-proven { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.5); }
+        .tag-heur { color: #fcd34d; border-color: rgba(251, 191, 36, 0.5); }
+        .tag-unified { color: #67e8f9; border-color: rgba(34, 211, 238, 0.5); }
+
+        /* Interactive labs */
+        .lab { border: 1px solid var(--line-strong); border-radius: 14px; background: linear-gradient(180deg, rgba(8, 47, 73, 0.35), rgba(15, 23, 42, 0.8)); padding: 16px; margin: 1.4rem 0; }
+        .lab-title { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+        .lab input[type="text"], .lab select {
+            background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; font: 0.95rem var(--mono); }
+        .lab input[type="text"] { width: 100%; }
+        .lab input[type="text"]:focus, .lab select:focus { outline: 2px solid rgba(34, 211, 238, 0.6); outline-offset: 1px; }
+        .lab-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+        .chip { font: 0.8rem var(--mono); padding: 4px 9px; border-radius: 999px; border: 1px solid #334155; background: #0f172a; color: #cbd5e1; cursor: pointer; }
+        .chip:hover { border-color: var(--cyan); color: #fff; }
+        .out { font-family: var(--mono); font-size: 0.88rem; background: #020617; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; }
+        .out .k { color: var(--muted); }
+        .out .bad { color: var(--rose); }
+        .out .good { color: var(--emerald); }
+        .two-out { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .bitgrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; width: 100%; max-width: 300px; }
+        .bit { aspect-ratio: 1; display: grid; place-items: center; font: 9px var(--mono); border-radius: 3px; color: #64748b; border: 1px solid #1e293b; background: #0b1222; }
+        .bit.on.halo { background: #b45309; color: #fff; } .bit.on.gate { background: #7e22ce; color: #fff; }
+        .bit.on.ctrl { background: #047857; color: #fff; } .bit.on.core { background: #0e7490; color: #fff; }
+        .bit.off.halo { border-color: rgba(245, 158, 11, 0.35); } .bit.off.gate { border-color: rgba(168, 85, 247, 0.35); }
+        .bit.off.ctrl { border-color: rgba(16, 185, 129, 0.35); } .bit.off.core { border-color: rgba(34, 211, 238, 0.3); }
+        input[type="range"] { accent-color: var(--fuchsia); width: 100%; }
+
+        .gloss { display: grid; grid-template-columns: 220px 1fr; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .gloss dt, .gloss dd { margin: 0; padding: 9px 12px; border-bottom: 1px solid rgba(51, 65, 85, 0.45); }
+        .gloss dt { font-weight: 600; color: #a5f3fc; background: rgba(15, 23, 42, 0.9); }
+        .gloss dd { color: #cbd5e1; font-size: 0.93rem; }
+        details.faq { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 8px 0; background: rgba(15, 23, 42, 0.6); }
+        details.faq summary { cursor: pointer; font-weight: 600; color: #e0f2fe; }
+        details.faq[open] summary { margin-bottom: 6px; }
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+        footer { text-align: center; color: var(--faint); font-size: 0.85rem; padding: 30px 20px 60px; border-top: 1px solid var(--line); }
+
+        @media (max-width: 1023px) {
+            .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 20px; }
+            .toc { display: none; }
+            .toc-mobile { display: block; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); }
+            .toc-mobile summary { cursor: pointer; font-weight: 600; }
+            .toc-mobile ol { margin: 8px 0 0; padding-left: 1.2rem; columns: 2; column-gap: 20px; font-size: 0.9rem; }
+        }
+        @media (max-width: 640px) {
+            body { font-size: 15px; }
+            .grid-2, .grid-3, .two-out { grid-template-columns: minmax(0, 1fr); }
+            .gloss { grid-template-columns: minmax(0, 1fr); }
+            .gloss dt { border-bottom: 0; padding-bottom: 2px; }
+            .toc-mobile ol { columns: 1; }
+            h2 { font-size: 1.45rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="eyebrow">BioChain AI &middot; Geometric Engine of Time</div>
+    <h1>The Geometric Harmonics Calculator: Instruction Manual &amp; Explainer</h1>
+    <p class="lede">A guided tour of every part of the engine: what you see on screen, what each control does, the mathematics behind the five nested tori, and how an ordinary sum like <code>0.1 + 0.2</code> becomes a 150-step journey that ends in an exact answer.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="index.html">Open the Engine</a>
+        <a class="btn btn-ghost" href="#quickstart">5-minute Quick Start</a>
+        <a class="btn btn-ghost" href="https://www.academia.edu/171106117/The_Geometric_Engine_of_Time_Mathematical_Architecture_of_the_6_Channel_5_Tier_Toroidal_Orbital_Calculator" target="_blank" rel="noopener noreferrer">Read the Paper</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat"><b>5</b> nested tori</span>
+        <span class="stat"><b>30</b> nodes per tier</span>
+        <span class="stat"><b>150</b> pulses per calculation</span>
+        <span class="stat">W<sub>&Sigma;</sub> = <b>60</b> wraps</span>
+        <span class="stat"><b>64</b>-bit engram tile</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol id="toc-list">
+            <li class="part">Getting started</li>
+            <li><a href="#start">1. The big idea</a></li>
+            <li><a href="#quickstart">2. Quick start</a></li>
+            <li><a href="#screen">3. A tour of the screen</a></li>
+            <li class="part">How the engine works</li>
+            <li><a href="#geometry">4. The five tiers</a></li>
+            <li><a href="#clock">5. The 30-node clock</a></li>
+            <li><a href="#trace">6. The calculation trace</a></li>
+            <li><a href="#arithmetic">7. Exact arithmetic, stage by stage</a></li>
+            <li><a href="#limits">8. What is exact, and what isn't</a></li>
+            <li><a href="#between">9. Between the manifolds: TQF</a></li>
+            <li><a href="#tension">10. Tension, torsion &amp; the &pi;/6 lock</a></li>
+            <li><a href="#clutch">11. The differential clutch</a></li>
+            <li><a href="#engram">12. The 64-bit engram</a></li>
+            <li class="part">Reference</li>
+            <li><a href="#paper">13. PAPER tab modules</a></li>
+            <li><a href="#rightpanel">14. Right panel reference</a></li>
+            <li><a href="#bottombar">15. Bottom control bar</a></li>
+            <li><a href="#loom">16. The wider architecture</a></li>
+            <li><a href="#glossary">17. Glossary</a></li>
+            <li><a href="#faq">18. Troubleshooting &amp; FAQ</a></li>
+        </ol>
+    </nav>
+
+    <main>
+        <details class="toc-mobile">
+            <summary>Contents</summary>
+            <ol>
+                <li><a href="#start">The big idea</a></li>
+                <li><a href="#quickstart">Quick start</a></li>
+                <li><a href="#screen">A tour of the screen</a></li>
+                <li><a href="#geometry">The five tiers</a></li>
+                <li><a href="#clock">The 30-node clock</a></li>
+                <li><a href="#trace">The calculation trace</a></li>
+                <li><a href="#arithmetic">Exact arithmetic</a></li>
+                <li><a href="#limits">What is exact</a></li>
+                <li><a href="#between">Between the manifolds</a></li>
+                <li><a href="#tension">Tension &amp; torsion</a></li>
+                <li><a href="#clutch">The differential clutch</a></li>
+                <li><a href="#engram">The 64-bit engram</a></li>
+                <li><a href="#paper">PAPER tab modules</a></li>
+                <li><a href="#rightpanel">Right panel</a></li>
+                <li><a href="#bottombar">Bottom control bar</a></li>
+                <li><a href="#loom">The wider architecture</a></li>
+                <li><a href="#glossary">Glossary</a></li>
+                <li><a href="#faq">Troubleshooting &amp; FAQ</a></li>
+            </ol>
+        </details>
+
+        <!-- 1 -->
+        <section class="chapter" id="start">
+            <div class="chapter-num">CHAPTER 1</div>
+            <h2>The big idea</h2>
+            <p class="chapter-intro">Most calculators treat a sum as an instant, invisible event. This engine slows a calculation down and gives it a shape: a journey inward through five nested rings, ending in an answer that is exact rather than "very close".</p>
+
+            <h3>Why ordinary computers get 0.1 + 0.2 wrong</h3>
+            <p>Almost every computer stores decimal numbers in a binary format called <strong>IEEE-754 floating point</strong>. A 64-bit "double" keeps about 15 to 17 significant digits (53 binary digits, the <em>mantissa</em>) and throws the rest away.</p>
+            <p>That works well for most things, but some everyday decimals have no exact binary form. One tenth is the classic example: in base 2 it repeats forever, <code>0.000110011001100…</code>, much as one third repeats forever in base 10 (<code>0.333…</code>). The computer has to cut it off, and the tiny leftover error shows up when you add:</p>
+            <div class="out">0.1 + 0.2 = <span class="bad">0.30000000000000004</span> &nbsp;<span class="k">// what a standard double gives</span><br>0.1 + 0.2 = <span class="good">0.3</span> &nbsp;<span class="k">// what this engine gives</span></div>
+            <p>A second failure is the <strong>precision ceiling</strong>. Try <code>9.0000000000000005 + 0.30000008</code> on a normal calculator. The tiny <code>…0005</code> at the end is beyond the 53-bit limit, so it silently disappears and you get <code>9.30000008</code>. The engine keeps every digit: <code>9.3000000800000005</code>.</p>
+
+            <h3>The engine's answer, in two layers</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <h4 style="color:var(--emerald)">Layer 1: exact fractions</h4>
+                    <p>Every number you type is turned into a fraction of two whole numbers, for example 0.1 becomes 1/10. Whole numbers of any size can be stored exactly (JavaScript's <code>BigInt</code>), so adding, subtracting, multiplying and dividing fractions never loses anything. The answer is converted back to decimals only at the very end.</p>
+                </div>
+                <div class="card">
+                    <h4 style="color:var(--fuchsia)">Layer 2: a geometric picture</h4>
+                    <p>The engine shows that pipeline as motion through space. Five ring-shaped surfaces (<em>tori</em>, like doughnuts) sit inside each other. A glowing orb starts on the outer ring and spirals inward, one ring per stage, until it reaches the core and the answer "latches".</p>
+                </div>
+            </div>
+
+            <div class="callout plain">
+                <div class="label">In plain words</div>
+                <p>Think of the five rings as five rooms in a factory, from loading dock to final inspection. Your numbers come in at the outer room as raw material, get lined up, combined, trimmed of waste, and leave the inner room as a finished, exact answer. The orb's path is the tour of the factory.</p>
+            </div>
+
+            <h3>The vocabulary you'll meet</h3>
+            <p>The engine uses the language of the research paper behind it: <em>manifold</em>, <em>soliton</em>, <em>holonomy</em>, <em>spinor</em>. You don't need any of it to use the calculator, and each term is explained where it first matters (and again in the <a href="#glossary">glossary</a>). As a first translation:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>On screen it says…</th><th>Read it as…</th></tr></thead>
+                <tbody>
+                    <tr><td>Manifold / Tier T<sub>n</sub></td><td>One of the five rings (tori). T4 is the outermost, T0 the core.</td></tr>
+                    <tr><td>Stage 0 … Stage 4</td><td>The five steps of a calculation, one per ring, outside to inside.</td></tr>
+                    <tr><td>Node / Frame F1–F30</td><td>One of 30 evenly spaced positions around a ring (12&deg; apart).</td></tr>
+                    <tr><td>Pulse</td><td>One tick of the engine's clock: moving from one node to the next.</td></tr>
+                    <tr><td>Soliton orb / Calculation trace</td><td>The glowing pink ball and its trail: the calculation's position.</td></tr>
+                    <tr><td>Latch / Soliton crystallization</td><td>The moment the answer is released at the end of Stage 4.</td></tr>
+                    <tr><td>Quadrance Q</td><td>A distance squared. Using it avoids square roots.</td></tr>
+                    <tr><td>TQF</td><td>The Triple Quad Formula: a test for whether three points form a real triangle or lie on a straight line.</td></tr>
+                    <tr><td>Engram / 64-bit tile</td><td>A 64-bit "fingerprint" made from a result, shown as an 8&times;8 grid.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <!-- 2 -->
+        <section class="chapter" id="quickstart">
+            <div class="chapter-num">CHAPTER 2</div>
+            <h2>Quick start: your first calculation</h2>
+            <p class="chapter-intro">Five minutes, no theory needed. Open the <a href="index.html">engine</a> in another tab and follow along.</p>
+            <ol class="steps">
+                <li><strong>Look around.</strong> The coloured rings in the middle are the five tiers. Drag with the mouse (or one finger) to rotate the view, scroll (or pinch) to zoom, right-drag (or two fingers) to pan. The crosshair button at the bottom left recentres the camera.</li>
+                <li><strong>Open the TERMINAL.</strong> In the left panel, click <code>2. TERMINAL</code>. This is the calculator keypad.</li>
+                <li><strong>Load the classic test.</strong> Click <code>IEEE Test: 0.1 + 0.2</code>. The expression appears in the display.</li>
+                <li><strong>Press <code>RESOLVE MANIFOLD (=)</code>.</strong> The right panel switches to <code>REGISTER</code>. A pink orb appears on the outer red ring (T4) and a red diamond marks where it started.</li>
+                <li><strong>Watch the five stages.</strong> The orb winds around each ring, then jumps inward. Each jump drops a new coloured diamond: amber (T3), green (T2), purple (T1), blue (T0). The Register lists the stages and ticks them off. Stages 3 and 4 run more slowly on purpose; that's where the answer is "trimmed" and "latched".</li>
+                <li><strong>Read the result.</strong> When the last stage finishes, the display shows <code>0.3</code> exactly, a message confirms the result, and an explanation card appears in the Register (Node A = 1/10, Node B = 1/5, Collapse = 3/10).</li>
+                <li><strong>Try the ceiling test.</strong> Back in TERMINAL, click <code>64-Bit Ceiling Test</code> and resolve again. The answer keeps all 16 decimal places.</li>
+                <li><strong>Inspect what happened.</strong> In the Register, click any stage card (or the <code>S0</code>–<code>S4</code> pills) to replay that stage's 30 frames, and click a frame row to see its measurements. Then drag the bottom <em>Frame Scrubber</em> to move the orb back and forth along its path.</li>
+                <li><strong>Make a fingerprint.</strong> Click <code>Hash to Engram</code> (next to <code>Reset Before Calc</code>). The left panel jumps to <code>3. ENGRAM</code> and shows your result as a 64-bit tile.</li>
+            </ol>
+            <div class="callout tryit">
+                <div class="label">Try it</div>
+                <p>Type your own expression with the keypad, for example <code>1/3</code>, <code>2/7*7</code> or <code>(1+2)*3</code>. Switch to <code>SCIENTIFIC</code> for <code>sin</code>, <code>cos</code>, <code>&radic;</code>, <code>^</code>, <code>&pi;</code> and brackets. Press <code>C</code> to clear. Not sure what to type? Use the <a href="#arithmetic">exact-vs-float lab</a> in this manual first.</p>
+            </div>
+            <div class="callout note">
+                <div class="label">Good to know</div>
+                <p>The answer is worked out the instant you press <code>=</code>; the animation then walks you through the five stages and releases the answer at the end. At the default speed (<code>0.10x</code>) one calculation takes about six to seven seconds. Keep <code>Reset Before Calc</code> ticked if you want every run of the same expression to trace exactly the same path.</p>
+            </div>
+        </section>
+
+        <!-- 3 -->
+        <section class="chapter" id="screen">
+            <div class="chapter-num">CHAPTER 3</div>
+            <h2>A tour of the screen</h2>
+            <p class="chapter-intro">The engine fills the whole window. Everything sits on top of the 3D view in floating glass panels you can hide.</p>
+            <figure>
+                <svg viewBox="0 0 800 460" role="img" aria-labelledby="screen-map-title">
+                    <title id="screen-map-title">Screen layout: left panel, 3D view, right panel and bottom control bar</title>
+                    <rect x="1" y="1" width="798" height="458" rx="16" fill="#020617" stroke="#164e63"/>
+                    <g fill="none" stroke-width="5" opacity="0.55">
+                        <ellipse cx="400" cy="215" rx="150" ry="58" stroke="#f43f5e"/>
+                        <ellipse cx="400" cy="215" rx="22" ry="102" stroke="#f59e0b"/>
+                        <ellipse cx="400" cy="215" rx="66" ry="25" stroke="#10b981"/>
+                        <ellipse cx="400" cy="215" rx="9" ry="36" stroke="#a855f7"/>
+                        <ellipse cx="400" cy="215" rx="16" ry="6" stroke="#38bdf8"/>
+                    </g>
+                    <circle cx="400" cy="215" r="4" fill="#fff"/>
+                    <rect x="16" y="16" width="215" height="360" rx="12" fill="rgba(15,23,42,0.85)" stroke="#0891b2"/>
+                    <text x="30" y="40" fill="#67e8f9" font-family="Fira Code" font-size="12">LEFT PANEL</text>
+                    <g font-family="Fira Code" font-size="10" fill="#cbd5e1">
+                        <rect x="28" y="52" width="44" height="20" rx="4" fill="#083344"/><text x="33" y="66">PAPER</text>
+                        <rect x="76" y="52" width="52" height="20" rx="4" fill="#0f172a"/><text x="79" y="66">TERMINAL</text>
+                        <rect x="132" y="52" width="46" height="20" rx="4" fill="#0f172a"/><text x="136" y="66">ENGRAM</text>
+                        <rect x="182" y="52" width="40" height="20" rx="4" fill="#0f172a"/><text x="185" y="66">CLUTCH</text>
+                    </g>
+                    <text x="30" y="100" fill="#94a3b8" font-family="Inter" font-size="12">Modules, keypad,</text>
+                    <text x="30" y="118" fill="#94a3b8" font-family="Inter" font-size="12">64-bit tile, gears</text>
+                    <rect x="569" y="16" width="215" height="360" rx="12" fill="rgba(15,23,42,0.85)" stroke="#0891b2"/>
+                    <text x="583" y="40" fill="#67e8f9" font-family="Fira Code" font-size="12">RIGHT PANEL</text>
+                    <g font-family="Fira Code" font-size="9" fill="#cbd5e1">
+                        <rect x="580" y="52" width="52" height="20" rx="4" fill="#083344"/><text x="583" y="66">TELEMETRY</text>
+                        <rect x="636" y="52" width="50" height="20" rx="4" fill="#0f172a"/><text x="640" y="66">REGISTER</text>
+                        <rect x="690" y="52" width="28" height="20" rx="4" fill="#0f172a"/><text x="694" y="66">HUB</text>
+                        <rect x="722" y="52" width="54" height="20" rx="4" fill="#0f172a"/><text x="724" y="66">VISIBILITY</text>
+                    </g>
+                    <text x="583" y="100" fill="#94a3b8" font-family="Inter" font-size="12">Live readings, stage log,</text>
+                    <text x="583" y="118" fill="#94a3b8" font-family="Inter" font-size="12">2D map, display options</text>
+                    <rect x="231" y="180" width="14" height="44" rx="4" fill="#0f172a" stroke="#0891b2"/><text x="234" y="207" fill="#22d3ee" font-size="12">&#8249;</text>
+                    <rect x="555" y="180" width="14" height="44" rx="4" fill="#0f172a" stroke="#0891b2"/><text x="558" y="207" fill="#22d3ee" font-size="12">&#8250;</text>
+                    <rect x="230" y="392" width="340" height="52" rx="12" fill="rgba(15,23,42,0.9)" stroke="#06b6d4"/>
+                    <text x="246" y="414" fill="#cbd5e1" font-family="Fira Code" font-size="10">&#8853; &#9654; FREE SPIN  TRACE  DEG  SYNC   speed</text>
+                    <rect x="246" y="424" width="308" height="8" rx="3" fill="#164e63"/><rect x="400" y="424" width="154" height="8" rx="3" fill="#701a75"/>
+                    <rect x="316" y="6" width="168" height="22" rx="11" fill="rgba(15,23,42,0.9)" stroke="#2dd4bf" stroke-opacity="0.5"/>
+                    <text x="400" y="21" text-anchor="middle" fill="#5eead4" font-family="Fira Code" font-size="9">site bar &#8226; Home &#8226; Manual</text>
+                    <g font-family="Inter" font-weight="700" font-size="13" fill="#020617">
+                        <circle cx="236" cy="32" r="11" fill="#e879f9"/><text x="232" y="37">1</text>
+                        <circle cx="400" cy="300" r="11" fill="#e879f9"/><text x="396" y="305">2</text>
+                        <circle cx="564" cy="32" r="11" fill="#e879f9"/><text x="560" y="37">3</text>
+                        <circle cx="580" cy="404" r="11" fill="#e879f9"/><text x="576" y="409">4</text>
+                        <circle cx="250" cy="200" r="11" fill="#e879f9"/><text x="246" y="205">5</text>
+                        <circle cx="496" cy="17" r="11" fill="#e879f9"/><text x="492" y="22">6</text>
+                    </g>
+                </svg>
+                <figcaption>Screen map. Numbers match the list below.</figcaption>
+            </figure>
+            <ol>
+                <li><strong>Left panel</strong>, four tabs: <code>1. PAPER</code> (four guided demonstrations from the paper, <a href="#paper">chapter 13</a>), <code>2. TERMINAL</code> (the calculator, <a href="#arithmetic">chapter 7</a>), <code>3. ENGRAM</code> (the 64-bit tile, <a href="#engram">chapter 12</a>) and <code>4. CLUTCH</code> (the gear train and clock-rate coupling, <a href="#clutch">chapter 11</a>). The header badge <code>W<sub>&Sigma;</sub> = 60</code> and a status icon (wave = idle, spinning arrows = computing, tick = result ready) sit at the top. The <code>[Paper]</code> link opens the research paper.</li>
+                <li><strong>3D view</strong>: the five tori, the braided helix tubes, the square particles, thin radial lines to the centre, the glowing core, the calculation trace and any checkpoint diamonds or TQF polygons you switch on.</li>
+                <li><strong>Right panel</strong>, four tabs: <code>TELEMETRY</code>, <code>REGISTER</code>, <code>HUB</code> and <code>VISIBILITY</code> (<a href="#rightpanel">chapter 14</a>).</li>
+                <li><strong>Bottom control bar</strong>: camera reset, play/pause, free spin, trace, degree overlay, sync mode, speed and the frame scrubber (<a href="#bottombar">chapter 15</a>).</li>
+                <li><strong>Panel tabs</strong>: the small chevron tabs on the inner edge of each side panel slide that panel off-screen, so you can see the full 3D view. Click again to bring it back.</li>
+                <li><strong>Site bar</strong>: the floating bar at the top centre takes you back to the main site, to this manual, signs you in with Google (the same sign-in as the rest of the site) and links to GitHub, X, YouTube and Patreon. Its arrow button tucks it away into a small <code>•••</code> button.</li>
+            </ol>
+        </section>
+
+        <!-- 4 -->
+        <section class="chapter" id="geometry">
+            <div class="chapter-num">CHAPTER 4</div>
+            <h2>The five tiers</h2>
+            <p class="chapter-intro">Everything in the engine hangs off five tori. Their sizes and winding speeds aren't arbitrary: each follows a simple formula in the tier number <em>n</em> (0 for the core, 4 for the outside).</p>
+
+            <h3>What a torus is, and how a path winds around it</h3>
+            <p>A torus is a doughnut shape. It has two radii: the <strong>major radius R</strong> (from the centre of the doughnut to the middle of its tube) and the <strong>minor radius r</strong> (the thickness of the tube). A point on it is fixed by two angles: &theta; goes the long way round the ring, &phi; goes round the tube.</p>
+            $$x = (R + r\cos\varphi)\cos\theta,\qquad y = (R + r\cos\varphi)\sin\theta,\qquad z = r\sin\varphi$$
+            <p>If you tie the two angles together as &phi; = W&middot;&theta;, a point travelling once round the ring wraps round the tube <strong>W</strong> times, drawing a spiral like the stripe on a candy cane bent into a circle. <strong>W</strong> is the tier's <em>winding number</em>. The coloured helix tubes on each torus in the 3D view are exactly these spirals.</p>
+
+            <h3>The three tier laws</h3>
+            $$R_n = 5n^2 + 15n + 15,\qquad r_n = 2n + 4,\qquad W_n = 16 - 2n$$
+            <div class="table-wrap"><table>
+                <thead><tr><th>Tier</th><th>Stage</th><th class="num">R</th><th class="num">Gap &Delta;R</th><th class="num">r</th><th class="num">W</th><th class="num">f = 6W</th><th class="num">&omega;/&omega;<sub>4</sub></th><th>Plane</th><th>Role in a calculation</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="tier-dot" style="background:var(--t4)"></span>T4</td><td>0</td><td class="num">155</td><td class="num">&mdash;</td><td class="num">12</td><td class="num">8</td><td class="num">48 Hz</td><td class="num">1.00&times;</td><td>flat (XY)</td><td>Ingestion: numbers become exact fractions</td></tr>
+                    <tr><td><span class="tier-dot" style="background:var(--t3)"></span>T3</td><td>1</td><td class="num">105</td><td class="num">50</td><td class="num">10</td><td class="num">10</td><td class="num">60 Hz</td><td class="num">1.25&times;</td><td>upright</td><td>Alignment: order of operations, common denominators</td></tr>
+                    <tr><td><span class="tier-dot" style="background:var(--t2)"></span>T2</td><td>2</td><td class="num">65</td><td class="num">40</td><td class="num">8</td><td class="num">12</td><td class="num">72 Hz</td><td class="num">1.50&times;</td><td>flat (XY)</td><td>Superposition: the operator acts</td></tr>
+                    <tr><td><span class="tier-dot" style="background:var(--t1)"></span>T1</td><td>3</td><td class="num">35</td><td class="num">30</td><td class="num">6</td><td class="num">14</td><td class="num">84 Hz</td><td class="num">1.75&times;</td><td>upright</td><td>Pruning: common factors removed (GCD)</td></tr>
+                    <tr><td><span class="tier-dot" style="background:var(--t0)"></span>T0</td><td>4</td><td class="num">15</td><td class="num">20</td><td class="num">4</td><td class="num">16</td><td class="num">96 Hz</td><td class="num">2.00&times;</td><td>flat (XY)</td><td>Latch: the fraction is written out in decimals</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>The four ratios that tie them together</h3>
+            <ol>
+                <li><strong>The winding invariant, W<sub>&Sigma;</sub> = 60.</strong> Add the winding numbers: 8 + 10 + 12 + 14 + 16 = 60. This is the <code>W<sub>&Sigma;</sub> = 60</code> badge in the header, and 60 is also the engine's base pulse rate (60 pulses per second at nominal speed).</li>
+                <li><strong>The 2:1 inward acceleration.</strong> Every stage takes the same number of pulses (30), but inner tiers wrap more often: 8 wraps on T4, 16 on T0. So the spin rate doubles from outside to inside, &omega;<sub>0</sub>/&omega;<sub>4</sub> = 16/8 = 2, like a skater spinning faster as they pull their arms in. The tier frequencies f = 6W run 48, 60, 72, 84, 96 Hz.</li>
+                <li><strong>Quadratic compression.</strong> The gaps between rings shrink in equal steps (50, 40, 30, 20: a constant "second difference" of 10, which is what a quadratic formula produces). Overall the ring shrinks from 155 to 15, a factor of 31/3 &asymp; 10.33.</li>
+                <li><strong>The &pi;/6 handshake.</strong> The middle tier T2 has W = 12, which splits a full turn into twelve 30&deg; (&pi;/6) sectors. 30&deg; becomes the "gear tooth" that the outer and inner tiers have to agree on (<a href="#tension">chapter 10</a>).</li>
+            </ol>
+
+            <figure>
+                <svg viewBox="0 0 760 340" role="img" aria-labelledby="tiers-fig-title">
+                    <title id="tiers-fig-title">Top view and side view of the five tiers</title>
+                    <text x="180" y="14" text-anchor="middle" fill="#94a3b8" font-family="Fira Code" font-size="12">TOP VIEW (looking down Z)</text>
+                    <g id="fig-top" transform="translate(180,186)"></g>
+                    <text x="560" y="14" text-anchor="middle" fill="#94a3b8" font-family="Fira Code" font-size="12">SIDE VIEW (looking along Y)</text>
+                    <g id="fig-side" transform="translate(560,186)"></g>
+                </svg>
+                <figcaption>Drawn to scale from the tier laws. The flat tiers (T4, T2, T0) lie in the horizontal plane; T3 and T1 are stood upright, turned 90&deg; about the X axis. Seen from the side, the flat ones look like bars and the upright ones like rings.</figcaption>
+            </figure>
+
+            <h3>Why the tiers alternate between flat and upright</h3>
+            <p>Neighbouring tiers are <strong>orthogonal</strong>: T4, T2 and T0 lie flat, T3 and T1 stand upright. A calculation moving inward therefore has to "fold" through 90&deg; at every stage. The paper calls the jump between tiers an <em>orthogonal geodesic plunge</em>; on screen it's the moment the orb leaves one ring and swoops onto the next. Because consecutive rings are perpendicular, no two neighbours ever overlap, and each stage begins in a fresh plane.</p>
+
+            <h3>What else is drawn on each tier</h3>
+            <ul>
+                <li><strong>Dual-helix braid tubes.</strong> Six spirals per tier: three starting phases (0&deg;, 120&deg;, 240&deg;, the C<sub>3</sub> triad) times two directions (forward, blue, and reverse, amber, the C<sub>2</sub> chirality). Together they form a braid.</li>
+                <li><strong>Square particle fields.</strong> Sixteen square particles ride each of those six spirals, so 96 per tier and 480 in all. They flow at the tier's frequency whenever the engine is running, which makes the inward speed-up visible.</li>
+                <li><strong>Orthogonal radial lines.</strong> A faint line from the centre to every particle, a reminder that every point is measured from the core.</li>
+                <li><strong>The scalar core.</strong> The white sphere at the centre. It glows blue when the system is in lock and turns red when the clutch slips or drift is injected (<a href="#clutch">chapter 11</a>).</li>
+                <li><strong>A polar grid</strong> lies faintly in the background for orientation.</li>
+            </ul>
+        </section>
+
+        <!-- 5 -->
+        <section class="chapter" id="clock">
+            <div class="chapter-num">CHAPTER 5</div>
+            <h2>The 30-node clock</h2>
+            <p class="chapter-intro">The engine replaces "frames per second" with a clock built from the geometry itself. Each ring is divided into 30 nodes, and the pattern those nodes follow is what the paper calls the <em>intrinsic topological clock</em>.</p>
+
+            <h3>Thirty nodes, 12&deg; apart</h3>
+            <p>Each tier is cut into 30 equal steps of 12&deg;: node <em>k</em> sits at &theta;<sub>k</sub> = 2&pi;k/30. The engine labels them <code>F1/30</code> … <code>F30/30</code>. Two repeating patterns run across them at once:</p>
+            <ul>
+                <li><strong>C<sub>3</sub>, the triadic phase.</strong> Every three nodes cycle through 0&deg;, 120&deg; and 240&deg; (k mod 3). This keeps the path balanced: no direction is favoured.</li>
+                <li><strong>C<sub>2</sub>, chiral parity.</strong> Nodes alternate between the forward braid (+1) and the reverse braid (&minus;1) (k mod 2).</li>
+            </ul>
+            <p>Together they form a 6-node pattern (C<sub>3</sub>&times;C<sub>2</sub>), and 30 nodes hold exactly five copies of it. That's what the label <code>|C₃ × C₂| × 5 Tiers</code> on the <em>Active Node</em> card refers to.</p>
+
+            <h3>The Cesium-133 half-cycle</h3>
+            <p>The international definition of the second is 9,192,631,770 oscillations of a caesium-133 atom. At the engine's base rate of 60 pulses per second, one pulse lasts</p>
+            $$\frac{9{,}192{,}631{,}770}{60} = 153{,}210{,}529.5 \text{ caesium cycles}$$
+            <p>That trailing <strong>.5</strong> is the <em>parity residual</em>, shown as <code>φ_p</code> on the <em>Parity State</em> card. After an odd number of pulses there's half a cycle left over (<code>φ_p = 0.5</code>); after an even number it cancels (<code>φ_p = 0.0</code>). At node 30 that integer closure coincides with a full 360&deg; turn and the end of the fifth C<sub>3</sub>&times;C<sub>2</sub> pattern:</p>
+            $$153{,}210{,}529.5 \times 30 = 4{,}596{,}315{,}885 \text{ cycles, exactly}$$
+            <p>So one 30-node lap takes half a second at nominal speed and contains a whole number of caesium cycles. That is the gate the engine waits for before letting a calculation move inward to the next tier.</p>
+
+            <div class="lab" id="lab-clock">
+                <div class="lab-title">Lab &middot; the 30-node dial</div>
+                <svg id="clock-svg" viewBox="0 0 300 300" style="max-width:300px;display:block;margin:0 auto" role="img" aria-label="Thirty-node dial coloured by C3 phase and C2 chirality"></svg>
+                <input type="range" id="clock-k" min="1" max="30" value="1" aria-label="Node">
+                <div class="out" id="clock-out"></div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">Colour = C<sub>3</sub> phase (cyan 0&deg;, amber 120&deg;, fuchsia 240&deg;). Filled = forward braid (+1), hollow = reverse braid (&minus;1). Drag the slider to step through the nodes.</p>
+            </div>
+
+            <h3>From 30 nodes to 150 pulses to 720 frames</h3>
+            <ul>
+                <li>A calculation visits all five tiers, 30 nodes each: <strong>150 pulses</strong>. At the nominal 60 pulses per second that's 0.5 s per stage and <strong>2.5 s</strong> in total.</li>
+                <li>On screen it runs slower so you can follow it. During a calculation the clock runs at 6&times; the speed slider for stages 0–2 and 2.5&times; for stages 3–4. At the default <code>0.10x</code> that's roughly 0.8 s per outer stage and 2 s per inner stage: about 6–7 seconds in all.</li>
+                <li>The same journey can also be counted as <strong>720 frames</strong>, two full turns of 360&deg;. The paper calls this the <em>holonomic</em> or <em>spinor</em> view. Spinors are mathematical objects that only return to their starting state after 720&deg;, not 360&deg; (the "belt trick" is the everyday example). The bottom scrubber can count in either unit (<a href="#bottombar">chapter 15</a>).</li>
+            </ul>
+        </section>
+
+        <!-- 6 -->
+        <section class="chapter" id="trace">
+            <div class="chapter-num">CHAPTER 6</div>
+            <h2>The calculation trace</h2>
+            <p class="chapter-intro">The fuchsia orb and its comet trail show where the calculation "is". Here is exactly how it starts, moves and finishes.</p>
+
+            <h3>Where it starts</h3>
+            <p>With <code>Reset Before Calc</code> ticked, pressing <code>=</code> resets the clock, the pulse counter and the manifold's rotation to zero, so the same expression always traces the same path. The orb starts on T4 at &theta; = 0, &phi; = 0:</p>
+            $$P_{\text{start}} = \big((R_4 + r_4)\,,\;0\,,\;0\big) = (155 + 12,\;0,\;0) = (167,\;0,\;0)$$
+            <p>A crimson-rose octahedron, the first <strong>checkpoint diamond</strong>, is dropped there to mark the start of Stage 0.</p>
+
+            <h3>Spinning around a tier</h3>
+            <p>During each stage the orb winds around the current tier along its helix (&phi; = W&theta;), so it circles the inner tiers faster than the outer ones. Each animation frame it moves a quarter of the way toward its target point (<code>lerp(target, 0.25)</code>), which smooths the motion into a flowing comet trail.</p>
+
+            <h3>Jumping between tiers</h3>
+            <p>When the clock reaches node 30 on the current tier (the parity gate from <a href="#clock">chapter 5</a>), the stage advances:</p>
+            <ol>
+                <li>A new checkpoint diamond is dropped where the orb is, coloured for the stage it's entering: amber (Stage 1, T3), green (Stage 2, T2), purple (Stage 3, T1), blue (Stage 4, T0). Each diamond wears a white halo ring.</li>
+                <li>The orb's target switches to the next tier inward, which is turned 90&deg; from the one it's leaving.</li>
+                <li>Because the orb eases toward its new target, it sweeps across the gap in a curve rather than teleporting: that curve is the inward bridge you see in the trail.</li>
+                <li>Entering Stage 3 the engine deliberately slows down (the clock drops from 6&times; to 2.5&times;). This is the pruning stage, and the slower pace lets you see the last two tiers clearly.</li>
+            </ol>
+
+            <h3>Where it finishes</h3>
+            <p>The calculation is complete when the clock closes node 30 on T0, the fifth and last parity gate: 5 stages &times; 30 nodes = 150 pulses, or 720&deg; of the holonomic cycle. At that moment the engine:</p>
+            <ul>
+                <li>writes the result into the display and the Register, and shows the explanation card;</li>
+                <li>stops the animation (unless <code>FREE SPIN</code> is on, in which case the rings keep turning);</li>
+                <li>pops up a message such as <code>Manifold Resolution Complete: 0.1 + 0.2 = 0.3</code>.</li>
+            </ul>
+            <div class="callout note">
+                <div class="label">Two different paths</div>
+                <p>While a calculation runs, the trail records where the orb actually went. When you scrub afterwards (with the Frame Scrubber, the Hub's trajectory scan, the stage cards or <code>+1 Pulse</code>), the engine draws an idealised version instead, the <em>canonical trajectory</em>: one point per node, each blended 38% of the way toward that node's position. Both describe the same T4&rarr;T0 journey; the canonical one is tidier for inspection.</p>
+            </div>
+        </section>
+
+        <!-- 7 -->
+        <section class="chapter" id="arithmetic">
+            <div class="chapter-num">CHAPTER 7</div>
+            <h2>Exact arithmetic, stage by stage</h2>
+            <p class="chapter-intro">What the engine computes is <strong>exact rational arithmetic</strong>: every value is a fraction <em>n/d</em> of two whole numbers with no size limit. Here is the pipeline, mapped onto the five stages.</p>
+
+            <h3>Stage 0 on T4: turning decimals into exact fractions</h3>
+            <p>Each number is read as text, never as a float. A number with <em>k</em> digits after the decimal point becomes (all its digits) / 10<sup>k</sup>, then is reduced by the <strong>greatest common divisor</strong> (GCD), found with Euclid's 2,300-year-old algorithm:</p>
+            $$\gcd(a, b) = \gcd(b,\; a \bmod b), \qquad \gcd(a, 0) = a$$
+            <p>Examples: <code>0.1</code> &rarr; 1/10. <code>0.2</code> &rarr; 2/10 &rarr; 1/5. <code>9.0000000000000005</code> has 16 decimals:</p>
+            $$\frac{90{,}000{,}000{,}000{,}000{,}005}{10{,}000{,}000{,}000{,}000{,}000} \xrightarrow{\;\div 5\;} \frac{18{,}000{,}000{,}000{,}000{,}001}{2{,}000{,}000{,}000{,}000{,}000}$$
+            <p>Nothing has been rounded. The fraction is the number, exactly.</p>
+
+            <h3>Stage 1 on T3: putting operations in order</h3>
+            <p>The expression is reordered with Dijkstra's <strong>shunting-yard</strong> algorithm so that operations happen in the right order: brackets first, then <code>^</code>, then <code>*</code> and <code>/</code>, then <code>+</code> and <code>-</code>. Powers group from the right, so <code>2^3^2</code> means 2<sup>9</sup> = 512, as in standard maths. Conceptually this is also where pairs of fractions are brought onto a <strong>common denominator</strong>:</p>
+            $$\frac{1}{10} = \frac{1\times5}{10\times5} = \frac{5}{50},\qquad \frac{1}{5} = \frac{1\times10}{5\times10} = \frac{10}{50}$$
+
+            <h3>Stage 2 on T2: the operator acts</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Key</th><th>Operation</th><th>Rule used</th><th>Exact?</th></tr></thead>
+                <tbody>
+                    <tr><td><code>+</code> <code>-</code></td><td>add, subtract</td><td>\( \frac{a}{b} \pm \frac{c}{d} = \frac{ad \pm cb}{bd} \)</td><td class="good" style="color:var(--emerald)">Yes</td></tr>
+                    <tr><td><code>*</code></td><td>multiply</td><td>\( \frac{a}{b} \cdot \frac{c}{d} = \frac{ac}{bd} \)</td><td style="color:var(--emerald)">Yes</td></tr>
+                    <tr><td><code>/</code></td><td>divide</td><td>\( \frac{a}{b} \div \frac{c}{d} = \frac{ad}{bc} \)</td><td style="color:var(--emerald)">Yes (dividing by 0 gives <code>ERR: SINGULARITY</code>)</td></tr>
+                    <tr><td><code>^</code></td><td>whole-number power</td><td>\( \left(\frac{a}{b}\right)^e = \frac{a^e}{b^e} \): the exponent sets how many times the value "wraps" around itself</td><td style="color:var(--emerald)">Yes, for whole-number exponents</td></tr>
+                    <tr><td><code>&radic;</code></td><td>square root</td><td>Scale by 10<sup>40</sup>, take the whole-number square root by Newton's method, divide by 10<sup>20</sup></td><td style="color:var(--amber)">Correct to 20 decimal places</td></tr>
+                    <tr><td><code>sin</code> <code>cos</code></td><td>sine, cosine</td><td>First three terms of the Taylor series, in exact fractions</td><td style="color:var(--amber)">Approximate (best near 0)</td></tr>
+                    <tr><td><code>&pi;</code></td><td>pi</td><td>The fraction 314159265358979323846 / 10<sup>20</sup></td><td style="color:var(--amber)">20 decimal places</td></tr>
+                </tbody>
+            </table></div>
+            <p>For 0.1 + 0.2 this stage produces 5/50 + 10/50 = 15/50.</p>
+            <p>The square root uses Newton's method on whole numbers, starting from S/2 and repeating until the guess stops shrinking:</p>
+            $$x_{k+1} = \left\lfloor \frac{x_k + \lfloor S / x_k \rfloor}{2} \right\rfloor, \qquad S = \left\lfloor \frac{n \cdot 10^{40}}{d} \right\rfloor$$
+            <p>The sine and cosine are the polynomials</p>
+            $$\sin a \approx a - \frac{a^3}{6} + \frac{a^5}{120}, \qquad \cos a \approx 1 - \frac{a^2}{2} + \frac{a^4}{24}$$
+            <p>computed with fractions, so they use no floating-point hardware at all. (See <a href="#limits">chapter 8</a> for how accurate this is.)</p>
+
+            <h3>Stage 3 on T1: pruning (TQF collinear collapse)</h3>
+            <p>Every intermediate fraction is reduced to lowest terms by dividing top and bottom by their GCD:</p>
+            $$c = \gcd(|N|, D), \qquad \frac{N}{D} \to \frac{N / c}{D / c}$$
+            <p>For our example, gcd(15, 50) = 5, so 15/50 &rarr; <strong>3/10</strong>. The paper connects this to geometry: a common factor carries no new information, just as three points on a straight line (where the TQF area is zero, <a href="#between">chapter 9</a>) carry no new curvature. Both get "pruned". This is the stage where the engine slows down.</p>
+
+            <h3>Stage 4 on T0: the latch (writing out the decimals)</h3>
+            <p>The final fraction N/D is turned back into decimal digits by long division, exactly as you'd do on paper:</p>
+            <ol>
+                <li>The whole-number part is N &divide; D (rounded down); the remainder is N mod D.</li>
+                <li>While the remainder isn't zero: multiply it by 10, the next digit is (remainder &times; 10) &divide; D, and the new remainder is what's left over. Each repetition is one "base-10 wrap".</li>
+                <li>Stop when the remainder is zero, or after 48 decimal places (then <code>...</code> is added to show the digits go on).</li>
+            </ol>
+            <p>For 3/10: 30 &divide; 10 = 3 remainder 0, so the answer is <code>0.3</code>, with no binary error anywhere. For the ceiling test, every one of the 16 decimal places comes out: <code>9.3000000800000005</code>.</p>
+
+            <div class="callout note">
+                <div class="label">How the computation and the animation line up</div>
+                <p>The arithmetic is done all at once when you press <code>=</code>. In fact every <code>+</code>, <code>-</code>, <code>*</code> and <code>/</code> is reduced to lowest terms as it happens, so the "align, combine, prune" steps all happen inside each single operation. The five stages are the engine's way of showing that pipeline at human speed. The result is held back until the animation reaches the core, then latched.</p>
+            </div>
+
+            <div class="lab" id="lab-exact">
+                <div class="lab-title">Lab &middot; exact vs floating point</div>
+                <p style="margin-top:0">Type an expression using the same keys as the engine (<code>+ - * / ^ ( )</code>, <code>sqrt( )</code>, <code>sin( )</code>, <code>cos( )</code>, <code>pi</code>). This lab uses the engine's own algorithm, so it gives the same answers.</p>
+                <input type="text" id="exact-in" value="0.1 + 0.2" spellcheck="false" autocomplete="off" aria-label="Expression">
+                <div class="lab-row" id="exact-chips"></div>
+                <div class="two-out">
+                    <div class="out"><div class="k">Standard float (IEEE-754 double)</div><div id="exact-float" style="font-size:1.05rem"></div></div>
+                    <div class="out"><div class="k">Geometric engine (exact rational)</div><div id="exact-rat" style="font-size:1.05rem"></div></div>
+                </div>
+                <div class="out" id="exact-frac" style="margin-top:10px"></div>
+            </div>
+        </section>
+
+        <!-- 8 -->
+        <section class="chapter" id="limits">
+            <div class="chapter-num">CHAPTER 8</div>
+            <h2>What is exact, and what isn't</h2>
+            <p class="chapter-intro">Being clear about the boundaries makes the exact parts more convincing, not less. This is how version 10 of the engine behaves.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>You type</th><th>Engine shows</th><th>Why</th></tr></thead>
+                <tbody>
+                    <tr><td><code>0.1 + 0.2</code></td><td><code>0.3</code></td><td>Exact.</td></tr>
+                    <tr><td><code>2/7*7</code></td><td><code>2</code></td><td>Exact: 2/7 is kept as a fraction, so multiplying by 7 gives exactly 2.</td></tr>
+                    <tr><td><code>1/3</code></td><td><code>0.333…333...</code></td><td>Exact internally (1/3); the decimal display stops at 48 places and adds <code>...</code>.</td></tr>
+                    <tr><td><code>2^10</code></td><td><code>1024</code></td><td>Exact.</td></tr>
+                    <tr><td><code>sqrt(2)</code></td><td><code>1.4142135623730950488</code></td><td>Correct to 20 decimal places, then cut off. So <code>sqrt(2)*sqrt(2)</code> gives <code>1.99999999999999999999…</code>, not 2.</td></tr>
+                    <tr><td><code>pi</code></td><td><code>3.14159265358979323846</code></td><td>Stored to 20 decimal places.</td></tr>
+                    <tr><td><code>sin(0.5)</code></td><td><code>0.47942708…</code></td><td>Three Taylor terms; the true value is 0.4794255… Good to about 5 places near 0.</td></tr>
+                    <tr><td><code>sin(pi)</code></td><td><code>0.52404…</code></td><td>Three terms are not enough far from 0 (the true value is 0). Use sin/cos for small angles, in radians.</td></tr>
+                    <tr><td><code>2^0.5</code></td><td><code>1</code></td><td>Exponents are rounded toward zero to a whole number (0.5 &rarr; 0). Use <code>sqrt( )</code> instead.</td></tr>
+                    <tr><td><code>-3+5</code> or <code>2^-2</code></td><td><code>ERR: SINGULARITY</code></td><td>There's no "negative sign" key; <code>-</code> always means subtract. Write <code>0-3+5</code>, or <code>1/2^2</code> for 2<sup>&minus;2</sup>.</td></tr>
+                    <tr><td><code>1/0</code></td><td><code>ERR: SINGULARITY</code></td><td>Division by zero.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout deep">
+                <div class="label">Exact numbers, approximate pictures</div>
+                <p>The arithmetic uses exact whole numbers. The 3D picture, including the quadrance and TQF readings in <a href="#between">chapter 9</a>, is drawn with ordinary graphics maths, so those readings are rounded to whole numbers or four decimals for display. They describe the geometry of the path; they don't feed back into the answer.</p>
+            </div>
+        </section>
+
+        <!-- 9 -->
+        <section class="chapter" id="between">
+            <div class="chapter-num">CHAPTER 9</div>
+            <h2>Between the manifolds: quadrance and the TQF</h2>
+            <p class="chapter-intro">The space between the rings isn't empty in this model. At every node the engine measures how the calculation point sits between its two neighbouring tiers, using <em>rational trigonometry</em>.</p>
+
+            <h3>Quadrance instead of distance</h3>
+            <p>Ordinary distance needs a square root, d = &radic;(&Delta;x&sup2; + &Delta;y&sup2; + &Delta;z&sup2;), and square roots are usually irrational. <strong>Rational trigonometry</strong> (developed by mathematician Norman Wildberger) uses the <strong>quadrance</strong> instead, which is just the distance squared:</p>
+            $$Q = d^2 = \Delta x^2 + \Delta y^2 + \Delta z^2$$
+            <p>If the coordinates are fractions, so is the quadrance. No square root, no rounding.</p>
+
+            <h3>The four vertices</h3>
+            <p>For each node the engine takes four points:</p>
+            <div class="grid-2">
+                <div class="card"><h4 style="color:#38bdf8">V1 &middot; P<sub>node</sub></h4><p>The active node on the current tier (cyan).</p></div>
+                <div class="card"><h4 style="color:#f59e0b">V2 &middot; P<sub>upper</sub></h4><p>A point on the next tier outward (amber).</p></div>
+                <div class="card"><h4 style="color:#10b981">V3 &middot; P<sub>lower</sub></h4><p>A point on the next tier inward (emerald).</p></div>
+                <div class="card"><h4 style="color:#d946ef">V4 &middot; P<sub>4</sub></h4><p>The inferred 4th "equilibrium" point (fuchsia), worked out from the other three.</p></div>
+            </div>
+            <p>The outermost and innermost tiers have only one neighbour each, so they borrow the next one along: T4 is bounded by T3 and T2, T0 by T2 and T1. The Register shows this as <code>Bounds: T3 &amp; T2</code> and so on. The three points are spread round the tube by the C<sub>3</sub> phases (0&deg;, 120&deg;, 240&deg;) and offset slightly along the ring, so they always form a genuine 3D triangle.</p>
+
+            <h3>Three quadrances and two ratios</h3>
+            $$Q_1 = \lVert V_1 - V_2 \rVert^2,\qquad Q_2 = \lVert V_1 - V_3 \rVert^2,\qquad Q_3 = \lVert V_2 - V_3 \rVert^2$$
+            <ul>
+                <li><strong>Projective quadrance</strong> \( \hat{Q} = \dfrac{Q_1 + Q_2}{Q_1 + Q_2 + Q_3} \), always between 0 and 1. It measures how the node is "stretched" between its two neighbours: near 1, the node is far from both compared with how far apart they are.</li>
+                <li><strong>Inverse projective quadrance</strong> \( \hat{Q}^{-1} = 1/\hat{Q} \), always above 1. The paper reads it as the local compression acting on the path as the gaps between rings narrow.</li>
+            </ul>
+
+            <h3>The Triple Quad Formula and the area remainder</h3>
+            <p>Three points lie on one straight line exactly when their quadrances satisfy the <strong>Triple Quad Formula</strong>:</p>
+            $$(Q_1 + Q_2 + Q_3)^2 = 2\,(Q_1^2 + Q_2^2 + Q_3^2)$$
+            <p>The difference between the two sides is <strong>Archimedes' function</strong>, which the engine calls the area remainder A<sub>R</sub>. It equals 16 times the triangle's area squared (it's Heron's formula written in quadrances):</p>
+            $$A_R = (Q_1 + Q_2 + Q_3)^2 - 2\,(Q_1^2 + Q_2^2 + Q_3^2) = 16\,A^2$$
+            <ul>
+                <li><strong>A<sub>R</sub> = 0</strong>: the points are collinear. The middle one adds no new "bend", so in the paper's compression scheme it's redundant and can be pruned, just as Stage 3 prunes common factors.</li>
+                <li><strong>A<sub>R</sub> &gt; 0</strong>: a real triangle, with area \( A = \sqrt{A_R}/4 \).</li>
+            </ul>
+
+            <h3>Finding the 4th point</h3>
+            <p>V4 completes the triangle into a parallelogram-like shape: start at V1, add the two edge vectors toward V2 and V3, and scale by an amount that grows with the triangle's area. In engine version 10:</p>
+            $$q = 0.65 + 0.45\,\frac{\sqrt{A_R}}{Q_1 + Q_2 + Q_3 + 1},\qquad V_4 = V_1 + q\,\big[(V_2 - V_1) + (V_3 - V_1)\big]$$
+            <p>With q = 1 this would be exact parallelogram completion (V4 = V2 + V3 &minus; V1). A flat, collinear triple gives q = 0.65; a fat triangle pushes V4 further out.</p>
+
+            <figure>
+                <svg viewBox="0 0 640 300" role="img" aria-labelledby="tqf-fig-title">
+                    <title id="tqf-fig-title">The four-vertex TQF polygon, and a collinear case</title>
+                    <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+                    <polygon points="70,230 190,70 330,210" fill="rgba(56,189,248,0.10)" stroke="none"/>
+                    <polygon points="190,70 400,95 330,210" fill="rgba(217,70,239,0.10)" stroke="none"/>
+                    <line x1="70" y1="230" x2="190" y2="70" stroke="#38bdf8" stroke-width="2"/>
+                    <line x1="70" y1="230" x2="330" y2="210" stroke="#38bdf8" stroke-width="2"/>
+                    <line x1="190" y1="70" x2="330" y2="210" stroke="#38bdf8" stroke-width="2"/>
+                    <g stroke="#d946ef" stroke-width="1.6" stroke-dasharray="5 4">
+                        <line x1="190" y1="70" x2="400" y2="95"/><line x1="330" y1="210" x2="400" y2="95"/><line x1="70" y1="230" x2="400" y2="95"/>
+                    </g>
+                    <g font-family="Fira Code" font-size="13">
+                        <text x="105" y="140" fill="#cbd5e1">Q₁</text><text x="190" y="240" fill="#cbd5e1">Q₂</text><text x="270" y="130" fill="#cbd5e1">Q₃</text>
+                    </g>
+                    <circle cx="70" cy="230" r="8" fill="#38bdf8"/><circle cx="190" cy="70" r="7" fill="#f59e0b"/><circle cx="330" cy="210" r="7" fill="#10b981"/>
+                    <polygon points="400,83 412,95 400,107 388,95" fill="#d946ef"/>
+                    <g font-family="Inter" font-size="13" font-weight="600">
+                        <text x="30" y="258" fill="#38bdf8">V1 node</text><text x="150" y="58" fill="#f59e0b">V2 upper</text>
+                        <text x="300" y="240" fill="#10b981">V3 lower</text><text x="418" y="92" fill="#d946ef">V4 inferred</text>
+                    </g>
+                    <text x="470" y="170" fill="#94a3b8" font-family="Fira Code" font-size="12">collinear: A_R = 0</text>
+                    <line x1="470" y1="250" x2="620" y2="200" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="470" cy="250" r="6" fill="#38bdf8"/><circle cx="545" cy="225" r="6" fill="#10b981"/><circle cx="620" cy="200" r="6" fill="#f59e0b"/>
+                </svg>
+                <figcaption>Left: the shaded 4-vertex polygon the engine draws for each node (triangles V1-V2-V3 and V2-V4-V3). Right: three collinear points, where the TQF holds exactly and the area remainder is zero.</figcaption>
+            </figure>
+
+            <h3>A worked example: Stage 0, frame 1</h3>
+            <p>With the sliders at their defaults (tension 180&deg;, torsion 150&deg;), the engine reports for <code>STAGE 0 | FRAME F1/30</code> (T4, bounds T3 &amp; T2):</p>
+            <div class="table-wrap"><table>
+                <tbody>
+                    <tr><td>V1 (node on T4)</td><td class="num">(167.0, 0.0, 0.0)</td><td>V2 (on T3)</td><td class="num">(99.3, 9.1, 18.1)</td></tr>
+                    <tr><td>V3 (on T2)</td><td class="num">(64.1, &minus;11.7, 8.0)</td><td>V4 (inferred)</td><td class="num">(36.9, &minus;1.9, 19.9)</td></tr>
+                    <tr><td>Q<sub>1</sub>, Q<sub>2</sub>, Q<sub>3</sub></td><td class="num">4,992 &middot; 10,784 &middot; 1,773</td><td>Q&#770; &middot; Q&#770;<sup>&minus;1</sup></td><td class="num">0.8990 &middot; 1.1124</td></tr>
+                    <tr><td>A<sub>R</sub> = 16A&sup2;</td><td class="num">19,240,365</td><td>Triangle area A</td><td class="num">&asymp; 1,097</td></tr>
+                </tbody>
+            </table></div>
+            <p>Check the projective quadrance yourself: (4,992 + 10,784) / (4,992 + 10,784 + 1,773) = 15,776 / 17,549 = 0.8990. (If you recompute A<sub>R</sub> from the rounded Q values you'll get a slightly different number, because the engine uses the unrounded ones.)</p>
+
+            <h3>Seeing it in the engine</h3>
+            <ul>
+                <li><strong>REGISTER &rarr; 30-Frame Stage Telemetry Breakdown</strong> lists every frame of the inspected stage with its C<sub>3</sub> phase, C<sub>2</sub> sign, parity, Q<sub>1</sub>, Q<sub>2</sub> and Q&#770;. Click a row to load it into the <em>Selected Frame</em> card above it (Q<sub>1</sub>, Q<sub>2</sub>, Q<sub>3</sub>, Q&#770;, Q&#770;<sup>&minus;1</sup>, A<sub>R</sub> and V4's coordinates).</li>
+                <li><strong>VISIBILITY &rarr; Archimedean Triangulation (TQF)</strong> draws the polygons in 3D: small spheres for V1–V3, an octahedron for V4, solid edges for the triangle, dashed-style fuchsia edges to V4, and lightly shaded faces. Choose the scope (whole system: all 150; current stage: 30; or a single node), turn persistent trails for each vertex on or off, and pick your own vertex colours.</li>
+                <li><strong>ALL TQF</strong> (in the Register's stage pills) switches on the whole-system lattice in one click.</li>
+            </ul>
+        </section>
+
+        <!-- 10 -->
+        <section class="chapter" id="tension">
+            <div class="chapter-num">CHAPTER 10</div>
+            <h2>Tension, torsion and the &pi;/6 lock</h2>
+            <p class="chapter-intro">The two outer tiers and the three inner tiers can be twisted against each other. When their twist differs by a multiple of 30&deg;, the paper says the system is "locked"; otherwise it's under "shear".</p>
+            <h3>The two fields</h3>
+            <div class="grid-2">
+                <div class="card"><h4 style="color:var(--rose)">Tension (outer: T4, T3)</h4><p>Slider 0–360&deg;, default 180&deg;. Turns T4 and T3 about the vertical axis by (tension &minus; 180&deg;). T2 also tilts by a quarter of that.</p></div>
+                <div class="card"><h4 style="color:var(--sky)">Torsion (inner: T2, T1, T0)</h4><p>Slider 0–360&deg;, default 150&deg;. Twists T2, T1 and T0 about their own axis by (torsion &minus; 150&deg;); T1 and T0 also tilt by about a third of that, in the opposite direction.</p></div>
+            </div>
+            <p>The twist is applied to everything that belongs to a tier: the torus itself, its helix tubes, its particles, the calculation path and every TQF vertex. Move a slider and you'll see the quadrances and A<sub>R</sub> on the <em>TQF Area Remainder</em> card change immediately (its sub-line shows Q&#770; and the current &Delta;&theta;).</p>
+            <h3>The lock rule</h3>
+            $$\Delta\theta = |\,\text{tension} - \text{torsion}\,|, \qquad \text{locked} \iff \Delta\theta \bmod 30^\circ = 0$$
+            <p>The defaults give &Delta;&theta; = 30&deg;, so the engine starts locked (green <code>&pi;/6 LOCKED</code> badge). Any other difference shows an amber <code>SHEAR (x&deg;)</code> badge, where x is the remainder. Because the sliders move in 5&deg; steps, the possible shear remainders are 5&deg;, 10&deg;, 15&deg;, 20&deg; and 25&deg;.</p>
+            <ul>
+                <li><strong>Snap &pi;/6 (30&deg;) Lock</strong> rounds both sliders to the nearest multiple of 30&deg;, which always produces a lock.</li>
+                <li><strong>Test 15&deg; Shear Twist</strong> sets torsion to tension + 45&deg;. 45 mod 30 = 15, the worst possible shear (exactly half a tooth), and it also turns on TQF triangulation so you can watch the polygons twist.</li>
+            </ul>
+            <p>Both pairs of sliders (TELEMETRY and VISIBILITY tabs) control the same two values and stay in sync.</p>
+            <div class="callout plain">
+                <div class="label">In plain words</div>
+                <p>Picture two gears, one for the outer rings and one for the inner rings, each with teeth every 30&deg;. When the teeth mesh, motion passes cleanly from one to the other ("zero drag"). Turn one gear by half a tooth and they grind. The paper's <em>12-6-7-3-1 engine</em> and its "Planck cube" lock are the theoretical version of this picture; the engine itself marks this module <span class="tag tag-heur">[HEURISTIC]</span>, meaning a guiding model rather than a proven result.</p>
+            </div>
+        </section>
+
+        <!-- 11 -->
+        <section class="chapter" id="clutch">
+            <div class="chapter-num">CHAPTER 11</div>
+            <h2>The differential clutch (CLUTCH tab)</h2>
+            <p class="chapter-intro">The CLUTCH tab models two clocks running at different rates, and a clutch that engages them in five steps. Everything here feeds back into the 3D tiers.</p>
+
+            <h3>The 12-10-8 torsional pump</h3>
+            <p>The left drawing shows three nested gears:</p>
+            <ul>
+                <li>an outer <strong>12-tooth</strong> gear (blue), standing for the tension tiers T4 and T3;</li>
+                <li>a middle <strong>10-tooth</strong> clutch gear (purple) that turns the opposite way (&sigma; = &minus;1) and, when the clutch slips, more slowly;</li>
+                <li>an inner <strong>8-tooth</strong> anchor gear (amber, red when there is drift), standing for the torsion tiers T1 and T0.</li>
+            </ul>
+            <p>The right drawing is the <strong>8-ray &pi;-cycle rotor</strong>: eight spokes at 45&deg; (&pi;/4) intervals. The highlighted spoke is the current step k = 1…8. Spokes 2 and 6 are drawn in amber: these are the two <em>handshake windows</em>, where the rotor points along +i and &minus;i (in the complex plane, (1+i)<sup>2</sup> = 2i and (1+i)<sup>6</sup> = &minus;8i).</p>
+            <ul>
+                <li><strong>+1 Pulse</strong> advances everything by one tick: the pulse counter (out of 60), the outer frame (by 12 of 720, i.e. 6&deg;), the rotor step, and the calculation path by one node.</li>
+                <li><strong>Inject Drift</strong> introduces a <em>holonomy drift</em> of ||log H|| = 0.342. It twists T1 and T0 by an extra 17&deg; (0.342 &times; 50&deg;; T2 by half that), turns the inner gear and the scalar core red, and logs an alert.</li>
+            </ul>
+
+            <h3>Two engines, two rates</h3>
+            <p>Choose a local rate for <strong>Engine A</strong> (60, 40 or 72 Hz) and a remote rate for <strong>Engine B</strong> (45, 72, 90 or 144 Hz). The engine then computes:</p>
+            <ul>
+                <li><strong>Ratio &gamma;<sub>AB</sub></strong> = f<sub>B</sub>/f<sub>A</sub> in lowest terms (60 and 90 give 3/2).</li>
+                <li><strong>Boost cosh</strong> = (f<sub>A</sub>&sup2; + f<sub>B</sub>&sup2;) / (2 f<sub>A</sub> f<sub>B</sub>). For 60/90 this is 13/12 &asymp; 1.083.</li>
+                <li><strong>Q<sub>h</sub><sup>clk</sup></strong> = (f<sub>A</sub>&sup2; &minus; f<sub>B</sub>&sup2;)&sup2; / (2 f<sub>A</sub> f<sub>B</sub>)&sup2;. For 60/90 this is 25/144 &asymp; 0.1736.</li>
+            </ul>
+            <div class="callout deep">
+                <div class="label">Why "cosh"?</div>
+                <p>These two numbers have a neat meaning. Write the rate ratio as &gamma; = f<sub>B</sub>/f<sub>A</sub>. Then the boost is \( \tfrac12(\gamma + 1/\gamma) = \cosh(\ln\gamma) \), the hyperbolic cosine of the <em>rapidity</em> ln &gamma; (the same quantity that adds up velocities in special relativity), and \( Q_h = \cosh^2 - 1 = \sinh^2(\ln\gamma) \), the hyperbolic "spread" between the two clocks. Equal rates give cosh = 1 and Q<sub>h</sub> = 0: no mismatch to absorb.</p>
+            </div>
+
+            <h3>The clutch ramp and slip</h3>
+            <p>The <strong>Clutch Ramp</strong> slider r runs from 0 (barely engaged) to 4 (fully locked). From it the engine derives a slip coefficient &lambda;<sub>r</sub>, an engagement &eta; and an effective frequency:</p>
+            $$\lambda_r = 2.4\cdot\frac{4 - r}{4},\qquad \eta = \begin{cases} 1 & r = 4 \\[2pt] \dfrac{1}{1 + \lambda_r\,(Q_h + 0.08)} & r < 4\end{cases},\qquad f_{\text{eff}} = (1 - \eta)\,f_A + \eta\,f_B$$
+            <p>&eta; = 1 means the clutch is locked and the system runs at Engine B's rate. Lower &eta; means slip: the effective rate is a blend of the two. Slip also twists the inner tiers in 3D by (1 &minus; &eta;) &times; 28&deg; (T2 by half), and turns the core red below &eta; = 0.99.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>A &rarr; B</th><th class="num">r = 0</th><th class="num">r = 1</th><th class="num">r = 2</th><th class="num">r = 3</th><th class="num">r = 4</th></tr></thead>
+                <tbody>
+                    <tr><td>60 &rarr; 90 Hz (default)</td><td class="num">&eta; 0.622 &middot; 78.6 Hz</td><td class="num">0.687 &middot; 80.6</td><td class="num">0.767 &middot; 83.0</td><td class="num">0.868 &middot; 86.0</td><td class="num">1.000 &middot; 90.0</td></tr>
+                    <tr><td>60 &rarr; 144 Hz</td><td class="num">0.282 &middot; 83.6</td><td class="num">0.343 &middot; 88.8</td><td class="num">0.439 &middot; 96.9</td><td class="num">0.610 &middot; 111.3</td><td class="num">1.000 &middot; 144.0</td></tr>
+                    <tr><td>60 &rarr; 72 Hz</td><td class="num">0.786 &middot; 69.4</td><td class="num">0.830 &middot; 70.0</td><td class="num">0.880 &middot; 70.6</td><td class="num">0.936 &middot; 71.2</td><td class="num">1.000 &middot; 72.0</td></tr>
+                </tbody>
+            </table></div>
+            <p>The bigger the mismatch between the two rates (larger Q<sub>h</sub>), the more the clutch slips before it locks.</p>
+
+            <h3>Two buttons that tie it together</h3>
+            <ul>
+                <li><strong>5-Stage Handshake</strong> steps the ramp through r = 0, 1, 2, 3, 4 about a third of a second apart, advancing the clock one pulse each time, clearing any drift at the final step, and logging &eta; and f<sub>eff</sub> at every stage. It mirrors the five-stage structure of a calculation.</li>
+                <li><strong>Form 3 Sync</strong> is the recovery button: it clears holonomy drift, sets the ramp to 4 (locked), and writes Form ID 3 ("Clutch Offset") into the engram tile (<a href="#engram">chapter 12</a>). The log confirms <code>Holonomy H=1 and Clutch η=1.000 restored</code>.</li>
+            </ul>
+
+            <div class="lab" id="lab-clutch">
+                <div class="lab-title">Lab &middot; clutch calculator</div>
+                <div class="lab-row">
+                    <label>Engine A <select id="cl-a"><option>60</option><option>40</option><option>72</option></select> Hz</label>
+                    <label>Engine B <select id="cl-b"><option>45</option><option>72</option><option selected>90</option><option>144</option></select> Hz</label>
+                </div>
+                <label for="cl-r" style="font-size:0.9rem;color:var(--muted)">Clutch ramp r = <span id="cl-r-val">4</span></label>
+                <input type="range" id="cl-r" min="0" max="4" step="1" value="4">
+                <div class="out" id="cl-out"></div>
+            </div>
+        </section>
+
+        <!-- 12 -->
+        <section class="chapter" id="engram">
+            <div class="chapter-num">CHAPTER 12</div>
+            <h2>The 64-bit engram (ENGRAM tab)</h2>
+            <p class="chapter-intro">An <em>engram</em> is a memory trace. Here it's a 64-bit word laid out as an 8&times;8 grid, the "Einstein tile", made from a result or any text you type.</p>
+
+            <h3>Making a tile</h3>
+            <ol>
+                <li>Type anything into <strong>Engram Grounding Seed</strong> (a number, an expression, a word), or press <code>Hash to Engram</code> in the TERMINAL to send the latest result there.</li>
+                <li>Pick a <strong>Form</strong> (see below) and press <strong>Synthesize 64-Bit Tile</strong>.</li>
+                <li>The 8&times;8 kernel lights up, the full value appears in hex (e.g. <code>0x…</code>), and the four region readouts update.</li>
+            </ol>
+            <div class="callout note">
+                <div class="label">What the tile is (and isn't)</div>
+                <p>The tile is a <strong>fingerprint</strong> of the text: two 32-bit hashes in the FNV-1a family are computed from the characters and placed in the top and bottom halves. The same text always gives the same tile, and changing one character changes it completely. It doesn't store the number's value, so <code>0.3</code> and <code>0.30</code>, which are equal numbers, give different tiles. After hashing, the chosen Form ID is written into its own field (bits 43–40).</p>
+            </div>
+
+            <h3>Reading the grid</h3>
+            <p>Bit 63 is at the top left; bits count down left to right, row by row, to bit 0 at the bottom right. Hover over a cell to see what it means in the <strong>bit inspector</strong>; click it to flip it. The colours show four regions:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Region</th><th>Bits</th><th>Grid rows</th><th>Decoded as</th></tr></thead>
+                <tbody>
+                    <tr><td style="color:#fbbf24">I. Halo</td><td class="num">63–56</td><td>row 1</td><td><strong>Cycle step k</strong> (bits 63–61, shown 1–8): the &pi;-cycle phase &theta; = k&pi;/4 and the spinor (1+i)<sup>k</sup>, with handshake windows at k = 2 (+i) and k = 6 (&minus;i). <strong>Wheel unit</strong> (bits 60–58): one of the eight numbers below 30 that share no factor with 30: 1, 7, 11, 13, 17, 19, 23, 29. Every prime above 5 leaves one of these remainders when divided by 30, which is why this "mod-30 wheel" is used to sieve primes. Bits 57–56 select a structure.</td></tr>
+                    <tr><td style="color:#c084fc">II. Gate</td><td class="num">55–48</td><td>row 2</td><td><strong>Locus</strong>: which tier T0–T4 the word is gated to (bits 55–53, mod 5), plus sense-reversal chirality &sigma;<sub>r</sub> and a sector label.</td></tr>
+                    <tr><td style="color:#34d399">III. Ctrl</td><td class="num">47–32</td><td>rows 3–4</td><td><strong>Form ID</strong> (bits 43–40): which "grammar" the word follows. <strong>Fibonacci scale</strong> (bits 35–32): an index into 1, 1, 2, 3, 5, 8, 13, 21, 34…, shown as <code>F<sub>i</sub>=value</code>, the subdivision of the Steinhaus–S&oacute;s golden circle.</td></tr>
+                    <tr><td style="color:#22d3ee">IV. Core</td><td class="num">31–0</td><td>rows 5–8</td><td>The 32-bit <strong>payload</strong>: Hurwitz spinor coordinates and prime-triplet residues. The engine shows its <strong>CRT</strong> value: the payload mod 690,017,701.</td></tr>
+                </tbody>
+            </table></div>
+            <h4>Why 690,017,701?</h4>
+            <p>It's 881 &times; 883 &times; 887, three primes close together (881 and 883 are twin primes). By the <strong>Chinese Remainder Theorem</strong>, any whole number below that product is pinned down exactly by its three remainders mod 881, 883 and 887. Splitting a value into small independent remainders is a classic way to do big-number arithmetic in parallel: this is "Form 2".</p>
+
+            <h3>The Forms</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">ID</th><th>Name</th><th>Idea</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">0</td><td>Smallest-3 Quat</td><td>Store a unit quaternion by its three smallest components; the fourth follows because they square-sum to 1.</td></tr>
+                    <tr><td class="num">1</td><td>Hurwitz Spinor 2Q (default)</td><td>Hurwitz quaternions (all-integer or all-half-integer coordinates), stored doubled as (2w, 2x, 2y, 2z) so they're whole numbers.</td></tr>
+                    <tr><td class="num">2</td><td>CRT (881, 883, 887)</td><td>The payload read as three prime residues (above).</td></tr>
+                    <tr><td class="num">3</td><td>Clutch Offset</td><td>The clutch calibration form; <em>Form 3 Sync</em> in the CLUTCH tab writes this.</td></tr>
+                    <tr><td class="num">4</td><td>Voxel Cube V (64)</td><td>The 64 bits read as a 4&times;4&times;4 cube of voxels.</td></tr>
+                    <tr><td class="num">12</td><td>{4,3,5} Honeycomb</td><td>Cells of the order-5 cubic honeycomb, a tiling of hyperbolic space by cubes (Schl&auml;fli symbol {4,3,5}).</td></tr>
+                </tbody>
+            </table></div>
+            <p>Choosing <code>Form: Auto</code> leaves those four bits as the hash produced them; any other choice overwrites them immediately.</p>
+
+            <h3>The packet register (TELEMETRY tab)</h3>
+            <p>The same 64 bits are also shown as four 16-bit words, like the four components of a quaternion: <code>X</code> = bits 0–15, <code>Y</code> = 16–31 (together, the core), <code>Z</code> = 32–47 (the ctrl field) and <code>W</code> = 48–63 (halo and gate).</p>
+
+            <div class="lab" id="lab-engram">
+                <div class="lab-title">Lab &middot; build a tile</div>
+                <div class="lab-row">
+                    <input type="text" id="en-in" value="0.3" spellcheck="false" style="flex:1;min-width:160px" aria-label="Seed text">
+                    <select id="en-form" aria-label="Form">
+                        <option value="auto">Form: Auto</option><option value="0">Form 0</option><option value="1" selected>Form 1</option>
+                        <option value="2">Form 2</option><option value="3">Form 3</option><option value="4">Form 4</option><option value="12">Form 12</option>
+                    </select>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+                    <div class="bitgrid" id="en-grid" aria-label="8 by 8 bit grid"></div>
+                    <div class="out" id="en-out" style="flex:1;min-width:220px"></div>
+                </div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">Same algorithm as the engine, so the same seed gives the same tile there. Try <code>0.3</code> and then <code>0.30</code>.</p>
+            </div>
+        </section>
+
+        <!-- 13 -->
+        <section class="chapter" id="paper">
+            <div class="chapter-num">CHAPTER 13</div>
+            <h2>The PAPER tab: four guided demonstrations</h2>
+            <p class="chapter-intro">Each card summarises one pillar of the paper and has a button that configures the 3D scene to show it. The tags are the paper's own rating of each claim.</p>
+            <p><span class="tag tag-proven">[PROVEN]</span> a result the paper proves; <span class="tag tag-heur">[HEURISTIC]</span> a guiding model; <span class="tag tag-unified">[UNIFIED]</span> a mapping that connects separate systems.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Module</th><th>What it claims</th><th>What the button does</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>1. Intrinsic Topological Clock</strong> <span class="tag tag-proven">[PROVEN]</span></td><td>The winding law W<sub>n</sub> = 16 &minus; 2n and the 30-node C<sub>3</sub>&times;C<sub>2</sub> cycle replace an arbitrary frame rate; a 0.5 s lap resolves the caesium half-cycle into a whole number (<a href="#clock">chapter 5</a>).</td><td><code>[Simulate 30-Node Clock]</code> brightens all tori and shows the clock's telemetry.</td></tr>
+                    <tr><td><strong>2. 64-Bit Einstein Tile &amp; TQF</strong> <span class="tag tag-proven">[PROVEN / TQF]</span></td><td>A continuous field collapses into 64 discrete slots (via a <em>monoid homomorphism</em>, a structure-preserving map), and redundant collinear points are pruned without square roots (<a href="#between">chapter 9</a>, <a href="#engram">chapter 12</a>).</td><td><code>[Visualize Full-System TQF Polygons]</code> dims the tori, turns on all 150 TQF polygons and opens VISIBILITY.</td></tr>
+                    <tr><td><strong>3. &pi;/6 Handshake &amp; Torsion</strong> <span class="tag tag-heur">[HEURISTIC]</span></td><td>The 12-6-7-3-1 engine couples tension and torsion; at 6:1 and 12:1 alignment (30&deg;) drag vanishes and the state locks (<a href="#tension">chapter 10</a>).</td><td><code>[Engage Torsion Clutch]</code> makes the core blaze, turns on all TQF polygons and invites you to use the sliders.</td></tr>
+                    <tr><td><strong>4. Master 144 / Natural 9</strong> <span class="tag tag-unified">[UNIFIED]</span></td><td>The Master 144 square (12&times;12; one full cycle is 144&sup2; = 20,736 units) maps to the 12-stream boundary; the "Natural 9" square-of-nine spiral encodes orbits that grow like &radic;T. Its 120&deg; trine corresponds to the C<sub>3</sub> rotor and its 90&deg; square to the 64-bit tile.</td><td><code>[Project Harmonic Matrix]</code> switches on the degree overlay (<code>DEG</code>) so you can read angles on every tier.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout plain">
+                <div class="label">About the Master 144 and the Natural 9</div>
+                <p>Both come from the harmonic "wheels" used by the market analyst W. D. Gann: a 12&times;12 square of 144 cells and a "square of nine", where numbers spiral outward around a centre. On a square-of-nine spiral, each full turn adds a ring, so the number of turns grows like the square root of the numbers reached: that's the O(&radic;T) in the card. The engine's name, <em>harmonic market matrix</em>, comes from this connection.</p>
+            </div>
+        </section>
+
+        <!-- 14 -->
+        <section class="chapter" id="rightpanel">
+            <div class="chapter-num">CHAPTER 14</div>
+            <h2>Right panel reference</h2>
+
+            <h3>TELEMETRY</h3>
+            <ul>
+                <li><strong>Header</strong>: an icon, a status tag and a description that change with the PAPER module you last ran.</li>
+                <li><strong>Four metric cards</strong>: <em>Winding Invariant</em> (60 wraps; relabelled by some PAPER modules), <em>Active Node</em> (<code>Node k / 30</code>), <em>Parity State</em> (<code>φ_p</code> = 0.0 or 0.5), and <em>TQF Area Remainder</em> (A<sub>R</sub> of the inspected node, with Q&#770; and &Delta;&theta;; updates when you move the sliders).</li>
+                <li><strong>64-Bit Packet Register</strong>: the engram as four 16-bit words X, Y, Z, W (<a href="#engram">chapter 12</a>). The <code>RESONANT</code> label is its status.</li>
+                <li><strong>System Dynamics</strong>: the tension and torsion sliders, the lock badge, <em>Snap &pi;/6</em>, <em>Test 15&deg; Shear Twist</em> and the phase read-out (<a href="#tension">chapter 10</a>).</li>
+                <li><strong>Synthesis</strong> box: a short takeaway for the current module.</li>
+            </ul>
+
+            <h3>REGISTER</h3>
+            <ul>
+                <li><strong>Pause / Step</strong>: pauses or resumes a running calculation (or, when idle, toggles free spin), the same as the play button below.</li>
+                <li><strong>Status line</strong>: what's happening (<code>Traversing Tier T3...</code>, <code>Paused at Stage 2</code>, or the result) and a <code>Stage s/4 | Node k/30</code> read-out.</li>
+                <li><strong>Stage pills</strong> <code>S0 (T4)</code> … <code>S4 (T0)</code> jump to a stage and switch on its TQF web; <strong>ALL TQF</strong> shows all five stages at once.</li>
+                <li><strong>Five stage cards</strong>: a tick when done, a spinner for the active stage (a pause icon if paused), a dot if not reached yet. Click any card to inspect that stage.</li>
+                <li><strong>30-Frame Stage Telemetry Breakdown</strong>: the <em>Selected Frame</em> card and the clickable list of 30 frames (<a href="#between">chapter 9</a>). Click the heading to fold the list away.</li>
+                <li><strong>Explanation card</strong> (after a result): a title, an introduction, three boxes (Node A, Node B, Collapse) and three steps. The two preset tests have their own detailed write-ups; other expressions get a general one.</li>
+            </ul>
+
+            <h3>HUB</h3>
+            <ul>
+                <li><strong>Base-10 Trajectory Scan</strong>: a 1–100% slider for the whole journey. 1% is the start on T4, and each 20% is one stage (25%, 50% and 75% marks are labelled T3, T2, T1). It's linked to the bottom scrubber.</li>
+                <li><strong>2D map</strong>: the five tiers as circles seen from above and the path as a spiral shrinking from radius 155 to 15. It turns 0.25 radians per pulse (about six turns in all), with a small square where each stage begins (fuchsia for the stage you're inspecting) and a dot for the current position.</li>
+                <li><strong>Three summary cards</strong>: T4 (ingestion), T2 (superposition and TQF) and T0 (crystallisation).</li>
+            </ul>
+
+            <h3>VISIBILITY</h3>
+            <ul>
+                <li><strong>Archimedean Triangulation (TQF)</strong> on/off, plus: <em>TQF System Scope</em> (whole system, current stage, single node), <em>Trail Span</em> (full T4&rarr;T0, or the current stage loop), <em>Persistent Vertex Trails</em>, <em>3D Shaded Polygon Faces</em>, a colour picker and trail toggle for each of V1–V4, and a second copy of the tension and torsion sliders.</li>
+                <li><strong>Scene toggles</strong>: checkpoint diamonds (with a size/glow slider), square particle fields, dual-helix braid tubes and orthogonal radial lines.</li>
+                <li><strong>Per-tier controls</strong> for T4…T0: show or hide, colour, opacity (0.02–0.95) and glow (0–1.5).</li>
+            </ul>
+        </section>
+
+        <!-- 15 -->
+        <section class="chapter" id="bottombar">
+            <div class="chapter-num">CHAPTER 15</div>
+            <h2>Bottom control bar</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td>Crosshair</td><td>Puts the camera back to its starting view, looking at the centre.</td></tr>
+                    <tr><td>Play / Pause</td><td>During a calculation, pauses and resumes it. Otherwise, starts or stops free spin.</td></tr>
+                    <tr><td><code>FREE SPIN</code></td><td>Lets the whole structure idle: the rings turn slowly, the particles flow and the clock ticks, even with no calculation. If it's on when a calculation ends, the motion carries on.</td></tr>
+                    <tr><td><code>TRACE: ON/OFF</code></td><td>Shows or hides the orb and its trail.</td></tr>
+                    <tr><td><code>DEG: ON/OFF</code></td><td>Lays a protractor-style degree ring on each tier, every 30&deg;. T4, T3 and T2 are labelled 0–720&deg; (the double, spinor turn); T1 and T0 0–360&deg;.</td></tr>
+                    <tr><td><code>SYNC: LOCKED / HOLONOMIC</code></td><td>Switches the scrubber's units. <em>LOCKED</em>: 0–30, matching the 30-node clock, in steps of 0.1. <em>HOLONOMIC</em>: 0–720 frames, two full 360&deg; turns (<a href="#clock">chapter 5</a>). Either way the scrubber and the Hub scan stay linked.</td></tr>
+                    <tr><td>Speed (gauge icon)</td><td>From 0.01&times; to 2.00&times;, default 0.10&times;. Scales every animation, including calculations.</td></tr>
+                    <tr><td>Frame scrubber</td><td>Drag to move along the whole calculation path. The badge shows <code>FRAME: x / 30</code> or <code>/ 720</code>. The track behind it is cyan for the first 360&deg; and purple for the second; the marks above split it into thirds (the C<sub>3</sub> triad) and the marks below into quarters.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note">
+                <div class="label">Speed tip</div>
+                <p>Keep the speed low while a calculation is running. A stage only closes when the clock lands exactly on node 30. At around 0.15&times; and above, the clock can move more than one node per screen refresh and occasionally jump over node 30, so that stage needs another lap. The answer is still correct; the run just takes longer and looks less regular.</p>
+            </div>
+        </section>
+
+        <!-- 16 -->
+        <section class="chapter" id="loom">
+            <div class="chapter-num">CHAPTER 16</div>
+            <h2>The wider architecture: Loom &amp; Weave and the Zero-Point engine</h2>
+            <p class="chapter-intro">The calculator is one piece of a larger design. Two companion programs describe what happens before data reaches the five tiers, and what happens at the very centre. This chapter summarises how they fit together. They are separate simulations, not controls in this engine.</p>
+
+            <h3>Three scales, one pipeline</h3>
+            <div class="grid-3">
+                <div class="card"><h4 style="color:var(--amber)">Macro: Loom &amp; Weave</h4><p>Funnels an outside, many-dimensional field of data inward and wraps it onto a toroidal memory over a 720-frame cycle.</p></div>
+                <div class="card"><h4 style="color:var(--cyan)">Meso: this calculator</h4><p>Carries one calculation through five nested tiers and latches an exact result.</p></div>
+                <div class="card"><h4 style="color:var(--fuchsia)">Micro: Zero-Point engine</h4><p>Looks inside the centre point itself: an 8-step process in which a single point unfolds into a 64-bit crystal cube and a 72-node toroid.</p></div>
+            </div>
+
+            <h3>The Loom &amp; Weave in five subsystems</h3>
+            <ol>
+                <li><strong>The 64-bit seed with 1/16 symmetry.</strong> An 8&times;8 bit lattice whose rows have hardware roles (structural form, parity, frequency, a 32-bit quaternion core, spin class, amplitude). Four seed bits in one corner are mirrored across both axes to set all 64, so 4/64 = 1/16 of the tile determines the rest.</li>
+                <li><strong>The outer Hilbert envelope.</strong> Three perpendicular planes, each with three concentric 12-point star polygons. Eight times per 720-frame cycle (every 90 frames) the envelope shrinks by a factor of &phi;<sup>&minus;4</sup> (&phi; = the golden ratio), pumping energy inward.</li>
+                <li><strong>Six directional faces, two lenses each.</strong> Along &plusmn;X, &plusmn;Y and &plusmn;Z, an outer 3&times;3 "trefoil triad" (three layers riding a trefoil-knot path) feeds a middle 4&times;4 pandiagonal magic square that acts as a focusing lens.</li>
+                <li><strong>54 Fibonacci streams.</strong> 6 faces &times; 9 columns of streams run from the triads through the lenses to the core, wrapped in spiral waves whose amplitude shrinks by powers of &phi; as they approach the centre. Where a stream passes close to one of 64 orbiting core voxels, a spark marks a collision and it's logged.</li>
+                <li><strong>The Markov pump funnel and the toroidal weave.</strong> At the centre, a nested gear train implements the <strong>12-6-7-3-1 compression protocol</strong>: a 12-point ring feeds 6-pointed hexagrams, then 7-pointed heptagrams, then a central scalar ring, with 12 Clifford&ndash;Strassen tensor stations around it. The whole core travels round a torus of radius 25 while twisting, and the paths of its 24 outer points braid the "toroidal manifold weave".</li>
+            </ol>
+
+            <h3>Breathing: the 720-frame cycle</h3>
+            <p>Most sizes in the Loom follow sin(&pi;t) as t runs from 0 to 1 over 720 frames. From frame 0 to 360 the field expands (inhale, decompression); from 360 to 720 it collapses back into the centre (exhale, compression). At frame 720, sin &pi; = 0 and everything has converged on the central point. That moment is where the Zero-Point process belongs.</p>
+
+            <h3>Joining them: the integration roadmap</h3>
+            <ul>
+                <li><strong>A two-epoch state machine.</strong> Rather than jumping from frame 720 straight back to 0, the combined system alternates between <em>Loom &amp; Weave</em> (frames 0–720, collecting collisions into a 64-bit change mask) and <em>Zero-Point</em> (8 steps &times; 90 sub-frames = 720 micro-frames at the centre, with the Loom frozen at 20% opacity and the camera moving into the core). The Zero-Point result becomes the next seed, the weave is recomputed, and a counter-propagating "phase-conjugate" wave travels back out as the next cycle begins.</li>
+                <li><strong>Matching the scales.</strong> The Zero-Point tiers (radii 1.2, 2.8, 5.2, 8.4, 12.4) fit inside the Loom's core rings (2.5, 5, 10, 16) when scaled by about 1.25–1.29: the outer tier lands on the 12 Clifford&ndash;Strassen stations at radius 16.</li>
+                <li><strong>72 kissing nodes.</strong> The Zero-Point's third manifold has 12 wraps &times; 6 channels = 72 nodes; the Loom's 12 stations each carry 3 rings = 6 half-arcs, also 72. The two counts line up one to one.</li>
+                <li><strong>Two ways to run time.</strong> <em>Mode A, sequential</em>: run the Loom, pause at frame 720, run the 8 Zero-Point steps, resume; best for watching each system clearly. <em>Mode B, parallel</em>: each of the Loom's eight 90-frame beats runs one Zero-Point step inside the moving core; best for seeing the scales couple in real time.</li>
+            </ul>
+
+            <h3>How this calculator connects</h3>
+            <ul>
+                <li>The 720-frame holonomic cycle is the same count the calculator's <code>SYNC: HOLONOMIC</code> mode uses.</li>
+                <li>The 12-6-7-3-1 engine is the coupling behind PAPER module 3 and the &pi;/6 lock.</li>
+                <li>Both use a 64-bit, 8&times;8 tile, though each assigns the bits differently.</li>
+                <li>The 12-10-8 gears and the 8-step &pi;-cycle rotor in the CLUTCH tab echo the eight beats of the Loom and the eight Zero-Point steps.</li>
+            </ul>
+            <p>Related simulations on this site:
+                <a href="../../Simulation%20Homepage/Geometric%20Weave%20and%20Loom%20Processing/Geometric%20Weave%20and%20Loom%20Processing.html">Geometric Weave and Loom Processing</a>,
+                <a href="../../Simulation%20Homepage/Geometric%20Weave%20and%20Loom%20Processing/Holographic%2064-Voxel%20Memory%20Weave.html">Holographic 64-Voxel Memory Weave</a>,
+                <a href="../../Simulation%20Homepage/Geometric%20Weave%20and%20Loom%20Processing/Geometric%20Engine%20of%20Time.html">Geometric Engine of Time</a> and
+                <a href="../../Fractal%20Processing/Weave%20and%20Loom/SHD-CCP%20Jacquard%20Tensor%20Weave%20Architecture.html">SHD-CCP Jacquard Tensor Weave Architecture</a>.</p>
+        </section>
+
+        <!-- 17 -->
+        <section class="chapter" id="glossary">
+            <div class="chapter-num">CHAPTER 17</div>
+            <h2>Glossary</h2>
+            <dl class="gloss">
+                <dt>A<sub>R</sub> (area remainder)</dt><dd>Archimedes' function of three quadrances, (Q<sub>1</sub>+Q<sub>2</sub>+Q<sub>3</sub>)&sup2; &minus; 2(Q<sub>1</sub>&sup2;+Q<sub>2</sub>&sup2;+Q<sub>3</sub>&sup2;) = 16&times;area&sup2;. Zero means collinear.</dd>
+                <dt>BigInt</dt><dd>JavaScript's whole-number type with no size limit. The engine's exactness rests on it.</dd>
+                <dt>C<sub>3</sub> &times; C<sub>2</sub></dt><dd>The 6-step symmetry pattern of the nodes: three phases (0&deg;, 120&deg;, 240&deg;) times two directions (+1, &minus;1).</dd>
+                <dt>Canonical trajectory</dt><dd>The idealised path drawn when you scrub or inspect: one smoothed point per node.</dd>
+                <dt>Checkpoint diamond</dt><dd>A glowing octahedron dropped at the start of each stage.</dd>
+                <dt>Chirality</dt><dd>Handedness. Here, whether a braid winds forward (+1) or in reverse (&minus;1).</dd>
+                <dt>Clutch / &eta;</dt><dd>The coupling between two clock rates. &eta; = 1 is fully locked; less than 1 means slip.</dd>
+                <dt>Collinear</dt><dd>Lying on one straight line.</dd>
+                <dt>CRT</dt><dd>Chinese Remainder Theorem: a number is fixed by its remainders modulo pairwise coprime numbers (here 881, 883, 887).</dd>
+                <dt>Engram / Einstein tile</dt><dd>The 64-bit word shown as an 8&times;8 grid, made by hashing a result or text.</dd>
+                <dt>f<sub>eff</sub></dt><dd>The effective frequency while the clutch slips: (1 &minus; &eta;)f<sub>A</sub> + &eta;f<sub>B</sub>.</dd>
+                <dt>Form ID</dt><dd>Bits 43–40 of the tile, naming which encoding "grammar" the word follows.</dd>
+                <dt>GCD</dt><dd>Greatest common divisor. Dividing top and bottom of a fraction by it gives lowest terms.</dd>
+                <dt>Holonomy / holonomic</dt><dd>What changes when you carry something round a closed loop. Here: the 720-frame view of the journey, and the "drift" the clutch can correct.</dd>
+                <dt>IEEE-754</dt><dd>The standard binary floating-point format used by almost all computers.</dd>
+                <dt>Latch</dt><dd>The release of the answer at the end of Stage 4.</dd>
+                <dt>Manifold / tier</dt><dd>One of the five tori, T0 (core) to T4 (outer).</dd>
+                <dt>Mantissa</dt><dd>The significant-digits part of a floating-point number; 53 bits in a double.</dd>
+                <dt>Mod-30 wheel</dt><dd>The eight remainders 1, 7, 11, 13, 17, 19, 23, 29 that every prime above 5 falls into when divided by 30.</dd>
+                <dt>Node / frame</dt><dd>One of the 30 positions around a tier, 12&deg; apart (F1–F30).</dd>
+                <dt>Orthogonal</dt><dd>At right angles. Neighbouring tiers are orthogonal.</dd>
+                <dt>Parity residual &phi;<sub>p</sub></dt><dd>The half caesium cycle left after an odd number of pulses (0.5), cancelled after an even number (0.0).</dd>
+                <dt>Projective quadrance Q&#770;</dt><dd>(Q<sub>1</sub>+Q<sub>2</sub>)/(Q<sub>1</sub>+Q<sub>2</sub>+Q<sub>3</sub>): where a node sits between its neighbouring tiers, from 0 to 1.</dd>
+                <dt>Pulse</dt><dd>One clock tick; one node of movement. 150 per calculation.</dd>
+                <dt>Quadrance Q</dt><dd>Squared distance. Stays rational when coordinates are rational.</dd>
+                <dt>Rapidity</dt><dd>ln of a rate ratio; the "boost" between two clocks is its cosh.</dd>
+                <dt>Shear</dt><dd>A tension/torsion difference that isn't a multiple of 30&deg;.</dd>
+                <dt>Shunting-yard</dt><dd>Dijkstra's algorithm for putting operators in the right order of precedence.</dd>
+                <dt>Soliton</dt><dd>In physics, a wave that keeps its shape. Here, the calculation orb and the stable result it settles into.</dd>
+                <dt>Spinor</dt><dd>An object that needs a 720&deg; turn, not 360&deg;, to return to its starting state.</dd>
+                <dt>Tension / torsion</dt><dd>The twist applied to the outer tiers (T4, T3) and the inner tiers (T2, T1, T0).</dd>
+                <dt>Torus</dt><dd>A doughnut shape with a major radius R and a minor (tube) radius r.</dd>
+                <dt>TQF</dt><dd>Triple Quad Formula: (Q<sub>1</sub>+Q<sub>2</sub>+Q<sub>3</sub>)&sup2; = 2(Q<sub>1</sub>&sup2;+Q<sub>2</sub>&sup2;+Q<sub>3</sub>&sup2;) exactly when three points are collinear.</dd>
+                <dt>W, W<sub>&Sigma;</sub></dt><dd>Winding number: tube wraps per trip round the ring (8 to 16). Their sum, W<sub>&Sigma;</sub>, is 60.</dd>
+                <dt>V1–V4</dt><dd>The four TQF vertices: node, upper, lower, inferred.</dd>
+            </dl>
+        </section>
+
+        <!-- 18 -->
+        <section class="chapter" id="faq">
+            <div class="chapter-num">CHAPTER 18</div>
+            <h2>Troubleshooting &amp; FAQ</h2>
+            <details class="faq"><summary>The engine shows a black screen or no rings.</summary><p>The 3D view needs WebGL and loads three.js, Tailwind and the icon font from public CDNs. Check that hardware acceleration is on in your browser, and that an ad-blocker or company network isn't blocking <code>cdnjs.cloudflare.com</code>, <code>cdn.jsdelivr.net</code> or <code>cdn.tailwindcss.com</code>. Then hard-refresh (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd>).</p></details>
+            <details class="faq"><summary>I pressed = and nothing seems to happen.</summary><p>Check the display: if it's empty, there's nothing to compute. Make sure the speed isn't at its minimum (0.01&times; is very slow) and that the play button isn't paused. The right panel switches to REGISTER when a calculation starts.</p></details>
+            <details class="faq"><summary>Why do I get ERR: SINGULARITY?</summary><p>Division by zero, a minus sign at the start of a number (<code>-3</code>, <code>2^-2</code>), or unbalanced brackets. Write <code>0-3</code> instead of <code>-3</code>. See <a href="#limits">chapter 8</a>.</p></details>
+            <details class="faq"><summary>Why does the answer only appear at the end?</summary><p>It's computed immediately but held back until the trace reaches the core, so the animation and the result stay in step. See <a href="#arithmetic">chapter 7</a>.</p></details>
+            <details class="faq"><summary>The same expression traced a different path this time.</summary><p>Tick <code>Reset Before Calc</code> in the TERMINAL. Without it, each calculation starts wherever the clock happens to be. The tension, torsion, clutch and drift settings also twist the path, so set them the same too (or use <em>Form 3 Sync</em> and <em>Snap &pi;/6</em> to return to a clean lock).</p></details>
+            <details class="faq"><summary>A calculation is taking much longer than usual.</summary><p>The speed is probably high enough that the clock skips node 30 now and then; see the speed tip in <a href="#bottombar">chapter 15</a>.</p></details>
+            <details class="faq"><summary>The panels cover the view, especially on a phone.</summary><p>Use the chevron tabs on the panels' inner edges to slide them away, and the arrow on the site bar to tuck it into its <code>•••</code> button.</p></details>
+            <details class="faq"><summary>Do I need to sign in?</summary><p>No. Signing in with Google from the site bar just keeps you signed in across the Ebayednoob pages; the engine works the same either way.</p></details>
+            <details class="faq"><summary>Where can I read the full theory?</summary><p>In the paper, <a href="https://www.academia.edu/171106117/The_Geometric_Engine_of_Time_Mathematical_Architecture_of_the_6_Channel_5_Tier_Toroidal_Orbital_Calculator" target="_blank" rel="noopener noreferrer"><em>The Geometric Engine of Time: Mathematical Architecture of the 6-Channel, 5-Tier Toroidal Orbital Calculator</em></a>. Source code and related work live at <a href="https://github.com/BioChainAI/Geometric-Labs" target="_blank" rel="noopener noreferrer">BioChainAI/Geometric-Labs</a>.</p></details>
+        </section>
+    </main>
+</div>
+
+<footer>
+    <p><a href="index.html">Open the Geometric Harmonics Calculator</a> &middot; <a href="../../index.html">Ebayednoob home</a></p>
+    <p>&copy; 2026 BioChain AI &middot; Ebayednoob. Manual written for engine version 10.</p>
+</footer>
+
+<script>
+// ---------- Math rendering (KaTeX, optional: the page reads fine without it) ----------
+window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+            delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\(", right: "\\)", display: false }],
+            ignoredClasses: ["out", "lab"],
+            throwOnError: false
+        });
+    }
+});
+
+// ---------- Table of contents: highlight the chapter in view ----------
+(() => {
+    const links = [...document.querySelectorAll(".toc a")];
+    const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            links.forEach((a) => a.classList.remove("active"));
+            byId.get(e.target.id)?.classList.add("active");
+        });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    document.querySelectorAll("section.chapter").forEach((s) => obs.observe(s));
+    document.querySelectorAll(".toc-mobile a").forEach((a) => a.addEventListener("click", () => a.closest("details").open = false));
+})();
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (parent) parent.appendChild(n);
+    return n;
+};
+const TIERS = [
+    { id: 4, R: 155, r: 12, W: 8, color: "#f43f5e", flat: true },
+    { id: 3, R: 105, r: 10, W: 10, color: "#f59e0b", flat: false },
+    { id: 2, R: 65, r: 8, W: 12, color: "#10b981", flat: true },
+    { id: 1, R: 35, r: 6, W: 14, color: "#a855f7", flat: false },
+    { id: 0, R: 15, r: 4, W: 16, color: "#38bdf8", flat: true }
+];
+
+// ---------- Figure: top and side views of the tiers ----------
+(() => {
+    const s = 140 / 167;
+    const top = document.getElementById("fig-top"), side = document.getElementById("fig-side");
+    TIERS.forEach((t) => {
+        if (t.flat) {
+            el("circle", { r: t.R * s, fill: "none", stroke: t.color, "stroke-width": 2 * t.r * s, "stroke-opacity": 0.35 }, top);
+            el("circle", { r: t.R * s, fill: "none", stroke: t.color, "stroke-width": 1.2 }, top);
+            el("rect", { x: -(t.R + t.r) * s, y: -t.r * s, width: 2 * (t.R + t.r) * s, height: 2 * t.r * s, rx: t.r * s, fill: t.color, "fill-opacity": 0.3, stroke: t.color }, side);
+        } else {
+            el("rect", { x: -(t.R + t.r) * s, y: -t.r * s, width: 2 * (t.R + t.r) * s, height: 2 * t.r * s, rx: t.r * s, fill: t.color, "fill-opacity": 0.3, stroke: t.color }, top);
+            el("circle", { r: t.R * s, fill: "none", stroke: t.color, "stroke-width": 2 * t.r * s, "stroke-opacity": 0.35 }, side);
+            el("circle", { r: t.R * s, fill: "none", stroke: t.color, "stroke-width": 1.2 }, side);
+        }
+    });
+    // Labels: big tiers are labelled in place, the small inner ones get a leader line.
+    const color = Object.fromEntries(TIERS.map((t) => [t.id, t.color]));
+    const labels = [
+        [top, 4, 0, -140, 0, -146], [top, 2, 0, -61, 0, -67], [top, 3, 96, -8, 102, -12],
+        [top, 1, 30, 4, 62, 92], [top, 0, -10, 6, -64, 92],
+        [side, 3, 0, -96, 0, -102], [side, 1, 0, -34, 0, -40], [side, 4, 138, -8, 144, -12],
+        [side, 2, 61, -6, 66, -10], [side, 0, -14, 3, -64, 92]
+    ];
+    labels.forEach(([g, id, ax, ay, lx, ly]) => {
+        if (Math.hypot(lx - ax, ly - ay) > 20) el("line", { x1: ax, y1: ay, x2: lx, y2: ly - 10, stroke: color[id], "stroke-width": 1, "stroke-opacity": 0.8 }, g);
+        const txt = el("text", { x: lx, y: ly, "text-anchor": "middle", fill: color[id], "font-family": "Fira Code", "font-size": 11, "font-weight": 600 }, g);
+        txt.textContent = `T${id}`;
+    });
+    [top, side].forEach((g) => el("circle", { r: 3, fill: "#fff" }, g));
+})();
+
+// ---------- Lab: 30-node dial ----------
+(() => {
+    const svg = document.getElementById("clock-svg");
+    const out = document.getElementById("clock-out");
+    const k = document.getElementById("clock-k");
+    const C3 = ["#22d3ee", "#fbbf24", "#e879f9"];
+    const dots = [];
+    el("circle", { cx: 150, cy: 150, r: 118, fill: "none", stroke: "#1e293b", "stroke-width": 1 }, svg);
+    const pointer = el("line", { x1: 150, y1: 150, x2: 150, y2: 40, stroke: "#e2e8f0", "stroke-width": 2, "stroke-linecap": "round" }, svg);
+    for (let i = 0; i < 30; i++) {
+        const a = (i / 30) * Math.PI * 2 - Math.PI / 2;
+        const x = 150 + Math.cos(a) * 118, y = 150 + Math.sin(a) * 118;
+        const forward = i % 2 === 0;
+        dots.push(el("circle", { cx: x, cy: y, r: 7, fill: forward ? C3[i % 3] : "#020617", stroke: C3[i % 3], "stroke-width": 2.5 }, svg));
+        if (i % 5 === 4 || i === 0) {
+            const t = el("text", { x: 150 + Math.cos(a) * 94, y: 150 + Math.sin(a) * 94 + 4, "text-anchor": "middle", fill: "#64748b", "font-family": "Fira Code", "font-size": 10 }, svg);
+            t.textContent = `F${i + 1}`;
+        }
+    }
+    const centre = el("text", { x: 150, y: 156, "text-anchor": "middle", fill: "#e2e8f0", "font-family": "Fira Code", "font-size": 16, "font-weight": 600 }, svg);
+    const fmt = (n) => n.toLocaleString("en-US");
+    function update() {
+        const n = +k.value, i = n - 1;
+        const a = (i / 30) * Math.PI * 2 - Math.PI / 2;
+        pointer.setAttribute("x2", 150 + Math.cos(a) * 104);
+        pointer.setAttribute("y2", 150 + Math.sin(a) * 104);
+        dots.forEach((d, j) => d.setAttribute("r", j === i ? 10 : 7));
+        centre.textContent = `F${n}/30`;
+        // n pulses x 153,210,529.5 = n x 306,421,059 / 2 (kept exact with BigInt)
+        const twice = BigInt(n) * 306421059n;
+        const cycles = twice % 2n === 0n ? fmt(twice / 2n) : `${fmt(twice / 2n)}.5`;
+        out.innerHTML = `<span class="k">θ</span> = ${i * 12}° &nbsp; <span class="k">C₃</span> = ${(i % 3) * 120}° &nbsp; <span class="k">C₂</span> = ${i % 2 === 0 ? "+1" : "−1"}<br>`
+            + `<span class="k">after ${n} pulse${n > 1 ? "s" : ""}:</span> ${cycles} caesium cycles &nbsp; `
+            + (n % 2 === 0 ? `<span class="good">φ_p = 0.0 (whole number)</span>` : `<span class="bad">φ_p = 0.5 (half cycle left)</span>`)
+            + (n === 30 ? `<br><span class="good">Full lap: 4,596,315,885 cycles. Gate opens to the next tier.</span>` : "");
+    }
+    k.addEventListener("input", update);
+    update();
+})();
+
+// ---------- The engine's exact rational arithmetic (same algorithm as engine v10) ----------
+function gcd(a, b) {
+    a = a < 0n ? -a : a;
+    b = b < 0n ? -b : b;
+    while (b !== 0n) { const t = b; b = a % b; a = t; }
+    return a;
+}
+function toFraction(str) {
+    str = str.trim();
+    if (str.includes(".")) {
+        const [ip, dp = ""] = str.split(".");
+        const den = 10n ** BigInt(dp.length);
+        const num = BigInt(ip || "0") * den + BigInt(dp || "0");
+        const c = gcd(num, den);
+        return { n: num / c, d: den / c };
+    }
+    return { n: BigInt(str), d: 1n };
+}
+function fractionToString(n, d) {
+    if (d === 1n) return n.toString();
+    let res = (n < 0n) !== (d < 0n) ? "-" : "";
+    const an = n < 0n ? -n : n, ad = d < 0n ? -d : d;
+    res += (an / ad).toString();
+    let rem = an % ad;
+    if (rem === 0n) return res;
+    res += ".";
+    let count = 0;
+    while (rem !== 0n && count < 48) { rem *= 10n; res += (rem / ad).toString(); rem %= ad; count++; }
+    return rem !== 0n ? res + "..." : res;
+}
+function bigIntSqrt(v) {
+    if (v < 0n) throw new Error("Negative root");
+    if (v === 0n) return 0n;
+    let x0 = v / 2n;
+    if (x0 === 0n) return 1n;
+    let x1 = (x0 + v / x0) / 2n;
+    while (x1 < x0) { x0 = x1; x1 = (x0 + v / x0) / 2n; }
+    return x0;
+}
+const R = {
+    simplify: (f) => { const c = gcd(f.n, f.d); return { n: f.n / c, d: f.d / c }; },
+    add: (a, b) => R.simplify({ n: a.n * b.d + b.n * a.d, d: a.d * b.d }),
+    sub: (a, b) => R.simplify({ n: a.n * b.d - b.n * a.d, d: a.d * b.d }),
+    mul: (a, b) => R.simplify({ n: a.n * b.n, d: a.d * b.d }),
+    div: (a, b) => { if (b.n === 0n) throw new Error("Div/0"); return R.simplify({ n: a.n * b.d, d: a.d * b.n }); },
+    pow: (a, b) => { const e = b.n / b.d; return e < 0n ? R.simplify({ n: a.d ** -e, d: a.n ** -e }) : R.simplify({ n: a.n ** e, d: a.d ** e }); },
+    sqrt: (a) => R.simplify({ n: bigIntSqrt((a.n * 10n ** 40n) / a.d), d: 10n ** 20n }),
+    sin: (a) => R.add(R.sub(a, R.div(R.pow(a, { n: 3n, d: 1n }), { n: 6n, d: 1n })), R.div(R.pow(a, { n: 5n, d: 1n }), { n: 120n, d: 1n })),
+    cos: (a) => R.add(R.sub({ n: 1n, d: 1n }, R.div(R.pow(a, { n: 2n, d: 1n }), { n: 2n, d: 1n })), R.div(R.pow(a, { n: 4n, d: 1n }), { n: 24n, d: 1n })),
+    num: toFraction,
+    pi: () => ({ n: 314159265358979323846n, d: 100000000000000000000n })
+};
+const F = {
+    add: (a, b) => a + b, sub: (a, b) => a - b, mul: (a, b) => a * b,
+    div: (a, b) => { if (b === 0) throw new Error("Div/0"); return a / b; },
+    pow: (a, b) => a ** b, sqrt: Math.sqrt, sin: Math.sin, cos: Math.cos,
+    num: parseFloat, pi: () => Math.PI
+};
+// Shunting-yard evaluation, shared by the exact and the floating-point column.
+function evaluate(expr, ops) {
+    const tokens = expr.match(/(sqrt|sin|cos|pi|\d+\.\d+|\d+|[+\-*/^()])/gi);
+    if (!tokens) throw new Error("Empty");
+    const prec = { "+": 1, "-": 1, "*": 2, "/": 2, "^": 3 };
+    const isOp = (t) => t in prec;
+    const isFn = (t) => t === "sqrt" || t === "sin" || t === "cos";
+    const out = [], stack = [];
+    for (const raw of tokens) {
+        const t = raw.toLowerCase();
+        if (t === "pi") out.push(ops.pi());
+        else if (isFn(t)) stack.push(t);
+        else if (/^\d/.test(t)) out.push(ops.num(t));
+        else if (isOp(t)) {
+            while (stack.length && stack.at(-1) !== "(" && (prec[stack.at(-1)] > prec[t] || (prec[stack.at(-1)] === prec[t] && t !== "^"))) out.push(stack.pop());
+            stack.push(t);
+        } else if (t === "(") stack.push(t);
+        else if (t === ")") {
+            while (stack.length && stack.at(-1) !== "(") out.push(stack.pop());
+            if (stack.at(-1) === "(") stack.pop();
+            if (isFn(stack.at(-1))) out.push(stack.pop());
+        }
+    }
+    while (stack.length) out.push(stack.pop());
+    const ev = [];
+    for (const t of out) {
+        if (isOp(t)) {
+            const b = ev.pop(), a = ev.pop();
+            if (a === undefined || b === undefined) throw new Error("Missing operand");
+            ev.push(ops[{ "+": "add", "-": "sub", "*": "mul", "/": "div", "^": "pow" }[t]](a, b));
+        } else if (isFn(t)) {
+            const a = ev.pop();
+            if (a === undefined) throw new Error("Missing operand");
+            ev.push(ops[t](a));
+        } else ev.push(t);
+    }
+    if (ev.length !== 1) throw new Error("Malformed");
+    return ev[0];
+}
+
+// ---------- Lab: exact vs floating point ----------
+(() => {
+    const input = document.getElementById("exact-in");
+    const fOut = document.getElementById("exact-float"), rOut = document.getElementById("exact-rat"), frac = document.getElementById("exact-frac");
+    const chips = document.getElementById("exact-chips");
+    ["0.1 + 0.2", "9.0000000000000005 + 0.30000008", "1/3", "2/7*7", "0.1*3", "sqrt(2)", "2^3^2", "sin(0.5)"].forEach((e) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "chip"; b.textContent = e;
+        b.addEventListener("click", () => { input.value = e; run(); });
+        chips.appendChild(b);
+    });
+    const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    function run() {
+        const expr = input.value;
+        let fl, ex, fr;
+        try { fl = String(evaluate(expr, F)); } catch { fl = "error"; }
+        try { const v = evaluate(expr, R); ex = fractionToString(v.n, v.d); fr = v; } catch { ex = "ERR: SINGULARITY"; fr = null; }
+        const differs = fr && fl !== "error" && fl !== ex && !ex.endsWith("...");
+        fOut.innerHTML = `<span class="${differs ? "bad" : ""}">${esc(fl)}</span>`;
+        rOut.innerHTML = `<span class="${fr ? "good" : "bad"}">${esc(ex)}</span>`;
+        if (!fr) { frac.innerHTML = `<span class="k">The engine would show ERR: SINGULARITY (see chapter 8).</span>`; return; }
+        const digits = (fr.n < 0n ? -fr.n : fr.n).toString().length + fr.d.toString().length;
+        frac.innerHTML = `<span class="k">Held internally as the fraction</span> ${esc(fr.n.toString())} / ${esc(fr.d.toString())} <span class="k">(${digits} digits, nothing rounded)</span>`
+            + (differs ? `<br><span class="k">The float column differs: that is binary rounding error.</span>` : "");
+    }
+    input.addEventListener("input", run);
+    run();
+})();
+
+// ---------- Lab: clutch calculator (same formulas as engine v10) ----------
+(() => {
+    const a = document.getElementById("cl-a"), b = document.getElementById("cl-b"), r = document.getElementById("cl-r");
+    const rv = document.getElementById("cl-r-val"), out = document.getElementById("cl-out");
+    const g = (x, y) => (y ? g(y, x % y) : x);
+    function run() {
+        const fA = +a.value, fB = +b.value, rs = +r.value, d = g(fA, fB);
+        rv.textContent = rs;
+        const cosh = (fA * fA + fB * fB) / (2 * fA * fB);
+        const qh = ((fA * fA - fB * fB) ** 2) / ((2 * fA * fB) ** 2);
+        const lam = 2.4 * ((4 - rs) / 4);
+        const eta = rs >= 4 ? 1 : 1 / (1 + lam * (qh + 0.08));
+        const fEff = (1 - eta) * fA + eta * fB;
+        const twist = (1 - eta) * 28;
+        out.innerHTML = `<span class="k">γ_AB</span> = ${fB / d}/${fA / d} &nbsp; <span class="k">cosh</span> = ${cosh.toFixed(3)} &nbsp; <span class="k">Q_h</span> = ${qh.toFixed(4)} &nbsp; <span class="k">rapidity ln γ</span> = ${Math.log(fB / fA).toFixed(3)}<br>`
+            + `<span class="k">λ_r</span> = ${lam.toFixed(2)} &nbsp; <span class="k">η</span> = <span class="${eta === 1 ? "good" : "bad"}">${eta.toFixed(3)}</span> &nbsp; <span class="k">f_eff</span> = ${fEff.toFixed(1)} Hz<br>`
+            + (eta === 1 ? `<span class="good">LOCKED: the system runs at Engine B's rate; no extra twist on the inner tiers.</span>`
+                         : `<span class="bad">SLIP: inner tiers T1/T0 twist an extra ${twist.toFixed(1)}° (T2 ${(twist / 2).toFixed(1)}°) and the core turns red.</span>`);
+    }
+    [a, b, r].forEach((x) => x.addEventListener("input", run));
+    run();
+})();
+
+// ---------- Lab: 64-bit engram tile (same hash and decoding as engine v10) ----------
+(() => {
+    const WHEEL = [1, 7, 11, 13, 17, 19, 23, 29];
+    const FIB = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987];
+    const input = document.getElementById("en-in"), form = document.getElementById("en-form");
+    const grid = document.getElementById("en-grid"), out = document.getElementById("en-out");
+    const cells = [];
+    for (let i = 0; i < 64; i++) {
+        const bit = 63 - i;
+        const region = bit >= 56 ? "halo" : bit >= 48 ? "gate" : bit >= 32 ? "ctrl" : "core";
+        const c = document.createElement("div");
+        c.className = `bit off ${region}`;
+        c.textContent = bit;
+        grid.appendChild(c);
+        cells.push({ c, region });
+    }
+    function run() {
+        const seed = new Array(64).fill(0);
+        const str = input.value || "0.3";
+        let h1 = 0x811c9dc5, h2 = 0xcbf29ce4;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i);
+            h1 ^= ch; h1 = Math.imul(h1, 0x01000193);
+            h2 ^= ch + i; h2 = Math.imul(h2, 0x01000193);
+        }
+        for (let i = 0; i < 32; i++) { seed[i] = (h1 >>> (31 - i)) & 1; seed[i + 32] = (h2 >>> (31 - i)) & 1; }
+        const get = (msb, lsb) => { let v = 0; for (let b = msb; b >= lsb; b--) v = (v << 1) | seed[63 - b]; return v >>> 0; };
+        if (form.value !== "auto") { let v = +form.value; for (let b = 40; b <= 43; b++) { seed[63 - b] = v & 1; v >>>= 1; } }
+        cells.forEach(({ c, region }, i) => { c.className = `bit ${seed[i] ? "on" : "off"} ${region}`; });
+        const hex = (v, n) => "0x" + v.toString(16).toUpperCase().padStart(n, "0");
+        const core = get(31, 0), sc = get(35, 32);
+        out.innerHTML = `<span class="k">tile</span> ${hex(get(63, 32), 8)}${core.toString(16).toUpperCase().padStart(8, "0")}<br>`
+            + `<span style="color:#fbbf24">Halo</span> ${hex(get(63, 56), 2)}: step k = ${get(63, 61) + 1}, wheel u = ${WHEEL[get(60, 58)]}<br>`
+            + `<span style="color:#c084fc">Gate</span> ${hex(get(55, 48), 2)}: locus T${get(55, 53) % 5}<br>`
+            + `<span style="color:#34d399">Ctrl</span> ${hex(get(47, 32), 4)}: Form F${get(43, 40)}, scale F${sc} = ${FIB[sc]}<br>`
+            + `<span style="color:#22d3ee">Core</span> ${hex(core, 8)}: CRT ${(core % 690017701).toLocaleString("en-US")}`;
+    }
+    input.addEventListener("input", run);
+    form.addEventListener("change", run);
+    run();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extra-href="index.html" data-extra-label="Open Engine" data-extra-icon="engine"></script>
+<!-- page-chrome:end -->
+</body>
+</html>
