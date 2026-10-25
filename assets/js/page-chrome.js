@@ -8,8 +8,10 @@
 // Optional attributes on that script tag:
 //   data-position  "top" (default), "bottom-left" or "bottom-right"
 //   data-home      URL for the Home button (default: the site's index.html)
-//   data-extra-href, data-extra-label, data-extra-icon ("book" or "engine")
+//   data-extra-href, data-extra-label, data-extra-icon ("book", "engine" or "trace")
 //                  one extra button after Home, e.g. a tool's manual (relative to the page)
+//   data-extras    several extra buttons as JSON: [{"href": "...", "label": "...", "icon": "..."}]
+//   data-compact   "true" shows every button as an icon only (names on hover)
 
 const SITE_ROOT = new URL("../../", import.meta.url).href;
 const STORE_KEY = "ebayednoob-page-chrome-collapsed";
@@ -33,6 +35,7 @@ const ICONS = {
     google: svg('<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>', "0 0 48 48", ""),
     book: svg('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
     engine: svg('<circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8"'),
+    trace: svg('<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
     hide: svg('<path d="m15 18-6-6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
     grip: svg('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>')
 };
@@ -51,6 +54,8 @@ const CSS = `
 .dock[data-position="bottom-left"] { bottom: 10px; left: 10px; }
 .dock[data-position="bottom-right"] { bottom: 10px; right: 10px; flex-direction: row-reverse; }
 .dock.collapsed .full { display: none; }
+.dock.compact .label { display: none; }
+.dock.compact .home, .dock.compact .extra, .dock.compact .signin { padding: 0; width: 30px; }
 .dock:not(.collapsed) .expand { display: none; }
 .full { display: flex; align-items: center; gap: 4px; }
 .sep { width: 1px; height: 20px; background: rgba(148, 163, 184, 0.3); margin: 0 2px; }
@@ -97,30 +102,43 @@ function saveCollapsed(v) {
     try { localStorage.setItem(STORE_KEY, v ? "1" : "0"); } catch { /* storage unavailable */ }
 }
 
+// Extra buttons from data-extras (JSON list) and/or the single data-extra-* attributes.
+function readExtras(script) {
+    const list = [];
+    try {
+        const parsed = JSON.parse(script?.dataset.extras || "[]");
+        if (Array.isArray(parsed)) list.push(...parsed);
+    } catch (e) {
+        console.warn("page-chrome: data-extras is not valid JSON", e);
+    }
+    if (script?.dataset.extraHref) list.unshift({ href: script.dataset.extraHref, label: script.dataset.extraLabel, icon: script.dataset.extraIcon });
+    return list
+        .filter((x) => x && typeof x.href === "string" && x.href)
+        .map((x) => ({ href: x.href, label: x.label || "More", icon: ICONS[x.icon] ? x.icon : "book" }));
+}
+
 function mount() {
     if (document.getElementById("ebayednoob-page-chrome")) return; // already on the page
     const script = document.querySelector('script[src*="page-chrome.js"]');
     const position = ["top", "bottom-left", "bottom-right"].includes(script?.dataset.position) ? script.dataset.position : "top";
     const home = script?.dataset.home || new URL("index.html", SITE_ROOT).href;
-    const extra = script?.dataset.extraHref
-        ? { href: script.dataset.extraHref, label: script.dataset.extraLabel || "More", icon: ICONS[script.dataset.extraIcon] ? script.dataset.extraIcon : "book" }
-        : null;
+    const extras = readExtras(script);
 
     const host = document.createElement("div");
     host.id = "ebayednoob-page-chrome";
     const root = host.attachShadow({ mode: "open" });
     root.innerHTML = `
         <style>${CSS}</style>
-        <nav class="dock" data-position="${position}" aria-label="Site">
+        <nav class="dock${script?.dataset.compact === "true" ? " compact" : ""}" data-position="${position}" aria-label="Site">
             <button class="icon expand" type="button" title="Show site menu" aria-label="Show site menu" aria-expanded="false">${ICONS.grip}</button>
             <div class="full">
-                <a href="${esc(home)}" title="Back to the main site">${ICONS.home}<span class="label">Home</span></a>
-                ${extra ? `<a class="extra" href="${esc(extra.href)}" title="${esc(extra.label)}">${ICONS[extra.icon]}<span class="label">${esc(extra.label)}</span></a>` : ""}
+                <a class="home" href="${esc(home)}" title="Back to the main site" aria-label="Home">${ICONS.home}<span class="label">Home</span></a>
+                ${extras.map((x) => `<a class="extra" href="${esc(x.href)}" title="${esc(x.label)}">${ICONS[x.icon]}<span class="label">${esc(x.label)}</span></a>`).join("")}
                 <span class="sep"></span>
                 ${SOCIAL_LINKS.map((l) => `<a class="icon" href="${esc(l.href)}" target="_blank" rel="noopener noreferrer" title="${esc(l.label)}" aria-label="${esc(l.label)}">${ICONS[l.icon]}</a>`).join("")}
                 <span class="sep"></span>
                 <div class="auth">
-                    <button class="signin" type="button" hidden>${ICONS.google}<span class="label">Sign in</span></button>
+                    <button class="signin" type="button" title="Sign in with Google" aria-label="Sign in with Google" hidden>${ICONS.google}<span class="label">Sign in</span></button>
                     <button class="profile" type="button" hidden aria-haspopup="menu" aria-expanded="false"></button>
                     <div class="menu" role="menu" hidden>
                         <div class="who"></div>
