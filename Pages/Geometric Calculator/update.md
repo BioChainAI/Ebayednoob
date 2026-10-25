@@ -5,10 +5,18 @@ small snippet at the end that loads the floating bar (Home button, a **Manual** 
 shared with the main site, GitHub / X / YouTube / Patreon links, and the hide toggle). The bar itself lives
 in [`assets/js/page-chrome.js`](../../assets/js/page-chrome.js), never in the calculator file.
 
-The instruction manual is **`manual.html`** in the same folder. Its bar has an **Open Engine** button, so
-the two pages link to each other.
+Two companion pages sit in the same folder, and the bars on all three pages link to each other:
 
-`calculator.html` only redirects old links to `index.html`. Don't put new versions there.
+| File | Page | Bar buttons |
+| --- | --- | --- |
+| `index.html` | The engine | Manual, Tracer |
+| `manual.html` | Instruction manual & explainer | Open Engine, Tracer |
+| `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses | Open Engine, Manual |
+
+To update the tracer, upload the new version over `tracer.html` (keep the name); the bar is added the same way.
+
+Two files only redirect to `index.html`: `calculator.html` (the old address) and `shd_ccp_unified_engine.html`
+(the engine's export name, which the tracer links to). Don't put new versions in either.
 
 ## Automatic (the usual way)
 
@@ -28,7 +36,7 @@ Paste this just above the closing `</body>` tag of the new export:
 
 ```html
 <!-- page-chrome:start -->
-<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extra-href="manual.html" data-extra-label="Manual" data-extra-icon="book"></script>
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras='[{"href":"manual.html","label":"Manual","icon":"book"},{"href":"tracer.html","label":"Tracer","icon":"trace"}]' data-compact="true"></script>
 <!-- page-chrome:end -->
 ```
 
@@ -47,9 +55,12 @@ Running either more than once is harmless. An existing snippet, including a bare
 - `data-position`: `top` (default, centred between the calculator's side panels), `bottom-left` or
   `bottom-right`. For automatic installs, set `position` in `scripts/page-chrome-targets.json`.
 - `data-home`: a different address for the Home button (default: the site's main page).
-- `data-extra-href`, `data-extra-label`, `data-extra-icon` (`book` or `engine`): one extra button after
-  Home. This is how the calculator links to its manual and the manual links back. For automatic installs,
-  set `extra` in `scripts/page-chrome-targets.json`.
+- `data-extras`: extra buttons after Home, as JSON, e.g.
+  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine` or `trace`. (A single
+  button can also be given as `data-extra-href`, `data-extra-label`, `data-extra-icon`.) For automatic
+  installs, set `extra` in `scripts/page-chrome-targets.json` to one `{ href, label, icon }` or a list.
+- `data-compact="true"`: shows every button as an icon only, with its name on hover. The
+  engine uses this so the bar fits between its two side panels. For automatic installs, set `"compact": true`.
 - The social links are the `SOCIAL_LINKS` list at the top of `assets/js/page-chrome.js`. Change them
   there and every page using the bar picks the change up.
 
@@ -62,7 +73,10 @@ Add the page to `scripts/page-chrome-targets.json`:
     {
         "file": "Pages/Geometric Calculator/index.html",
         "position": "top",
-        "extra": { "href": "manual.html", "label": "Manual", "icon": "book" }
+        "extra": [
+            { "href": "manual.html", "label": "Manual", "icon": "book" },
+            { "href": "tracer.html", "label": "Tracer", "icon": "trace" }
+        ]
     },
     { "file": "Pages/Some Other Tool/index.html", "position": "bottom-right" }
 ]
