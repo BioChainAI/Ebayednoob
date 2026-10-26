@@ -13,7 +13,8 @@ Companion pages sit in the same folder, and their bars link to each other:
 | `manual.html` | Instruction manual & explainer | Open Engine, Tracer |
 | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses | Open Engine, Manual |
 | `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification | Open Engine, Manual, Tracer |
-| `galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` | Open Engine, Manual, Numogram |
+| `galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` and live checks against the Fifteen Lemmas | Open Engine, Guide, Numogram |
+| `galactic_companion.html` | Companion guide: from one engine to the triple quad, lemma by lemma | Simulation, Open Engine, Manual |
 
 To update the tracer, upload the new version over `tracer.html` (keep the name); the bar is added the same way.
 
