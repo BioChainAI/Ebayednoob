@@ -5,13 +5,14 @@ small snippet at the end that loads the floating bar (Home button, a **Manual** 
 shared with the main site, GitHub / X / YouTube / Patreon links, and the hide toggle). The bar itself lives
 in [`assets/js/page-chrome.js`](../../assets/js/page-chrome.js), never in the calculator file.
 
-Two companion pages sit in the same folder, and the bars on all three pages link to each other:
+Companion pages sit in the same folder, and their bars link to each other:
 
 | File | Page | Bar buttons |
 | --- | --- | --- |
-| `index.html` | The engine | Manual, Tracer |
+| `index.html` | The engine | Manual, Tracer, Numogram |
 | `manual.html` | Instruction manual & explainer | Open Engine, Tracer |
 | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses | Open Engine, Manual |
+| `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification | Open Engine, Manual, Tracer |
 
 To update the tracer, upload the new version over `tracer.html` (keep the name); the bar is added the same way.
 
@@ -36,7 +37,7 @@ Paste this just above the closing `</body>` tag of the new export:
 
 ```html
 <!-- page-chrome:start -->
-<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras='[{"href":"manual.html","label":"Manual","icon":"book"},{"href":"tracer.html","label":"Tracer","icon":"trace"}]' data-compact="true"></script>
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras='[{"href":"manual.html","label":"Manual","icon":"book"},{"href":"tracer.html","label":"Tracer","icon":"trace"},{"href":"numogram.html","label":"Numogram","icon":"numogram"}]' data-compact="true"></script>
 <!-- page-chrome:end -->
 ```
 
@@ -56,7 +57,7 @@ Running either more than once is harmless. An existing snippet, including a bare
   `bottom-right`. For automatic installs, set `position` in `scripts/page-chrome-targets.json`.
 - `data-home`: a different address for the Home button (default: the site's main page).
 - `data-extras`: extra buttons after Home, as JSON, e.g.
-  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine` or `trace`. (A single
+  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine`, `trace` or `numogram`. (A single
   button can also be given as `data-extra-href`, `data-extra-label`, `data-extra-icon`.) For automatic
   installs, set `extra` in `scripts/page-chrome-targets.json` to one `{ href, label, icon }` or a list.
 - `data-compact="true"`: shows every button as an icon only, with its name on hover. The
