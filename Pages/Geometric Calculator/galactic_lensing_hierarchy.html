@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galactic Lensing Hierarchy</title>
+<meta name="description" content="Interactive simulation of the Galactic Lensing Hierarchy: Sgr A* as the centroid of three nested 6-channel, 5-tier geometric engines with an emergent fourth, the seven pulsars within 100 pc, exact rational residual parity and frame-closure checks, and an in-browser port of verify_galactic_hierarchy.py.">
+<style>
+:root, :root[data-theme="dark"] {
+    --bg: #0a0a1a; --panel: rgba(17, 19, 40, 0.86); --panel-2: #101228; --line: rgba(148, 163, 184, 0.18); --line-2: rgba(148, 163, 184, 0.32);
+    --text: #e6e8f2; --muted: #9aa3bd; --faint: #6b7390; --gold: #f5c542; --space: #05050f;
+    --sys1: #ff7a3d; --sys2: #2dd4bf; --sys3: #8b5cf6; --fourth: #ffe6a3;
+    --pass: #34d399; --tol: #fbbf24; --fail: #f87171;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --bg: #f4f5fb; --panel: rgba(255, 255, 255, 0.92); --panel-2: #ffffff; --line: rgba(30, 41, 59, 0.14); --line-2: rgba(30, 41, 59, 0.28);
+        --text: #161a2e; --muted: #4b5470; --faint: #737b96; --gold: #b7860b; --sys1: #d9480f; --sys2: #0f9488; --sys3: #6d28d9; --fourth: #b7860b;
+        --pass: #059669; --tol: #b45309; --fail: #dc2626; color-scheme: light;
+    }
+}
+:root[data-theme="light"] {
+    --bg: #f4f5fb; --panel: rgba(255, 255, 255, 0.92); --panel-2: #ffffff; --line: rgba(30, 41, 59, 0.14); --line-2: rgba(30, 41, 59, 0.28);
+    --text: #161a2e; --muted: #4b5470; --faint: #737b96; --gold: #b7860b; --sys1: #d9480f; --sys2: #0f9488; --sys3: #6d28d9; --fourth: #b7860b;
+    --pass: #059669; --tol: #b45309; --fail: #dc2626; color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 var(--sans); overflow-x: hidden; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.5), transparent 60%), radial-gradient(1px 1px at 72% 34%, rgba(255,255,255,0.4), transparent 60%),
+        radial-gradient(1px 1px at 38% 72%, rgba(255,255,255,0.35), transparent 60%), radial-gradient(1px 1px at 88% 82%, rgba(255,255,255,0.45), transparent 60%),
+        radial-gradient(1.5px 1.5px at 55% 10%, rgba(255,255,255,0.4), transparent 60%), radial-gradient(1px 1px at 22% 52%, rgba(255,255,255,0.3), transparent 60%); }
+:root[data-theme="light"] body::before { opacity: 0; }
+.mono, code { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--sys2); }
+button, select, input { font: inherit; color: var(--text); }
+button, select { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--gold); }
+button.on { border-color: var(--gold); color: var(--gold); }
+input[type="range"] { accent-color: var(--gold); vertical-align: middle; }
+.wrap { max-width: 1680px; margin: 0 auto; padding: 0 16px 40px; }
+header.hero { padding: 64px 0 10px; }
+header.hero h1 { margin: 0; font-size: clamp(1.4rem, 3vw, 2.1rem); letter-spacing: -0.01em; }
+header.hero h1 .g { background: linear-gradient(90deg, var(--sys1), var(--sys2) 50%, var(--sys3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header.hero p { margin: 4px 0 0; color: var(--muted); max-width: 1100px; }
+.tags-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* Epistemic tags */
+.tag { display: inline-block; font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid; letter-spacing: 0.02em; white-space: nowrap; cursor: help; vertical-align: 1px; }
+.t-PROVEN { color: #34d399; border-color: rgba(52,211,153,0.6); background: rgba(52,211,153,0.1); }
+.t-ESTABLISHED { color: #60a5fa; border-color: rgba(96,165,250,0.6); background: rgba(96,165,250,0.1); }
+.t-CORRESPONDENCE { color: #facc15; border-color: rgba(250,204,21,0.6); background: rgba(250,204,21,0.08); }
+.t-DEFINITION { color: #9ca3af; border-color: rgba(156,163,175,0.6); background: rgba(156,163,175,0.08); }
+.t-COMPUTED { color: #22d3ee; border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.08); }
+.t-EMPIRICAL { color: #fb923c; border-color: rgba(251,146,60,0.6); background: rgba(251,146,60,0.08); }
+.t-HEURISTIC { color: #fbbf24; border-color: rgba(251,191,36,0.6); background: rgba(251,191,36,0.08); }
+.t-CONJECTURAL { color: #f87171; border-color: rgba(248,113,113,0.6); background: rgba(248,113,113,0.08); }
+.t-OPEN { color: #f8fafc; border-color: rgba(248,250,252,0.7); background: rgba(248,250,252,0.06); }
+:root[data-theme="light"] .t-OPEN { color: #111827; border-color: #111827; }
+:root[data-theme="light"] .t-CORRESPONDENCE, :root[data-theme="light"] .t-HEURISTIC { color: #92400e; }
+:root[data-theme="light"] .t-COMPUTED { color: #0e7490; }
+#tip { position: fixed; z-index: 50; max-width: 340px; padding: 7px 9px; border-radius: 8px; background: #0f1224; color: #e6e8f2; border: 1px solid rgba(245,197,66,0.6);
+    font-size: 12px; line-height: 1.4; pointer-events: none; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+
+/* Controls */
+.controls { position: sticky; top: 64px; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 12px; margin: 10px 0 12px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(8px); }
+.controls .grp { display: flex; align-items: center; gap: 6px; }
+.controls label { color: var(--muted); font-size: 12.5px; }
+.controls .val { font: 12px var(--mono); color: var(--text); min-width: 40px; display: inline-block; }
+#btn-play { min-width: 74px; font-weight: 600; }
+
+/* Layout */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto; gap: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
+.panel h2 { margin: 0 0 2px; font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.panel .sub { margin: 0 0 8px; color: var(--muted); font-size: 12.5px; }
+#panel-a { grid-row: 1 / span 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 172px; }
+#space { position: relative; flex: none; height: max(480px, calc(100vh - 310px)); min-height: 480px; border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at center, #11122b 0%, var(--space) 70%); border: 1px solid var(--line); touch-action: none; }
+#space canvas { display: block; }
+#space .msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; color: #9aa3bd; }
+.sys-labels { position: absolute; left: 10px; top: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 3; }
+.sys-labels button { text-align: left; font-size: 12px; padding: 4px 9px; background: rgba(10,10,26,0.72); color: #e6e8f2; border-color: rgba(148,163,184,0.35); }
+.sys-labels button .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.sys-labels button.dim { opacity: 0.45; }
+#gears { position: absolute; right: 10px; bottom: 10px; width: 190px; height: 83px; z-index: 3; background: rgba(10,10,26,0.72); border: 1px solid rgba(148,163,184,0.35); border-radius: 8px; }
+#scale-note { position: absolute; left: 10px; bottom: 10px; z-index: 3; font: 11px var(--mono); color: #9aa3bd; background: rgba(10,10,26,0.72); padding: 3px 7px; border-radius: 6px; max-width: 62%; }
+#hover { position: absolute; z-index: 4; pointer-events: none; display: none; background: rgba(10,10,26,0.92); color: #e6e8f2; border: 1px solid rgba(245,197,66,0.6); border-radius: 8px; padding: 6px 8px; font: 11.5px var(--mono); white-space: nowrap; }
+
+/* Dashboard */
+.sysgrids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sysgrid { border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
+.sysgrid h3 { margin: 0 0 4px; font-size: 12.5px; display: flex; justify-content: space-between; gap: 4px; flex-wrap: wrap; }
+.sysgrid table { width: 100%; border-collapse: collapse; font: 11px var(--mono); }
+.sysgrid th, .sysgrid td { padding: 2px 3px; text-align: right; border-bottom: 1px solid var(--line); }
+.sysgrid th { color: var(--muted); font-weight: 500; }
+.sysgrid td.cls { text-align: left; color: var(--muted); }
+.sysgrid td.cell { cursor: pointer; border-radius: 4px; }
+.sysgrid td.active { outline: 1px solid var(--gold); background: rgba(245,197,66,0.12); }
+.sysgrid td.hl { background: rgba(255,255,255,0.12); }
+.tier-line { font: 10.5px var(--mono); color: var(--muted); margin-top: 3px; }
+.sec { margin-top: 10px; }
+.sec h3 { margin: 0 0 4px; font-size: 13px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tbl-wrap { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; }
+table.res { width: 100%; border-collapse: collapse; font: 11px var(--mono); }
+table.res th, table.res td { padding: 3px 4px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.res th { color: var(--muted); font-weight: 500; text-align: right; }
+table.res td:first-child, table.res th:first-child { text-align: left; }
+table.res tr:last-child td { border-bottom: 0; }
+.st { font: 700 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; }
+.st-pass { color: #052e1a; background: var(--pass); }
+.st-tol { color: #2a1a00; background: var(--tol); }
+.st-fail { color: #2b0505; background: var(--fail); }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; font: 11px var(--mono); }
+.kv div > span:not(.st) { color: var(--muted); }
+#spark { width: 100%; height: 60px; display: block; border: 1px solid var(--line); border-radius: 8px; }
+#lens { width: 100%; display: block; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); }
+
+/* Log */
+.logbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 6px; }
+.logbar h2 { margin: 0; font-size: 15px; }
+#vsum { font: 12px var(--mono); }
+#log { height: 300px; overflow: auto; background: #06061a; color: #cfd6ea; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 11.5px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+:root[data-theme="light"] #log { background: #0b1022; }
+#log .pass { color: #34d399; } #log .fail { color: #f87171; } #log .hd { color: #f5c542; }
+.notes { margin-top: 12px; color: var(--muted); font-size: 12.5px; }
+.notes li { margin: 3px 0; }
+
+@media (max-width: 1100px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    #panel-a { grid-row: auto; position: static; }
+    #space { height: 70vh; min-height: 460px; }
+}
+@media (max-width: 640px) {
+    .sysgrids { grid-template-columns: minmax(0, 1fr); }
+    .controls { position: static; }
+    #space { height: 62vh; min-height: 380px; }
+    #gears { width: 150px; height: 66px; }
+    #scale-note { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="tip" role="tooltip"></div>
+<div class="wrap">
+<header class="hero">
+    <h1><span class="g">Galactic Lensing Hierarchy</span></h1>
+    <p>Sgr A* as the centroid of three nested 6-channel, 5-tier geometric engines (Systems I, II, III) with an emergent fourth, the closure residual. Physics is weak-field general relativity in floating point (Layer A). The engine's bookkeeping, residual parity and frame closure, is exact rational arithmetic in BigInt (Layer B).</p>
+    <div class="tags-legend" id="tags-legend"></div>
+</header>
+
+<div class="controls" aria-label="Simulation controls">
+    <div class="grp"><button id="btn-play" type="button">Pause</button></div>
+    <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-1" max="1" step="0.01" value="0"><span class="val" id="speed-v">1.0×</span></div>
+    <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-rays" type="button" class="on">Rays</button></div>
+    <div class="grp"><label for="eta">Clutch η</label><input id="eta" type="range" min="0" max="1" step="0.01" value="1"><span class="val" id="eta-v">1.00</span></div>
+    <div class="grp"><label for="noise">Noise</label><input id="noise" type="range" min="0" max="10" step="0.5" value="0"><span class="val" id="noise-v">0σ</span></div>
+    <div class="grp"><label for="signal">Inject signal</label>
+        <select id="signal"><option value="none">None</option><option value="shapiro">Shapiro event</option><option value="lensing">Lensing event</option><option value="scalar">Scalar field (§7.1 test)</option></select></div>
+    <div class="grp"><button id="btn-error" type="button">Inject error</button></div>
+    <div class="grp"><label>Epoch</label><button id="ep-back" type="button" aria-label="Previous epoch">◀</button><span class="val" id="ep-v">0</span><button id="ep-fwd" type="button" aria-label="Next epoch">▶</button></div>
+    <div class="grp"><label for="sight">Sightline</label><select id="sight"></select></div>
+    <div class="grp"><button id="btn-verify" type="button">Run Verification</button><button id="btn-theme" type="button" aria-label="Toggle light or dark theme">Light</button></div>
+</div>
+
+<div class="grid">
+    <!-- Panel A -->
+    <section class="panel" id="panel-a" aria-label="Panel A: nested torus view">
+        <h2>A · Nested torus view <span class="tag t-DEFINITION" data-basis="§4.2: tiers are logarithmic radial shells r_n = r_in (r_out/r_in)^((R_n − R_0)/(R_4 − R_0)); fractions 0, 1/7, 5/14, 9/14, 1. The tori organize and display; they make no physical prediction.">DEFINITION</span></h2>
+        <p class="sub">Five tiers per system at the spec's log radii; each tier carries its six channels as helices with W<sub>n</sub> = 16 − 2n windings (phase = observable class, chirality = model/data). Drag to orbit, scroll or pinch to zoom, hover a pulsar for its data.</p>
+        <div id="space">
+            <div class="msg" id="space-msg">Loading Three.js r158…</div>
+            <div class="sys-labels" id="sys-labels"></div>
+            <canvas id="gears" width="380" height="165" aria-label="12/10/8 gear chain"></canvas>
+            <div id="scale-note"></div>
+            <div id="hover"></div>
+        </div>
+    </section>
+
+    <!-- Panel B -->
+    <section class="panel" id="panel-b" aria-label="Panel B: engine dashboard">
+        <h2>B · Engine dashboard <span class="tag t-PROVEN" data-basis="Lemma 4: k ↦ (k mod 3, k mod 2) is a bijection ℤ/6 → C3 × C2 (script §H3).">C3 × C2</span></h2>
+        <p class="sub" id="node-line">Six channels per system. Row = observable class (C<sub>3</sub>), column = side (C<sub>2</sub>). The gold cell is the active channel k mod 6 of the 30-node clock.</p>
+        <div class="sysgrids" id="sysgrids"></div>
+        <div class="sec">
+            <h3>Residual parity, Proposition G1 <span class="tag t-PROVEN" data-basis="Proposition G1: Y = Y_I + Y_II + Y_III + Y_R; any one of the four is recovered exactly from the total and the other three. Verified in exact rational arithmetic on 2000 cases (script §H1); here recomputed live in BigInt fractions.">PROVEN</span>
+                <span class="tag t-DEFINITION" data-basis="Layer A3: every channel value is rationalized as round(x·2^k)/2^k with k = 24 before entering Layer B. Units: astrometry µas, timing ×10⁻¹⁸ s⁻¹ (a/c term in Ṗ/P), velocity km/s.">k = 24</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>class</th><th>Y (data total)</th><th>Y_I</th><th>Y_II</th><th>Y_III</th><th>Y_R (exact)</th><th>identity</th><th>recover</th><th>residual</th></tr></thead><tbody id="g1-rows"></tbody></table></div>
+            <canvas id="spark" aria-label="Residual history per class"></canvas>
+        </div>
+        <div class="sec">
+            <h3>Frame closure, Proposition G2 <span class="tag t-PROVEN" data-basis="Proposition G2 / Lemma 12: with four independently measured legs, H1H2H3H4 = 1 when consistent and any single-leg error breaks closure; if the fourth leg is computed from the other three the product is 1 identically and tests nothing. Legs are rational unit quaternions built with the Cayley map (Lemma 9 Part 3). Script §H2, 500 cases each.">PROVEN</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>leg</th><th>meaning</th><th>angle</th><th>denominator bits</th></tr></thead><tbody id="g2-legs"></tbody></table></div>
+            <div class="kv" id="g2-out" style="margin-top:6px"></div>
+        </div>
+        <div class="sec">
+            <h3>Frame invariance, Theorem 7.18 <span class="tag t-PROVEN" data-basis="Theorem 7.18: E = A I⁻¹ A⁻¹ closes A I A⁻¹ E = 1 and keeps Re(E) = Re(I): rotation angles are preserved, only axes turn. Script §H5, 500 cases; here A = H1·H2 (ICRS → galactocentric) and I = H3.">PROVEN</span></h3>
+            <div class="kv" id="inv-out"></div>
+        </div>
+        <div class="sec">
+            <h3>Engine node telemetry (v10 <code>getNodeTelemetry</code>) <span class="tag t-COMPUTED" data-basis="Copied from harmonic_market_matrix_geometric_engine_10.html: TQF A_R = (ΣQ)² − 2ΣQ² and qScale = 0.65 + 0.45·√A_R/(ΣQ + 1) on the engine's own tier geometry (R = 15…155). Display only: no physical meaning.">COMPUTED</span></h3>
+            <div class="kv" id="node-out"></div>
+        </div>
+        <div class="sec">
+            <h3>64-bit Einstein Tile packets <span class="tag t-DEFINITION" data-basis="§5.3 layout: cycle step [63:61] (onload / offload / third phase), structure selector [57:56] (00 I, 01 II, 10 III, 11 R), Form ID [43:40] = 3, stream slot [39:36] = 4·class + structure, payload [31:0] = binary32 of the value (a rounded display copy; the exact value lives in Layer B).">DEFINITION</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>stream</th><th>I</th><th>II</th><th>III</th><th>R</th></tr></thead><tbody id="pk-rows"></tbody></table></div>
+        </div>
+    </section>
+
+    <!-- Panel C -->
+    <section class="panel" id="panel-c" aria-label="Panel C: lensing and timing view">
+        <h2>C · Lensing and timing <span class="tag t-COMPUTED" data-basis="Evaluated formulas of §3.3, §6.1 and §6.2 (point lens, Shapiro delay, magnetar budget), reproduced by script sections B, D and E.">COMPUTED</span></h2>
+        <p class="sub" id="lens-sub">Einstein radii behind Sgr A* (log radius), the scattered image against the weak-lensing shift, the magnetar's timing budget, and each pulsar's astrometric shift.</p>
+        <canvas id="lens" aria-label="Lensing and timing diagram"></canvas>
+    </section>
+</div>
+
+<div class="logbar">
+    <h2>Telemetry log</h2>
+    <span id="vsum"></span>
+    <button id="btn-clear" type="button">Clear</button>
+</div>
+<div id="log" role="log" aria-live="polite"></div>
+
+<ul class="notes" id="notes">
+    <li><strong>Data.</strong> Constants, the seven pulsars and every computed number come from <code>the_galactic_lensing_hierarchy.md</code> and <code>verify_galactic_hierarchy.py</code>. "Run Verification" is a line-by-line port of the script, including Python's Mersenne Twister seeded with 20261026, so the exact-arithmetic checks run on the same random cases; its output is compared with the script's captured output.</li>
+    <li><strong>Simulated observations.</strong> The "model" side of each channel is a forward prediction from simple mass models: Sgr A* as a point mass; the nuclear star cluster as a Hernquist sphere of 2.5 × 10⁷ M☉ with a 4.2 pc half-mass radius <span class="tag t-HEURISTIC" data-basis="Modelling choice: Schödel et al. 2014 give the mass and half-light radius; the Hernquist profile shape is assumed.">HEURISTIC</span>; and System III's observer terms (Gaia drift, Gaia acceleration, solar reflex). The "data" side is model + Gaussian noise + any injected signal. Pulsar position angles on the sky are illustrative; only projected distances are from the table. Line-of-sight depths are unknown (Problem G1) and are set equal to the projected offset, as in §6.2.</li>
+    <li><strong>Clock.</strong> One master clock: pulseCount = ⌊t·60⌋, gears at 2π·n/720, −2π·n/72·η and 2π·n/10·0.1 with n = 12·pulseCount mod 720 (engine v10). One 720-frame cycle is one observation epoch of 0.25 yr. 1× speed advances 0.5 cycle per second; physics uses a fixed 1/60 s step with interpolated rendering.</li>
+</ul>
+</div>
+
+<!-- Three.js r158 (classic build); falls back to jsdelivr's copy of the same release if cdnjs has no r158 path -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js" onerror="window.__threeFallback = true"></script>
+<script>
+// ===== CORE:BEGIN =====
+// ---------- Python-compatible number formatting (for line-by-line parity with the script) ----------
+const pyExp = (s) => s.replace(/e([+-])(\d)$/, "e$10$2");
+const fE = (x, p) => pyExp(x.toExponential(p));
+const fF = (x, p, w = 0) => x.toFixed(p).padStart(w);
+const fD = (n, w = 0) => String(n).padStart(w);
+function fG(x, p) {
+    if (x === 0) return "0";
+    const e = Number(x.toExponential(p - 1).split("e")[1]);
+    const strip = (m) => (m.includes(".") ? m.replace(/0+$/, "").replace(/\.$/, "") : m);
+    if (e < -4 || e >= p) { const [m, ex] = x.toExponential(p - 1).split("e"); return pyExp(strip(m) + "e" + ex); }
+    return strip(x.toFixed(Math.max(0, p - 1 - e)));
+}
+const pyFloat = (x) => (Number.isInteger(x) ? x.toFixed(1) : String(x));
+const pyStrList = (a) => "[" + a.map((s) => `'${s}'`).join(", ") + "]";
+
+// ---------- Exact rationals (BigInt) ----------
+const absB = (a) => (a < 0n ? -a : a);
+function gcdB(a, b) { a = absB(a); b = absB(b); while (b) { [a, b] = [b, a % b]; } return a; }
+class Fraction {
+    constructor(num, den = 1n) {
+        let n = BigInt(num), d = BigInt(den);
+        if (d === 0n) throw new RangeError("Fraction with zero denominator");
+        if (d < 0n) { n = -n; d = -d; }
+        const g = gcdB(n, d);
+        this.n = n / g; this.d = d / g;
+    }
+    add(o) { return new Fraction(this.n * o.d + o.n * this.d, this.d * o.d); }
+    sub(o) { return new Fraction(this.n * o.d - o.n * this.d, this.d * o.d); }
+    mul(o) { return new Fraction(this.n * o.n, this.d * o.d); }
+    div(o) { return new Fraction(this.n * o.d, this.d * o.n); }
+    neg() { return new Fraction(-this.n, this.d); }
+    eq(o) { return this.n === o.n && this.d === o.d; }
+    isZero() { return this.n === 0n; }
+    toNumber() { return Number(this.n) / Number(this.d); }
+    toString() { return this.d === 1n ? this.n.toString() : `${this.n}/${this.d}`; }
+    // Rationalize a float at declared precision 2^-k (Layer A3): round(x * 2^k) / 2^k
+    static fromFloat(x, k) { const s = 2 ** k; return new Fraction(BigInt(Math.round(x * s)), 1n << BigInt(k)); }
+}
+Fraction.ZERO = new Fraction(0n); Fraction.ONE = new Fraction(1n); Fraction.TWO = new Fraction(2n);
+
+// ---------- Exact quaternions over Q: [w, x, y, z] ----------
+function qmul(a, b) {
+    const [w1, x1, y1, z1] = a, [w2, x2, y2, z2] = b;
+    return [
+        w1.mul(w2).sub(x1.mul(x2)).sub(y1.mul(y2)).sub(z1.mul(z2)),
+        w1.mul(x2).add(x1.mul(w2)).add(y1.mul(z2)).sub(z1.mul(y2)),
+        w1.mul(y2).sub(x1.mul(z2)).add(y1.mul(w2)).add(z1.mul(x2)),
+        w1.mul(z2).add(x1.mul(y2)).sub(y1.mul(x2)).add(z1.mul(w2))
+    ];
+}
+const qconj = (a) => [a[0], a[1].neg(), a[2].neg(), a[3].neg()];
+function qinv(a) { const n = a.reduce((s, x) => s.add(x.mul(x)), Fraction.ZERO); return qconj(a).map((x) => x.div(n)); }
+const Q_ONE = [Fraction.ONE, Fraction.ZERO, Fraction.ZERO, Fraction.ZERO];
+const qprod = (...qs) => qs.reduce((p, q) => qmul(p, q), Q_ONE);
+const qeq = (a, b) => a.every((x, i) => x.eq(b[i]));
+// Cayley map (Lemma 9 Part 3): (u1, u2, u3) in Q^3 -> rational unit quaternion
+function cayleyMap(u1, u2, u3) {
+    const n2 = u1.mul(u1).add(u2.mul(u2)).add(u3.mul(u3));
+    const d = Fraction.ONE.add(n2);
+    return [Fraction.ONE.sub(n2).div(d), u1.mul(Fraction.TWO).div(d), u2.mul(Fraction.TWO).div(d), u3.mul(Fraction.TWO).div(d)];
+}
+
+// ---------- Python's random module (MT19937, seed by init_by_array, randint via getrandbits) ----------
+class PyRandom {
+    constructor(seed) {
+        this.mt = new Uint32Array(624); this.i = 625;
+        const key = []; let s = BigInt(seed); if (s < 0n) s = -s;
+        do { key.push(Number(s & 0xffffffffn)); s >>= 32n; } while (s > 0n);
+        this.initByArray(key);
+    }
+    initGenrand(s) {
+        const mt = this.mt; mt[0] = s >>> 0;
+        for (let i = 1; i < 624; i++) { const p = mt[i - 1] ^ (mt[i - 1] >>> 30); mt[i] = (Math.imul(1812433253, p) + i) >>> 0; }
+        this.i = 624;
+    }
+    initByArray(key) {
+        this.initGenrand(19650218); const mt = this.mt; let i = 1, j = 0;
+        for (let k = Math.max(624, key.length); k; k--) {
+            const p = mt[i - 1] ^ (mt[i - 1] >>> 30);
+            mt[i] = ((mt[i] ^ Math.imul(p, 1664525)) + key[j] + j) >>> 0; i++; j++;
+            if (i >= 624) { mt[0] = mt[623]; i = 1; } if (j >= key.length) j = 0;
+        }
+        for (let k = 623; k; k--) {
+            const p = mt[i - 1] ^ (mt[i - 1] >>> 30);
+            mt[i] = ((mt[i] ^ Math.imul(p, 1566083941)) - i) >>> 0; i++;
+            if (i >= 624) { mt[0] = mt[623]; i = 1; }
+        }
+        mt[0] = 0x80000000;
+    }
+    uint32() {
+        const mt = this.mt;
+        if (this.i >= 624) {
+            for (let k = 0; k < 624; k++) {
+                const y = (mt[k] & 0x80000000) | (mt[(k + 1) % 624] & 0x7fffffff);
+                mt[k] = mt[(k + 397) % 624] ^ (y >>> 1) ^ (y & 1 ? 0x9908b0df : 0);
+            }
+            this.i = 0;
+        }
+        let y = mt[this.i++];
+        y ^= y >>> 11; y ^= (y << 7) & 0x9d2c5680; y ^= (y << 15) & 0xefc60000; y ^= y >>> 18;
+        return y >>> 0;
+    }
+    getrandbits(k) { return this.uint32() >>> (32 - k); } // k <= 32 is all the script needs
+    randbelow(n) { const k = Math.floor(Math.log2(n)) + 1; let r = this.getrandbits(k); while (r >= n) r = this.getrandbits(k); return r; }
+    randint(a, b) { return a + this.randbelow(b - a + 1); }
+}
+
+// ---------- Physics constants (Layer A, floating point; same values as the script) ----------
+const PHYS = { G: 6.67430e-11, c: 299792458.0, GMsun: 1.3271244e20, pc: 3.0856775814913673e16, AU: 149597870700.0,
+               M_BH: 4.297e6, R0_pc: 8275.0, yr: 365.25 * 86400, mas: Math.PI / 180 / 3600 / 1000 };
+PHYS.GM = PHYS.M_BH * PHYS.GMsun;
+PHYS.R0 = PHYS.R0_pc * PHYS.pc;
+PHYS.rs = 2 * PHYS.GM / PHYS.c ** 2;
+PHYS.tS = 2 * PHYS.GM / PHYS.c ** 3;
+
+// The seven pulsars (SKAO chapter Table 1), in the script's order
+const PULSARS = [
+    { name: "J1746-2849", P: 1.48, DM: 1360, off: 12.3, tau: "266 @1.5 GHz", rem: "" },
+    { name: "J1746-2850", P: 1.08, DM: 941, off: 11.3, tau: "-", rem: "magnetar-like" },
+    { name: "J1746-2856", P: 0.95, DM: 1155, off: 15.6, tau: "450 @1 GHz", rem: "" },
+    { name: "J1745-2900", P: 3.76, DM: 1778, off: 0.04, tau: "1300 @1 GHz", rem: "magnetar" },
+    { name: "J1745-2912", P: 0.19, DM: 1106, off: 14.5, tau: "750 @1 GHz", rem: "" },
+    { name: "J1745-2910", P: 0.98, DM: 1088, off: 12.9, tau: "-", rem: "position poorly known" },
+    { name: "J1746-2829", P: 1.89, DM: 1309, off: 31.8, tau: "67 @1 GHz", rem: "magnetar-like" }
+];
+const projPc = (p) => PHYS.R0 * p.off * 60 * 1000 * PHYS.mas / PHYS.pc;
+
+// ---------- Verification: a line-by-line port of verify_galactic_hierarchy.py ----------
+function runVerification() {
+    const out = []; let failed = null;
+    const log = (tag, ...a) => out.push(`[${tag}] ` + a.join(" "));
+    const check = (tag, cond, msg) => { log(tag, msg, "->", cond ? "PASS" : "FAIL"); if (!cond && !failed) failed = `${tag} ${msg}`; };
+    const { G, c, GMsun, pc, AU, yr, mas, M_BH, R0_pc, GM, R0 } = PHYS;
+    const random = new PyRandom(20261026);
+
+    // A
+    log("A", `M_BH = ${fG(M_BH, 4)} Msun, R0 = ${fF(R0_pc, 0)} pc, GM = ${fE(GM, 4)} m^3/s^2`);
+    // B
+    const rs = 2 * GM / c ** 2, thE_inf = Math.sqrt(2 * rs / R0), tS = 2 * GM / c ** 3;
+    log("B", `Schwarzschild radius r_s = ${fE(rs, 4)} m = ${fF(rs / AU, 4)} AU; angular size at R0 = ${fF(rs / R0 / mas * 1e3, 2)} uas`);
+    log("B", `Einstein radius, source at infinity: ${fF(thE_inf / mas / 1e3, 3)} arcsec`);
+    for (const dls of [0.01, 0.1, 1.0, 30.0]) {
+        const Dls = dls * pc, Ds = R0 + Dls;
+        const th = Math.sqrt(2 * rs * Dls / (R0 * Ds)), RE = Math.sqrt(2 * rs * Dls * R0 / Ds);
+        log("B", `source ${pyFloat(dls).padStart(5)} pc behind Sgr A*: theta_E = ${fF(th / mas, 3, 8)} mas, R_E (at lens) = ${fF(RE / AU, 1, 7)} AU`);
+    }
+    log("B", `Shapiro scale 2GM/c^3 = ${fF(tS, 2)} s`);
+    const sigma = 100e3, r_infl = GM / sigma ** 2 / pc;
+    log("B", `sphere of influence GM/sigma^2 (sigma = 100 km/s) = ${fF(r_infl, 2)} pc`);
+    const M_NSC = 2.5e7;
+    log("B", `nuclear star cluster mass / M_BH = ${fF(M_NSC / M_BH, 1)} (NSC 2.5e7 Msun within ~4.2 pc half-light radius)`);
+    for (const r_pc of [0.097, 1.0, 30.0]) {
+        const eps = GM / (c ** 2 * r_pc * pc);
+        log("B", `weak-field parameter GM/(c^2 r) at ${pyFloat(r_pc)} pc = ${fE(eps, 2)} (second-order terms ~ eps^2 = ${fE(eps ** 2, 1)}, a fraction ~eps of the first-order terms)`);
+    }
+    check("B", GM / (c ** 2 * 0.097 * pc) < 1e-5, "Sgr A* field is weak (GM/c^2 r < 1e-5) at every known pulsar: superposition holds");
+    log("B", `strong-field region: a few r_s ~ ${fF(3 * rs / AU, 2)} AU, where superposition fails (System I inner tiers only)`);
+    // C
+    for (const p of PULSARS) {
+        const rproj = R0 * p.off * 60 * 1000 * mas / pc;
+        const Pk = 2 * Math.PI * Math.sqrt((rproj * pc) ** 3 / GM) / yr;
+        log("C", `${p.name}: P=${fF(p.P, 2, 5)} s DM=${fD(p.DM, 5)} offset ${fF(p.off, 2, 5)}' -> projected ${fF(rproj, 2, 6)} pc; ` +
+                 `Keplerian period about Sgr A* alone at that radius ${fG(Pk, 3)} yr ${p.rem}`);
+    }
+    check("C", PULSARS.length === 7, "seven known pulsars within 100 pc projected");
+    check("C", PULSARS.every((p) => R0 * p.off * 60e3 * mas / pc < 100), "all seven within 100 pc projected at R0 = 8275 pc");
+    const outside = PULSARS.filter((p) => R0 * p.off * 60e3 * mas / pc > r_infl).map((p) => p.name);
+    log("C", `pulsars outside Sgr A*'s sphere of influence (~${fF(r_infl, 1)} pc): ${outside.length} of 7 -> ${pyStrList(outside)}`);
+    // D
+    const v_perp = 236e3, r_mag = 0.097 * pc, a_max = GM / r_mag ** 2;
+    log("D", `magnetar transverse velocity: v/c = ${fE(v_perp / c, 3)} (Doppler scale on P)`);
+    log("D", `max line-of-sight acceleration a/c at r >= 0.097 pc: ${fE(a_max / c, 3)} s^-1 (upper bound: true r >= projected)`);
+    const P_orb = 2 * Math.PI * Math.sqrt(r_mag ** 3 / GM), shapiro_rate = tS * 2 * Math.PI / P_orb;
+    log("D", `Keplerian period at 0.097 pc: ${fF(P_orb / yr, 0)} yr; Shapiro-delay rate bound ~ ${fE(shapiro_rate, 2)} (s/s)`);
+    log("D", `ratio Doppler / Shapiro-rate = ${fE((v_perp / c) / shapiro_rate, 1)}`);
+    check("D", (v_perp / c) / shapiro_rate > 1e4, "Shapiro-rate term is >1e4 below the Doppler term for the magnetar");
+    // E
+    log("E", "astrometric shift theta_E^2/theta if each pulsar sat behind Sgr A* at a depth equal to its projected offset:");
+    for (const p of PULSARS) {
+        const theta = p.off * 60 * 1000 * mas, dls = R0 * theta, th2 = 2 * rs * dls / (R0 * (R0 + dls));
+        log("E", `  ${p.name}: depth ${fF(dls / pc, 2, 6)} pc, shift ${fF(th2 / theta / mas * 1e3, 3, 9)} uas`);
+    }
+    const RE01 = Math.sqrt(2 * rs * 0.1 * pc), p_align = (RE01 / (0.1 * pc)) ** 2, cross_t = RE01 / v_perp / yr;
+    const shift_scale = 2 * rs / R0 / mas * 1e3;
+    log("E", `  all shifts are close to 2 r_s / R0 = ${fF(shift_scale, 2)} uas: with depth = R0*theta, theta_E^2/theta = 2 r_s/(R0 + depth)`);
+    check("E", Math.abs(20.43 - shift_scale) < 0.2, "the astrometric shift is ~2 r_s/R0 ~ 20 uas, independent of offset when depth equals the projected offset");
+    log("E", `magnetar-depth source (0.1 pc): R_E = ${fF(RE01 / AU, 1)} AU, instantaneous alignment probability ~ (R_E/r)^2 = ${fE(p_align, 1)},` +
+             ` Einstein-crossing time at 236 km/s = ${fF(cross_t, 2)} yr`);
+    check("E", p_align < 1e-4, "strong lensing of a 0.1 pc pulsar by Sgr A* is rare (< 1e-4 at any instant)");
+    // F
+    for (const Mg of [1e10, 1e11]) log("F", `2GM/c^3 for ${fE(Mg, 0)} Msun = ${fF(2 * Mg * GMsun / c ** 3 / 86400, 2)} days (a constant offset, absorbed by the timing fit)`);
+    const acc = 2.32e-10;
+    log("F", `Gaia EDR3 solar-system acceleration ${fE(acc, 2)} m/s^2 -> aberration drift ${fF(acc / c * yr / mas * 1e3, 2)} uas/yr ` +
+             "(published 5.05 +- 0.35 uas/yr)");
+    check("F", Math.abs(acc / c * yr / mas * 1e3 - 5.05) < 0.1, "acceleration reproduces the published 5.05 uas/yr drift");
+    log("F", `same acceleration as a pulsar period-derivative term a/c = ${fE(acc / c, 2)} s^-1`);
+    // G
+    const k = 4.740470463, mu_l = 6.411, mu_b = 0.219;
+    const V_tot = k * mu_l * R0_pc / 1000, W_tot = k * mu_b * R0_pc / 1000;
+    log("G", `Sgr A* apparent motion -> (Theta0 + V_sun) = ${fF(V_tot, 1)} km/s, W_sun = ${fF(W_tot, 2)} km/s at R0 = ${fF(R0_pc, 0)} pc`);
+    log("G", `with V_sun = 12.24 km/s (Schoenrich et al. 2010): Theta0 = ${fF(V_tot - 12.24, 1)} km/s`);
+    log("G", "Reid & Brunthaler 2020 report the residual (intrinsic Sgr A* motion): -0.58 +- 2.23 km/s (rotation), " +
+             "-0.85 +- 0.75 km/s (toward NGP): closure consistent with zero");
+    log("G", `R0 systematic (33 pc) alone moves (Theta0+V_sun) by ${fF(k * mu_l * 0.033, 2)} km/s`);
+    // H: exact arithmetic
+    const F = (n, d = 1) => new Fraction(BigInt(n), BigInt(d));
+    const rq = (scale = 9) => {
+        const u = [0, 1, 2].map(() => { const n = random.randint(-scale, scale); return F(n, random.randint(1, scale)); });
+        return cayleyMap(u[0], u[1], u[2]);
+    };
+    // H1
+    let ok = true;
+    for (let i = 0; i < 2000; i++) {
+        const [I, II, III, R] = [0, 1, 2, 3].map(() => { const n = random.randint(-(10 ** 6), 10 ** 6); return F(n, random.randint(1, 10 ** 3)); });
+        const T = I.add(II).add(III).add(R);
+        ok = ok && T.sub(II).sub(III).sub(R).eq(I) && T.sub(I).sub(III).sub(R).eq(II) && T.sub(I).sub(II).sub(R).eq(III) && T.sub(I).sub(II).sub(III).eq(R);
+    }
+    check("H1", ok, "2000 exact cases: any one of {I, II, III, residual} is recovered from the measured total and the other three");
+    { const T = F(7), I = F(2); const pairs = new Set(); for (let n = 0; n < 50; n++) { const x = F(n); pairs.add(`${x}|${T.sub(I).sub(F(1)).sub(x)}`); }
+      check("H1", pairs.size === 50, "two unknown components with one total: 50 distinct consistent pairs (not recoverable)"); }
+    // H2
+    let ok_open = true, ok_detect = true, ok_cyc = true;
+    for (let i = 0; i < 500; i++) {
+        const H1 = rq(), H2 = rq(), H3 = rq();
+        const H4_meas = qinv(qprod(H1, H2, H3));
+        ok_open = ok_open && qeq(qprod(H1, H2, H3, H4_meas), Q_ONE);
+        const eps = rq(50);
+        if (!qeq(eps, Q_ONE)) ok_detect = ok_detect && !qeq(qprod(H1, qmul(eps, H2), H3, H4_meas), Q_ONE);
+        const H4_cyc = qinv(qprod(H1, qmul(eps, H2), H3));
+        ok_cyc = ok_cyc && qeq(qprod(H1, qmul(eps, H2), H3, H4_cyc), Q_ONE);
+    }
+    check("H2", ok_open, "500 exact cases: four independently measured frame legs close, H1H2H3H4 = 1");
+    check("H2", ok_detect, "500 exact cases: an error in any one measured leg breaks closure (open convention detects it)");
+    check("H2", ok_cyc, "500 exact cases: if the fourth leg is computed from the other three, closure holds even with the error (vacuous)");
+    // H3
+    const classes = ["astrometry", "timing", "velocity"], sides = ["model", "data"];
+    const slots = Array.from({ length: 6 }, (_, k) => [classes[k % 3], sides[k % 2]]);
+    const slotStr = "{" + slots.map(([a, b], k) => `${k}: ('${a}', '${b}')`).join(", ") + "}";
+    check("H3", new Set(slots.map((s) => s.join())).size === 6, `k -> (k mod 3, k mod 2) is a bijection Z/6 -> C3 x C2: ${slotStr}`);
+    // H4
+    const Rn = [0, 1, 2, 3, 4].map((n) => 5 * n * n + 15 * n + 15);
+    const systems = [["I", rs / pc, 2.0], ["II", 2.0, 200.0], ["III", 200.0, 1.0e5]];
+    const isclose = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(Math.abs(a), Math.abs(b));
+    for (const [name, r_in, r_out] of systems) {
+        const shells = [0, 1, 2, 3, 4].map((n) => r_in * (r_out / r_in) ** ((Rn[n] - Rn[0]) / (Rn[4] - Rn[0])));
+        const mono = shells.every((s, i) => i === 4 || s < shells[i + 1]);
+        const ends = isclose(shells[0], r_in) && isclose(shells[4], r_out);
+        check("H4", mono && ends, `System ${name}: tiers at r = ` + shells.map((s) => fG(s, 3)).join(", ") + " pc (monotone, exact ends)");
+    }
+    log("H4", "fractions (R_n - R_0)/(R_4 - R_0) =", pyStrList([0, 1, 2, 3, 4].map((n) => F(Rn[n] - Rn[0], Rn[4] - Rn[0]).toString())));
+    // H5
+    ok = true;
+    for (let i = 0; i < 500; i++) {
+        const A = rq(), Iq = rq();
+        const E = qprod(A, qinv(Iq), qinv(A));
+        ok = ok && E[0].eq(Iq[0]) && qeq(qprod(A, Iq, qinv(A), E), Q_ONE);
+    }
+    check("H5", ok, "500 exact cases: frame change E = A I^-1 A^-1 closes A I A^-1 E = 1 and keeps Re(E) = Re(I)");
+    // H6
+    const g = (a, b) => (b ? g(b, a % b) : a);
+    check("H6", g(7, 6) === 1 && g(7, 30) === 1 && g(7, 60) === 1, "7 is coprime to 6, 30 and 60: no equal partition of the seven pulsars over the engine's channels");
+    check("H6", PULSARS.filter((p) => R0 * p.off * 60e3 * mas / pc <= 2.0).length === 1 && PULSARS.length - 1 === 6,
+          "placement by radius: 1 pulsar in System I (< 2 pc), 6 in System II (2-200 pc), 0 in System III");
+    out.push("");
+    out.push(failed ? `FAILED: ${failed}` : "All checks passed.");
+    return out;
+}
+// ===== CORE:END =====
+
+
+// =====================================================================
+// Engine v10 structures (kept exactly)
+// =====================================================================
+const TIERS_SPEC = [
+    { n: 0, W: 16, R: 15,  r: 4,  freq: 96, rotAxis: 'Z' },
+    { n: 1, W: 14, R: 35,  r: 6,  freq: 84, rotAxis: 'X' },
+    { n: 2, W: 12, R: 65,  r: 8,  freq: 72, rotAxis: 'Z' },
+    { n: 3, W: 10, R: 105, r: 10, freq: 60, rotAxis: 'X' },
+    { n: 4, W: 8,  R: 155, r: 12, freq: 48, rotAxis: 'Z' }
+];
+const TOTAL_NODES = 30, TOTAL_CALC_PULSES = 150;
+const tensionAngleDeg = 180, torsionAngleDeg = 150, holonomyDrift = 0.0;
+const currentClutchState = { eta: 1.0 };
+function getTierOrientationQuat(tierId) {
+    const tier = TIERS_SPEC[tierId];
+    const euler = new THREE.Euler(0, 0, 0, 'XYZ');
+    if (tier.rotAxis === 'X') euler.x = Math.PI / 2;
+    const tensionRad = ((tensionAngleDeg - 180) * Math.PI) / 180;
+    const slipRad = ((1.0 - currentClutchState.eta) * 28 + holonomyDrift * 50) * (Math.PI / 180);
+    const torsionRad = ((torsionAngleDeg - 150) * Math.PI) / 180;
+    if (tierId >= 3) {
+        euler.y = tensionRad;
+    } else if (tierId === 2) {
+        euler.z = torsionRad + slipRad * 0.5;
+        euler.y = tensionRad * 0.25;
+    } else {
+        euler.z = torsionRad + slipRad;
+        euler.y = -torsionRad * 0.35;
+    }
+    return new THREE.Quaternion().setFromEuler(euler);
+}
+function getNodeTelemetry(k, stageIdx) {
+    const currentTierId = Math.max(0, Math.min(4, 4 - stageIdx));
+    let upperTierId, lowerTierId;
+    if (currentTierId === 4) { upperTierId = 3; lowerTierId = 2; }
+    else if (currentTierId === 0) { upperTierId = 2; lowerTierId = 1; }
+    else { upperTierId = currentTierId + 1; lowerTierId = currentTierId - 1; }
+    const curTier = TIERS_SPEC[currentTierId], upperTier = TIERS_SPEC[upperTierId], lowerTier = TIERS_SPEC[lowerTierId];
+    const theta = (k / TOTAL_NODES) * Math.PI * 2;
+    const c3Phase = (k % 3) * ((2 * Math.PI) / 3);
+    const c2Chiral = (k % 2 === 0) ? 1 : -1;
+    const phiCur = curTier.W * theta * c2Chiral + c3Phase;
+    const phiUp  = upperTier.W * (theta + 0.22) * c2Chiral + c3Phase + (2 * Math.PI / 3);
+    const phiLow = lowerTier.W * (theta - 0.22) * c2Chiral + c3Phase + (4 * Math.PI / 3);
+    function tierPointWithDynamics(tier, angTheta, angPhi) {
+        const px = (tier.R + tier.r * Math.cos(angPhi)) * Math.cos(angTheta);
+        const py = (tier.R + tier.r * Math.cos(angPhi)) * Math.sin(angTheta);
+        const pz = tier.r * Math.sin(angPhi);
+        return new THREE.Vector3(px, py, pz).applyQuaternion(getTierOrientationQuat(tier.n));
+    }
+    const pNode = tierPointWithDynamics(curTier, theta, phiCur);
+    const pUpper = tierPointWithDynamics(upperTier, theta + 0.18, phiUp);
+    const pLower = tierPointWithDynamics(lowerTier, theta - 0.18, phiLow);
+    const Q1 = pNode.distanceToSquared(pUpper), Q2 = pNode.distanceToSquared(pLower), Q3 = pUpper.distanceToSquared(pLower);
+    const denomProj = Q1 + Q2 + Q3 + 1e-6;
+    const sumQ = Q1 + Q2 + Q3;
+    const AR = Math.max(0, (sumQ * sumQ) - 2 * (Q1 * Q1 + Q2 * Q2 + Q3 * Q3));
+    const qScale = 0.65 + (Math.sqrt(AR) / (denomProj + 1.0)) * 0.45;
+    return { Q1, Q2, Q3, AR, qScale, projQ: (Q1 + Q2) / denomProj, currentTierId, upperTierId, lowerTierId };
+}
+// drawClockPumpCanvas (v10), with the clock state passed in
+function drawClockPumpCanvas(canvas, outerFrameN, eta, piCycleStepK) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const cx1 = 110, cy1 = H / 2;
+    const outerAng = (outerFrameN / 720) * Math.PI * 2;
+    const midAng = -(outerFrameN / 72) * Math.PI * 2 * eta;
+    const innerAng = (outerFrameN / 10) * Math.PI * 2 * 0.1 + holonomyDrift;
+    function drawGear(cx, cy, radius, teeth, rot, stroke, fill) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.beginPath();
+        for (let i = 0; i < teeth * 2; i++) {
+            const r = (i % 2 === 0) ? radius + 4 : radius - 3;
+            const a = (i / (teeth * 2)) * Math.PI * 2;
+            if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    }
+    drawGear(cx1, cy1, 62, 12, outerAng, '#8b5cf6', 'rgba(139,92,246,0.10)');
+    drawGear(cx1, cy1, 42, 10, midAng, '#2dd4bf', 'rgba(45,212,191,0.10)');
+    drawGear(cx1, cy1, 22, 8, innerAng, '#ff7a3d', 'rgba(255,122,61,0.14)');
+    const cx2 = 280, cy2 = H / 2;
+    ctx.beginPath(); ctx.arc(cx2, cy2, 58, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(245,197,66,0.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+    for (let s = 1; s <= 8; s++) {
+        const a = (s * Math.PI) / 4 - Math.PI / 2, active = (s === piCycleStepK);
+        ctx.beginPath(); ctx.moveTo(cx2 + Math.cos(a) * 14, cy2 + Math.sin(a) * 14); ctx.lineTo(cx2 + Math.cos(a) * 52, cy2 + Math.sin(a) * 52);
+        ctx.strokeStyle = active ? '#f5c542' : (s === 2 || s === 6 ? '#fb923c' : 'rgba(148,163,184,0.35)'); ctx.lineWidth = active ? 2.5 : 1.2; ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(230,232,242,0.85)'; ctx.font = '600 15px ui-monospace, monospace';
+    ctx.fillText('12 · 10 · 8', 66, H - 8); ctx.fillText(`n = ${String(outerFrameN).padStart(3)}/720`, 210, H - 8);
+}
+
+// =====================================================================
+// Systems, tiers, pulsars
+// =====================================================================
+const FRAC = [0, 1 / 7, 5 / 14, 9 / 14, 1];
+const FRAC_STR = ['0', '1/7', '5/14', '9/14', '1'];
+const SYSTEMS = [
+    { id: 'I', name: 'Sgr A* domain', rIn: PHYS.rs / PHYS.pc, rOut: 2.0, colors: [0xff5a36, 0xff8f3d, 0xffc25a], css: '--sys1', yaw: 0 },
+    { id: 'II', name: 'Nuclear region', rIn: 2.0, rOut: 200.0, colors: [0x22d3ee, 0x2dd4bf, 0x7dd3fc], css: '--sys2', yaw: 60 },
+    { id: 'III', name: 'Galaxy', rIn: 200.0, rOut: 100000.0, colors: [0x8b5cf6, 0x6366f1, 0xc4b5fd], css: '--sys3', yaw: 120 }
+];
+function tierRadius(system, n) { const { rIn, rOut } = system; return rIn * Math.pow(rOut / rIn, FRAC[n]); }
+const CLASSES = ['astrometry', 'timing', 'velocity'];
+const UNITS = ['µas', '×10⁻¹⁸ s⁻¹', 'km/s'];
+const SIGMA = [0.5, 0.05, 2.0];           // 1σ per class [DEFINITION]
+const K_RAT = 24;                         // declared rationalization precision 2^-24
+const R_INFL = PHYS.GM / (100e3) ** 2 / PHYS.pc;
+PULSARS.forEach((p, i) => {
+    p.r = projPc(p);
+    p.sys = p.r <= 2 ? 0 : p.r <= 200 ? 1 : 2;
+    p.pa = (i * 137.50776) * Math.PI / 180;   // illustrative position angle [DEFINITION]
+    p.theta = p.off * 60 * 1000 * PHYS.mas;   // radians
+});
+const MAGNETAR = PULSARS.findIndex(p => p.name === 'J1745-2900');
+const DISPLAY_ORDER = ['J1745-2900', 'J1746-2850', 'J1746-2849', 'J1745-2910', 'J1745-2912', 'J1746-2856', 'J1746-2829'].map(n => PULSARS.findIndex(p => p.name === n));
+
+// =====================================================================
+// Layer A: physics (floating point)
+// =====================================================================
+const M_NSC = 2.5e7, A_NSC = 4.2 / (1 + Math.SQRT2);  // Hernquist scale for a 4.2 pc half-mass radius
+const M_II = r => M_NSC * r * r / ((r + A_NSC) ** 2);
+const ACC_GAIA = 2.32e-10, V_REFLEX = 4.740470463 * 6.411 * PHYS.R0_pc / 1000;
+const T_REF = 2026 + 298 / 365.25;                    // 2026 October 26
+const EPOCH_YR = 0.25;
+const V_MAG = 236e3, DLS_MAG = 0.1;                   // magnetar transverse velocity; lens-event depth (pc)
+const RE_MAG = Math.sqrt(2 * PHYS.rs * DLS_MAG * PHYS.pc);              // Einstein radius at the lens (m)
+const THE_MAG = Math.sqrt(2 * PHYS.rs * DLS_MAG * PHYS.pc / (PHYS.R0 * (PHYS.R0 + DLS_MAG * PHYS.pc)));  // rad
+const TE_YR = RE_MAG / V_MAG / PHYS.yr;                                 // 1.19 yr
+const U0 = 0.3;                                                         // event impact parameter (θ_E units) [DEFINITION]
+const YUKAWA = { alpha: 0.01, lambda: 1.0 };                            // §7.1 test hypothesis [CONJECTURAL]
+function weakShiftUas(Mmsun, theta, depthPc) {
+    const rsM = 2 * Mmsun * PHYS.GMsun / PHYS.c ** 2, Dls = depthPc * PHYS.pc;
+    return 2 * rsM * Dls / (PHYS.R0 * (PHYS.R0 + Dls)) / theta / PHYS.mas * 1e3;
+}
+const centroidShiftUas = u => THE_MAG * u / (u * u + 2) / PHYS.mas * 1e3;
+const magnification = u => (u * u + 2) / (u * Math.sqrt(u * u + 4));
+// Shapiro delay of the source relative to the lens: Δt_S = −(2GM/c³) ln(|r| − r·k̂), with |r| − r·k̂ = b²/(|r| + D)
+function shapiroDelay(bM, dM) { const rr = Math.hypot(bM, dM); return -PHYS.tS * Math.log(bM * bM / (rr + dM)); }
+// Second derivative of the Shapiro delay along b(t)² = b0² + v²τ²: the term it adds to Ṗ/P (s⁻¹)
+function shapiroCurv(tauS, b0, v) { const s = b0 * b0 + v * v * tauS * tauS; return -2 * PHYS.tS * v * v * (b0 * b0 - v * v * tauS * tauS) / (s * s); }
+function eventGeom(tObs) {
+    const ev = state.event; if (!ev) return null;
+    const tau = tObs - ev.t0;                       // years from closest approach
+    if (Math.abs(tau) > 3 * TE_YR) return { active: false, tau };
+    const u = Math.hypot(U0, tau / TE_YR);
+    const edgeU = Math.hypot(U0, 3);
+    const b0 = U0 * RE_MAG, tauS = tau * PHYS.yr, edgeS = 3 * TE_YR * PHYS.yr;
+    return {
+        active: true, tau, u, mu: magnification(u),
+        astro: centroidShiftUas(u) - centroidShiftUas(edgeU),
+        timing: (shapiroCurv(tauS, b0, V_MAG) - shapiroCurv(edgeS, b0, V_MAG)) * 1e18,
+        dShapiro: shapiroDelay(u * RE_MAG, DLS_MAG * PHYS.pc) - shapiroDelay(edgeU * RE_MAG, DLS_MAG * PHYS.pc),
+        thetaPlus: 0.5 * (u + Math.sqrt(u * u + 4)), thetaMinus: 0.5 * (u - Math.sqrt(u * u + 4))
+    };
+}
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(seed) { const r = mulberry32(seed); const u = Math.max(1e-12, r()), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+// Six channels per system for one sightline
+function computeChannels(pi, tObs, epoch) {
+    const p = PULSARS[pi], r = p.r, rm = r * PHYS.pc;
+    const model = [
+        [weakShiftUas(PHYS.M_BH, p.theta, PHYS.R0 * p.theta / PHYS.pc), PHYS.GM / rm ** 2 / PHYS.c * 1e18, Math.sqrt(PHYS.GM / rm) / 1e3],
+        [weakShiftUas(M_II(r), p.theta, PHYS.R0 * p.theta / PHYS.pc), M_II(r) * PHYS.GMsun / rm ** 2 / PHYS.c * 1e18, Math.sqrt(M_II(r) * PHYS.GMsun / rm) / 1e3],
+        [5.04 * (tObs - 2016.0), ACC_GAIA / PHYS.c * 1e18, V_REFLEX]
+    ];
+    const data = model.map((row, s) => row.map((v, c) => v + state.noise * SIGMA[c] * gauss((epoch * 131 + s * 17 + c * 7 + pi * 1009) | 0)));
+    let ev = null;
+    if (state.signal === 'scalar') {
+        for (let s = 0; s < 2; s++) {
+            const f = YUKAWA.alpha * (1 + r / YUKAWA.lambda) * Math.exp(-r / YUKAWA.lambda);
+            data[s][1] += model[s][1] * f;
+            data[s][2] += model[s][2] * (Math.sqrt(1 + f) - 1);
+        }
+    } else if (state.signal === 'lensing' || state.signal === 'shapiro') {
+        ev = eventGeom(tObs);
+        if (ev && ev.active) {
+            data[0][1] += ev.timing;
+            if (state.signal === 'lensing') data[0][0] += ev.astro;
+        }
+    }
+    return { model, data, ev };
+}
+
+// =====================================================================
+// Layer B: exact rational engine
+// =====================================================================
+const RAT = x => Fraction.fromFloat(x, K_RAT);
+const fracAbs = f => (f.n < 0n ? f.neg() : f);
+const fracLe = (a, b) => a.n * b.d <= b.n * a.d;
+const bits = f => Math.max(f.n < 0n ? (-f.n).toString(2).length : f.n.toString(2).length, f.d.toString(2).length);
+function layerB(ch) {
+    return CLASSES.map((cls, c) => {
+        const Ys = [0, 1, 2].map(s => RAT(ch.model[s][c]));
+        const Y = [0, 1, 2].reduce((acc, s) => acc.add(RAT(ch.data[s][c])), Fraction.ZERO);
+        const YR = Y.sub(Ys[0]).sub(Ys[1]).sub(Ys[2]);
+        const identity = Y.eq(Ys[0].add(Ys[1]).add(Ys[2]).add(YR));
+        const recovered = Y.sub(Ys[0]).sub(Ys[2]).sub(YR).eq(Ys[1]);
+        const tolF = Fraction.fromFloat(3 * SIGMA[c] * state.noise * Math.sqrt(3), K_RAT);
+        const status = YR.isZero() ? 'pass' : (fracLe(fracAbs(YR), tolF) ? 'tol' : 'fail');
+        return { Y, Ys, YR, identity, recovered, status, tol: tolF.toNumber() };
+    });
+}
+// Frame legs (floating-point rotations -> rational Cayley quaternions)
+function quatFromMatrix(m) {
+    const t = m[0][0] + m[1][1] + m[2][2]; let w, x, y, z;
+    if (t > 0) { const s = Math.sqrt(t + 1) * 2; w = s / 4; x = (m[2][1] - m[1][2]) / s; y = (m[0][2] - m[2][0]) / s; z = (m[1][0] - m[0][1]) / s; }
+    else if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) { const s = Math.sqrt(1 + m[0][0] - m[1][1] - m[2][2]) * 2; w = (m[2][1] - m[1][2]) / s; x = s / 4; y = (m[0][1] + m[1][0]) / s; z = (m[0][2] + m[2][0]) / s; }
+    else if (m[1][1] > m[2][2]) { const s = Math.sqrt(1 + m[1][1] - m[0][0] - m[2][2]) * 2; w = (m[0][2] - m[2][0]) / s; x = (m[0][1] + m[1][0]) / s; y = s / 4; z = (m[1][2] + m[2][1]) / s; }
+    else { const s = Math.sqrt(1 + m[2][2] - m[0][0] - m[1][1]) * 2; w = (m[1][0] - m[0][1]) / s; x = (m[0][2] + m[2][0]) / s; y = (m[1][2] + m[2][1]) / s; z = s / 4; }
+    return [w, x, y, z];
+}
+const axisAngle = (ax, ang) => { const n = Math.hypot(...ax), s = Math.sin(ang / 2); return [Math.cos(ang / 2), ax[0] / n * s, ax[1] / n * s, ax[2] / n * s]; };
+const fmul = (a, b) => [a[0]*b[0]-a[1]*b[1]-a[2]*b[2]-a[3]*b[3], a[0]*b[1]+a[1]*b[0]+a[2]*b[3]-a[3]*b[2], a[0]*b[2]-a[1]*b[3]+a[2]*b[0]+a[3]*b[1], a[0]*b[3]+a[1]*b[2]-a[2]*b[1]+a[3]*b[0]];
+function exactLeg(q, k) {          // inverse Cayley u = v/(1 + w), rationalized at 2^-k, then the exact Cayley map
+    if (q[0] < 0) q = q.map(v => -v);
+    const u = [q[1], q[2], q[3]].map(v => Fraction.fromFloat(v / (1 + q[0]), k));
+    return cayleyMap(u[0], u[1], u[2]);
+}
+const ICRS_TO_GAL = [[-0.0548755604, -0.8734370902, -0.4838350155], [0.4941094279, -0.4448296300, 0.7469822445], [-0.8676661490, -0.1980763734, 0.4559837762]];
+const D2R = Math.PI / 180;
+function legAngle(q) { const v = Math.hypot(q[1].toNumber(), q[2].toNumber(), q[3].toNumber()); return 2 * Math.atan2(v, Math.abs(q[0].toNumber())); }
+const qbits = q => Math.max(...q.map(f => f.d.toString(2).length));
+function buildLegs(pi, epoch) {
+    const p = PULSARS[pi];
+    const H1 = exactLeg(quatFromMatrix(ICRS_TO_GAL), 20);
+    const H2 = exactLeg(fmul(axisAngle([0, 0, 1], -0.056 * D2R), axisAngle([0, 1, 0], 0.046 * D2R)), 30);
+    const H3 = exactLeg(axisAngle([0, -Math.sin(p.pa), Math.cos(p.pa)], p.theta), 40);
+    const sigLeg = 0.1 * PHYS.mas;                                 // 0.1 mas per independently measured leg [DEFINITION]
+    const un = [0, 1, 2].map(i => state.noise * sigLeg / 4 * gauss((epoch * 7919 + i * 104729 + pi * 31) | 0));
+    const delta = cayleyMap(...un.map(v => Fraction.fromFloat(v, 48)));
+    const H4 = qmul(qinv(qprod(H1, H2, H3)), delta);              // independent measurement of the fourth leg
+    return { legs: [H1, H2, H3, H4], tol: 5 * Math.max(state.noise, 0) * sigLeg };
+}
+function frameClosure(pi, epoch) {
+    const { legs, tol } = buildLegs(pi, epoch);
+    const L = legs.slice();
+    const err = state.error;
+    if (err) L[err.leg] = qmul(err.eps, L[err.leg]);
+    const open = qprod(L[0], L[1], L[2], L[3]);
+    const openExact = qeq(open, Q_ONE), openAngle = legAngle(open);
+    const H4cyc = qinv(qprod(L[0], L[1], L[2]));                  // the cyclic convention: fourth computed from the others
+    const cyc = qprod(L[0], L[1], L[2], H4cyc);
+    const openStatus = openExact ? 'pass' : (openAngle <= tol ? 'tol' : 'fail');
+    // Theorem 7.18 frame invariance
+    const A = qmul(legs[0], legs[1]), I = legs[2];
+    const E = qprod(A, qinv(I), qinv(A));
+    const reEq = E[0].eq(I[0]), closes = qeq(qprod(A, I, qinv(A), E), Q_ONE);
+    const dir = [0, Math.cos(p_pa(pi)), Math.sin(p_pa(pi))].map(v => Fraction.fromFloat(v, 30));
+    const v = [Fraction.ZERO, ...dir], vr = qprod(A, v, qinv(A));
+    const quad = q => q.slice(1).reduce((s, x) => s.add(x.mul(x)), Fraction.ZERO);
+    return { legs: L, open, openExact, openAngle, openStatus, cycExact: qeq(cyc, Q_ONE), tol, inv: { reEq, closes, quadEq: quad(v).eq(quad(vr)), reI: I[0], reE: E[0] } };
+}
+const p_pa = pi => PULSARS[pi].pa;
+// 64-bit Einstein Tile packet (§5.3)
+const f32 = new DataView(new ArrayBuffer(4));
+function tile(cycle, struct, slot, value) {
+    f32.setFloat32(0, value);
+    const payload = BigInt(f32.getUint32(0));
+    const t = (BigInt(cycle) << 61n) | (BigInt(struct) << 56n) | (3n << 40n) | (BigInt(slot) << 36n) | payload;
+    return '0x' + t.toString(16).toUpperCase().padStart(16, '0');
+}
+
+// =====================================================================
+// State and clock
+// =====================================================================
+const state = { playing: true, speed: 1, logScale: true, showRays: true, eta: 1, noise: 0, signal: 'none', error: null, solo: null, sight: MAGNETAR, event: null, hoverChannel: null };
+const sim = { t: 0, prevT: 0, phase: SYSTEMS.map(() => [0, 0, 0, 0, 0]), prevPhase: SYSTEMS.map(() => [0, 0, 0, 0, 0]) };
+const RATE = 0.5, DT = 1 / 60;
+const clockOf = t => {
+    const pulseCount = Math.floor(t * 60 + 1e-9);
+    return { pulseCount, outerFrameN: (pulseCount * 12) % 720, statorPulse: pulseCount % 60, piCycleStepK: (pulseCount % 8) + 1,
+             stage: Math.floor((pulseCount % TOTAL_CALC_PULSES) / TOTAL_NODES), k: pulseCount % TOTAL_NODES, epoch: Math.floor(pulseCount / 60) };
+};
+const tObsOf = t => T_REF + t * EPOCH_YR;
+function physicsStep(dt) {
+    sim.prevT = sim.t;
+    for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.prevPhase[s][n] = sim.phase[s][n];
+    const dSim = dt * state.speed * RATE;
+    sim.t += dSim;
+    for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.phase[s][n] += state.eta * (TIERS_SPEC[n].freq / 60) * 2 * Math.PI * dSim;
+    if (state.event) { const tObs = tObsOf(sim.t); if (tObs > state.event.t0 + 3 * TE_YR + 0.5) state.event.t0 = tObs + 3 * TE_YR; }
+}
+
+// =====================================================================
+// UI helpers: tags with tooltips, log
+// =====================================================================
+const $ = s => document.querySelector(s);
+const TAG_BASIS = {
+    PROVEN: 'A complete proof is given in the specification and the identity is asserted by the script.',
+    ESTABLISHED: 'Cited standard physics or mathematics.',
+    CORRESPONDENCE: 'Equal counts only; no structure-preserving map is claimed.',
+    DEFINITION: 'A design convention of this system.',
+    COMPUTED: 'An evaluated formula, reproduced by verify_galactic_hierarchy.py.',
+    EMPIRICAL: 'A measurement, with its source and uncertainty.',
+    HEURISTIC: 'A modelling choice motivated by analogy rather than proof.',
+    CONJECTURAL: 'Needs new evidence before it can be accepted.',
+    OPEN: 'A stated problem awaiting resolution.'
+};
+const tag = (t, basis) => `<span class="tag t-${t}" data-basis="${(basis || TAG_BASIS[t]).replace(/"/g, '&quot;')}">${t}</span>`;
+$('#tags-legend').innerHTML = Object.keys(TAG_BASIS).map(t => tag(t)).join('');
+const tip = $('#tip');
+document.addEventListener('pointerover', e => {
+    const t = e.target.closest('[data-basis]');
+    if (!t) { tip.style.display = 'none'; return; }
+    tip.textContent = t.dataset.basis; tip.style.display = 'block';
+    const r = t.getBoundingClientRect();
+    tip.style.left = Math.min(window.innerWidth - 350, Math.max(8, r.left)) + 'px';
+    tip.style.top = (r.bottom + 6 + 120 > window.innerHeight ? r.top - 8 - tip.offsetHeight : r.bottom + 6) + 'px';
+});
+const logEl = $('#log');
+function log(line, cls) {
+    const div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = line;
+    logEl.appendChild(div);
+    while (logEl.childElementCount > 600) logEl.firstChild.remove();
+    logEl.scrollTop = logEl.scrollHeight;
+}
+const fmt = (x, d = 4) => { if (x === 0) return '0'; const a = Math.abs(x); return (a >= 1e5 || a < 1e-3) ? x.toExponential(d - 1) : x.toPrecision(d).replace(/\.?0+$/, m => (m.includes('.') ? '' : m)); };
+const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+const fmtFrac = (f, max = 26) => {   // exact; a power-of-two denominator is written 2ᵏ to keep the column narrow
+    let s = f.toString();
+    if (f.d > 1n && (f.d & (f.d - 1n)) === 0n) s = `${f.n}/2${String(f.d.toString(2).length - 1).replace(/\d/g, c => SUP[c])}`;
+    return s.length > max ? s.slice(0, max - 1) + '…' : s;
+};
+
+// =====================================================================
+// Panel B dashboard
+// =====================================================================
+function buildDashboard() {
+    $('#sysgrids').innerHTML = SYSTEMS.map((sys, s) => `
+        <div class="sysgrid" style="border-color: var(${sys.css})">
+            <h3><span style="color: var(${sys.css})">System ${sys.id} · ${sys.name}</span><span class="mono" style="color:var(--muted);font-weight:400">${fmt(sys.rIn, 2)}–${fmt(sys.rOut, 2)} pc</span></h3>
+            <table><thead><tr><th></th><th>model</th><th>data</th></tr></thead><tbody>
+            ${CLASSES.map((cls, c) => `<tr><td class="cls">${cls}</td>${[0, 1].map(side => `<td class="cell" data-ch="${s}:${c}:${side}" id="cell-${s}-${c}-${side}">–</td>`).join('')}</tr>`).join('')}
+            </tbody></table>
+            <div class="tier-line" id="tier-${s}"></div>
+        </div>`).join('');
+    document.querySelectorAll('td.cell').forEach(td => {
+        td.addEventListener('pointerenter', () => { state.hoverChannel = td.dataset.ch; applyChannelHighlight(); });
+        td.addEventListener('pointerleave', () => { state.hoverChannel = null; applyChannelHighlight(); });
+    });
+    $('#sight').innerHTML = DISPLAY_ORDER.map(i => `<option value="${i}">${PULSARS[i].name} · ${fmtPc(PULSARS[i].r)} · System ${SYSTEMS[PULSARS[i].sys].id}</option>`).join('');
+    $('#sight').value = String(state.sight);
+}
+const fmtPc = r => (r < 1 ? r.toFixed(2) : r.toFixed(2)) + ' pc';
+const resHist = [[], [], []];
+let lastB = null, lastFrames = null, lastCh = null, lastEpochLogged = -1, lastSB = 0;
+function updateLayerB(force) {
+    const now = performance.now();
+    if (!force && now - lastSB < 100) return;
+    lastSB = now;
+    const ck = clockOf(sim.t), tObs = tObsOf(sim.t);
+    const ch = computeChannels(state.sight, tObs, ck.epoch);
+    const B = layerB(ch), Fr = frameClosure(state.sight, ck.epoch);
+    lastB = B; lastFrames = Fr; lastCh = ch;
+    // grids
+    for (let s = 0; s < 3; s++) for (let c = 0; c < 3; c++) {
+        $(`#cell-${s}-${c}-0`).textContent = fmt(ch.model[s][c]);
+        $(`#cell-${s}-${c}-1`).textContent = fmt(ch.data[s][c]);
+    }
+    // G1
+    const stLbl = { pass: 'PASS 0', tol: 'TOL', fail: 'FAIL' };
+    $('#g1-rows').innerHTML = B.map((b, c) => `<tr>
+        <td>${CLASSES[c]} <span style="color:var(--faint)">${UNITS[c]}</span></td>
+        <td>${fmt(b.Y.toNumber(), 6)}</td>${b.Ys.map(y => `<td>${fmt(y.toNumber(), 5)}</td>`).join('')}
+        <td title="${b.YR.toString()}">${fmtFrac(b.YR)}</td>
+        <td><span class="st ${b.identity ? 'st-pass' : 'st-fail'}">${b.identity ? 'PASS' : 'FAIL'}</span></td>
+        <td><span class="st ${b.recovered ? 'st-pass' : 'st-fail'}">${b.recovered ? 'Y_II ✓' : 'FAIL'}</span></td>
+        <td><span class="st st-${b.status}" title="tolerance 3σ·√3 = ${fmt(b.tol)} ${UNITS[c]}">${stLbl[b.status]}</span></td></tr>`).join('');
+    B.forEach((b, c) => { resHist[c].push(b.YR.isZero() ? 0 : Math.abs(b.YR.toNumber()) / (SIGMA[c])); if (resHist[c].length > 240) resHist[c].shift(); });
+    drawSpark();
+    // G2
+    const legNames = ['ICRS → Galactic', 'Galactic → Sgr A* rest frame', 'Sgr A* → pulsar frame', 'pulsar → observer (timing astrometry)'];
+    $('#g2-legs').innerHTML = Fr.legs.map((q, i) => `<tr><td>H${i + 1}${state.error && state.error.leg === i ? ' <span class="st st-fail">ε</span>' : ''}</td><td style="text-align:left">${legNames[i]}</td><td>${fmtAngle(legAngle(q))}</td><td>${qbits(q)}</td></tr>`).join('');
+    const openLbl = { pass: 'PASS (exact identity)', tol: 'within tolerance', fail: 'FAIL' };
+    $('#g2-out').innerHTML = `
+        <div><span>open convention</span><br><span class="st st-${Fr.openStatus}">${openLbl[Fr.openStatus]}</span></div>
+        <div><span>|log(H1H2H3H4)|</span><br>${Fr.openExact ? '0 (exact)' : fmtAngle(Fr.openAngle)}</div>
+        <div><span>tolerance (5σ legs)</span><br>${Fr.tol ? fmtAngle(Fr.tol) : '0'}</div>
+        <div><span>cyclic convention</span><br><span class="st st-pass">${Fr.cycExact ? 'trivially PASS' : 'FAIL'}</span> <span style="color:var(--muted)">tests nothing</span></div>`;
+    $('#inv-out').innerHTML = `
+        <div><span>Re(I)</span><br>${fmtFrac(Fr.inv.reI, 22)}</div>
+        <div><span>Re(E)</span><br>${fmtFrac(Fr.inv.reE, 22)}</div>
+        <div><span>Re(E) = Re(I)</span><br><span class="st ${Fr.inv.reEq ? 'st-pass' : 'st-fail'}">${Fr.inv.reEq ? 'PASS exact' : 'FAIL'}</span></div>
+        <div><span>A I A⁻¹ E = 1</span><br><span class="st ${Fr.inv.closes ? 'st-pass' : 'st-fail'}">${Fr.inv.closes ? 'PASS exact' : 'FAIL'}</span></div>
+        <div><span>quadrance kept by A</span><br><span class="st ${Fr.inv.quadEq ? 'st-pass' : 'st-fail'}">${Fr.inv.quadEq ? 'PASS exact' : 'FAIL'}</span></div>`;
+    // packets
+    const cycle = ck.pulseCount % 3;
+    $('#pk-rows').innerHTML = CLASSES.map((cls, c) => `<tr><td>${cls}</td>${[0, 1, 2, 3].map(s => `<td>${tile(cycle, s, 4 * c + s, s < 3 ? ch.model[s][c] : B[c].YR.toNumber())}</td>`).join('')}</tr>`).join('');
+    // per-epoch telemetry line (Layer B steps of §5.1)
+    if (ck.epoch !== lastEpochLogged) {
+        lastEpochLogged = ck.epoch;
+        const yr = tObsOf(ck.epoch).toFixed(2);
+        log(`[B1] epoch ${ck.epoch} (t = ${yr}) ${PULSARS[state.sight].name}: Y_R = ` + B.map((b, c) => `${CLASSES[c]} ${fmt(b.YR.toNumber(), 3)}`).join(', ') +
+            ` | parity identity ${B.every(b => b.identity) ? 'PASS' : 'FAIL'} | residual ${B.map(b => b.status.toUpperCase()).join('/')}`, B.some(b => b.status === 'fail') ? 'fail' : '');
+        log(`[B2] frame closure (open): ${Fr.openStatus === 'pass' ? 'PASS' : Fr.openStatus === 'tol' ? 'within tolerance' : 'FAIL'} | frame closure (cyclic): trivially PASS | [B3] Re(E) = Re(I): ${Fr.inv.reEq ? 'PASS' : 'FAIL'}`,
+            Fr.openStatus === 'fail' ? 'fail' : '');
+    }
+    return { B, Fr, ch };
+}
+const fmtAngle = a => { const mas = a / PHYS.mas; return mas >= 3.6e6 ? (a / D2R).toFixed(3) + '°' : mas >= 1 ? mas.toPrecision(4) + ' mas' : (mas * 1e3).toPrecision(3) + ' µas'; };
+function drawSpark() {
+    const cv = $('#spark'), dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+    if (!w) return;
+    cv.width = w * dpr; cv.height = h * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
+    const css = getComputedStyle(document.documentElement);
+    const cols = [css.getPropertyValue('--sys1'), css.getPropertyValue('--sys2'), css.getPropertyValue('--sys3')];
+    const y = v => h - 6 - (Math.log10(1 + v) / Math.log10(1 + 1e6)) * (h - 14);
+    ctx.strokeStyle = css.getPropertyValue('--line'); ctx.beginPath(); ctx.moveTo(0, y(3)); ctx.lineTo(w, y(3)); ctx.stroke();
+    ctx.fillStyle = css.getPropertyValue('--faint'); ctx.font = '10px ui-monospace, monospace'; ctx.fillText('|Y_R| / σ (log): 3σ line; astrometry · timing · velocity', 6, 11);
+    resHist.forEach((hist, c) => {
+        ctx.strokeStyle = cols[c].trim() || '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+        hist.forEach((v, i) => { const x = w - (hist.length - 1 - i) * (w / 240); if (i === 0) ctx.moveTo(x, y(v)); else ctx.lineTo(x, y(v)); });
+        ctx.stroke();
+    });
+}
+function updateNodePanel(ck) {
+    let tel = null;
+    try { tel = typeof THREE !== 'undefined' ? getNodeTelemetry(ck.k, ck.stage) : null; } catch (e) { tel = null; }
+    const ch = ck.k % 6, cls = CLASSES[ch % 3], side = ch % 2 ? 'data' : 'model', tier = 4 - ck.stage;
+    $('#node-out').innerHTML = `
+        <div><span>pulseCount</span><br>${ck.pulseCount}</div><div><span>stage → tier</span><br>${ck.stage} → T${tier}</div>
+        <div><span>node k</span><br>${ck.k} (F${ck.k + 1}/30)</div><div><span>channel k mod 6</span><br>${ch} = (${cls}, ${side})</div>
+        <div><span>Q1 · Q2 · Q3</span><br>${tel ? `${Math.round(tel.Q1)} · ${Math.round(tel.Q2)} · ${Math.round(tel.Q3)}` : '–'}</div>
+        <div><span>A_R</span><br>${tel ? Math.round(tel.AR).toLocaleString('en-US') : '–'}</div>
+        <div><span>qScale</span><br>${tel ? tel.qScale.toFixed(4) : '–'}</div>
+        <div><span>outerFrameN · rotor k</span><br>${ck.outerFrameN}/720 · ${ck.piCycleStepK}/8</div>`;
+    document.querySelectorAll('td.cell.active').forEach(td => td.classList.remove('active'));
+    for (let s = 0; s < 3; s++) {
+        $(`#cell-${s}-${ch % 3}-${ch % 2}`).classList.add('active');
+        $(`#tier-${s}`).textContent = `active T${tier}: r = ${fmt(tierRadius(SYSTEMS[s], tier), 3)} pc (exponent ${FRAC_STR[tier]}), W = ${TIERS_SPEC[tier].W}, f = ${TIERS_SPEC[tier].freq} Hz`;
+    }
+}
+
+// =====================================================================
+// Panel C: lensing and timing canvas
+// =====================================================================
+function drawLensing() {
+    const cv = $('#lens'), dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = cv.clientWidth; if (!W) return;
+    const narrow = W < 560;
+    const H = narrow ? 1040 : 600;
+    cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, W, H);
+    const css = getComputedStyle(document.documentElement), C = n => css.getPropertyValue(n).trim();
+    const text = C('--text'), muted = C('--muted'), faint = C('--faint'), line = C('--line-2'), gold = C('--gold');
+    const box = narrow ? [[0, 0, W, 300], [0, 300, W, 230], [0, 530, W, 260], [0, 790, W, 250]]
+                       : [[0, 0, W * 0.56, 330], [W * 0.56, 0, W * 0.44, 330], [0, 330, W * 0.5, 270], [W * 0.5, 330, W * 0.5, 270]];
+    const fit = (s, w) => { if (ctx.measureText(s).width <= w) return s; while (s.length > 1 && ctx.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
+    const title = (b, s, tg) => { ctx.fillStyle = text; ctx.font = '600 12px system-ui, sans-serif'; ctx.fillText(fit(s, b[2] - 20), b[0] + 10, b[1] + 18); if (tg) { ctx.fillStyle = faint; ctx.font = '10px ui-monospace, monospace'; ctx.fillText(fit(tg, b[2] - 20), b[0] + 10, b[1] + 31); } ctx.font = '11px ui-monospace, monospace'; };
+    ctx.font = '11px ui-monospace, monospace';
+    // 1. Einstein radii (log radius)
+    {
+        const b = box[0]; title(b, 'Einstein radii of sources behind Sgr A* (log radius)', '[COMPUTED] θ_E = √(2 r_s D_ls / (D_l D_s))');
+        const cx = b[0] + b[2] / 2, cy = b[1] + b[3] / 2 + 24, R = Math.min(b[2], b[3]) / 2 - 44;
+        const lo = Math.log10(0.5), hi = Math.log10(300);
+        const rp = th => Math.max(0, (Math.log10(Math.max(th, 0.5)) - lo) / (hi - lo)) * R;
+        ctx.strokeStyle = line; ctx.setLineDash([2, 4]);
+        [1, 10, 100].forEach(t => { ctx.beginPath(); ctx.arc(cx, cy, rp(t), 0, 2 * Math.PI); ctx.stroke(); ctx.fillStyle = faint; ctx.fillText(`${t} mas`, cx + rp(t) * 0.71 + 2, cy + rp(t) * 0.71 + 10); });
+        ctx.setLineDash([]);
+        const rings = [[0.01, 2.261], [0.1, 7.149], [1.0, 22.605], [30.0, 123.596]];
+        rings.forEach(([d, th]) => { ctx.strokeStyle = gold; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, rp(th), 0, 2 * Math.PI); ctx.stroke(); });
+        rings.forEach(([d, th]) => {
+            const lb = `${d} pc: ${th} mas`, lw = ctx.measureText(lb).width, ly = cy - rp(th);
+            ctx.fillStyle = C('--panel-2'); ctx.fillRect(cx - lw / 2 - 3, ly - 7, lw + 6, 13);
+            ctx.fillStyle = gold; ctx.textAlign = 'center'; ctx.fillText(lb, cx, ly + 4); ctx.textAlign = 'left'; });
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, 2 * Math.PI); ctx.fill();
+        ctx.fillStyle = muted; ctx.fillText('Sgr A*', cx + 6, cy - 6);
+        ctx.fillText('source at ∞: θ_E = 2.056″ (off scale)', b[0] + 10, b[1] + b[3] - 8);
+        const ev = lastCh && lastCh.ev;
+        if (ev && ev.active) {   // source track at depth 0.1 pc, images θ±, in θ_E = 7.149 mas units
+            const thE = 7.149, ang = Math.atan2(U0, ev.tau / TE_YR);
+            ctx.strokeStyle = C('--sys1'); ctx.setLineDash([3, 3]); ctx.beginPath();
+            for (let i = 0; i <= 80; i++) { const tt = -3 + 6 * i / 80, bb = Math.hypot(U0, tt) * thE, a = Math.atan2(U0, tt); const x = cx + rp(bb) * Math.cos(a), y = cy - rp(bb) * Math.sin(a); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+            ctx.stroke(); ctx.setLineDash([]);
+            const dot = (r, a, col, rad) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx + rp(r) * Math.cos(a), cy - rp(r) * Math.sin(a), rad, 0, 2 * Math.PI); ctx.fill(); };
+            dot(ev.u * thE, ang, C('--sys1'), 4);
+            dot(ev.thetaPlus * thE, ang, '#fff', 3.5);
+            dot(-ev.thetaMinus * thE, ang + Math.PI, '#fff', 2.5);
+            ctx.fillStyle = text;
+            ctx.fillText(`u = ${ev.u.toFixed(3)}   μ = ${ev.mu.toFixed(3)}   centroid Δ = ${ev.astro.toFixed(1)} µas`, b[0] + 10, b[1] + 48);
+            ctx.fillText(`ΔΔt_S = ${(ev.dShapiro * 1e3).toFixed(2)} ms   τ = ${ev.tau.toFixed(2)} yr (t_E = ${TE_YR.toFixed(2)} yr)`, b[0] + 10, b[1] + 62);
+        }
+    }
+    // 2. Scattered image vs lensing shift (linear)
+    {
+        const b = box[1]; title(b, 'Scattered image vs lensing shift', '[EMPIRICAL] 17 × 9 mas at 8.6 GHz (Bower et al. 2015)');
+        const cx = b[0] + b[2] / 2, cy = b[1] + b[3] / 2 + 10, s = Math.min(b[2] - 40, b[3] - 90) / 19;
+        ctx.fillStyle = 'rgba(148,163,184,0.18)'; ctx.strokeStyle = muted; ctx.beginPath(); ctx.ellipse(cx, cy, 8.5 * s, 4.5 * s, -0.4, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = muted; ctx.fillText('17 mas', cx + 8.5 * s * 0.92 - 10, cy - 4.5 * s * 0.4 - 26);
+        const shiftMas = 2 * PHYS.rs / PHYS.R0 / PHYS.mas, mag = 100;
+        ctx.strokeStyle = gold; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + shiftMas * s * mag, cy); ctx.stroke(); ctx.lineWidth = 1;
+        ctx.fillStyle = gold; ctx.beginPath(); ctx.arc(cx + shiftMas * s * mag, cy, 2.5, 0, 2 * Math.PI); ctx.fill();
+        ctx.fillText(`${(shiftMas * 1e3).toFixed(2)} µas shift, drawn ×${mag}`, b[0] + 10, b[1] + b[3] - 24);
+        ctx.fillStyle = text; ctx.fillText(`ratio 17 mas / ${(shiftMas * 1e3).toFixed(1)} µas ≈ 1/${Math.round(17 / shiftMas)}`, b[0] + 10, b[1] + b[3] - 9);
+    }
+    // 3. Magnetar timing budget (log bars)
+    {
+        const b = box[2]; title(b, 'Magnetar J1745−2900 timing budget', '[COMPUTED] script §D: Doppler / Shapiro-rate = 1.3 × 10⁵');
+        const vc = 236e3 / PHYS.c, a_c = PHYS.GM / (0.097 * PHYS.pc) ** 2 / PHYS.c;
+        const Porb = 2 * Math.PI * Math.sqrt((0.097 * PHYS.pc) ** 3 / PHYS.GM), sr = PHYS.tS * 2 * Math.PI / Porb;
+        const ev = lastCh && lastCh.ev;
+        const bars = [['Doppler v/c', vc, C('--sys2')], ['acceleration a/c × 1 yr', a_c * PHYS.yr, C('--sys3')], ['Shapiro-rate bound', sr, gold]];
+        if (ev && ev.active) bars.push(['event Shapiro curvature × 1 yr', Math.abs(ev.timing) * 1e-18 * PHYS.yr, C('--sys1')]);
+        const lo = -14, hi = -2, x0 = b[0] + 18 + Math.max(...bars.map(r => ctx.measureText(r[0]).width)), x1 = b[0] + b[2] - 20, xp = v => x0 + (Math.log10(v) - lo) / (hi - lo) * (x1 - x0);
+        ctx.strokeStyle = line; ctx.fillStyle = faint;
+        const tstep = (x1 - x0) / (hi - lo) * 2 >= 44 ? 2 : 4;
+        for (let e = lo; e <= hi; e += tstep) { const x = xp(10 ** e); ctx.beginPath(); ctx.moveTo(x, b[1] + 44); ctx.lineTo(x, b[1] + b[3] - 34); ctx.stroke(); ctx.fillText(`1e${e}`, x - 12, b[1] + b[3] - 20); }
+        bars.forEach(([lbl, v, col], i) => {
+            const y = b[1] + 52 + i * 40;
+            ctx.fillStyle = col; ctx.fillRect(x0, y, Math.max(2, xp(v) - x0), 16);
+            ctx.fillStyle = text; ctx.fillText(lbl, b[0] + 10, y + 12); ctx.fillText(fE(v, 1), Math.min(xp(v) + 4, x1 - 40), y + 12);
+        });
+        ctx.fillStyle = gold; ctx.fillText(`Doppler / Shapiro-rate = ${fE(vc / sr, 1)}`, b[0] + 10, b[1] + b[3] - 6);
+    }
+    // 4. Astrometric shift per pulsar
+    {
+        const b = box[3]; title(b, 'Weak-lensing shift θ_E²/θ ≈ 2 r_s/(R₀ + D_ls)', '[COMPUTED] script §E, depth = projected offset');
+        const x0 = b[0] + 92, x1 = b[0] + b[2] - 60, maxV = 22, xp = v => x0 + v / maxV * (x1 - x0);
+        DISPLAY_ORDER.forEach((pi, i) => {
+            const p = PULSARS[pi], v = weakShiftUas(PHYS.M_BH, p.theta, PHYS.R0 * p.theta / PHYS.pc), y = b[1] + 44 + i * 30;
+            ctx.fillStyle = pi === state.sight ? gold : C(SYSTEMS[p.sys].css);
+            ctx.fillRect(x0, y, xp(v) - x0, 14);
+            ctx.fillStyle = text; ctx.fillText(p.name, b[0] + 10, y + 11); ctx.fillText(v.toFixed(3), xp(v) + 4, y + 11);
+        });
+        ctx.fillStyle = faint; ctx.fillText(`2 r_s / R0 = ${(2 * PHYS.rs / PHYS.R0 / PHYS.mas * 1e3).toFixed(2)} µas`, b[0] + 10, b[1] + b[3] - 8);
+    }
+    ctx.strokeStyle = line; box.forEach(b => ctx.strokeRect(b[0] + 0.5, b[1] + 0.5, b[2] - 1, b[3] - 1));
+}
+
+// =====================================================================
+// Panel A: Three.js scene
+// =====================================================================
+let three = null;
+const dispR = r => state.logScale ? 6 + 20 * (Math.log10(Math.max(r, 1e-12)) - Math.log10(PHYS.rs / PHYS.pc)) : r / 1e5 * 234;
+const SUN_PC = PHYS.R0_pc;
+function mapPoint(v) {     // physical position (pc, observer along +X) -> display position
+    const r = Math.hypot(v[0], v[1], v[2]); if (r === 0) return new THREE.Vector3();
+    const d = Math.max(0, dispR(r)) / r; return new THREE.Vector3(v[0] * d, v[1] * d, v[2] * d);
+}
+function pulsarPhysPos(pi, ev) {
+    const p = PULSARS[pi];
+    if (pi === MAGNETAR && ev && ev.active) {   // lensing event: behind Sgr A* at depth 0.1 pc, sweeping past at impact u0
+        const thE = THE_MAG * PHYS.R0 / PHYS.pc;  // Einstein radius projected at the source distance (pc)
+        const ty = ev.tau / TE_YR * thE, tz = U0 * thE;
+        return [-DLS_MAG, ty * Math.cos(p.pa) - tz * Math.sin(p.pa), ty * Math.sin(p.pa) + tz * Math.cos(p.pa)];
+    }
+    return [0, p.r * Math.cos(p.pa), p.r * Math.sin(p.pa)];
+}
+function glowTexture(inner, outer) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, inner); gr.addColorStop(0.25, inner); gr.addColorStop(1, outer);
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+}
+function initThree() {
+    const host = $('#space'), msg = $('#space-msg');
+    if (typeof THREE === 'undefined') { msg.textContent = 'Three.js r158 could not be loaded from cdnjs or jsdelivr. Panels B and C and the verification still run.'; return; }
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { msg.textContent = 'WebGL is not available in this browser.'; return; }
+    msg.remove();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    host.insertBefore(renderer.domElement, host.firstChild);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 20000);
+    const orbit = { theta: 0.8, phi: 1.05, radius: 880 };
+    three = { renderer, scene, camera, orbit, systems: [], pulsars: [], rays: [], nodes: [], root: new THREE.Group() };
+    scene.add(three.root);
+    // star field
+    const sp = new Float32Array(1800 * 3), rnd = mulberry32(20261026);
+    for (let i = 0; i < 1800; i++) { const u = rnd() * 2 - 1, a = rnd() * 2 * Math.PI, s = Math.sqrt(1 - u * u); sp.set([3000 * s * Math.cos(a), 3000 * u, 3000 * s * Math.sin(a)], i * 3); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xb8c0e0, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0.7 })));
+    // Sgr A*
+    three.sgr = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,236,200,1)', 'rgba(255,120,40,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
+    three.sgr.scale.set(26, 26, 1); scene.add(three.sgr);
+    three.sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,248,200,1)', 'rgba(255,220,80,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
+    three.sun.scale.set(10, 10, 1); scene.add(three.sun);
+    // emergent fourth
+    three.fourth = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffe6a3, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    three.fourthWire = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 3), new THREE.MeshBasicMaterial({ color: 0xffd27a, wireframe: true, transparent: true, opacity: 0, depthWrite: false }));
+    scene.add(three.fourth, three.fourthWire);
+    // pulsars
+    PULSARS.forEach((p, pi) => {
+        const mag = pi === MAGNETAR;
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(mag ? 'rgba(255,90,70,1)' : 'rgba(210,240,255,1)', mag ? 'rgba(255,40,40,0)' : 'rgba(120,200,255,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
+        s.userData = { pi }; scene.add(s); three.pulsars.push(s);
+        const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(160 * 3), 3)); rg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(160 * 3), 3));
+        const ray = new THREE.Line(rg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.75 }));
+        scene.add(ray); three.rays.push(ray);
+    });
+    // active-node markers (one per system)
+    SYSTEMS.forEach((sys, s) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), new THREE.MeshBasicMaterial({ color: 0xf5c542, transparent: true, opacity: 0.9 })); scene.add(m); three.nodes.push(m); });
+    buildSystems();
+    wireOrbit(renderer.domElement);
+    new ResizeObserver(resize3D).observe(host);
+    resize3D();
+}
+function disposeObj(o) { o.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material) x.material.dispose(); }); }
+function buildSystems() {
+    if (!three) return;
+    three.systems.forEach(sg => { three.root.remove(sg.group); disposeObj(sg.group); });
+    three.systems = [];
+    SYSTEMS.forEach((sys, s) => {
+        const group = new THREE.Group(); group.rotation.y = sys.yaw * D2R;
+        const tiers = [];
+        for (let n = 0; n < 5; n++) {
+            const D = Math.max(0.02, dispR(tierRadius(sys, n))), tube = Math.max(0.004, D * 0.006 * (2 * n + 4));
+            const tg = new THREE.Group();
+            const torus = new THREE.Mesh(new THREE.TorusGeometry(D, tube, 12, 180), new THREE.MeshBasicMaterial({ color: sys.colors[0], transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending }));
+            tg.add(torus);
+            const hg = new THREE.Group(); tg.add(hg);
+            const helices = [];
+            for (let k = 0; k < 6; k++) {          // channel k -> (class k mod 3, side k mod 2): phase and chirality
+                const cls = k % 3, side = k % 2, chiral = side === 0 ? 1 : -1, phase = cls * 2 * Math.PI / 3, W = TIERS_SPEC[n].W;
+                const N = Math.max(240, W * 30), pts = [];
+                for (let i = 0; i <= N; i++) {
+                    const th = i / N * 2 * Math.PI, ph = W * th * chiral + phase, rr = tube * 1.12;
+                    pts.push(new THREE.Vector3((D + rr * Math.cos(ph)) * Math.cos(th), (D + rr * Math.cos(ph)) * Math.sin(th), rr * Math.sin(ph)));
+                }
+                const geo = new THREE.BufferGeometry().setFromPoints(pts);
+                const mat = side === 0 ? new THREE.LineBasicMaterial({ color: sys.colors[cls], transparent: true, opacity: 0.55 })
+                                       : new THREE.LineDashedMaterial({ color: sys.colors[cls], transparent: true, opacity: 0.55, dashSize: Math.max(0.02, D * 0.05), gapSize: Math.max(0.015, D * 0.035) });
+                const ln = new THREE.Line(geo, mat); if (side === 1) ln.computeLineDistances();
+                ln.userData = { ch: `${s}:${cls}:${side}` }; hg.add(ln); helices.push(ln);
+            }
+            group.add(tg); tiers.push({ tg, hg, D, tube, helices, torus });
+        }
+        three.root.add(group);
+        three.systems.push({ group, tiers });
+    });
+    const R4 = dispR(1e5) * 1.07; three.fourth.scale.setScalar(R4); three.fourthWire.scale.setScalar(R4 * 1.004);
+    three.sun.position.copy(mapPoint([SUN_PC, 0, 0]));
+    applyTierOrientation();
+    applyChannelHighlight();
+    applySolo();
+    $('#scale-note').textContent = state.logScale
+        ? 'log radii: display = 6 + 20·log10(r / r_s); System I spans 6.7 decades, II 2, III 2.7'
+        : 'linear radii: 100 kpc = 234 units; Systems I and II collapse into the centre (zoom in)';
+}
+function applyTierOrientation() {
+    if (!three) return;
+    currentClutchState.eta = state.eta;
+    three.systems.forEach(sg => sg.tiers.forEach((t, n) => t.tg.quaternion.copy(getTierOrientationQuat(n))));
+}
+function applyChannelHighlight() {
+    if (!three) return;
+    const hc = state.hoverChannel;
+    three.systems.forEach(sg => sg.tiers.forEach(t => t.helices.forEach(h => { h.material.opacity = hc ? (h.userData.ch === hc ? 1 : 0.07) : 0.55; })));
+    document.querySelectorAll('td.cell').forEach(td => td.classList.toggle('hl', td.dataset.ch === hc));
+}
+function applySolo() {
+    if (!three) return;
+    three.systems.forEach((sg, s) => { sg.group.visible = state.solo === null || state.solo === s; });
+    three.fourth.visible = three.fourthWire.visible = state.solo === null || state.solo === 3;
+    document.querySelectorAll('.sys-labels button').forEach((b, i) => b.classList.toggle('dim', state.solo !== null && state.solo !== i));
+}
+function resize3D() {
+    if (!three) return;
+    const host = $('#space'), w = host.clientWidth, h = host.clientHeight;
+    if (!w || !h) return;
+    three.renderer.setSize(w, h); three.camera.aspect = w / h; three.camera.updateProjectionMatrix();
+}
+function wireOrbit(el) {
+    const o = three.orbit, pts = new Map(); let pinch = 0, moved = false;
+    el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = false; });
+    el.addEventListener('pointermove', e => {
+        if (!pts.has(e.pointerId)) { hoverPulsar(e); return; }
+        const [px, py] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+        if (pts.size === 1) { o.theta -= (e.clientX - px) * 0.006; o.phi = Math.min(Math.PI - 0.05, Math.max(0.05, o.phi - (e.clientY - py) * 0.006)); moved = true; }
+        else if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) o.radius = Math.min(4000, Math.max(0.3, o.radius * pinch / d)); pinch = d; }
+    });
+    const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = 0; };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', e => { e.preventDefault(); o.radius = Math.min(4000, Math.max(0.3, o.radius * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
+}
+let raycaster = null;
+function hoverPulsar(e) {
+    const hv = $('#hover'); if (!three) return;
+    const r = three.renderer.domElement.getBoundingClientRect();
+    const m = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    if (!raycaster) raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(m, three.camera);
+    const hit = raycaster.intersectObjects(three.pulsars.filter(s => s.visible))[0];
+    if (!hit) { hv.style.display = 'none'; return; }
+    const p = PULSARS[hit.object.userData.pi];
+    hv.innerHTML = `${p.name}${p.rem ? ' · ' + p.rem : ''}<br>P = ${p.P} s · DM = ${p.DM} pc cm⁻³<br>offset ${p.off}′ → ${p.r.toFixed(2)} pc · System ${SYSTEMS[p.sys].id}<br>τ_sc ${p.tau}`;
+    hv.style.display = 'block'; hv.style.left = Math.min(r.width - 230, e.clientX - r.left + 12) + 'px'; hv.style.top = (e.clientY - r.top + 12) + 'px';
+}
+const sysColorOf = r => (r <= 2 ? new THREE.Color(0xff7a3d) : r <= 200 ? new THREE.Color(0x2dd4bf) : new THREE.Color(0x8b5cf6));
+function updateScene(alpha, wallT) {
+    if (!three) return;
+    const t = sim.prevT + (sim.t - sim.prevT) * alpha;
+    const ck = clockOf(t), tObs = tObsOf(t), ev = (state.signal === 'lensing' || state.signal === 'shapiro') ? eventGeom(tObs) : null;
+    // tier windings (interpolated)
+    three.systems.forEach((sg, s) => sg.tiers.forEach((tr, n) => { tr.hg.rotation.z = sim.prevPhase[s][n] + (sim.phase[s][n] - sim.prevPhase[s][n]) * alpha; }));
+    // active node per system: θ_k on the active tier, on its channel helix (k mod 3, k mod 2)
+    const tier = 4 - ck.stage, theta = ck.k / 30 * 2 * Math.PI, chiral = ck.k % 2 === 0 ? 1 : -1, phase = (ck.k % 3) * 2 * Math.PI / 3;
+    three.systems.forEach((sg, s) => {
+        const tr = sg.tiers[tier], ph = TIERS_SPEC[tier].W * theta * chiral + phase, rr = tr.tube * 1.12;
+        const local = new THREE.Vector3((tr.D + rr * Math.cos(ph)) * Math.cos(theta), (tr.D + rr * Math.cos(ph)) * Math.sin(theta), rr * Math.sin(ph));
+        sg.group.updateMatrixWorld(true);
+        three.nodes[s].position.copy(local.applyMatrix4(tr.tg.matrixWorld));
+        three.nodes[s].scale.setScalar(Math.max(0.04, tr.D * 0.011));
+        three.nodes[s].visible = sg.group.visible;
+    });
+    // pulsars, pulsing at their (scaled) spin periods
+    PULSARS.forEach((p, pi) => {
+        const pos = mapPoint(pulsarPhysPos(pi, ev));
+        const spr = three.pulsars[pi]; spr.position.copy(pos);
+        const P = pi === MAGNETAR ? p.P * (1 + 0.04 * Math.sin(wallT * 0.31) + 0.02 * Math.sin(wallT * 1.7)) : p.P;  // magnetar: unstable spin
+        const ph = (wallT / P) % 1, pulse = Math.exp(-((ph - 0.5) ** 2) / 0.008);
+        const base = state.logScale ? 7 : 3.5;
+        spr.scale.setScalar(base * (0.7 + 0.9 * pulse));
+        spr.material.opacity = 0.55 + 0.45 * pulse;
+        spr.visible = state.solo === null || state.solo === p.sys;
+        const ray = three.rays[pi]; ray.visible = state.showRays && spr.visible;
+        if (ray.visible) {
+            const a = ray.geometry.attributes.position.array, cc = ray.geometry.attributes.color.array, src = pulsarPhysPos(pi, ev);
+            for (let i = 0; i < 160; i++) {
+                const f = i / 159, v = [src[0] + (SUN_PC - src[0]) * f, src[1] * (1 - f), src[2] * (1 - f)], q = mapPoint(v), col = sysColorOf(Math.hypot(...v));
+                a[i * 3] = q.x; a[i * 3 + 1] = q.y; a[i * 3 + 2] = q.z; cc[i * 3] = col.r; cc[i * 3 + 1] = col.g; cc[i * 3 + 2] = col.b;
+            }
+            ray.geometry.attributes.position.needsUpdate = true; ray.geometry.attributes.color.needsUpdate = true; ray.geometry.computeBoundingSphere();
+        }
+    });
+    // emergent fourth: visible only while a residual is nonzero, pulsing with its size
+    let level = 0;
+    if (lastB) lastB.forEach((b, c) => { if (!b.YR.isZero()) level = Math.max(level, b.status === 'fail' ? 1 : 0.35); });
+    if (lastFrames && !lastFrames.openExact) level = Math.max(level, lastFrames.openStatus === 'fail' ? 1 : 0.35);
+    const shimmer = 0.5 + 0.5 * Math.sin(wallT * (level >= 1 ? 5 : 2));
+    three.fourth.material.opacity = level ? (0.025 + 0.06 * level * shimmer) : 0;
+    three.fourthWire.material.opacity = level ? (0.05 + 0.18 * level * shimmer) : 0;
+    three.fourthWire.rotation.y = wallT * 0.05;
+    // camera
+    const o = three.orbit;
+    three.camera.position.setFromSphericalCoords(o.radius, o.phi, o.theta);
+    three.camera.lookAt(0, 0, 0);
+    three.renderer.render(three.scene, three.camera);
+}
+
+// =====================================================================
+// Controls
+// =====================================================================
+function wireControls() {
+    const playBtn = $('#btn-play');
+    playBtn.onclick = () => { state.playing = !state.playing; playBtn.textContent = state.playing ? 'Pause' : 'Play'; };
+    const sp = $('#speed'); sp.oninput = () => { state.speed = 10 ** parseFloat(sp.value); $('#speed-v').textContent = state.speed.toFixed(state.speed < 1 ? 2 : 1) + '×'; };
+    const toggle = (id, key, after) => { const b = $(id); b.onclick = () => { state[key] = !state[key]; b.classList.toggle('on', state[key]); if (after) after(); }; };
+    toggle('#btn-log', 'logScale', () => { buildSystems(); three && (three.orbit.radius = state.logScale ? 880 : 620); });
+    toggle('#btn-rays', 'showRays');
+    const eta = $('#eta'); eta.oninput = () => { state.eta = parseFloat(eta.value); $('#eta-v').textContent = state.eta.toFixed(2); applyTierOrientation(); };
+    const noise = $('#noise'); noise.oninput = () => { state.noise = parseFloat(noise.value); $('#noise-v').textContent = state.noise + 'σ'; updateLayerB(true); };
+    const sig = $('#signal');
+    sig.onchange = () => {
+        state.signal = sig.value;
+        state.event = null;
+        if (state.signal === 'lensing' || state.signal === 'shapiro') {
+            state.sight = MAGNETAR; $('#sight').value = String(MAGNETAR);
+            state.event = { t0: tObsOf(sim.t) + 3 * TE_YR };
+            log(`[E] ${state.signal === 'lensing' ? 'lensing' : 'Shapiro'} event injected: J1745-2900 at 0.1 pc depth crosses behind Sgr A* at u0 = ${U0}, t_E = ${TE_YR.toFixed(2)} yr (236 km/s); closest approach at t = ${state.event.t0.toFixed(2)}`, 'hd');
+        } else if (state.signal === 'scalar') {
+            log(`[7.1] scalar-field test injected: Yukawa Φ → Φ(1 + α e^(−r/λ)) with α = ${YUKAWA.alpha}, λ = ${YUKAWA.lambda} pc in Systems I and II [CONJECTURAL]; the model side stays pure GR`, 'hd');
+        } else log('[E] injected signal removed');
+        updateLayerB(true);
+    };
+    const errBtn = $('#btn-error');
+    errBtn.onclick = () => {
+        if (state.error) { state.error = null; errBtn.textContent = 'Inject error'; errBtn.classList.remove('on'); log('[H2] frame error cleared'); updateLayerB(true); return; }
+        const r = mulberry32((Date.now() & 0x7fffffff) | 1), leg = Math.floor(r() * 4);
+        const u = [0, 1, 2].map(() => Fraction.fromFloat((r() - 0.5) * 0.1, 12));
+        state.error = { leg, eps: cayleyMap(u[0], u[1], u[2]) };
+        errBtn.textContent = 'Clear error'; errBtn.classList.add('on');
+        const Fr = updateLayerB(true).Fr;
+        log(`[H2] inject error: leg H${leg + 1} perturbed by ε (${fmtAngle(legAngle(state.error.eps))}) -> open convention ${Fr.openStatus === 'fail' ? 'FAIL (detected)' : Fr.openStatus.toUpperCase()} | cyclic convention trivially PASS (tests nothing, Lemma 12)`, 'fail');
+    };
+    const setEpoch = e => { state.playing = false; playBtn.textContent = 'Play'; sim.t = sim.prevT = Math.max(0, e) + 1e-6; updateLayerB(true); };
+    $('#ep-back').onclick = () => setEpoch(clockOf(sim.t).epoch - 1);
+    $('#ep-fwd').onclick = () => setEpoch(clockOf(sim.t).epoch + 1);
+    $('#sight').onchange = e => { state.sight = parseInt(e.target.value, 10); updateLayerB(true); };
+    $('#btn-verify').onclick = runVerificationUI;
+    $('#btn-clear').onclick = () => { logEl.innerHTML = ''; };
+    const themeBtn = $('#btn-theme');
+    const setTheme = t => { document.documentElement.dataset.theme = t; themeBtn.textContent = t === 'dark' ? 'Light' : 'Dark'; try { localStorage.setItem('glh-theme', t); } catch (e) { /* storage unavailable */ } drawLensing(); drawSpark(); };
+    let stored = null; try { stored = localStorage.getItem('glh-theme'); } catch (e) { stored = null; }
+    setTheme(stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+    themeBtn.onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    $('#sys-labels').innerHTML = SYSTEMS.map((s, i) => `<button type="button" data-solo="${i}"><span class="dot" style="background:var(${s.css})"></span>System ${s.id} · ${s.name}</button>`).join('') +
+        `<button type="button" data-solo="3"><span class="dot" style="background:var(--fourth)"></span>R · emergent fourth</button>`;
+    document.querySelectorAll('.sys-labels button').forEach(b => b.onclick = () => { const i = parseInt(b.dataset.solo, 10); state.solo = state.solo === i ? null : i; applySolo(); });
+    window.addEventListener('resize', () => { drawLensing(); drawSpark(); });
+}
+
+// =====================================================================
+// Run Verification (line-by-line port of verify_galactic_hierarchy.py)
+// =====================================================================
+const REFERENCE_OUTPUT = ["[A] M_BH = 4.297e+06 Msun, R0 = 8275 pc, GM = 5.7027e+26 m^3/s^2", "[B] Schwarzschild radius r_s = 1.2690e+10 m = 0.0848 AU; angular size at R0 = 10.25 uas", "[B] Einstein radius, source at infinity: 2.056 arcsec", "[B] source  0.01 pc behind Sgr A*: theta_E =    2.261 mas, R_E (at lens) =    18.7 AU", "[B] source   0.1 pc behind Sgr A*: theta_E =    7.149 mas, R_E (at lens) =    59.2 AU", "[B] source   1.0 pc behind Sgr A*: theta_E =   22.605 mas, R_E (at lens) =   187.1 AU", "[B] source  30.0 pc behind Sgr A*: theta_E =  123.596 mas, R_E (at lens) =  1022.8 AU", "[B] Shapiro scale 2GM/c^3 = 42.33 s", "[B] sphere of influence GM/sigma^2 (sigma = 100 km/s) = 1.85 pc", "[B] nuclear star cluster mass / M_BH = 5.8 (NSC 2.5e7 Msun within ~4.2 pc half-light radius)", "[B] weak-field parameter GM/(c^2 r) at 0.097 pc = 2.12e-06 (second-order terms ~ eps^2 = 4.5e-12, a fraction ~eps of the first-order terms)", "[B] weak-field parameter GM/(c^2 r) at 1.0 pc = 2.06e-07 (second-order terms ~ eps^2 = 4.2e-14, a fraction ~eps of the first-order terms)", "[B] weak-field parameter GM/(c^2 r) at 30.0 pc = 6.85e-09 (second-order terms ~ eps^2 = 4.7e-17, a fraction ~eps of the first-order terms)", "[B] Sgr A* field is weak (GM/c^2 r < 1e-5) at every known pulsar: superposition holds -> PASS", "[B] strong-field region: a few r_s ~ 0.25 AU, where superposition fails (System I inner tiers only)", "[C] J1746-2849: P= 1.48 s DM= 1360 offset 12.30' -> projected  29.61 pc; Keplerian period about Sgr A* alone at that radius 7.28e+06 yr ", "[C] J1746-2850: P= 1.08 s DM=  941 offset 11.30' -> projected  27.20 pc; Keplerian period about Sgr A* alone at that radius 6.41e+06 yr magnetar-like", "[C] J1746-2856: P= 0.95 s DM= 1155 offset 15.60' -> projected  37.55 pc; Keplerian period about Sgr A* alone at that radius 1.04e+07 yr ", "[C] J1745-2900: P= 3.76 s DM= 1778 offset  0.04' -> projected   0.10 pc; Keplerian period about Sgr A* alone at that radius 1.35e+03 yr magnetar", "[C] J1745-2912: P= 0.19 s DM= 1106 offset 14.50' -> projected  34.90 pc; Keplerian period about Sgr A* alone at that radius 9.32e+06 yr ", "[C] J1745-2910: P= 0.98 s DM= 1088 offset 12.90' -> projected  31.05 pc; Keplerian period about Sgr A* alone at that radius 7.82e+06 yr position poorly known", "[C] J1746-2829: P= 1.89 s DM= 1309 offset 31.80' -> projected  76.55 pc; Keplerian period about Sgr A* alone at that radius 3.03e+07 yr magnetar-like", "[C] seven known pulsars within 100 pc projected -> PASS", "[C] all seven within 100 pc projected at R0 = 8275 pc -> PASS", "[C] pulsars outside Sgr A*'s sphere of influence (~1.8 pc): 6 of 7 -> ['J1746-2849', 'J1746-2850', 'J1746-2856', 'J1745-2912', 'J1745-2910', 'J1746-2829']", "[D] magnetar transverse velocity: v/c = 7.872e-04 (Doppler scale on P)", "[D] max line-of-sight acceleration a/c at r >= 0.097 pc: 2.123e-13 s^-1 (upper bound: true r >= projected)", "[D] Keplerian period at 0.097 pc: 1365 yr; Shapiro-delay rate bound ~ 6.17e-09 (s/s)", "[D] ratio Doppler / Shapiro-rate = 1.3e+05", "[D] Shapiro-rate term is >1e4 below the Doppler term for the magnetar -> PASS", "[E] astrometric shift theta_E^2/theta if each pulsar sat behind Sgr A* at a depth equal to its projected offset:", "[E]   J1746-2849: depth  29.61 pc, shift    20.429 uas", "[E]   J1746-2850: depth  27.20 pc, shift    20.435 uas", "[E]   J1746-2856: depth  37.55 pc, shift    20.410 uas", "[E]   J1745-2900: depth   0.10 pc, shift    20.502 uas", "[E]   J1745-2912: depth  34.90 pc, shift    20.416 uas", "[E]   J1745-2910: depth  31.05 pc, shift    20.426 uas", "[E]   J1746-2829: depth  76.55 pc, shift    20.314 uas", "[E]   all shifts are close to 2 r_s / R0 = 20.50 uas: with depth = R0*theta, theta_E^2/theta = 2 r_s/(R0 + depth)", "[E] the astrometric shift is ~2 r_s/R0 ~ 20 uas, independent of offset when depth equals the projected offset -> PASS", "[E] magnetar-depth source (0.1 pc): R_E = 59.2 AU, instantaneous alignment probability ~ (R_E/r)^2 = 8.2e-06, Einstein-crossing time at 236 km/s = 1.19 yr", "[E] strong lensing of a 0.1 pc pulsar by Sgr A* is rare (< 1e-4 at any instant) -> PASS", "[F] 2GM/c^3 for 1e+10 Msun = 1.14 days (a constant offset, absorbed by the timing fit)", "[F] 2GM/c^3 for 1e+11 Msun = 11.40 days (a constant offset, absorbed by the timing fit)", "[F] Gaia EDR3 solar-system acceleration 2.32e-10 m/s^2 -> aberration drift 5.04 uas/yr (published 5.05 +- 0.35 uas/yr)", "[F] acceleration reproduces the published 5.05 uas/yr drift -> PASS", "[F] same acceleration as a pulsar period-derivative term a/c = 7.74e-19 s^-1", "[G] Sgr A* apparent motion -> (Theta0 + V_sun) = 251.5 km/s, W_sun = 8.59 km/s at R0 = 8275 pc", "[G] with V_sun = 12.24 km/s (Schoenrich et al. 2010): Theta0 = 239.2 km/s", "[G] Reid & Brunthaler 2020 report the residual (intrinsic Sgr A* motion): -0.58 +- 2.23 km/s (rotation), -0.85 +- 0.75 km/s (toward NGP): closure consistent with zero", "[G] R0 systematic (33 pc) alone moves (Theta0+V_sun) by 1.00 km/s", "[H1] 2000 exact cases: any one of {I, II, III, residual} is recovered from the measured total and the other three -> PASS", "[H1] two unknown components with one total: 50 distinct consistent pairs (not recoverable) -> PASS", "[H2] 500 exact cases: four independently measured frame legs close, H1H2H3H4 = 1 -> PASS", "[H2] 500 exact cases: an error in any one measured leg breaks closure (open convention detects it) -> PASS", "[H2] 500 exact cases: if the fourth leg is computed from the other three, closure holds even with the error (vacuous) -> PASS", "[H3] k -> (k mod 3, k mod 2) is a bijection Z/6 -> C3 x C2: {0: ('astrometry', 'model'), 1: ('timing', 'data'), 2: ('velocity', 'model'), 3: ('astrometry', 'data'), 4: ('timing', 'model'), 5: ('velocity', 'data')} -> PASS", "[H4] System I: tiers at r = 4.11e-07, 3.71e-06, 0.000101, 0.00818, 2 pc (monotone, exact ends) -> PASS", "[H4] System II: tiers at r = 2, 3.86, 10.4, 38.6, 200 pc (monotone, exact ends) -> PASS", "[H4] System III: tiers at r = 200, 486, 1.84e+03, 1.09e+04, 1e+05 pc (monotone, exact ends) -> PASS", "[H4] fractions (R_n - R_0)/(R_4 - R_0) = ['0', '1/7', '5/14', '9/14', '1']", "[H5] 500 exact cases: frame change E = A I^-1 A^-1 closes A I A^-1 E = 1 and keeps Re(E) = Re(I) -> PASS", "[H6] 7 is coprime to 6, 30 and 60: no equal partition of the seven pulsars over the engine's channels -> PASS", "[H6] placement by radius: 1 pulsar in System I (< 2 pc), 6 in System II (2-200 pc), 0 in System III -> PASS", "", "All checks passed."];
+function runVerificationUI() {
+    log('──── Run Verification: verify_galactic_hierarchy.py, ported line by line ────', 'hd');
+    const t0 = performance.now(), lines = runVerification(), ms = performance.now() - t0;
+    lines.forEach(l => log(l, / -> PASS$|All checks passed/.test(l) ? 'pass' : / -> FAIL$|FAILED/.test(l) ? 'fail' : ''));
+    let same = 0; const n = Math.max(lines.length, REFERENCE_OUTPUT.length);
+    for (let i = 0; i < n; i++) if (lines[i] === REFERENCE_OUTPUT[i]) same++;
+    const passes = lines.filter(l => / -> PASS$/.test(l)).length, fails = lines.filter(l => / -> FAIL$/.test(l)).length;
+    const h1 = lines.filter(l => l.startsWith('[H1]')), h2 = lines.filter(l => l.startsWith('[H2]'));
+    log(`[H1] Parity check: ${h1.every(l => l.endsWith('PASS')) ? 'PASS' : 'FAIL'} (2000/2000 exact cases; two unknowns: 50/50 distinct pairs)`, h1.every(l => l.endsWith('PASS')) ? 'pass' : 'fail');
+    log(`[H2] Frame closure (open): ${h2[0] && h2[0].endsWith('PASS') && h2[1].endsWith('PASS') ? 'PASS' : 'FAIL'} | Frame closure (cyclic): trivially PASS (500 cases each)`, 'pass');
+    log(`──── ${passes} checks PASS, ${fails} FAIL; ${same}/${n} lines identical to the script's output (Python 3.13); ${ms.toFixed(0)} ms ────`, same === n && !fails ? 'pass' : 'fail');
+    const vs = $('#vsum');
+    vs.innerHTML = `<span class="st ${same === n && !fails ? 'st-pass' : 'st-fail'}">${passes}/${passes + fails} PASS · ${same}/${n} lines match</span>`;
+}
+
+// =====================================================================
+// Main loop: fixed 1/60 s physics step, interpolated rendering
+// =====================================================================
+let acc = 0, lastWall = performance.now(), wallT = 0, lastClockKey = -1;
+function frame(now) {
+    const dtWall = Math.min(0.25, (now - lastWall) / 1000); lastWall = now;
+    if (state.playing) {
+        wallT += dtWall; acc += dtWall;
+        while (acc >= DT) { physicsStep(DT); acc -= DT; }
+    } else { sim.prevT = sim.t; for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.prevPhase[s][n] = sim.phase[s][n]; }
+    const alpha = state.playing ? acc / DT : 1;
+    const ck = clockOf(sim.t);
+    if (ck.pulseCount !== lastClockKey) {
+        lastClockKey = ck.pulseCount;
+        drawClockPumpCanvas($('#gears'), ck.outerFrameN, state.eta, ck.piCycleStepK);
+        updateNodePanel(ck);
+        $('#ep-v').textContent = `${ck.epoch} · ${tObsOf(sim.t).toFixed(2)}`;
+    }
+    updateLayerB(false);
+    if (now - (frame.lastLens || 0) > 120) { frame.lastLens = now; drawLensing(); }
+    updateScene(alpha, wallT);
+    requestAnimationFrame(frame);
+}
+
+function start() {
+    buildDashboard();
+    wireControls();
+    initThree();
+    // Opening telemetry, in the script's format
+    const v = runVerificationHead();
+    v.forEach(l => log(l));
+    updateLayerB(true);
+    updateNodePanel(clockOf(0));
+    drawClockPumpCanvas($('#gears'), 0, state.eta, 1);
+    drawLensing();
+    requestAnimationFrame(frame);
+    setTimeout(runVerificationUI, 400);
+}
+// First lines of the script's output (sections A to C) for the opening log
+function runVerificationHead() {
+    const lines = runVerification();
+    return lines.filter(l => /^\[(A|B|C)\]/.test(l)).slice(0, 6).concat(lines.filter(l => /^\[C\] J1745-2900/.test(l)));
+}
+function boot() {
+    if (typeof THREE === 'undefined' && !window.__threeTried) {
+        window.__threeTried = true;
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js';
+        s.onload = s.onerror = () => start();
+        document.head.appendChild(s);
+        return;
+    }
+    start();
+}
+boot();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras="[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Open Engine&quot;,&quot;icon&quot;:&quot;engine&quot;},{&quot;href&quot;:&quot;manual.html&quot;,&quot;label&quot;:&quot;Manual&quot;,&quot;icon&quot;:&quot;book&quot;},{&quot;href&quot;:&quot;numogram.html&quot;,&quot;label&quot;:&quot;Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>
