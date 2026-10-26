@@ -8,7 +8,7 @@
 // Optional attributes on that script tag:
 //   data-position  "top" (default), "bottom-left" or "bottom-right"
 //   data-home      URL for the Home button (default: the site's index.html)
-//   data-extra-href, data-extra-label, data-extra-icon ("book", "engine", "trace" or "numogram")
+//   data-extra-href, data-extra-label, data-extra-icon ("book", "engine", "trace", "numogram" or "lensing")
 //                  one extra button after Home, e.g. a tool's manual (relative to the page)
 //   data-extras    several extra buttons as JSON: [{"href": "...", "label": "...", "icon": "..."}]
 //   data-compact   "true" shows every button as an icon only (names on hover)
@@ -36,6 +36,7 @@ const ICONS = {
     book: svg('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
     engine: svg('<circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8"'),
     numogram: svg('<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9" stroke-opacity="0.45"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"'),
+    lensing: svg('<circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="12" r="6"/><path d="M2.5 12c3-5 16-5 19 0M2.5 12c3 5 16 5 19 0" stroke-opacity="0.55"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"'),
     trace: svg('<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
     hide: svg('<path d="m15 18-6-6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
     grip: svg('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>')

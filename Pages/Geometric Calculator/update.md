@@ -9,10 +9,11 @@ Companion pages sit in the same folder, and their bars link to each other:
 
 | File | Page | Bar buttons |
 | --- | --- | --- |
-| `index.html` | The engine | Manual, Tracer, Numogram |
+| `index.html` | The engine | Manual, Tracer, Numogram, Lensing |
 | `manual.html` | Instruction manual & explainer | Open Engine, Tracer |
 | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses | Open Engine, Manual |
 | `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification | Open Engine, Manual, Tracer |
+| `galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` | Open Engine, Manual, Numogram |
 
 To update the tracer, upload the new version over `tracer.html` (keep the name); the bar is added the same way.
 
@@ -37,7 +38,7 @@ Paste this just above the closing `</body>` tag of the new export:
 
 ```html
 <!-- page-chrome:start -->
-<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras='[{"href":"manual.html","label":"Manual","icon":"book"},{"href":"tracer.html","label":"Tracer","icon":"trace"},{"href":"numogram.html","label":"Numogram","icon":"numogram"}]' data-compact="true"></script>
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras='[{"href":"manual.html","label":"Manual","icon":"book"},{"href":"tracer.html","label":"Tracer","icon":"trace"},{"href":"numogram.html","label":"Numogram","icon":"numogram"},{"href":"galactic_lensing_hierarchy.html","label":"Lensing","icon":"lensing"}]' data-compact="true"></script>
 <!-- page-chrome:end -->
 ```
 
@@ -57,7 +58,7 @@ Running either more than once is harmless. An existing snippet, including a bare
   `bottom-right`. For automatic installs, set `position` in `scripts/page-chrome-targets.json`.
 - `data-home`: a different address for the Home button (default: the site's main page).
 - `data-extras`: extra buttons after Home, as JSON, e.g.
-  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine`, `trace` or `numogram`. (A single
+  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine`, `trace`, `numogram` or `lensing`. (A single
   button can also be given as `data-extra-href`, `data-extra-label`, `data-extra-icon`.) For automatic
   installs, set `extra` in `scripts/page-chrome-targets.json` to one `{ href, label, icon }` or a list.
 - `data-compact="true"`: shows every button as an icon only, with its name on hover. The
