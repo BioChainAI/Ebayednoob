@@ -1516,7 +1516,7 @@ function glowTexture(inner, outer) {
 }
 function initThree() {
     const host = $('#space'), msg = $('#space-msg');
-    if (typeof THREE === 'undefined') { msg.textContent = 'Three.js r158 could not be loaded from cdnjs or jsdelivr. Panels B and C and the verification still run.'; return; }
+    if (typeof THREE === 'undefined') { msg.textContent = 'Three.js r158 could not be loaded from cdnjs, jsdelivr or unpkg. Panels B and C and the verification still run.'; return; }
     let renderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { msg.textContent = 'WebGL is not available in this browser.'; return; }
     msg.remove();
@@ -1824,16 +1824,16 @@ function runVerificationHead() {
     const lines = runVerification();
     return lines.filter(l => /^\[(A|B|C)\]/.test(l)).slice(0, 6).concat(lines.filter(l => /^\[C\] J1745-2900/.test(l)));
 }
-function boot() {
-    if (typeof THREE === 'undefined' && !window.__threeTried) {
-        window.__threeTried = true;
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js';
-        s.onload = s.onerror = () => start();
-        document.head.appendChild(s);
-        return;
-    }
-    start();
+// Three.js r158 comes from cdnjs if it serves that release; otherwise the same release is tried from jsdelivr and
+// then unpkg. Nothing at the top level of this script touches THREE, so the page runs (without 3D) even if all fail.
+const THREE_FALLBACKS = ['https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js', 'https://unpkg.com/three@0.158.0/build/three.min.js'];
+function boot(i = 0) {
+    if (typeof THREE !== 'undefined' || i >= THREE_FALLBACKS.length) { start(); return; }
+    const s = document.createElement('script');
+    s.src = THREE_FALLBACKS[i];
+    s.onload = () => (typeof THREE !== 'undefined' ? start() : boot(i + 1));
+    s.onerror = () => boot(i + 1);
+    document.head.appendChild(s);
 }
 boot();
 </script>

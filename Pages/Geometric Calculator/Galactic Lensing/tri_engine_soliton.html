@@ -1812,7 +1812,6 @@ function frenet(t, c, B, K) {
     const T = p1.clone().sub(p0).normalize(), T2 = p2.clone().sub(p1).normalize(), N = T2.sub(T).normalize(), Bn = new THREE.Vector3().crossVectors(T, N).normalize();
     return { p: p0, N, B: Bn };
 }
-const _tmp = new THREE.Vector3();
 // Particle flow: the crystal file advances one step of its 720-step loop per display frame. Here the loop follows the
 // outer gear, but the flow advances at most one step per frame (the file's own pace) so the streams never strobe; the step readout and the
 // optional spinor turn follow the gear exactly. Displacements ease toward their targets instead of snapping.
@@ -1855,7 +1854,7 @@ function updateCrystal(frameF) {
     const poleR = crys.lock ? Math.sqrt(3) : crys.poleH / U20, sAx = 0.25 * Math.tanh(G.s.toNumber() / 3);
     crystal.poleGroup.visible = state.tier3;
     crystal.poleGroup.position.lerp(Bs.n.clone().multiplyScalar(sAx), EASE_K);
-    const perp1 = Bs.u, perp2 = Bs.v;
+    const perp1 = Bs.u, perp2 = Bs.v, _tmp = new THREE.Vector3();
     crystal.ghosts.forEach(gh => {
         gh.node.position.copy(Bs.n.clone().multiplyScalar(gh.sg * poleR));
         const pos = gh.stream.geometry.attributes.position;
@@ -2035,16 +2034,16 @@ function start() {
     requestAnimationFrame(frame);
     setTimeout(runVerificationUI, 500);
 }
-function boot() {
-    if (typeof THREE === 'undefined' && !window.__threeTried) {
-        window.__threeTried = true;
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js';
-        s.onload = s.onerror = () => start();
-        document.head.appendChild(s);
-        return;
-    }
-    start();
+// Three.js r158 comes from cdnjs if it serves that release; otherwise the same release is tried from jsdelivr and
+// then unpkg. Nothing at the top level of this script touches THREE, so the page runs (without 3D) even if all fail.
+const THREE_FALLBACKS = ['https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js', 'https://unpkg.com/three@0.158.0/build/three.min.js'];
+function boot(i = 0) {
+    if (typeof THREE !== 'undefined' || i >= THREE_FALLBACKS.length) { start(); return; }
+    const s = document.createElement('script');
+    s.src = THREE_FALLBACKS[i];
+    s.onload = () => (typeof THREE !== 'undefined' ? start() : boot(i + 1));
+    s.onerror = () => boot(i + 1);
+    document.head.appendChild(s);
 }
 boot();
 </script>
