@@ -968,7 +968,8 @@
             <div class="chapter-num">CHAPTER 22 &middot; PART 2 &middot; LEMMA 8, §7.5–§7.7, PROPOSITION 7.14</div>
             <h2>The soliton crystal</h2>
             <p class="chapter-intro">The emergent fourth gets a body: a crystal at Sgr A* that sits still while the books balance and moves, by an exactly invertible amount, when they do not.</p>
-            <p>The specification describes the crystal from a separate simulation, <code>torsional_twistor_tier_3_crystal.html</code>, which was not supplied. Every piece of the crystal on this page is instead an object the monograph defines:</p>
+            <p>The crystal comes from <code>torsional_twistor_tier_3_crystal_2.html</code>, the Tier 3 simulation the specification analyses. Part 2 keeps its mechanics and its look, and sets them on the monograph's geometry. The file already fits that geometry more closely than the specification says. Its three TwistorPairs use tube phases \(0, 2\pi/3, 4\pi/3\), which put the three trefoils' lobes at 0°/120°/240°, 40°/160°/280° and 80°/200°/320°: exactly the C<sub>9</sub> offsets {0°, 40°, 80°} of Lemma 8.2. And its 80-unit, 4 × 4 × 4 lattice is the voxel cube \(V = [-2,2]^3\) of Lemma 5 at 20 units per cubit. The <strong>Lemma 8.2 geometry</strong> checkbox (on by default) sizes the carrier so the lobes land exactly on the nine ray endpoints. With it off, the file's free torus radius, z-scale and pole height come back, and Panel D reports how far the lobes leave the rays.</p>
+            <p>Every piece of the locked crystal is an object the monograph defines:</p>
             <div class="table-wrap"><table>
                 <thead><tr><th>Piece</th><th>Monograph object</th><th>Status</th></tr></thead>
                 <tbody>
@@ -977,7 +978,24 @@
                     <tr><td>Two blue poles</td><td>\(\pm(1,1,1)\): the shared pole of \(\Delta_1, \Delta_2, \Delta_3\) and its antipode, on the C<sub>3</sub> axis.</td><td><span class="tag t-PROVEN">PROVEN</span></td></tr>
                     <tr><td>All twelve nodes</td><td>§7.5's "ten-node core" (pole + 9 rays) with the antipode and the centre: a 9-sided bipyramid, 1 + 9 + 1 + 1. The monograph notes it is a different object from the twelve-engine cuboctahedron (3 + 6 + 3).</td><td><span class="tag t-PROVEN">PROVEN</span></td></tr>
                     <tr><td>Three trefoils</td><td>(2,3) torus knots (Lemma 8 Step 6) on a carrier with golden radius ratio (Proposition 6.5). With tube phases \(2\pi c/3\), trefoil \(c\)'s lobes fall at azimuths \(40°(3m - 2c)\): exactly the rays of \(\Delta_1, \Delta_2, \Delta_3\). The page checks that the three lobe sets partition the nine rays.</td><td><span class="tag t-PROVEN">PROVEN</span> lobes; <span class="tag t-DEFINITION">DEFINITION</span> carrier</td></tr>
-                    <tr><td>Two strands per trefoil</td><td>Model and data (the C<sub>2</sub> side). They braid opposite each other at lock and pull together as that class's residual grows.</td><td><span class="tag t-DEFINITION">DEFINITION</span></td></tr>
+                    <tr><td>Two particle streams per trefoil</td><td>The file's TwistorPair streams A and B, offset from the curve by the buckle radius in its Frenet frame and turned by the micro-twist. Here A is the model and B the data (the C<sub>2</sub> side). They sit at the file's inverse separation at lock and pull together as that class's residual grows.</td><td><span class="tag t-DEFINITION">DEFINITION</span></td></tr>
+                </tbody>
+            </table></div>
+            <h3>From the crystal file to Part 2</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>In the crystal file</th><th>In Part 2</th></tr></thead>
+                <tbody>
+                    <tr><td>Three TwistorPairs (magenta, cyan, gold), 200-particle streams A and B, micro-twist 2.5, buckle 3, inverse sep 0.8</td><td>The same streams, colours and sliders. Each pair is an observable class: astrometry, timing, velocity.</td></tr>
+                    <tr><td>Torus radius 25, minor radius 6, z-scale 12 (free)</td><td>Locked to the golden carrier with R + r = √(8/3) cubits (32.7 units), z-scale 10. Unlock to free them.</td></tr>
+                    <tr><td>Ghost poles at (0, ±30, 0) with spiral streams</td><td>Poles on the trefoils' C<sub>3</sub> axis at ±(1, 1, 1), 34.6 units out, with the same spirals. The file's y-axis lies in the trefoils' own plane, not on their axis.</td></tr>
+                    <tr><td>EmergentCore at the mean of the pair centroids and poles</td><td>The Proposition 7.14 gauge of the three residuals. In the file the core sits at the origin because each closed trefoil's own centroid is the origin, not because the three pairs cancel each other.</td></tr>
+                    <tr><td>Tier 2 (green) and Tier 3 (blue) bridges, structural nodes</td><td>Kept, with the same roles: core to pair nodes and the pair ring (Tier 2); the axis and poles to pair nodes (Tier 3).</td></tr>
+                    <tr><td>64-voxel lattice</td><td>Kept: V = [−2, 2]³.</td></tr>
+                    <tr><td>720-step loop, particles advance 4π</td><td>Kept, driven by the outer gear (one epoch). The step bar seeks within the epoch. "Spinor turn" adds the 1°-per-frame rotation.</td></tr>
+                    <tr><td>Strassen 4 × 4 HUD with fixed labels G<sub>N</sub>, A<sub>1–3</sub>, B<sub>1–3</sub>, C<sub>1–3</sub>, A<sub>3</sub>*, G<sub>S</sub> and four null cells</td><td>The §7.7 layer with live values: the 12 streams on the ring (three groups of four) and \(w, x, y, z\) inside.</td></tr>
+                    <tr><td>Orthogonal scope ("Toda–Kogame lattice") of 16 nodes, deformed by sliders</td><td>Kept as a toggle, but driven by the data: its 16 nodes are the 16 streams, the chords join each class's group of four, and residuals push the R nodes out.</td></tr>
+                    <tr><td>Triplet bit grids toggled at random; "deformation maps to bits [52–63] (ECC)"</td><td>Not adopted. §6.1 fixes those bits (South Halo and gate byte) and Lemma 15 Part 2 says the South Halo is not an integrity check, so Part 2 shows computed tiles and a Merkle root instead.</td></tr>
+                    <tr><td>Three.js r128, OrbitControls and sprite images from threejs.org</td><td>Three.js r158 with the site's own orbit code and canvas-drawn sprites, so nothing loads from elsewhere.</td></tr>
                 </tbody>
             </table></div>
             <h3>The gauge: Proposition 7.14</h3>
@@ -1027,7 +1045,8 @@
                     <tr><td>The barycentre of three pairs and two poles locks at the origin</td><td>The core is the Proposition 7.14 gauge, zero at lock</td><td>In Lemma 8.2's geometry the nine rays lie on a latitude below the centre, so the raw barycentre is not the origin; the gauge is exact and invertible.</td></tr>
                     <tr><td>"Planck cube"</td><td>Cube 1 with \(\Delta_1 \cup -\Delta_1\)</td><td>The monograph's own object (Propositions 7.16–7.17).</td></tr>
                     <tr><td>Per-engine phase \(\Delta\varphi_s\)</td><td>Driven by each system's data-minus-model</td><td>The specification gives no driver; this makes the triangle a gauge of the residuals.</td></tr>
-                    <tr><td>The crystal simulation <code>torsional_twistor_tier_3_crystal.html</code></td><td>Rebuilt from the monograph's objects</td><td>The file was not supplied.</td></tr>
+                    <tr><td>The three pairs are "separated by the exact C<sub>3</sub> phase offsets 0, 2π/3, 4π/3"</td><td>Kept as tube phases</td><td>In space the three trefoils sit at 0°, 40° and 80° (the C<sub>9</sub> offsets of Lemma 8.2), not 120° apart. Each trefoil is itself 3-fold symmetric.</td></tr>
+                    <tr><td>Ghost poles at ±y represent the invariant line</td><td>Poles on the C<sub>3</sub> axis</td><td>In the crystal file the y-axis lies in the trefoils' plane; the invariant line of a 120° turn is its axis.</td></tr>
                 </tbody>
             </table></div>
             <div class="callout deep">

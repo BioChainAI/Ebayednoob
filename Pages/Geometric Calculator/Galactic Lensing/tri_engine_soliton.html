@@ -188,10 +188,21 @@ table.lemmas th { text-align: left; }
 .hud div { border: 1px solid var(--line); border-radius: 6px; padding: 3px 4px; font: 10.5px/1.3 var(--mono); min-height: 40px; overflow: hidden; }
 .hud div b { display: block; font-size: 10px; color: var(--muted); font-weight: 600; }
 .hud div.in { background: var(--panel-2); border-style: dashed; }
-.hud div.c0 { border-color: rgba(245,197,66,0.6); } .hud div.c1 { border-color: rgba(45,212,191,0.6); } .hud div.c2 { border-color: rgba(232,121,249,0.6); }
+.hud div.c0 { border-color: rgba(255,0,85,0.6); } .hud div.c1 { border-color: rgba(0,242,255,0.6); } .hud div.c2 { border-color: rgba(255,215,0,0.6); }
 .hud div.bad { background: rgba(248,113,113,0.16); } .hud div.warn { background: rgba(251,191,36,0.14); }
 .gate { font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line-2); color: var(--muted); }
 .gate.open { color: #6ee7b7; border-color: rgba(52,211,153,0.6); }
+.crys-play { display: flex; gap: 10px; align-items: center; margin-top: 6px; font: 11px var(--mono); color: #00b8c4; }
+#progress-container { flex: 1; height: 6px; background: var(--line-2); border-radius: 3px; cursor: pointer; }
+#progress-fill { height: 100%; width: 0; background: #00f2ff; border-radius: 3px; }
+.crys-ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; margin-top: 6px; font-size: 11.5px; }
+.crys-ctl label { display: flex; flex-direction: column; color: var(--muted); }
+.crys-ctl label span.v { font-family: var(--mono); color: var(--text); }
+.crys-ctl input[type=range] { width: 100%; }
+.crys-ctl input:disabled { opacity: 0.4; }
+.crys-checks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+.crys-checks label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+@media (max-width: 640px) { .crys-ctl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .cls-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
 </style>
 </head>
@@ -224,7 +235,7 @@ table.lemmas th { text-align: left; }
     <!-- Panel A -->
     <section class="panel" id="panel-a" aria-label="Panel A: three active engines">
         <h2>A · Three active engines <span class="tag t-DEFINITION" data-basis="Each system is one instance of the 5-tier engine (Lemma 4) at its log radii (spec §4.2, script §H4). Engine s is turned by σˢ, the exact 120° rotation (x, y, z) ↦ (z, x, y) about (1, 1, 1). Tiers carry the pure Lemma 4 frames; Tension turns T4 and T3 about their local y axis and Torsion turns T2–T0 the opposite way about local z. The engines spin in alternate directions (I and III forward, II backward).">DEFINITION</span></h2>
-        <p class="sub">The same node k of all three engines is sampled for each class: astrometry <span class="cls-dot" style="background:#f5c542"></span>, timing <span class="cls-dot" style="background:#2dd4bf"></span>, velocity <span class="cls-dot" style="background:#e879f9"></span>. Each class's three nodes form a TQF triangle; the diamond is the inferred fourth vertex P₄ and the white dot its exact closure P₄*. During stage 4 (tier T0) the P₄ markers converge on the soliton at the centre.</p>
+        <p class="sub">The same node k of all three engines is sampled for each class: astrometry <span class="cls-dot" style="background:#ff0055"></span>, timing <span class="cls-dot" style="background:#00f2ff"></span>, velocity <span class="cls-dot" style="background:#ffd700"></span>. Each class's three nodes form a TQF triangle; the diamond is the inferred fourth vertex P₄ and the white dot its exact closure P₄*. During stage 4 (tier T0) the P₄ markers converge on the soliton at the centre.</p>
         <div id="space">
             <div class="msg" id="space-msg">Loading Three.js r158…</div>
             <canvas id="gears" width="380" height="165" aria-label="12/10/8 gear chain"></canvas>
@@ -235,8 +246,26 @@ table.lemmas th { text-align: left; }
     <!-- Panel B -->
     <section class="panel" id="panel-b" aria-label="Panel B: the soliton core">
         <h2>B · Soliton core <span class="tag t-PROVEN" data-basis="Geometry from the monograph: Cube 1 K = [−1, 1]³ with Δ₁ ∪ −Δ₁ (Proposition 7.16), the nine C₉ ray endpoints x(s) of Lemma 8.2 at 40° on the circumsphere |x| = √3, and the poles ±(1, 1, 1): together with the centre, the 12-node set of §7.5 (a 9-sided bipyramid, 1 + 9 + 1 + 1). Three (2,3) trefoils (Lemma 8 Step 6) on a golden carrier (Proposition 6.5) put their lobes exactly on the nine ray endpoints.">§7.5 · Lemma 8</span></h2>
-        <p class="sub">The emergent fourth as a crystal. Each trefoil is one observable class (two strands: model and data). The core sits at the centre while every residual is zero and the measured frame legs close; residuals move it by the Proposition 7.14 split (s along the axis, z in the plane), and a frame error shears the trefoils.</p>
+        <p class="sub">The emergent fourth as the Tier 3 crystal of <code>torsional_twistor_tier_3_crystal_2.html</code>, set on the monograph's geometry. Each TwistorPair is one observable class (two particle streams: model and data). The core sits at the centre while every residual is zero and the measured frame legs close; residuals move it by the Proposition 7.14 split (s along the axis, z in the plane), and a frame error shears the trefoils.</p>
         <div id="crystal"><div class="msg" id="crystal-msg">Loading…</div><span id="sol-state" class="sol-locked">LOCKED</span><span id="sol-step"></span></div>
+        <div class="crys-play"><span>STEP <span id="step-count">000</span>/720</span><div id="progress-container" title="Seek within this epoch (one 720-frame turn of the outer gear)"><div id="progress-fill"></div></div></div>
+        <div class="crys-ctl">
+            <label>Micro-twist <span class="v" id="c-twist-v">2.50</span><input type="range" id="c-twist" min="0" max="15" step="0.01" value="2.5"></label>
+            <label>Buckle radius <span class="v" id="c-buckle-v">3.0</span><input type="range" id="c-buckle" min="0.5" max="8" step="0.1" value="3"></label>
+            <label>Inverse sep <span class="v" id="c-sep-v">0.8</span><input type="range" id="c-sep" min="0.1" max="2" step="0.1" value="0.8"></label>
+            <label>Torus radius <span class="v" id="c-torus-v">20.2</span><input type="range" id="c-torus" min="10" max="40" step="0.1" value="20.2" disabled></label>
+            <label>Z-scale <span class="v" id="c-z-v">10.0</span><input type="range" id="c-z" min="5" max="30" step="0.1" value="10" disabled></label>
+            <label>Pole height <span class="v" id="c-pole-v">34.6</span><input type="range" id="c-pole" min="10" max="50" step="0.1" value="34.6" disabled></label>
+        </div>
+        <div class="crys-checks">
+            <label title="Lock the carrier to the monograph: golden radii with R + r = √(8/3) so the lobes sit on the C9 rays (Lemma 8.2), z-scale 1, poles at ±(1,1,1). Units are the crystal file's: 20 per cubit."><input type="checkbox" id="c-lock" checked> Lemma 8.2 geometry</label>
+            <label><input type="checkbox" id="c-lattice" checked> 64-voxel lattice</label>
+            <label><input type="checkbox" id="c-bridge" checked> Bridges</label>
+            <label><input type="checkbox" id="c-nodes" checked> Nodes</label>
+            <label><input type="checkbox" id="c-lemma" checked> Lemma objects</label>
+            <label><input type="checkbox" id="c-scope"> Orthogonal scope</label>
+            <label><input type="checkbox" id="c-spin"> Spinor turn</label>
+        </div>
         <div class="sec">
             <h3>The 4 × 4 stream layer, §7.7 <span class="tag t-PROVEN" data-basis="Monograph §7.7: a structure's 12 engines occupy the 12 boundary cells of a 4 × 4 layer in ring order and its 4 projections the 4 interior cells. Here ring cell j holds stream (class j mod 3, structure ⌊j/3⌋), so the three groups of four are the orbits of the 90° rotation (shift by 3) and the 120° step (shift by 4) carries each group to the next. The interior holds w, x, y, z of the measured net holonomy H₁H₂H₃H₄.">§7.7</span></h3>
             <div class="hud" id="hud"></div>
@@ -292,7 +321,7 @@ table.lemmas th { text-align: left; }
 <ul class="notes" id="notes">
     <li><strong>What Part 2 adds.</strong> Part 1's systems were passive shells. Here each is a running engine, the three are compared node by node (the cross-engine TQF), and the emergent fourth is drawn as a crystal whose position is an exact, invertible gauge of the three residuals. The physics, the exact residual parity, the frame legs, the packets and the reference-script port are the same code as <a href="galactic_lensing_hierarchy.html">Part 1</a>.</li>
     <li><strong>Where the triangle lives.</strong> Layer B evaluates each class's triangle in the engines' own cubit frames, where the three engines are congruent copies related by σ. With equal phases the triangle is exactly equilateral (χ = 1/√3, Weitzenböck equality): that is the lock. Each node's phase is shifted by Δφ = κ·(π/6)·tanh(r/3), where r is that system's data-minus-model in units of σ <span class="tag t-DEFINITION" data-basis="A design choice of this page: the spec asks for a per-system phase offset Δφ_s but does not say what drives it.">DEFINITION</span>. Panel A draws the same nodes at their nested display radii. The triangle measures the engines' bookkeeping state, not a physical distance.</li>
-    <li><strong>The crystal.</strong> The specification describes it from <code>torsional_twistor_tier_3_crystal.html</code>, which was not supplied, so the crystal here is built from the monograph's own objects: Cube 1, Δ₁ ∪ −Δ₁, the nine C₉ rays and the poles ±(1, 1, 1) of §7.5. Its 12 nodes match the 12 streams and the 12 dimensions of aff(3) as counts only <span class="tag t-CORRESPONDENCE" data-basis="Equal counts, no structure-preserving map. The monograph says the 12-node bipyramid (1 + 9 + 1 + 1) and the 12-vector cuboctahedron of the twelve-engine shell (3 + 6 + 3) are different objects.">CORRESPONDENCE</span>.</li>
+    <li><strong>The crystal.</strong> Ported from <code>torsional_twistor_tier_3_crystal_2.html</code>: its TwistorPair particle streams (micro-twist, buckle, inverse separation), GhostPair pole spirals, structural nodes, Tier 2 and Tier 3 bridges, 64-voxel lattice (V = [−2, 2]³ at 20 units per cubit) and orthogonal scope. "Lemma 8.2 geometry" locks its carrier to the monograph: the file's tube phases 0, 2π/3, 4π/3 already put the three trefoils at the C₉ offsets 0°, 40°, 80°, and the lock sizes them so the lobes sit on the nine ray endpoints, with the poles at ±(1, 1, 1) on the C₃ axis (the file has them on the y-axis, in the trefoils' plane). Cube 1 and Δ₁ ∪ −Δ₁ complete the §7.5 objects. Its 12 nodes match the 12 streams and the 12 dimensions of aff(3) as counts only <span class="tag t-CORRESPONDENCE" data-basis="Equal counts, no structure-preserving map. The monograph says the 12-node bipyramid (1 + 9 + 1 + 1) and the 12-vector cuboctahedron of the twelve-engine shell (3 + 6 + 3) are different objects.">CORRESPONDENCE</span>.</li>
     <li><strong>Clock.</strong> Engine v10's master clock: pulseCount = ⌊t·60⌋, node k = pulseCount mod 30, stage = ⌊(pulseCount mod 150)/30⌋, outerFrameN = 12·pulseCount mod 720. The crystal turns 1° per outer frame, so one 720-frame turn is the 8-step spinor cycle (1 + i)^k of Lemma 8, and the packets' cycle step is ⌊outerFrameN/90⌋ <span class="tag t-DEFINITION" data-basis="Part 1 used the engine's rotor step (pulseCount mod 8); Part 2 ties the step to the outer gear so the crystal's 720° turn and the packet step agree.">DEFINITION</span>.</li>
 </ul>
 </div>
@@ -1278,7 +1307,8 @@ const fmtFrac = (f, max = 26) => {   // exact; a power-of-two denominator is wri
 
 
 const fmtAngle = a => { const mas = a / PHYS.mas; return mas >= 3.6e6 ? (a / D2R).toFixed(3) + '°' : mas >= 1 ? mas.toPrecision(4) + ' mas' : (mas * 1e3).toPrecision(3) + ' µas'; };
-const CLASS_HEX = [0xf5c542, 0x2dd4bf, 0xe879f9], CLASS_CSS = ['#f5c542', '#2dd4bf', '#e879f9'], STRUCT_SHORT = ['I', 'II', 'III', 'R'];
+const CLASS_HEX = [0xff0055, 0x00f2ff, 0xffd700], CLASS_CSS = ['#ff0055', '#00f2ff', '#ffd700'],   // the crystal file's pair colours
+      STRUCT_SHORT = ['I', 'II', 'III', 'R'];
 
 // =====================================================================
 // Layer B for three engines: exact frames, nodes and the cross-engine TQF
@@ -1503,8 +1533,10 @@ function renderLemmaRows2(L) {
         ['Lemma 9 Part 3', 'Frame legs are Cayley-map rational unit quaternions', 'N(H<sub>j</sub>) = 1 exactly for all four', okB(legsUnit)],
         ['Lemma 13 Part 2', 'σ lifts to the Hurwitz unit ω = (1 + i + j + k)/2: a finite-order rational rotation (120°), allowed by Niven', 'ω⁶ = 1, ω³ = −1, ω i ω⁻¹ = j (exact)', okB(C.omega6 && C.iToJ)],
         ['Lemma 8.2, 8.2″', 'Crystal: the nine C<sub>9</sub> ray endpoints x(s) at 40° on |x| = √3; exactly three (the 0° tetrahedron Δ₁) are cube corners', `|x(s)|² = 3 for all nine; cube corners at s = ${C9.corners.join(', ')}`, okB(C9.onSphere && C9.corners.join() === '0,3,6')],
-        ['Lemma 8 Step 6, Prop. 6.5', 'Three (2,3) trefoils with tube phase 2πc/3 put their lobes on the rays of Δ₁, Δ₂, Δ₃ (offsets 0°, 40°, 80°); golden carrier R/r = φ', `Lobe rays ${C9.lobes.map(l => '{' + l.join(',') + '}').join(' ')} partition the nine`, okB(C9.partition && C9.lobes[0].join() === '0,3,6')],
-        ['§7.5', 'The 12-node crystal is the ten-node core (pole + 9 rays) plus the antipode and the centre: a 9-sided bipyramid, 1 + 9 + 1 + 1', 'Monograph §7.5; distinct from the cuboctahedron (3 + 6 + 3)', DEF2],
+        ['Lemma 8 Step 6, Prop. 6.5', 'Three (2,3) trefoils with tube phase 2πc/3 (the crystal file\'s TwistorPairs) put their lobes on the rays of Δ₁, Δ₂, Δ₃ (offsets 0°, 40°, 80°); golden carrier R/r = φ', crys.lock ? `Lobe rays ${C9.lobes.map(l => '{' + l.join(',') + '}').join(' ')} partition the nine` : `Carrier unlocked: lobe tips ${(Math.abs(crystalCarrier().R + crystalCarrier().r - C9.R9) * U20).toFixed(1)} units off the rays`, crys.lock ? okB(C9.partition && C9.lobes[0].join() === '0,3,6') : '<span class="st st-na">free</span>'],
+        ['§7.5', 'The 12-node crystal is the ten-node core (pole + 9 rays) plus the antipode and the centre: a 9-sided bipyramid, 1 + 9 + 1 + 1', crys.lock ? 'Ghost poles at ±(1, 1, 1) on the C₃ axis; distinct from the cuboctahedron (3 + 6 + 3)' : `Poles at height ${crys.poleH.toFixed(1)} units on the C₃ axis (lemma value 34.6)`, DEF2],
+        ['Crystal file', 'Ported: TwistorPair streams (micro-twist, buckle, inverse sep), GhostPair spirals, structural nodes, Tier 2/3 bridges, 64-voxel lattice V = [−2, 2]³ (Lemma 5), orthogonal scope (here the 16 §7.7 streams)', 'Display mechanics of torsional_twistor_tier_3_crystal_2.html on the lemma geometry', DEF2],
+        ['Crystal file, §6.1, Lemma 15', 'Not adopted: "deformation maps to bits [52–63] (ECC)" and the randomly toggled triplet bit grids', '§6.1 fixes bits 56–63 (South Halo) and 48–55 (gate); Lemma 15 Part 2 says the halo is not an integrity check; the page shows computed tiles instead', '<span class="st st-na">not adopted</span>'],
         ['Lemma 7 Part 1, §7.4', 'The spec calls the 12 nodes isomorphic to aff(3) and to the twelve-engine hierarchy', 'Equal counts (12) only; no structure-preserving map is claimed', COR2],
         ['Props. 7.16–7.17', 'The central cube: Δ₁ ∪ −Δ₁ are the 8 vertices of Cube 1 (the spec\'s "Planck cube")', 'Exact integer vertices', okB(C.cube)],
         ['Prop. 7.14', 'Soliton gauge: residuals (a, b, c) split into s (axis) and z (plane) and are recovered exactly', `Recovery ${L.G.recovered ? 'exact' : 'fails'}; s = ${fmt(L.G.s.toNumber(), 3)}`, okB(L.G.recovered)],
@@ -1664,84 +1696,152 @@ function gaugeDisplay(G) {
 
 // =====================================================================
 // Panel B: the soliton crystal (its own renderer)
+// Ported from torsional_twistor_tier_3_crystal_2.html: TwistorPair streams (micro-twist, buckle, inverse
+// separation), GhostPair pole spirals, structural nodes, the T2/T3 bridges, the 64-voxel lattice and the
+// orthogonal scope. Coordinates are cubits (the crystal file's 64-voxel lattice is V = [−2, 2]³ at 20 units
+// per cubit, so its sliders are read in those units and divided by 20).
 // =====================================================================
-const PHI = (1 + Math.sqrt(5)) / 2;
+const PHI = (1 + Math.sqrt(5)) / 2, U20 = 20;
+const LEMMA_RC = C9.R9 / (1 + PHI), LEMMA_RCAR = PHI * LEMMA_RC;      // golden carrier with R + r = √(8/3)
+const crys = { twist: 2.5, buckle: 3.0, pairSep: 0.8, lock: true, torusR: LEMMA_RCAR * U20, zScale: 10, poleH: Math.sqrt(3) * U20,
+               lattice: true, bridge: true, nodes: true, lemma: true, scope: false, spin: false };
+const PARTICLES = 200, GHOST_PARTICLES = 100;
+function discTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 32, 0, 2 * Math.PI); g.fill();
+    return new THREE.CanvasTexture(c);
+}
 function initCrystal() {
     const host = $('#crystal'), renderer = makeRenderer(host, $('#crystal-msg'));
     if (!renderer) return;
     const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
-    crystal = { renderer, scene, camera, orbit: { theta: 0.6, phi: 1.2, radius: 7.2 } };
-    // lemma coordinates; the root turns (1, 1, 1) to the vertical for viewing
+    crystal = { renderer, scene, camera, orbit: { theta: 0.6, phi: 1.25, radius: 6.4 } };
+    const tex = discTexture();
+    // lemma coordinates; the view turns (1, 1, 1) to the vertical
     const view = new THREE.Group(); view.quaternion.setFromUnitVectors(AXIS111(), new THREE.Vector3(0, 1, 0)); scene.add(view);
-    const spin = new THREE.Group(); view.add(spin); crystal.spin = spin;
+    const spin = new THREE.Group(); view.add(spin); crystal.spin = spin; crystal.view = view;
     const V = a => new THREE.Vector3(a[0], a[1], a[2]);
-    // Cube 1 and Δ₁ ∪ −Δ₁
+    // 64-voxel lattice V = [−2, 2]³ (Lemma 5; the crystal file's 80-unit, 4 × 4 × 4 wireframe)
+    const lv = [];
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) { const a = -2 + i, b = -2 + j; lv.push(a, -2, b, a, 2, b, -2, a, b, 2, a, b, b, a, -2, b, a, 2); }
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
+    crystal.lattice = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x8a90a8, transparent: true, opacity: 0.1 }));
+    spin.add(crystal.lattice);
+    // lemma objects: Cube 1, Δ₁ ∪ −Δ₁, the circumsphere, the nine C9 rays and their ring
+    const lemma = new THREE.Group(); spin.add(lemma); crystal.lemma = lemma;
     crystal.cube = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({ color: 0xf5c542, transparent: true, opacity: 0.9 }));
-    spin.add(crystal.cube);
+    lemma.add(crystal.cube);
     const D1 = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(V), D1m = D1.map(p => p.clone().negate());
-    const tetra = (P, col) => { const pts = []; for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) pts.push(P[i], P[j]); return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.35 })); };
-    crystal.stella = [tetra(D1, 0xe879f9), tetra(D1m, 0x22d3ee)]; crystal.stella.forEach(t => spin.add(t));
-    spin.add(new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(3), 24, 16), new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true, transparent: true, opacity: 0.07 })));
-    // nine C9 rays and the tier-2 ring
+    const tetra = (P, col) => { const pts = []; for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) pts.push(P[i], P[j]); return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.3 })); };
+    lemma.add(tetra(D1, 0xff0055), tetra(D1m, 0x00f2ff));
+    lemma.add(new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(3), 24, 16), new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true, transparent: true, opacity: 0.06 })));
     const rays = C9.pts.map(V);
-    crystal.rayPts = rays.map(p => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), new THREE.MeshBasicMaterial({ color: 0x34d399 })); m.position.copy(p); spin.add(m); return m; });
-    spin.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(rays), new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.7 })));
-    spin.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rays.flatMap(p => [new THREE.Vector3(), p])), new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.18 })));
-    // ghost poles ±(1,1,1) and the tier-3 longitudes
-    crystal.poleGroup = new THREE.Group(); spin.add(crystal.poleGroup);
-    crystal.poles = [1, -1].map(sg => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 14), new THREE.MeshBasicMaterial({ color: 0x60a5fa })); m.position.set(sg, sg, sg); crystal.poleGroup.add(m); return m; });
-    crystal.longs = new THREE.LineSegments(lineGeo(36), new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.45 }));
-    crystal.poleGroup.add(crystal.longs);
-    // three trefoils, each a model/data double strand on the golden carrier
-    const n = AXIS111(), u = V(C9.u), v = V(C9.v), c0 = new THREE.Vector3(-1 / 3, -1 / 3, -1 / 3), rc = C9.R9 / (1 + PHI), Rc = PHI * rc;
-    crystal.basis = { n, u, v, c0, rc, Rc };
-    crystal.tref = [0, 1, 2].map(c => {
+    rays.forEach(p => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), new THREE.MeshBasicMaterial({ color: 0x34d399 })); m.position.copy(p); lemma.add(m); });
+    lemma.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(rays), new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.55 })));
+    // three TwistorPairs: two particle streams (A = model, B = data) and a structural node at their centroid
+    crystal.basis = { n: AXIS111(), u: V(C9.u), v: V(C9.v), c0: new THREE.Vector3(-1 / 3, -1 / 3, -1 / 3) };
+    const nodeGroup = new THREE.Group(); spin.add(nodeGroup); crystal.nodeGroup = nodeGroup;
+    crystal.pairs = [0, 1, 2].map(c => {
         const g = new THREE.Group(); spin.add(g);
-        const mk = (op) => { const l = new THREE.Line(lineGeo(361), new THREE.LineBasicMaterial({ color: CLASS_HEX[c], transparent: true, opacity: op })); g.add(l); return l; };
-        return { g, a: mk(0.95), b: mk(0.6) };
+        const mat = new THREE.PointsMaterial({ color: CLASS_HEX[c], size: 0.1, map: tex, transparent: true, opacity: 0.95, alphaTest: 0.3, depthWrite: false });
+        const mk = () => { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PARTICLES * 3), 3)); const p = new THREE.Points(geo, mat); g.add(p); return p; };
+        const node = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 16), new THREE.MeshBasicMaterial({ color: CLASS_HEX[c], wireframe: true, transparent: true, opacity: 0.9 }));
+        nodeGroup.add(node);
+        return { g, a: mk(), b: mk(), node, centroid: new THREE.Vector3() };
     });
-    crystal.core = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 20), new THREE.MeshBasicMaterial({ color: 0xffe08a }));
-    crystal.coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,240,170,0.9)', 'rgba(245,197,66,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
-    crystal.coreGlow.scale.set(1.1, 1.1, 1);
+    // two GhostPairs: a spiral stream from the centre to each pole, and the pole node
+    crystal.poleGroup = new THREE.Group(); spin.add(crystal.poleGroup);
+    crystal.ghosts = [1, -1].map(sg => {
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(GHOST_PARTICLES * 3), 3));
+        const stream = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xcfe6ff, size: 0.06, map: tex, transparent: true, opacity: 0.7, alphaTest: 0.3, depthWrite: false }));
+        const node = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0x9ad8ff, wireframe: true, transparent: true, opacity: 0.9 }));
+        crystal.poleGroup.add(stream, node);
+        return { sg, stream, node };
+    });
+    // bridges: Tier 2 (green: core to pair nodes, ring of pair nodes) and Tier 3 (blue: axis, poles to pair nodes)
+    crystal.bridgeT2 = new THREE.LineSegments(lineGeo(12), new THREE.LineBasicMaterial({ color: 0x88ff88, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending }));
+    crystal.bridgeT3 = new THREE.LineSegments(lineGeo(16), new THREE.LineBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending }));
+    spin.add(crystal.bridgeT2, crystal.bridgeT3);
+    // EmergentCore at the Proposition 7.14 gauge
+    crystal.core = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 20), new THREE.MeshBasicMaterial({ color: 0xffe08a }));
+    crystal.coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,250,220,0.95)', 'rgba(245,197,66,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
+    crystal.coreGlow.scale.set(0.6, 0.6, 1);
     crystal.arrow = new THREE.Line(lineGeo(2), new THREE.LineBasicMaterial({ color: 0xffe08a }));
-    spin.add(crystal.core, crystal.coreGlow, crystal.arrow);      // the gauge lives in the crystal's own frame
-    wireOrbit(renderer.domElement, crystal.orbit, 3, 20);
+    spin.add(crystal.core, crystal.coreGlow, crystal.arrow);
+    // orthogonal scope: the 16 streams of §7.7 (12 on a ring, 4 inside), driven by the data
+    crystal.scope = new THREE.Group(); view.add(crystal.scope);
+    crystal.scopeNodes = Array.from({ length: 16 }, (_, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), new THREE.MeshBasicMaterial({ color: i < 12 ? CLASS_HEX[i % 3] : 0xffffff })); crystal.scope.add(m); return m; });
+    crystal.scopeLinks = new THREE.LineSegments(lineGeo(2 * 28), new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5 }));
+    crystal.scope.add(crystal.scopeLinks);
+    wireOrbit(renderer.domElement, crystal.orbit, 3, 24);
     new ResizeObserver(() => resizeR(crystal, host)).observe(host);
     resizeR(crystal, host);
 }
-function trefoilPoint(t, c, B) {     // (2,3) torus knot on the golden carrier, lobes on the C9 rays (lemma coordinates)
-    const ph = 3 * t + 2 * Math.PI * c / 3, rad = B.Rc + B.rc * Math.cos(ph);
-    return B.c0.clone().addScaledVector(B.u, rad * Math.cos(2 * t)).addScaledVector(B.v, rad * Math.sin(2 * t)).addScaledVector(B.n, B.rc * Math.sin(ph));
+// (2,3) torus knot: tube angle 3t + 2πc/3, torus angle 2t, centred at c0 on the (1,1,1) axis (crystal file's getTorusTrefoilPoint)
+function crystalCarrier() {
+    return crys.lock ? { R: LEMMA_RCAR, r: LEMMA_RC, z: 1 } : { R: crys.torusR / U20, r: LEMMA_RC, z: crys.zScale / 10 };
 }
+function trefoilPoint(t, c, B, K) {
+    const ph = 3 * t + 2 * Math.PI * c / 3, rad = K.R + K.r * Math.cos(ph);
+    return B.c0.clone().addScaledVector(B.u, rad * Math.cos(2 * t)).addScaledVector(B.v, rad * Math.sin(2 * t)).addScaledVector(B.n, K.z * K.r * Math.sin(ph));
+}
+// Frenet frame by finite differences (crystal file's computeQuaternionFrame): N from dT, B = T × N
+function frenet(t, c, B, K) {
+    const e = 0.01, p0 = trefoilPoint(t, c, B, K), p1 = trefoilPoint(t + e, c, B, K), p2 = trefoilPoint(t + 2 * e, c, B, K);
+    const T = p1.clone().sub(p0).normalize(), T2 = p2.clone().sub(p1).normalize(), N = T2.sub(T).normalize(), Bn = new THREE.Vector3().crossVectors(T, N).normalize();
+    return { p: p0, N, B: Bn };
+}
+const _tmp = new THREE.Vector3();
 function updateCrystal(frameF) {
     if (!crystal || !L2) return;
-    const { G, solState, Fr, B } = L2, Bs = crystal.basis;
-    // 1° per outer frame: 720 frames = 720° = the 8-step spinor cycle
-    crystal.spin.quaternion.setFromAxisAngle(Bs.n, frameF * D2R);
-    const twist = Fr.openExact ? 0 : Math.min(0.7, Fr.openAngle * 6);   // shear from the measured holonomy
-    crystal.tref.forEach((T, c) => {
-        const r = G.r[c].toNumber(), mag = Math.min(1, Math.abs(r) / 5), sep = Math.PI - (Math.PI / 2) * mag;
+    const { G, solState, Fr, B } = L2, Bs = crystal.basis, K = crystalCarrier();
+    const timeRad = frameF / 720 * 4 * Math.PI;                       // the crystal file's 720-step loop: t advances 4π
+    crystal.spin.quaternion.setFromAxisAngle(Bs.n, crys.spin ? frameF * D2R : 0);   // optional 1°-per-frame spinor turn
+    crystal.lattice.visible = crys.lattice; crystal.lemma.visible = crys.lemma; crystal.nodeGroup.visible = crys.nodes;
+    crystal.bridgeT2.visible = crys.bridge; crystal.bridgeT3.visible = crys.bridge && state.tier3;
+    const shear = Fr.openExact ? 0 : Math.min(0.7, Fr.openAngle * 6);   // measured-holonomy shear
+    const buckle = crys.buckle / U20, sepA = crys.pairSep * 0.5;
+    crystal.pairs.forEach((P, c) => {
+        const r = G.r[c].toNumber(), mag = Math.min(1, Math.abs(r) / 5);
         const e = Bs.u.clone().multiplyScalar(Math.cos(2 * Math.PI * c / 3)).addScaledVector(Bs.v, Math.sin(2 * Math.PI * c / 3));
-        T.g.position.copy(e.multiplyScalar(0.25 * Math.tanh(r / 3)));
-        T.g.quaternion.setFromAxisAngle(Bs.n, (c - 1) * twist);
-        const pa = [], pb = [], delta = 0.06 * (1 + 0.8 * mag);
-        for (let i = 0; i <= 360; i++) {
-            const t = i / 360 * 2 * Math.PI, p = trefoilPoint(t, c, Bs), q = trefoilPoint(t + 1e-3, c, Bs), tan = q.sub(p).normalize();
-            const nrm = new THREE.Vector3().crossVectors(tan, Bs.n).normalize(), bin = new THREE.Vector3().crossVectors(tan, nrm), psi = 3 * t + frameF * D2R * 2;
-            pa.push(p.clone().addScaledVector(nrm, 0.06 * Math.cos(psi)).addScaledVector(bin, 0.06 * Math.sin(psi)));
-            pb.push(p.clone().addScaledVector(nrm, delta * Math.cos(psi + sep)).addScaledVector(bin, delta * Math.sin(psi + sep)));
+        P.g.position.copy(e.multiplyScalar(0.25 * Math.tanh(r / 3)));
+        P.g.quaternion.setFromAxisAngle(Bs.n, (c - 1) * shear);
+        const pa = P.a.geometry.attributes.position, pb = P.b.geometry.attributes.position, sepB = Math.PI - sepA - mag * (Math.PI - 2 * sepA);
+        const cen = new THREE.Vector3();
+        for (let i = 0; i < PARTICLES; i++) {
+            const t = ((i / PARTICLES) * 2 * Math.PI + timeRad) % (2 * Math.PI), f = frenet(t, c, Bs, K), tw = t * crys.twist;
+            const a = f.p.clone().addScaledVector(f.N, buckle * Math.cos(tw + sepA)).addScaledVector(f.B, buckle * Math.sin(tw + sepA));
+            const b = f.p.clone().addScaledVector(f.N, buckle * Math.cos(tw + sepB)).addScaledVector(f.B, buckle * Math.sin(tw + sepB));
+            pa.setXYZ(i, a.x, a.y, a.z); pb.setXYZ(i, b.x, b.y, b.z); cen.add(a).add(b);
         }
-        setLine(T.a, pa); setLine(T.b, pb);
+        pa.needsUpdate = pb.needsUpdate = true;
+        P.centroid.copy(cen.multiplyScalar(1 / (2 * PARTICLES))).applyQuaternion(P.g.quaternion).add(P.g.position);
+        P.node.position.copy(P.centroid);
     });
-    // poles move along the axis with s; tier-3 longitudes join them to the nine rays
-    const sAx = 0.25 * Math.tanh(G.s.toNumber() / 3);
+    // ghost poles on the C3 axis: ±(1, 1, 1) when the geometry is locked, otherwise at the pole height
+    const poleR = crys.lock ? Math.sqrt(3) : crys.poleH / U20, sAx = 0.25 * Math.tanh(G.s.toNumber() / 3);
     crystal.poleGroup.visible = state.tier3;
     crystal.poleGroup.position.copy(Bs.n.clone().multiplyScalar(sAx));
-    const rays = C9.pts.map(p => new THREE.Vector3(p[0], p[1], p[2]).sub(crystal.poleGroup.position));
-    setLine(crystal.longs, rays.flatMap(p => [crystal.poles[0].position, p, crystal.poles[1].position, p]));
+    const perp1 = Bs.u, perp2 = Bs.v;
+    crystal.ghosts.forEach(gh => {
+        gh.node.position.copy(Bs.n.clone().multiplyScalar(gh.sg * poleR));
+        const pos = gh.stream.geometry.attributes.position;
+        for (let i = 0; i < GHOST_PARTICLES; i++) {
+            const t = i / GHOST_PARTICLES, ang = t * Math.PI * 8 + timeRad, h = t * poleR * gh.sg;
+            _tmp.copy(Bs.n).multiplyScalar(h).addScaledVector(perp1, 0.1 * Math.cos(ang)).addScaledVector(perp2, 0.1 * Math.sin(ang));
+            pos.setXYZ(i, _tmp.x, _tmp.y, _tmp.z);
+        }
+        pos.needsUpdate = true;
+    });
     const g = gaugeDisplay(G), coreP = new THREE.Vector3(g[0], g[1], g[2]);
     crystal.core.position.copy(coreP); crystal.coreGlow.position.copy(coreP);
     setLine(crystal.arrow, [new THREE.Vector3(), coreP]);
+    const nodes = crystal.pairs.map(P => P.centroid), north = crystal.ghosts[0].node.position.clone().add(crystal.poleGroup.position), south = crystal.ghosts[1].node.position.clone().add(crystal.poleGroup.position);
+    setLine(crystal.bridgeT2, [nodes[0], coreP, nodes[1], coreP, nodes[2], coreP, nodes[0], nodes[1], nodes[1], nodes[2], nodes[2], nodes[0]]);
+    setLine(crystal.bridgeT3, [north, coreP, south, coreP, ...nodes.flatMap(p => [p, north, p, south])]);
+    updateScope(timeRad);
     const col = solState === 'locked' ? 0xf5c542 : solState === 'tol' ? 0xfbbf24 : 0xf87171;
     crystal.cube.material.color.setHex(col); crystal.cube.material.opacity = solState === 'locked' ? 0.95 : 0.4;
     crystal.core.material.color.setHex(solState === 'locked' ? 0xffe08a : col);
@@ -1749,8 +1849,35 @@ function updateCrystal(frameF) {
     crystal.camera.position.setFromSphericalCoords(o.radius, o.phi, o.theta); crystal.camera.lookAt(0, 0, 0);
     crystal.renderer.render(crystal.scene, crystal.camera);
     const k = Math.floor(frameF / 90) % 8 + 1, red = GAUSS_STEPS[k - 1].red, spinSign = Math.cos(frameF * D2R / 2) >= 0 ? '+' : '−';
-    $('#sol-step').innerHTML = `frame ${Math.floor(frameF)}/720 · turn ${Math.floor(frameF)}°<br>step k = ${k} · spinor ${fmtGauss(red)}${k === 2 || k === 6 ? ' · window' : ''} · sign ${spinSign}`;
+    $('#sol-step').innerHTML = `step k = ${k} · spinor ${fmtGauss(red)}${k === 2 || k === 6 ? ' · window' : ''} · sign ${spinSign}`;
+    $('#step-count').textContent = String(Math.floor(frameF)).padStart(3, '0');
+    $('#progress-fill').style.width = (frameF / 720 * 100).toFixed(2) + '%';
     const st = $('#sol-state'); st.className = `sol-${solState}`; st.textContent = solState === 'locked' ? 'LOCKED · Y_R = 0, H = 1' : solState === 'tol' ? 'BREATHING · within tolerance' : 'ACTIVE · residual or frame error';
+}
+// Orthogonal scope (the crystal file's 16-node ring), here the 16 streams: ring cell j = (class j mod 3, structure ⌊j/3⌋),
+// chords j → j + 3 join each class's group of four, and the 4 inner nodes are w, x, y, z of the measured holonomy
+function updateScope(timeRad) {
+    crystal.scope.visible = crys.scope;
+    if (!crys.scope || !L2) return;
+    const { B, Fr } = L2, pts = [];
+    crystal.scopeNodes.forEach((m, i) => {
+        if (i < 12) {
+            const c = i % 3, s = Math.floor(i / 3), ang = i / 12 * 2 * Math.PI;
+            const push = s === 3 ? 0.35 * Math.tanh(Math.abs(B[c].YR.toNumber() / SIGMA[c]) / 3) : 0;
+            const rad = 0.55 + push;
+            m.position.set(rad * Math.cos(ang), s === 3 ? 0.12 * Math.sign(B[c].YR.toNumber()) * Math.tanh(Math.abs(B[c].YR.toNumber() / SIGMA[c])) : 0, rad * Math.sin(ang));
+        } else {
+            const j = i - 12, comp = Fr.open[j].toNumber(), dev = j === 0 ? 1 - comp : comp;
+            const lift = Math.sign(dev) * Math.min(0.3, Math.log10(1 + Math.abs(dev) * 1e9) / 30), ang = j / 4 * 2 * Math.PI + Math.PI / 4;
+            m.position.set(0.2 * Math.cos(ang), lift, 0.2 * Math.sin(ang));
+        }
+        pts.push(m.position);
+    });
+    const seg = [];
+    for (let j = 0; j < 12; j++) seg.push(pts[j], pts[(j + 1) % 12], pts[j], pts[(j + 3) % 12]);
+    for (let j = 0; j < 4; j++) seg.push(pts[12 + j], pts[12 + (j + 1) % 4]);
+    setLine(crystal.scopeLinks, seg);
+    crystal.scope.rotation.y = -timeRad;
 }
 
 // =====================================================================
@@ -1798,6 +1925,21 @@ function wireControls() {
     $('#quad-rows').addEventListener('click', e => { const td = e.target.closest('td[data-q]'); if (!td) return; const k = td.dataset.q; quadErased.has(k) ? quadErased.delete(k) : quadErased.add(k); lastB && renderQuad(lastB); });
     $('#quad-reset').onclick = () => { quadErased.clear(); lastB && renderQuad(lastB); };
     $('#mk2-tamper').onclick = tamper2;
+    // crystal controls (the crystal file's sliders, in its units: 20 per cubit)
+    const cs = (id, key, digits) => { const el = $(id); el.oninput = () => { crys[key] = +el.value; $(id + '-v').textContent = (+el.value).toFixed(digits); lastLemmaKey2 = ''; }; };
+    cs('#c-twist', 'twist', 2); cs('#c-buckle', 'buckle', 1); cs('#c-sep', 'pairSep', 1); cs('#c-torus', 'torusR', 1); cs('#c-z', 'zScale', 1); cs('#c-pole', 'poleH', 1);
+    const lockUI = () => {
+        ['#c-torus', '#c-z', '#c-pole'].forEach(id => { $(id).disabled = crys.lock; });
+        if (crys.lock) [['#c-torus', 'torusR', LEMMA_RCAR * U20], ['#c-z', 'zScale', 10], ['#c-pole', 'poleH', Math.sqrt(3) * U20]].forEach(([id, key, v]) => { crys[key] = v; $(id).value = v; $(id + '-v').textContent = v.toFixed(1); });
+        lastLemmaKey2 = '';
+    };
+    const ck = (id, key, after) => { const el = $(id); el.onchange = () => { crys[key] = el.checked; if (after) after(); }; };
+    ck('#c-lock', 'lock', lockUI); ck('#c-lattice', 'lattice'); ck('#c-bridge', 'bridge'); ck('#c-nodes', 'nodes'); ck('#c-lemma', 'lemma'); ck('#c-scope', 'scope'); ck('#c-spin', 'spin');
+    lockUI();
+    $('#progress-container').onclick = e => {
+        const r = e.currentTarget.getBoundingClientRect(), pct = Math.max(0, Math.min(0.9999, (e.clientX - r.left) / r.width));
+        sim.t = sim.prevT = Math.floor(sim.t) + pct; updateLayerB(true);
+    };
     $('#btn-verify').onclick = runVerificationUI;
     $('#btn-clear').onclick = () => { logEl.innerHTML = ''; };
     const themeBtn = $('#btn-theme');
