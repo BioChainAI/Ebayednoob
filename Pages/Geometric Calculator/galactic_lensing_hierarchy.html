@@ -147,6 +147,10 @@ table.res td.erased { color: var(--fail); text-decoration: line-through; }
 table.res td.recov { color: var(--pass); }
 table.res td.pk.sel { outline: 1px solid var(--gold); outline-offset: -1px; }
 .rnd { color: var(--tol); margin-left: 2px; }
+.fk-bar { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-top: 8px; font-size: 12px; }
+.fk-bar label { color: var(--muted); }
+.fk-bar a { color: var(--gold); }
+.loss { color: var(--fail); } .nolss { color: var(--pass); }
 .st-na { color: var(--muted); border: 1px solid var(--line-2); }
 table.lemmas td { white-space: normal; text-align: left; font-family: var(--sans); font-size: 12px; line-height: 1.4; }
 table.lemmas td:first-child { font-family: var(--mono); white-space: nowrap; }
@@ -184,7 +188,7 @@ table.lemmas th { text-align: left; }
 <div class="controls" aria-label="Simulation controls">
     <div class="grp"><button id="btn-play" type="button">Pause</button></div>
     <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-1" max="1" step="0.01" value="0"><span class="val" id="speed-v">1.0×</span></div>
-    <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-rays" type="button" class="on">Rays</button><button id="btn-frames" type="button" class="on" title="Tier frames: Lemma 4 standard Rot_x(π/2) for even n, Rot_y(π/2) for odd n. Off: engine v10 frames.">Lemma 4 frames</button></div>
+    <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-rays" type="button" class="on">Rays</button><button id="btn-frames" type="button" class="on" title="On: the exact Lemma 4 frames, Rot_x(π/2) for even n and Rot_y(π/2) for odd n, with no engine offsets (the clutch then changes only the spin rate). Off: engine v10 frames with tension, torsion and clutch slip.">Lemma 4 frames</button></div>
     <div class="grp"><label for="eta">Clutch η</label><input id="eta" type="range" min="0" max="1" step="0.01" value="1"><span class="val" id="eta-v">1.00</span></div>
     <div class="grp"><label for="noise">Noise</label><input id="noise" type="range" min="0" max="10" step="0.5" value="0"><span class="val" id="noise-v">0σ</span></div>
     <div class="grp"><label for="signal">Inject signal</label>
@@ -236,6 +240,11 @@ table.lemmas th { text-align: left; }
         <div class="sec">
             <h3>64-bit Einstein Tile packets <span class="tag t-DEFINITION" data-basis="Monograph §6.1 Table 4 with the stream use of spec §5.3: cycle step k − 1 [63:61] (Lemma 8), wheel unit [60:58] (Lemma 4 Part 5), structure [57:56] (00 I, 01 II, 10 III, 11 R), gate byte [55:48] = component w + slice counter (epoch mod 64), step-multiplexed index [47:44], Form ID [43:40] = 3, stream slot [39:36] = 4·class + structure, scale [35:32] = 0, payload [31:0] = binary32 stored bit for bit. ≈ marks a value binary32 cannot hold exactly; its exact rational goes into the Merkle leaf. Click a packet to decode it.">§6.1</span></h3>
             <div class="tbl-wrap"><table class="res"><thead><tr><th>stream</th><th>I</th><th>II</th><th>III</th><th>R</th></tr></thead><tbody id="pk-rows"></tbody></table></div>
+            <div class="fk-bar"><label for="frame-pk">Frame-leg packets</label>
+                <select id="frame-pk"><option value="off">Off</option><option value="f3">Form 3: 4 components per leg (slots 12–15)</option><option value="f1">Form 1: Hurwitz, 1 packet per leg</option></select>
+                <a href="galactic_companion.html#framepk">what is this?</a></div>
+            <div class="tbl-wrap" id="fk-wrap" hidden><table class="res"><thead id="fk-head"></thead><tbody id="fk-rows"></tbody></table></div>
+            <div class="mono-sm" id="fk-note"></div>
             <div class="mono-sm" id="pk-decode" style="margin-top:6px"></div>
         </div>
     </section>
@@ -892,16 +901,69 @@ function makePackets(ck, B) {
         const core = f32.getUint32(0), exact = fracOfDouble(f32.getFloat32(0)).eq(rat);
         const word = packTile({ step: ck.piCycleStepK, wheel: wheelSector(ck.k), struct: s, gate: (0 << 6) | (ck.epoch % 64),
                                 mux: muxIndex(ck.piCycleStepK, ck.k, slot), form: 3, slot, scale: 0, core });
-        out.push({ c, s, slot, rat, word, exact });
+        out.push({ kind: 'data', key: `d:${slot}`, c, s, slot, rat, word, exact });
     }
     return out;
 }
-// Lemma 15 Part 3: τ12 = H(G12), τd = H(Gd ‖ τd+1); leaf Gd = tile word ‖ exact rational of stream d − 1
-const leafBytes = p => concatBytes(wordBytes(p.word), utf8(p.rat.toString()));
+// ---------- Frame-leg packets (spec §5.3: "12–15: the four quaternion components of a frame leg") ----------
+// Stream ID for leg ℓ = (structure bits ℓ, slot 12–15), the same pattern as the data streams (structure s, slot 4c + s)
+// [DEFINITION]. Form 3: one binary32 component per packet, component also in gate bits 55–54. Form 1: the whole leg in one packet.
+const LEG_NAMES = ['H1 ICRS → Galactic', 'H2 Galactic → Sgr A*', 'H3 Sgr A* → pulsar', 'H4 pulsar → observer'];
+const GATE_HOLONOMY = 0b11;   // geometric gate (Forms 0–2): locus 0, C9 offset 0, harmonic flag 11 = holonomy H
+// Form 1 (Table 5): 2Q gcd-reduced and sign-normalized (first non-zero coordinate positive). Core word [DEFINITION of byte order]:
+// bits 31–24 = loss flag (bit 31) + 2w (bits 30–24), bits 23–16 = x, 15–8 = y, 7–0 = z, signed bytes in [−127, 127].
+function hurwitzEncode(q) {
+    const L = q.reduce((l, f) => l / gcdB(l, f.d) * f.d, 1n);
+    let v = q.map(f => 2n * f.n * (L / f.d));
+    const g = v.reduce((a, x) => gcdB(a, x), 0n) || 1n;
+    v = v.map(x => x / g);
+    if ((v.find(x => x !== 0n) || 0n) < 0n) v = v.map(x => -x);
+    const bitsNeeded = Math.max(...v.map(x => absB(x).toString(2).length));
+    let b, loss = false;
+    if (v[0] <= 127n && v.slice(1).every(x => absB(x) <= 127n)) b = v.map(Number);
+    else {   // renormalize to the nearest representable direction on the 7-bit grid and set the loss flag
+        loss = true;
+        let f = q.map(x => x.toNumber()); if ((f.find(x => x !== 0) || 0) < 0) f = f.map(x => -x);
+        const m = Math.max(...f.map(Math.abs)); b = f.map(x => Math.round(x * 127 / m));
+    }
+    const byte = x => (x < 0 ? 256 + x : x) & 0xff;
+    const core = (((loss ? 0x80 : 0) | (b[0] & 0x7f)) << 24 | byte(b[1]) << 16 | byte(b[2]) << 8 | byte(b[3])) >>> 0;
+    return { b, loss, core, bitsNeeded, err: hurwitzAngleError(q, b) };
+}
+function hurwitzDecode(core) {
+    const sb = x => (x > 127 ? x - 256 : x);
+    return { loss: !!(core >>> 31), b: [(core >>> 24) & 0x7f, sb((core >>> 16) & 0xff), sb((core >>> 8) & 0xff), sb(core & 0xff)] };
+}
+// Rotation-angle difference between the exact leg and the decoded direction: 4·asin(|q̂ − b̂|/2) with matched signs
+function hurwitzAngleError(q, b) {
+    const f = q.map(x => x.toNumber()), nb = Math.hypot(...b);
+    if (!nb) return Math.PI;
+    let bh = b.map(x => x / nb); const dot = f.reduce((s, x, i) => s + x * bh[i], 0); if (dot < 0) bh = bh.map(x => -x);
+    return 4 * Math.asin(Math.min(1, Math.hypot(...f.map((x, i) => x - bh[i])) / 2));
+}
+function makeFramePackets(ck, legs, mode) {
+    const out = [], step = ck.piCycleStepK, wheel = wheelSector(ck.k);
+    legs.forEach((q, l) => {
+        if (mode === 'f3') q.forEach((comp, j) => {
+            f32.setFloat32(0, comp.toNumber());
+            const core = f32.getUint32(0), exact = fracOfDouble(f32.getFloat32(0)).eq(comp);
+            const word = packTile({ step, wheel, struct: l, gate: (j << 6) | (ck.epoch % 64), mux: muxIndex(step, ck.k, 12 + j), form: 3, slot: 12 + j, scale: 0, core });
+            out.push({ kind: 'f3', key: `f:${l}:${j}`, leg: l, j, rat: comp, word, exact, leafText: comp.toString() });
+        });
+        else {
+            const h = hurwitzEncode(q);
+            const word = packTile({ step, wheel, struct: l, gate: GATE_HOLONOMY, mux: muxIndex(step, ck.k, 12 + l), form: 1, slot: 12 + l, scale: 0, core: h.core });
+            out.push({ kind: 'f1', key: `f:${l}:q`, leg: l, q, h, word, exact: !h.loss, leafText: q.map(String).join(',') });
+        }
+    });
+    return out;
+}
+// Lemma 15 Part 3: τN = H(GN), τd = H(Gd ‖ τd+1); leaf Gd = tile word ‖ the exact value it stands for
+const leafBytes = p => concatBytes(wordBytes(p.word), utf8(p.leafText !== undefined ? p.leafText : p.rat.toString()));
 function merkleChain(leaves) {
-    const tau = new Array(13);
-    tau[12] = sha256(leaves[11]);
-    for (let d = 11; d >= 1; d--) tau[d] = sha256(concatBytes(leaves[d - 1], tau[d + 1]));
+    const N = leaves.length, tau = new Array(N + 1);
+    tau[N] = sha256(leaves[N - 1]);
+    for (let d = N - 1; d >= 1; d--) tau[d] = sha256(concatBytes(leaves[d - 1], tau[d + 1]));
     return tau;
 }
 
@@ -961,14 +1023,17 @@ const STATIC = (() => {
 
 // ---------- Panel D state and rendering ----------
 const quadErased = new Set();
-let lastPackets = null, lastTau = null, selPacket = 5, lastLemmaKey = '';
+let lastPackets = null, lastFramePk = [], lastAll = null, lastTau = null, selKey = 'd:5', lastLemmaKey = '', fkMode = '';
 function updateLemmaLayer(ck, B, Fr) {
     const packets = makePackets(ck, B);
-    const tau = merkleChain(packets.map(leafBytes));
-    lastPackets = packets; lastTau = tau;
+    const frames = state.framePk === 'off' ? [] : makeFramePackets(ck, Fr.legs, state.framePk);
+    const all = packets.concat(frames);
+    const tau = merkleChain(all.map(leafBytes));
+    lastPackets = packets; lastFramePk = frames; lastAll = all; lastTau = tau;
+    renderFrameTable(frames);
     // Panel B packet table (§6.1)
     // cells are built once and updated in place so clicks are never lost to a re-render
-    if (!$('#pk-rows td.pk')) $('#pk-rows').innerHTML = CLASSES.map((cls, c) => `<tr><td>${cls}</td>${[0, 1, 2, 3].map(s => `<td class="pk${4 * c + s === selPacket ? ' sel' : ''}" data-slot="${4 * c + s}"></td>`).join('')}</tr>`).join('');
+    if (!$('#pk-rows td.pk')) $('#pk-rows').innerHTML = CLASSES.map((cls, c) => `<tr><td>${cls}</td>${[0, 1, 2, 3].map(s => `<td class="pk${`d:${4 * c + s}` === selKey ? ' sel' : ''}" data-key="d:${4 * c + s}" data-slot="${4 * c + s}"></td>`).join('')}</tr>`).join('');
     packets.forEach(p => { const td = $(`#pk-rows td[data-slot="${p.slot}"]`);
         td.innerHTML = hexWord(p.word) + (p.exact ? '' : '<span class="rnd">≈</span>');
         td.title = p.exact ? 'binary32 holds the exact value' : 'binary32 is rounded; the exact rational is in the Merkle leaf'; });
@@ -976,17 +1041,57 @@ function updateLemmaLayer(ck, B, Fr) {
     // Merkle (Lemma 15)
     const halos = [...new Set(packets.map(p => decodeTile(p.word).halo))].map(h => '0x' + h.toString(16).toUpperCase().padStart(2, '0'));
     $('#mk-out').innerHTML = `root τ₁ <span title="${toHex(tau[1])}">${toHex(tau[1]).slice(0, 24)}…</span><br>
-        τ₁₂ = H(G₁₂) <span title="${toHex(tau[12])}">${toHex(tau[12]).slice(0, 16)}…</span> · 12 leaves (tile ‖ exact rational)<br>
+        τ<sub>${all.length}</sub> = H(G<sub>${all.length}</sub>) <span title="${toHex(tau[all.length])}">${toHex(tau[all.length]).slice(0, 16)}…</span> · ${all.length} leaves (tile ‖ exact value)${frames.length ? `: 12 data + ${frames.length} frame` : ''}<br>
         South Halo [63:56] this update: ${halos.join(', ')} · <span style="color:var(--muted)">2⁵⁶/2⁸ = 2⁴⁸ payloads per value: pre-filter only</span>`;
     renderQuad(B);
-    const key = [ck.epoch, state.noise, state.signal, state.error ? state.error.leg : -1, Fr.openStatus, state.sight].join('|');
-    if (key !== lastLemmaKey) { lastLemmaKey = key; renderLemmaRows(B, Fr, packets, tau); }
+    const key = [ck.epoch, state.noise, state.signal, state.error ? state.error.leg : -1, Fr.openStatus, state.sight, state.framePk, state.lemmaFrames].join('|');
+    if (key !== lastLemmaKey) { lastLemmaKey = key; renderLemmaRows(B, Fr, all, tau); }
+}
+const fmtErr = a => (a === 0 ? '0 (exact)' : a / D2R >= 0.01 ? (a / D2R).toFixed(3) + '°' : fmtAngle(a));
+function renderFrameTable(frames) {
+    const mode = state.framePk;
+    $('#fk-wrap').hidden = mode === 'off';
+    if (mode !== fkMode) {
+        fkMode = mode;
+        if (mode === 'f3') {
+            $('#fk-head').innerHTML = '<tr><th>leg</th><th>w (slot 12)</th><th>x (13)</th><th>y (14)</th><th>z (15)</th></tr>';
+            $('#fk-rows').innerHTML = LEG_NAMES.map((n, l) => `<tr><td>${n}</td>${[0, 1, 2, 3].map(j => `<td class="pk" data-key="f:${l}:${j}"></td>`).join('')}</tr>`).join('');
+        } else if (mode === 'f1') {
+            $('#fk-head').innerHTML = '<tr><th>leg</th><th>tile (Form 1)</th><th>2Q bytes (w, x, y, z)</th><th>exact needs</th><th>loss</th><th>angle error</th></tr>';
+            $('#fk-rows').innerHTML = LEG_NAMES.map((n, l) => `<tr><td>${n}</td><td class="pk" data-key="f:${l}:q"></td><td id="fk-b-${l}"></td><td id="fk-n-${l}"></td><td id="fk-l-${l}"></td><td id="fk-e-${l}"></td></tr>`).join('');
+        } else { $('#fk-rows').innerHTML = ''; $('#fk-head').innerHTML = ''; }
+        if (selKey.startsWith('f:')) selKey = 'd:5';
+    }
+    frames.forEach(p => {
+        const td = $(`#fk-rows td[data-key="${p.key}"]`); if (!td) return;
+        td.classList.toggle('sel', p.key === selKey);
+        td.innerHTML = hexWord(p.word) + (p.exact ? '' : '<span class="rnd">≈</span>');
+        if (p.kind === 'f1') {
+            $(`#fk-b-${p.leg}`).textContent = p.h.b.join(', ');
+            $(`#fk-n-${p.leg}`).textContent = `${p.h.bitsNeeded} bits`;
+            $(`#fk-l-${p.leg}`).innerHTML = p.h.loss ? '<span class="loss">set</span>' : '<span class="nolss">clear</span>';
+            $(`#fk-e-${p.leg}`).textContent = fmtErr(p.h.err);
+        }
+    });
+    const lossy = frames.filter(p => !p.exact).length;
+    $('#fk-note').innerHTML = mode === 'off' ? '' : mode === 'f3'
+        ? `16 packets: leg ℓ in structure bits, component in slot 12–15 and gate bits 55–54. ${16 - lossy}/16 components fit binary32 exactly; the rest are marked ≈, and every exact component is in its Merkle leaf.`
+        : `4 packets, one per leg. Form 1 holds a quaternion exactly only when 2Q fits 7-bit/8-bit bytes; these legs need ${Math.min(...frames.map(p => p.h.bitsNeeded))}–${Math.max(...frames.map(p => p.h.bitsNeeded))} bits (Lemma 13), so the loss flag is set and the direction is rounded. The exact legs are in the Merkle leaves.`;
 }
 function renderDecode() {
-    const p = lastPackets && lastPackets[selPacket]; if (!p) return;
+    const p = lastAll && lastAll.find(x => x.key === selKey); if (!p) return;
     const d = decodeTile(p.word);
-    $('#pk-decode').innerHTML = `slot ${d.slot} (${CLASSES[p.c]}, ${STRUCT_NAMES[d.struct]}) · step k = ${d.step} (θ = ${STEP_THETA[d.step - 1]}, ${phaseOf(d.step)}) · wheel u = ${WHEEL[d.wheel]} (${B_PLUS.includes(WHEEL[d.wheel]) ? 'B₊' : 'B₋'}) · ` +
-        `index ${d.mux} · Form ${d.form} (exact binary32) · component ${'wxyz'[d.comp]} · slice ${d.slice} · scale 2⁻${d.scale} · payload ${Math.fround(p.rat.toNumber())} ${p.exact ? '= exact value' : `≈ ${p.rat.toString()}`}`;
+    const head = `step k = ${d.step} (θ = ${STEP_THETA[d.step - 1]}, ${phaseOf(d.step)}) · wheel u = ${WHEEL[d.wheel]} (${B_PLUS.includes(WHEEL[d.wheel]) ? 'B₊' : 'B₋'}) · index ${d.mux} · `;
+    if (p.kind === 'data') $('#pk-decode').innerHTML = `slot ${d.slot} (${CLASSES[p.c]}, ${STRUCT_NAMES[d.struct]}) · ` + head +
+        `Form ${d.form} (exact binary32) · component ${'wxyz'[d.comp]} · slice ${d.slice} · scale 2⁻${d.scale} · payload ${Math.fround(p.rat.toNumber())} ${p.exact ? '= exact value' : `≈ ${p.rat.toString()}`}`;
+    else if (p.kind === 'f3') $('#pk-decode').innerHTML = `slot ${d.slot} (projection ${'wxyz'[d.slot - 12]}) · structure bits ${d.struct} = leg ${LEG_NAMES[d.struct]} · ` + head +
+        `Form ${d.form} (exact binary32) · component ${'wxyz'[d.comp]} · slice ${d.slice} · payload ${Math.fround(p.rat.toNumber())} ${p.exact ? '= exact value' : `≈ ${p.rat.toString()}`}`;
+    else {
+        const h = hurwitzDecode(d.core);
+        $('#pk-decode').innerHTML = `slot ${d.slot} · structure bits ${d.struct} = leg ${LEG_NAMES[d.struct]} · ` + head +
+            `Form ${d.form} (Hurwitz) · gate: locus ${(d.gate >> 5) & 7}, C9/sense ${(d.gate >> 2) & 7}, harmonic flag ${(d.gate & 3).toString(2).padStart(2, '0')} (holonomy) · ` +
+            `2Q = (${h.b.join(', ')}) · loss flag ${h.loss ? '<span class="loss">set</span>: direction rounded by ' + fmtErr(p.h.err) : '<span class="nolss">clear</span>: exact'} · exact leg needs ${p.h.bitsNeeded}-bit coordinates`;
+    }
 }
 function renderQuad(B) {
     const vals = B.map(b => [...b.Ys, b.YR]);
@@ -1023,13 +1128,22 @@ function renderLemmaRows(B, Fr, packets, tau) {
     const openNorm = qnorm(Fr.open).eq(Fraction.ONE);
     const A = qmul(Fr.legs[0], Fr.legs[1]), balancer = qeq(qmul(A, qinv(A)), Q_ONE);
     const legBits = Fr.legs.map(qbits), prodBits = qbits(Fr.open);
-    const roundTrip = packets.every(p => { const d = decodeTile(p.word); return d.slot === p.slot && d.struct === p.s && d.form === 3 && packTile({ ...d, wheel: d.wheel, core: d.core }) === p.word; });
-    const exactCount = packets.filter(p => p.exact).length;
+    const dataPk = packets.filter(p => p.kind === 'data'), framePk = packets.filter(p => p.kind !== 'data');
+    const roundTrip = packets.every(p => packTile({ ...decodeTile(p.word) }) === p.word) &&
+        dataPk.every(p => { const d = decodeTile(p.word); return d.slot === p.slot && d.struct === p.s && d.form === 3; }) &&
+        framePk.every(p => { const d = decodeTile(p.word); return d.struct === p.leg && d.slot === 12 + (p.kind === 'f3' ? p.j : p.leg) && d.form === (p.kind === 'f3' ? 3 : 1); });
+    const exactCount = dataPk.filter(p => p.exact).length;
+    const f1 = framePk.filter(p => p.kind === 'f1');
+    const f1ok = f1.every(p => { const h = hurwitzDecode(decodeTile(p.word).core); return h.loss === p.h.loss && h.b.join() === p.h.b.join() && (p.h.loss || p.h.err < 1e-12); });
+    const f3 = framePk.filter(p => p.kind === 'f3');
+    const f3norm = f3.length ? Math.max(...[0, 1, 2, 3].map(l => Math.abs(f3.filter(p => p.leg === l).reduce((s, p) => s + Math.fround(p.rat.toNumber()) ** 2, 0) - 1))) : 0;
+    const framesDrawn = drawnFramesCheck();
     const parity = B.every(b => b.identity && b.recovered);
     const rows = [
         ['1–3', 'Zhao\'s synthetic lemmas (homothety, spiral similarity, symmedian bundle)', 'No triangle-centre construction is used by this page.', NA],
         ['4', 'Tier laws R<sub>n</sub> = 5n² + 15n + 15, r<sub>n</sub> = 2n + 4, W<sub>n</sub> = 16 − 2n; ρ<sub>n</sub> + W<sub>n</sub> = 20, ΣW = 60 (Part 1)', 'All five tiers of TIERS_SPEC, exact integers', ok(S.l4p1)],
-        ['4', 'Tier frames Rot<sub>x</sub>(π/2) (even n), Rot<sub>y</sub>(π/2) (odd n); U<sub>even</sub> is the 120° turn about (−1, 1, 1) (Part 2). Used by Panel A when "Lemma 4 frames" is on', 'U<sub>even</sub> = Rot<sub>y</sub>Rot<sub>x</sub><sup>−1</sup> equals the lemma\'s integer matrix, U³ = I, axis fixed', ok(S.l4p2)],
+        ['4', 'Tier frames Rot<sub>x</sub>(π/2) (even n), Rot<sub>y</sub>(π/2) (odd n); U<sub>even</sub> is the 120° turn about (−1, 1, 1) (Part 2)', 'U<sub>even</sub> = Rot<sub>y</sub>Rot<sub>x</sub><sup>−1</sup> equals the lemma\'s integer matrix, U³ = I, axis fixed', ok(S.l4p2)],
+        ['4', 'Panel A draws the pure Lemma 4 frames when "Lemma 4 frames" is on (no engine offsets)', state.lemmaFrames ? (framesDrawn === null ? 'Scene not loaded' : `Each drawn step q<sub>n+1</sub>q<sub>n</sub><sup>−1</sup> is 120° about ±(−1, 1, 1)/√3 to ${framesDrawn.toExponential(1)} (floating point)`) : 'Off: Panel A shows the engine v10 frames', state.lemmaFrames ? (framesDrawn === null ? DEFN : ok(framesDrawn < 1e-9)) : '<span class="st st-na">off</span>'],
         ['4', 'Hurwitz spinor h = (1 − i + j + k)/2 (Part 4)', 'N(h) = 1, h³ = −1, h⁶ = +1 in exact quaternions', ok(S.l4p4)],
         ['4', '30-node wheel and its 8 units, split by (·/5) into B₊ = {1, 11, 19, 29} (Part 5); tile field [60:58]', 'φ(30) = 8 units, B₊ = quadratic residues mod 5', ok(S.l4p5)],
         ['5', 'Lower Manifold: voxel cube, core, harmonic bundle, Hurwitz box', 'The page has no voxel cube or quaternion core.', NA],
@@ -1048,12 +1162,13 @@ function renderLemmaRows(B, Fr, packets, tau) {
         ['12', 'Middle-gear blocks A<sub>l</sub> = {m : ⌊10m/72⌋ = l} (Part 1); the page\'s outerFrameN = 12·pulseCount mod 720', `Sizes (${S.blocks.join(', ')})`, ok(S.l12blocks)],
         ['13', 'Denominator growth in S³ ∩ ℚ⁴ (Part 1); short fixed chains instead of renormalization (Part 3)', `Leg denominators ${legBits.join(', ')} bits; product ${prodBits} bits ≤ ${legBits.reduce((a, b) => a + b, 0)}`, ok(prodBits <= legBits.reduce((a, b) => a + b, 0))],
         ['14', 'Fokker–Planck sieve and circularity boundary', 'No prime sampling is done here.', NA],
-        ['15', 'Recursive Merkle chain τ<sub>d</sub> = H(G<sub>d</sub> ‖ τ<sub>d+1</sub>) over the 12 streams of each update (Part 3; spec B5)', `Root ${toHex(tau[1]).slice(0, 12)}…; use "Tamper" to see a change caught`, ok(tau[1].length === 32)],
+        ['15', `Recursive Merkle chain τ<sub>d</sub> = H(G<sub>d</sub> ‖ τ<sub>d+1</sub>) over all ${packets.length} streams of each update (Part 3; spec B5)`, `Root ${toHex(tau[1]).slice(0, 12)}…; use "Tamper" to see a change caught`, ok(tau[1].length === 32)],
         ['15', 'South Halo [63:56] is a cache pre-filter, not an integrity check (Part 2)', 'Halo depends only on step, wheel and structure; tampering leaves it unchanged', DEFN],
-        ['§6.1', 'Einstein Tile fixed fields (Table 4) and Form 3 (Table 5)', `12/12 packets decode and re-encode bit for bit; ${exactCount}/12 values fit binary32 exactly (the rest are marked ≈ and kept exactly in the leaf)`, ok(roundTrip)],
+        ['§6.1', 'Einstein Tile fixed fields (Table 4) and Form 3 (Table 5)', `${packets.length}/${packets.length} packets decode and re-encode bit for bit; ${exactCount}/12 data values fit binary32 exactly (the rest are marked ≈ and kept exactly in the leaf)`, ok(roundTrip)],
+        ['§6.1 · 13', 'Frame-leg packets: Form 1 (Hurwitz) is exact only while its loss flag is clear; Lemma 13 says rational legs outgrow any fixed width', f1.length ? `${f1.filter(p => !p.h.loss).length}/4 legs fit the bytes exactly; loss flag set on ${f1.filter(p => p.h.loss).length}, worst direction error ${fmtErr(Math.max(...f1.map(p => p.h.err)))}; flags decode correctly` : f3.length ? `Form 3 mode: ${f3.filter(p => p.exact).length}/16 components fit binary32 exactly` : 'Frame-leg packets are off', f1.length ? ok(f1ok) : f3.length ? ok(roundTrip) : '<span class="st st-na">off</span>'],
         ['§7.4', 'Twelve-engine hierarchy: 3 groups × (3 + 1), the "triple quad" (Propositions 7.11, 7.13)', 'Erasure grid: one loss per group is rebuilt exactly', ok(parity)],
         ['§7.6', 'Four-structure frame change I, A, Ā, E with E = A I⁻¹ A⁻¹ (Theorem 7.18)', 'Re(E) = Re(I), A I A⁻¹ E = 1, quadrance kept', ok(Fr.inv.reEq && Fr.inv.closes && Fr.inv.quadEq)],
-        ['§7.7', 'Projection checks: norm w² + x² + y² + z² = 1; balancer A·Ā = 1', `N(H₁H₂H₃H₄) = 1 ${openNorm ? 'exactly' : 'fails'}; A·A⁻¹ = 1`, ok(openNorm && balancer)]
+        ['§7.7', 'Projection checks: norm w² + x² + y² + z² = 1; balancer A·Ā = 1', `N(H₁H₂H₃H₄) = 1 ${openNorm ? 'exactly' : 'fails'}; A·A⁻¹ = 1${f3.length ? `; Form 3 projection streams decode to |N − 1| ≤ ${f3norm.toExponential(1)}` : ''}`, ok(openNorm && balancer && (!f3.length || f3norm < 1e-6))]
     ];
     $('#lemma-rows').innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
     const pass = rows.filter(r => r[3].includes('st-pass')).length, fail = rows.filter(r => r[3].includes('st-fail')).length;
@@ -1061,32 +1176,42 @@ function renderLemmaRows(B, Fr, packets, tau) {
 }
 function tamperDemo() {
     if (!lastPackets) return;
-    const slot = Math.floor(Math.random() * 12), p = lastPackets[slot];
-    const bumped = p.rat.add(new Fraction(1n, 1n << 24n));
-    f32.setFloat32(0, bumped.toNumber());
-    const word2 = (p.word & ~0xffffffffn) | BigInt(f32.getUint32(0));
-    const leaves = lastPackets.map(leafBytes);
-    leaves[slot] = concatBytes(wordBytes(word2), utf8(bumped.toString()));
+    const all = lastAll, slot = Math.floor(Math.random() * all.length), p = all[slot];
+    let word2 = p.word, text2;
+    if (p.kind === 'f1') { const q2 = p.q.slice(); q2[1] = q2[1].add(new Fraction(1n, 1n << 24n)); text2 = q2.map(String).join(','); }
+    else { const bumped = p.rat.add(new Fraction(1n, 1n << 24n)); f32.setFloat32(0, bumped.toNumber()); word2 = (p.word & ~0xffffffffn) | BigInt(f32.getUint32(0)); text2 = bumped.toString(); }
+    const leaves = all.map(leafBytes);
+    leaves[slot] = concatBytes(wordBytes(word2), utf8(text2));
     const tau2 = merkleChain(leaves);
     const diff = [];
-    for (let d = 1; d <= 12; d++) if (toHex(tau2[d]) !== toHex(lastTau[d])) diff.push(d);
+    for (let d = 1; d <= all.length; d++) if (toHex(tau2[d]) !== toHex(lastTau[d])) diff.push(d);
     const haloSame = decodeTile(word2).halo === decodeTile(p.word).halo, wordSame = word2 === p.word;
-    $('#mk-tamper-out').innerHTML = `Leaf ${slot + 1} (${CLASSES[p.c]}, ${STRUCT_NAMES[p.s]}) changed by 2⁻²⁴: tile word ${wordSame ? '<b>unchanged</b> (binary32 cannot see it)' : 'changed'}; South Halo ${haloSame ? '<b>unchanged</b>' : 'changed'}; ` +
+    const what = p.kind === 'data' ? `${CLASSES[p.c]}, ${STRUCT_NAMES[p.s]}` : p.kind === 'f3' ? `${LEG_NAMES[p.leg]}, component ${'wxyz'[p.j]}` : `${LEG_NAMES[p.leg]}, x component`;
+    $('#mk-tamper-out').innerHTML = `Leaf ${slot + 1} (${what}) changed by 2⁻²⁴: tile word ${wordSame ? '<b>unchanged</b> (binary32 cannot see it)' : 'changed'}; South Halo ${haloSame ? '<b>unchanged</b>' : 'changed'}; ` +
         `root ${toHex(tau2[1]) !== toHex(lastTau[1]) ? '<b style="color:var(--fail)">changed</b>' : 'unchanged'} (τ<sub>d</sub> differs for d = 1…${Math.max(...diff)}; deepest differing layer d = ${Math.max(...diff)}).`;
     log(`[B5] tamper test: leaf ${slot + 1} + 2^-24 -> tile ${wordSame ? 'unchanged' : 'changed'}, halo ${haloSame ? 'unchanged' : 'changed'}, Merkle root ${toHex(tau2[1]) !== toHex(lastTau[1]) ? 'CHANGED (caught)' : 'unchanged'}`, 'hd');
 }
-// Panel A tier frames: Lemma 4 standard frames, with the engine's own perturbations (clutch slip) applied on top
-const lemmaTierQuat = n => {
-    const base = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(n % 2 === 0 ? 1 : 0, n % 2 === 0 ? 0 : 1, 0), Math.PI / 2);
-    const v10 = getTierOrientationQuat(n);
-    const v10base = TIERS_SPEC[n].rotAxis === 'X' ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2) : new THREE.Quaternion();
-    return base.multiply(v10base.invert().multiply(v10));
-};
+// Panel A tier frames. Lemma 4 mode is the exact standard: Rot_x(π/2) for even n, Rot_y(π/2) for odd n, with none of
+// the engine's tension, torsion or clutch-slip offsets (the clutch then changes only the spin rate). Off: engine v10 frames.
+const lemmaTierQuat = n => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(n % 2 === 0 ? 1 : 0, n % 2 === 0 ? 0 : 1, 0), Math.PI / 2);
+// Display check: the drawn step q_(n+1) q_n⁻¹ must be the 120° turn about ±(−1, 1, 1)/√3 (U_even, or U_odd = U_even⁻¹)
+function drawnFramesCheck() {
+    if (!three || !three.systems.length) return null;
+    const qs = three.systems[0].tiers.map(t => t.tg.quaternion.clone());
+    let worst = 0;
+    for (let n = 0; n < 4; n++) {
+        const d = qs[n + 1].clone().multiply(qs[n].clone().invert());
+        const w = Math.min(1, Math.abs(d.w)), ang = 2 * Math.acos(w), s = Math.sign(d.w) || 1;
+        const ax = new THREE.Vector3(d.x * s, d.y * s, d.z * s).normalize(), target = new THREE.Vector3(-1, 1, 1).normalize();
+        worst = Math.max(worst, Math.abs(ang - 2 * Math.PI / 3), 1 - Math.abs(ax.dot(target)));
+    }
+    return worst;
+}
 
 // =====================================================================
 // State and clock
 // =====================================================================
-const state = { playing: true, speed: 1, logScale: true, showRays: true, eta: 1, noise: 0, signal: 'none', error: null, solo: null, sight: MAGNETAR, event: null, hoverChannel: null, lemmaFrames: true };
+const state = { playing: true, speed: 1, logScale: true, showRays: true, eta: 1, noise: 0, signal: 'none', error: null, solo: null, sight: MAGNETAR, event: null, hoverChannel: null, lemmaFrames: true, framePk: 'off' };
 const sim = { t: 0, prevT: 0, phase: SYSTEMS.map(() => [0, 0, 0, 0, 0]), prevPhase: SYSTEMS.map(() => [0, 0, 0, 0, 0]) };
 const RATE = 0.5, DT = 1 / 60;
 const clockOf = t => {
@@ -1218,7 +1343,7 @@ function updateLayerB(force) {
             ` | parity identity ${B.every(b => b.identity) ? 'PASS' : 'FAIL'} | residual ${B.map(b => b.status.toUpperCase()).join('/')}`, B.some(b => b.status === 'fail') ? 'fail' : '');
         log(`[B2] frame closure (open): ${Fr.openStatus === 'pass' ? 'PASS' : Fr.openStatus === 'tol' ? 'within tolerance' : 'FAIL'} | frame closure (cyclic): trivially PASS | [B3] Re(E) = Re(I): ${Fr.inv.reEq ? 'PASS' : 'FAIL'}`,
             Fr.openStatus === 'fail' ? 'fail' : '');
-        log(`[B5] packets: 12 streams, Form 3, step k = ${ck.piCycleStepK} (${phaseOf(ck.piCycleStepK)}) | ${lastPackets.filter(p => p.exact).length}/12 binary32-exact | Merkle root tau_1 = ${toHex(lastTau[1]).slice(0, 16)}...`);
+        log(`[B5] packets: 12 streams, Form 3, step k = ${ck.piCycleStepK} (${phaseOf(ck.piCycleStepK)}) | ${lastPackets.filter(p => p.exact).length}/12 binary32-exact${lastFramePk.length ? ` | ${lastFramePk.length} frame-leg packets (Form ${state.framePk === 'f1' ? '1, loss flag set on ' + lastFramePk.filter(p => p.h.loss).length : '3'})` : ''} | Merkle root tau_1 = ${toHex(lastTau[1]).slice(0, 16)}...`);
     }
     return { B, Fr, ch };
 }
@@ -1576,10 +1701,12 @@ function wireControls() {
     const toggle = (id, key, after) => { const b = $(id); b.onclick = () => { state[key] = !state[key]; b.classList.toggle('on', state[key]); if (after) after(); }; };
     toggle('#btn-log', 'logScale', () => { buildSystems(); three && (three.orbit.radius = state.logScale ? 880 : 620); });
     toggle('#btn-rays', 'showRays');
-    toggle('#btn-frames', 'lemmaFrames', applyTierOrientation);
+    toggle('#btn-frames', 'lemmaFrames', () => { applyTierOrientation(); lastLemmaKey = ''; });
     $('#quad-rows').addEventListener('click', e => { const td = e.target.closest('td[data-q]'); if (!td) return; const k = td.dataset.q; quadErased.has(k) ? quadErased.delete(k) : quadErased.add(k); lastB && renderQuad(lastB); });
     $('#quad-reset').onclick = () => { quadErased.clear(); lastB && renderQuad(lastB); };
-    $('#pk-rows').addEventListener('click', e => { const td = e.target.closest('td[data-slot]'); if (!td) return; selPacket = +td.dataset.slot; document.querySelectorAll('td.pk.sel').forEach(x => x.classList.remove('sel')); td.classList.add('sel'); renderDecode(); });
+    const pick = e => { const td = e.target.closest('td.pk[data-key]'); if (!td) return; selKey = td.dataset.key; document.querySelectorAll('td.pk.sel').forEach(x => x.classList.remove('sel')); td.classList.add('sel'); renderDecode(); };
+    $('#pk-rows').addEventListener('click', pick); $('#fk-rows').addEventListener('click', pick);
+    $('#frame-pk').onchange = () => { state.framePk = $('#frame-pk').value; updateLayerB(true); if (state.framePk !== 'off') { selKey = state.framePk === 'f1' ? 'f:1:q' : 'f:1:0'; updateLayerB(true); } };
     $('#quad-rows').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } });
     $('#mk-tamper').onclick = tamperDemo;
     const eta = $('#eta'); eta.oninput = () => { state.eta = parseFloat(eta.value); $('#eta-v').textContent = state.eta.toFixed(2); applyTierOrientation(); };
