@@ -217,7 +217,7 @@ table.lemmas th { text-align: left; }
 
 <div class="controls" aria-label="Simulation controls">
     <div class="grp"><button id="btn-play" type="button">Pause</button></div>
-    <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-1" max="1" step="0.01" value="-0.6"><span class="val" id="speed-v">0.25×</span></div>
+    <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-1" max="1" step="0.01" value="-0.78"><span class="val" id="speed-v">0.17×</span></div>
     <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-web" type="button" class="on">TQF web</button><button id="btn-t3" type="button" class="on" title="Tier 3: show the two ghost poles ±(1,1,1) and the polar longitudes of the 12-node crystal. Off: the 10-node seed.">Tier 3 poles</button></div>
     <div class="grp"><label for="ten">Tension</label><input id="ten" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="ten-v">0°</span></div>
     <div class="grp"><label for="tor">Torsion</label><input id="tor" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="tor-v">0°</span><span class="gate open" id="gate" data-basis="Spec §1A.4: the engines are said to lock into zero-drag resonance when Δθ = θ_ten − θ_tor ≡ 0 (mod 30°). The π/6 of Lemma 5 Part 3 is the acoustic phase k·x_F of the Klein-wave merge boundary x_F = (4/3)C₀ = λ/12, not a rotation angle, so this gate is shown as the spec asks without claiming a lemma proves a resonance [HEURISTIC].">π/6 gate</span></div>
@@ -322,7 +322,7 @@ table.lemmas th { text-align: left; }
     <li><strong>What Part 2 adds.</strong> Part 1's systems were passive shells. Here each is a running engine, the three are compared node by node (the cross-engine TQF), and the emergent fourth is drawn as a crystal whose position is an exact, invertible gauge of the three residuals. The physics, the exact residual parity, the frame legs, the packets and the reference-script port are the same code as <a href="galactic_lensing_hierarchy.html">Part 1</a>.</li>
     <li><strong>Where the triangle lives.</strong> Layer B evaluates each class's triangle in the engines' own cubit frames, where the three engines are congruent copies related by σ. With equal phases the triangle is exactly equilateral (χ = 1/√3, Weitzenböck equality): that is the lock. Each node's phase is shifted by Δφ = κ·(π/6)·tanh(r/3), where r is that system's data-minus-model in units of σ <span class="tag t-DEFINITION" data-basis="A design choice of this page: the spec asks for a per-system phase offset Δφ_s but does not say what drives it.">DEFINITION</span>. Panel A draws the same nodes at their nested display radii. The triangle measures the engines' bookkeeping state, not a physical distance.</li>
     <li><strong>The crystal.</strong> Ported from <code>torsional_twistor_tier_3_crystal_2.html</code>: its TwistorPair particle streams (micro-twist, buckle, inverse separation), GhostPair pole spirals, structural nodes, Tier 2 and Tier 3 bridges, 64-voxel lattice (V = [−2, 2]³ at 20 units per cubit) and orthogonal scope. "Lemma 8.2 geometry" locks its carrier to the monograph: the file's tube phases 0, 2π/3, 4π/3 already put the three trefoils at the C₉ offsets 0°, 40°, 80°, and the lock sizes them so the lobes sit on the nine ray endpoints, with the poles at ±(1, 1, 1) on the C₃ axis (the file has them on the y-axis, in the trefoils' plane). Cube 1 and Δ₁ ∪ −Δ₁ complete the §7.5 objects. Its 12 nodes match the 12 streams and the 12 dimensions of aff(3) as counts only <span class="tag t-CORRESPONDENCE" data-basis="Equal counts, no structure-preserving map. The monograph says the 12-node bipyramid (1 + 9 + 1 + 1) and the 12-vector cuboctahedron of the twelve-engine shell (3 + 6 + 3) are different objects.">CORRESPONDENCE</span>.</li>
-    <li><strong>Clock.</strong> Engine v10's master clock: pulseCount = ⌊t·60⌋, node k = pulseCount mod 30, stage = ⌊(pulseCount mod 150)/30⌋, outerFrameN = 12·pulseCount mod 720. The crystal turns 1° per outer frame, so one 720-frame turn is the 8-step spinor cycle (1 + i)^k of Lemma 8, and the packets' cycle step is ⌊outerFrameN/90⌋ <span class="tag t-DEFINITION" data-basis="Part 1 used the engine's rotor step (pulseCount mod 8); Part 2 ties the step to the outer gear so the crystal's 720° turn and the packet step agree.">DEFINITION</span>.</li>
+    <li><strong>Clock.</strong> Engine v10's master clock: pulseCount = ⌊t·60⌋, node k = pulseCount mod 30, stage = ⌊(pulseCount mod 150)/30⌋, outerFrameN = 12·pulseCount mod 720. One 720-frame turn of the outer gear is one epoch and the crystal file's 720-step loop; at the default 0.17× (1/6) it advances one step per 60 Hz display frame, the file's own pace. Its 8 steps of 90 frames are the spinor cycle (1 + i)^k of Lemma 8, and the packets' cycle step is ⌊outerFrameN/90⌋. Panel A's nodes ride their spinning helices and glide from pulse to pulse; Layer B evaluates them at each whole pulse in the helices' co-rotating frame <span class="tag t-DEFINITION" data-basis="Part 1 used the engine's rotor step (pulseCount mod 8); Part 2 ties the step to the outer gear so the crystal's 720° turn and the packet step agree.">DEFINITION</span>.</li>
 </ul>
 </div>
 
@@ -834,7 +834,15 @@ function buildLegs(pi, epoch) {
     const H4 = qmul(qinv(qprod(H1, H2, H3)), delta);              // independent measurement of the fourth leg
     return { legs: [H1, H2, H3, H4], tol: 5 * Math.max(state.noise, 0) * sigLeg };
 }
+// The closure depends only on the sightline, the epoch, the noise level and any injected error, and costs several
+// milliseconds of BigInt work, so it is computed once per such state and reused between pulses
+let frameClosureCache = { key: null, value: null };
 function frameClosure(pi, epoch) {
+    const key = `${pi}|${epoch}|${state.noise}|${state.error ? state.error.leg + ':' + state.error.eps.join(',') : ''}`;
+    if (frameClosureCache.key !== key) frameClosureCache = { key, value: computeFrameClosure(pi, epoch) };
+    return frameClosureCache.value;
+}
+function computeFrameClosure(pi, epoch) {
     const { legs, tol } = buildLegs(pi, epoch);
     const L = legs.slice();
     const err = state.error;
@@ -1241,7 +1249,8 @@ function drawnFramesCheck() {
 // =====================================================================
 // Part 2 state and clock
 // =====================================================================
-const state = { playing: true, speed: 10 ** -0.6, logScale: true, eta: 1, noise: 0, signal: 'none', error: null, sight: MAGNETAR, event: null,
+const state = { playing: true, speed: 10 ** -0.78,   // ≈ 1/6×: one outer-gear frame per 60 Hz display frame
+                logScale: true, eta: 1, noise: 0, signal: 'none', error: null, sight: MAGNETAR, event: null,
                 tension: 0, torsion: 0, kappa: 1, web: true, tier3: true, lemmaFrames: true, framePk: 'off', solo: null };
 const SPIN = [1, -1, 1];                       // counter-rotating nested engines: I and III forward, II backward [DEFINITION]
 const sim = { t: 0, prevT: 0, phase: SYSTEMS.map(() => [0, 0, 0, 0, 0]), prevPhase: SYSTEMS.map(() => [0, 0, 0, 0, 0]) };
@@ -1595,7 +1604,7 @@ function initThree() {
     const host = $('#space'), renderer = makeRenderer(host, $('#space-msg'));
     if (!renderer) return;
     const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(50, 1, 0.01, 20000);
-    three = { renderer, scene, camera, orbit: { theta: 0.75, phi: 1.1, radius: 760 }, systems: [], root: new THREE.Group() };
+    three = { renderer, scene, camera, orbit: { theta: 0.75, phi: 1.1, radius: 880 }, systems: [], root: new THREE.Group() };
     scene.add(three.root);
     const sp = new Float32Array(1500 * 3), rnd = mulberry32(20261027);
     for (let i = 0; i < 1500; i++) { const u = rnd() * 2 - 1, a = rnd() * 2 * Math.PI, s = Math.sqrt(1 - u * u); sp.set([3000 * s * Math.cos(a), 3000 * u, 3000 * s * Math.sin(a)], i * 3); }
@@ -1656,21 +1665,31 @@ function applyModulation() {
     }));
 }
 // Display position of the class-c node of engine s: the same (θ, φ) on the drawn torus, then modulation, frame and σˢ
-function dispNode(s, c, k, S, dphi) {
-    const n = 4 - S, { D, tube } = tierDisp(s, n);
-    const p = torusPoint(D, tube * 1.12, n, k, c, dphi);
-    return c3pow(frameOf(n, p, NEG_N), s);
+// Display node of engine s, class c at pulse p. It rides its tier's helices, which spin about the tier's own axis, so
+// the spin adds to θ; Layer B uses the same node in the helices' co-rotating frame, where the spin drops out.
+const spinOf = (s, n, alpha) => sim.prevPhase[s][n] + (sim.phase[s][n] - sim.prevPhase[s][n]) * alpha;
+function dispNodeAt(s, c, p, dphi, alpha) {
+    const k = p % 30, S = Math.floor((p % 150) / 30), n = 4 - S, { D, tube } = tierDisp(s, n), rr = tube * 1.12;
+    const th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = TIERS_SPEC[n].W * th * chi + 2 * Math.PI * c / 3 + dphi, a = th + spinOf(s, n, alpha);
+    const q = modRot([(D + rr * Math.cos(ph)) * Math.cos(a), (D + rr * Math.cos(ph)) * Math.sin(a), rr * Math.sin(ph)], n);
+    return new THREE.Vector3(...c3pow(frameOf(n, q, NEG_N), s));
 }
-function updateScene(alpha) {
+const ease = x => x * x * (3 - 2 * x);
+function updateScene(alpha, tI) {
     if (!three || !L2) return;
-    three.systems.forEach((sg, s) => sg.tiers.forEach((t, n) => { t.hg.rotation.z = sim.prevPhase[s][n] + (sim.phase[s][n] - sim.prevPhase[s][n]) * alpha; }));
-    const { ck, dphi, T, solState } = L2, latch = ck.stage === 4 ? (ck.k + 1) / 30 : 0;
+    three.systems.forEach((sg, s) => sg.tiers.forEach((t, n) => { t.hg.rotation.z = spinOf(s, n, alpha); }));
+    const { dphi, T, solState } = L2;
+    // glide from this pulse's node to the next one
+    const pf = Math.max(0, tI * 60), p = Math.floor(pf + 1e-9), e = ease(Math.min(1, Math.max(0, pf - p)));
+    const k = p % 30, S = Math.floor((p % 150) / 30);
+    // the specification's core latch: P4 slides into the soliton during stage 4 and back out over the first pulses of stage 0
+    const latch = S === 4 ? Math.min(1, (k + e) / 29) : S === 0 ? Math.max(0, 1 - (k + e) / 5) : 0;
     const soliton = gaugeDisplay(L2.G);
-    three.soliton.position.set(soliton[0] * 4, soliton[1] * 4, soliton[2] * 4);
+    three.soliton.position.lerp(new THREE.Vector3(soliton[0] * 4, soliton[1] * 4, soliton[2] * 4), 0.12);
     three.soliton.material.opacity = solState === 'locked' ? 1 : 0.85;
     three.cls.forEach((C, c) => {
-        const P = [0, 1, 2].map(s => new THREE.Vector3(...dispNode(s, c, ck.k, ck.stage, dphi[s][c])));
-        P.forEach((p, s) => { C.nodes[s].position.copy(p); C.nodes[s].scale.setScalar(Math.max(1.2, tierDisp(s, 4 - ck.stage).D * 0.02)); });
+        const P = [0, 1, 2].map(s => dispNodeAt(s, c, p, dphi[s][c], alpha).lerp(dispNodeAt(s, c, p + 1, dphi[s][c], alpha), e));
+        P.forEach((q, s) => { C.nodes[s].position.copy(q); C.nodes[s].scale.setScalar(Math.max(1.2, tierDisp(s, 4 - S).D * 0.02)); });
         setLine(C.tri, [P[0], P[1], P[2], P[0]]);
         const u = P[1].clone().sub(P[0]), v = P[2].clone().sub(P[0]);
         const p4 = P[0].clone().add(u.clone().add(v).multiplyScalar(T[c].qScale)).lerp(three.soliton.position, latch);
@@ -1794,19 +1813,31 @@ function frenet(t, c, B, K) {
     return { p: p0, N, B: Bn };
 }
 const _tmp = new THREE.Vector3();
+// Particle flow: the crystal file advances one step of its 720-step loop per display frame. Here the loop follows the
+// outer gear, but the flow advances at most one step per frame (the file's own pace) so the streams never strobe; the step readout and the
+// optional spinor turn follow the gear exactly. Displacements ease toward their targets instead of snapping.
+const crysAnim = { flow: 0, last: null, shear: 0, mag: [0, 0, 0] };
+const EASE_K = 0.12;
 function updateCrystal(frameF) {
     if (!crystal || !L2) return;
     const { G, solState, Fr, B } = L2, Bs = crystal.basis, K = crystalCarrier();
-    const timeRad = frameF / 720 * 4 * Math.PI;                       // the crystal file's 720-step loop: t advances 4π
+    let dF = crysAnim.last === null ? 0 : frameF - crysAnim.last;
+    if (dF < -360) dF += 720;
+    if (dF < 0 || dF > 360) dF = 0;                                    // a backward wrap or a seek: no flow jump
+    crysAnim.flow = (crysAnim.flow + Math.min(dF, 1)) % 720; crysAnim.last = frameF;
+    const timeRad = crysAnim.flow / 720 * 4 * Math.PI;                 // the crystal file's 720-step loop: t advances 4π
     crystal.spin.quaternion.setFromAxisAngle(Bs.n, crys.spin ? frameF * D2R : 0);   // optional 1°-per-frame spinor turn
     crystal.lattice.visible = crys.lattice; crystal.lemma.visible = crys.lemma; crystal.nodeGroup.visible = crys.nodes;
     crystal.bridgeT2.visible = crys.bridge; crystal.bridgeT3.visible = crys.bridge && state.tier3;
-    const shear = Fr.openExact ? 0 : Math.min(0.7, Fr.openAngle * 6);   // measured-holonomy shear
+    crysAnim.shear += ((Fr.openExact ? 0 : Math.min(0.7, Fr.openAngle * 6)) - crysAnim.shear) * EASE_K;   // measured-holonomy shear
+    const shear = crysAnim.shear;
     const buckle = crys.buckle / U20, sepA = crys.pairSep * 0.5;
     crystal.pairs.forEach((P, c) => {
-        const r = G.r[c].toNumber(), mag = Math.min(1, Math.abs(r) / 5);
+        const r = G.r[c].toNumber();
+        crysAnim.mag[c] += (Math.min(1, Math.abs(r) / 5) - crysAnim.mag[c]) * EASE_K;
+        const mag = crysAnim.mag[c];
         const e = Bs.u.clone().multiplyScalar(Math.cos(2 * Math.PI * c / 3)).addScaledVector(Bs.v, Math.sin(2 * Math.PI * c / 3));
-        P.g.position.copy(e.multiplyScalar(0.25 * Math.tanh(r / 3)));
+        P.g.position.lerp(e.multiplyScalar(0.25 * Math.tanh(r / 3)), EASE_K);
         P.g.quaternion.setFromAxisAngle(Bs.n, (c - 1) * shear);
         const pa = P.a.geometry.attributes.position, pb = P.b.geometry.attributes.position, sepB = Math.PI - sepA - mag * (Math.PI - 2 * sepA);
         const cen = new THREE.Vector3();
@@ -1823,7 +1854,7 @@ function updateCrystal(frameF) {
     // ghost poles on the C3 axis: ±(1, 1, 1) when the geometry is locked, otherwise at the pole height
     const poleR = crys.lock ? Math.sqrt(3) : crys.poleH / U20, sAx = 0.25 * Math.tanh(G.s.toNumber() / 3);
     crystal.poleGroup.visible = state.tier3;
-    crystal.poleGroup.position.copy(Bs.n.clone().multiplyScalar(sAx));
+    crystal.poleGroup.position.lerp(Bs.n.clone().multiplyScalar(sAx), EASE_K);
     const perp1 = Bs.u, perp2 = Bs.v;
     crystal.ghosts.forEach(gh => {
         gh.node.position.copy(Bs.n.clone().multiplyScalar(gh.sg * poleR));
@@ -1835,8 +1866,8 @@ function updateCrystal(frameF) {
         }
         pos.needsUpdate = true;
     });
-    const g = gaugeDisplay(G), coreP = new THREE.Vector3(g[0], g[1], g[2]);
-    crystal.core.position.copy(coreP); crystal.coreGlow.position.copy(coreP);
+    const g = gaugeDisplay(G), coreP = crystal.core.position.lerp(new THREE.Vector3(g[0], g[1], g[2]), EASE_K).clone();
+    crystal.coreGlow.position.copy(coreP);
     setLine(crystal.arrow, [new THREE.Vector3(), coreP]);
     const nodes = crystal.pairs.map(P => P.centroid), north = crystal.ghosts[0].node.position.clone().add(crystal.poleGroup.position), south = crystal.ghosts[1].node.position.clone().add(crystal.poleGroup.position);
     setLine(crystal.bridgeT2, [nodes[0], coreP, nodes[1], coreP, nodes[2], coreP, nodes[0], nodes[1], nodes[1], nodes[2], nodes[2], nodes[0]]);
@@ -1888,7 +1919,7 @@ function wireControls() {
     playBtn.onclick = () => { state.playing = !state.playing; playBtn.textContent = state.playing ? 'Pause' : 'Play'; };
     const sp = $('#speed'); sp.oninput = () => { state.speed = 10 ** parseFloat(sp.value); $('#speed-v').textContent = state.speed.toFixed(state.speed < 1 ? 2 : 1) + '×'; };
     const toggle = (id, key, after) => { const b = $(id); b.onclick = () => { state[key] = !state[key]; b.classList.toggle('on', state[key]); if (after) after(); }; };
-    toggle('#btn-log', 'logScale', () => { buildEngines(); three && (three.orbit.radius = state.logScale ? 760 : 620); });
+    toggle('#btn-log', 'logScale', () => { buildEngines(); three && (three.orbit.radius = state.logScale ? 880 : 620); });
     toggle('#btn-web', 'web'); toggle('#btn-t3', 'tier3');
     const gate = () => { const open = Math.abs(((state.tension - state.torsion) % 30 + 30) % 30) < 1e-9; $('#gate').classList.toggle('open', open); $('#gate').textContent = open ? 'π/6 gate · open' : 'π/6 gate · closed'; };
     $('#ten').oninput = e => { state.tension = +e.target.value; $('#ten-v').textContent = state.tension + '°'; applyModulation(); gate(); updateLayerB(true); };
@@ -1987,7 +2018,7 @@ function frame(now) {
         updateLayerB(true);
     } else updateLayerB(false);
     const tInterp = sim.prevT + (sim.t - sim.prevT) * alpha;
-    updateScene(alpha);
+    updateScene(alpha, tInterp);
     updateCrystal((tInterp * 720) % 720);
     requestAnimationFrame(frame);
 }

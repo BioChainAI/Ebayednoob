@@ -807,7 +807,15 @@ function buildLegs(pi, epoch) {
     const H4 = qmul(qinv(qprod(H1, H2, H3)), delta);              // independent measurement of the fourth leg
     return { legs: [H1, H2, H3, H4], tol: 5 * Math.max(state.noise, 0) * sigLeg };
 }
+// The closure depends only on the sightline, the epoch, the noise level and any injected error, and costs several
+// milliseconds of BigInt work, so it is computed once per such state and reused between pulses
+let frameClosureCache = { key: null, value: null };
 function frameClosure(pi, epoch) {
+    const key = `${pi}|${epoch}|${state.noise}|${state.error ? state.error.leg + ':' + state.error.eps.join(',') : ''}`;
+    if (frameClosureCache.key !== key) frameClosureCache = { key, value: computeFrameClosure(pi, epoch) };
+    return frameClosureCache.value;
+}
+function computeFrameClosure(pi, epoch) {
     const { legs, tol } = buildLegs(pi, epoch);
     const L = legs.slice();
     const err = state.error;
