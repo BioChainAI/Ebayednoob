@@ -210,7 +210,7 @@
         <span class="stat"><b>1</b> engine &rarr; <b>3</b> systems + <b>1</b> emergent</span>
         <span class="stat"><b>3 &times; 4 = 12</b> streams: the triple quad</span>
         <span class="stat"><b>64</b>-bit Einstein Tile per stream</span>
-        <span class="stat"><b>19</b> live lemma checks</span>
+        <span class="stat"><b>20</b> live lemma checks</span>
         <span class="stat"><b>66/66</b> lines match the reference script</span>
     </div>
 </header>
@@ -365,7 +365,7 @@
             <p>Lemma 4 also fixes how each tier is oriented: \(\mathrm{Rot}(T_n) = \mathrm{Rot}_x(\pi/2)\) for even \(n\) and \(\mathrm{Rot}_y(\pi/2)\) for odd \(n\). The step from one tier to the next is then always the same integer matrix,</p>
             $$\mathbf U_{\text{even}} = \mathrm{Rot}_y(\tfrac{\pi}{2})\,\mathrm{Rot}_x(-\tfrac{\pi}{2}) = \begin{pmatrix} 0 & -1 & 0 \\ 0 & 0 & 1 \\ -1 & 0 & 0 \end{pmatrix},$$
             <p>a 120° rotation about the body diagonal \((-1,1,1)/\sqrt3\), with \(\mathbf U^3 = I\). Its spinor lift is the Hurwitz unit \(h = (1 - i + j + k)/2\), with \(h^3 = -1\) and \(h^6 = +1\) <span class="tag t-PROVEN">PROVEN</span>.</p>
-            <p>Engine v10 uses a different, simpler set of frames: tiers 0, 2 and 4 unrotated and tiers 1 and 3 turned by \(\mathrm{Rot}_x(\pi/2)\), plus the tension, torsion and clutch-slip offsets of its controls. The simulation now draws the Lemma&nbsp;4 frames by default, adding the engine's slip offsets on top so the clutch still visibly matters. The <strong>Lemma 4 frames</strong> button switches back to the v10 frames for comparison. In the galaxy the tier rotations have no physical meaning (the specification's verdict is "no map"); they only make the nesting visible.</p>
+            <p>Engine v10 uses a different, simpler set of frames: tiers 0, 2 and 4 unrotated and tiers 1 and 3 turned by \(\mathrm{Rot}_x(\pi/2)\), plus the tension, torsion and clutch-slip offsets of its controls. The simulation draws the <strong>pure</strong> Lemma&nbsp;4 frames by default: exactly \(\mathrm{Rot}_x(\pi/2)\) and \(\mathrm{Rot}_y(\pi/2)\), with none of the engine's tension, torsion or clutch-slip offsets. In this mode the clutch changes only how fast the helices spin, not how the tiers are tilted. Panel D checks the drawn frames live: every step \(q_{n+1}q_n^{-1}\) between neighbouring tiers must be the 120° turn about \(\pm(-1,1,1)/\sqrt3\). The <strong>Lemma 4 frames</strong> button switches to the v10 frames, offsets included, for comparison. In the galaxy the tier rotations have no physical meaning (the specification's verdict is "no map"); they only make the nesting visible.</p>
             <div class="callout deep">
                 <div class="label">Why the frequencies are 96, 84, 72, 60, 48 Hz</div>
                 <p>Engine v10 drives tier \(n\) at \(f_n = 6W_n\) Hz. This is the engine's own choice <span class="tag t-DEFINITION">DEFINITION</span>, not a lemma. It does interact with Lemma 11's clock windows, though: on the 60-pulse register, a carrier at \(f\) Hz returns to a whole period every \(60/\gcd(60, f)\) pulses, so all five tiers line up every 5 pulses (1/12 s). The simulation checks this exactly (Chapter 5).</p>
@@ -442,11 +442,11 @@
                 <tbody>
                     <tr><td class="num">63–61</td><td>Cycle step</td><td>k &minus; 1 for step k of the 8-step cycle (Lemma 8)</td><td>The engine's rotor step; it sets onload, offload or third phase</td></tr>
                     <tr><td class="num">60–58</td><td>Wheel unit</td><td>Index of a unit u &isin; {1, 7, &hellip;, 29} (Lemma 4 Part 5)</td><td>The unit sector of the active node: the largest unit &le; k <span class="tag t-DEFINITION">DEFINITION</span></td></tr>
-                    <tr><td class="num">57–56</td><td>Structure</td><td>Which of four structures sent it</td><td>00 System I, 01 System II, 10 System III, 11 residual R (spec §5.3)</td></tr>
+                    <tr><td class="num">57–56</td><td>Structure</td><td>Which of four structures sent it</td><td>00 System I, 01 System II, 10 System III, 11 residual R (spec §5.3); for frame-leg packets, the leg H1–H4</td></tr>
                     <tr><td class="num">55–48</td><td>Gate byte</td><td>Form-dependent (Table 5)</td><td>Form 3: bits 55–54 = component (w), bits 53–48 = slice counter (epoch mod 64)</td></tr>
                     <tr><td class="num">47–44</td><td>Step-multiplexed index</td><td>Circle phase s &isin; &#8484;/9 at steps 1–2; half-cube at step 3; ghost index at step 6; otherwise an aff(3) coordinate</td><td>k mod 9, k mod 16, 0 (central cell), or the stream slot mod 12</td></tr>
                     <tr><td class="num">43–40</td><td>Form ID</td><td>How to read bits 0–31 and 48–55</td><td>Form 3, exact binary32 scalar</td></tr>
-                    <tr><td class="num">39–36</td><td>Stream slot</td><td>0–11 engine position; 12–15 projections w, x, y, z</td><td>4 &middot; class + structure: the twelve cells of the triple quad</td></tr>
+                    <tr><td class="num">39–36</td><td>Stream slot</td><td>0–11 engine position; 12–15 projections w, x, y, z</td><td>4 &middot; class + structure: the twelve cells of the triple quad; 12–15 for the optional frame-leg packets (<a href="#framepk">Chapter 15</a>)</td></tr>
                     <tr><td class="num">35–32</td><td>Scale register</td><td>Dyadic level, Fibonacci index or subdivision frequency</td><td>0 (scale 2<sup>0</sup>)</td></tr>
                     <tr><td class="num">31–0</td><td>Core word</td><td>Form-dependent payload</td><td>The value as IEEE-754 binary32, bit for bit</td></tr>
                 </tbody>
@@ -603,7 +603,7 @@
                 <li><strong>Balancer check:</strong> the net of A times the net of &Abar; read in reverse is exactly 1.</li>
                 <li><strong>Collapse check:</strong> the disagreement \(D\) of §7.5 travels in the codex sub-region field.</li>
             </ul>
-            <p>The simulation runs the first three on its frame legs (Panel D, row §7.7). The collapse check belongs to the ghost tetrahedra of §7.5, which the galaxy does not use.</p>
+            <p>The simulation runs the first three on its frame legs (Panel D, row §7.7). With Form 3 frame-leg packets switched on, it also decodes each leg's four projection streams and checks their norm (<a href="#framepk">Chapter 15</a>). The collapse check belongs to the ghost tetrahedra of §7.5, which the galaxy does not use.</p>
         </section>
 
         <!-- ================================================================ 12 -->
@@ -713,6 +713,53 @@
                 <div class="label">Why the 256-bit root and not the tile</div>
                 <p>A 64-bit label for a 12-layer state of \(2^{72}\) possibilities has at least \(2^8 = 256\) preimages (Lemma 15 Part 1), so no 64-bit word can certify the state. Linear checksums such as CRC-32 give no integrity at all, since \(\mathrm{crc}(x \oplus y \oplus z) = \mathrm{crc}(x) \oplus \mathrm{crc}(y) \oplus \mathrm{crc}(z)\). Integrity needs a collision-resistant hash, chained.</p>
             </div>
+
+            <h3 id="framepk">Frame-leg packets (optional)</h3>
+            <p>The four frame legs \(H_1, \dots, H_4\) of <a href="#frames">Chapter 14</a> are exact rational unit quaternions. The specification gives them a place in the packet stream: stream slots 12–15 hold "the four quaternion components of a frame leg", and frame quaternions use Form 1 (Hurwitz) or Form 0 (§5.3). The <strong>Frame-leg packets</strong> menu in Panel B sends them in one of two ways. It is off by default, so the twelve data streams stand alone unless you ask for more.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th></th><th>Form 3: four components</th><th>Form 1: Hurwitz</th></tr></thead>
+                <tbody>
+                    <tr><td>Packets</td><td>4 per leg, 16 in all</td><td>1 per leg, 4 in all</td></tr>
+                    <tr><td>Structure bits 57–56</td><td>the leg &ell; = 0–3 (H1–H4)</td><td>the leg &ell; = 0–3 (H1–H4)</td></tr>
+                    <tr><td>Stream slot 39–36</td><td>12 + component (w, x, y, z = the four projection streams of §7.7)</td><td>12 + &ell;</td></tr>
+                    <tr><td>Gate byte 55–48</td><td>component in 55–54, slice counter in 53–48</td><td>geometric gate: locus 0, C<sub>9</sub> offset 0, harmonic flag 11 = holonomy H</td></tr>
+                    <tr><td>Core word 31–0</td><td>one component as binary32</td><td>the gcd-reduced doubled coordinates 2Q, one byte each, with the loss flag in bit 31</td></tr>
+                    <tr><td>Exact when</td><td>the component has at most 24 significant bits</td><td>2w &le; 127 and |x|, |y|, |z| &le; 127, with the loss flag clear</td></tr>
+                    <tr><td>On this page</td><td>almost never: the components have 40–180-bit denominators, so packets are marked &asymp;; decoded norms are within about 10<sup>&minus;7</sup> of 1</td><td>never: the legs need 40–179-bit coordinates, so the loss flag is set; directions are off by 0.07–0.24°, and the smallest legs round to the identity</td></tr>
+                </tbody>
+            </table></div>
+            <p>Both modes address a frame packet as (structure, slot), the same pattern as the data streams, where structure \(s\) and slot \(4c + s\) name a cell of the triple quad. The monograph fixes the fields but not this assignment, so it is the page's own choice <span class="tag t-DEFINITION">DEFINITION</span>, and so is the byte order of the Form 1 core word: bits 31–24 hold the loss flag and \(2w\), then \(x\), \(y\) and \(z\) as signed bytes.</p>
+            <h4>How Form 1 encodes a quaternion (monograph Table 5)</h4>
+            <ol class="steps">
+                <li><strong>Clear denominators.</strong> Multiply by the common denominator \(L\). The rotation \(\rho_Q(x) = QxQ^{\ast}/N(Q)\) does not change when \(Q\) is scaled (Lemma 13 Part 3), so \(LQ\) is the same rotation in integers.</li>
+                <li><strong>Double.</strong> Take \(2Q\), so Hurwitz half-integer quaternions such as \(h = (1 - i + j + k)/2\) also become integers.</li>
+                <li><strong>Reduce.</strong> Divide by the gcd of the four coordinates.</li>
+                <li><strong>Normalize the sign.</strong> Make the first non-zero coordinate positive. \(Q\) and \(-Q\) give the same rotation; the spin sign is carried by the cycle step in bits 63–61, not by the payload.</li>
+                <li><strong>Fit or flag.</strong> If \(2w \le 127\) and \(|x|, |y|, |z| \le 127\), the bytes hold the quaternion exactly and the loss flag stays clear. Otherwise the coordinates are rescaled so the largest is 127, rounded to the nearest representable direction, and the loss flag is set.</li>
+            </ol>
+            <div class="lab" id="f1-lab">
+                <div class="lab-title">Encode a quaternion in Form 1</div>
+                <div class="lab-row">
+                    <button class="chip" type="button" data-q="1/2,-1/2,1/2,1/2">h = (1 &minus; i + j + k)/2</button>
+                    <button class="chip" type="button" data-q="-1/2,1/2,-1/2,-1/2">&minus;h</button>
+                    <button class="chip" type="button" data-q="1,1,0,0">1 + i (90° about x)</button>
+                    <button class="chip" type="button" data-q="23/49,36/49,24/49,0">Cayley C(1/2, 1/3, 0)</button>
+                    <button class="chip" type="button" data-q="C:0,419/1048576,-512/1048576">a small measured turn: C(0, 419/2²⁰, &minus;512/2²⁰)</button>
+                </div>
+                <div class="lab-row">
+                    <label>w <input type="text" id="f1-w" style="width:9rem" spellcheck="false"></label>
+                    <label>x <input type="text" id="f1-x" style="width:9rem" spellcheck="false"></label>
+                    <label>y <input type="text" id="f1-y" style="width:9rem" spellcheck="false"></label>
+                    <label>z <input type="text" id="f1-z" style="width:9rem" spellcheck="false"></label>
+                </div>
+                <div class="out" id="f1-out"></div>
+            </div>
+            <h4>Why the measured legs never fit</h4>
+            <p>Form 1 is built for the engine's own Hurwitz arithmetic: units such as \(h\), small integer quaternions, and the cycle spinors \((1+i)^k\), which Table 5 notes never overflow. A measured frame leg is a different animal. It starts as a floating-point rotation, is rationalized at \(2^{-20}\) to \(2^{-40}\) (plus \(2^{-48}\) for the noise in \(H_4\)), and passes through the Cayley map, so its exact coordinates run to 40–180 bits. Lemma 13 Part 1 says denominators of rational unit quaternions grow without bound, so no fixed-width field can hold every such rotation. A 7-bit grid resolves directions only to roughly 1/127 per coordinate, a few tenths of a degree. The loss flag is how Form 1 says so honestly.</p>
+            <div class="callout plain">
+                <div class="label">What stays exact</div>
+                <p>Each frame packet's Merkle leaf carries the exact value it stands for: the exact component in Form 3, the exact quaternion in Form 1. With frame packets on, the chain runs over 28 leaves (Form 3) or 16 (Form 1), and the root still certifies every exact value. Panel D adds a row that checks the loss flag is set exactly when the bytes cannot hold a leg and that every packet decodes back to the same bytes. With Form 3 on, the §7.7 row also checks the norm of the decoded projection streams.</p>
+            </div>
         </section>
 
         <!-- ================================================================ 16 -->
@@ -757,7 +804,7 @@
             <p class="chapter-intro">The simulation has four panels, a telemetry log and one control bar. Panel A sits on the left; B and C stack beside it; D runs full width below.</p>
             <div class="grid-2">
                 <div class="card"><h4>A · Nested torus view</h4><p>The three systems as five-tier tori at their log radii, each tier wound with its six channel helices (phase = class, solid or dashed = model or data). Sgr A* glows at the centre; the seven pulsars pulse at their real periods (the magnetar red and unsteady); rays run to the Sun. The pale shell is the emergent fourth; it pulses when any residual is nonzero. The gold dot is the active node. Drag to orbit, scroll or pinch to zoom, hover a pulsar, click a system label to show it alone.</p></div>
-                <div class="card"><h4>B · Engine dashboard</h4><p>Each system's 3&times;2 channel table; G1 residual parity with the exact fraction \(Y_R\); a residual history in units of &sigma;; G2 frame closure in both conventions; Theorem 7.18; engine v10 node telemetry; and the twelve §6.1 packets. Click a packet to decode it. Hover a channel cell to light up its helix in Panel A.</p></div>
+                <div class="card"><h4>B · Engine dashboard</h4><p>Each system's 3&times;2 channel table; G1 residual parity with the exact fraction \(Y_R\); a residual history in units of &sigma;; G2 frame closure in both conventions; Theorem 7.18; engine v10 node telemetry; the twelve §6.1 packets; and, if you switch them on, the frame-leg packets in Form 3 or Form 1. Click any packet to decode it. Hover a channel cell to light up its helix in Panel A.</p></div>
                 <div class="card"><h4>C · Lensing and timing</h4><p>Einstein rings behind Sgr A*; the magnetar's 17&times;9&nbsp;mas scattered image against the 20&nbsp;&micro;as shift; its timing budget bars; and each pulsar's astrometric shift. During a lensing event the source track and the two images appear on the rings.</p></div>
                 <div class="card"><h4>D · Fifteen-Lemma compliance</h4><p>The cycle strip with handshake windows; the live triple quad with erasure; the Merkle root, South Halo and tamper test; and a row per lemma saying how the page uses it and whether the live check passes.</p></div>
             </div>
@@ -768,7 +815,8 @@
                     <tr><td>Speed</td><td>0.1&times; to 10&times;, on a log slider. At 1&times; one second advances half an epoch.</td></tr>
                     <tr><td>Log radii</td><td>Log or linear radius in Panel A. Linear is honest but leaves Systems I and II as a dot.</td></tr>
                     <tr><td>Rays</td><td>Shows the sight lines from each pulsar to the Sun.</td></tr>
-                    <tr><td>Lemma 4 frames</td><td>On: tier frames Rot<sub>x</sub>(&pi;/2), Rot<sub>y</sub>(&pi;/2) alternating (Lemma 4). Off: the engine v10 frames.</td></tr>
+                    <tr><td>Lemma 4 frames</td><td>On: the pure Lemma 4 frames, Rot<sub>x</sub>(&pi;/2) and Rot<sub>y</sub>(&pi;/2) alternating, with no engine offsets. Off: the engine v10 frames with tension, torsion and clutch slip.</td></tr>
+                    <tr><td>Frame-leg packets (Panel B)</td><td>Off; Form 3 (16 packets, one per leg component, slots 12–15); or Form 1 (4 Hurwitz packets with loss flags). Frame packets join the Merkle chain.</td></tr>
                     <tr><td>Clutch &eta;</td><td>The v10 differential clutch: below 1 the tiers slip and spin slower. Display only.</td></tr>
                     <tr><td>Noise</td><td>0–10&sigma; of Gaussian noise on the data side, and on the fourth frame leg. Residuals move to amber (within tolerance) or red.</td></tr>
                     <tr><td>Inject signal</td><td>None; a Shapiro event (a mass passing the magnetar's line of sight); a lensing event (the same, with the astrometric shift, about 1.2&nbsp;yr long); or a scalar-field term (the §7.1 Yukawa test, &alpha; = 0.01, &lambda; = 1&nbsp;pc) <span class="tag t-CONJECTURAL">CONJECTURAL</span>.</td></tr>
@@ -794,7 +842,8 @@
                 <li><strong>Erasure (Proposition 7.11).</strong> In Panel D, click one cell in each row of the triple quad. All three come back exactly. Then click a second cell in one row: that group is lost.</li>
                 <li><strong>Integrity (Lemma 15).</strong> Press <em>Tamper with one leaf</em> a few times. The root always changes; the South Halo never does; the tile word usually doesn't either.</li>
                 <li><strong>Decode a packet (§6.1).</strong> Click packets in Panel B. Watch the step and phase change with the clock while the slot, structure and Form stay fixed.</li>
-                <li><strong>Frames (Lemma 4).</strong> Toggle <em>Lemma 4 frames</em> and compare the tier orientations with engine v10's.</li>
+                <li><strong>Frames (Lemma 4).</strong> With <em>Lemma 4 frames</em> on, move the clutch: the helices slow down but the tiers do not tilt. Turn it off and the v10 offsets come back.</li>
+                <li><strong>Frame-leg packets (Lemma 13).</strong> Choose <em>Form 1</em> under Panel B's packets. All four loss flags are set, and the table shows how many bits each leg would need. Then try <em>h</em> and the Cayley preset in the <a href="#framepk">Form 1 lab</a>: they fit exactly.</li>
                 <li><strong>A hypothesis test (§7.1).</strong> Choose <em>Scalar field</em>. A Yukawa term changes the timing and velocity of Systems I and II; it shows up only in the residual, which is where any new physics would have to appear.</li>
                 <li><strong>Reproduce the script.</strong> Press <em>Run Verification</em>: 66 of 66 lines match the Python reference, and 19 of 19 checks pass.</li>
             </ol>
@@ -809,7 +858,7 @@
                 <thead><tr><th>Lemma</th><th>Use in the simulation</th><th>Status</th></tr></thead>
                 <tbody>
                     <tr><td>1–3</td><td>Not used. No triangle-centre construction appears.</td><td>not used</td></tr>
-                    <tr><td>4</td><td>Tier laws and conservation (checked exactly); Lemma 4 tier frames in Panel A, with \(\mathbf U_{\text{even}}^3 = I\) and \(h^6 = 1\) checked; the 30-node wheel and its units in tile bits 60–58.</td><td>applied, checked</td></tr>
+                    <tr><td>4</td><td>Tier laws and conservation (checked exactly); pure Lemma 4 tier frames in Panel A, with \(\mathbf U_{\text{even}}^3 = I\) and \(h^6 = 1\) checked exactly and the drawn frames checked live; the 30-node wheel and its units in tile bits 60–58.</td><td>applied, checked</td></tr>
                     <tr><td>5</td><td>Not used. There is no voxel cube or Hurwitz box in the galaxy.</td><td>not used</td></tr>
                     <tr><td>6</td><td>Not used. The systems exchange no fluid profiles.</td><td>not used</td></tr>
                     <tr><td>7</td><td>Central tier T2 (checked); the implied fourth as parity element in additive form (G1, checked live); \(H_4 = (H_1H_2H_3)^{-1}\) used only as the vacuous cyclic leg.</td><td>applied, checked</td></tr>
@@ -822,12 +871,18 @@
                     <tr><td>14</td><td>Not used. No prime sampling.</td><td>not used</td></tr>
                     <tr><td>15</td><td>Recursive SHA-256 Merkle chain over the 12 streams (Part 3); South Halo labelled as a pre-filter only (Part 2); tamper test.</td><td>applied, checked</td></tr>
                     <tr><td>§6.1</td><td>Tile fixed fields per Table 4; Form 3 per Table 5, with a mark on values binary32 cannot hold exactly. Packets decode and re-encode bit for bit.</td><td>applied, checked</td></tr>
+                    <tr><td>§6.1, 13</td><td>Optional frame-leg packets: Form 3 projection streams, or Form 1 with the loss flag set exactly when the bytes cannot hold a leg.</td><td>applied, checked when on</td></tr>
                     <tr><td>§7.4, 7.11</td><td>Triple quad of 3 classes &times; (I, II, III, R), with live erasure.</td><td>applied, checked</td></tr>
                     <tr><td>§7.6, 7.18</td><td>Four-structure frame change with Re(E) = Re(I) and closure, live.</td><td>applied, checked</td></tr>
                     <tr><td>§7.7</td><td>Norm check on the closure product and the balancer check A&middot;A<sup>&minus;1</sup> = 1, live.</td><td>applied, checked</td></tr>
                 </tbody>
             </table></div>
-            <h3>What changed in this revision</h3>
+            <h3>What changed in the latest revision</h3>
+            <ul>
+                <li><strong>Pure Lemma 4 frames.</strong> The Lemma 4 mode no longer adds the engine's tension, torsion and clutch-slip offsets; Panel D checks the drawn frames.</li>
+                <li><strong>Frame-leg packets.</strong> An optional Form 3 or Form 1 encoding of the four frame legs, in the Merkle chain, with its own Panel D row (<a href="#framepk">Chapter 15</a>).</li>
+            </ul>
+            <h3>What changed in the first lemma revision</h3>
             <ul>
                 <li><strong>Tile layout (§6.1).</strong> Bits 63–61 used to hold a three-phase counter; they now hold the Lemma 8 step k &minus; 1, as Table 4 requires. The wheel unit, gate byte (component and slice counter) and step-multiplexed index were zero and are now filled per Tables 4 and 5. Values binary32 cannot hold exactly are now marked.</li>
                 <li><strong>Lemma 15.</strong> The recursive Merkle chain, the South Halo readout and the tamper test are new, and the log gains a <code>[B5]</code> line per epoch, as the specification's pipeline step B5 asks.</li>
@@ -1230,6 +1285,53 @@ const qshort = (q) => `(${q.map((x) => { const s = String(x); return s.length > 
     el("line", { x1: x(1.85), y1: 60, x2: x(1.85), y2: 146, stroke: "#94a3b8", "stroke-dasharray": "3 3" }, svg);
     el("text", { x: x(1.85), y: 52, "text-anchor": "middle", fill: "#94a3b8", "font-size": 10 }, svg, "sphere of influence 1.85 pc");
     el("text", { x: x(rs), y: 52, "text-anchor": "start", fill: "#94a3b8", "font-size": 10 }, svg, "r_s");
+})();
+
+// ---------- Chapter 15: Form 1 (Hurwitz) encoder ----------
+(() => {
+    const ids = ["#f1-w", "#f1-x", "#f1-y", "#f1-z"], out = $("#f1-out");
+    const parseQ = (t) => { const m = /^\s*(-?\d+)(?:\s*\/\s*(\d+))?\s*$/.exec(t); if (!m || m[2] === "0") return null; return new Q(BigInt(m[1]), BigInt(m[2] || 1)); };
+    const short = (x) => { const t = String(x); return t.length > 26 ? `${t.slice(0, 10)}…${t.slice(-6)} (${t.replace("-", "").length} digits)` : t; };
+    const byte = (x) => (x < 0 ? 256 + x : x) & 0xff;
+    function enc() {
+        const q = ids.map((id) => parseQ($(id).value));
+        if (q.some((x) => !x)) { out.innerHTML = '<span class="bad">Enter integers or fractions such as 23/49.</span>'; return; }
+        if (q.every((x) => x.n === 0n)) { out.innerHTML = '<span class="bad">The zero quaternion is not a rotation.</span>'; return; }
+        const N = qnorm(q);
+        const L = q.reduce((l, f) => l / gcdB(l, f.d) * f.d, 1n);
+        const two = q.map((f) => 2n * f.n * (L / f.d));
+        const g = two.reduce((a, x) => gcdB(a, x), 0n) || 1n;
+        let v = two.map((x) => x / g);
+        const flip = v.find((x) => x !== 0n) < 0n; if (flip) v = v.map((x) => -x);
+        const need = Math.max(...v.map((x) => absB(x).toString(2).length));
+        const fits = v[0] <= 127n && v.slice(1).every((x) => absB(x) <= 127n);
+        let b, err = 0;
+        if (fits) b = v.map(Number);
+        else {
+            const f = v.map(Number), m = Math.max(...f.map(Math.abs)); b = f.map((x) => Math.round((x * 127) / m));
+            const nf = Math.hypot(...f), nb = Math.hypot(...b);
+            err = 4 * Math.asin(Math.min(1, Math.hypot(...f.map((x, i) => x / nf - b[i] / nb)) / 2));
+        }
+        const core = ((((fits ? 0 : 0x80) | (b[0] & 0x7f)) << 24) | (byte(b[1]) << 16) | (byte(b[2]) << 8) | byte(b[3])) >>> 0;
+        const deg = (err * 180) / Math.PI;
+        out.innerHTML = `<span class="k">Q</span> = (${q.map(short).join(", ")}) · <span class="k">N(Q)</span> = ${short(N)}${N.eq(ONE) ? " (unit)" : " (not unit: Form 1 still carries its rotation)"}<br>` +
+            `<span class="k">1. common denominator</span> L = ${short(L)}<br>` +
+            `<span class="k">2. doubled</span> 2LQ = (${two.map(short).join(", ")})<br>` +
+            `<span class="k">3. gcd</span> ${short(g)} → (${v.map((x) => short(flip ? -x : x)).join(", ")})<br>` +
+            `<span class="k">4. sign</span> ${flip ? "first coordinate negative: multiply by −1 (same rotation)" : "already positive"} → (${v.map(short).join(", ")})<br>` +
+            `<span class="k">5. fit</span> needs ${need}-bit coordinates; bytes hold 2w ≤ 127, |x|, |y|, |z| ≤ 127 → ` +
+            (fits ? '<span class="good">fits: exact, loss flag clear</span>' : `<span class="warn">does not fit: rounded to (${b.join(", ")}), loss flag set, direction off by ${deg >= 0.01 ? deg.toFixed(3) + "°" : (deg * 3.6e6).toPrecision(3) + " mas"}</span>`) +
+            `<br><span class="k">core word</span> 0x${core.toString(16).toUpperCase().padStart(8, "0")} · <span class="k">bytes</span> ${fits ? "" : "flag+"}2w = ${b[0]}, x = ${b[1]}, y = ${b[2]}, z = ${b[3]}`;
+    }
+    ids.forEach((id) => $(id).addEventListener("input", enc));
+    document.querySelectorAll("#f1-lab .chip").forEach((c) => c.addEventListener("click", () => {
+        let parts = c.dataset.q;
+        if (parts.startsWith("C:")) { const u = parts.slice(2).split(",").map(parseQ); parts = cayley(u).map(String).join(","); }
+        parts.split(",").forEach((t, i) => { $(ids[i]).value = t; });
+        document.querySelectorAll("#f1-lab .chip").forEach((x) => x.classList.toggle("on", x === c));
+        enc();
+    }));
+    document.querySelector("#f1-lab .chip").click();
 })();
 </script>
 <!-- page-chrome:start -->
