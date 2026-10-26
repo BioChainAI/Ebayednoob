@@ -13,8 +13,9 @@ Companion pages sit in the same folder, and their bars link to each other:
 | `manual.html` | Instruction manual & explainer | Open Engine, Tracer |
 | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses | Open Engine, Manual |
 | `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification | Open Engine, Manual, Tracer |
-| `galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` and live checks against the Fifteen Lemmas | Open Engine, Guide, Numogram |
-| `galactic_companion.html` | Companion guide: from one engine to the triple quad, lemma by lemma | Simulation, Open Engine, Manual |
+| `Galactic Lensing/galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` and live checks against the Fifteen Lemmas | Open Engine, Guide, Part 2 |
+| `Galactic Lensing/galactic_companion.html` | Companion guide: from one engine to the triple quad, lemma by lemma, and Part 2 | Part 1, Part 2, Open Engine |
+| `Galactic Lensing/tri_engine_soliton.html` | Galactic Lensing Hierarchy Part 2: three active engines, cross-engine TQF and the soliton crystal | Part 1, Guide, Open Engine |
 
 To update the tracer, upload the new version over `tracer.html` (keep the name); the bar is added the same way.
 
@@ -59,7 +60,7 @@ Running either more than once is harmless. An existing snippet, including a bare
   `bottom-right`. For automatic installs, set `position` in `scripts/page-chrome-targets.json`.
 - `data-home`: a different address for the Home button (default: the site's main page).
 - `data-extras`: extra buttons after Home, as JSON, e.g.
-  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine`, `trace`, `numogram` or `lensing`. (A single
+  `[{"href":"manual.html","label":"Manual","icon":"book"}]`. Icons: `book`, `engine`, `trace`, `numogram`, `lensing` or `soliton`. (A single
   button can also be given as `data-extra-href`, `data-extra-label`, `data-extra-icon`.) For automatic
   installs, set `extra` in `scripts/page-chrome-targets.json` to one `{ href, label, icon }` or a list.
 - `data-compact="true"`: shows every button as an icon only, with its name on hover. The
