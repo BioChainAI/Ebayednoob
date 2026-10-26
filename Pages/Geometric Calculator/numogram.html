@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Numogram Correspondence</title>
+    <meta name="description" content="Three synchronized panels on one clock: the Geometric Harmonics Calculator's orbital engine (v10 mechanics), the CCRU decimal Numogram, and a Numogram engine locked to the Engine wherever an exact symmetry exists, with in-page BigInt verification.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Same Three.js builds as engine v10 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        :root {
+            --bg: #020617; --panel: #0b1222; --panel-2: #0f172a;
+            --line: rgba(34, 211, 238, 0.16); --line-strong: rgba(34, 211, 238, 0.38);
+            --text: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
+            --cyan: #22d3ee; --fuchsia: #e879f9; --amber: #fbbf24; --rose: #fb7185;
+            --emerald: #34d399; --sky: #38bdf8; --purple: #c084fc; --grey: #94a3b8;
+            --murmur: #22d3ee; --oddubb: #fbbf24; --katak: #e879f9; --djynxx: #c084fc; --uttunul: #94a3b8;
+            --mono: 'Fira Code', ui-monospace, monospace;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+        body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background: radial-gradient(1100px 600px at 85% -10%, rgba(232, 121, 249, 0.09), transparent 60%), radial-gradient(900px 600px at -10% 20%, rgba(34, 211, 238, 0.09), transparent 60%); }
+        a { color: var(--cyan); }
+        code, .mono { font-family: var(--mono); font-size: 0.86em; }
+        code { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(51, 65, 85, 0.7); border-radius: 5px; padding: 0 0.3em; color: #a5f3fc; }
+        h1, h2, h3, h4 { color: #f8fafc; line-height: 1.25; }
+        .wrap { max-width: 1560px; margin: 0 auto; padding: 0 16px; }
+
+        .hero { padding: 76px 0 18px; text-align: center; }
+        .eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); }
+        .hero h1 { font-size: clamp(1.6rem, 3.6vw, 2.6rem); margin: 0.5rem auto 0.6rem; max-width: 980px;
+            background: linear-gradient(90deg, #67e8f9, #e879f9 55%, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .hero p { max-width: 860px; margin: 0 auto; color: #cbd5e1; }
+        .legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; font-size: 0.82rem; color: var(--muted); }
+
+        .tag { font: 600 0.7rem var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid; white-space: nowrap; letter-spacing: 0.02em; }
+        .t-proven { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.55); }
+        .t-computed { color: #7dd3fc; border-color: rgba(56, 189, 248, 0.55); }
+        .t-heuristic { color: #fcd34d; border-color: rgba(251, 191, 36, 0.55); }
+        .t-nomap { color: #94a3b8; border-color: rgba(148, 163, 184, 0.55); }
+        .v-exact { color: #020617; background: #34d399; border-color: #34d399; }
+        .v-partial { color: #020617; background: #fbbf24; border-color: #fbbf24; }
+        .v-nomap { color: #e2e8f0; background: #334155; border-color: #475569; }
+
+        .card { background: rgba(11, 18, 34, 0.86); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+        .card h2 { font-size: 1.1rem; margin: 0 0 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .card .sub { color: var(--muted); font-size: 0.82rem; margin: 0 0 10px; }
+
+        /* Clock */
+        .clock { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 14px; align-items: center; margin-bottom: 14px; }
+        .clock-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        button, select { font: 500 0.85rem Inter, sans-serif; color: var(--text); background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+        button:hover { border-color: var(--cyan); color: #fff; }
+        button.primary { background: linear-gradient(90deg, #0891b2, #a21caf); border-color: transparent; color: #fff; font-weight: 600; min-width: 78px; }
+        button.on { border-color: var(--fuchsia); color: #f5d0fe; }
+        input[type="range"] { accent-color: var(--fuchsia); }
+        .scrub { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-top: 10px; font: 0.8rem var(--mono); color: var(--muted); }
+        .scrub input { width: 100%; }
+        .readouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; margin-top: 10px; }
+        .ro { background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 5px 8px; font-family: var(--mono); }
+        .ro .k { display: block; font-size: 0.66rem; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; }
+        .ro .v { font-size: 0.92rem; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        #hub { width: 150px; height: 150px; border-radius: 50%; background: #020617; border: 1px solid #164e63; }
+
+        /* Panels */
+        .tabs { display: none; gap: 6px; margin-bottom: 10px; }
+        .tabs button { flex: 1; }
+        .tabs button[aria-selected="true"] { border-color: var(--cyan); color: var(--cyan); background: rgba(8, 47, 73, 0.5); }
+        .panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+        .panel { min-width: 0; }
+        #three-host { position: relative; width: 100%; height: 340px; border-radius: 10px; overflow: hidden; background: #020617; border: 1px solid #1e293b; }
+        #three-host .msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+        #gears { width: 100%; height: auto; display: block; background: #020617; border: 1px solid #1e293b; border-radius: 10px; margin-top: 10px; }
+        svg.diagram { width: 100%; height: auto; display: block; background: #020617; border: 1px solid #1e293b; border-radius: 10px; }
+        .grid-ro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+        details.ctl { margin-top: 10px; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px; background: #020617; }
+        details.ctl summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+        .ctl-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 54px; gap: 8px; align-items: center; margin: 6px 0; font-size: 0.82rem; }
+        .ctl-row input[type="range"] { width: 100%; }
+        .note { font-size: 0.8rem; color: var(--muted); margin: 8px 0 0; }
+        .quat { font: 1rem var(--mono); color: #f5d0fe; }
+
+        .maplist { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+        .maplist li { border: 1px solid #1e293b; border-radius: 9px; padding: 7px 9px; background: #020617; font-size: 0.82rem; }
+        .maplist li .hd { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
+        .tray { margin-top: 10px; border: 1px dashed #475569; border-radius: 10px; padding: 8px; background: rgba(30, 41, 59, 0.35); }
+        .tray h3 { margin: 0 0 6px; font-size: 0.85rem; color: #cbd5e1; }
+        .tray li { background: rgba(15, 23, 42, 0.6); color: #cbd5e1; }
+
+        .zone-table td, .zone-table th { padding: 4px 7px; }
+        .table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; margin-top: 8px; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(51, 65, 85, 0.5); vertical-align: top; }
+        th { background: rgba(15, 23, 42, 0.95); color: #a5f3fc; font-weight: 600; font-size: 0.78rem; white-space: nowrap; }
+        tr:last-child td { border-bottom: 0; }
+
+        .section { margin-top: 18px; }
+        .checks { display: grid; gap: 6px; margin-top: 8px; }
+        .check { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: start; border: 1px solid #1e293b; border-radius: 9px; padding: 7px 10px; background: #020617; }
+        .badge { font: 700 0.75rem var(--mono); text-align: center; border-radius: 6px; padding: 3px 0; }
+        .pass { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.5); }
+        .fail { background: rgba(251, 113, 133, 0.18); color: #fda4af; border: 1px solid rgba(251, 113, 133, 0.5); }
+        .info { background: rgba(56, 189, 248, 0.14); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.45); }
+        .check .t { font-weight: 600; font-size: 0.86rem; }
+        .check .d { font: 0.78rem var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+        .summary { font: 600 0.9rem var(--mono); }
+        ul.dep li, ol.dep li { margin: 4px 0; font-size: 0.88rem; }
+
+        /* Cross-panel highlight */
+        .hl { outline: 2px solid #f8fafc !important; outline-offset: 1px; background-color: rgba(248, 250, 252, 0.08) !important; }
+        svg .hl { outline: none !important; filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 2px #fff); }
+        svg .hl circle, svg circle.hl { stroke: #fff !important; stroke-width: 3 !important; }
+        svg path.hl, svg line.hl { stroke: #fff !important; stroke-opacity: 1 !important; }
+        [data-link] { cursor: pointer; }
+        .active-zone circle { stroke: #fff; stroke-width: 3.5; }
+        .gates-off .gate { display: none; }
+
+        footer { color: var(--faint); font-size: 0.82rem; text-align: center; padding: 28px 16px 50px; }
+
+        @media (max-width: 1099px) {
+            .tabs { display: flex; }
+            .panels { grid-template-columns: minmax(0, 1fr); }
+            .panel[hidden] { display: none; }
+        }
+        @media (max-width: 560px) {
+            .clock { grid-template-columns: minmax(0, 1fr); }
+            #hub { margin: 0 auto; }
+            .grid-ro { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            th, td { padding: 6px 7px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header class="hero">
+        <div class="eyebrow">Geometric Engine of Time &middot; v10 mechanics &middot; CCRU decimal Numogram</div>
+        <h1>Engine, Numogram and a Numogram Engine on one clock</h1>
+        <p>Panel A runs the orbital calculator with formulas copied from engine v10. Panel B is the decimal Numogram. Panel C rebuilds a clock from Numogram rules alone and locks it to the Engine only where an exact symmetry exists; everywhere else it says there is no map, and why. Hover (or tap) any linked element to light up its counterpart in the other panels.</p>
+        <div class="legend">
+            <span><span class="tag t-proven">PROVEN</span> exhaustive finite check or algebraic identity</span>
+            <span><span class="tag t-computed">COMPUTED</span> evaluated numerically or on samples</span>
+            <span><span class="tag t-heuristic">HEURISTIC</span> analogy, not a theorem</span>
+            <span><span class="tag t-nomap">NO MAP</span> no structural counterpart</span>
+        </div>
+    </header>
+
+    <!-- Shared clock -->
+    <section class="card clock" aria-label="Shared clock">
+        <div>
+            <h2>Shared clock <span class="tag t-proven">ENGINE PULSE COUNTER</span></h2>
+            <p class="sub">pulseCount = &lfloor;simTime &middot; 60&rfloor;, activeNode k = pulseCount mod 30, stage = &lfloor;(pulseCount mod 150) / 30&rfloor;, tier = 4 &minus; stage. One counter drives all three panels.</p>
+            <div class="clock-controls">
+                <button class="primary" id="btn-play" type="button">Play</button>
+                <button id="btn-back" type="button" title="One pulse back">&minus;1 pulse</button>
+                <button id="btn-step" type="button" title="One pulse forward (stepClockOnce)">+1 pulse</button>
+                <button id="btn-reset" type="button">Reset</button>
+                <button id="btn-holo" type="button" title="Switch the scrubber between 150 pulses and 720 holonomic frames">Scrub: pulses</button>
+                <label class="mono" style="font-size:0.8rem;color:var(--muted)">speed <input id="speed" type="range" min="0.01" max="2" step="0.01" value="0.10" style="width:110px;vertical-align:middle"> <span id="speed-val">0.10x</span></label>
+            </div>
+            <div class="scrub">
+                <span id="scrub-min">0</span>
+                <input id="scrub" type="range" min="0" max="150" step="1" value="0" aria-label="Scrub">
+                <span id="scrub-max">150 pulses</span>
+            </div>
+            <div class="readouts">
+                <div class="ro"><span class="k">pulseCount</span><span class="v" id="r-P">0</span></div>
+                <div class="ro"><span class="k">lap pulse p</span><span class="v" id="r-p">0 / 150</span></div>
+                <div class="ro"><span class="k">holonomic frame</span><span class="v" id="r-holo">0 / 720</span></div>
+                <div class="ro" data-link="tiers"><span class="k">stage &rarr; tier</span><span class="v" id="r-stage">0 &rarr; T4</span></div>
+                <div class="ro" data-link="nodek"><span class="k">node k (F k+1)</span><span class="v" id="r-k">0 (F1/30)</span></div>
+                <div class="ro" data-link="zonecur"><span class="k">zone 2^(k mod 6)</span><span class="v" id="r-zone">1</span></div>
+                <div class="ro" data-link="map:9"><span class="k">statorPulse</span><span class="v" id="r-stator">0 / 60</span></div>
+                <div class="ro" data-link="map:13"><span class="k">outerFrameN</span><span class="v" id="r-outer">0 / 720</span></div>
+                <div class="ro" data-link="map:10"><span class="k">piCycleStepK</span><span class="v" id="r-pik">1 / 8</span></div>
+            </div>
+        </div>
+        <canvas id="hub" width="300" height="300" title="Hub spiral (renderHub2D): radius 155 to 15 over 150 pulses, angle i x 0.25"></canvas>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Panels">
+        <button role="tab" aria-selected="true" data-tab="panel-a" type="button">A &middot; Engine</button>
+        <button role="tab" aria-selected="false" data-tab="panel-b" type="button">B &middot; Numogram</button>
+        <button role="tab" aria-selected="false" data-tab="panel-c" type="button">C &middot; Numogram Engine</button>
+    </div>
+
+    <div class="panels">
+        <!-- Panel A -->
+        <section class="card panel" id="panel-a" aria-label="Panel A: Engine">
+            <h2>A &middot; Engine <span class="tag t-computed">v10 FORMULAS</span></h2>
+            <p class="sub">Tori, the 30 dual helices, the 30 nodes of the active tier, and the TQF triangle V1&ndash;V2&ndash;V3 with the inferred V4 (fuchsia) and the exact parallelogram closure V4* (white).</p>
+            <div id="three-host"><div class="msg" id="three-msg">Loading Three.js&hellip;</div></div>
+            <div class="grid-ro">
+                <div class="ro" data-link="nodek"><span class="k">&theta;_k</span><span class="v" id="a-theta">0&deg;</span></div>
+                <div class="ro" data-link="classcur"><span class="k">c3Phase</span><span class="v" id="a-c3">0&deg;</span></div>
+                <div class="ro" data-link="chiralcur"><span class="k">c2Chiral &middot; &phi;_p</span><span class="v" id="a-c2">+1 &middot; 0.0</span></div>
+                <div class="ro" data-link="tqf" style="grid-column: span 2"><span class="k">Q1 &middot; Q2 &middot; Q3</span><span class="v" id="a-q">&ndash;</span></div>
+                <div class="ro" data-link="map:5"><span class="k">qScale</span><span class="v" id="a-qs">&ndash;</span></div>
+                <div class="ro" data-link="tqf" style="grid-column: span 2"><span class="k">A_R = (&Sigma;Q)&sup2; &minus; 2&Sigma;Q&sup2;</span><span class="v" id="a-ar">&ndash;</span></div>
+                <div class="ro" data-link="map:5"><span class="k">|V4 &minus; V4*|</span><span class="v" id="a-gap">&ndash;</span></div>
+                <div class="ro" data-link="map:5" style="grid-column: 1 / -1"><span class="k">V4 inferred &middot; V4* closure (qScale = 1)</span><span class="v"><span id="a-v4">&ndash;</span> &middot; <span id="a-v4s">&ndash;</span></span></div>
+            </div>
+            <canvas id="gears" width="380" height="165" data-link="map:13" title="12/10/8 gears and the 8-ray pi-cycle rotor (drawClockPumpCanvas)"></canvas>
+            <p class="note">Gears: outer 12 teeth = 2&pi;&middot;n/720, middle 10 teeth = &minus;2&pi;&middot;n/72&middot;&eta;, inner 8 teeth = 2&pi;&middot;n/10&middot;0.1 + drift, with n = outerFrameN. Rotor ray = piCycleStepK; amber rays k = 2 and 6 are the handshakes (&plusmn;i).</p>
+            <details class="ctl" data-link="map:11">
+                <summary>Engine controls (tension, torsion, clutch, drift)</summary>
+                <div class="ctl-row"><span>Tension</span><input id="c-tension" type="range" min="0" max="360" step="5" value="180"><span class="mono" id="c-tension-v">180&deg;</span></div>
+                <div class="ctl-row"><span>Torsion</span><input id="c-torsion" type="range" min="0" max="360" step="5" value="150"><span class="mono" id="c-torsion-v">150&deg;</span></div>
+                <div class="ctl-row"><span>Engine A</span><select id="c-fa"><option value="60" selected>60 Hz</option><option value="40">40 Hz</option><option value="72">72 Hz</option></select><span></span></div>
+                <div class="ctl-row"><span>Engine B</span><select id="c-fb"><option value="45">45 Hz</option><option value="72">72 Hz</option><option value="90" selected>90 Hz</option><option value="144">144 Hz</option></select><span></span></div>
+                <div class="ctl-row"><span>Clutch ramp r</span><input id="c-r" type="range" min="0" max="4" step="1" value="4"><span class="mono" id="c-r-v">4</span></div>
+                <div class="clock-controls" style="margin-top:6px">
+                    <button id="c-drift" type="button" data-link="map:12">Inject drift 0.342</button>
+                    <button id="c-sync" type="button" data-link="map:12">Form 3 resync</button>
+                </div>
+                <div class="out mono" id="c-out" style="margin-top:8px;font-size:0.8rem;color:var(--muted)"></div>
+            </details>
+            <details class="ctl" data-link="map:4">
+                <summary>64-bit engram (processEngram)</summary>
+                <div class="ctl-row"><span>Seed text</span><input id="e-seed" type="text" value="0.3" style="width:100%;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 6px;font:0.85rem var(--mono)"><span></span></div>
+                <div class="mono" id="e-out" style="font-size:0.8rem;line-height:1.7"></div>
+                <p class="note">Same two FNV-style 32-bit hashes as the file, with the file's default Form 1 written into [43:40]. The wheel unit decoded from [60:58] always has its digital root in the Time-Circuit (mapping 4).</p>
+            </details>
+        </section>
+
+        <!-- Panel B -->
+        <section class="card panel" id="panel-b" aria-label="Panel B: Numogram" hidden>
+            <h2>B &middot; Numogram <span class="tag t-proven">DECIMAL, MOD 9</span></h2>
+            <p class="sub">Zones 0&ndash;9; syzygies x::9&minus;x drawn as linked pairs; current arrows land on the zone numbered by the difference; dashed gate channels run zone n &rarr; digital root of n(n+1)/2.</p>
+            <svg id="numogram" class="diagram" viewBox="0 0 420 560" role="img" aria-label="Decimal Numogram"></svg>
+            <div class="clock-controls" style="margin-top:8px">
+                <button id="btn-gates" class="on" type="button" data-link="gates">Gate channels: on</button>
+                <span class="mono" style="font-size:0.78rem;color:var(--muted)">45 demons = C(10, 2), one per pair of zones; the 5 syzygetic demons are drawn.</span>
+            </div>
+            <div class="table-wrap">
+                <table class="zone-table">
+                    <thead><tr><th>Zone</th><th>Name</th><th>Current</th><th>Syzygetic demon</th><th>Region</th></tr></thead>
+                    <tbody id="zone-rows"></tbody>
+                </table>
+            </div>
+            <p class="note" id="current-rule"></p>
+        </section>
+
+        <!-- Panel C -->
+        <section class="card panel" id="panel-c" aria-label="Panel C: Numogram Engine" hidden>
+            <h2>C &middot; Numogram Engine <span class="tag t-proven">(&#8484;/9)&#739; &cong; C6 &cong; C3 &times; C2</span></h2>
+            <p class="sub">Outer ring: Time-Circuit zones 2^j mod 9, with j = k mod 6 driven by the Engine. Antipodes are syzygy twins. Inner triangle: the quotient (&#8484;/9)&#739;/&plusmn;1 &cong; C3 by angle doubling, where the currents form the 3-cycle. Warp and Plex are fixed self-loops.</p>
+            <svg id="c6" class="diagram" viewBox="0 0 420 460" role="img" aria-label="C6 ring of the Time-Circuit"></svg>
+            <div class="grid-ro" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                <div class="ro" data-link="zonecur"><span class="k">j = k mod 6 &rarr; zone</span><span class="v" id="c-zone">j 0 &rarr; 1</span></div>
+                <div class="ro" data-link="classcur"><span class="k">syzygy &middot; twin</span><span class="v" id="c-syz">Murmur &middot; +</span></div>
+                <div class="ro" data-link="map:3" style="grid-column: 1 / -1"><span class="k">spinor h^j, h = (1 &minus; i + j + k)/2</span><span class="v quat" id="c-quat">1</span></div>
+                <div class="ro" data-link="map:3" style="grid-column: 1 / -1"><span class="k">twin 9 &minus; x &harr; &minus;h^j = h^(j+3)</span><span class="v quat" id="c-quat-twin">&minus;1</span></div>
+            </div>
+            <ul class="maplist" id="maps-exact"></ul>
+            <div class="tray">
+                <h3>No counterpart <span class="tag t-nomap">NO MAP</span></h3>
+                <ul class="maplist" id="maps-nomap" style="margin-top:0"></ul>
+            </div>
+        </section>
+    </div>
+
+    <!-- Correspondence table -->
+    <section class="card section" id="correspondence">
+        <h2>Correspondence table</h2>
+        <p class="sub">Each row is drawn in Panel C and linked across panels. Verdict says whether the Engine and the Numogram share the structure; the tag says how the claim is established.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>#</th><th>Engine element</th><th>Numogram element</th><th>Verdict</th><th>Reason</th></tr></thead>
+                <tbody id="corr-rows"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Verification -->
+    <section class="card section" id="verification">
+        <h2>Verification <span class="summary" id="v-summary"></span></h2>
+        <p class="sub">Assertions run in this page with BigInt and exact rationals. Finite structures are checked exhaustively (PROVEN). The A_R identity is also tested on random integer triangles (COMPUTED). <button id="v-rerun" type="button">Re-run with a new seed</button></p>
+        <div class="checks" id="checks"></div>
+        <h3 style="font-size:0.95rem;margin:14px 0 4px">Live (floating-point, from the Engine's own telemetry)</h3>
+        <div class="checks" id="checks-live"></div>
+    </section>
+
+    <!-- Discrepancies and departures -->
+    <section class="card section" id="departures">
+        <h2>Discrepancies in the file (flagged, not fixed)</h2>
+        <ul class="dep">
+            <li><strong>Rotation axes.</strong> The code rotates tiers with <code>rotAxis</code> 'Z' (no base rotation: T0, T2, T4) and 'X' (base <code>euler.x = &pi;/2</code>: T1, T3). The papers describe the alternation as X/Y.</li>
+            <li><strong>Inferred 4th vertex.</strong> <code>pInferred = pNode + qScale&middot;((pUpper &minus; pNode) + (pLower &minus; pNode))</code> with <code>qScale = 0.65 + 0.45&middot;&radic;A_R/(&Sigma;Q + 1e-6 + 1)</code>. It equals the parallelogram closure only when qScale = 1, so it is not an exact closure (Panel A shows both points and their distance).</li>
+            <li><strong>Tier frequencies.</strong> <code>freq = 6W</code> (96, 84, 72, 60, 48 Hz) appears in <code>TIERS_SPEC</code> but not in the papers.</li>
+            <li><strong>Upper/lower phase offset.</strong> The 0.22 is applied to &theta; inside the winding term: <code>&phi;_up = W_up&middot;(&theta; + 0.22)&middot;c2 + c3 + 2&pi;/3</code>, <code>&phi;_low = W_low&middot;(&theta; &minus; 0.22)&middot;c2 + c3 + 4&pi;/3</code>. The effective poloidal shift is &plusmn;0.22&middot;W rad (about &plusmn;2.2 rad on T3), not 0.22 rad.</li>
+            <li><strong>Small code details.</strong> <code>A_R</code> is clamped with <code>Math.max(0, &hellip;)</code>; <code>PHI</code> is defined but no function uses it; the inspector labels [60:56] "mod-30 wheel and structure selector" but only [60:58] is decoded (the wheel index).</li>
+        </ul>
+        <h2 style="margin-top:16px">Where this page departs from the file, and why</h2>
+        <ol class="dep" id="dep-list">
+            <li><strong>Stage index.</strong> The page derives the stage as &lfloor;(pulseCount mod 150)/30&rfloor;. The file advances a stage on the edge <code>activeNode === 29 &amp;&amp; previousActiveNode !== 29</code>, which can be skipped when more than one pulse elapses in a frame. Deriving every quantity from the counter keeps all three panels on the same pulse at any speed or scrub position.</li>
+            <li><strong>Clock mode.</strong> Only the free-running clock is modelled (<code>simSpeedBase = 1.0</code> times the speed slider, default 0.10x as in the file). The calculator's 6.0x/2.5x calculation speeds, keypad, rational evaluator and result latch are not part of this page.</li>
+            <li><strong>Scrubber.</strong> One lap is 150 pulses, and holonomic frames are 720&middot;p/150 = 4.8 p. The file's own display uses (p + 1)/150 progress, i.e. it counts the current pulse as completed.</li>
+            <li><strong>Helix thickness.</strong> Tubes use radius 0.9 instead of 0.4 so they stay visible in a one-third-width panel. The curves (&phi; = W&theta;&middot;chiral + phase, 200 samples, closed Catmull-Rom, 150 segments) are unchanged.</li>
+            <li><strong>Scene contents.</strong> Not drawn: particle fields, radial lines, checkpoint diamonds, the trace orb and trail, the degree plane, the polar grid, and the idle group rotation. Added: 30 node markers on the active tier (coloured by syzygy) and the closure point V4*. TQF is shown for the active node only, and its geometry is updated in place instead of rebuilt each frame.</li>
+            <li><strong>Gear canvas.</strong> Copied unchanged; it is redrawn on every pulse of the shared clock rather than only while the CLUTCH tab is open.</li>
+            <li><strong>Engram.</strong> Hash and decoding copied; the 8&times;8 grid, bit toggling and Form selector are omitted (Form 1, the file's default, is applied).</li>
+            <li><strong>Additions with no source in the file.</strong> Panels B and C, the hover links, the correspondence table and the verification suite.</li>
+        </ol>
+    </section>
+
+    <footer>
+        <p><a href="index.html">Open the Engine</a> &middot; <a href="manual.html">Manual</a> &middot; <a href="tracer.html">Calculation Tracer</a></p>
+        <p>Zone and demon names are the CCRU's labels for the decimal Numogram, shown as names only. Mechanics in Panel A are copied from <code>harmonic_market_matrix_geometric_engine_10.html</code>.</p>
+    </footer>
+</div>
+
+<script>
+// =====================================================================
+// 1. Engine constants and state: copied from engine v10
+// =====================================================================
+const TOTAL_NODES = 30;
+const TOTAL_CALC_PULSES = 150; // 5 stages * 30 nodes
+const PHI = (1 + Math.sqrt(5)) / 2;
+const WHEEL_30_UNITS = [1, 7, 11, 13, 17, 19, 23, 29];
+const FIBONACCI = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987];
+const TIERS_SPEC = [
+    { id: 0, W: 16, R: 15,  r: 4,  color: 0x38bdf8, hex: '#38bdf8', rotAxis: 'Z', freq: 96.0, opacity: 0.28, glow: 0.15 },
+    { id: 1, W: 14, R: 35,  r: 6,  color: 0xa855f7, hex: '#a855f7', rotAxis: 'X', freq: 84.0, opacity: 0.28, glow: 0.15 },
+    { id: 2, W: 12, R: 65,  r: 8,  color: 0x10b981, hex: '#10b981', rotAxis: 'Z', freq: 72.0, opacity: 0.28, glow: 0.15 },
+    { id: 3, W: 10, R: 105, r: 10, color: 0xf59e0b, hex: '#f59e0b', rotAxis: 'X', freq: 60.0, opacity: 0.28, glow: 0.15 },
+    { id: 4, W: 8,  R: 155, r: 12, color: 0xf43f5e, hex: '#f43f5e', rotAxis: 'Z', freq: 48.0, opacity: 0.28, glow: 0.15 }
+];
+
+let tensionAngleDeg = 180;
+let torsionAngleDeg = 150;
+let holonomyDrift = 0.0;
+let currentClutchState = { fA: 60, fB: 90, eta: 1.0, slip: 0.0, qhClk: 0.1736, fEff: 90 };
+let statorPulse = 0, outerFrameN = 0, piCycleStepK = 1;
+
+// getTierOrientationQuat: copied
+function getTierOrientationQuat(tierId) {
+    const tier = TIERS_SPEC[tierId];
+    const euler = new THREE.Euler(0, 0, 0, 'XYZ');
+    if (tier.rotAxis === 'X') {
+        euler.x = Math.PI / 2;
+    }
+    const tensionRad = ((tensionAngleDeg - 180) * Math.PI) / 180;
+    const slipRad = ((1.0 - currentClutchState.eta) * 28 + holonomyDrift * 50) * (Math.PI / 180);
+    const torsionRad = ((torsionAngleDeg - 150) * Math.PI) / 180;
+
+    if (tierId >= 3) {
+        euler.y = tensionRad;
+    } else if (tierId === 2) {
+        euler.z = torsionRad + slipRad * 0.5;
+        euler.y = tensionRad * 0.25;
+    } else {
+        euler.z = torsionRad + slipRad;
+        euler.y = -torsionRad * 0.35;
+    }
+    return new THREE.Quaternion().setFromEuler(euler);
+}
+
+// getNodeTelemetry: copied; the closure point (qScale = 1) is added for mapping 5
+function getNodeTelemetry(k, stageIdx) {
+    const currentTierId = Math.max(0, Math.min(4, 4 - stageIdx));
+    let upperTierId, lowerTierId;
+    if (currentTierId === 4) { upperTierId = 3; lowerTierId = 2; }
+    else if (currentTierId === 0) { upperTierId = 2; lowerTierId = 1; }
+    else { upperTierId = currentTierId + 1; lowerTierId = currentTierId - 1; }
+
+    const curTier = TIERS_SPEC[currentTierId];
+    const upperTier = TIERS_SPEC[upperTierId];
+    const lowerTier = TIERS_SPEC[lowerTierId];
+
+    const theta = (k / TOTAL_NODES) * Math.PI * 2;
+    const c3Phase = (k % 3) * ((2 * Math.PI) / 3);
+    const c2Chiral = (k % 2 === 0) ? 1 : -1;
+
+    const phiCur = curTier.W * theta * c2Chiral + c3Phase;
+    const phiUp  = upperTier.W * (theta + 0.22) * c2Chiral + c3Phase + (2 * Math.PI / 3);
+    const phiLow = lowerTier.W * (theta - 0.22) * c2Chiral + c3Phase + (4 * Math.PI / 3);
+
+    function tierPointWithDynamics(tier, angTheta, angPhi) {
+        const px = (tier.R + tier.r * Math.cos(angPhi)) * Math.cos(angTheta);
+        const py = (tier.R + tier.r * Math.cos(angPhi)) * Math.sin(angTheta);
+        const pz = tier.r * Math.sin(angPhi);
+        const v = new THREE.Vector3(px, py, pz);
+        const q = getTierOrientationQuat(tier.id);
+        v.applyQuaternion(q);
+        return v;
+    }
+
+    const pNode  = tierPointWithDynamics(curTier, theta, phiCur);
+    const pUpper = tierPointWithDynamics(upperTier, theta + 0.18, phiUp);
+    const pLower = tierPointWithDynamics(lowerTier, theta - 0.18, phiLow);
+
+    const Q1 = pNode.distanceToSquared(pUpper);
+    const Q2 = pNode.distanceToSquared(pLower);
+    const Q3 = pUpper.distanceToSquared(pLower);
+
+    const denomProj = Q1 + Q2 + Q3 + 1e-6;
+    const projQ = (Q1 + Q2) / denomProj;
+    const invProjQ = denomProj / Math.max(1e-6, Q1 + Q2);
+
+    const sumQ = Q1 + Q2 + Q3;
+    const AR = Math.max(0, (sumQ * sumQ) - 2 * (Q1 * Q1 + Q2 * Q2 + Q3 * Q3));
+
+    const qScale = 0.65 + (Math.sqrt(AR) / (denomProj + 1.0)) * 0.45;
+    const vecU = new THREE.Vector3().subVectors(pUpper, pNode);
+    const vecL = new THREE.Vector3().subVectors(pLower, pNode);
+    const pInferred = new THREE.Vector3()
+        .copy(pNode)
+        .addScaledVector(vecU.add(vecL), qScale);
+    // Added: exact parallelogram closure pUpper + pLower - pNode (qScale = 1)
+    const pClosure = new THREE.Vector3().addVectors(pUpper, pLower).sub(pNode);
+
+    return { k, pNode, pUpper, pLower, pInferred, pClosure, Q1, Q2, Q3, projQ, invProjQ, AR, qScale, sumQ,
+             currentTierId, upperTierId, lowerTierId, theta, c3Phase, c2Chiral };
+}
+
+// computeDifferentialClutch: formulas copied, reading this page's controls
+function computeDifferentialClutch() {
+    const fA = parseInt(document.getElementById('c-fa').value, 10);
+    const fB = parseInt(document.getElementById('c-fb').value, 10);
+    const rStep = parseInt(document.getElementById('c-r').value, 10);
+
+    const g = Number(gcdB(BigInt(fA), BigInt(fB)));
+    const coshNum = fA * fA + fB * fB;
+    const coshDen = 2 * fA * fB;
+    const qhClk = ((fA * fA - fB * fB) ** 2) / (coshDen ** 2);
+
+    const lambda_r = 2.4 * ((4 - rStep) / 4);
+    const eta = rStep >= 4 ? 1.0 : (1 / (1 + lambda_r * (qhClk + 0.08)));
+    const fEff = (1 - eta) * fA + eta * fB;
+
+    currentClutchState = { fA, fB, eta, slip: 1 - eta, qhClk, fEff };
+    document.getElementById('c-r-v').textContent = rStep;
+    document.getElementById('c-out').innerHTML =
+        `&gamma; = ${fB / g}/${fA / g} &middot; cosh = ${(coshNum / coshDen).toFixed(3)} &middot; qhClk = ${qhClk.toFixed(4)}<br>` +
+        `&lambda; = ${lambda_r.toFixed(2)} &middot; &eta; = ${eta.toFixed(4)} &middot; fEff = ${fEff.toFixed(1)} Hz &middot; drift = ${holonomyDrift}`;
+}
+
+// drawClockPumpCanvas: copied
+function drawClockPumpCanvas() {
+    const canvas = document.getElementById('gears');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const cx1 = 110, cy1 = H / 2;
+    const outerAng = (outerFrameN / 720) * Math.PI * 2;
+    const midAng = -(outerFrameN / 72) * Math.PI * 2 * currentClutchState.eta;
+    const innerAng = (outerFrameN / 10) * Math.PI * 2 * 0.1 + holonomyDrift;
+
+    function drawGear(cx, cy, radius, teeth, rot, stroke, fill) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        for (let i = 0; i < teeth * 2; i++) {
+            const r = (i % 2 === 0) ? radius + 4 : radius - 3;
+            const a = (i / (teeth * 2)) * Math.PI * 2;
+            if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+            else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    drawGear(cx1, cy1, 62, 12, outerAng, '#38bdf8', 'rgba(56,189,248,0.08)');
+    drawGear(cx1, cy1, 42, 10, midAng, '#a855f7', 'rgba(168,85,247,0.10)');
+    drawGear(cx1, cy1, 22, 8, innerAng, holonomyDrift > 0.001 ? '#f43f5e' : '#f59e0b', 'rgba(245,158,11,0.14)');
+
+    const cx2 = 280, cy2 = H / 2;
+    ctx.beginPath();
+    ctx.arc(cx2, cy2, 58, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(16,185,129,0.4)';
+    ctx.stroke();
+
+    for (let s = 1; s <= 8; s++) {
+        const a = (s * Math.PI) / 4 - Math.PI / 2;
+        const active = (s === piCycleStepK);
+        ctx.beginPath();
+        ctx.moveTo(cx2 + Math.cos(a) * 14, cy2 + Math.sin(a) * 14);
+        ctx.lineTo(cx2 + Math.cos(a) * 52, cy2 + Math.sin(a) * 52);
+        ctx.strokeStyle = active ? '#22d3ee' : (s === 2 || s === 6 ? '#f59e0b' : 'rgba(148,163,184,0.3)');
+        ctx.lineWidth = active ? 2.5 : 1.2;
+        ctx.stroke();
+    }
+}
+
+// renderHub2D spiral: formula copied (radius 155 -> 15 over 150 pulses, angle i * 0.25)
+function renderHub(pLap) {
+    const canvas = document.getElementById('hub');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2;
+    ctx.clearRect(0, 0, w, h);
+    const maxR = Math.min(w, h) / 2 - 14, scale = maxR / 155;
+    TIERS_SPEC.slice().reverse().forEach(tier => {
+        ctx.beginPath(); ctx.arc(cx, cy, tier.R * scale, 0, Math.PI * 2);
+        ctx.strokeStyle = tier.hex; ctx.globalAlpha = 0.35; ctx.lineWidth = 2; ctx.stroke();
+    });
+    const startR = TIERS_SPEC[4].R * scale, endR = TIERS_SPEC[0].R * scale;
+    const maxSteps = Math.max(1, pLap);
+    ctx.beginPath();
+    let fx = cx, fy = cy - startR;
+    for (let i = 0; i <= maxSteps; i++) {
+        const t = i / TOTAL_CALC_PULSES;
+        const rInterp = startR - (startR - endR) * t;
+        const ang = i * 0.25;
+        const x = cx + Math.sin(ang) * rInterp, y = cy - Math.cos(ang) * rInterp;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        fx = x; fy = y;
+    }
+    ctx.strokeStyle = '#e879f9'; ctx.globalAlpha = 0.9; ctx.lineWidth = 3; ctx.stroke();
+    for (let stg = 0; stg < 5; stg++) {
+        const i = stg * 30;
+        if (i > maxSteps) continue;
+        const rr = startR - (startR - endR) * (i / TOTAL_CALC_PULSES);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx + Math.sin(i * 0.25) * rr - 6, cy - Math.cos(i * 0.25) * rr - 6, 12, 12);
+    }
+    ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(fx, fy, 8, 0, Math.PI * 2); ctx.fillStyle = '#f0abfc'; ctx.fill();
+}
+
+// processEngram + bit decoding: copied (seedState[0] is bit 63)
+const seedState = new Array(64).fill(0);
+function getBitsValue(msb, lsb) {
+    let val = 0;
+    for (let b = msb; b >= lsb; b--) val = (val << 1) | (seedState[63 - b] & 1);
+    return val >>> 0;
+}
+function setBitsValue(msb, lsb, val) {
+    for (let b = lsb; b <= msb; b++) { seedState[63 - b] = val & 1; val = val >>> 1; }
+}
+function processEngram(str) {
+    let h1 = 0x811c9dc5, h2 = 0xcbf29ce4;
+    for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        h1 ^= c; h1 = Math.imul(h1, 0x01000193);
+        h2 ^= (c + i); h2 = Math.imul(h2, 0x01000193);
+    }
+    for (let i = 0; i < 32; i++) {
+        seedState[i] = (h1 >>> (31 - i)) & 1;
+        seedState[i + 32] = (h2 >>> (31 - i)) & 1;
+    }
+    setBitsValue(43, 40, 1); // the file's default Form selection
+}
+
+// =====================================================================
+// 2. Numogram model (exact rules)
+// =====================================================================
+const DEMON_COLOR = { Murmur: '#22d3ee', Oddubb: '#fbbf24', Katak: '#e879f9', Djynxx: '#c084fc', Uttunul: '#94a3b8' };
+const SYZYGIES = [
+    { demon: 'Murmur',  hi: 8, lo: 1, current: 'Surge', region: 'Time-Circuit' },
+    { demon: 'Oddubb',  hi: 7, lo: 2, current: 'Hold',  region: 'Time-Circuit' },
+    { demon: 'Katak',   hi: 5, lo: 4, current: 'Sink',  region: 'Time-Circuit' },
+    { demon: 'Djynxx',  hi: 6, lo: 3, current: 'Warp',  region: 'Warp' },
+    { demon: 'Uttunul', hi: 9, lo: 0, current: 'Plex',  region: 'Plex' }
+];
+const ZONES = [
+    { z: 0, name: 'Flatline',       current: 'Plex',  demon: 'Uttunul' },
+    { z: 1, name: 'Pod-Deliria',    current: 'Sink',  demon: 'Murmur' },
+    { z: 2, name: 'The Crypt',      current: 'Hold',  demon: 'Oddubb' },
+    { z: 3, name: 'The Swirl',      current: 'Warp',  demon: 'Djynxx' },
+    { z: 4, name: 'Time-Delta',     current: 'Sink',  demon: 'Katak' },
+    { z: 5, name: 'Missing Time',   current: 'Hold',  demon: 'Katak' },
+    { z: 6, name: 'Undu',           current: 'Warp',  demon: 'Djynxx' },
+    { z: 7, name: 'Tracts of Dobo', current: 'Surge', demon: 'Oddubb' },
+    { z: 8, name: 'Limbic Drift',   current: 'Surge', demon: 'Murmur' },
+    { z: 9, name: 'Cthelll',        current: 'Plex',  demon: 'Uttunul' }
+];
+const SYZ_OF_ZONE = {};
+SYZYGIES.forEach(s => { SYZ_OF_ZONE[s.hi] = s; SYZ_OF_ZONE[s.lo] = s; });
+const CIRCUIT = [1, 2, 4, 8, 7, 5];                  // 2^j mod 9, j = 0..5
+const J_OF_ZONE = { 1: 0, 2: 1, 4: 2, 8: 3, 7: 4, 5: 5 };
+const CLASS_BY_PHASE = ['Murmur', 'Oddubb', 'Katak'];  // class of 2^(k mod 6) depends on k mod 3
+const zoneOfNode = k => CIRCUIT[k % 6];
+const twinSign = x => ([1, 4, 7].includes(x) ? 1 : -1); // C3 x C2 with C3 = {1,4,7}, C2 = {1,8}
+const drNum = n => (n === 0 ? 0 : 1 + ((n - 1) % 9));
+const GATES = Array.from({ length: 9 }, (_, i) => { const n = i + 1, T = n * (n + 1) / 2; return { n, T, to: drNum(T) }; });
+
+// =====================================================================
+// 3. Exact arithmetic helpers (BigInt, rational quaternions)
+// =====================================================================
+const absB = a => (a < 0n ? -a : a);
+function gcdB(a, b) { a = absB(a); b = absB(b); while (b !== 0n) { const t = b; b = a % b; a = t; } return a; }
+const modB = (a, m) => ((a % m) + m) % m;
+const drB = n => (n === 0n ? 0n : 1n + modB(n - 1n, 9n));
+function qReduce(q) {
+    let g = [q.w, q.x, q.y, q.z].reduce((acc, c) => gcdB(acc, c), q.d);
+    if (g === 0n) g = 1n;
+    const s = q.d < 0n ? -1n : 1n;
+    return { w: s * q.w / g, x: s * q.x / g, y: s * q.y / g, z: s * q.z / g, d: s * q.d / g };
+}
+function qMul(a, b) {
+    return qReduce({
+        w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+        x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+        y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+        z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+        d: a.d * b.d
+    });
+}
+const qNeg = q => ({ w: -q.w, x: -q.x, y: -q.y, z: -q.z, d: q.d });
+const qEq = (a, b) => { a = qReduce(a); b = qReduce(b); return a.w === b.w && a.x === b.x && a.y === b.y && a.z === b.z && a.d === b.d; };
+const Q_ONE = { w: 1n, x: 0n, y: 0n, z: 0n, d: 1n };
+const H = { w: 1n, x: -1n, y: 1n, z: 1n, d: 2n }; // h = (1 - i + j + k)/2
+const H_POW = [Q_ONE];
+for (let j = 1; j <= 6; j++) H_POW.push(qMul(H_POW[j - 1], H));
+function fmtQuat(q) {
+    q = qReduce(q);
+    let s = '';
+    [[q.w, ''], [q.x, 'i'], [q.y, 'j'], [q.z, 'k']].forEach(([c, u]) => {
+        if (c === 0n) return;
+        const neg = c < 0n, a = neg ? -c : c, coef = (a === 1n && u) ? '' : a.toString();
+        s += s ? (neg ? ' − ' : ' + ') + coef + u : (neg ? '−' : '') + coef + u;
+    });
+    if (!s) s = '0';
+    return q.d === 1n ? s : `(${s})/${q.d}`;
+}
+
+// =====================================================================
+// 4. Shared clock
+// =====================================================================
+const clock = { simTime: 0, playing: false, multiplier: 0.10, simSpeedBase: 1.0, holonomic: false };
+const pulseCountOf = t => Math.floor(t * 60 + 1e-9);
+let lastPulse = -1;
+
+function derive() {
+    const P = pulseCountOf(clock.simTime);
+    const p = ((P % TOTAL_CALC_PULSES) + TOTAL_CALC_PULSES) % TOTAL_CALC_PULSES;
+    const stage = Math.min(4, Math.floor(p / TOTAL_NODES));
+    const k = ((P % TOTAL_NODES) + TOTAL_NODES) % TOTAL_NODES;
+    const j = k % 6, zone = CIRCUIT[j];
+    const frac = clock.simTime * 60 - P;
+    return { P, p, stage, tier: 4 - stage, k, j, zone, frac };
+}
+function setPulse(P) { clock.simTime = Math.max(0, P) / 60 + 1e-7; }
+
+// =====================================================================
+// 5. Panel A: Three.js scene
+// =====================================================================
+let scene, camera, renderer, controls, root, nodeMarkers = [], tqf = null, three = false;
+const toriMeshes = [], helixMeshes = [];
+const CLASS_HEX = { Murmur: 0x22d3ee, Oddubb: 0xfbbf24, Katak: 0xe879f9 };
+
+function init3D() {
+    const host = document.getElementById('three-host');
+    const msg = document.getElementById('three-msg');
+    if (typeof THREE === 'undefined' || !THREE.OrbitControls) { msg.textContent = 'Three.js r128 did not load (check that cdnjs.cloudflare.com and cdn.jsdelivr.net are reachable). Panels B and C and the verification still run.'; return; }
+    try {
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    } catch (e) { msg.textContent = 'WebGL is not available in this browser.'; return; }
+    msg.remove();
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020617, 0.0015);
+    camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+    camera.position.set(240, 180, 260);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    host.appendChild(renderer.domElement);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.05;
+
+    scene.add(new THREE.AmbientLight(0x0f172a, 2.2));
+    const coreLight = new THREE.PointLight(0x38bdf8, 3.5, 380); scene.add(coreLight);
+    const outerLight = new THREE.PointLight(0xf59e0b, 2.5, 520); outerLight.position.set(120, 180, 120); scene.add(outerLight);
+    root = new THREE.Group(); scene.add(root);
+
+    // Tori (buildManifoldTori)
+    TIERS_SPEC.forEach(tier => {
+        const mat = new THREE.MeshPhysicalMaterial({ color: tier.color, emissive: tier.color, emissiveIntensity: tier.glow, roughness: 0.3, metalness: 0.7, transparent: true, opacity: tier.opacity });
+        const mesh = new THREE.Mesh(new THREE.TorusGeometry(tier.R, tier.r, 28, 90), mat);
+        mesh.add(new THREE.Mesh(new THREE.TorusGeometry(tier.R, tier.r, 12, 45), new THREE.MeshBasicMaterial({ color: tier.color, wireframe: true, transparent: true, opacity: 0.12 })));
+        mesh.userData = { tierId: tier.id };
+        toriMeshes.push(mesh); root.add(mesh);
+    });
+    // Dual helices (buildDualHelixChannels): phi = W*theta*chiral + phase
+    TIERS_SPEC.forEach(tier => {
+        [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3].forEach((phase, phaseIdx) => {
+            [1, -1].forEach(chiral => {
+                const points = [];
+                for (let i = 0; i <= 200; i++) {
+                    const theta = (i / 200) * Math.PI * 2;
+                    const phi = tier.W * theta * chiral + phase;
+                    points.push(new THREE.Vector3((tier.R + tier.r * Math.cos(phi)) * Math.cos(theta), (tier.R + tier.r * Math.cos(phi)) * Math.sin(theta), tier.r * Math.sin(phi)));
+                }
+                const curve = new THREE.CatmullRomCurve3(points, true);
+                const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 150, 0.9, 5, true),
+                    new THREE.MeshBasicMaterial({ color: chiral === 1 ? 0x38bdf8 : 0xf59e0b, transparent: true, opacity: 0.4 }));
+                mesh.userData = { tierId: tier.id };
+                helixMeshes.push({ mesh, tierId: tier.id, phaseIdx, chiral });
+                root.add(mesh);
+            });
+        });
+    });
+    // Scalar core
+    root.add(new THREE.Mesh(new THREE.SphereGeometry(3.5, 32, 32), new THREE.MeshPhysicalMaterial({ color: 0xffffff, emissive: 0x38bdf8, emissiveIntensity: 0.6, transparent: true, opacity: 0.95 })));
+    // 30 node markers of the active tier
+    const nodeGeo = new THREE.SphereGeometry(2.4, 12, 12);
+    for (let k = 0; k < TOTAL_NODES; k++) {
+        const col = new THREE.Color(CLASS_HEX[CLASS_BY_PHASE[k % 3]]);
+        if (k % 2 === 1) col.multiplyScalar(0.45);
+        const m = new THREE.Mesh(nodeGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true }));
+        nodeMarkers.push(m); root.add(m);
+    }
+    // TQF overlay (updated in place)
+    const mk = (geo, color, opts = {}) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, ...opts })); root.add(m); return m; };
+    const line = (n, color, opacity) => {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+        const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity })); root.add(l); return l;
+    };
+    const faceGeo = new THREE.BufferGeometry(); faceGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(18), 3));
+    tqf = {
+        v1: mk(new THREE.SphereGeometry(4.6, 16, 16), 0x38bdf8),
+        v2: mk(new THREE.SphereGeometry(3.9, 12, 12), 0xf59e0b),
+        v3: mk(new THREE.SphereGeometry(3.9, 12, 12), 0x10b981),
+        v4: mk(new THREE.OctahedronGeometry(5.2, 0), 0xd946ef),
+        v4s: mk(new THREE.OctahedronGeometry(6.2, 0), 0xffffff, { wireframe: true }),
+        base: line(6, 0x38bdf8, 0.9), inf: line(6, 0xd946ef, 0.9), gap: line(2, 0xffffff, 0.85),
+        face: new THREE.Mesh(faceGeo, new THREE.MeshBasicMaterial({ color: 0xd946ef, side: THREE.DoubleSide, transparent: true, opacity: 0.18, depthWrite: false }))
+    };
+    root.add(tqf.face);
+    new ResizeObserver(resize3D).observe(host);
+    resize3D();
+    three = true;
+    applyOrientation();
+}
+function resize3D() {
+    if (!renderer) return;
+    const host = document.getElementById('three-host');
+    const w = host.clientWidth, h = host.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+// applyTierRotationsToSceneMeshes
+function applyOrientation() {
+    if (!three) return;
+    toriMeshes.forEach(m => m.quaternion.copy(getTierOrientationQuat(m.userData.tierId)));
+    helixMeshes.forEach(h => h.mesh.quaternion.copy(getTierOrientationQuat(h.tierId)));
+    placeNodes(derive().stage, true);
+}
+let placedStage = -1;
+function placeNodes(stage, force) {
+    if (!three || (!force && stage === placedStage)) return;
+    placedStage = stage;
+    for (let k = 0; k < TOTAL_NODES; k++) nodeMarkers[k].position.copy(getNodeTelemetry(k, stage).pNode);
+}
+function setLine(l, pts) {
+    const a = l.geometry.attributes.position.array;
+    pts.forEach((p, i) => { a[i * 3] = p.x; a[i * 3 + 1] = p.y; a[i * 3 + 2] = p.z; });
+    l.geometry.attributes.position.needsUpdate = true;
+    l.geometry.computeBoundingSphere();
+}
+const fmtV = v => `(${v.x.toFixed(1)}, ${v.y.toFixed(1)}, ${v.z.toFixed(1)})`;
+let lastTelemetry = null;
+function updateEngine(d) {
+    const t = getNodeTelemetryOrNull(d.k, d.stage);
+    lastTelemetry = t;
+    document.getElementById('a-theta').textContent = `${Math.round((d.k / 30) * 360)}°`;
+    document.getElementById('a-c3').textContent = `${(d.k % 3) * 120}° (${d.k % 3})`;
+    document.getElementById('a-c2').textContent = `${d.k % 2 === 0 ? '+1' : '−1'} · ${d.k % 2 === 0 ? '0.0' : '0.5'}`;
+    if (!t) return;
+    document.getElementById('a-q').textContent = `${Math.round(t.Q1)} · ${Math.round(t.Q2)} · ${Math.round(t.Q3)}`;
+    document.getElementById('a-ar').textContent = Math.round(t.AR).toLocaleString('en-US');
+    document.getElementById('a-qs').textContent = t.qScale.toFixed(4);
+    document.getElementById('a-v4').textContent = fmtV(t.pInferred);
+    document.getElementById('a-v4s').textContent = fmtV(t.pClosure);
+    document.getElementById('a-gap').textContent = t.pInferred.distanceTo(t.pClosure).toFixed(2);
+    if (!three) return;
+    placeNodes(d.stage, false);
+    tqf.v1.position.copy(t.pNode); tqf.v2.position.copy(t.pUpper); tqf.v3.position.copy(t.pLower);
+    tqf.v4.position.copy(t.pInferred); tqf.v4s.position.copy(t.pClosure);
+    setLine(tqf.base, [t.pNode, t.pUpper, t.pUpper, t.pLower, t.pLower, t.pNode]);
+    setLine(tqf.inf, [t.pUpper, t.pInferred, t.pLower, t.pInferred, t.pNode, t.pInferred]);
+    setLine(tqf.gap, [t.pInferred, t.pClosure]);
+    const fa = tqf.face.geometry.attributes.position.array;
+    [t.pNode, t.pUpper, t.pLower, t.pUpper, t.pInferred, t.pLower].forEach((p, i) => { fa[i * 3] = p.x; fa[i * 3 + 1] = p.y; fa[i * 3 + 2] = p.z; });
+    tqf.face.geometry.attributes.position.needsUpdate = true; tqf.face.geometry.computeBoundingSphere();
+    nodeMarkers.forEach((m, k) => { m.material.opacity = k === d.k ? 0 : 1; });
+}
+const getNodeTelemetryOrNull = (k, s) => (typeof THREE === 'undefined' ? null : getNodeTelemetry(k, s));
+
+// =====================================================================
+// 6. SVG helpers
+// =====================================================================
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent, text) {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v);
+    if (text !== undefined) n.textContent = text;
+    if (parent) parent.appendChild(n);
+    return n;
+}
+function arrowMarkers(svg, colors) {
+    const defs = el('defs', {}, svg);
+    Object.entries(colors).forEach(([name, c]) => {
+        const m = el('marker', { id: `${svg.id}-arr-${name}`, viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+        el('path', { d: 'M0,0 L10,5 L0,10 z', fill: c }, m);
+    });
+}
+function zoneNode(svg, x, y, z, r, key) {
+    const s = SYZ_OF_ZONE[z], col = DEMON_COLOR[s.demon], tc = s.region === 'Time-Circuit';
+    const g = el('g', { 'data-link': key || `zone:${z}`, class: `zn zn-${z}` }, svg);
+    const plus = tc && twinSign(z) === 1;
+    el('circle', { cx: x, cy: y, r, fill: plus ? col : '#0b1222', 'fill-opacity': plus ? 0.35 : 1, stroke: col, 'stroke-width': 2, 'stroke-dasharray': tc && !plus ? '4 3' : 'none' }, g);
+    el('text', { x, y: y + 5, 'text-anchor': 'middle', fill: '#f8fafc', 'font-family': 'Fira Code', 'font-size': r > 14 ? 15 : 12, 'font-weight': 600 }, g, String(z));
+    return g;
+}
+
+// =====================================================================
+// 7. Panel B: the decimal Numogram
+// =====================================================================
+const NB = { 6: [210, 40], 3: [210, 96], 8: [210, 158], 1: [210, 218], 7: [348.6, 398], 2: [296.6, 368], 5: [71.4, 398], 4: [123.4, 368], 9: [210, 470], 0: [210, 528] };
+let flowDotB = null;
+function buildNumogram() {
+    const svg = document.getElementById('numogram');
+    arrowMarkers(svg, { Murmur: DEMON_COLOR.Murmur, Oddubb: DEMON_COLOR.Oddubb, Katak: DEMON_COLOR.Katak, Djynxx: DEMON_COLOR.Djynxx, Uttunul: DEMON_COLOR.Uttunul, gate: '#64748b' });
+    el('text', { x: 12, y: 20, fill: '#64748b', 'font-family': 'Fira Code', 'font-size': 10 }, svg, 'WARP');
+    el('text', { x: 12, y: 300, fill: '#64748b', 'font-family': 'Fira Code', 'font-size': 10 }, svg, 'TIME-CIRCUIT');
+    el('text', { x: 12, y: 548, fill: '#64748b', 'font-family': 'Fira Code', 'font-size': 10 }, svg, 'PLEX');
+    // Gate channels (zone n -> digital root of n(n+1)/2)
+    const gateG = el('g', { class: 'gates', 'data-link': 'gates' }, svg);
+    const gatePaths = {
+        1: 'M193 212 C150 190 150 246 193 226', 2: 'M302 352 Q345 180 226 100', 3: 'M194 92 Q170 68 194 46',
+        4: 'M132 352 Q152 272 197 232', 5: 'M58 384 Q-8 150 193 42', 6: 'M226 46 Q252 68 226 92',
+        7: 'M338 382 Q300 262 226 226', 8: 'M227 160 Q432 318 226 466', 9: 'M193 462 C150 440 150 496 193 476'
+    };
+    GATES.forEach(gt => {
+        const p = el('path', { d: gatePaths[gt.n], fill: 'none', stroke: '#64748b', 'stroke-width': 1.3, 'stroke-dasharray': '4 4', 'stroke-opacity': 0.75, 'marker-end': `url(#numogram-arr-gate)`, class: 'gate', 'data-link': `gate:${gt.n}` }, gateG);
+        el('title', {}, p, `Gate ${gt.n}: Gt-${gt.T}, ${gt.n} → ${gt.to} (digital root of ${gt.T})`);
+    });
+    // Syzygy links and demon labels
+    const labelPos = { Murmur: [232, 192, 'start'], Oddubb: [348.6, 436, 'middle'], Katak: [71.4, 436, 'middle'], Djynxx: [150, 72, 'end'], Uttunul: [150, 503, 'end'] };
+    SYZYGIES.forEach(s => {
+        const [x1, y1] = NB[s.hi], [x2, y2] = NB[s.lo];
+        el('line', { x1, y1, x2, y2, stroke: DEMON_COLOR[s.demon], 'stroke-width': 5, 'stroke-opacity': 0.35, 'data-link': `class:${s.demon}` }, svg);
+        const [lx, ly, anchor] = labelPos[s.demon];
+        const t = el('text', { x: lx, y: ly, 'text-anchor': anchor, fill: DEMON_COLOR[s.demon], 'font-family': 'Inter', 'font-size': 11, 'font-weight': 600, 'data-link': `class:${s.demon}` }, svg, `${s.demon} ${s.hi}::${s.lo}`);
+    });
+    // Currents (difference within each syzygy, landing on that zone)
+    const curPaths = {
+        Murmur: 'M226 190 Q330 230 346.5 379', Oddubb: 'M310 396 Q210 455 89 407', Katak: 'M100 368 Q110 250 192 224',
+        Djynxx: 'M227 44 C305 28 305 112 228 100', Uttunul: 'M227 528 C305 540 305 466 228 466'
+    };
+    const curLabel = { Murmur: [300, 262], Oddubb: [210, 446], Katak: [96, 282], Djynxx: [318, 72], Uttunul: [318, 500] };
+    SYZYGIES.forEach(s => {
+        const p = el('path', { id: `cur-${s.demon}`, d: curPaths[s.demon], fill: 'none', stroke: DEMON_COLOR[s.demon], 'stroke-width': 2.4, 'marker-end': `url(#numogram-arr-${s.demon})`, 'data-link': `current:${s.demon}` }, svg);
+        el('title', {}, p, `${s.current} current: ${s.hi} − ${s.lo} = ${s.hi - s.lo}, lands on zone ${s.hi - s.lo}`);
+        const [lx, ly] = curLabel[s.demon];
+        el('text', { x: lx, y: ly, 'text-anchor': 'middle', fill: DEMON_COLOR[s.demon], 'font-family': 'Fira Code', 'font-size': 10, 'data-link': `current:${s.demon}` }, svg, `${s.current} ${s.hi - s.lo}`);
+    });
+    Object.entries(NB).forEach(([z, [x, y]]) => zoneNode(svg, x, y, +z, 17));
+    flowDotB = el('circle', { r: 5, fill: '#fff', opacity: 0.95 }, svg);
+    // Zone table
+    const tb = document.getElementById('zone-rows');
+    tb.innerHTML = ZONES.map(zn => {
+        const s = SYZ_OF_ZONE[zn.z];
+        return `<tr data-link="zone:${zn.z}"><td class="mono">${zn.z}</td><td>${zn.name}</td><td>${zn.current}</td><td style="color:${DEMON_COLOR[zn.demon]}">${zn.demon} ${s.hi}::${s.lo}</td><td>${s.region}</td></tr>`;
+    }).join('');
+    document.getElementById('current-rule').innerHTML = 'The table\'s "current" column follows one rule <span class="tag t-computed">COMPUTED</span>: a zone where a Time-Circuit current lands (1, 5, 7) carries that current; every other zone carries the current of its own syzygy.';
+}
+
+// =====================================================================
+// 8. Panel C: the Numogram Engine
+// =====================================================================
+const C_CENTER = [210, 186], C_R = 130, C_TRI = 58;
+const cPos = j => { const a = (-90 + 60 * j) * Math.PI / 180; return [C_CENTER[0] + C_R * Math.cos(a), C_CENTER[1] + C_R * Math.sin(a)]; };
+const triPos = c => { const a = (-90 + 120 * c) * Math.PI / 180; return [C_CENTER[0] + C_TRI * Math.cos(a), C_CENTER[1] + C_TRI * Math.sin(a)]; };
+let flowDotC = null;
+function buildC6() {
+    const svg = document.getElementById('c6');
+    arrowMarkers(svg, { ring: '#64748b', Murmur: DEMON_COLOR.Murmur, Oddubb: DEMON_COLOR.Oddubb, Katak: DEMON_COLOR.Katak, loop: '#94a3b8' });
+    el('circle', { cx: C_CENTER[0], cy: C_CENTER[1], r: C_R, fill: 'none', stroke: '#1e293b', 'stroke-width': 1.5 }, svg);
+    // Syzygy diameters (antipodes j, j+3)
+    for (let j = 0; j < 3; j++) {
+        const s = SYZ_OF_ZONE[CIRCUIT[j]];
+        const [x1, y1] = cPos(j), [x2, y2] = cPos(j + 3);
+        el('line', { x1, y1, x2, y2, stroke: DEMON_COLOR[s.demon], 'stroke-width': 1.5, 'stroke-dasharray': '5 5', 'stroke-opacity': 0.55, 'data-link': `class:${s.demon}` }, svg);
+    }
+    // x2 steps around the ring (j -> j+1)
+    for (let j = 0; j < 6; j++) {
+        const a0 = (-90 + 60 * j + 14) * Math.PI / 180, a1 = (-90 + 60 * (j + 1) - 14) * Math.PI / 180, rr = C_R + 16;
+        el('path', { d: `M${C_CENTER[0] + rr * Math.cos(a0)} ${C_CENTER[1] + rr * Math.sin(a0)} A ${rr} ${rr} 0 0 1 ${C_CENTER[0] + rr * Math.cos(a1)} ${C_CENTER[1] + rr * Math.sin(a1)}`, fill: 'none', stroke: '#64748b', 'stroke-width': 1.2, 'marker-end': `url(#c6-arr-ring)`, class: `ringstep ringstep-${j}`, 'data-link': 'map:1' }, svg);
+    }
+    el('text', { x: 12, y: 18, fill: '#64748b', 'font-family': 'Fira Code', 'font-size': 10 }, svg, 'arrows: ×2 per node (j → j + 1)');
+    // Inner triangle: classes by angle doubling, currents as a 3-cycle
+    const triNames = ['Murmur', 'Oddubb', 'Katak'], triCur = ['Surge 7', 'Hold 5', 'Sink 1'];
+    for (let c = 0; c < 3; c++) {
+        const [x1, y1] = triPos(c), [x2, y2] = triPos((c + 1) % 3);
+        const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+        el('path', { id: `tri-${c}`, d: `M${x1 + ux * 13} ${y1 + uy * 13} L${x2 - ux * 15} ${y2 - uy * 15}`, stroke: DEMON_COLOR[triNames[c]], 'stroke-width': 2.2, fill: 'none', 'marker-end': `url(#c6-arr-${triNames[c]})`, class: 'triedge', 'data-link': `current:${triNames[c]}` }, svg);
+        el('text', { x: (x1 + x2) / 2 + (c === 1 ? 0 : (c === 0 ? 12 : -12)), y: (y1 + y2) / 2 + (c === 1 ? 16 : -4), 'text-anchor': c === 0 ? 'start' : (c === 2 ? 'end' : 'middle'), fill: DEMON_COLOR[triNames[c]], 'font-family': 'Fira Code', 'font-size': 9, 'data-link': `current:${triNames[c]}` }, svg, triCur[c]);
+    }
+    for (let c = 0; c < 3; c++) {
+        const [x, y] = triPos(c);
+        const g = el('g', { 'data-link': `class:${triNames[c]}`, class: `tri-v tri-v-${c}` }, svg);
+        el('circle', { cx: x, cy: y, r: 11, fill: '#0b1222', stroke: DEMON_COLOR[triNames[c]], 'stroke-width': 2 }, g);
+        el('text', { x, y: y + 3.5, 'text-anchor': 'middle', fill: DEMON_COLOR[triNames[c]], 'font-family': 'Inter', 'font-size': 8, 'font-weight': 700 }, g, triNames[c].slice(0, 3));
+    }
+    el('text', { x: C_CENTER[0], y: C_CENTER[1] + 4, 'text-anchor': 'middle', fill: '#64748b', 'font-family': 'Fira Code', 'font-size': 9 }, svg, 'C3');
+    // Zones on the ring
+    for (let j = 0; j < 6; j++) {
+        const [x, y] = cPos(j), z = CIRCUIT[j];
+        zoneNode(svg, x, y, z, 18);
+        const lab = el('text', { x: x + (x > C_CENTER[0] + 5 ? 24 : x < C_CENTER[0] - 5 ? -24 : 0), y: y + (Math.abs(x - C_CENTER[0]) < 5 ? (y < C_CENTER[1] ? -24 : 34) : 4), 'text-anchor': x > C_CENTER[0] + 5 ? 'start' : x < C_CENTER[0] - 5 ? 'end' : 'middle', fill: '#94a3b8', 'font-family': 'Fira Code', 'font-size': 9.5, 'data-link': `zone:${z}` }, svg, `2^${j} · h^${j}`);
+    }
+    // Warp and Plex self-loops
+    [['Djynxx', 'Warp {3, 6}', [3, 6], 110], ['Uttunul', 'Plex {0, 9}', [0, 9], 310]].forEach(([demon, label, [a, b], cx]) => {
+        const cy = 400, g = el('g', { 'data-link': `class:${demon}` }, svg);
+        el('circle', { cx, cy, r: 34, fill: 'none', stroke: DEMON_COLOR[demon], 'stroke-width': 1.5, 'stroke-opacity': 0.6 }, g);
+        el('path', { d: `M${cx + 24} ${cy - 24} C${cx + 64} ${cy - 50} ${cx + 66} ${cy + 6} ${cx + 33} ${cy + 6}`, fill: 'none', stroke: '#94a3b8', 'stroke-width': 1.4, 'marker-end': 'url(#c6-arr-loop)' }, g);
+        el('text', { x: cx, y: cy - 44, 'text-anchor': 'middle', fill: DEMON_COLOR[demon], 'font-family': 'Inter', 'font-size': 10.5, 'font-weight': 600 }, g, `${label} · ${demon}`);
+        el('text', { x: cx, y: cy + 50, 'text-anchor': 'middle', fill: '#64748b', 'font-family': 'Fira Code', 'font-size': 9 }, g, demon === 'Djynxx' ? '×2 swaps 3 ↔ 6; class fixed' : '×2 fixes 0 (≡ 9)');
+        zoneNode(svg, cx - 13, cy, a, 12);
+        zoneNode(svg, cx + 13, cy, b, 12);
+    });
+    flowDotC = el('circle', { r: 4.5, fill: '#fff' }, svg);
+}
+
+// =====================================================================
+// 9. Mappings (Panel C lists and the correspondence table)
+// =====================================================================
+const MAPS = [
+    { n: 1, v: 'EXACT', tag: 'PROVEN', engine: 'Node k: c3Phase = (k mod 3)·120°, c2Chiral = ±1, φ_p; node k lies on helix (k mod 3, c2Chiral) of its tier', numo: 'Zone 2^(k mod 6) mod 9; syzygy = class of k mod 3, twin = k mod 2; the 6 helices of a tier are the 6 Time-Circuit zones',
+      reason: 'ℤ/6 ≅ C3 × C2 (CRT) and 2^j = 4^(2j mod 3) · 8^(j mod 2). Since 6 | 30 the map closes on every lap, and because 6 is even, φ_p = 0 or 1/2 is exactly the C2 bit / 2.' },
+    { n: 2, v: 'EXACT', tag: 'PROVEN', engine: 'Triadic advance: c3Phase +120° per node', numo: 'Currents on classes: Murmur 8::1 → Oddubb 7::2 → Katak 5::4 → Murmur',
+      reason: 'The currents are x ↦ 2x on (ℤ/9)/±1; on the units this quotient is C3 and ×2 generates it. On zones (not classes) a current lands on 2x or on its twin 9 − 2x; the difference is the C2 step.' },
+    { n: 3, v: 'EXACT', tag: 'PROVEN', engine: 'Chirality c2Chiral = ±1 (forward / inverse braid)', numo: 'Syzygy twins x ↔ 9 − x; spinor h^j ↔ −h^j',
+      reason: '9 − x ≡ −x ≡ 8x and 8 = 2^3 ↦ h^3 = −1, so twins are antipodal spinors q and −q.' },
+    { n: 4, v: 'EXACT', tag: 'PROVEN', engine: 'WHEEL_30_UNITS {1, 7, 11, 13, 17, 19, 23, 29}', numo: 'Digital roots 1, 7, 2, 4, 8, 1, 5, 2, all in the Time-Circuit',
+      reason: 'gcd(u, 30) = 1 implies 3 ∤ u, so gcd(u, 9) = 1. A containment, not an isomorphism: (ℤ/30)ˣ ≅ C2 × C4 has 8 elements, the circuit 6, and u ↦ u mod 9 is not a homomorphism from ℤ/30.' },
+    { n: 5, v: 'PARTIAL', tag: 'COMPUTED', engine: 'TQF inferred V4 = pNode + qScale·((pUpper − pNode) + (pLower − pNode))', numo: 'Syzygy closure x + (9 − x) ≡ 0',
+      reason: 'The closure analogue is the parallelogram point V4* = pUpper + pLower − pNode, reached only when qScale = 1. The file\'s qScale is 0.65 + 0.45·√A_R/(ΣQ + 1), so V4 and V4* differ (both drawn in Panel A).' },
+    { n: 6, v: 'PARTIAL', tag: 'PROVEN', engine: '30 nodes per tier', numo: 'ℤ/30 ≅ C3 × C2 × C5',
+      reason: 'The CRT factorisation is exact, but the file chooses the tier by stage (4 − stage), not by k mod 5, so the C5 factor does not describe what the code does.' },
+    { n: 7, v: 'PARTIAL', tag: 'HEURISTIC', engine: 'Cumulative windings 16, 30, 42, 52, 60 (digital roots 7, 3, 6, 7, 6)', numo: 'Gates 1, 3, 6, 10, 15 (digital roots 1, 3, 6, 1, 6)',
+      reason: 'Both are partial sums of arithmetic progressions; their digital roots agree at 3 of 5 places. W_n = 16 − 2n ≡ 9 − 2(n + 1) (mod 9), the current sequence 7, 5, 3, 1, 8, holds only because both step by −2.' },
+    { n: 8, v: 'PARTIAL', tag: 'HEURISTIC', engine: 'FIBONACCI array (digital-root period)', numo: 'π-cycle 8 and triad 3: lcm(8, 3) = 24',
+      reason: 'Fibonacci digital roots repeat every 24 (the Pisano period mod 9). The same number arises as lcm(8, 3) from a different mechanism; no map between them.' },
+    { n: 9, v: 'NO MAP', tag: 'NO MAP', engine: 'Stator register statorPulse mod 60', numo: '—',
+      reason: 'Casting out nines works because 10 ≡ 1 (mod 9); in base 60 the analogue is mod 59. 60 ≡ 6 (a Warp zone), but that does not transfer any structure.' },
+    { n: 10, v: 'NO MAP', tag: 'NO MAP', engine: '8-step π/4 cycle (C8), handshakes k = 2 and 6', numo: 'C6 Time-Circuit',
+      reason: 'The only common quotient of C8 and C6 is C2, so only parity maps. The handshakes (1 + i)^2 = 2i and (1 + i)^6 = −8i point along ±i; both are even steps.' },
+    { n: 11, v: 'NO MAP', tag: 'NO MAP', engine: 'Clutch η, cosh, qhClk, fEff', numo: '—',
+      reason: 'These are continuous parameters; the Numogram is a finite structure with no continuous parameter.' },
+    { n: 12, v: 'NO MAP', tag: 'NO MAP', engine: 'Holonomy drift 0.342 and Form 3 resync', numo: '—',
+      reason: 'The Numogram closes exactly every 6 steps (2^6 ≡ 1 mod 9), so its holonomy is identically 1 and there is no drift to correct.' },
+    { n: 13, v: 'NO MAP', tag: 'NO MAP', engine: 'Nested radii, Z/X rotation axes, 12/10/8 gears, tier frequencies 6W', numo: '—',
+      reason: 'No geometric counterpart. The 10 middle-gear teeth and the 10 zones match in count only.' }
+];
+const VCLASS = { EXACT: 'v-exact', PARTIAL: 'v-partial', 'NO MAP': 'v-nomap' };
+const TCLASS = { PROVEN: 't-proven', COMPUTED: 't-computed', HEURISTIC: 't-heuristic', 'NO MAP': 't-nomap' };
+function buildMaps() {
+    const tags = m => `<span class="tag ${VCLASS[m.v]}">${m.v}</span>` + (m.tag === m.v ? '' : ` <span class="tag ${TCLASS[m.tag]}">${m.tag}</span>`);
+    const item = m => `<li data-link="map:${m.n}"><div class="hd">${tags(m)}${m.n}. ${m.engine.split(':')[0].split('(')[0].trim()}</div><div>${m.reason}</div></li>`;
+    document.getElementById('maps-exact').innerHTML = MAPS.filter(m => m.v !== 'NO MAP').map(item).join('');
+    document.getElementById('maps-nomap').innerHTML = MAPS.filter(m => m.v === 'NO MAP').map(item).join('');
+    document.getElementById('corr-rows').innerHTML = MAPS.map(m => `<tr data-link="map:${m.n}"><td class="mono">${m.n}</td><td>${m.engine}</td><td>${m.numo}</td><td>${tags(m)}</td><td>${m.reason}</td></tr>`).join('');
+}
+
+// =====================================================================
+// 10. Cross-panel highlighting
+// =====================================================================
+let pinned = null, cur = null;
+function expandKey(key, d) {
+    const out = new Set([key]);
+    const add = (...ks) => ks.forEach(k => out.add(k));
+    const [kind, val] = key.split(':');
+    const zonesOfClass = c => SYZYGIES.filter(s => s.demon === c).flatMap(s => [`zone:${s.hi}`, `zone:${s.lo}`]);
+    if (kind === 'class' || kind === 'current') add(`class:${val}`, `current:${val}`, ...zonesOfClass(val));
+    if (key === 'zonecur' || key === 'nodek') add(`zone:${d.zone}`, 'nodek', 'zonecur');
+    if (key === 'classcur') { const c = CLASS_BY_PHASE[d.k % 3]; add(`class:${c}`, `current:${c}`, ...zonesOfClass(c), 'classcur'); }
+    if (key === 'chiralcur') add('chiralcur', ...(d.k % 2 === 0 ? [1, 4, 7] : [8, 2, 5]).map(z => `zone:${z}`));
+    if (kind === 'map') {
+        const n = +val;
+        if (n === 1) add('nodek', 'zonecur', `zone:${d.zone}`);
+        if (n === 2) add('current:Murmur', 'current:Oddubb', 'current:Katak', 'classcur');
+        if (n === 3) add('chiralcur', `zone:${d.zone}`, `zone:${9 - d.zone}`);
+        if (n === 4) add(...CIRCUIT.map(z => `zone:${z}`));
+        if (n === 5) add('tqf');
+        if (n === 6 || n === 13) add('tiers');
+        if (n === 7) add('gates', 'tiers');
+        if (n === 9) add('class:Djynxx', 'zone:6');
+    }
+    if (key === 'gates') GATES.forEach(g => add(`gate:${g.n}`));
+    return out;
+}
+function setHighlight(key) {
+    cur = key;
+    const d = derive();
+    const set = key ? expandKey(key, d) : new Set();
+    document.querySelectorAll('[data-link]').forEach(e => {
+        const ks = e.getAttribute('data-link').split(' ');
+        e.classList.toggle('hl', ks.some(k => set.has(k)));
+    });
+    apply3DHighlight(set);
+}
+function apply3DHighlight(set) {
+    if (!three) return;
+    const pairs = new Set();
+    set.forEach(s => { if (s.startsWith('zone:')) { const j = J_OF_ZONE[+s.slice(5)]; if (j !== undefined) pairs.add(`${j % 3}:${j % 2 === 0 ? 1 : -1}`); } });
+    const on = pairs.size > 0;
+    helixMeshes.forEach(h => {
+        const hit = pairs.has(`${h.phaseIdx}:${h.chiral}`);
+        h.mesh.material.opacity = on ? (hit ? 1.0 : 0.05) : 0.4;
+        h.mesh.material.color.setHex(on && hit ? 0xffffff : (h.chiral === 1 ? 0x38bdf8 : 0xf59e0b));
+    });
+    nodeMarkers.forEach((m, k) => { const j = k % 6; m.scale.setScalar(on ? (pairs.has(`${j % 3}:${j % 2 === 0 ? 1 : -1}`) ? 1.9 : 0.55) : 1); });
+    const tq = set.has('tqf') || set.has('map:5');
+    tqf.v4s.scale.setScalar(tq ? 1.8 : 1);
+    tqf.face.material.opacity = tq ? 0.4 : 0.18;
+    toriMeshes.forEach(m => { m.material.emissiveIntensity = set.has('tiers') ? 0.8 : TIERS_SPEC[m.userData.tierId].glow; });
+}
+function linkOf(target) { const e = target.closest && target.closest('[data-link]'); return e ? e.getAttribute('data-link').split(' ')[0] : null; }
+document.addEventListener('pointerover', e => { if (e.pointerType === 'touch' || pinned) return; const k = linkOf(e.target); if (k !== cur) setHighlight(k); });
+document.addEventListener('click', e => {
+    if (e.target.closest('button, input, select, summary')) return;
+    const k = linkOf(e.target);
+    pinned = (k && k !== pinned) ? k : null;
+    setHighlight(pinned);
+});
+
+// =====================================================================
+// 11. Per-pulse updates
+// =====================================================================
+function updatePulse(d) {
+    statorPulse = d.P % 60;
+    outerFrameN = (d.P * 12) % 720;
+    piCycleStepK = (d.P % 8) + 1;
+    document.getElementById('r-P').textContent = d.P;
+    document.getElementById('r-p').textContent = `${d.p} / 150`;
+    document.getElementById('r-holo').textContent = `${(d.p * 4.8).toFixed(1)} / 720`;
+    document.getElementById('r-stage').textContent = `${d.stage} → T${d.tier}`;
+    document.getElementById('r-k').textContent = `${d.k} (F${d.k + 1}/30)`;
+    document.getElementById('r-zone').textContent = `${d.zone} (j = ${d.j})`;
+    document.getElementById('r-stator').textContent = `${statorPulse} / 60`;
+    document.getElementById('r-outer').textContent = `${outerFrameN} / 720`;
+    document.getElementById('r-pik').textContent = `${piCycleStepK} / 8${piCycleStepK === 2 ? ' (+i)' : piCycleStepK === 6 ? ' (−i)' : ''}`;
+    const sc = document.getElementById('scrub');
+    if (document.activeElement !== sc) sc.value = clock.holonomic ? Math.round(d.p * 4.8) : d.p;
+    drawClockPumpCanvas();
+    renderHub(d.p);
+    updateEngine(d);
+    // Panels B and C
+    const s = SYZ_OF_ZONE[d.zone];
+    document.querySelectorAll('.zn').forEach(g => g.classList.toggle('active-zone', g.classList.contains(`zn-${d.zone}`)));
+    document.querySelectorAll('.tri-v').forEach((g, c) => g.querySelector('circle').setAttribute('stroke-width', c === d.k % 3 ? 4.5 : 2));
+    document.querySelectorAll('.triedge').forEach((p, c) => p.setAttribute('stroke-width', c === d.k % 3 ? 4 : 2.2));
+    document.querySelectorAll('.ringstep').forEach((p, j) => { p.setAttribute('stroke', j === d.j ? '#f8fafc' : '#64748b'); p.setAttribute('stroke-width', j === d.j ? 2.4 : 1.2); });
+    SYZYGIES.forEach(x => document.getElementById(`cur-${x.demon}`).setAttribute('stroke-width', x.demon === s.demon ? 4.2 : 2.4));
+    document.getElementById('c-zone').textContent = `j ${d.j} → ${d.zone}`;
+    document.getElementById('c-syz').textContent = `${s.demon} ${s.hi}::${s.lo} · ${twinSign(d.zone) === 1 ? '+' : '−'}`;
+    document.getElementById('c-quat').textContent = `h^${d.j} = ${fmtQuat(H_POW[d.j])}`;
+    document.getElementById('c-quat-twin').textContent = `zone ${9 - d.zone}: h^${(d.j + 3) % 6} = ${fmtQuat(H_POW[(d.j + 3) % 6])} = −h^${d.j}`;
+    renderLiveChecks(d);
+    if (cur) setHighlight(cur);
+}
+function updateFlow(d) {
+    const s = SYZ_OF_ZONE[d.zone];
+    const pb = document.getElementById(`cur-${s.demon}`);
+    if (pb && flowDotB) { const L = pb.getTotalLength(), pt = pb.getPointAtLength(L * d.frac); flowDotB.setAttribute('cx', pt.x); flowDotB.setAttribute('cy', pt.y); }
+    const pc = document.getElementById(`tri-${d.k % 3}`);
+    if (pc && flowDotC) { const L = pc.getTotalLength(), pt = pc.getPointAtLength(L * d.frac); flowDotC.setAttribute('cx', pt.x); flowDotC.setAttribute('cy', pt.y); }
+}
+
+// =====================================================================
+// 12. Verification suite (BigInt / exact rationals)
+// =====================================================================
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function runChecks(seed) {
+    const out = [];
+    const check = (tag, title, fn) => { let r; try { r = fn(); } catch (e) { r = { pass: false, detail: 'threw: ' + e.message }; } out.push({ tag, title, ...r }); };
+    const classOfRes = x => { const a = modB(BigInt(x), 9n), b = modB(-BigInt(x), 9n); return a === b ? `${a}` : (a < b ? `${a},${b}` : `${b},${a}`); };
+
+    check('PROVEN', 'Syzygies are the classes {x, −x} mod 9', () => {
+        const sums = SYZYGIES.map(s => modB(BigInt(s.hi + s.lo), 9n));
+        const classes = new Set(Array.from({ length: 9 }, (_, x) => classOfRes(x)));
+        const syzClasses = new Set(SYZYGIES.map(s => classOfRes(s.lo)));
+        const pass = sums.every(v => v === 0n) && classes.size === 5 && [...classes].every(c => syzClasses.has(c));
+        return { pass, detail: `x + (9 − x) ≡ 0 for all 5 pairs; (ℤ/9)/±1 has ${classes.size} classes: {${[...classes].join('} {')}}` };
+    });
+    check('PROVEN', 'Each current lands in the class of 2x (currents = ×2 on classes)', () => {
+        const rows = SYZYGIES.map(s => { const c = s.hi - s.lo; return { s, c, ok: classOfRes(c) === classOfRes(2 * s.lo) && classOfRes(c) === classOfRes(2 * s.hi) }; });
+        return { pass: rows.every(r => r.ok), detail: rows.map(r => `${r.s.demon}: ${r.s.hi}−${r.s.lo} = ${r.c} ∈ class(2·${r.s.lo} = ${2 * r.s.lo % 9})`).join(' · ') };
+    });
+    check('PROVEN', 'Currents on classes: Murmur → Oddubb → Katak → Murmur; Warp and Plex fixed', () => {
+        const name = x => SYZYGIES.find(s => classOfRes(s.lo) === classOfRes(x)).demon;
+        const map = Object.fromEntries(SYZYGIES.map(s => [s.demon, name(s.hi - s.lo)]));
+        const pass = map.Murmur === 'Oddubb' && map.Oddubb === 'Katak' && map.Katak === 'Murmur' && map.Djynxx === 'Djynxx' && map.Uttunul === 'Uttunul';
+        return { pass, detail: Object.entries(map).map(([a, b]) => `${a} → ${b}`).join(', ') };
+    });
+    check('PROVEN', 'Time-Circuit = 2^j mod 9, a cycle of order exactly 6', () => {
+        const seq = Array.from({ length: 7 }, (_, j) => modB(2n ** BigInt(j), 9n));
+        const order = seq.findIndex((v, j) => j > 0 && v === 1n);
+        return { pass: seq.slice(0, 6).join() === '1,2,4,8,7,5' && order === 6, detail: `2^0..2^6 mod 9 = ${seq.join(', ')}; first return to 1 at j = ${order}` };
+    });
+    check('PROVEN', '(ℤ/9)ˣ = C3 × C2 with C3 = {1, 4, 7}, C2 = {1, 8}, 8 ≡ −1', () => {
+        const C3 = [1n, 4n, 7n], C2 = [1n, 8n];
+        const closed = S => S.every(a => S.every(b => S.includes(modB(a * b, 9n))));
+        const prods = C3.flatMap(a => C2.map(b => modB(a * b, 9n)));
+        const units = [1n, 2n, 4n, 5n, 7n, 8n];
+        const pass = closed(C3) && closed(C2) && modB(8n + 1n, 9n) === 0n && new Set(prods.map(String)).size === 6 && units.every(u => prods.includes(u));
+        return { pass, detail: `products a·b = ${prods.join(', ')} (each unit exactly once); C3 = squares of units` };
+    });
+    check('PROVEN', 'h = (1 − i + j + k)/2: |h|² = 1, h³ = −1, h⁶ = 1, order exactly 6', () => {
+        const n2 = (H.w * H.w + H.x * H.x + H.y * H.y + H.z * H.z), pass = n2 === H.d * H.d && qEq(H_POW[3], qNeg(Q_ONE)) && qEq(H_POW[6], Q_ONE) && [1, 2, 3, 4, 5].every(j => !qEq(H_POW[j], Q_ONE));
+        return { pass, detail: H_POW.map((q, j) => `h^${j} = ${fmtQuat(q)}`).join(' · ') };
+    });
+    check('PROVEN', '2^j ↦ h^j is an isomorphism, and twins map to antipodes (h^(j+3) = −h^j)', () => {
+        let pass = true;
+        for (let a = 0; a < 6; a++) for (let b = 0; b < 6; b++) {
+            const z = Number(modB(BigInt(CIRCUIT[a] * CIRCUIT[b]), 9n));
+            if (z !== CIRCUIT[(a + b) % 6] || !qEq(qMul(H_POW[a], H_POW[b]), H_POW[(a + b) % 6])) pass = false;
+        }
+        for (let j = 0; j < 6; j++) if (9 - CIRCUIT[j] !== CIRCUIT[(j + 3) % 6] || !qEq(H_POW[(j + 3) % 6], qNeg(H_POW[j]))) pass = false;
+        return { pass, detail: 'all 36 products agree; 9 − 2^j = 2^(j+3) and h^(j+3) = −h^j for j = 0..5' };
+    });
+    check('PROVEN', 'Node map: k mod 3 fixes the syzygy, k mod 2 the twin, φ_p = C2 bit / 2 (all 30 nodes)', () => {
+        let pass = true;
+        for (let k = 0; k < 30; k++) {
+            const z = zoneOfNode(k), s = SYZ_OF_ZONE[z];
+            const phiP = { n: BigInt(k % 2), d: 2n }; // engine: 0.0 for even, 0.5 for odd
+            const c2bit = twinSign(z) === 1 ? 0n : 1n;
+            if (s.demon !== CLASS_BY_PHASE[k % 3] || twinSign(z) !== (k % 2 === 0 ? 1 : -1) || phiP.n * 2n !== c2bit * phiP.d) pass = false;
+        }
+        return { pass, detail: '30 nodes checked; zone(k + 6) = zone(k) and 6 | 30, so the map closes on every lap' };
+    });
+    check('PROVEN', 'Wheel units mod 30 have digital roots in the Time-Circuit', () => {
+        const drs = WHEEL_30_UNITS.map(u => drB(BigInt(u)));
+        const pass = drs.join() === '1,7,2,4,8,1,5,2' && drs.every(r => [1n, 2n, 4n, 5n, 7n, 8n].includes(r)) && WHEEL_30_UNITS.every(u => gcdB(BigInt(u), 9n) === 1n);
+        return { pass, detail: `digital roots ${drs.join(', ')}; gcd(u, 9) = 1 for every unit` };
+    });
+    check('PROVEN', '(ℤ/30)ˣ ≅ C2 × C4, so the wheel contains into but is not isomorphic to C6', () => {
+        const order = u => { let e = 1n, x = modB(u, 30n); while (x !== 1n) { x = modB(x * u, 30n); e++; } return e; };
+        const ords = WHEEL_30_UNITS.map(u => order(BigInt(u)));
+        const two = ords.filter(o => o === 2n).length, max = ords.reduce((a, b) => (b > a ? b : a), 0n);
+        return { pass: two === 3 && max === 4n && WHEEL_30_UNITS.length === 8, detail: `element orders ${ords.join(', ')}: three of order 2, maximum 4, size 8 (not cyclic, not of order 6)` };
+    });
+    check('PROVEN', 'Gates n(n+1)/2 and their channels (digital roots)', () => {
+        const T = Array.from({ length: 9 }, (_, i) => BigInt((i + 1) * (i + 2) / 2)), drs = T.map(drB);
+        return { pass: T.join() === '1,3,6,10,15,21,28,36,45' && drs.join() === '1,3,6,1,6,3,1,9,9', detail: `gates ${T.join(', ')} → ${drs.join(', ')}` };
+    });
+    check('PROVEN', '45 demons, one per pair of zones', () => { const c = 10n * 9n / 2n; return { pass: c === 45n, detail: `C(10, 2) = ${c}` }; });
+    check('PROVEN', 'ν_Cs mod 60 = 30 (the half-cycle per pulse)', () => {
+        const nu = 9192631770n, r = nu % 60n, g = gcdB(nu, 60n), num = nu / g, den = 60n / g;
+        return { pass: r === 30n && num * 30n % den === 0n && num * 30n / den === 4596315885n, detail: `9,192,631,770 mod 60 = ${r}; ν/60 = ${num}/${den}; ×30 = ${num * 30n / den}` };
+    });
+    check('COMPUTED', 'A_R = 16 · area² on random integer triangles (plus collinear cases)', () => {
+        const rnd = mulberry32(seed), ri = () => BigInt(Math.floor(rnd() * 501) - 250);
+        let ok = 0, N = 300;
+        const test = (A, B, C) => {
+            const sub = (p, q) => p.map((v, i) => v - q[i]), dot = (p, q) => p.reduce((s, v, i) => s + v * q[i], 0n);
+            const ab = sub(B, A), ac = sub(C, A), bc = sub(C, B);
+            const Q1 = dot(ab, ab), Q2 = dot(ac, ac), Q3 = dot(bc, bc), S = Q1 + Q2 + Q3;
+            const AR = S * S - 2n * (Q1 * Q1 + Q2 * Q2 + Q3 * Q3);
+            const cr = [ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]];
+            return AR === 4n * dot(cr, cr); // 16 · area² = 16 · |cross|² / 4
+        };
+        for (let i = 0; i < N; i++) if (test([ri(), ri(), ri()], [ri(), ri(), ri()], [ri(), ri(), ri()])) ok++;
+        let col = 0;
+        for (let i = 0; i < 20; i++) { const A = [ri(), ri(), ri()], d = [ri(), ri(), ri()], s = BigInt(Math.floor(rnd() * 7) - 3), t = BigInt(Math.floor(rnd() * 7) + 1); if (test(A, A.map((v, k) => v + s * d[k]), A.map((v, k) => v + t * d[k]))) col++; }
+        return { pass: ok === N && col === 20, detail: `seed ${seed}: ${ok}/${N} random triangles and ${col}/20 collinear triples satisfy A_R = 16·area² exactly (collinear: both 0)` };
+    });
+    check('PROVEN', 'ℤ/30 ≅ C3 × C2 × C5 (CRT bijection on the 30 nodes)', () => {
+        const s = new Set(Array.from({ length: 30 }, (_, k) => `${k % 3},${k % 2},${k % 5}`));
+        return { pass: s.size === 30, detail: `${s.size} distinct (k mod 3, k mod 2, k mod 5) triples` };
+    });
+    check('PROVEN', 'Winding law W_n ≡ currents mod 9 (both step by −2); cumulative windings vs gates', () => {
+        const W = TIERS_SPEC.map(t => BigInt(t.W)); // T0..T4: 16, 14, 12, 10, 8
+        const wm = W.map(w => modB(w, 9n)), cm = [0n, 1n, 2n, 3n, 4n].map(n => modB(9n - 2n * (n + 1n), 9n));
+        let acc = 0n; const cum = W.map(w => (acc += w)), cdr = cum.map(drB), gdr = [1n, 3n, 6n, 10n, 15n].map(drB);
+        return { pass: wm.join() === cm.join() && cum.join() === '16,30,42,52,60', detail: `W mod 9 = ${wm.join(', ')} = 9 − 2(n+1) mod 9; cumulative ${cum.join(', ')} → digital roots ${cdr.join(', ')} vs gates → ${gdr.join(', ')}` };
+    });
+    check('PROVEN', 'Fibonacci digital roots have period 24 = lcm(8, 3)', () => {
+        let a = 0n, b = 1n, n = 0;
+        do { [a, b] = [b, modB(a + b, 9n)]; n++; } while (!(a === 0n && b === 1n) && n < 1000);
+        const lcm = 8 * 3 / Number(gcdB(8n, 3n));
+        const drs = FIBONACCI.map(f => drB(BigInt(f)));
+        return { pass: n === 24 && lcm === 24, detail: `Pisano period mod 9 = ${n}; lcm(8, 3) = ${lcm}; file's FIBONACCI digital roots: ${drs.join(', ')}` };
+    });
+    check('PROVEN', 'C8 and C6 share only the quotient C2; handshakes k = 2, 6 are ±i', () => {
+        const gmul = ([a, b], [c, d]) => [a * c - b * d, a * d + b * c];
+        let z = [1n, 0n]; const pw = [z];
+        for (let k = 1; k <= 8; k++) { z = gmul(z, [1n, 1n]); pw.push(z); }
+        const pass = gcdB(8n, 6n) === 2n && pw[2][0] === 0n && pw[2][1] === 2n && pw[6][0] === 0n && pw[6][1] === -8n;
+        return { pass, detail: `gcd(8, 6) = 2; (1 + i)^2 = ${pw[2][1]}i, (1 + i)^6 = ${pw[6][1]}i` };
+    });
+    check('PROVEN', 'Casting out nines needs 10 ≡ 1 (mod 9); base 60 casts out 59, and 60 ≡ 6', () => {
+        const rnd = mulberry32(seed + 7); let n = 0n; for (let i = 0; i < 6; i++) n = n * 1000000n + BigInt(Math.floor(rnd() * 1e6));
+        const digSum = (x, b) => { let s = 0n; while (x > 0n) { s += x % b; x /= b; } return s; };
+        const pass = 10n % 9n === 1n && 60n % 59n === 1n && 60n % 9n === 6n && digSum(n, 10n) % 9n === n % 9n && digSum(n, 60n) % 59n === n % 59n;
+        return { pass, detail: `n = ${n}: base-10 digit sum ≡ n (mod 9); base-60 digit sum ≡ n (mod 59); base-60 digit sum mod 9 = ${digSum(n, 60n) % 9n}, n mod 9 = ${n % 9n}` };
+    });
+    check('COMPUTED', 'Zone table: "current" column follows the landing/syzygy rule; demons match syzygies', () => {
+        const landing = { 1: 'Sink', 5: 'Hold', 7: 'Surge', 3: 'Warp', 9: 'Plex' };
+        const pass = ZONES.every(zn => zn.demon === SYZ_OF_ZONE[zn.z].demon && zn.current === (landing[zn.z] || SYZ_OF_ZONE[zn.z].current));
+        return { pass, detail: 'landing zones 1, 5, 7, 3, 9 carry their incoming current; zones 0, 2, 4, 6, 8 carry their syzygy\'s current' };
+    });
+    const box = document.getElementById('checks');
+    box.innerHTML = out.map(c => `<div class="check"><span class="badge ${c.pass ? 'pass' : 'fail'}">${c.pass ? 'PASS' : 'FAIL'}</span><div><div class="t">${c.title} <span class="tag ${TCLASS[c.tag]}">${c.tag}</span></div><div class="d">${c.detail}</div></div></div>`).join('');
+    const passed = out.filter(c => c.pass).length;
+    const sum = document.getElementById('v-summary');
+    sum.textContent = `${passed}/${out.length} pass`;
+    sum.style.color = passed === out.length ? '#6ee7b7' : '#fda4af';
+}
+function renderLiveChecks(d) {
+    const box = document.getElementById('checks-live');
+    const t = lastTelemetry;
+    if (!t) { box.innerHTML = '<div class="check"><span class="badge info">INFO</span><div class="d">Three.js is needed for the Engine\'s telemetry.</div></div>'; return; }
+    const u = t.pUpper.clone().sub(t.pNode), l = t.pLower.clone().sub(t.pNode), cr = new THREE.Vector3().crossVectors(u, l);
+    const sixteenArea2 = 4 * cr.lengthSq(), rel = Math.abs(t.AR - sixteenArea2) / Math.max(1, sixteenArea2);
+    const gap = t.pInferred.distanceTo(t.pClosure);
+    box.innerHTML = [
+        [rel < 1e-9 ? 'pass' : 'fail', rel < 1e-9 ? 'PASS' : 'FAIL', `Stage ${d.stage}, F${d.k + 1}: A_R = ${t.AR.toFixed(1)} vs 16·area² = ${sixteenArea2.toFixed(1)} from the cross product (relative difference ${rel.toExponential(2)})`, 'COMPUTED'],
+        ['info', 'INFO', `Mapping 5: qScale = ${t.qScale.toFixed(4)}, so |V4 − V4*| = ${gap.toFixed(3)} (exact closure needs qScale = 1)`, 'COMPUTED'],
+        ['info', 'INFO', `Mapping 1: node ${d.k} → j = ${d.j} → zone ${d.zone}; on helix (phase ${d.k % 3}, chiral ${d.k % 2 === 0 ? '+1' : '−1'}) of T${d.tier}`, 'PROVEN']
+    ].map(([cls, b, txt, tag]) => `<div class="check"><span class="badge ${cls}">${b}</span><div><div class="d">${txt} <span class="tag ${TCLASS[tag]}">${tag}</span></div></div></div>`).join('');
+}
+
+// =====================================================================
+// 13. Controls and main loop
+// =====================================================================
+function updateEngram() {
+    processEngram(document.getElementById('e-seed').value || '0.3');
+    const hex = v => v.toString(16).toUpperCase().padStart(8, '0');
+    const step = getBitsValue(63, 61) + 1, u = WHEEL_30_UNITS[getBitsValue(60, 58)], sc = getBitsValue(35, 32), F = FIBONACCI[sc % FIBONACCI.length];
+    const ratio = sc + 1 < FIBONACCI.length ? (FIBONACCI[sc + 1] / F).toFixed(6) : '—';
+    document.getElementById('e-out').innerHTML =
+        `tile 0x${hex(getBitsValue(63, 32))}${hex(getBitsValue(31, 0))}<br>` +
+        `<span data-link="map:10">[63:61] cycle step k = ${step}${step === 2 || step === 6 ? ' (handshake)' : ''}</span><br>` +
+        `<span data-link="zone:${drNum(u)}">[60:58] wheel u = ${u} → digital root ${drNum(u)} (zone ${drNum(u)}, Time-Circuit)</span><br>` +
+        `[55:53] locus T${getBitsValue(55, 53) % 5} &middot; [43:40] Form F${getBitsValue(43, 40)}<br>` +
+        `<span data-link="map:8">[35:32] Fibonacci F${sc} = ${F} (digital root ${drNum(F)}); F${sc + 1}/F${sc} = ${ratio} vs PHI = ${PHI.toFixed(6)}</span>`;
+}
+function wireControls() {
+    const playBtn = document.getElementById('btn-play');
+    playBtn.addEventListener('click', () => { clock.playing = !clock.playing; playBtn.textContent = clock.playing ? 'Pause' : 'Play'; });
+    document.getElementById('btn-step').addEventListener('click', () => setPulse(derive().P + 1));
+    document.getElementById('btn-back').addEventListener('click', () => setPulse(derive().P - 1));
+    document.getElementById('btn-reset').addEventListener('click', () => setPulse(0));
+    const speed = document.getElementById('speed');
+    speed.addEventListener('input', () => { clock.multiplier = parseFloat(speed.value); document.getElementById('speed-val').textContent = clock.multiplier.toFixed(2) + 'x'; });
+    const scrub = document.getElementById('scrub'), holoBtn = document.getElementById('btn-holo');
+    scrub.addEventListener('input', () => {
+        const d = derive(), lap = Math.floor(d.P / 150), v = parseFloat(scrub.value);
+        const p = clock.holonomic ? Math.floor(v * 150 / 720) : v;
+        setPulse(lap * 150 + p);
+    });
+    holoBtn.addEventListener('click', () => {
+        clock.holonomic = !clock.holonomic;
+        scrub.max = clock.holonomic ? 720 : 150;
+        holoBtn.textContent = clock.holonomic ? 'Scrub: holonomic 720' : 'Scrub: pulses';
+        holoBtn.classList.toggle('on', clock.holonomic);
+        document.getElementById('scrub-max').textContent = clock.holonomic ? '720 frames' : '150 pulses';
+        lastPulse = -1;
+    });
+    const orient = () => {
+        tensionAngleDeg = parseFloat(document.getElementById('c-tension').value);
+        torsionAngleDeg = parseFloat(document.getElementById('c-torsion').value);
+        document.getElementById('c-tension-v').textContent = `${tensionAngleDeg}°`;
+        document.getElementById('c-torsion-v').textContent = `${torsionAngleDeg}°`;
+        computeDifferentialClutch();
+        applyOrientation();
+        lastPulse = -1;
+    };
+    ['c-tension', 'c-torsion', 'c-r', 'c-fa', 'c-fb'].forEach(id => document.getElementById(id).addEventListener('input', orient));
+    document.getElementById('c-drift').addEventListener('click', () => { holonomyDrift = 0.342; orient(); });
+    document.getElementById('c-sync').addEventListener('click', () => { holonomyDrift = 0.0; document.getElementById('c-r').value = 4; orient(); });
+    document.getElementById('e-seed').addEventListener('input', updateEngram);
+    document.getElementById('btn-gates').addEventListener('click', e => {
+        const svg = document.getElementById('numogram'), off = svg.classList.toggle('gates-off');
+        e.currentTarget.textContent = off ? 'Gate channels: off' : 'Gate channels: on';
+        e.currentTarget.classList.toggle('on', !off);
+    });
+    document.getElementById('v-rerun').addEventListener('click', () => runChecks((Math.random() * 2 ** 31) | 0));
+    // Phone tabs
+    const tabs = [...document.querySelectorAll('.tabs [data-tab]')];
+    const show = id => { tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === id))); document.querySelectorAll('.panel').forEach(p => { p.hidden = window.innerWidth < 1100 && p.id !== id; }); resize3D(); };
+    tabs.forEach(t => t.addEventListener('click', () => show(t.dataset.tab)));
+    const layout = () => { if (window.innerWidth >= 1100) document.querySelectorAll('.panel').forEach(p => (p.hidden = false)); else show(tabs.find(t => t.getAttribute('aria-selected') === 'true').dataset.tab); };
+    window.addEventListener('resize', layout);
+    layout();
+}
+
+let prevT = performance.now();
+function frame(now) {
+    const dt = (now - prevT) / 1000; prevT = now;
+    if (clock.playing) clock.simTime += dt * clock.simSpeedBase * clock.multiplier;
+    const d = derive();
+    if (d.P !== lastPulse) { lastPulse = d.P; updatePulse(d); }
+    updateFlow(d);
+    if (three) { controls.update(); renderer.render(scene, camera); }
+    requestAnimationFrame(frame);
+}
+
+buildNumogram();
+buildC6();
+buildMaps();
+computeDifferentialClutch();
+init3D();
+updateEngram();
+wireControls();
+runChecks(20261026);
+requestAnimationFrame(frame);
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras="[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Open Engine&quot;,&quot;icon&quot;:&quot;engine&quot;},{&quot;href&quot;:&quot;manual.html&quot;,&quot;label&quot;:&quot;Manual&quot;,&quot;icon&quot;:&quot;book&quot;},{&quot;href&quot;:&quot;tracer.html&quot;,&quot;label&quot;:&quot;Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

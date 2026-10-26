@@ -5,13 +5,14 @@ small snippet at the end that loads the floating bar (Home button, a **Manual** 
 shared with the main site, GitHub / X / YouTube / Patreon links, and the hide toggle). The bar itself lives
 in [`assets/js/page-chrome.js`](../../assets/js/page-chrome.js), never in the calculator file.
 
-Two companion pages sit in the same folder, and the bars on all three pages link to each other:
+Companion pages sit in the same folder, and their bars link to each other:
 
 | File | Page | Bar buttons |
 | --- | --- | --- |
 | `index.html` | The engine | Manual, Tracer |
 | `manual.html` | Instruction manual & explainer | Open Engine, Tracer |
 | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses | Open Engine, Manual |
+| `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification | Open Engine, Manual, Tracer |
 
 To update the tracer, upload the new version over `tracer.html` (keep the name); the bar is added the same way.
 
