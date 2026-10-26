@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Lensing Hierarchy Companion - Ebayednoob</title>
+    <meta name="description" content="Companion guide to the Galactic Lensing Hierarchy simulation: how one geometric engine becomes three systems with an emergent fourth and the twelve-element triple quad, lemma by lemma from The Fifteen Lemmas of the Geometric Engine.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #020617;
+            --panel: #0b1222;
+            --panel-2: #0f172a;
+            --line: rgba(34, 211, 238, 0.16);
+            --line-strong: rgba(34, 211, 238, 0.38);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --faint: #64748b;
+            --cyan: #22d3ee;
+            --fuchsia: #e879f9;
+            --amber: #fbbf24;
+            --rose: #fb7185;
+            --emerald: #34d399;
+            --sky: #38bdf8;
+            --purple: #c084fc;
+            --gold: #f5c542;
+            --sys1: #ff7a3d; --sys2: #2dd4bf; --sys3: #8b5cf6; --sysR: #ffe6a3;
+            --t4: #f43f5e; --t3: #f59e0b; --t2: #10b981; --t1: #a855f7; --t0: #38bdf8;
+            --mono: 'Fira Code', ui-monospace, monospace;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+        body {
+            margin: 0; background: var(--bg); color: var(--text);
+            font: 16px/1.7 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(1200px 600px at 85% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+                radial-gradient(900px 600px at -10% 20%, rgba(255, 122, 61, 0.08), transparent 60%);
+        }
+        a { color: var(--cyan); text-decoration-color: rgba(34, 211, 238, 0.4); text-underline-offset: 3px; }
+        a:hover { color: #67e8f9; }
+        code, kbd, .mono { font-family: var(--mono); font-size: 0.88em; }
+        code { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(51, 65, 85, 0.7); border-radius: 5px; padding: 0.05em 0.35em; color: #a5f3fc; }
+        strong { color: #f8fafc; }
+        h1, h2, h3, h4 { line-height: 1.25; color: #f8fafc; }
+        h2 { font-size: 1.75rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+        h3 { font-size: 1.2rem; margin: 2rem 0 0.5rem; color: #cffafe; }
+        h4 { font-size: 1rem; margin: 1.4rem 0 0.4rem; color: #e0f2fe; }
+        p { margin: 0.7rem 0; }
+        ul, ol { padding-left: 1.4rem; }
+        li { margin: 0.25rem 0; }
+
+        .hero { padding: 92px 20px 40px; text-align: center; border-bottom: 1px solid var(--line); }
+        .eyebrow { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin: 0.6rem auto 0.8rem; max-width: 940px; letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ff7a3d, #2dd4bf 50%, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .hero p.lede { max-width: 760px; margin: 0 auto; color: #cbd5e1; font-size: 1.08rem; }
+        .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1.6rem; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-size: 0.95rem; }
+        .btn-primary { background: linear-gradient(90deg, #c2410c, #0f766e 55%, #6d28d9); color: #fff; }
+        .btn-primary:hover { color: #fff; filter: brightness(1.1); }
+        .btn-ghost { border-color: var(--line-strong); color: #cffafe; background: rgba(8, 47, 73, 0.35); }
+        .btn-ghost:hover { background: rgba(8, 47, 73, 0.6); color: #fff; }
+        .hero-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1.8rem; }
+        .stat { font-family: var(--mono); font-size: 0.8rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(15, 23, 42, 0.7); color: #cbd5e1; }
+        .stat b { color: var(--gold); }
+
+        .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 40px; max-width: 1240px; margin: 0 auto; padding: 32px 20px 80px; }
+        .toc { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 90px); overflow-y: auto; padding-right: 6px; font-size: 0.88rem; }
+        .toc-title { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+        .toc ol { list-style: none; padding: 0; margin: 0; }
+        .toc li { margin: 0; }
+        .toc a { display: block; padding: 5px 10px; border-left: 2px solid rgba(51, 65, 85, 0.6); color: var(--muted); text-decoration: none; }
+        .toc a:hover { color: #e2e8f0; border-left-color: #475569; }
+        .toc a.active { color: var(--gold); border-left-color: var(--gold); background: rgba(120, 53, 15, 0.25); }
+        .toc .part { margin: 14px 0 4px 10px; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fuchsia); }
+        .toc-mobile { display: none; }
+        main { min-width: 0; max-width: 880px; }
+
+        section.chapter { padding: 8px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
+        section.chapter:last-of-type { border-bottom: 0; }
+        .chapter-num { font-family: var(--mono); font-size: 0.78rem; color: var(--fuchsia); letter-spacing: 0.1em; }
+        .chapter-intro { color: #cbd5e1; font-size: 1.04rem; }
+
+        .callout { border: 1px solid; border-radius: 12px; padding: 14px 16px; margin: 1.2rem 0; background: rgba(15, 23, 42, 0.75); }
+        .callout > :first-child { margin-top: 0; }
+        .callout > :last-child { margin-bottom: 0; }
+        .callout .label { display: inline-block; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+        .plain { border-color: rgba(52, 211, 153, 0.4); } .plain .label { color: var(--emerald); }
+        .tryit { border-color: rgba(34, 211, 238, 0.45); background: rgba(8, 47, 73, 0.3); } .tryit .label { color: var(--cyan); }
+        .note { border-color: rgba(251, 191, 36, 0.45); } .note .label { color: var(--amber); }
+        .deep { border-color: rgba(192, 132, 252, 0.45); } .deep .label { color: var(--purple); }
+
+        .table-wrap { position: relative; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--line); border-radius: 12px; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(51, 65, 85, 0.5); vertical-align: top; }
+        th { background: rgba(15, 23, 42, 0.95); color: #a5f3fc; font-weight: 600; font-size: 0.82rem; white-space: nowrap; }
+        tr:last-child td { border-bottom: 0; }
+        td.num, th.num { text-align: right; font-family: var(--mono); white-space: nowrap; }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: rgba(15, 23, 42, 0.7); }
+        .card h4 { margin-top: 0; }
+        .card p { margin: 0.3rem 0 0; font-size: 0.93rem; color: #cbd5e1; }
+        figure { margin: 1.4rem 0; }
+        figure svg { display: block; width: 100%; height: auto; }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 8px; text-align: center; }
+        .steps { counter-reset: step; list-style: none; padding: 0; }
+        .steps > li { counter-increment: step; position: relative; padding: 4px 0 10px 46px; }
+        .steps > li::before { content: counter(step); position: absolute; left: 0; top: 4px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+            font-family: var(--mono); font-weight: 600; font-size: 0.85rem; color: #020617; background: linear-gradient(135deg, #ff7a3d, #8b5cf6); }
+
+        /* Epistemic tags (the nine of the monograph) */
+        .tag { font-family: var(--mono); font-size: 0.72rem; padding: 1px 7px; border-radius: 5px; border: 1px solid; white-space: nowrap; vertical-align: 1px; }
+        .t-PROVEN { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.55); }
+        .t-ESTABLISHED { color: #93c5fd; border-color: rgba(96, 165, 250, 0.55); }
+        .t-CORRESPONDENCE { color: #fde047; border-color: rgba(250, 204, 21, 0.55); }
+        .t-DEFINITION { color: #cbd5e1; border-color: rgba(148, 163, 184, 0.55); }
+        .t-COMPUTED { color: #67e8f9; border-color: rgba(34, 211, 238, 0.55); }
+        .t-EMPIRICAL { color: #fdba74; border-color: rgba(251, 146, 60, 0.55); }
+        .t-HEURISTIC { color: #fcd34d; border-color: rgba(245, 158, 11, 0.55); }
+        .t-CONJECTURAL { color: #fca5a5; border-color: rgba(248, 113, 113, 0.55); }
+        .t-OPEN { color: #f8fafc; border-color: rgba(248, 250, 252, 0.55); }
+
+        .lab { border: 1px solid var(--line-strong); border-radius: 14px; background: linear-gradient(180deg, rgba(8, 47, 73, 0.35), rgba(15, 23, 42, 0.8)); padding: 16px; margin: 1.4rem 0; }
+        .lab-title { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+        .lab input[type="text"], .lab select, .lab input[type="number"] {
+            background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px 8px; font: 0.9rem var(--mono); }
+        .lab input[type="number"] { width: 4.6rem; }
+        .lab input[type="text"] { width: 100%; }
+        .lab-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+        .lab-row label { font-size: 0.85rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+        .chip { font: 0.8rem var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid #334155; background: #0f172a; color: #cbd5e1; cursor: pointer; }
+        .chip:hover { border-color: var(--cyan); color: #fff; }
+        .chip.on { border-color: var(--gold); color: #fff; background: rgba(120, 53, 15, 0.35); }
+        .out { font-family: var(--mono); font-size: 0.86rem; background: #020617; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; }
+        .out .k { color: var(--muted); }
+        .out .bad { color: var(--rose); }
+        .out .good { color: var(--emerald); }
+        .out .warn { color: var(--amber); }
+
+        /* Triple-quad widget */
+        table.quad td, table.quad th { text-align: center; font-family: var(--mono); font-size: 0.85rem; }
+        table.quad td.q { cursor: pointer; user-select: none; }
+        table.quad td.q:hover { background: rgba(34, 211, 238, 0.08); }
+        table.quad td.lost { color: var(--rose); text-decoration: line-through; }
+        table.quad td.rec { color: var(--emerald); }
+        table.quad td.f4 { color: var(--fuchsia); }
+
+        /* Tile widget */
+        .bits64 { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 2px; margin: 10px 0; }
+        .bits64 .b { aspect-ratio: 1; display: grid; place-items: center; font: 9px var(--mono); border-radius: 3px; border: 1px solid #1e293b; color: #64748b; }
+        .bits64 .b.on { color: #020617; font-weight: 600; }
+        .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); }
+        .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
+
+        /* Stepper */
+        .stepper-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .stage-text { min-height: 4.5em; }
+
+        .gloss { display: grid; grid-template-columns: 220px 1fr; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .gloss dt, .gloss dd { margin: 0; padding: 9px 12px; border-bottom: 1px solid rgba(51, 65, 85, 0.45); }
+        .gloss dt { font-weight: 600; color: #a5f3fc; background: rgba(15, 23, 42, 0.9); }
+        .gloss dd { color: #cbd5e1; font-size: 0.93rem; }
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+        footer { text-align: center; color: var(--faint); font-size: 0.85rem; padding: 30px 20px 60px; border-top: 1px solid var(--line); }
+
+        @media (max-width: 1023px) {
+            .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 20px; }
+            .toc { display: none; }
+            .toc-mobile { display: block; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); }
+            .toc-mobile summary { cursor: pointer; font-weight: 600; }
+            .toc-mobile ol { margin: 8px 0 0; padding-left: 1.2rem; columns: 2; column-gap: 20px; font-size: 0.9rem; }
+        }
+        @media (max-width: 640px) {
+            body { font-size: 15px; }
+            .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }
+            .gloss { grid-template-columns: minmax(0, 1fr); }
+            .gloss dt { border-bottom: 0; padding-bottom: 2px; }
+            .toc-mobile ol { columns: 1; }
+            h2 { font-size: 1.45rem; }
+            .bits64 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="eyebrow">BioChain AI &middot; Geometric Engine of Time &middot; Companion guide</div>
+    <h1>From One Engine to the Triple Quad: A Guide to the Galactic Lensing Hierarchy</h1>
+    <p class="lede">How a single five-tier geometric engine becomes three nested systems around Sgr&nbsp;A*, why a fourth structure emerges from them, and how three classes of measurement form three groups of four. Every step is tied to a lemma or proposition of <em>The Geometric Engine of Time: The Fifteen Lemmas</em>, and every check the simulation runs is explained.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="galactic_lensing_hierarchy.html">Open the simulation</a>
+        <a class="btn btn-ghost" href="#route">The route in five steps</a>
+        <a class="btn btn-ghost" href="#compliance">Lemma-by-lemma compliance</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat"><b>1</b> engine &rarr; <b>3</b> systems + <b>1</b> emergent</span>
+        <span class="stat"><b>3 &times; 4 = 12</b> streams: the triple quad</span>
+        <span class="stat"><b>64</b>-bit Einstein Tile per stream</span>
+        <span class="stat"><b>19</b> live lemma checks</span>
+        <span class="stat"><b>66/66</b> lines match the reference script</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li class="part">I &middot; Start here</li>
+            <li><a href="#overview">1. What the simulation shows</a></li>
+            <li><a href="#route">2. The route in five steps</a></li>
+            <li><a href="#tags">3. Reading the tags</a></li>
+            <li class="part">II &middot; One engine</li>
+            <li><a href="#engine">4. Five tiers and their shells</a></li>
+            <li><a href="#wheel">5. Wheel, channels and clock</a></li>
+            <li><a href="#cycle">6. The 8-step cycle</a></li>
+            <li><a href="#tile">7. The 64-bit Einstein Tile</a></li>
+            <li class="part">III &middot; From one to many</li>
+            <li><a href="#fourth">8. The fourth from three</a></li>
+            <li><a href="#stack">9. Many engines, no contact</a></li>
+            <li><a href="#twelve">10. Twelve engines: the triple quad</a></li>
+            <li><a href="#four">11. The four-structure system</a></li>
+            <li class="part">IV &middot; The galaxy</li>
+            <li><a href="#galaxy">12. Three systems around Sgr A*</a></li>
+            <li><a href="#residual">13. The emergent fourth</a></li>
+            <li><a href="#frames">14. Frame closure and invariance</a></li>
+            <li><a href="#packets">15. Packets, phases and the Merkle chain</a></li>
+            <li><a href="#physics">16. The physics layer</a></li>
+            <li class="part">V &middot; Using the page</li>
+            <li><a href="#panels">17. Panels and controls</a></li>
+            <li><a href="#experiments">18. Experiments to try</a></li>
+            <li><a href="#compliance">19. Lemma-by-lemma compliance</a></li>
+            <li><a href="#limits">20. Departures and open problems</a></li>
+            <li><a href="#glossary">21. Glossary</a></li>
+        </ol>
+    </nav>
+
+    <main>
+        <details class="toc-mobile">
+            <summary>Contents</summary>
+            <ol>
+                <li><a href="#overview">What the simulation shows</a></li>
+                <li><a href="#route">The route in five steps</a></li>
+                <li><a href="#tags">Reading the tags</a></li>
+                <li><a href="#engine">Five tiers and their shells</a></li>
+                <li><a href="#wheel">Wheel, channels and clock</a></li>
+                <li><a href="#cycle">The 8-step cycle</a></li>
+                <li><a href="#tile">The 64-bit Einstein Tile</a></li>
+                <li><a href="#fourth">The fourth from three</a></li>
+                <li><a href="#stack">Many engines, no contact</a></li>
+                <li><a href="#twelve">Twelve engines: the triple quad</a></li>
+                <li><a href="#four">The four-structure system</a></li>
+                <li><a href="#galaxy">Three systems around Sgr A*</a></li>
+                <li><a href="#residual">The emergent fourth</a></li>
+                <li><a href="#frames">Frame closure and invariance</a></li>
+                <li><a href="#packets">Packets, phases and the Merkle chain</a></li>
+                <li><a href="#physics">The physics layer</a></li>
+                <li><a href="#panels">Panels and controls</a></li>
+                <li><a href="#experiments">Experiments to try</a></li>
+                <li><a href="#compliance">Lemma-by-lemma compliance</a></li>
+                <li><a href="#limits">Departures and open problems</a></li>
+                <li><a href="#glossary">Glossary</a></li>
+            </ol>
+        </details>
+
+        <!-- ================================================================ 1 -->
+        <section class="chapter" id="overview">
+            <div class="chapter-num">CHAPTER 1</div>
+            <h2>What the simulation shows</h2>
+            <p class="chapter-intro">The <a href="galactic_lensing_hierarchy.html">Galactic Lensing Hierarchy</a> treats the centre of the Milky Way as three nested systems, each organized like one copy of the geometric engine, and keeps exact books on what the three of them explain and what they leave over.</p>
+            <p>Every measurement of a pulsar near the Galactic Centre (where it appears on the sky, how its spin period drifts, how fast it moves) is shaped by mass at every scale between the black hole and the edge of the Galaxy. The simulation splits that mass into three ranges of radius:</p>
+            <div class="grid-3">
+                <div class="card" style="border-color: rgba(255,122,61,0.5)"><h4><span class="dot" style="background:var(--sys1)"></span>System I</h4><p>The Sgr&nbsp;A* domain, from the Schwarzschild radius to 2&nbsp;pc: the black hole itself.</p></div>
+                <div class="card" style="border-color: rgba(45,212,191,0.5)"><h4><span class="dot" style="background:var(--sys2)"></span>System II</h4><p>The nuclear region, 2 to 200&nbsp;pc: the nuclear star cluster, gas and the plasma screen.</p></div>
+                <div class="card" style="border-color: rgba(139,92,246,0.5)"><h4><span class="dot" style="background:var(--sys3)"></span>System III</h4><p>The Galaxy, 200&nbsp;pc to 100&nbsp;kpc: bar, disks, halo, and the Sun's own motion.</p></div>
+            </div>
+            <p>Whatever the three models fail to explain is the <strong>emergent fourth</strong>, written \(Y_R\). It has no mass model of its own. It is defined as data minus the three models, so the four always add up to the measurement exactly. This is the additive form of the monograph's <em>implied fourth</em> (Lemma&nbsp;7 Part&nbsp;3(d)).</p>
+            <p>Each measurement comes in three <strong>classes</strong> (astrometry, timing and velocity), and each class splits into the same four parts: I, II, III and R. Three classes of four make twelve streams. That is the <strong>triple quad</strong>: the monograph's twelve-engine hierarchy of three groups of four (§7.4, Proposition&nbsp;7.11), applied to the galaxy.</p>
+            <div class="callout plain">
+                <div class="label">In plain words</div>
+                <p>One engine is a set of nested rings with a clock and a 64-bit message format. Three engines side by side can be checked against each other, because any three of a group of four fix the fourth. The simulation uses that one idea twice: to split each measurement into "explained by I, II, III" plus "unexplained", and to check that the coordinate frames the data pass through fit together.</p>
+            </div>
+            <p>The page has two layers, as the design specification requires:</p>
+            <ul>
+                <li><strong>Layer A, physics.</strong> Weak-field general relativity in ordinary floating point: lensing, Shapiro delay and accelerations. These are approximate, as all physics is.</li>
+                <li><strong>Layer B, bookkeeping.</strong> Exact rational arithmetic in JavaScript <code>BigInt</code>: the residual parity, the quaternion frame closure, the packet layout and the Merkle chain. Layer B adds no error of its own. It cannot make a measurement more certain, only make sure nothing is lost or invented on the way.</li>
+            </ul>
+        </section>
+
+        <!-- ================================================================ 2 -->
+        <section class="chapter" id="route">
+            <div class="chapter-num">CHAPTER 2</div>
+            <h2>The route in five steps</h2>
+            <p class="chapter-intro">The whole guide follows one path. Step through it here first; each stage has its own chapter later.</p>
+            <div class="lab" id="stepper">
+                <div class="lab-title">From one engine to the triple quad</div>
+                <div class="stepper-tabs" role="tablist"></div>
+                <figure style="margin:0.4rem 0"><svg id="stepper-svg" viewBox="0 0 760 300" role="img" aria-label="Stage diagram"></svg></figure>
+                <div class="out stage-text" id="stepper-text"></div>
+            </div>
+            <ol class="steps">
+                <li><strong>One engine.</strong> Five tiers in disjoint shells, a 30-node wheel, six channels, a 12/10/8 gear clock, an 8-step cycle, and a 64-bit packet (Lemmas 4, 8, 10, 11 and 12, §6.1). <a href="#engine">Chapters 4–7</a>.</li>
+                <li><strong>A fourth from three.</strong> Three holonomies fix a fourth, \(H_4 = (H_1H_2H_3)^{-1}\). It is a parity element that rebuilds any one lost member (Lemma 7 Part 3(d)). It tests something only if measured independently (Lemma 12). <a href="#fourth">Chapter 8</a>.</li>
+                <li><strong>Many engines.</strong> Engines tile space without touching, and exchange data only at the two handshake windows of the cycle (Theorems 7.1–7.10). <a href="#stack">Chapter 9</a>.</li>
+                <li><strong>Twelve engines, three groups of four.</strong> Nine data engines and three implied fourths: the triple quad. One loss per group is recoverable (§7.4, Propositions 7.11–7.14). <a href="#twelve">Chapter 10</a>.</li>
+                <li><strong>The galaxy.</strong> Systems I–III are three engines, the residual is the fourth, and three observable classes make three groups of four. Frame closure and the four-structure frame change are the same algebra again (§7.6, Theorem 7.18). <a href="#galaxy">Chapters 12–15</a>.</li>
+            </ol>
+        </section>
+
+        <!-- ================================================================ 3 -->
+        <section class="chapter" id="tags">
+            <div class="chapter-num">CHAPTER 3</div>
+            <h2>Reading the tags</h2>
+            <p class="chapter-intro">The monograph, the specification and the simulation all label every claim with one of nine status tags. They tell you how much weight a statement can bear.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Tag</th><th>Meaning</th><th>Example on this page</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="tag t-PROVEN">PROVEN</span></td><td>A complete proof exists (in the monograph or the specification), and the page re-checks it.</td><td>Residual parity G1; frame closure G2; Theorem 7.18</td></tr>
+                    <tr><td><span class="tag t-ESTABLISHED">ESTABLISHED</span></td><td>Standard mathematics or physics, cited.</td><td>The point-lens equations; Niven's theorem</td></tr>
+                    <tr><td><span class="tag t-CORRESPONDENCE">CORRESPONDENCE</span></td><td>Two counts are equal; no structure-preserving map is claimed.</td><td>12 streams and the 12 vectors of the cuboctahedron</td></tr>
+                    <tr><td><span class="tag t-DEFINITION">DEFINITION</span></td><td>A convention of the design.</td><td>The log map that places the tiers; the 2&nbsp;pc and 200&nbsp;pc boundaries</td></tr>
+                    <tr><td><span class="tag t-COMPUTED">COMPUTED</span></td><td>A stated formula, evaluated (by the reference script).</td><td>Einstein radii; the magnetar's timing budget</td></tr>
+                    <tr><td><span class="tag t-EMPIRICAL">EMPIRICAL</span></td><td>A measurement with a source and an uncertainty.</td><td>The seven pulsars; the Gaia acceleration</td></tr>
+                    <tr><td><span class="tag t-HEURISTIC">HEURISTIC</span></td><td>A modelling choice motivated by analogy, not proof.</td><td>The Hernquist profile for the star cluster; the engine's TQF scale</td></tr>
+                    <tr><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td><td>A hypothesis that needs new evidence.</td><td>The injected scalar-field term</td></tr>
+                    <tr><td><span class="tag t-OPEN">OPEN</span></td><td>A stated problem awaiting resolution.</td><td>Problems G1–G8 (Chapter 20)</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note">
+                <div class="label">The rule that matters most</div>
+                <p>"Counts are not structure." Seven pulsars, six channels, five tiers and twelve engines are counts. When two counts match, the page says <span class="tag t-CORRESPONDENCE">CORRESPONDENCE</span> and claims nothing more. When they do not match, it says so.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 4 -->
+        <section class="chapter" id="engine">
+            <div class="chapter-num">CHAPTER 4 &middot; LEMMAS 4 AND 10</div>
+            <h2>Five tiers and their shells</h2>
+            <p class="chapter-intro">The engine is five nested tori, one per tier, centred on the origin. All lengths are in cubits \(\mathcal{C}_0 = \lambda/16\), about 53.7&nbsp;cm at 40&nbsp;Hz in room air (§6.2).</p>
+            <p>Lemma 4 fixes the tier laws for \(n = 0, \dots, 4\):</p>
+            $$R_n = 5n^2 + 15n + 15, \qquad \rho_n = 2n + 4, \qquad W_n = 16 - 2n,$$
+            <p>where \(R_n\) is the major radius, \(\rho_n\) the minor (tube) radius and \(W_n\) the number of helical windings. Two conservation laws follow at once, and the page checks both on every load <span class="tag t-PROVEN">PROVEN</span>:</p>
+            $$\rho_n + W_n = 20 \text{ for every tier}, \qquad \sum_{n=0}^{4} W_n = W_\Sigma = 60.$$
+            <div class="table-wrap"><table>
+                <thead><tr><th>Tier</th><th class="num">R<sub>n</sub></th><th class="num">&rho;<sub>n</sub></th><th class="num">W<sub>n</sub></th><th class="num">shell [R &minus; &rho;, R + &rho;]</th><th class="num">gap to next</th><th class="num">engine freq. (v10)</th><th>frame (Lemma 4)</th></tr></thead>
+                <tbody id="tier-table"></tbody>
+            </table></div>
+            <p><strong>Disjoint shells (Lemma 10).</strong> Whatever way a tier is rotated, its torus stays inside the spherical shell \(R_n - \rho_n \le \|x\| \le R_n + \rho_n\). The shells are \([11,19], [29,41], [57,73], [95,115], [143,167]\), with gaps 10, 16, 22 and 28 between them <span class="tag t-PROVEN">PROVEN</span>. The voxel cube \([-2,2]^3\) of the Lower Manifold reaches only \(2\sqrt3 \approx 3.46\), so it is separated from the innermost tier by \(11 - 2\sqrt3 \approx 7.54\,\mathcal{C}_0\) (4.05&nbsp;m). The whole engine fits in a ball of radius 167.</p>
+            <figure><svg id="shells-svg" viewBox="0 0 760 250" role="img" aria-label="The five tier shells of Lemma 10 on a radial axis"></svg>
+                <figcaption>The five shells of Lemma 10 on one radial axis (cubits). Tier colours match the engine. The small block at the left is the voxel cube's reach, 2&radic;3.</figcaption></figure>
+            <h3>Tier frames: Lemma 4 versus engine v10</h3>
+            <p>Lemma 4 also fixes how each tier is oriented: \(\mathrm{Rot}(T_n) = \mathrm{Rot}_x(\pi/2)\) for even \(n\) and \(\mathrm{Rot}_y(\pi/2)\) for odd \(n\). The step from one tier to the next is then always the same integer matrix,</p>
+            $$\mathbf U_{\text{even}} = \mathrm{Rot}_y(\tfrac{\pi}{2})\,\mathrm{Rot}_x(-\tfrac{\pi}{2}) = \begin{pmatrix} 0 & -1 & 0 \\ 0 & 0 & 1 \\ -1 & 0 & 0 \end{pmatrix},$$
+            <p>a 120° rotation about the body diagonal \((-1,1,1)/\sqrt3\), with \(\mathbf U^3 = I\). Its spinor lift is the Hurwitz unit \(h = (1 - i + j + k)/2\), with \(h^3 = -1\) and \(h^6 = +1\) <span class="tag t-PROVEN">PROVEN</span>.</p>
+            <p>Engine v10 uses a different, simpler set of frames: tiers 0, 2 and 4 unrotated and tiers 1 and 3 turned by \(\mathrm{Rot}_x(\pi/2)\), plus the tension, torsion and clutch-slip offsets of its controls. The simulation now draws the Lemma&nbsp;4 frames by default, adding the engine's slip offsets on top so the clutch still visibly matters. The <strong>Lemma 4 frames</strong> button switches back to the v10 frames for comparison. In the galaxy the tier rotations have no physical meaning (the specification's verdict is "no map"); they only make the nesting visible.</p>
+            <div class="callout deep">
+                <div class="label">Why the frequencies are 96, 84, 72, 60, 48 Hz</div>
+                <p>Engine v10 drives tier \(n\) at \(f_n = 6W_n\) Hz. This is the engine's own choice <span class="tag t-DEFINITION">DEFINITION</span>, not a lemma. It does interact with Lemma 11's clock windows, though: on the 60-pulse register, a carrier at \(f\) Hz returns to a whole period every \(60/\gcd(60, f)\) pulses, so all five tiers line up every 5 pulses (1/12 s). The simulation checks this exactly (Chapter 5).</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 5 -->
+        <section class="chapter" id="wheel">
+            <div class="chapter-num">CHAPTER 5 &middot; LEMMAS 4, 11 AND 12</div>
+            <h2>Wheel, channels and clock</h2>
+            <p class="chapter-intro">Around each tier runs a 30-node wheel; the nodes carry six channels; and one master clock drives everything.</p>
+            <h3>The 30-node wheel</h3>
+            <p>The wheel has 30 nodes, \(k \in \mathbb Z/30\). Its 8 <em>units</em>, the residues coprime to 30, are \(\{1, 7, 11, 13, 17, 19, 23, 29\}\). Lemma 4 Part 5 splits them by the Legendre symbol mod 5 into \(\mathcal B_+ = \{1, 11, 19, 29\}\) (quadratic residues) and \(\mathcal B_- = \{7, 13, 17, 23\}\) <span class="tag t-PROVEN">PROVEN</span>. A tile's wheel field (bits 60–58) names one of the eight units.</p>
+            <h3>Six channels</h3>
+            <p>The node index also picks a channel \(k \bmod 6\), which is the pair \((k \bmod 3,\ k \bmod 2) \in C_3 \times C_2\). By the Chinese remainder theorem this is a bijection \(\mathbb Z/6 \to C_3 \times C_2\) <span class="tag t-PROVEN">PROVEN</span> (script check H3). In the galaxy the two factors get physical meaning <span class="tag t-DEFINITION">DEFINITION</span>:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>k</th><th>k mod 3: class</th><th>k mod 2: side</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">0</td><td>astrometry</td><td>model</td></tr>
+                    <tr><td class="num">1</td><td>timing</td><td>data</td></tr>
+                    <tr><td class="num">2</td><td>velocity</td><td>model</td></tr>
+                    <tr><td class="num">3</td><td>astrometry</td><td>data</td></tr>
+                    <tr><td class="num">4</td><td>timing</td><td>model</td></tr>
+                    <tr><td class="num">5</td><td>velocity</td><td>data</td></tr>
+                </tbody>
+            </table></div>
+            <p>So each system becomes a 3&nbsp;&times;&nbsp;2 table: one row per class, one column for the model and one for the data. Panel B of the simulation shows exactly that table for each system, with the active channel in gold.</p>
+            <h3>The master clock</h3>
+            <p>The simulation uses engine v10's clock unchanged:</p>
+            <ul>
+                <li><code>pulseCount = ⌊t · 60⌋</code>: 60 pulses per simulated second.</li>
+                <li>Node \(k\) = pulseCount mod 30, and stage = ⌊(pulseCount mod 150)/30⌋. The active tier sweeps T4 &rarr; T0 over 150 pulses.</li>
+                <li><code>outerFrameN = 12 · pulseCount mod 720</code> drives the 12/10/8 gear chain of Lemma 12: an outer gear of 720 frames, a middle gear of 72 and an inner gear of 10. Lemma 12 Part 1 proves the middle frames split into inner blocks of sizes (8, 7, 7, 7, 7, 8, 7, 7, 7, 7) <span class="tag t-PROVEN">PROVEN</span>.</li>
+                <li>Rotor step \(k_8\) = (pulseCount mod 8) + 1: the 8-step cycle of Lemma 8 (next chapter).</li>
+                <li>One 720-frame cycle (60 pulses) is one <em>observation epoch</em> of 0.25&nbsp;yr in the galaxy <span class="tag t-DEFINITION">DEFINITION</span>.</li>
+            </ul>
+            <div class="callout note">
+                <div class="label">What the 60-pulse register cannot do</div>
+                <p>Proposition 11.4 gives the exact rule: integer carriers \(f_1, \dots, f_r\) share a window of \(k\) pulses if and only if \(\mathrm{lcm}_i\big(60/\gcd(60, f_i)\big)\) divides \(k\). The caesium frequency 9&nbsp;192&nbsp;631&nbsp;770&nbsp;Hz is \(\equiv 30 \pmod{60}\), so it closes on every second pulse. Pulsar spin frequencies are not integers, so the rule says nothing about them. The register schedules packets; pulsar data are folded on each pulsar's own ephemeris against TT(BIPM) (spec §4.7).</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 6 -->
+        <section class="chapter" id="cycle">
+            <div class="chapter-num">CHAPTER 6 &middot; LEMMA 8, THEOREM 7.5, PROPOSITION 7.14</div>
+            <h2>The 8-step cycle</h2>
+            <p class="chapter-intro">Every engine runs an eight-step cycle \(\theta_k = k\pi/4\). Two of its steps are special: they are the only moments at which two engines can exchange data.</p>
+            <p>Lemma 8 builds the cycle step by step: a circle phase (Step 1), the conformal lift with nine rays and a 4-simplex (Step 2), sixteen half-cubes (Step 3), dilation to the voxel cube (Step 4), a sense-reversing fold into Cube 3 (Step 5), the \(D_3\) trefoil and its projection into hyperbolic space (Step 6), and the apex peaks and holonomy (Steps 7–8).</p>
+            <p>Its spinor bookkeeping is exact. One step is a 90° rotation with spinor \(1 + i\), and Lemma 13 Part 4 shows that in integer arithmetic</p>
+            $$(1+i)^2 = 2i, \qquad (1+i)^4 = -4, \qquad (1+i)^8 = 16.$$
+            <p>Dividing each power by the gcd of its parts leaves the eight unit states \(1+i,\ i,\ -1+i,\ -1,\ -1-i,\ -i,\ 1-i,\ 1\). The transverse amplitude \(|\sin\theta_k|\) is 1 only at \(k = 2\) and \(k = 6\), where the reduced spinors are \(i\) and \(-i\): the same half-turn about the \(x\)-axis with opposite spin sign <span class="tag t-PROVEN">PROVEN</span> (Theorem 7.5). These are the two <strong>handshake windows</strong>.</p>
+            <div class="lab">
+                <div class="lab-title">The cycle and its windows</div>
+                <figure style="margin:0"><svg id="cycle-svg" viewBox="0 0 360 300" role="img" aria-label="The eight steps of the cycle" style="max-width:420px;margin:0 auto"></svg></figure>
+                <div class="out" id="cycle-out">Click a step.</div>
+            </div>
+            <p>At both windows a partner sees the same spatial orientation, so two engines need not agree on where they are in the double cover. The spin sign is the one bit the geometry never exposes. The monograph calls \(k = 2\) the <strong>onload</strong> window and \(k = 6\) the <strong>offload</strong> window.</p>
+            <p>The specification (§4.7, after Proposition 7.14) schedules the galaxy's traffic on these windows <span class="tag t-DEFINITION">DEFINITION</span>:</p>
+            <ul>
+                <li><strong>Onload</strong> (\(k = 2\)): new data in.</li>
+                <li><strong>Offload</strong> (\(k = 6\)): model updates out.</li>
+                <li><strong>Third phase</strong> (other steps): the residual parity traffic and the time reference.</li>
+            </ul>
+            <p>Panel D's cycle strip shows the current step, its spinor and its phase. Every packet carries the step in bits 63–61.</p>
+        </section>
+
+        <!-- ================================================================ 7 -->
+        <section class="chapter" id="tile">
+            <div class="chapter-num">CHAPTER 7 &middot; MONOGRAPH §6.1, LEMMAS 9, 13 AND 15</div>
+            <h2>The 64-bit Einstein Tile</h2>
+            <p class="chapter-intro">Everything an engine says is said in 64-bit words. A receiver must be able to decode a packet before it knows what kind of packet it is, so the fields below sit at fixed positions in every packet.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Bits</th><th>Field</th><th>Meaning (monograph Table 4)</th><th>On this page</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">63–61</td><td>Cycle step</td><td>k &minus; 1 for step k of the 8-step cycle (Lemma 8)</td><td>The engine's rotor step; it sets onload, offload or third phase</td></tr>
+                    <tr><td class="num">60–58</td><td>Wheel unit</td><td>Index of a unit u &isin; {1, 7, &hellip;, 29} (Lemma 4 Part 5)</td><td>The unit sector of the active node: the largest unit &le; k <span class="tag t-DEFINITION">DEFINITION</span></td></tr>
+                    <tr><td class="num">57–56</td><td>Structure</td><td>Which of four structures sent it</td><td>00 System I, 01 System II, 10 System III, 11 residual R (spec §5.3)</td></tr>
+                    <tr><td class="num">55–48</td><td>Gate byte</td><td>Form-dependent (Table 5)</td><td>Form 3: bits 55–54 = component (w), bits 53–48 = slice counter (epoch mod 64)</td></tr>
+                    <tr><td class="num">47–44</td><td>Step-multiplexed index</td><td>Circle phase s &isin; &#8484;/9 at steps 1–2; half-cube at step 3; ghost index at step 6; otherwise an aff(3) coordinate</td><td>k mod 9, k mod 16, 0 (central cell), or the stream slot mod 12</td></tr>
+                    <tr><td class="num">43–40</td><td>Form ID</td><td>How to read bits 0–31 and 48–55</td><td>Form 3, exact binary32 scalar</td></tr>
+                    <tr><td class="num">39–36</td><td>Stream slot</td><td>0–11 engine position; 12–15 projections w, x, y, z</td><td>4 &middot; class + structure: the twelve cells of the triple quad</td></tr>
+                    <tr><td class="num">35–32</td><td>Scale register</td><td>Dyadic level, Fibonacci index or subdivision frequency</td><td>0 (scale 2<sup>0</sup>)</td></tr>
+                    <tr><td class="num">31–0</td><td>Core word</td><td>Form-dependent payload</td><td>The value as IEEE-754 binary32, bit for bit</td></tr>
+                </tbody>
+            </table></div>
+            <div class="lab" id="tile-lab">
+                <div class="lab-title">Build or decode a tile</div>
+                <div class="lab-row">
+                    <label>step k <input type="number" id="tl-step" min="1" max="8" value="2"></label>
+                    <label>wheel index <input type="number" id="tl-wheel" min="0" max="7" value="0"></label>
+                    <label>structure <select id="tl-struct"><option value="0">00 System I</option><option value="1">01 System II</option><option value="2">10 System III</option><option value="3" selected>11 residual R</option></select></label>
+                    <label>class <select id="tl-class"><option value="0">astrometry</option><option value="1" selected>timing</option><option value="2">velocity</option></select></label>
+                    <label>slice <input type="number" id="tl-slice" min="0" max="63" value="9"></label>
+                    <label>value <input type="number" id="tl-value" step="any" value="0.375" style="width:7rem"></label>
+                </div>
+                <div class="bits64" id="tl-bits" aria-label="64 bits, bit 63 first"></div>
+                <div class="legend" id="tl-legend"></div>
+                <div class="lab-row"><label style="flex:1">hex word <input type="text" id="tl-hex" spellcheck="false"></label></div>
+                <div class="out" id="tl-out"></div>
+            </div>
+            <h3>Exactness, honestly</h3>
+            <p>Form 3 stores one binary32 value bit for bit, so it is exact <em>about that binary32 value</em>. Layer B's numbers are exact rationals \(n/2^{24}\) or sums of them. A binary32 holds such a rational exactly only when it has at most 24 significant bits. When it does not, the simulation marks the packet with "&asymp;" and puts the exact rational in the packet's Merkle leaf, so the integrity chain covers the exact value even when the tile shows a rounded copy. The value 0.375 above is exact; try 0.1 to see the difference.</p>
+            <h3>The South Halo is not a checksum</h3>
+            <p>The top byte (bits 63–56) is the <em>South Halo</em>. Lemma 15 Part 2 proves it splits the \(2^{56}\) possible payloads into 256 buckets of \(2^{48} \approx 2.8 \times 10^{14}\) each. It is a fast cache pre-filter that rejects packets from the wrong phase or wheel. It is never an integrity check <span class="tag t-PROVEN">PROVEN</span>. Integrity comes from the recursive Merkle chain of Lemma 15 Part 3 (Chapter 15).</p>
+        </section>
+
+        <!-- ================================================================ 8 -->
+        <section class="chapter" id="fourth">
+            <div class="chapter-num">CHAPTER 8 &middot; LEMMA 7, LEMMA 12, THEOREM 7.2</div>
+            <h2>The fourth from three</h2>
+            <p class="chapter-intro">The single idea behind the whole hierarchy: in a group of four that must close, any three determine the fourth. That makes the fourth a spare, able to rebuild one loss. It also means a fourth <em>computed</em> from the other three can never catch an error.</p>
+            <h3>Already inside one engine: V4 and V4*</h3>
+            <p>Engine v10 triangulates each node against an upper and a lower tier point (V1, V2, V3) and infers a fourth vertex V4. Its exact parallelogram closure is \(V_4^* = V_2 + V_3 - V_1\), so that \(V_1 + V_4^* = V_2 + V_3\): one point of four, fixed by the other three. The engine's displayed V4 scales that closure by its TQF factor <code>qScale</code>, which is an engine heuristic <span class="tag t-HEURISTIC">HEURISTIC</span>. The <a href="numogram.html">Numogram page</a> draws both side by side.</p>
+            <h3>The group form: Lemma 7 Part 3</h3>
+            <p>For any three holonomy quaternions \(H_1, H_2, H_3 \in S^3\), there is exactly one \(H_4\) that closes the loop <span class="tag t-PROVEN">PROVEN</span>:</p>
+            $$H_1 H_2 H_3 H_4 = 1 \iff H_4 = (H_1H_2H_3)^{-1}.$$
+            <p>Part 3(d) reads this as a parity element. Since the closure survives cyclic shifts, each of the four is fixed by the other three, so one lost element of a group of four is recoverable exactly; two are not. \(H_4\) carries no information beyond its three parents. Offloading it returns only their product, never their individual histories.</p>
+            <h3>The lattice form: Theorem 7.2</h3>
+            <p>Take the lattice \(L = 2\mathbb Z^3\) and the four offsets \(o_0 = (0,0,0)\), \(o_1 = (1,1,0)\), \(o_2 = (1,0,1)\), \(o_3 = (0,1,1)\). The four translates \(L + o_i\) are disjoint and together make the face-centred cubic lattice \(D_3\). Since \(o_1 + o_2 + o_3 \equiv 0 \pmod 2\), any three translates determine the fourth: the "3:1 interleave" <span class="tag t-PROVEN">PROVEN</span>. The monograph notes that the implied fourth has three exact twins: this lattice, the group inverse \(H_4\), and the quaternion relation \(ijk = -1\).</p>
+            <h3>The additive form: what the galaxy uses</h3>
+            <p>Measured quantities add. With a measured total \(Y\) and three model contributions, the fourth is the residual \(Y_R = Y - Y_I - Y_{II} - Y_{III}\), and the group closes as \(Y = Y_I + Y_{II} + Y_{III} + Y_R\). That is Proposition G1 of the specification, the additive form of Lemma 7 Part 3(d) (Chapter 13).</p>
+            <h3>Open versus cyclic: when a fourth tests anything</h3>
+            <p>Lemma 12 compares three boundary conventions for the gear chain's holonomy (monograph Table 3):</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Convention</th><th>Holonomy H</th><th>What it carries</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Open (adopted)</strong></td><td>\(q_0 q_{719}^{-1}\)</td><td>Net rotation from start to end; \(H = 1\) only if the chain returns to its start. A genuine test.</td></tr>
+                    <tr><td>Anchored</td><td>\(q_{719}^{-1}\)</td><td>Net rotation from the identity.</td></tr>
+                    <tr><td>Cyclic</td><td>1 identically</td><td>Nothing: closure is built in, so \(H = 1\) tests nothing.</td></tr>
+                </tbody>
+            </table></div>
+            <p>The galaxy's frame closure (Proposition G2) is the same statement. Four frame legs that are each <em>measured</em> close to 1 when they agree, and an error in any one breaks the closure. If the fourth leg is instead <em>computed</em> as \((H_1H_2H_3)^{-1}\), the product is 1 whatever the error. Try it:</p>
+            <div class="lab" id="closure-lab">
+                <div class="lab-title">Open and cyclic closure, in exact rational quaternions</div>
+                <div class="lab-row">
+                    <button class="chip on" id="cl-clean" type="button">Consistent legs</button>
+                    <button class="chip" id="cl-err" type="button">Error in leg 2</button>
+                </div>
+                <div class="out" id="cl-out"></div>
+            </div>
+            <div class="callout plain">
+                <div class="label">The design rule</div>
+                <p>A fourth leg used for <em>testing</em> must be measured independently. A fourth leg computed from the other three is a parity element, good for <em>recovery</em> but useless as a test. The simulation shows both conventions side by side in Panel B, and "Inject error" lets you watch the difference.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 9 -->
+        <section class="chapter" id="stack">
+            <div class="chapter-num">CHAPTER 9 &middot; MONOGRAPH §7.1–§7.3</div>
+            <h2>Many engines, no contact</h2>
+            <p class="chapter-intro">Before twelve engines can share a hierarchy, the monograph has to show that engines can sit together without interfering, and say exactly what can pass between them.</p>
+            <div class="grid-2">
+                <div class="card"><h4>Stacking (Theorem 7.1)</h4><p>Translates of the voxel cube by \(4\mathcal C_0\,\mathbb Z^3\) tile space, and neighbouring cubes meet only along faces. Each engine is one cell of an unbounded periodic stack. <span class="tag t-PROVEN">PROVEN</span></p></div>
+                <div class="card"><h4>Growth at every scale (Theorem 7.3)</h4><p>\(2\mathbb Z^3 \subset D_3 \subset \mathbb Z^3 \subset \tfrac12 D_3 \subset \cdots\) has indices 4, 2, 4, 2: each 3:1 interleave is followed by a centring step, so the same 3:1 step recurs at every level. <span class="tag t-PROVEN">PROVEN</span></p></div>
+                <div class="card"><h4>Separation (Theorem 7.6)</h4><p>Each engine lies in a closed ball of radius 167 about its centre (Lemma 10). In a cubic tiling with edge greater than 334, distinct engines are disjoint: cubes touch, engines never do. <span class="tag t-PROVEN">PROVEN</span></p></div>
+                <div class="card"><h4>Handshake windows (Theorem 7.5)</h4><p>Exchanges happen at steps 2 and 6 of the cycle (Chapter 6). Two engines on different integer carriers can exchange only at the shared windows of Proposition 11.4. <span class="tag t-PROVEN">PROVEN</span></p></div>
+            </div>
+            <h3>What crosses a handshake</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Item</th><th>Size</th><th>Why it suffices</th><th>Basis</th></tr></thead>
+                <tbody>
+                    <tr><td>Five cumulative moments M, I, J, S, C<sub>p</sub></td><td>5 numbers per band</td><td>Exterior agreement; any small target is reachable since the Jacobian is invertible</td><td>Lemma 6</td></tr>
+                    <tr><td>One fundamental arc of the trefoil</td><td>1/6 of the curve</td><td>The six integer matrices of D<sub>3</sub> rebuild the rest exactly</td><td>Lemma 8 Step 6</td></tr>
+                    <tr><td>Address residues</td><td>Three 10-bit residues</td><td>CRT with closed-form inverses reconstructs the address</td><td>Lemma 9</td></tr>
+                    <tr><td>Root hash</td><td>256 bits</td><td>Any change in the 12 nested layers changes it, unless SHA-256 has a collision</td><td>Lemma 15</td></tr>
+                    <tr><td>Net rotation</td><td>One unit quaternion</td><td>Open-convention holonomy \(H = q_0 q_{719}^{-1}\)</td><td>Lemma 12</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>What cannot cross.</strong> A product forgets its factors. The \(24^3 = 13{,}824\) three-step chains of Hurwitz units give only 24 products, 576 chains each <span class="tag t-COMPUTED">COMPUTED</span>, so no scheme can rebuild a chain's history from its current quaternion (Theorem 7.10). The galaxy's residual inherits this: \(Y_R\) tells you <em>how much</em> is unexplained, not <em>where</em> it came from (Problem G5).</p>
+            <p><strong>Interaction without contact.</strong> Engines are coupled only through channels that carry no geometry of their own: the five-moment exterior channel (Theorem 7.7), the hyperbolic kernel \(Q_h = \sinh^2 d\) between projected states (Theorem 7.8), and the directed exchange of a rational valve (Theorem 7.9).</p>
+        </section>
+
+        <!-- ================================================================ 10 -->
+        <section class="chapter" id="twelve">
+            <div class="chapter-num">CHAPTER 10 &middot; MONOGRAPH §7.4, PROPOSITIONS 7.11–7.14</div>
+            <h2>Twelve engines: the triple quad</h2>
+            <p class="chapter-intro">Apply "the fourth from three" three times, and you have twelve engines in three groups of four. This is the structure the galaxy reuses.</p>
+            <p><strong>Definition (§7.4).</strong> A six-tier engine is the core plus the five tiers of Lemma 4. Its memory state is its holonomy \(H \in S^3\) together with its 64-bit packet. Three data engines \(A_1, A_2, A_3\) determine an implied fourth \(F_A = (A_1A_2A_3)^{-1}\). Doing this three times (groups A, B and C) gives nine data engines and three implied fourths: <strong>twelve engines, three groups of four</strong> <span class="tag t-DEFINITION">DEFINITION</span>. An optional thirteenth engine \(F_\star = (F_AF_BF_C)^{-1}\) is the fourth of the fourths.</p>
+            <figure><svg id="cubo-svg" viewBox="0 0 760 250" role="img" aria-label="The three planar groups of four of the cuboctahedron"></svg>
+                <figcaption>Proposition 7.13: the twelve nearest neighbours of the face-centred cubic lattice, \((\pm1, \pm1, 0)\) and permutations, split by their zero coordinate into three planar groups of four. Each group sums to zero, so any three determine the fourth, and the 120° rotation about (1,1,1) carries each group onto the next.</figcaption></figure>
+            <div class="grid-2">
+                <div class="card"><h4>Parity (Proposition 7.11)</h4><p>Each group of four tolerates the loss of any one engine, so the hierarchy survives up to three losses, one per group. Two losses in the same group are unrecoverable. Only 9 of the 12 engines carry data (75%). <span class="tag t-PROVEN">PROVEN</span></p></div>
+                <div class="card"><h4>The thirteenth engine</h4><p>Adds exactly one recovery case: losing a data engine together with its own fourth (say \(A_1\) and \(F_A\)), since \(F_\star\), \(F_B\), \(F_C\) rebuild \(F_A\), which then rebuilds \(A_1\). <span class="tag t-PROVEN">PROVEN</span></p></div>
+                <div class="card"><h4>Exact offload (Proposition 7.12)</h4><p>Onload carries data out through the tier word \(W = U_3U_2U_1U_0\). Its inverse is again a word in \(U\) and \(U^{-1}\), so the inverse tier system is exact. The radial scale \(R_4/R_0 = 155/15 = 31/3\) is exact both ways. <span class="tag t-PROVEN">PROVEN</span></p></div>
+                <div class="card"><h4>The third phase (Proposition 7.14)</h4><p>Three channels \((a, b, c)\) in three 120° phases are one invariant line \(s = a+b+c\) plus one rotating plane \(z = a + \omega b + \omega^2 c\). Onload and offload use two phases; the third can carry the parity traffic, a 4/3 data-rate gain. <span class="tag t-PROVEN">PROVEN</span></p></div>
+            </div>
+            <div class="lab" id="quad-lab">
+                <div class="lab-title">Erase and rebuild: the triple quad</div>
+                <p style="margin-top:0;font-size:0.92rem;color:#cbd5e1">Three groups of four whole numbers, each with its known total (the parity). Click cells to erase them. A group rebuilds one missing member exactly; it cannot rebuild two.</p>
+                <div class="table-wrap" style="margin:0.4rem 0"><table class="quad">
+                    <thead><tr><th>group</th><th>1</th><th>2</th><th>3</th><th>fourth</th><th>total</th><th>status</th></tr></thead>
+                    <tbody id="qd-rows"></tbody>
+                </table></div>
+                <div class="lab-row"><button class="chip" id="qd-reset" type="button">Restore all</button><button class="chip" id="qd-three" type="button">Lose one per group</button><button class="chip" id="qd-two" type="button">Lose two in one group</button></div>
+                <div class="out" id="qd-out"></div>
+            </div>
+            <h3>What the hierarchy buys, and what it does not</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Configuration (monograph Table 9)</th><th class="num">Data bits</th><th class="num">Parity bits</th><th>Losses survived</th></tr></thead>
+                <tbody>
+                    <tr><td>12 engines, parity sharing two phases</td><td class="num">576</td><td class="num">192</td><td>one per group</td></tr>
+                    <tr><td>12 engines, parity in the third phase</td><td class="num">576 per two data phases (&times;4/3 rate)</td><td class="num">192 in phase 3</td><td>one per group</td></tr>
+                    <tr><td>13 engines</td><td class="num">576</td><td class="num">256</td><td>one per group, or a data engine with its own fourth</td></tr>
+                    <tr><td>Third phase used for data (time slots only)</td><td class="num">864</td><td class="num">192</td><td>one per group</td></tr>
+                </tbody>
+            </table></div>
+            <p>No arrangement stores more than the bits written (pigeonhole). The hierarchy adds erasure tolerance and phase throughput, not capacity. The same is true in the galaxy: the residual adds a check, not information.</p>
+            <div class="callout note">
+                <div class="label">Counts that match, and nothing more</div>
+                <p>12 &times; 6 = 72 tier slots match the 72 middle-gear frames of Lemma 12, and 12 &times; W<sub>&Sigma;</sub> = 720 matches the outer frames <span class="tag t-CORRESPONDENCE">CORRESPONDENCE</span>. The twelve streams of the galaxy and the twelve cuboctahedron vectors are likewise equal counts. The structure that <em>is</em> shared is the parity: each group of four closes.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 11 -->
+        <section class="chapter" id="four">
+            <div class="chapter-num">CHAPTER 11 &middot; MONOGRAPH §7.6–§7.7, THEOREMS 7.18–7.20</div>
+            <h2>The four-structure system</h2>
+            <p class="chapter-intro">The monograph has a second "three plus an emergent fourth": an input sandwiched between two balancers, and the structure that closes the sandwich. The galaxy uses it as a frame-change check.</p>
+            <p><strong>Definition (§7.6).</strong> Let \(A\) be a twelve-engine structure with holonomies \(A_1, \dots, A_{12}\), and \(\bar A\) its dynamical inverse, \(\bar A_j = A_j^{-1}\). A third structure \(I\) carries the input. The <em>balancers</em> \(A\) and \(\bar A\) sit on either side of the input, and the <em>emergent structure</em> \(E\) is fixed by the slot-wise closure</p>
+            $$A_j\, I_j\, A_j^{-1}\, E_j = 1, \qquad j = 1, \dots, 12.$$
+            <figure><svg id="sandwich-svg" viewBox="0 0 760 170" role="img" aria-label="The four-structure sandwich A I A-bar E"></svg>
+                <figcaption>The sandwich: balancer A, input I, balancer &Abar; = A<sup>&minus;1</sup>, and the emergent structure E that closes it.</figcaption></figure>
+            <p><strong>Theorem 7.18.</strong> \(E_j = A\,I_j^{-1}A^{-1}\), so \(\mathrm{Re}(E_j) = \mathrm{Re}(I_j)\) <span class="tag t-PROVEN">PROVEN</span>. Conjugation keeps the real part of a unit quaternion, which fixes the rotation angle; only the axes turn. Had the balancers been placed next to each other (\(I\,A\,A^{-1}\,E = 1\)), they would cancel and give \(E = I^{-1}\).</p>
+            <p><strong>Theorem 7.19.</strong> A product in which every factor also appears inverted equals 1 for all values only if it reduces to the empty word by cancelling adjacent inverse pairs: forward and inverse streams cancel only when nested. <strong>Proposition 7.20.</strong> If \(I_1I_2I_3I_4 = 1\) in a group of four, then \(E_4E_3E_2E_1 = 1\): the emergent structure closes its own groups, read in reverse <span class="tag t-PROVEN">PROVEN</span>.</p>
+            <div class="lab" id="sand-lab">
+                <div class="lab-title">Conjugation keeps the angle</div>
+                <div class="lab-row"><button class="chip" id="sd-new" type="button">New random I and A</button></div>
+                <div class="out" id="sd-out"></div>
+            </div>
+            <h3>The 64 streams and the four projection checks (§7.7)</h3>
+            <p>Each of the four structures I, A, &Abar;, E logs 12 engine streams plus 4 projection streams, the components \(w, x, y, z\) of its net holonomy: \(4 \times 16 = 64\) streams. The projections give checks that exist only at this scale, each <span class="tag t-PROVEN">PROVEN</span>:</p>
+            <ul>
+                <li><strong>Norm check:</strong> \(w^2 + x^2 + y^2 + z^2 = 1\) for every structure.</li>
+                <li><strong>Equilibrium monitor:</strong> the \(w\) stream of E equals the \(w\) stream of I (Theorem 7.18 with a global frame).</li>
+                <li><strong>Balancer check:</strong> the net of A times the net of &Abar; read in reverse is exactly 1.</li>
+                <li><strong>Collapse check:</strong> the disagreement \(D\) of §7.5 travels in the codex sub-region field.</li>
+            </ul>
+            <p>The simulation runs the first three on its frame legs (Panel D, row §7.7). The collapse check belongs to the ghost tetrahedra of §7.5, which the galaxy does not use.</p>
+        </section>
+
+        <!-- ================================================================ 12 -->
+        <section class="chapter" id="galaxy">
+            <div class="chapter-num">CHAPTER 12 &middot; SPEC §4.1–§4.2, §4.6</div>
+            <h2>Three systems around Sgr A*</h2>
+            <p class="chapter-intro">Now the engine meets the galaxy. Each of the three mass systems is given the shape of one engine: five tiers and six channels.</p>
+            <figure><svg id="galaxy-svg" viewBox="0 0 760 260" role="img" aria-label="The three systems on a logarithmic radius axis"></svg>
+                <figcaption>Radius from Sgr A* on a log scale, from the Schwarzschild radius r<sub>s</sub> to 100&nbsp;kpc. Each system's five tiers are its ticks. Markers show the seven pulsars at their projected radii and the Sun at R<sub>0</sub> = 8275&nbsp;pc.</figcaption></figure>
+            <h3>Tiers become logarithmic shells <span class="tag t-DEFINITION">DEFINITION</span></h3>
+            <p>A system covering radii \([r_{\text{in}}, r_{\text{out}}]\) places tier \(n\) at</p>
+            $$r_n = r_{\text{in}}\left(\frac{r_{\text{out}}}{r_{\text{in}}}\right)^{(R_n - R_0)/(R_4 - R_0)}, \qquad \frac{R_n - R_0}{R_4 - R_0} \in \left\{0, \tfrac17, \tfrac{5}{14}, \tfrac{9}{14}, 1\right\}.$$
+            <p>The exponent is the engine's own tier spacing, \((R_n - 15)/140\). The engine's radii span only a factor of 31/3, whereas the physical systems span factors of 100 to \(5 \times 10^6\), so a linear map is impossible. The log map keeps the relative spacing, is exact at both ends, and is strictly increasing. Because it is increasing, it carries Lemma 10's disjoint shells to disjoint radial shells inside every system <span class="tag t-PROVEN">PROVEN</span>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>System</th><th class="num">T0</th><th class="num">T1</th><th class="num">T2</th><th class="num">T3</th><th class="num">T4</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="dot" style="background:var(--sys1)"></span>I · Sgr A* domain</td><td class="num">r<sub>s</sub> = 4.1&times;10<sup>&minus;7</sup> pc</td><td class="num">3.7&times;10<sup>&minus;6</sup> pc (0.77 AU)</td><td class="num">1.0&times;10<sup>&minus;4</sup> pc (21 AU)</td><td class="num">8.2&times;10<sup>&minus;3</sup> pc (S-stars)</td><td class="num">2 pc</td></tr>
+                    <tr><td><span class="dot" style="background:var(--sys2)"></span>II · Nuclear region</td><td class="num">2 pc</td><td class="num">3.86 pc</td><td class="num">10.4 pc</td><td class="num">38.6 pc</td><td class="num">200 pc</td></tr>
+                    <tr><td><span class="dot" style="background:var(--sys3)"></span>III · Galaxy</td><td class="num">200 pc</td><td class="num">486 pc</td><td class="num">1.84 kpc</td><td class="num">10.9 kpc</td><td class="num">100 kpc</td></tr>
+                </tbody>
+            </table></div>
+            <p>These are the reference script's H4 values <span class="tag t-COMPUTED">COMPUTED</span>. Panel A draws them as tori on a log scale (display radius \(6 + 20\log_{10}(r/r_s)\)), with tube thickness proportional to \(\rho_n = 2n+4\).</p>
+            <div class="callout note">
+                <div class="label">Where the galaxy departs from a stack of engines</div>
+                <p>Systems I and II share the radius 2&nbsp;pc (I's T4 is II's T0), and II and III share 200&nbsp;pc. In the monograph's stack every engine has its own cell and engines never touch (Theorem 7.6). The three galactic systems are not engines in a stack. They are three radial ranges of one mass model, so their boundary tiers coincide by design <span class="tag t-DEFINITION">DEFINITION</span>. Lemma 10 holds inside each system; Theorem 7.6 does not apply between them. Problem G7 asks how much the results depend on where the boundaries are put.</p>
+            </div>
+            <h3>The seven pulsars are data sources, not channels</h3>
+            <p>By projected radius, the magnetar J1745&minus;2900 (0.10&nbsp;pc) sits in System I, and the other six (27–77&nbsp;pc) in System II. None is in System III <span class="tag t-COMPUTED">COMPUTED</span>. Each pulsar's signal crosses all three systems on its way to Earth, so a pulsar is a line of sight through the hierarchy, not a part of one system.</p>
+            <p>Seven is prime and coprime to 6, 30 and 60, so seven pulsars cannot be divided evenly over six channels, thirty nodes or a sixty-pulse register <span class="tag t-PROVEN">PROVEN</span>. Any one-to-one assignment would be arbitrary, and the design makes none. The <strong>Sightline</strong> menu picks which pulsar's line of sight fills the channels.</p>
+        </section>
+
+        <!-- ================================================================ 13 -->
+        <section class="chapter" id="residual">
+            <div class="chapter-num">CHAPTER 13 &middot; SPEC §4.3–§4.4, PROPOSITION G1</div>
+            <h2>The emergent fourth</h2>
+            <p class="chapter-intro">This chapter is where the galaxy's triple quad appears: three classes of measurement, each a group of four.</p>
+            <p><strong>Proposition G1 (additive residual parity)</strong> <span class="tag t-PROVEN">PROVEN</span>. Let \(Y\) be a weak-field observable (a Shapiro delay change, a deflection, an astrometric shift, or the acceleration term in a pulsar's period derivative), and \(Y_s\) its value computed from system \(s\)'s mass model. Define \(Y_R := Y - Y_I - Y_{II} - Y_{III}\). Then:</p>
+            <ol>
+                <li>\(Y = Y_I + Y_{II} + Y_{III} + Y_R\) exactly, in rational arithmetic.</li>
+                <li>Any one of the four is recovered exactly from \(Y\) and the other three.</li>
+                <li>Two unknowns with one total are not recoverable: a whole line of pairs fits (script check H1 finds 50 distinct consistent pairs).</li>
+            </ol>
+            <p>Superposition is what makes the parity physical: at every known pulsar the Sgr&nbsp;A* field has \(GM/c^2r \le 2.1 \times 10^{-6}\), so second-order terms are a fraction of about \(10^{-6}\) of the first-order ones <span class="tag t-COMPUTED">COMPUTED</span>. Only inside a few \(r_s\) does superposition fail (Problem G4).</p>
+            <h3>The twelve-element arrangement</h3>
+            <p>G1 applies to each observable class separately. Writing \(c\) for astrometry, timing or velocity, each class forms a group of four:</p>
+            $$\{\,Y_I^{(c)},\ Y_{II}^{(c)},\ Y_{III}^{(c)},\ Y_R^{(c)}\,\}, \qquad Y^{(c)} = Y_I^{(c)} + Y_{II}^{(c)} + Y_{III}^{(c)} + Y_R^{(c)}.$$
+            <p>Three classes, each with three data elements and one implied fourth, give twelve elements. This is the twelve-engine hierarchy of Proposition 7.11 in additive form: the arrangement is a <span class="tag t-DEFINITION">DEFINITION</span> and the parity is <span class="tag t-PROVEN">PROVEN</span>, with the same erasure behaviour. Panel D's triple-quad grid lets you erase cells of the live arrangement and watch them rebuilt.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Monograph object</th><th>Role in the galaxy</th><th>Verdict</th></tr></thead>
+                <tbody>
+                    <tr><td>Implied fourth \(H_4 = (H_1H_2H_3)^{-1}\) (Lemma 7)</td><td>Residual \(Y_R\) (additive form)</td><td>Exact (G1) in the weak field</td></tr>
+                    <tr><td>Open vs cyclic holonomy (Lemma 12)</td><td>Independent vs computed fourth frame leg</td><td>Exact (G2)</td></tr>
+                    <tr><td>Twelve engines = 3 groups &times; (3 + 1) (§7.4)</td><td>3 classes &times; (3 systems + residual): the triple quad</td><td>Exact arrangement; parity exact</td></tr>
+                    <tr><td>Thirteenth engine \(F_\star\)</td><td>Cross-class consistency of one unmodelled mass \(\rho_R\)</td><td>Partial: a statistical joint fit, not an identity (G5)</td></tr>
+                    <tr><td>Four-structure I, A, &Abar;, E (§7.6)</td><td>Frame change ICRS &harr; galactocentric</td><td>Exact invariance check (Theorem 7.18)</td></tr>
+                    <tr><td>Tiers T0–T4</td><td>Logarithmic radial shells</td><td>Definition; order-preserving map</td></tr>
+                    <tr><td>Channels C<sub>3</sub> &times; C<sub>2</sub></td><td>(observable class) &times; (model, data)</td><td>Definition; bijection</td></tr>
+                    <tr><td>Third 120° phase (Proposition 7.14)</td><td>Residual traffic and the reference clock</td><td>Definition (§4.7)</td></tr>
+                    <tr><td>Tier rotations U<sub>n</sub>, spinor h</td><td>No physical counterpart; display of nested frames only</td><td>No map</td></tr>
+                    <tr><td>60-pulse register, caesium closure (Proposition 11.4)</td><td>Scheduling of packets only</td><td>Does not apply to pulsars</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout deep">
+                <div class="label">The thirteenth element</div>
+                <p>The three residuals \(Y_R^{(c)}\) are three linear views of the same unmodelled mass \(\rho_R\), so they must agree with one \(\rho_R\). That cross-class consistency is the galaxy's counterpart of \(F_\star\). Unlike \(F_\star\) it is a statistical test, not an exact identity, because no single view can be inverted on its own (Problem G5). The page does not claim it as exact.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 14 -->
+        <section class="chapter" id="frames">
+            <div class="chapter-num">CHAPTER 14 &middot; PROPOSITION G2, THEOREM 7.18, LEMMAS 9 AND 13</div>
+            <h2>Frame closure and invariance</h2>
+            <p class="chapter-intro">Every measurement travels through a chain of coordinate frames from the telescope to the pulsar and back. The chain must close, and it is checked exactly.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Leg</th><th>Frame change</th><th>How the page builds it</th></tr></thead>
+                <tbody>
+                    <tr><td>H1</td><td>ICRS &rarr; Galactic</td><td>The Hipparcos rotation matrix, as a quaternion rationalized at 2<sup>&minus;20</sup></td></tr>
+                    <tr><td>H2</td><td>Galactic &rarr; Sgr A* rest frame</td><td>The small turns that put Sgr A* (l = &minus;0.056°, b = &minus;0.046°) at the origin, at 2<sup>&minus;30</sup></td></tr>
+                    <tr><td>H3</td><td>Sgr A* &rarr; pulsar frame</td><td>The pulsar's angular offset on the sky, at 2<sup>&minus;40</sup></td></tr>
+                    <tr><td>H4</td><td>pulsar &rarr; observer (timing astrometry)</td><td>Measured independently: \((H_1H_2H_3)^{-1}\) times a noise rotation &delta; of 0.1&nbsp;mas per unit noise</td></tr>
+                </tbody>
+            </table></div>
+            <p>Every leg is a <strong>rational unit quaternion</strong>, made with the Cayley map of Lemma 9 Part 3:</p>
+            $$\mathcal C_{\text{rat}}(u) = \frac{\big(1 - \|u\|^2,\ 2u\big)}{1 + \|u\|^2}, \qquad N(\mathcal C_{\text{rat}}(u)) = 1 \text{ exactly}.$$
+            <p>A floating-point rotation is turned into \(u = v/(1 + w)\), rounded to \(2^{-k}\), and mapped back. No square roots, no trigonometry, and the norm is exactly 1, which the page re-checks for all four legs.</p>
+            <p><strong>Proposition G2</strong> <span class="tag t-PROVEN">PROVEN</span>. With four independently measured legs, \(H_1H_2H_3H_4 = 1\) when the measurements agree, and an error \(\epsilon \ne 1\) in any one leg gives a product \(\ne 1\). If the fourth leg is computed as \((H_1H_2H_3)^{-1}\), the product is 1 identically. This is Lemma 12's table applied to frames (Chapter 8).</p>
+            <p><strong>Frame invariance (Theorem 7.18)</strong>. With balancer \(A = H_1H_2\) (ICRS to the Sgr&nbsp;A* frame) and input \(I = H_3\), the emergent \(E = AI^{-1}A^{-1}\) closes \(AIA^{-1}E = 1\) and keeps \(\mathrm{Re}(E) = \mathrm{Re}(I)\). In practice every scalar the pipeline computes (quadrances, rotation angles, \(Q_h\), Shapiro delay changes) must be identical in both frames. A mismatch is a frame or units bug, caught before any physics is interpreted.</p>
+            <div class="callout note">
+                <div class="label">Lemma 13: why the chain is kept short</div>
+                <p>Rational unit quaternions multiplied repeatedly grow their denominators without bound (\(((3+4i)/5)^n\) has denominator exactly \(5^n\)). Panel B shows each leg's denominator size (41, 60, 81 and 180 bits on the magnetar's sightline). Long chains would need projective renormalization (Lemma 13 Part 3). The galaxy keeps to a fixed chain of four legs instead, so the bit growth is bounded and the page checks it stays within the sum of the legs.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 15 -->
+        <section class="chapter" id="packets">
+            <div class="chapter-num">CHAPTER 15 &middot; SPEC §4.7, §5.3, LEMMA 15</div>
+            <h2>Packets, phases and the Merkle chain</h2>
+            <p class="chapter-intro">Each update, the twelve cells of the triple quad leave as twelve 64-bit tiles, and the twelve are chained into one 256-bit root.</p>
+            <ol class="steps">
+                <li><strong>Pack.</strong> For class \(c\) and structure \(s\) (I, II, III or R), stream slot \(4c + s\) gets one Form 3 tile with the fields of Chapter 7. The cycle step in bits 63–61 says whether this update is onload, offload or third phase.</li>
+                <li><strong>Leaf.</strong> Leaf \(G_d\) (for \(d = 1, \dots, 12\)) is the 8 bytes of tile \(d - 1\) followed by its exact rational written as text, so the leaf covers the exact value even when binary32 rounds it.</li>
+                <li><strong>Chain (Lemma 15 Part 3).</strong> \(\tau_{12} = H(G_{12})\) and \(\tau_d = H(G_d \,\|\, \tau_{d+1})\) for \(d = 11, \dots, 1\), with \(H\) = SHA-256. The root \(\tau_1\) changes if anything in any leaf changes, unless SHA-256 has a collision <span class="tag t-PROVEN">PROVEN</span>.</li>
+                <li><strong>Log.</strong> Once per epoch the telemetry log records a <code>[B5]</code> line with the step, the phase, how many values binary32 holds exactly, and the root.</li>
+            </ol>
+            <p>Lemma 15 Part 3's proof also says where a change sits. If two states differ but their roots agree, the deepest layer \(d^\ast\) at which their chain values first agree exhibits an explicit SHA-256 collision. In the other direction, a change in leaf \(d\) changes every \(\tau\) from \(\tau_d\) up to the root. Panel D's <strong>Tamper</strong> button changes one leaf's exact value by \(2^{-24}\) and reports what each layer sees. Usually the tile word does not change (binary32 cannot see so small a change), the South Halo never does, and the root always does.</p>
+            <div class="callout plain">
+                <div class="label">Why the 256-bit root and not the tile</div>
+                <p>A 64-bit label for a 12-layer state of \(2^{72}\) possibilities has at least \(2^8 = 256\) preimages (Lemma 15 Part 1), so no 64-bit word can certify the state. Linear checksums such as CRC-32 give no integrity at all, since \(\mathrm{crc}(x \oplus y \oplus z) = \mathrm{crc}(x) \oplus \mathrm{crc}(y) \oplus \mathrm{crc}(z)\). Integrity needs a collision-resistant hash, chained.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 16 -->
+        <section class="chapter" id="physics">
+            <div class="chapter-num">CHAPTER 16 &middot; LAYER A</div>
+            <h2>The physics layer</h2>
+            <p class="chapter-intro">The engine organizes; physics predicts. Layer A is ordinary weak-field general relativity, and every number the page shows comes from <code>verify_galactic_hierarchy.py</code>.</p>
+            <p>For a point lens of mass \(M\) at distance \(D_l\) and a source at \(D_s = D_l + D_{ls}\), the Einstein radius, image positions and magnification are <span class="tag t-ESTABLISHED">ESTABLISHED</span></p>
+            $$\theta_E = \sqrt{\frac{2 r_s D_{ls}}{D_l D_s}}, \qquad \theta_\pm = \tfrac12\left(u \pm \sqrt{u^2 + 4}\right)\theta_E, \qquad \mu = \frac{u^2 + 2}{u\sqrt{u^2 + 4}},$$
+            <p>with \(u = \beta/\theta_E\), the centroid shift \(\theta_E\, u/(u^2 + 2)\), and the Shapiro delay \(\Delta t_S = -(2GM/c^3)\ln(\ldots)\).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Quantity</th><th class="num">Value</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>Sgr A* mass; R<sub>0</sub>; GM</td><td class="num">4.297&times;10<sup>6</sup> M&#9737;; 8275 pc; 5.7027&times;10<sup>26</sup> m³/s²</td><td><span class="tag t-EMPIRICAL">EMPIRICAL</span></td></tr>
+                    <tr><td>Schwarzschild radius r<sub>s</sub></td><td class="num">1.2690&times;10<sup>10</sup> m = 0.0848 AU (10.25 &micro;as)</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Einstein radius, source at infinity</td><td class="num">2.056″</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>&theta;<sub>E</sub> for sources 0.01 / 0.1 / 1 / 30 pc behind Sgr A*</td><td class="num">2.261 / 7.149 / 22.605 / 123.596 mas</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Shapiro scale 2GM/c³</td><td class="num">42.33 s</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Sphere of influence GM/&sigma;² (&sigma; = 100 km/s)</td><td class="num">1.85 pc</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Weak-field parameter GM/c²r at the magnetar (0.097 pc)</td><td class="num">2.12&times;10<sup>&minus;6</sup></td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Astrometric shift &theta;<sub>E</sub>²/&theta; per pulsar (depth = projected offset)</td><td class="num">20.31–20.50 &micro;as &asymp; 2r<sub>s</sub>/R<sub>0</sub> = 20.50 &micro;as</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Magnetar: Doppler v/c over Shapiro-rate bound</td><td class="num">7.87&times;10<sup>&minus;4</sup> / 6.17&times;10<sup>&minus;9</sup> = 1.3&times;10<sup>5</sup></td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Magnetar's scattered image vs the lensing shift</td><td class="num">17&times;9 mas vs 20.5 &micro;as (&asymp; 1/829)</td><td><span class="tag t-EMPIRICAL">EMPIRICAL</span></td></tr>
+                    <tr><td>Gaia solar acceleration &rarr; aberration drift</td><td class="num">2.32&times;10<sup>&minus;10</sup> m/s² &rarr; 5.04 &micro;as/yr</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                    <tr><td>Einstein-crossing time, 0.1 pc source at 236 km/s</td><td class="num">1.19 yr</td><td><span class="tag t-COMPUTED">COMPUTED</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>Three facts shape the design. The Sgr A* field is weak at every known pulsar, so superposition, and with it G1, holds. The magnetar's timing is dominated by its own motion, not by Shapiro delay: the Doppler term is \(1.3 \times 10^5\) times the Shapiro-rate bound. And plasma, not gravity, dominates radio propagation near the Galactic Centre, so every timing residual must be modelled for plasma first (Problem G2).</p>
+            <p><strong>The simulated channels.</strong> The "model" side of each channel is a forward prediction:</p>
+            <ul>
+                <li>System I: Sgr A* as a point mass.</li>
+                <li>System II: the nuclear star cluster as a Hernquist sphere of \(2.5 \times 10^7\) M&#9737; with a 4.2&nbsp;pc half-mass radius <span class="tag t-HEURISTIC">HEURISTIC</span>.</li>
+                <li>System III: the observer terms (Gaia drift, Gaia acceleration and solar reflex).</li>
+            </ul>
+            <p>The "data" side is the model plus Gaussian noise plus any injected signal. Each value is rationalized as \(\mathrm{round}(x \cdot 2^{24})/2^{24}\) before it enters Layer B (spec step A3) <span class="tag t-DEFINITION">DEFINITION</span>. Problem G6 asks for a proven bound on what that rounding can do to the residual.</p>
+        </section>
+
+        <!-- ================================================================ 17 -->
+        <section class="chapter" id="panels">
+            <div class="chapter-num">CHAPTER 17</div>
+            <h2>Panels and controls</h2>
+            <p class="chapter-intro">The simulation has four panels, a telemetry log and one control bar. Panel A sits on the left; B and C stack beside it; D runs full width below.</p>
+            <div class="grid-2">
+                <div class="card"><h4>A · Nested torus view</h4><p>The three systems as five-tier tori at their log radii, each tier wound with its six channel helices (phase = class, solid or dashed = model or data). Sgr A* glows at the centre; the seven pulsars pulse at their real periods (the magnetar red and unsteady); rays run to the Sun. The pale shell is the emergent fourth; it pulses when any residual is nonzero. The gold dot is the active node. Drag to orbit, scroll or pinch to zoom, hover a pulsar, click a system label to show it alone.</p></div>
+                <div class="card"><h4>B · Engine dashboard</h4><p>Each system's 3&times;2 channel table; G1 residual parity with the exact fraction \(Y_R\); a residual history in units of &sigma;; G2 frame closure in both conventions; Theorem 7.18; engine v10 node telemetry; and the twelve §6.1 packets. Click a packet to decode it. Hover a channel cell to light up its helix in Panel A.</p></div>
+                <div class="card"><h4>C · Lensing and timing</h4><p>Einstein rings behind Sgr A*; the magnetar's 17&times;9&nbsp;mas scattered image against the 20&nbsp;&micro;as shift; its timing budget bars; and each pulsar's astrometric shift. During a lensing event the source track and the two images appear on the rings.</p></div>
+                <div class="card"><h4>D · Fifteen-Lemma compliance</h4><p>The cycle strip with handshake windows; the live triple quad with erasure; the Merkle root, South Halo and tamper test; and a row per lemma saying how the page uses it and whether the live check passes.</p></div>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td>Pause / Play</td><td>Stops or runs the clock. The physics advances in fixed 1/60&nbsp;s steps and the drawing interpolates between them.</td></tr>
+                    <tr><td>Speed</td><td>0.1&times; to 10&times;, on a log slider. At 1&times; one second advances half an epoch.</td></tr>
+                    <tr><td>Log radii</td><td>Log or linear radius in Panel A. Linear is honest but leaves Systems I and II as a dot.</td></tr>
+                    <tr><td>Rays</td><td>Shows the sight lines from each pulsar to the Sun.</td></tr>
+                    <tr><td>Lemma 4 frames</td><td>On: tier frames Rot<sub>x</sub>(&pi;/2), Rot<sub>y</sub>(&pi;/2) alternating (Lemma 4). Off: the engine v10 frames.</td></tr>
+                    <tr><td>Clutch &eta;</td><td>The v10 differential clutch: below 1 the tiers slip and spin slower. Display only.</td></tr>
+                    <tr><td>Noise</td><td>0–10&sigma; of Gaussian noise on the data side, and on the fourth frame leg. Residuals move to amber (within tolerance) or red.</td></tr>
+                    <tr><td>Inject signal</td><td>None; a Shapiro event (a mass passing the magnetar's line of sight); a lensing event (the same, with the astrometric shift, about 1.2&nbsp;yr long); or a scalar-field term (the §7.1 Yukawa test, &alpha; = 0.01, &lambda; = 1&nbsp;pc) <span class="tag t-CONJECTURAL">CONJECTURAL</span>.</td></tr>
+                    <tr><td>Inject error</td><td>Puts a rotation error into one frame leg. The open convention turns red; the cyclic convention stays green, because it tests nothing.</td></tr>
+                    <tr><td>Epoch &#9664; &#9654;</td><td>Steps the clock one epoch (0.25&nbsp;yr) back or forward.</td></tr>
+                    <tr><td>Sightline</td><td>Chooses which pulsar's line of sight feeds the channels and the frame legs.</td></tr>
+                    <tr><td>Run Verification</td><td>Runs the line-by-line port of the reference script (including Python's Mersenne Twister, seed 20261026) and compares all 66 lines with the captured output.</td></tr>
+                    <tr><td>Light / Dark</td><td>Colour theme; the page follows your system setting by default.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <!-- ================================================================ 18 -->
+        <section class="chapter" id="experiments">
+            <div class="chapter-num">CHAPTER 18</div>
+            <h2>Experiments to try</h2>
+            <p class="chapter-intro">Each experiment takes under a minute and shows one lemma or proposition at work.</p>
+            <ol class="steps">
+                <li><strong>A clean closure.</strong> With noise at 0 and no signal, every residual \(Y_R\) is exactly 0, the parity identity passes, and the open frame closure is exact. Everything the three models predict is in the data, and nothing else.</li>
+                <li><strong>Open versus cyclic (Lemma 12).</strong> Press <em>Inject error</em>. The open convention reports FAIL and an angle; the cyclic convention still says "trivially PASS". Panel D's Lemma 12 row stays green, because it checks that the open test <em>caught</em> the error.</li>
+                <li><strong>A real signal in the residual (G1).</strong> Choose <em>Lensing event</em>. As the source crosses the magnetar's line of sight, the astrometry and timing residuals jump to FAIL, but the parity identity keeps passing. The bookkeeping is exact; the residual <em>is</em> the signal.</li>
+                <li><strong>Noise is not a signal.</strong> Set noise to 3&sigma;. Residuals become amber (within 3&sigma;&middot;&radic;3) rather than red.</li>
+                <li><strong>Erasure (Proposition 7.11).</strong> In Panel D, click one cell in each row of the triple quad. All three come back exactly. Then click a second cell in one row: that group is lost.</li>
+                <li><strong>Integrity (Lemma 15).</strong> Press <em>Tamper with one leaf</em> a few times. The root always changes; the South Halo never does; the tile word usually doesn't either.</li>
+                <li><strong>Decode a packet (§6.1).</strong> Click packets in Panel B. Watch the step and phase change with the clock while the slot, structure and Form stay fixed.</li>
+                <li><strong>Frames (Lemma 4).</strong> Toggle <em>Lemma 4 frames</em> and compare the tier orientations with engine v10's.</li>
+                <li><strong>A hypothesis test (§7.1).</strong> Choose <em>Scalar field</em>. A Yukawa term changes the timing and velocity of Systems I and II; it shows up only in the residual, which is where any new physics would have to appear.</li>
+                <li><strong>Reproduce the script.</strong> Press <em>Run Verification</em>: 66 of 66 lines match the Python reference, and 19 of 19 checks pass.</li>
+            </ol>
+        </section>
+
+        <!-- ================================================================ 19 -->
+        <section class="chapter" id="compliance">
+            <div class="chapter-num">CHAPTER 19</div>
+            <h2>Lemma-by-lemma compliance</h2>
+            <p class="chapter-intro">How the simulation stands against each of the fifteen lemmas and the §6–§7 results it relies on. Panel D runs the same checks live.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Lemma</th><th>Use in the simulation</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>1–3</td><td>Not used. No triangle-centre construction appears.</td><td>not used</td></tr>
+                    <tr><td>4</td><td>Tier laws and conservation (checked exactly); Lemma 4 tier frames in Panel A, with \(\mathbf U_{\text{even}}^3 = I\) and \(h^6 = 1\) checked; the 30-node wheel and its units in tile bits 60–58.</td><td>applied, checked</td></tr>
+                    <tr><td>5</td><td>Not used. There is no voxel cube or Hurwitz box in the galaxy.</td><td>not used</td></tr>
+                    <tr><td>6</td><td>Not used. The systems exchange no fluid profiles.</td><td>not used</td></tr>
+                    <tr><td>7</td><td>Central tier T2 (checked); the implied fourth as parity element in additive form (G1, checked live); \(H_4 = (H_1H_2H_3)^{-1}\) used only as the vacuous cyclic leg.</td><td>applied, checked</td></tr>
+                    <tr><td>8</td><td>The 8-step cycle and its gcd-reduced spinors; handshake windows at k = 2 and 6 schedule onload and offload; step in tile bits 63–61.</td><td>applied, checked</td></tr>
+                    <tr><td>9</td><td>Part 3: every frame leg is a Cayley-map rational unit quaternion (norm checked). Parts 1, 2 and 4 are not used.</td><td>applied, checked</td></tr>
+                    <tr><td>10</td><td>Shell disjointness and gaps checked exactly; the log tier map preserves them inside each system. Systems share boundary radii by design, so Theorem 7.6 does not apply between them.</td><td>applied, checked; departure stated</td></tr>
+                    <tr><td>11</td><td>Integer windings; Proposition 11.4 windows for the tier carriers (every 5 pulses) and caesium (\(\equiv 30 \bmod 60\)) checked. The register schedules packets only.</td><td>applied, checked</td></tr>
+                    <tr><td>12</td><td>Open convention for frame closure (live); cyclic shown as vacuous; middle-gear blocks (8, 7, 7, 7, 7, 8, 7, 7, 7, 7) checked; outerFrameN from v10.</td><td>applied, checked</td></tr>
+                    <tr><td>13</td><td>Denominator growth shown per leg; chain kept to four legs instead of renormalizing; bits bounded (checked).</td><td>applied, checked</td></tr>
+                    <tr><td>14</td><td>Not used. No prime sampling.</td><td>not used</td></tr>
+                    <tr><td>15</td><td>Recursive SHA-256 Merkle chain over the 12 streams (Part 3); South Halo labelled as a pre-filter only (Part 2); tamper test.</td><td>applied, checked</td></tr>
+                    <tr><td>§6.1</td><td>Tile fixed fields per Table 4; Form 3 per Table 5, with a mark on values binary32 cannot hold exactly. Packets decode and re-encode bit for bit.</td><td>applied, checked</td></tr>
+                    <tr><td>§7.4, 7.11</td><td>Triple quad of 3 classes &times; (I, II, III, R), with live erasure.</td><td>applied, checked</td></tr>
+                    <tr><td>§7.6, 7.18</td><td>Four-structure frame change with Re(E) = Re(I) and closure, live.</td><td>applied, checked</td></tr>
+                    <tr><td>§7.7</td><td>Norm check on the closure product and the balancer check A&middot;A<sup>&minus;1</sup> = 1, live.</td><td>applied, checked</td></tr>
+                </tbody>
+            </table></div>
+            <h3>What changed in this revision</h3>
+            <ul>
+                <li><strong>Tile layout (§6.1).</strong> Bits 63–61 used to hold a three-phase counter; they now hold the Lemma 8 step k &minus; 1, as Table 4 requires. The wheel unit, gate byte (component and slice counter) and step-multiplexed index were zero and are now filled per Tables 4 and 5. Values binary32 cannot hold exactly are now marked.</li>
+                <li><strong>Lemma 15.</strong> The recursive Merkle chain, the South Halo readout and the tamper test are new, and the log gains a <code>[B5]</code> line per epoch, as the specification's pipeline step B5 asks.</li>
+                <li><strong>Lemma 4.</strong> Panel A now draws the Lemma 4 tier frames by default; the engine v10 frames are one click away.</li>
+                <li><strong>Lemma 8 and Proposition 7.14.</strong> The cycle strip shows the step, its spinor and the onload, offload or third phase.</li>
+                <li><strong>Proposition 7.11.</strong> The live triple quad with erasure and exact recovery.</li>
+                <li><strong>Panel D</strong> collects all of the above with a row per lemma. None of this touches the reference-script port, which still matches all 66 lines.</li>
+            </ul>
+        </section>
+
+        <!-- ================================================================ 20 -->
+        <section class="chapter" id="limits">
+            <div class="chapter-num">CHAPTER 20</div>
+            <h2>Departures and open problems</h2>
+            <p class="chapter-intro">Where the page makes choices of its own, and what nobody knows yet.</p>
+            <h3>Choices made by the page</h3>
+            <ul>
+                <li><strong>Pulsar sky positions</strong> are illustrative (a golden-angle spread). Only the projected distances come from the catalogue <span class="tag t-DEFINITION">DEFINITION</span>.</li>
+                <li><strong>Line-of-sight depths</strong> are unknown (Problem G1) and are set equal to the projected offsets, as in spec §6.2.</li>
+                <li><strong>Events</strong> (Shapiro, lensing) are applied to the magnetar's line of sight, at 0.1&nbsp;pc depth with impact parameter 0.3&nbsp;&theta;<sub>E</sub>.</li>
+                <li><strong>Wheel sector and multiplexed index.</strong> The galaxy design does not say which wheel unit or step index a stream should carry. The page uses the unit sector of the active node and the Table 4 meanings listed in Chapter 7 <span class="tag t-DEFINITION">DEFINITION</span>.</li>
+                <li><strong>Merkle cadence.</strong> The chain is recomputed every update and logged once per epoch. The specification asks for one root per epoch.</li>
+                <li><strong>Engine v10 parts</strong> that no lemma governs (the clutch, tension and torsion, the TQF <code>qScale</code>) are kept as the engine's own and labelled as such.</li>
+                <li><strong>Shared boundaries.</strong> Systems I/II and II/III share a tier radius (Chapter 12), so the monograph's separation theorem for stacked engines does not carry over.</li>
+            </ul>
+            <h3>Open problems (spec §9)</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Problem</th><th>Question</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="tag t-OPEN">G1</span></td><td>Line-of-sight distances of the seven pulsars: in front of or behind Sgr A*, and how far.</td></tr>
+                    <tr><td><span class="tag t-OPEN">G2</span></td><td>A patchy, multi-screen plasma model; the magnetar's scattering is far below older predictions.</td></tr>
+                    <tr><td><span class="tag t-OPEN">G3</span></td><td>Discovery of a pulsar in a tight orbit, the precondition for spin and quadrupole tests (SKA era).</td></tr>
+                    <tr><td><span class="tag t-OPEN">G4</span></td><td>The nonlinear inner System I: inside about 10&nbsp;r<sub>s</sub>, G1 must be redefined against a Kerr ray trace.</td></tr>
+                    <tr><td><span class="tag t-OPEN">G5</span></td><td>Cross-class consistency, the thirteenth element: a joint fit of one &rho;<sub>R</sub> to three residual views.</td></tr>
+                    <tr><td><span class="tag t-OPEN">G6</span></td><td>A proven bound on the residual induced by rounding Layer A into Layer B at 2<sup>&minus;k</sup>.</td></tr>
+                    <tr><td><span class="tag t-OPEN">G7</span></td><td>Sensitivity to the system boundaries at 2&nbsp;pc and 200&nbsp;pc.</td></tr>
+                    <tr><td><span class="tag t-OPEN">G8</span></td><td>A scalar-field term, if one is proposed: field, source, coupling and range stated, then the §7.1 test run.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <!-- ================================================================ 21 -->
+        <section class="chapter" id="glossary">
+            <div class="chapter-num">CHAPTER 21</div>
+            <h2>Glossary</h2>
+            <dl class="gloss">
+                <dt>Cubit \(\mathcal C_0\)</dt><dd>The engine's unit of length, \(\lambda/16\) at the calibration frequency; about 53.7&nbsp;cm at 40&nbsp;Hz in room air.</dd>
+                <dt>Tier T<sub>n</sub></dt><dd>One of five nested tori with major radius \(R_n = 5n^2+15n+15\), tube radius \(2n+4\) and \(16-2n\) windings (Lemma 4).</dd>
+                <dt>Shell</dt><dd>The spherical shell \([R_n - \rho_n, R_n + \rho_n]\) that contains tier n in every orientation (Lemma 10).</dd>
+                <dt>Channel</dt><dd>One of six labels \(k \bmod 6 \leftrightarrow (k \bmod 3, k \bmod 2)\): in the galaxy, (observable class, model or data).</dd>
+                <dt>Holonomy</dt><dd>The net rotation of a chain of frames, as a unit quaternion. Under the open convention it is a genuine closure test.</dd>
+                <dt>Implied fourth</dt><dd>The element fixed by three others in a group that must close: \(H_4 = (H_1H_2H_3)^{-1}\), or additively \(Y_R = Y - Y_I - Y_{II} - Y_{III}\).</dd>
+                <dt>Emergent fourth (R)</dt><dd>The galaxy's residual: what the three mass models leave unexplained.</dd>
+                <dt>Triple quad</dt><dd>Three groups of four: the twelve-engine hierarchy of §7.4, and in the galaxy the three observable classes &times; (I, II, III, R).</dd>
+                <dt>Handshake window</dt><dd>Steps k = 2 (onload) and k = 6 (offload) of the 8-step cycle, where engines can exchange data (Theorem 7.5).</dd>
+                <dt>Balancer</dt><dd>In the four-structure system, the structures A and &Abar; = A<sup>&minus;1</sup> that sandwich the input I.</dd>
+                <dt>Einstein Tile</dt><dd>The 64-bit packet of §6.1, with fixed fields and a 4-bit Form ID selecting how the rest is read.</dd>
+                <dt>South Halo</dt><dd>The tile's top byte; a cache pre-filter, not an integrity check (Lemma 15 Part 2).</dd>
+                <dt>Merkle root</dt><dd>\(\tau_1\) of the chain \(\tau_d = H(G_d \| \tau_{d+1})\): the integrity certificate for all twelve streams (Lemma 15 Part 3).</dd>
+                <dt>Layer A / Layer B</dt><dd>Floating-point physics / exact rational bookkeeping.</dd>
+                <dt>Open / cyclic convention</dt><dd>Fourth element measured independently (a test) / computed from the other three (no test) (Lemma 12).</dd>
+            </dl>
+        </section>
+    </main>
+</div>
+
+<footer>
+    <p><a href="galactic_lensing_hierarchy.html">Galactic Lensing Hierarchy</a> &middot; <a href="index.html">Geometric Engine</a> &middot; <a href="manual.html">Manual</a> &middot; <a href="tracer.html">Calculation Tracer</a> &middot; <a href="numogram.html">Numogram</a> &middot; <a href="../../index.html">Ebayednoob home</a></p>
+    <p>&copy; 2026 BioChain AI &middot; Ebayednoob. Written against <em>The Geometric Engine of Time: The Fifteen Lemmas</em> (October 16, 2026) and the Galactic Lensing Hierarchy design specification (October 26, 2026).</p>
+</footer>
+
+<script>
+// ---------- Math rendering (KaTeX, optional: the page reads fine without it) ----------
+window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+            delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\(", right: "\\)", display: false }],
+            ignoredClasses: ["out", "lab-title"],
+            throwOnError: false
+        });
+    }
+});
+
+// ---------- Table of contents: highlight the chapter in view ----------
+(() => {
+    const links = [...document.querySelectorAll(".toc a")];
+    const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            links.forEach((a) => a.classList.remove("active"));
+            byId.get(e.target.id)?.classList.add("active");
+        });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    document.querySelectorAll("section.chapter").forEach((s) => obs.observe(s));
+    document.querySelectorAll(".toc-mobile a").forEach((a) => a.addEventListener("click", () => a.closest("details").open = false));
+})();
+
+const $ = (s) => document.querySelector(s);
+const SVGNS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent, text) => {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (text !== undefined) n.textContent = text;
+    if (parent) parent.appendChild(n);
+    return n;
+};
+const TIER_COLORS = ["#38bdf8", "#a855f7", "#10b981", "#f59e0b", "#f43f5e"];
+const SYS = [{ c: "#ff7a3d", n: "I" }, { c: "#2dd4bf", n: "II" }, { c: "#8b5cf6", n: "III" }];
+
+// ---------- Exact rationals and quaternions (BigInt) ----------
+const absB = (x) => (x < 0n ? -x : x);
+const gcdB = (a, b) => { a = absB(a); b = absB(b); while (b) [a, b] = [b, a % b]; return a; };
+class Q {
+    constructor(n, d = 1n) { n = BigInt(n); d = BigInt(d); if (d < 0n) { n = -n; d = -d; } const g = gcdB(n, d) || 1n; this.n = n / g; this.d = d / g; }
+    add(o) { return new Q(this.n * o.d + o.n * this.d, this.d * o.d); }
+    sub(o) { return new Q(this.n * o.d - o.n * this.d, this.d * o.d); }
+    mul(o) { return new Q(this.n * o.n, this.d * o.d); }
+    div(o) { return new Q(this.n * o.d, this.d * o.n); }
+    neg() { return new Q(-this.n, this.d); }
+    eq(o) { return this.n === o.n && this.d === o.d; }
+    toString() { return this.d === 1n ? `${this.n}` : `${this.n}/${this.d}`; }
+}
+const Z = new Q(0), ONE = new Q(1);
+const qmul = (a, b) => [
+    a[0].mul(b[0]).sub(a[1].mul(b[1])).sub(a[2].mul(b[2])).sub(a[3].mul(b[3])),
+    a[0].mul(b[1]).add(a[1].mul(b[0])).add(a[2].mul(b[3])).sub(a[3].mul(b[2])),
+    a[0].mul(b[2]).sub(a[1].mul(b[3])).add(a[2].mul(b[0])).add(a[3].mul(b[1])),
+    a[0].mul(b[3]).add(a[1].mul(b[2])).sub(a[2].mul(b[1])).add(a[3].mul(b[0]))];
+const qnorm = (a) => a.reduce((s, x) => s.add(x.mul(x)), Z);
+const qinv = (a) => { const n = qnorm(a); return [a[0].div(n), a[1].neg().div(n), a[2].neg().div(n), a[3].neg().div(n)]; };
+const qprod = (...qs) => qs.reduce(qmul, [ONE, Z, Z, Z]);
+const qeq = (a, b) => a.every((x, i) => x.eq(b[i]));
+const cayley = (u) => { const n2 = u.reduce((s, x) => s.add(x.mul(x)), Z), d = ONE.add(n2); return [ONE.sub(n2).div(d), ...u.map((x) => x.add(x).div(d))]; };
+const qstr = (q) => `(${q.map(String).join(", ")})`;
+const qshort = (q) => `(${q.map((x) => { const s = String(x); return s.length > 14 ? s.slice(0, 12) + "…" : s; }).join(", ")})`;
+
+// ---------- Chapter 2: the five-stage stepper ----------
+(() => {
+    const stages = [
+        ["One engine", "One engine: five tiers in disjoint shells (Lemmas 4, 10), a 30-node wheel with six channels, the 12/10/8 gear clock (Lemma 12), the 8-step cycle (Lemma 8), and one 64-bit Einstein Tile per message (§6.1)."],
+        ["Fourth from three", "Three holonomies fix a fourth: H4 = (H1H2H3)^-1 (Lemma 7 Part 3). It is a parity element: any one of the four is rebuilt from the other three. It tests something only when measured independently (Lemma 12, open convention)."],
+        ["Many engines", "Engines tile space in cubic cells and never touch (Theorems 7.1, 7.6). They exchange only at the handshake windows k = 2 and k = 6, and only what Table 8 lists: moments, an arc, residues, a root hash, a net rotation."],
+        ["Triple quad", "Do it three times: nine data engines and three implied fourths make twelve engines in three groups of four (§7.4). One loss per group is recoverable, two in a group are not (Proposition 7.11)."],
+        ["The galaxy", "Systems I, II, III are three engines; the residual R is the emergent fourth. Three observable classes × (I, II, III, R) = twelve streams: the triple quad, in additive form (G1). Frames close under Lemma 12's open convention (G2); the frame change is the four-structure sandwich (Theorem 7.18)."]
+    ];
+    const tabs = document.querySelector("#stepper .stepper-tabs"), svg = $("#stepper-svg"), txt = $("#stepper-text");
+    const ring = (g, cx, cy, s, col, label) => {
+        for (let n = 0; n < 5; n++) el("circle", { cx, cy, r: s * (6 + n * 5.5), fill: "none", stroke: col || TIER_COLORS[n], "stroke-width": s * (0.7 + n * 0.35), opacity: 0.85 }, g);
+        if (label) el("text", { x: cx, y: cy + s * 36, "text-anchor": "middle", fill: "#cbd5e1", "font-size": 12, "font-family": "Fira Code, monospace" }, g, label);
+    };
+    function draw(i) {
+        svg.innerHTML = "";
+        const g = el("g", {}, svg);
+        if (i === 0) {
+            ring(g, 380, 140, 4.4);
+            el("text", { x: 380, y: 290, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "T0 … T4: R = 15, 35, 65, 105, 155; shells disjoint (Lemma 10)");
+        } else if (i === 1) {
+            const P = [[230, 70], [530, 70], [530, 220], [230, 220]], cols = ["#38bdf8", "#a855f7", "#10b981", "#e879f9"];
+            P.forEach((p, k) => {
+                const q = P[(k + 1) % 4];
+                el("line", { x1: p[0], y1: p[1], x2: q[0], y2: q[1], stroke: cols[k], "stroke-width": 4, "stroke-dasharray": k === 3 ? "8 6" : "none" }, g);
+                el("text", { x: (p[0] + q[0]) / 2 + (k === 1 ? 14 : k === 3 ? -40 : -12), y: (p[1] + q[1]) / 2 + (k === 0 ? -10 : k === 2 ? 22 : 4), fill: cols[k], "font-size": 16, "font-family": "Fira Code, monospace" }, g, `H${k + 1}`);
+            });
+            el("text", { x: 380, y: 150, "text-anchor": "middle", fill: "#f8fafc", "font-size": 15 }, g, "H1 H2 H3 H4 = 1");
+            el("text", { x: 380, y: 172, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "dashed: H4 = (H1H2H3)⁻¹ is fixed by the others");
+            el("text", { x: 380, y: 275, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "measured H4: a test (open) · computed H4: parity only (cyclic)");
+        } else if (i === 2) {
+            for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) {
+                const x = 140 + a * 240, y = 70 + b * 130;
+                el("rect", { x: x - 70, y: y - 55, width: 140, height: 110, fill: "none", stroke: "#334155", "stroke-dasharray": "4 4" }, g);
+                ring(g, x, y, 1.6);
+            }
+            el("text", { x: 380, y: 290, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "one engine per cubic cell; engines never touch; exchange at k = 2 and k = 6");
+        } else if (i === 3) {
+            ["A", "B", "C"].forEach((G, a) => {
+                const x0 = 70 + a * 230;
+                el("text", { x: x0 + 90, y: 40, "text-anchor": "middle", fill: "#f8fafc", "font-size": 14 }, g, `group ${G}`);
+                for (let k = 0; k < 4; k++) {
+                    const x = x0 + (k % 2) * 95 + 42, y = 95 + Math.floor(k / 2) * 95;
+                    ring(g, x, y, 1.25, k === 3 ? "#e879f9" : null);
+                    el("text", { x, y: y + 4, "text-anchor": "middle", fill: k === 3 ? "#e879f9" : "#e2e8f0", "font-size": 11, "font-family": "Fira Code, monospace" }, g, k === 3 ? `F${G}` : `${G}${k + 1}`);
+                }
+            });
+            el("text", { x: 380, y: 290, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "9 data engines + 3 implied fourths F = (G1G2G3)⁻¹: one loss per group survives");
+        } else {
+            const cls = ["astrometry", "timing", "velocity"], cols = ["#ff7a3d", "#2dd4bf", "#8b5cf6", "#ffe6a3"], hdr = ["I", "II", "III", "R"];
+            hdr.forEach((h, s) => el("text", { x: 300 + s * 105, y: 50, "text-anchor": "middle", fill: cols[s], "font-size": 15, "font-family": "Fira Code, monospace" }, g, h));
+            cls.forEach((c, r) => {
+                el("text", { x: 230, y: 100 + r * 65, "text-anchor": "end", fill: "#e2e8f0", "font-size": 13 }, g, c);
+                for (let s = 0; s < 4; s++) el("rect", { x: 258 + s * 105, y: 76 + r * 65, width: 84, height: 40, rx: 8, fill: cols[s], opacity: s === 3 ? 0.35 : 0.25, stroke: cols[s] }, g);
+                el("text", { x: 700, y: 101 + r * 65, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "= Y");
+            });
+            el("text", { x: 380, y: 290, "text-anchor": "middle", fill: "#94a3b8", "font-size": 12 }, g, "each row: Y = Y_I + Y_II + Y_III + Y_R, exact in ℚ");
+        }
+        txt.textContent = `${i + 1}. ${stages[i][1]}`;
+        tabs.querySelectorAll(".chip").forEach((c, k) => { c.classList.toggle("on", k === i); c.setAttribute("aria-selected", k === i); });
+    }
+    stages.forEach((s, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.setAttribute("role", "tab"); b.textContent = `${i + 1} · ${s[0]}`; b.onclick = () => draw(i); tabs.appendChild(b); });
+    draw(0);
+})();
+
+// ---------- Chapter 4: tier table and shells ----------
+(() => {
+    const rows = [0, 1, 2, 3, 4].map((n) => ({ n, R: 5 * n * n + 15 * n + 15, r: 2 * n + 4, W: 16 - 2 * n }));
+    $("#tier-table").innerHTML = rows.map((t, i) => `<tr><td><span class="dot" style="background:${TIER_COLORS[i]}"></span>T${t.n}</td><td class="num">${t.R}</td><td class="num">${t.r}</td><td class="num">${t.W}</td><td class="num">[${t.R - t.r}, ${t.R + t.r}]</td><td class="num">${i < 4 ? rows[i + 1].R - rows[i + 1].r - (t.R + t.r) : "–"}</td><td class="num">${6 * t.W} Hz</td><td>${t.n % 2 ? "Rot<sub>y</sub>(π/2)" : "Rot<sub>x</sub>(π/2)"}</td></tr>`).join("");
+    const svg = $("#shells-svg"), x = (v) => 40 + v * 4.1;
+    el("line", { x1: x(0), y1: 150, x2: x(172), y2: 150, stroke: "#475569" }, svg);
+    for (let v = 0; v <= 170; v += 10) { el("line", { x1: x(v), y1: 150, x2: x(v), y2: 156, stroke: "#475569" }, svg); if (v % 20 === 0) el("text", { x: x(v), y: 172, "text-anchor": "middle", fill: "#64748b", "font-size": 11, "font-family": "Fira Code, monospace" }, svg, v); }
+    el("rect", { x: x(0), y: 110, width: x(2 * Math.sqrt(3)) - x(0), height: 34, fill: "#e879f9", opacity: 0.6 }, svg);
+    el("text", { x: x(0), y: 102, fill: "#e879f9", "font-size": 11 }, svg, "cube 2√3");
+    rows.forEach((t, i) => {
+        el("rect", { x: x(t.R - t.r), y: 110, width: x(t.R + t.r) - x(t.R - t.r), height: 34, rx: 4, fill: TIER_COLORS[i], opacity: 0.75 }, svg);
+        el("line", { x1: x(t.R), y1: 104, x2: x(t.R), y2: 150, stroke: "#f8fafc", "stroke-width": 1.2 }, svg);
+        el("text", { x: x(t.R), y: 96, "text-anchor": "middle", fill: TIER_COLORS[i], "font-size": 12, "font-family": "Fira Code, monospace" }, svg, `T${i}`);
+        el("text", { x: x(t.R), y: 60 + (i % 2) * 16, "text-anchor": "middle", fill: "#94a3b8", "font-size": 10, "font-family": "Fira Code, monospace" }, svg, `[${t.R - t.r},${t.R + t.r}]`);
+        if (i < 4) { const a = t.R + t.r, b = rows[i + 1].R - rows[i + 1].r; el("text", { x: (x(a) + x(b)) / 2, y: 205, "text-anchor": "middle", fill: "#fbbf24", "font-size": 11, "font-family": "Fira Code, monospace" }, svg, `gap ${b - a}`); el("line", { x1: x(a), y1: 190, x2: x(b), y2: 190, stroke: "#fbbf24", "stroke-width": 1 }, svg); }
+    });
+    el("text", { x: (x(2 * Math.sqrt(3)) + x(11)) / 2, y: 230, "text-anchor": "middle", fill: "#e879f9", "font-size": 11, "font-family": "Fira Code, monospace" }, svg, "11 − 2√3 ≈ 7.54");
+    el("text", { x: x(172), y: 172, "text-anchor": "end", fill: "#64748b", "font-size": 11 }, svg, "radius (cubits)");
+})();
+
+// ---------- Chapter 6: the 8-step cycle ----------
+(() => {
+    const TH = ["π/4", "π/2", "3π/4", "π", "5π/4", "3π/2", "7π/4", "2π"];
+    const steps = []; let re = 1n, im = 0n;
+    for (let k = 1; k <= 8; k++) { [re, im] = [re - im, re + im]; const g = gcdB(re, im) || 1n; steps.push({ k, raw: [re, im], red: [re / g, im / g] }); }
+    const fmtG = ([a, b]) => { const imS = b === 0n ? "" : b === 1n ? "i" : b === -1n ? "−i" : `${b}i`.replace("-", "−"); if (a === 0n) return imS || "0"; const reS = `${a}`.replace("-", "−"); return imS ? `${reS}${b > 0n ? "+" : ""}${imS}` : reS; };
+    const svg = $("#cycle-svg"), cx = 180, cy = 150, R = 105;
+    el("circle", { cx, cy, r: R, fill: "none", stroke: "#334155" }, svg);
+    el("line", { x1: cx - R - 14, y1: cy, x2: cx + R + 14, y2: cy, stroke: "#1e293b" }, svg);
+    el("line", { x1: cx, y1: cy - R - 14, x2: cx, y2: cy + R + 14, stroke: "#1e293b" }, svg);
+    const nodes = steps.map((s) => {
+        const a = (s.k * Math.PI) / 4, px = cx + R * Math.cos(a), py = cy - R * Math.sin(a), win = s.k === 2 || s.k === 6;
+        const g = el("g", { style: "cursor:pointer", tabindex: 0, role: "button", "aria-label": `step ${s.k}` }, svg);
+        const c = el("circle", { cx: px, cy: py, r: win ? 17 : 14, fill: win ? "rgba(245,197,66,0.22)" : "#0f172a", stroke: win ? "#f5c542" : "#475569", "stroke-width": 1.5 }, g);
+        el("text", { x: px, y: py + 4, "text-anchor": "middle", fill: "#f8fafc", "font-size": 12, "font-family": "Fira Code, monospace" }, g, s.k);
+        const lx = cx + (R + 34) * Math.cos(a), ly = cy - (R + 34) * Math.sin(a);
+        el("text", { x: lx, y: ly + 4, "text-anchor": "middle", fill: win ? "#f5c542" : "#94a3b8", "font-size": 11, "font-family": "Fira Code, monospace" }, g, fmtG(s.red));
+        const pick = () => {
+            nodes.forEach((n) => n.c.setAttribute("stroke-width", 1.5)); c.setAttribute("stroke-width", 3.5);
+            const ph = s.k === 2 ? "onload window: new data in" : s.k === 6 ? "offload window: model updates out" : "third phase: residual traffic and the reference clock";
+            $("#cycle-out").innerHTML = `<span class="k">step</span> k = ${s.k} · θ = ${TH[s.k - 1]} · |sin θ| = ${win ? 1 : s.k % 4 === 0 ? 0 : "√2/2"}<br><span class="k">spinor</span> (1+i)^${s.k} = ${fmtG(s.raw)} → gcd-reduced ${fmtG(s.red)}<br><span class="k">phase</span> <span class="${win ? "good" : ""}">${ph}</span><br><span class="k">tile bits 63–61</span> ${(s.k - 1).toString(2).padStart(3, "0")}`;
+        };
+        g.addEventListener("click", pick); g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        return { c, pick };
+    });
+    el("text", { x: cx, y: cy + 4, "text-anchor": "middle", fill: "#64748b", "font-size": 11 }, svg, "θₖ = kπ/4");
+    nodes[1].pick();
+})();
+
+// ---------- Chapter 7: tile builder / decoder ----------
+(() => {
+    const FIELDS = [
+        { name: "cycle step", hi: 63, lo: 61, c: "#f5c542" }, { name: "wheel unit", hi: 60, lo: 58, c: "#fb923c" }, { name: "structure", hi: 57, lo: 56, c: "#f43f5e" },
+        { name: "gate byte", hi: 55, lo: 48, c: "#c084fc" }, { name: "step index", hi: 47, lo: 44, c: "#34d399" }, { name: "Form ID", hi: 43, lo: 40, c: "#10b981" },
+        { name: "stream slot", hi: 39, lo: 36, c: "#2dd4bf" }, { name: "scale", hi: 35, lo: 32, c: "#38bdf8" }, { name: "core word", hi: 31, lo: 0, c: "#22d3ee" }];
+    const fieldOf = (b) => FIELDS.find((f) => b <= f.hi && b >= f.lo);
+    const WHEEL = [1, 7, 11, 13, 17, 19, 23, 29], STRUCT = ["System I", "System II", "System III", "residual R"], CLASS = ["astrometry", "timing", "velocity"];
+    const grid = $("#tl-bits");
+    for (let b = 63; b >= 0; b--) { const d = document.createElement("div"); d.className = "b"; d.id = `tb-${b}`; d.textContent = b; d.title = `bit ${b}: ${fieldOf(b).name}`; d.style.borderColor = fieldOf(b).c + "66"; grid.appendChild(d); }
+    $("#tl-legend").innerHTML = FIELDS.map((f) => `<span style="--c:${f.c}">${f.name} ${f.hi}–${f.lo}</span>`).join("");
+    const dv = new DataView(new ArrayBuffer(8));
+    const exactOf = (x) => { dv.setFloat64(0, x); const hi = dv.getUint32(0), lo = dv.getUint32(4), e = (hi >>> 20) & 0x7ff; let m = (BigInt(hi & 0xfffff) << 32n) | BigInt(lo), E; if (e === 0) E = -1074; else { m |= 1n << 52n; E = e - 1075; } if (hi >>> 31) m = -m; return E >= 0 ? new Q(m << BigInt(E)) : new Q(m, 1n << BigInt(-E)); };
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v || 0)));
+    function pack() {
+        const step = clamp($("#tl-step").value, 1, 8), wheel = clamp($("#tl-wheel").value, 0, 7), st = +$("#tl-struct").value, cl = +$("#tl-class").value, slice = clamp($("#tl-slice").value, 0, 63);
+        const val = parseFloat($("#tl-value").value) || 0, k = WHEEL[wheel], slot = 4 * cl + st;
+        const mux = step <= 2 ? k % 9 : step === 3 ? k % 16 : step === 6 ? 0 : slot % 12;
+        dv.setFloat32(0, val); const core = dv.getUint32(0);
+        const w = (BigInt(step - 1) << 61n) | (BigInt(wheel) << 58n) | (BigInt(st) << 56n) | (BigInt(slice) << 48n) | (BigInt(mux) << 44n) | (3n << 40n) | (BigInt(slot) << 36n) | BigInt(core);
+        return w;
+    }
+    function show(w, src) {
+        for (let b = 0; b < 64; b++) { const on = (w >> BigInt(b)) & 1n, d = $(`#tb-${b}`), f = fieldOf(b); d.classList.toggle("on", !!on); d.style.background = on ? f.c : "transparent"; }
+        const g = (hi, lo) => Number((w >> BigInt(lo)) & ((1n << BigInt(hi - lo + 1)) - 1n));
+        const step = g(63, 61) + 1, form = g(43, 40), slot = g(39, 36), core = g(31, 0);
+        dv.setUint32(0, core); const f32 = dv.getFloat32(0);
+        const typed = parseFloat($("#tl-value").value);
+        const exactNote = src === "build" && Number.isFinite(typed) ? (exactOf(f32).eq(exactOf(typed)) ? '<span class="good">binary32 holds the value exactly</span>' : `<span class="warn">binary32 rounds ${typed} to ${f32}: the page marks this packet ≈ and keeps the exact rational in its Merkle leaf</span>`) : "";
+        $("#tl-out").innerHTML = `<span class="k">step</span> ${step} (${step === 2 ? "onload" : step === 6 ? "offload" : "third phase"}) · <span class="k">wheel</span> u = ${WHEEL[g(60, 58)]} · <span class="k">structure</span> ${STRUCT[g(57, 56)]} · <span class="k">gate</span> component ${"wxyz"[g(55, 54)]}, slice ${g(53, 48)} · <span class="k">index</span> ${g(47, 44)} · <span class="k">Form</span> ${form}${form === 3 ? " (exact binary32)" : ""} · <span class="k">slot</span> ${slot}${slot < 12 ? ` (${CLASS[Math.floor(slot / 4)]}, ${STRUCT[slot % 4]})` : " (projection)"} · <span class="k">scale</span> 2^-${g(35, 32)} · <span class="k">South Halo</span> 0x${g(63, 56).toString(16).toUpperCase().padStart(2, "0")}<br><span class="k">payload</span> ${f32}${exactNote ? " · " + exactNote : ""}`;
+        if (src !== "hex") $("#tl-hex").value = "0x" + w.toString(16).toUpperCase().padStart(16, "0");
+    }
+    ["#tl-step", "#tl-wheel", "#tl-struct", "#tl-class", "#tl-slice", "#tl-value"].forEach((id) => $(id).addEventListener("input", () => show(pack(), "build")));
+    $("#tl-hex").addEventListener("input", () => { const s = $("#tl-hex").value.trim().replace(/^0x/i, ""); if (/^[0-9a-f]{1,16}$/i.test(s)) show(BigInt("0x" + s), "hex"); else $("#tl-out").innerHTML = '<span class="bad">Enter up to 16 hex digits.</span>'; });
+    show(pack(), "build");
+})();
+
+// ---------- Chapter 8: open vs cyclic closure ----------
+(() => {
+    const H1 = cayley([new Q(1, 2), new Q(1, 3), Z]), H2 = cayley([Z, new Q(1, 4), new Q(-1, 5)]), H3 = cayley([new Q(1, 3), Z, new Q(-1, 2)]);
+    const H4 = qinv(qprod(H1, H2, H3));          // independently measured, and consistent
+    const eps = cayley([new Q(1, 7), Z, Z]);
+    function run(err) {
+        const L2 = err ? qmul(eps, H2) : H2;
+        const open = qprod(H1, L2, H3, H4);
+        const H4c = qinv(qprod(H1, L2, H3)), cyc = qprod(H1, L2, H3, H4c);
+        const I = [ONE, Z, Z, Z];
+        $("#cl-out").innerHTML = `<span class="k">H1</span> = ${qstr(H1)} <span class="k">N =</span> ${qnorm(H1)}<br><span class="k">H2</span> = ${qstr(L2)}${err ? ' <span class="bad">(ε·H2, ε = C(1/7, 0, 0))</span>' : ""}<br><span class="k">H3</span> = ${qstr(H3)}<br><span class="k">H4 (measured)</span> = ${qshort(H4)}<br>` +
+            `<span class="k">open:</span> H1H2H3H4 = ${qshort(open)} → ${qeq(open, I) ? '<span class="good">= 1, closes</span>' : '<span class="bad">≠ 1, the error is caught</span>'}<br>` +
+            `<span class="k">cyclic:</span> H4 := (H1H2H3)⁻¹ → product = ${qstr(cyc)} → <span class="${err ? "warn" : "good"}">= 1 ${err ? "even with the error: tests nothing" : "(trivially)"}</span>`;
+        $("#cl-clean").classList.toggle("on", !err); $("#cl-err").classList.toggle("on", err);
+    }
+    $("#cl-clean").onclick = () => run(false); $("#cl-err").onclick = () => run(true);
+    run(false);
+})();
+
+// ---------- Chapter 10: cuboctahedron groups and erasure ----------
+(() => {
+    const svg = $("#cubo-svg");
+    const groups = [{ plane: "z = 0", v: [[1, 1, 0], [-1, 1, 0], [-1, -1, 0], [1, -1, 0]], ax: [0, 1] }, { plane: "x = 0", v: [[0, 1, 1], [0, -1, 1], [0, -1, -1], [0, 1, -1]], ax: [1, 2] }, { plane: "y = 0", v: [[1, 0, 1], [-1, 0, 1], [-1, 0, -1], [1, 0, -1]], ax: [0, 2] }];
+    const cols = ["#ff7a3d", "#2dd4bf", "#8b5cf6"];
+    groups.forEach((G, i) => {
+        const cx = 130 + i * 250, cy = 120, s = 58;
+        el("text", { x: cx, y: 28, "text-anchor": "middle", fill: cols[i], "font-size": 13, "font-family": "Fira Code, monospace" }, svg, `group ${i + 1}: ${G.plane}`);
+        el("circle", { cx, cy, r: 3, fill: "#64748b" }, svg);
+        G.v.forEach((v, k) => {
+            const px = cx + v[G.ax[0]] * s, py = cy - v[G.ax[1]] * s;
+            el("line", { x1: cx, y1: cy, x2: px, y2: py, stroke: cols[i], "stroke-width": 2, "stroke-dasharray": k === 3 ? "5 4" : "none" }, svg);
+            el("circle", { cx: px, cy: py, r: 5, fill: k === 3 ? "#020617" : cols[i], stroke: cols[i], "stroke-width": 2 }, svg);
+            el("text", { x: px + (v[G.ax[0]] > 0 ? 8 : -8), y: py + (v[G.ax[1]] > 0 ? -8 : 16), "text-anchor": v[G.ax[0]] > 0 ? "start" : "end", fill: "#cbd5e1", "font-size": 10, "font-family": "Fira Code, monospace" }, svg, `(${v.join(",")})`);
+        });
+        el("text", { x: cx, y: 218, "text-anchor": "middle", fill: "#94a3b8", "font-size": 11 }, svg, "v₁ + v₂ + v₃ + v₄ = 0");
+        el("text", { x: cx, y: 236, "text-anchor": "middle", fill: "#94a3b8", "font-size": 11 }, svg, "dashed v₄ = −(v₁ + v₂ + v₃)");
+    });
+    // erasure lab: three groups of four integers with known totals
+    const G = [[7, -3, 12, 5], [20, 4, -9, 1], [-6, 15, 2, 8]];
+    const totals = G.map((g) => g.reduce((a, b) => a + b, 0));
+    const lost = new Set();
+    const rows = $("#qd-rows");
+    rows.innerHTML = G.map((g, r) => `<tr><td>${"ABC"[r]}</td>${g.map((_, c) => `<td class="q" data-k="${r}:${c}" tabindex="0" role="button"></td>`).join("")}<td>${totals[r]}</td><td id="qd-st-${r}"></td></tr>`).join("");
+    function render() {
+        let bad = 0, n = 0;
+        G.forEach((g, r) => {
+            const miss = [0, 1, 2, 3].filter((c) => lost.has(`${r}:${c}`)); n += miss.length;
+            g.forEach((v, c) => {
+                const td = rows.querySelector(`[data-k="${r}:${c}"]`);
+                if (!lost.has(`${r}:${c}`)) { td.className = c === 3 ? "q f4" : "q"; td.textContent = v; return; }
+                if (miss.length > 1) { td.className = "q lost"; td.textContent = "?"; return; }
+                const rec = totals[r] - g.reduce((a, b, j) => (j === c ? a : a + b), 0);
+                td.className = "q rec"; td.textContent = `↺ ${rec}`;
+            });
+            if (miss.length > 1) bad++;
+            $(`#qd-st-${r}`).innerHTML = miss.length === 0 ? '<span class="good">intact</span>' : miss.length === 1 ? '<span class="good">rebuilt</span>' : `<span class="bad">${miss.length} lost</span>`;
+        });
+        $("#qd-out").innerHTML = n === 0 ? "Nothing erased. Each total is the parity of its group of four."
+            : bad ? `<span class="bad">${bad} group${bad > 1 ? "s" : ""} lost two or more members.</span> Their total fixes only the sum of the missing values: a whole line of pairs fits.`
+            : `<span class="good">${n} erased, at most one per group: each is rebuilt as the total minus the other three.</span> Up to three losses survive, one per group (Proposition 7.11).`;
+    }
+    const toggle = (k) => { lost.has(k) ? lost.delete(k) : lost.add(k); render(); };
+    rows.addEventListener("click", (e) => { const td = e.target.closest("td.q"); if (td) toggle(td.dataset.k); });
+    rows.addEventListener("keydown", (e) => { const td = e.target.closest("td.q"); if (td && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(td.dataset.k); } });
+    $("#qd-reset").onclick = () => { lost.clear(); render(); };
+    $("#qd-three").onclick = () => { lost.clear(); ["0:1", "1:3", "2:0"].forEach((k) => lost.add(k)); render(); };
+    $("#qd-two").onclick = () => { lost.clear(); ["1:0", "1:2"].forEach((k) => lost.add(k)); render(); };
+    render();
+})();
+
+// ---------- Chapter 11: sandwich diagram and conjugation lab ----------
+(() => {
+    const svg = $("#sandwich-svg");
+    const boxes = [["A", "balancer", "#38bdf8"], ["I", "input", "#f5c542"], ["Ā = A⁻¹", "balancer", "#38bdf8"], ["E", "emergent", "#e879f9"]];
+    boxes.forEach((b, i) => {
+        const x = 40 + i * 180;
+        el("rect", { x, y: 40, width: 140, height: 70, rx: 12, fill: b[2], opacity: 0.18, stroke: b[2] }, svg);
+        el("text", { x: x + 70, y: 78, "text-anchor": "middle", fill: "#f8fafc", "font-size": 20, "font-family": "Fira Code, monospace" }, svg, b[0]);
+        el("text", { x: x + 70, y: 100, "text-anchor": "middle", fill: "#94a3b8", "font-size": 11 }, svg, b[1]);
+        if (i < 3) el("text", { x: x + 160, y: 82, "text-anchor": "middle", fill: "#64748b", "font-size": 18 }, svg, "·");
+    });
+    el("text", { x: 380, y: 145, "text-anchor": "middle", fill: "#cbd5e1", "font-size": 14, "font-family": "Fira Code, monospace" }, svg, "A I A⁻¹ E = 1   ⇒   E = A I⁻¹ A⁻¹,   Re(E) = Re(I)");
+    const rq = () => { const r = () => new Q(Math.floor(Math.random() * 13) - 6, Math.floor(Math.random() * 9) + 1); return cayley([r(), r(), r()]); };
+    function run() {
+        const I = rq(), A = rq(), E = qprod(A, qinv(I), qinv(A));
+        const closes = qeq(qprod(A, I, qinv(A), E), [ONE, Z, Z, Z]);
+        const adj = qprod(I, A, qinv(A)), Eadj = qinv(adj);
+        $("#sd-out").innerHTML = `<span class="k">I</span> = ${qshort(I)}<br><span class="k">A</span> = ${qshort(A)}<br><span class="k">E = A I⁻¹ A⁻¹</span> = ${qshort(E)}<br>` +
+            `<span class="k">Re(I)</span> = ${I[0]} · <span class="k">Re(E)</span> = ${E[0]} → ${E[0].eq(I[0]) ? '<span class="good">equal: the rotation angle is kept</span>' : '<span class="bad">differ</span>'}<br>` +
+            `<span class="k">A I A⁻¹ E</span> = 1 ${closes ? '<span class="good">exactly</span>' : '<span class="bad">fails</span>'} · <span class="k">N(E)</span> = ${qnorm(E)} · balancers side by side would give E = I⁻¹: ${qeq(Eadj, qinv(I)) ? "yes" : "no"}`;
+    }
+    $("#sd-new").onclick = run; run();
+})();
+
+// ---------- Chapter 12: the galaxy on a log axis ----------
+(() => {
+    const svg = $("#galaxy-svg"), lo = -7, hi = 5.2, x = (pc) => 40 + ((Math.log10(pc) - lo) / (hi - lo)) * 680;
+    const rs = 4.11e-7, sys = [[rs, 2], [2, 200], [200, 1e5]], frac = [0, 1 / 7, 5 / 14, 9 / 14, 1];
+    el("line", { x1: x(1e-7), y1: 150, x2: x(10 ** hi), y2: 150, stroke: "#475569" }, svg);
+    for (let e = -7; e <= 5; e++) { el("line", { x1: x(10 ** e), y1: 150, x2: x(10 ** e), y2: 156, stroke: "#475569" }, svg); if (Math.abs(e) % 2 === 1 || e === 0) el("text", { x: x(10 ** e), y: 172, "text-anchor": "middle", fill: "#64748b", "font-size": 11, "font-family": "Fira Code, monospace" }, svg, e === 0 ? "1 pc" : `1e${e}`); }
+    sys.forEach(([a, b], s) => {
+        el("rect", { x: x(a), y: 112 - s * 6, width: x(b) - x(a), height: 26, rx: 5, fill: SYS[s].c, opacity: 0.22, stroke: SYS[s].c }, svg);
+        el("text", { x: (x(a) + x(b)) / 2, y: 98 - s * 6, "text-anchor": "middle", fill: SYS[s].c, "font-size": 13, "font-family": "Fira Code, monospace" }, svg, `System ${SYS[s].n}`);
+        frac.forEach((f, n) => { const r = a * (b / a) ** f; el("line", { x1: x(r), y1: 112 - s * 6, x2: x(r), y2: 138 - s * 6, stroke: TIER_COLORS[n], "stroke-width": 2 }, svg); });
+    });
+    const pulsars = [["J1745−2900", 0.10, true], ["J1746−2850", 27.2], ["J1746−2849", 29.61], ["J1745−2910", 31.05], ["J1745−2912", 34.9], ["J1746−2856", 37.55], ["J1746−2829", 76.55]];
+    pulsars.forEach(([n, r, mag], i) => { el("circle", { cx: x(r), cy: 190 + (i % 3) * 9, r: 4, fill: mag ? "#f87171" : "#e0f2fe" }, svg); });
+    el("text", { x: x(0.1), y: 222, "text-anchor": "middle", fill: "#f87171", "font-size": 11 }, svg, "magnetar 0.10 pc");
+    el("text", { x: x(40), y: 230, "text-anchor": "middle", fill: "#e0f2fe", "font-size": 11 }, svg, "six pulsars 27–77 pc");
+    el("path", { d: `M ${x(8275)} 182 l 6 10 l -12 0 z`, fill: "#fde047" }, svg);
+    el("text", { x: x(8275), y: 210, "text-anchor": "middle", fill: "#fde047", "font-size": 11 }, svg, "Sun 8275 pc");
+    el("line", { x1: x(1.85), y1: 60, x2: x(1.85), y2: 146, stroke: "#94a3b8", "stroke-dasharray": "3 3" }, svg);
+    el("text", { x: x(1.85), y: 52, "text-anchor": "middle", fill: "#94a3b8", "font-size": 10 }, svg, "sphere of influence 1.85 pc");
+    el("text", { x: x(rs), y: 52, "text-anchor": "start", fill: "#94a3b8", "font-size": 10 }, svg, "r_s");
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-extras="[{&quot;href&quot;:&quot;galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Simulation&quot;,&quot;icon&quot;:&quot;lensing&quot;},{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Open Engine&quot;,&quot;icon&quot;:&quot;engine&quot;},{&quot;href&quot;:&quot;manual.html&quot;,&quot;label&quot;:&quot;Manual&quot;,&quot;icon&quot;:&quot;book&quot;}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>
