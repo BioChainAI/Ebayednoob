@@ -227,6 +227,7 @@ table.lemmas th { text-align: left; }
 table.res td.memc { cursor: pointer; }
 table.res td.memc:hover { background: var(--panel-2); }
 table.res td.alt { color: var(--fail); }
+#clutch-gears { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); margin-bottom: 6px; }
 @media (max-width: 900px) { .jobs { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
@@ -240,7 +241,7 @@ table.res td.alt { color: var(--fail); }
 </header>
 
 <div class="controls" aria-label="Simulation controls">
-    <div class="grp"><button id="btn-play" type="button">Pause</button></div>
+    <div class="grp"><button id="btn-play" type="button">Play</button></div>
     <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-1" max="1" step="0.01" value="0"><span class="val" id="speed-v">1.0×</span></div>
     <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-trail" type="button" class="on">Trails</button><button id="btn-mem" type="button" class="on">Memory</button><button id="btn-t3" type="button" class="on" title="Tier 3: show the crystal's two ghost poles ±(1,1,1) and their bridges.">Tier 3 poles</button></div>
     <div class="grp"><label for="ten">Tension</label><input id="ten" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="ten-v">0°</span></div>
@@ -271,6 +272,7 @@ table.res td.alt { color: var(--fail); }
         <button class="chip" type="button" data-preset="mixed">three different</button>
         <button class="chip" type="button" data-preset="approx">approximate</button>
         <span style="flex:1"></span>
+        <label for="clutch" style="display:inline-flex;gap:6px;align-items:center" title="What a finished engine does while it waits for the others">Clutch <select id="clutch"><option value="hold" selected>hold finished engines</option><option value="free">free-run (all turn)</option><option value="membrane">free-run + membrane</option></select></label>
         <button id="run-all" type="button" title="All three enter on the same gate and land on the same pulse">Run all · aligned</button>
         <button id="run-stagger" type="button" title="A enters now, B one wheel turn later, C two turns later: A and B are held in memory until C lands">Run staggered · async</button>
     </div>
@@ -330,6 +332,12 @@ table.res td.alt { color: var(--fail); }
             <div class="kv" id="quad-out" style="margin-top:6px"></div>
         </div>
         <div class="sec">
+            <h3>Timing clutch and the orthogonal membrane <span class="tag t-DEFINITION" data-basis="Each engine has its own clock: the pulses during which its clutch is engaged. Its helices, and any result latched on them, turn only while engaged. Hold: a finished engine disengages, so its result stays where it landed while the others catch up. Free-run: every engine turns on every pulse, so a held result rides its counter-rotating helix away from where it landed. Membrane: free-run, but the three carried spins are split as in Proposition 7.14 into a common rotation s (harmless) and an orthogonal differential z (the shear); z is loaded at the step-2 window and removed exactly at the step-6 window, where the three pair.">clutch</span></h3>
+            <canvas id="clutch-gears" width="680" height="150" aria-label="Master gear and the three engines' own gears"></canvas>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>engine</th><th>clutch</th><th>own clock</th><th>own gear</th><th>spin since landing</th></tr></thead><tbody id="clutch-rows"></tbody></table></div>
+            <div class="kv" id="membrane-out" style="margin-top:6px"></div>
+        </div>
+        <div class="sec">
             <h3>Memory: outer and inner manifolds <span class="tag t-PROVEN" data-basis="Each converged word is a group of four: A, B, C on the outer manifolds (T4) of Engines I, II, III, and their parity Y = A + B + C on the inner manifold (T0). Either side restores the other: one lost value per word is rebuilt exactly (Proposition G1, Proposition 7.11). Words are written at address = word number mod 30, the node of the wheel where they are drawn. Each word also keeps the Lemma 15 Merkle chain of its four tiles, which locates an altered cell.">G1 · 7.11 · 15</span></h3>
             <div class="tbl-wrap"><table class="res quad"><thead><tr><th>addr</th><th>A · T4 I</th><th>B · T4 II</th><th>C · T4 III</th><th>Y · T0</th><th>parity</th><th>chain</th><th>word</th></tr></thead><tbody id="mem-rows"></tbody></table></div>
             <div class="mono-sm" id="mem-out" style="margin-top:4px"></div>
@@ -363,6 +371,7 @@ table.res td.alt { color: var(--fail); }
     <li><strong>One clock, three schedules.</strong> All three engines run on engine v10's master clock (pulse p, node k = p mod 30). A job may be submitted at any moment, but it waits on the outer manifold until the wheel reaches node 0. It then spends one full wheel turn on each tier: T4 ingest, T3 compile, T2 and T1 evaluate, T0 reduce and latch, landing on node 29 after 150 pulses. Jobs started on different turns are at different depths, yet every engine always samples the same node, so their results can be combined with no clock conversion. A job that lands first is held in memory until the others arrive <span class="tag t-DEFINITION" data-basis="The arithmetic is exact and finishes at submission; what the clock schedules is when each of its steps is applied and shown. This mirrors engine v10, which also resolves a calculation over one 150-pulse traversal.">DEFINITION</span>.</li>
     <li><strong>Quadrance out.</strong> On convergence the page reads out, with no further input, the Triple-Quad Formula of the three landing nodes: three quadrances, the quadrea in two exact forms, the ratio χ and the exact closure P₄*. The triangle encodes agreement, not the values themselves. Values are kept exactly in memory, which is why the readout and the memory are separate.</li>
     <li><strong>Memory on both manifolds.</strong> A, B, C are written to the outer manifolds and Y to the inner manifold, at the word's address on the wheel. Erase any one cell of a word (click it) and it is rebuilt from the other three. "Alter one cell" changes a stored value by 2⁻²⁴ without updating the others. Parity then detects it, the Merkle chain locates it (the deepest layer that differs is the altered leaf), and the parity rebuilds it.</li>
+    <li><strong>Timing clutch.</strong> Each engine has its own clock, the pulses during which its clutch is engaged, and its helices turn only then. With <em>hold finished engines</em> an engine that has latched disengages: its gear stops and its result stays where it landed while the others catch up. With <em>free-run</em> every engine keeps turning, so a held result rides its helix away from where it landed. The engines counter-rotate, so equal results then land on a sheared triangle: the asynchronous frustration. With <em>free-run + membrane</em> the three carried spins split as in Proposition 7.14 into a common rotation s, which leaves the three congruent, and an orthogonal differential z, which is the shear. The membrane takes z in at the step-2 window and removes it exactly at the step-6 window, 180° of spinor phase later, where the three pair <span class="tag t-DEFINITION" data-basis="The onload and offload windows and the fixed-line plus orthogonal-plane split follow the research addendum Zero-Point Eight-Step Pump and Three 120-Degree Conformal Lifts (27 October 2026), §§4–6. The compensation is exact rational arithmetic; that it models a physical membrane is a proposal.">DEFINITION</span>.</li>
     <li><strong>Shared with Part 2.</strong> The engines, the exact frames, the cross-engine TQF, the crystal, the gauge, the §7.7 layer and the tiles are Part 2's code, built from the same source.</li>
 </ul>
 </div>
@@ -1290,7 +1299,7 @@ function drawnFramesCheck() {
 // =====================================================================
 // State and clock (Part 2's clock)
 // =====================================================================
-const state = { playing: true, speed: 1, logScale: true, eta: 1, noise: 0, signal: 'none', error: null, sight: MAGNETAR, event: null,
+const state = { playing: false, clutch: 'hold', speed: 1, logScale: true, eta: 1, noise: 0, signal: 'none', error: null, sight: MAGNETAR, event: null,
                 tension: 0, torsion: 0, kappa: 1, trails: true, memory: true, tier3: true, lemmaFrames: true, framePk: 'off', solo: null };
 const SPIN = [1, -1, 1];                       // counter-rotating nested engines: I and III forward, II backward [DEFINITION]
 const sim = { t: 0, prevT: 0, phase: SYSTEMS.map(() => [0, 0, 0, 0, 0]), prevPhase: SYSTEMS.map(() => [0, 0, 0, 0, 0]) };
@@ -1301,12 +1310,10 @@ const clockOf = t => {
              epoch: Math.floor(pulseCount / 60), piCycleStepK: Math.floor(outerFrameN / 90) + 1 };
 };
 const stepOfPulse = p => Math.floor(((p * 12) % 720) / 90) + 1;
+// The master clock only advances time; each engine's rotation comes from its own engaged-pulse count (the timing clutch)
 function physicsStep(dt) {
     sim.prevT = sim.t;
-    for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.prevPhase[s][n] = sim.phase[s][n];
-    const dSim = dt * state.speed * RATE;
-    sim.t += dSim;
-    for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.phase[s][n] += SPIN[s] * state.eta * (TIERS_SPEC[n].freq / 60) * 2 * Math.PI * dSim;
+    sim.t += dt * state.speed * RATE;
 }
 
 // =====================================================================
@@ -1572,7 +1579,17 @@ const agree = w => w.G.X.isZero() && w.G.Yc.isZero();
 // =====================================================================
 // Jobs on the shared clock
 // =====================================================================
-const jobs = [0, 1, 2].map(s => ({ s, st: 'idle', prog: null, gate: 0, p0: null, i: -1, msg: '', landPulse: null, last: null }));
+const jobs = [0, 1, 2].map(s => ({ s, st: 'idle', prog: null, gate: 0, p0: null, i: -1, msg: '', landPulse: null, last: null, carry: 0 }));
+// Timing clutch: each engine's own clock E counts the pulses it was engaged. Its helices turn SPIN·(freq/3600) of a turn
+// per engaged pulse, so a result latched on T0 (96/3600 = 2/75 of a turn per pulse) rides it only while engaged.
+const TAU0 = new Fraction(2n, 75n);
+const eng = [0, 1, 2].map(() => ({ E: 0, on: false }));
+const engagedFor = J => state.clutch !== 'hold' || J.st === 'running';
+const fracPart = f => new Fraction(((f.n % f.d) + f.d) % f.d, f.d);                 // a turn count modulo one turn, exactly
+const carriedTurns = (s, pulses) => TAU0.mul(new Fraction(BigInt(SPIN[s] * pulses)));
+const fmtTurns = f => `${fmtShort(f, 12)} turn${f.eq(Fraction.ONE) ? '' : 's'} (${fmt(toNum(fracPart(f)) * 360, 4)}°)`;
+const pulsesTo = (p, r) => ((r - (p % 60)) + 60) % 60 || 60;                         // pulses until p ≡ r (mod 60)
+let membraneWait = null;
 const trails = [[], [], []], checkpoints = [[], [], []], completed = [];
 let lastPulse = 0;
 const nextGate = (p, turns = 0) => (Math.floor(p / 30) + 1) * 30 + 30 * turns;
@@ -1596,6 +1613,10 @@ function processPulse(p) {
             J.st = 'running'; J.p0 = J.gate; trails[s] = []; checkpoints[s] = [];
             log(`[${CALC[s]}] enters T4 of Engine ${ENG[s]} at pulse ${J.p0}`);
         }
+        const e = eng[s];
+        e.on = engagedFor(J);
+        if (e.on) e.E++;
+        if (J.st === 'held' && e.on) J.carry++;                 // the latched result rides its turning helix
         if (J.st !== 'running') continue;
         const i = p - J.p0, S = Math.floor(i / 30), n = 4 - S, k = p % 30;
         J.i = i;
@@ -1604,13 +1625,27 @@ function processPulse(p) {
         const lines = J.prog.sched.get(i);
         if (lines) J.msg = lines.join('\n');
         if (i === 149) {
-            J.st = 'held'; J.landPulse = p;
+            J.st = 'held'; J.landPulse = p; J.carry = 0;
             completed.push({ s, p0: J.p0, land: p });
             const waiting = jobs.filter(o => o.st !== 'held').map(o => CALC[o.s]);
             log(`[${CALC[s]}] latched on T0 of Engine ${ENG[s]} at pulse ${p} (node ${k}): ${fmtVal(J.prog.value)}${waiting.length ? ` · held in memory, waiting for ${waiting.join(' and ')}` : ''}`, 'pass');
         }
     }
-    if (jobs.every(J => J.st === 'held')) converge(p);
+    const anyHeld = jobs.some(J => J.st === 'held'), allHeld = jobs.every(J => J.st === 'held');
+    if (state.clutch === 'membrane' && anyHeld && p % 60 === 8) membraneOnload(p);   // first pulse of the step-2 window
+    if (allHeld && (state.clutch !== 'membrane' || p % 60 === 38)) converge(p);      // the membrane pairs only at step 6
+    else if (allHeld && membraneWait === null) {
+        membraneWait = p;
+        log(`[⊥] all three landed; the membrane pairs them at the next step-6 window, in ${pulsesTo(p, 38)} pulses, while the engines keep turning`);
+    }
+}
+function liveTurns(pf) {   // the spin each held result has carried so far (exact at whole pulses; display adds the running fraction)
+    return jobs.map(J => (J.st === 'held' ? carriedTurns(J.s, J.carry) : Fraction.ZERO));
+}
+function membraneOnload(p) {
+    const c = liveTurns(), Z = gaugeExact(c[0], c[1], c[2]);
+    if (Z.X.isZero() && Z.Yc.isZero()) return;
+    log(`[⊥] onload at step 2 (pulse ${p}): carried spins ${c.map((t, s) => `${CALC[s]} ${fmtShort(t, 10)}`).join(', ')} turns; the membrane takes in the differential z = (${fmtShort(Z.X, 10)}, ${fmtShort(Z.Yc, 10)}) and leaves the common part s = ${fmtShort(Z.s, 10)}`);
 }
 
 // =====================================================================
@@ -1623,10 +1658,18 @@ const gaugeExact = (a, b, c) => {
     return { s, X, Yc, recovered: a2.eq(a) && b2.eq(b) && c2.eq(c) };
 };
 // Δφ from each result's deviation from the mean [DEFINITION]: equal results give equal phases, hence an exact lock
-function readout(vals) {
+// Part 2's exactNode with the node carried round its tier by `turns` (only the fractional turn moves it)
+function exactNodeSpin(s, k, S, dphi, turns) {
+    const n = 4 - S, T = TIERS_SPEC[n], th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = T.W * th * chi + dphi;
+    const a = th + 2 * Math.PI * toNum(fracPart(turns));
+    const P = modRot([(T.R + T.r * Math.cos(ph)) * Math.cos(a), (T.R + T.r * Math.cos(ph)) * Math.sin(a), T.r * Math.sin(ph)], n).map(x => RAT(x));
+    return c3pow(frameOf(n, P, NEG_F), s);
+}
+const ZERO3 = [Fraction.ZERO, Fraction.ZERO, Fraction.ZERO];
+function readout(vals, turns = ZERO3) {
     const Y = vals[0].add(vals[1]).add(vals[2]), m = Y.div(F3), den = Math.abs(toNum(m)) + 1;
     const dphi = vals.map(x => state.kappa * (Math.PI / 6) * Math.tanh(toNum(x.sub(m)) / den));
-    const nodes = [0, 1, 2].map(s => exactNode(s, 0, 29, 4, dphi[s]));          // T0, node 29, the same class phase in all three
+    const nodes = [0, 1, 2].map(s => exactNodeSpin(s, 29, 4, dphi[s], turns[s]));   // T0, node 29, carried by each engine's spin
     const T = tqf(nodes);
     return { dphi, nodes, T, Q4: vdot(T.P4star, T.P4star) };
 }
@@ -1642,10 +1685,13 @@ const parityOk = w => w.cells[0].add(w.cells[1]).add(w.cells[2]).eq(w.cells[3]);
 function converge(p) {
     const vals = jobs.map(J => J.prog.value);
     const cells = [...vals.map(v => v.f), vals[0].f.add(vals[1].f).add(vals[2].f)];
-    const addr = wordCount % 30;
-    const w = { id: wordCount, addr, pulse: p, step: stepOfPulse(p), k: p % 30, src: jobs.map(J => J.prog.src), exact: vals.map(v => v.exact),
+    const addr = wordCount % 30, mode = state.clutch, carry = jobs.map(J => J.carry);
+    const raw = carry.map((c, s) => carriedTurns(s, c)), Z = gaugeExact(raw[0], raw[1], raw[2]);
+    const turns = mode === 'membrane' ? raw.map(() => Z.s.div(F3)) : raw;          // the membrane removes the differential z exactly
+    const w = { id: wordCount, mode, carry, raw, turns, Z, addr, pulse: p, step: stepOfPulse(p), k: p % 30, src: jobs.map(J => J.prog.src), exact: vals.map(v => v.exact),
                 cells, orig: cells.slice(), starts: jobs.map(J => J.p0), lands: jobs.map(J => J.landPulse), altered: null };
-    Object.assign(w, readout(cells.slice(0, 3)), { G: gaugeExact(cells[0], cells[1], cells[2]) });
+    Object.assign(w, readout(cells.slice(0, 3), turns), { G: gaugeExact(cells[0], cells[1], cells[2]) });
+    membraneWait = null;
     w.tau0 = chainOf(w);
     memory = memory.filter(o => o.addr !== addr);
     [...memErased].filter(key => key.startsWith(`${addr}:`)).forEach(key => memErased.delete(key));
@@ -1653,11 +1699,15 @@ function converge(p) {
     jobs.forEach(J => { J.st = 'done'; J.last = J.prog; });
     const spread = Math.max(...w.starts) - Math.min(...w.starts);
     log(`[Σ] converged at pulse ${p}: Y = A + B + C = ${fmtExact(w.G.s)}${vals.every(v => v.exact) ? ' (exact)' : ' (approximate inputs)'} · entries ${spread ? `staggered over ${spread} pulses` : 'aligned'} · written to address ${addr}: A, B, C on T4, Y on T0`, 'hd');
-    log(`[Q] quadrance out: Q = (${w.T.Q.map(q => fmt(q.toNumber(), 6)).join(', ')}), A_R = ${fmt(w.T.poly.toNumber(), 6)} (poly ${w.T.same ? '=' : '≠'} Gram), χ = ${w.T.chi.toFixed(6)}, ${agree(w) ? 'LOCK: the three results are equal' : w.T.lock ? 'LOCK at the 2^-24 grid, although the results differ below it' : 'deformed: the results differ'} · |P4*|² = ${fmt(w.Q4.toNumber(), 6)}`, w.T.lock ? 'pass' : '');
+    const zTxt = `(${fmtShort(Z.X, 10)}, ${fmtShort(Z.Yc, 10)})`;
+    if (mode === 'hold') log(`[⊥] clutch held the finished engines: spin since landing ${carry.join(' · ')} pulses, so no shear`);
+    else if (mode === 'free') log(`[⊥] free-run: the held results rode their helices ${raw.map((t, s) => `${CALC[s]} ${fmt(toNum(t) * 360, 4)}°`).join(', ')}; differential z = ${zTxt} turns ${Z.X.isZero() && Z.Yc.isZero() ? '(none)' : 'shears the landing triangle'}`, Z.X.isZero() && Z.Yc.isZero() ? '' : 'fail');
+    else log(`[⊥] membrane offload at step 6 (pulse ${p}): differential z = ${zTxt} turns removed exactly, common rotation s/3 = ${fmtShort(Z.s.div(F3), 12)} turns kept; the three landing nodes are congruent again`, 'pass');
+    log(`[Q] quadrance out: Q = (${w.T.Q.map(q => fmt(q.toNumber(), 6)).join(', ')}), A_R = ${fmt(w.T.poly.toNumber(), 6)} (poly ${w.T.same ? '=' : '≠'} Gram), χ = ${w.T.chi.toFixed(6)}, ${agree(w) ? (w.T.lock ? 'LOCK: the three results are equal' : 'deformed by the carried spin, although the three results are equal') : w.T.lock ? 'LOCK at the 2^-24 grid, although the results differ below it' : 'deformed: the results differ'} · |P4*|² = ${fmt(w.Q4.toNumber(), 6)}`, w.T.lock ? 'pass' : '');
     renderAll(true);
 }
 // The newest word's readout follows κ, tension and torsion
-function refreshReadout() { if (latest) Object.assign(latest, readout(latest.cells.slice(0, 3))); renderAll(true); }
+function refreshReadout() { if (latest) Object.assign(latest, readout(latest.cells.slice(0, 3), latest.turns)); renderAll(true); }
 
 // =====================================================================
 // Memory: erase, alter, locate and repair
@@ -1716,7 +1766,7 @@ function renderJob(s) {
     else if (J.st === 'running') text = `Stage ${Math.floor(J.i / 30)} · ${STAGE_NAMES[Math.floor(J.i / 30)]} · pulse ${J.i + 1}/150 · node ${(J.p0 + J.i) % 30}\n${J.msg}`;
     else if (J.st === 'held') text = `Latched on T0 at pulse ${J.landPulse}: ${fmtVal(J.prog.value)}\nHeld in memory until ${jobs.filter(o => o.st !== 'held').map(o => CALC[o.s]).join(' and ')} land${jobs.filter(o => o.st !== 'held').length === 1 ? 's' : ''}.`;
     else if (J.st === 'done') text = `${J.last.src} = ${fmtVal(J.last.value)}\nEntered pulse ${latest ? latest.starts[s] : '?'}, landed pulse ${latest ? latest.lands[s] : '?'} · converged into word ${latest ? latest.addr : '?'}.`;
-    out.textContent = text;
+    out.textContent = `${text}\nclutch ${clutchLabel(J)} · own gear ${(12 * eng[s].E) % 720}/720`;
 }
 function renderTqf() {
     const w = latest;
@@ -1784,11 +1834,60 @@ function renderHud() {
         }
     });
 }
+const ownFrame = (s, pf) => (12 * effE(s, pf)) % 720;
+function clutchLabel(J) {
+    const on = engagedFor(J);
+    return { running: 'engaged · computing', held: on ? 'engaged · held, riding' : 'disengaged · held', queued: on ? 'engaged · queued' : 'disengaged · queued',
+             done: on ? 'engaged · free' : 'disengaged', idle: on ? 'engaged · free' : 'disengaged', err: on ? 'engaged · free' : 'disengaged' }[J.st];
+}
+function renderClutch() {
+    const pf = lastPulse;
+    $('#clutch-rows').innerHTML = jobs.map((J, s) => {
+        const f = (12 * eng[s].E) % 720, held = J.st === 'held', done = J.st === 'done' && latest;
+        const spin = held ? `${J.carry} p · ${fmtTurns(carriedTurns(s, J.carry))}` : done ? `${latest.carry[s]} p · ${fmtTurns(latest.raw[s])}${latest.mode === 'membrane' ? ' → ' + fmtShort(latest.turns[s], 10) : ''}` : '—';
+        return `<tr><td><span class="cls-dot" style="background:${CLASS_CSS[s]}"></span>${CALC[s]} · ${ENG[s]}</td><td>${clutchLabel(J)}</td><td>${eng[s].E} pulses</td><td>${f}/720 · step ${Math.floor(f / 90) + 1}</td><td>${spin}</td></tr>`;
+    }).join('');
+    const fr = jobs.map((J, s) => (12 * eng[s].E) % 720), meshed = fr.every(f => f === fr[0]);
+    const anyHeld = jobs.some(J => J.st === 'held');
+    const c = anyHeld ? liveTurns() : latest ? latest.raw : ZERO3, Z = gaugeExact(c[0], c[1], c[2]), zero = Z.X.isZero() && Z.Yc.isZero();
+    $('#membrane-out').innerHTML = `
+        <div><span>mode</span><br>${{ hold: 'hold finished engines', free: 'free-run', membrane: 'free-run + membrane' }[state.clutch]}</div>
+        <div><span>own gears</span><br>${meshed ? '<span class="st st-pass">meshed</span>' : `<span class="st st-tol">lag ${fr.map(f => (f - fr[0] + 720) % 720).join(' · ')}</span>`}</div>
+        <div><span>${anyHeld ? 'carried now' : 'carried at pairing'}: s (common)</span><br>${fmtShort(Z.s, 14)} turns</div>
+        <div><span>${anyHeld ? 'z now (the shear)' : latest && latest.mode === 'membrane' ? 'z loaded, then removed at offload' : 'z at pairing (the shear)'}</span><br>${zero ? '<span class="st st-pass">0</span>' : `(${fmtShort(Z.X, 9)}, ${fmtShort(Z.Yc, 9)})`}</div>
+        <div><span>windows</span><br>onload (step 2) in ${pulsesTo(pf, 8)} · offload (step 6) in ${pulsesTo(pf, 38)} pulses</div>
+        ${latest && latest.mode === 'membrane' ? `<div><span>last offload</span><br>pulse ${latest.pulse} · step ${stepOfPulse(latest.pulse)} · z → 0</div>` : ''}`;
+}
+// The master gear and each engine's own 12-tooth outer gear; a bar between them shows the clutch
+function drawClutchGears(pf, frameF) {
+    const cv = $('#clutch-gears'); if (!cv) return;
+    const ctx = cv.getContext('2d'), W = cv.width, H = cv.height, light = document.documentElement.dataset.theme === 'light';
+    ctx.clearRect(0, 0, W, H);
+    const gear = (cx, cy, rad, teeth, rot, stroke, fill) => {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.beginPath();
+        for (let i = 0; i < teeth * 2; i++) { const r = i % 2 === 0 ? rad + 5 : rad - 3, a = (i / (teeth * 2)) * Math.PI * 2; i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+        ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth = 1.6; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(rad - 8, 0); ctx.stroke(); ctx.restore();
+    };
+    const txt = light ? '#161a2e' : '#e6e8f2', mut = light ? '#4b5470' : '#9aa3bd';
+    ctx.font = '600 12px ui-monospace, monospace'; ctx.textAlign = 'center';
+    gear(80, 66, 40, 12, frameF / 720 * 2 * Math.PI, '#8b5cf6', 'rgba(139,92,246,0.14)');
+    ctx.fillStyle = txt; ctx.fillText('master', 80, 132); ctx.fillStyle = mut; ctx.fillText(`${String(Math.floor(frameF)).padStart(3)}/720`, 80, 146);
+    jobs.forEach((J, s) => {
+        const cx = 250 + s * 160, on = eng[s].on, f = ownFrame(s, pf);
+        ctx.strokeStyle = on ? CLASS_CSS[s] : mut; ctx.lineWidth = on ? 3 : 1.5; ctx.setLineDash(on ? [] : [4, 5]);
+        ctx.beginPath(); ctx.moveTo(cx - 52, 66); ctx.lineTo(cx - 80, 66); ctx.stroke(); ctx.setLineDash([]);
+        gear(cx, 66, 40, 12, SPIN[s] * f / 720 * 2 * Math.PI, CLASS_CSS[s], on ? CLASS_CSS[s] + '33' : 'rgba(148,163,184,0.08)');
+        ctx.fillStyle = txt; ctx.fillText(`${CALC[s]} · Engine ${ENG[s]}`, cx, 132);
+        ctx.fillStyle = mut; ctx.fillText(`${String(Math.floor(f)).padStart(3)}/720 · ${on ? 'engaged' : 'held'}`, cx, 146);
+    });
+}
 function solStateOf() {
     if (memory.some(w => !parityOk(w))) return 'fail';
     if (jobs.some(J => J.st === 'running' || J.st === 'queued')) return 'busy';
-    if (jobs.some(J => J.st === 'held')) return 'hold';
-    return latest ? (agree(latest) ? 'lock' : 'conv') : 'idle';
+    if (jobs.some(J => J.st === 'held')) return state.clutch === 'membrane' && jobs.every(J => J.st === 'held') ? 'pend' : 'hold';
+    if (!latest) return 'idle';
+    return agree(latest) ? (latest.T.lock ? 'lock' : 'shear') : 'conv';
 }
 function renderGauge() {
     const w = latest;
@@ -1803,6 +1902,7 @@ function renderGauge() {
 }
 function renderAll(force) {
     jobs.forEach((J, s) => renderJob(s));
+    renderClutch();
     const key = [wordCount, memory.map(w => w.cells.map(String).join()).join('|'), [...memErased].join(), state.kappa, state.tension, state.torsion, crys.lock, completed.length].join('#');
     if (!force && key === lastRendered) return;
     lastRendered = key;
@@ -1826,6 +1926,8 @@ function renderLemmaRows3() {
     if (w) try { arithOk = w.src.every((src, s) => prepareJob(src).value.f.eq(w.orig[s])); } catch (e) { arithOk = false; }
     const tilesOk = !w || w.cells.every((v, j) => { const t = cellTile(w, j, v).word; return packTile({ ...decodeTile(t) }) === t; });
     const gateOpen = Math.abs(((state.tension - state.torsion) % 30 + 30) % 30) < 1e-9;
+    const phasesAgree = !!w && w.dphi.every(d => d === w.dphi[0]) && w.turns.every(t => fracPart(t).eq(fracPart(w.turns[0])));
+    const holdWords = memory.filter(o => o.mode === 'hold'), memWords = memory.filter(o => o.mode === 'membrane');
     const rows = [
         ['Lemma 4', 'Tier laws R<sub>n</sub> = 5n² + 15n + 15, ρ<sub>n</sub> = 2n + 4, W<sub>n</sub> = 16 − 2n for all three engines', 'Exact integers in TIERS_SPEC', okB(S.l4p1)],
         ['Lemma 4', 'Pure tier frames Rot<sub>x</sub>(π/2), Rot<sub>y</sub>(π/2), applied exactly to the landing nodes and drawn in Panel A', `Integer maps keep exact quadrances; drawn steps are 120° turns to ${drawn === null ? '–' : drawn.toExponential(1)}`, okB(C.frames && (drawn === null || drawn < 1e-9))],
@@ -1834,7 +1936,10 @@ function renderLemmaRows3() {
         ['Lemma 11', 'One clock for all three engines: a job enters at node 0, spends one 30-node turn on each tier and lands at node 29 after 150 pulses, whenever it was submitted', `${completed.length} job(s) completed, all on the gate`, okB(clockOk)],
         ['Layer B', 'Calculations: ℚ is closed under + − × ÷ and whole powers, so these results are exact; sqrt, sin, cos, π are exact only where the value is rational (Niven, Lemma 13 Part 2) and are otherwise marked ≈', w ? `Newest word's three expressions re-evaluated independently: ${arithOk ? 'bit for bit' : 'MISMATCH'}` : 'after a convergence', w ? okB(arithOk) : WAIT3],
         ['Lemma 5 Part 6(a)', 'Quadrance out: A<sub>R</sub> = (ΣQ)² − 2ΣQ² = 4(|u|²|v|² − ⟨u,v⟩²) for the landing triangle', w ? `Both forms equal and ≥ 0 in BigInt (${w.T.bits}-bit values)` : 'after a convergence', w ? okB(w.T.same && w.T.nonneg) : WAIT3],
-        ['Lemma 4 Part 2', 'Weitzenböck: χ ≤ 1/√3 with equality iff equilateral. Equal results give equal phases, hence an exact lock', w ? `χ = ${w.T.chi.toFixed(6)}; ${w.dphi.every(d => d === w.dphi[0]) ? 'phases agree and the triangle is locked' : 'phases differ'}` : 'after a convergence', w ? okB(w.T.weitz && (!w.dphi.every(d => d === w.dphi[0]) || w.T.lock)) : WAIT3],
+        ['Lemma 4 Part 2', 'Weitzenböck: χ ≤ 1/√3 with equality iff equilateral. Equal results carried by equal spins give equal phases, hence an exact lock', w ? `χ = ${w.T.chi.toFixed(6)}; ${phasesAgree ? 'phases and carried spins agree, and the triangle is locked' : 'phases or carried spins differ'}` : 'after a convergence', w ? okB(w.T.weitz && (!phasesAgree || w.T.lock)) : WAIT3],
+        ['Lemma 11 · clutch', 'Timing clutch: each engine\'s own clock counts only its engaged pulses. Holding a finished engine disengages it, so its latched node does not move while the others catch up', holdWords.length ? `${holdWords.length} word(s) paired with held engines; spin since landing 0 in all` : 'after a convergence in hold mode', holdWords.length ? okB(holdWords.every(o => o.carry.every(c => c === 0))) : WAIT3],
+        ['Prop. 7.14 · membrane', 'The carried spins split into a common rotation s (all three alike, still congruent under σ) and an orthogonal differential z (the shear). The membrane removes z exactly and keeps s/3', memWords.length ? `${memWords.length} offload(s): z removed, the three turns equal` : 'after a membrane convergence', memWords.length ? okB(memWords.every(o => o.Z.recovered && o.turns.every(t => t.eq(o.turns[0])))) : WAIT3],
+        ['Thm. 7.5 · windows', 'Membrane onload at step 2 and offload at step 6, 180° of spinor phase apart (|sin θ<sub>k</sub>| = 1 only there)', memWords.length ? `offloads at step ${[...new Set(memWords.map(o => stepOfPulse(o.pulse)))].join(', ')}` : 'after a membrane convergence', memWords.length ? okB(memWords.every(o => stepOfPulse(o.pulse) === 6)) : WAIT3],
         ['Prop. G1, Lemma 7 Part 3(d)', 'Each memory word is a group of four: Y = A + B + C. Parity fails exactly on the words whose cells were altered', `${words.length} word(s); ${words.filter(o => !parityOk(o)).length} flagged`, okB(parityRow)],
         ['Prop. 7.11', 'Either manifold restores the other: one lost cell per word is rebuilt exactly; two are not', `All four single erasures of ${intact.length} intact word(s) rebuild bit for bit`, okB(erasureRow)],
         ['Lemma 15 Part 3', 'Each word keeps the Merkle chain of its four leaves; the deepest differing layer locates an altered cell', `${words.filter(o => locate(o) !== null).length} word(s) differ from their chain`, okB(locateRow)],
@@ -1847,7 +1952,7 @@ function renderLemmaRows3() {
         ['Props. 7.16–7.17', 'The central cube: Δ₁ ∪ −Δ₁ are the 8 vertices of Cube 1', 'Exact integer vertices', okB(C.cube)],
         ['Thm. 7.5, Lemma 8', 'Outer-gear step k = ⌊frame/90⌋ + 1 in the tiles and the crystal readout; windows at k = 2, 6', `|sin θ<sub>k</sub>| = 1 only at k = ${S.windows.join(' and ')}`, okB(S.l8)],
         ['Lemma 10', 'Disjoint shells inside each engine, so a trail never jumps between tiers mid-turn', 'Shell gaps 10, 16, 22, 28 (exact)', okB(S.l10)],
-        ['Definition', 'Δφ = κ(π/6)tanh(d) with d = (x − x̄)/(|x̄| + 1); trails in the co-rotating frame; 150-pulse step schedule', 'Design choices of this page', DEF3],
+        ['Definition', 'Δφ = κ(π/6)tanh(d) with d = (x − x̄)/(|x̄| + 1); trails in the co-rotating frame; 150-pulse step schedule; the three clutch modes', 'Design choices of this page', DEF3],
         ['Lemma 5 Part 3', 'The spec\'s π/6 "zero-drag" gate', `Gate ${gateOpen ? 'open' : 'closed'} (Δθ = ${state.tension - state.torsion}°)`, HEU3],
         ['1–3, 6, 9, 14, physics', 'Triangle centres, the five-moment channel, CRT addressing, the Fokker–Planck sieve and Part 2\'s lensing physics', 'Not used here', NA3]
     ];
@@ -1964,12 +2069,15 @@ function applyModulation() {
 }
 
 // A node of engine s in the helices' co-rotating frame (Part 2's display node without the spin), lifted off the tube by `lift`
-function dispPoint(s, n, k, dphi = 0, lift = 1.12) {
-    const { D, tube } = tierDisp(s, n), rr = tube * lift, th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = TIERS_SPEC[n].W * th * chi + dphi;
-    const q = modRot([(D + rr * Math.cos(ph)) * Math.cos(th), (D + rr * Math.cos(ph)) * Math.sin(th), rr * Math.sin(ph)], n);
+function dispPoint(s, n, k, dphi = 0, lift = 1.12, turns = 0) {
+    const { D, tube } = tierDisp(s, n), rr = tube * lift, th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = TIERS_SPEC[n].W * th * chi + dphi, a = th + 2 * Math.PI * turns;
+    const q = modRot([(D + rr * Math.cos(ph)) * Math.cos(a), (D + rr * Math.cos(ph)) * Math.sin(a), rr * Math.sin(ph)], n);
     return new THREE.Vector3(...c3pow(frameOf(n, q, NEG_N), s));
 }
-const spinOf = (s, n, alpha) => sim.prevPhase[s][n] + (sim.phase[s][n] - sim.prevPhase[s][n]) * alpha;
+// Engaged pulses of engine s at fractional pulse pf (the pulse in progress counts in part while the clutch is engaged)
+const partOf = pf => Math.min(1, Math.max(0, pf - lastPulse));
+const effE = (s, pf) => eng[s].E - (eng[s].on ? 1 - partOf(pf) : 0);
+const effCarry = (s, pf) => Math.max(0, jobs[s].carry - (eng[s].on ? 1 - partOf(pf) : 0));
 const ease = x => x * x * (3 - 2 * x);
 const beadSize = (s, n) => Math.max(1.4, tierDisp(s, n).D * 0.03);
 function headOf(s, pf) {   // the head of engine s at fractional pulse pf: on its trail, gliding to the next node
@@ -1980,14 +2088,14 @@ function headOf(s, pf) {   // the head of engine s at fractional pulse pf: on it
         const at = j => dispPoint(s, 4 - Math.floor(j / 30), (J.p0 + j) % 30);
         return at(i0).lerp(at(i1), e);
     }
-    if (J.st === 'held') return dispPoint(s, 0, 29);
-    if (J.st === 'done' && latest) return dispPoint(s, 0, 29, latest.dphi[s]);
+    if (J.st === 'held') return dispPoint(s, 0, 29, 0, 1.12, SPIN[s] * (2 / 75) * effCarry(s, pf));
+    if (J.st === 'done' && latest) return dispPoint(s, 0, 29, latest.dphi[s], 1.12, toNum(fracPart(latest.turns[s])));
     return null;
 }
 function updateScene(alpha, tI) {
     if (!three) return;
-    three.systems.forEach((sg, s) => sg.tiers.forEach((t, n) => { t.hg.rotation.z = spinOf(s, n, alpha); }));
     const pf = Math.max(0, tI * 60), heads = [];
+    three.systems.forEach((sg, s) => sg.tiers.forEach((t, n) => { t.hg.rotation.z = SPIN[s] * 2 * Math.PI * (TIERS_SPEC[n].freq / 3600) * effE(s, pf); }));
     three.jobs.forEach((G, s) => {
         const h = headOf(s, pf);
         G.head.visible = !!h;
@@ -2023,7 +2131,7 @@ function updateScene(alpha, tI) {
     three.soliton.position.lerp(new THREE.Vector3(core[0] * 4, core[1] * 4, core[2] * 4), 0.12);
     three.soliton.material.opacity = w ? 1 : 0.45;
     if (show) {
-        const P = [0, 1, 2].map(s => dispPoint(s, 0, 29, w.dphi[s]));
+        const P = [0, 1, 2].map(s => dispPoint(s, 0, 29, w.dphi[s], 1.12, toNum(fracPart(w.turns[s]))));
         setLine(three.tri, [P[0], P[1], P[2], P[0]]);
         three.tri.material.opacity = w.T.lock ? 0.5 : 0.95;
         const u = P[1].clone().sub(P[0]), v = P[2].clone().sub(P[0]);
@@ -2149,6 +2257,14 @@ function frenet(t, c, B, K) {
 
 const crysAnim = { flow: 0, last: null, shear: 0, mag: [0, 0, 0], prog: [0, 0, 0] };
 const EASE_K = 0.12;
+// Largest pairwise difference (in turns, wrapped to ±½) of the spins the results carry: live while held, else the newest word's
+function shearOf(pf) {
+    const t = jobs.some(J => J.st === 'held') ? jobs.map((J, s) => (J.st === 'held' ? SPIN[s] * (2 / 75) * effCarry(s, pf) : 0))
+            : latest ? latest.turns.map(x => toNum(fracPart(x))) : [0, 0, 0];
+    let m = 0;
+    for (let a = 0; a < 3; a++) for (let b = a + 1; b < 3; b++) { const d = t[a] - t[b]; m = Math.max(m, Math.abs(d - Math.round(d))); }
+    return m;
+}
 function progressOf(s, pf) {
     const J = jobs[s];
     if (J.st === 'running') return Math.min(1, Math.max(0, (pf - J.p0) / 149));
@@ -2165,7 +2281,7 @@ function updateCrystal(frameF, tI) {
     crystal.spin.quaternion.setFromAxisAngle(Bs.n, crys.spin ? frameF * D2R : 0);
     crystal.lattice.visible = crys.lattice; crystal.lemma.visible = crys.lemma; crystal.nodeGroup.visible = crys.nodes;
     crystal.bridgeT2.visible = crys.bridge; crystal.bridgeT3.visible = crys.bridge && state.tier3;
-    crysAnim.shear += ((sol === 'fail' ? 0.5 : 0) - crysAnim.shear) * EASE_K;
+    crysAnim.shear += ((sol === 'fail' ? 0.5 : Math.min(0.7, 1.4 * shearOf(pf))) - crysAnim.shear) * EASE_K;
     const shear = crysAnim.shear, buckle = crys.buckle / U20, sepA = crys.pairSep * 0.5;
     crystal.pairs.forEach((P, c) => {
         crysAnim.prog[c] += (progressOf(c, pf) - crysAnim.prog[c]) * EASE_K;
@@ -2210,7 +2326,7 @@ function updateCrystal(frameF, tI) {
     setLine(crystal.bridgeT2, [nodes[0], hub, nodes[1], hub, nodes[2], hub, nodes[0], nodes[1], nodes[1], nodes[2], nodes[2], nodes[0]]);
     setLine(crystal.bridgeT3, [north, hub, south, hub, ...nodes.flatMap(p => [p, north, p, south])]);
     updateScope(timeRad);
-    const col = sol === 'fail' ? 0xf87171 : sol === 'lock' || sol === 'conv' ? 0xf5c542 : 0xfbbf24;
+    const col = sol === 'fail' ? 0xf87171 : sol === 'lock' || sol === 'conv' ? 0xf5c542 : 0xfbbf24;   // 'shear', 'hold', 'pend', 'busy': amber
     crystal.cube.material.color.setHex(col); crystal.cube.material.opacity = sol === 'lock' ? 0.95 : 0.5;
     crystal.core.material.color.setHex(sol === 'fail' ? 0xf87171 : 0xffe08a);
     const o = crystal.orbit;
@@ -2225,7 +2341,8 @@ function updateReadouts(frameF) {
     const sol = solStateOf(), st = $('#sol-state');
     const busy = jobs.map(J => (J.st === 'running' ? `${CALC[J.s]} T${4 - Math.floor(J.i / 30)}` : J.st === 'queued' ? `${CALC[J.s]} queued` : J.st === 'held' ? `${CALC[J.s]} held` : null)).filter(Boolean).join(' · ');
     st.className = sol === 'fail' ? 'sol-active' : sol === 'lock' || sol === 'conv' ? 'sol-locked' : 'sol-tol';
-    st.textContent = { fail: 'PARITY FAIL · memory altered', busy: `COMPUTING · ${busy}`, hold: `HOLDING · ${busy}`, lock: 'CONVERGED · LOCK: A = B = C', conv: `CONVERGED · Y = A + B + C${latest && latest.T.lock ? ' · lock within 2⁻²⁴' : ''}`, idle: 'IDLE · run three calculations' }[sol];
+    st.textContent = { fail: 'PARITY FAIL · memory altered', busy: `COMPUTING · ${busy}`, hold: `HOLDING · ${busy}`,
+                       pend: `HOLDING · membrane pairs at step 6 in ${pulsesTo(lastPulse, 38)} pulses`, shear: 'CONVERGED · A = B = C, but sheared by free-run spin', lock: 'CONVERGED · LOCK: A = B = C', conv: `CONVERGED · Y = A + B + C${latest && latest.T.lock ? ' · lock within 2⁻²⁴' : ''}`, idle: 'IDLE · run three calculations' }[sol];
 }
 // Orthogonal scope: the 16 cells of the §7.7 memory layer, ring nodes pushed out by |value| (relative to their word), inner by the gauge
 function updateScope(timeRad) {
@@ -2255,7 +2372,7 @@ function updateScope(timeRad) {
 // Self-test
 // =====================================================================
 function runSelfTest() {
-    log('──── Self-test: exact calculator, triple quad, gauge, quadrance-out, chain and clock ────', 'hd');
+    log('──── Self-test: exact calculator, triple quad, gauge, quadrance-out, chain, clock and clutch ────', 'hd');
     const t0 = performance.now(), res = [];
     const check = (tag, cond, msg) => { res.push(cond); log(`[${tag}] ${msg} -> ${cond ? 'PASS' : 'FAIL'}`, cond ? 'pass' : 'fail'); };
     const ev = s => prepareJob(s).value, F = (n, d = 1) => new Fraction(BigInt(n), BigInt(d));
@@ -2285,6 +2402,16 @@ function runSelfTest() {
     ok = true;
     for (let i = 0; i < 30 && ok; i++) { const p0 = 30 * Math.floor(rnd() * 1000), land = p0 + 149; ok = land % 30 === 29 && Math.floor((land - p0) / 30) === 4 && [0, 1, 2, 3, 4].every(S => (p0 + 30 * S) % 30 === 0); }
     check('V7', ok, '30 random gates: a job entering at node 0 spends one wheel turn per tier and lands on T0 at node 29');
+    const regs = [];
+    for (let h = 1; h <= 300; h++) { const t = [0, 1, 2].map(s => fracPart(carriedTurns(s, h))); if (t.every(x => x.eq(t[0]))) regs.push(h); }
+    check('V8', regs.join() === '75,150,225,300', `counter-rotating T0 helices that turn the same number of pulses re-register only every 75 pulses (${regs.join(', ')}): a free-running wait shears the results`);
+    ok = true;
+    for (let i = 0; i < 60 && ok; i++) {
+        const carry = [0, 1, 2].map(() => Math.floor(rnd() * 200)), raw = carry.map((c, s) => carriedTurns(s, c)), Z = gaugeExact(raw[0], raw[1], raw[2]);
+        const v = rf(), r = readout([v, v, v], raw.map(() => Z.s.div(F3)));
+        ok = r.T.lock && Z.recovered;
+    }
+    check('V9', ok, '60 random asynchronous waits: removing the differential z of the carried spins (Proposition 7.14) restores the exact lock for equal results');
     const pass = res.filter(Boolean).length;
     log(`──── ${pass}/${res.length} PASS; ${(performance.now() - t0).toFixed(0)} ms ────`, pass === res.length ? 'pass' : 'fail');
     $('#vsum').innerHTML = `<span class="st ${pass === res.length ? 'st-pass' : 'st-fail'}">self-test ${pass}/${res.length} PASS</span>`;
@@ -2318,6 +2445,11 @@ function wireControls() {
         $(`#expr-${s}`).addEventListener('keydown', e => { if (e.key === 'Enter') submit(s); });
     });
     $('#run-all').onclick = () => { [0, 1, 2].forEach(s => submit(s, 0)); };
+    $('#clutch').onchange = e => {
+        state.clutch = e.target.value;
+        log(`[⊥] clutch: ${{ hold: 'hold finished engines (a latched engine stops turning until the others land)', free: 'free-run (every engine turns on every pulse)', membrane: 'free-run + membrane (shear removed at the step-6 window)' }[state.clutch]}`, 'hd');
+        renderAll(true);
+    };
     $('#run-stagger').onclick = () => { [0, 1, 2].forEach(s => submit(s, s)); };
     document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
         PRESETS[b.dataset.preset].forEach((x, s) => { $(`#expr-${s}`).value = x; });
@@ -2354,7 +2486,7 @@ let acc = 0, lastWall = performance.now();
 function frame(now) {
     const dtWall = Math.min(0.25, (now - lastWall) / 1000); lastWall = now;
     if (state.playing) { acc += dtWall; while (acc >= DT) { physicsStep(DT); acc -= DT; } }
-    else { sim.prevT = sim.t; for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.prevPhase[s][n] = sim.phase[s][n]; }
+    else sim.prevT = sim.t;
     const alpha = state.playing ? acc / DT : 1, ck = clockOf(sim.t);
     if (ck.pulseCount !== lastPulse) {
         for (let p = lastPulse + 1; p <= ck.pulseCount; p++) processPulse(p);
@@ -2366,13 +2498,14 @@ function frame(now) {
     updateScene(alpha, tInterp);
     updateCrystal(frameF, tInterp);
     updateReadouts(frameF);
+    drawClutchGears(tInterp * 60, frameF);
     requestAnimationFrame(frame);
 }
 function start() {
     wireControls();
     initThree();
     initCrystal();
-    log('[P2R] three engines, three calculations, one clock: jobs enter at node 0, wind T4 -> T0 in 150 pulses, converge into Y = A + B + C, read out by the TQF and held on both manifolds', 'hd');
+    log('[P2R] three engines, three calculations, one clock: jobs enter at node 0, wind T4 -> T0 in 150 pulses, converge into Y = A + B + C, read out by the TQF and held on both manifolds. The clock starts paused; Run starts it.', 'hd');
     drawClockPumpCanvas($('#gears'), 0, state.eta, 1);
     $('#scale-note').textContent = 'log radii: display = 6 + 20·log10(r / r_s); engines turned by σˢ about (1,1,1)';
     renderAll(true);
