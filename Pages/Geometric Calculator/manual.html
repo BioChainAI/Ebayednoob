@@ -708,8 +708,8 @@
             <h3>Seeing it in the engine</h3>
             <ul>
                 <li><strong>REGISTER &rarr; 30-Frame Stage Telemetry Breakdown</strong> lists every frame of the inspected stage with its C<sub>3</sub> phase, C<sub>2</sub> sign, parity, Q<sub>1</sub>, Q<sub>2</sub> and Q&#770;. Click a row to load it into the <em>Selected Frame</em> card above it (Q<sub>1</sub>, Q<sub>2</sub>, Q<sub>3</sub>, Q&#770;, Q&#770;<sup>&minus;1</sup>, A<sub>R</sub> and V4's coordinates).</li>
-                <li><strong>VISIBILITY &rarr; Archimedean Triangulation (TQF)</strong> draws the polygons in 3D: small spheres for V1–V3, an octahedron for V4, solid edges for the triangle, dashed-style fuchsia edges to V4, and lightly shaded faces. Choose the scope (whole system: all 150; current stage: 30; or a single node), turn persistent trails for each vertex on or off, and pick your own vertex colours.</li>
-                <li><strong>ALL TQF</strong> (in the Register's stage pills) switches on the whole-system lattice in one click.</li>
+                <li><strong>VISIBILITY &rarr; Archimedean Triangulation (TQF)</strong> draws the polygons in 3D: small spheres for V1–V3, an octahedron for V4, solid edges for the triangle, dashed-style fuchsia edges to V4, and lightly shaded faces. Choose the scope (whole system: all 150; current stage: 30; or a single node), turn persistent trails for each vertex on or off, and pick your own vertex colours. It is <strong>off when the engine opens</strong> and stays off until you tick it. Once it is on, only the phase you are inspecting is lit: the inspected stage's polygons from node 1 up to the current node. The rest of the scope is drawn as faint grey ghosts. Clicking a Register stage or a node, moving the scan or frame slider, and a running calculation all update the lit polygons.</li>
+                <li><strong>ALL TQF</strong> (in the Register's stage pills) switches the triangulation on with the whole-system scope in one click. Clicking a stage pill on its own changes which stage is lit but never switches the triangulation on.</li>
             </ul>
         </section>
 
@@ -729,7 +729,7 @@
             <p>The defaults give &Delta;&theta; = 30&deg;, so the engine starts locked (green <code>&pi;/6 LOCKED</code> badge). Any other difference shows an amber <code>SHEAR (x&deg;)</code> badge, where x is the remainder. Because the sliders move in 5&deg; steps, the possible shear remainders are 5&deg;, 10&deg;, 15&deg;, 20&deg; and 25&deg;.</p>
             <ul>
                 <li><strong>Snap &pi;/6 (30&deg;) Lock</strong> rounds both sliders to the nearest multiple of 30&deg;, which always produces a lock.</li>
-                <li><strong>Test 15&deg; Shear Twist</strong> sets torsion to tension + 45&deg;. 45 mod 30 = 15, the worst possible shear (exactly half a tooth), and it also turns on TQF triangulation so you can watch the polygons twist.</li>
+                <li><strong>Test 15&deg; Shear Twist</strong> sets torsion to tension + 45&deg;. 45 mod 30 = 15, the worst possible shear (exactly half a tooth). If Archimedean Triangulation is on, you can watch the polygons twist.</li>
             </ul>
             <p>Both pairs of sliders (TELEMETRY and VISIBILITY tabs) control the same two values and stay in sync.</p>
             <div class="callout plain">
@@ -880,8 +880,8 @@
                 <thead><tr><th>Module</th><th>What it claims</th><th>What the button does</th></tr></thead>
                 <tbody>
                     <tr><td><strong>1. Intrinsic Topological Clock</strong> <span class="tag tag-proven">[PROVEN]</span></td><td>The winding law W<sub>n</sub> = 16 &minus; 2n and the 30-node C<sub>3</sub>&times;C<sub>2</sub> cycle replace an arbitrary frame rate; a 0.5 s lap resolves the caesium half-cycle into a whole number (<a href="#clock">chapter 5</a>).</td><td><code>[Simulate 30-Node Clock]</code> brightens all tori and shows the clock's telemetry.</td></tr>
-                    <tr><td><strong>2. 64-Bit Einstein Tile &amp; TQF</strong> <span class="tag tag-proven">[PROVEN / TQF]</span></td><td>A continuous field collapses into 64 discrete slots (via a <em>monoid homomorphism</em>, a structure-preserving map), and redundant collinear points are pruned without square roots (<a href="#between">chapter 9</a>, <a href="#engram">chapter 12</a>).</td><td><code>[Visualize Full-System TQF Polygons]</code> dims the tori, turns on all 150 TQF polygons and opens VISIBILITY.</td></tr>
-                    <tr><td><strong>3. &pi;/6 Handshake &amp; Torsion</strong> <span class="tag tag-heur">[HEURISTIC]</span></td><td>The 12-6-7-3-1 engine couples tension and torsion; at 6:1 and 12:1 alignment (30&deg;) drag vanishes and the state locks (<a href="#tension">chapter 10</a>).</td><td><code>[Engage Torsion Clutch]</code> makes the core blaze, turns on all TQF polygons and invites you to use the sliders.</td></tr>
+                    <tr><td><strong>2. 64-Bit Einstein Tile &amp; TQF</strong> <span class="tag tag-proven">[PROVEN / TQF]</span></td><td>A continuous field collapses into 64 discrete slots (via a <em>monoid homomorphism</em>, a structure-preserving map), and redundant collinear points are pruned without square roots (<a href="#between">chapter 9</a>, <a href="#engram">chapter 12</a>).</td><td><code>[Visualize Full-System TQF Polygons]</code> dims the tori, turns on the whole-system TQF (all 150 polygons, the inspected stage lit) and opens VISIBILITY.</td></tr>
+                    <tr><td><strong>3. &pi;/6 Handshake &amp; Torsion</strong> <span class="tag tag-heur">[HEURISTIC]</span></td><td>The 12-6-7-3-1 engine couples tension and torsion; at 6:1 and 12:1 alignment (30&deg;) drag vanishes and the state locks (<a href="#tension">chapter 10</a>).</td><td><code>[Engage Torsion Clutch]</code> makes the core blaze, sets the TQF scope to the whole system (it draws only if Archimedean Triangulation is on) and invites you to use the sliders.</td></tr>
                     <tr><td><strong>4. Master 144 / Natural 9</strong> <span class="tag tag-unified">[UNIFIED]</span></td><td>The Master 144 square (12&times;12; one full cycle is 144&sup2; = 20,736 units) maps to the 12-stream boundary; the "Natural 9" square-of-nine spiral encodes orbits that grow like &radic;T. Its 120&deg; trine corresponds to the C<sub>3</sub> rotor and its 90&deg; square to the 64-bit tile.</td><td><code>[Project Harmonic Matrix]</code> switches on the degree overlay (<code>DEG</code>) so you can read angles on every tier.</td></tr>
                 </tbody>
             </table></div>
@@ -924,7 +924,7 @@
 
             <h3>VISIBILITY</h3>
             <ul>
-                <li><strong>Archimedean Triangulation (TQF)</strong> on/off, plus: <em>TQF System Scope</em> (whole system, current stage, single node), <em>Trail Span</em> (full T4&rarr;T0, or the current stage loop), <em>Persistent Vertex Trails</em>, <em>3D Shaded Polygon Faces</em>, a colour picker and trail toggle for each of V1–V4, and a second copy of the tension and torsion sliders.</li>
+                <li><strong>Archimedean Triangulation (TQF)</strong> on/off (off by default), plus: <em>TQF System Scope</em> (whole system, current stage, single node), <em>Trail Span</em> (full T4&rarr;T0, or the current stage loop), <em>Persistent Vertex Trails</em>, <em>3D Shaded Polygon Faces</em>, a colour picker and trail toggle for each of V1–V4, and a second copy of the tension and torsion sliders.</li>
                 <li><strong>Scene toggles</strong>: checkpoint diamonds (with a size/glow slider), square particle fields, dual-helix braid tubes and orthogonal radial lines.</li>
                 <li><strong>Per-tier controls</strong> for T4…T0: show or hide, colour, opacity (0.02–0.95) and glow (0–1.5).</li>
             </ul>
