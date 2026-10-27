@@ -1,13 +1,13 @@
 # Updating the Geometric Harmonics Calculator
 
 The calculator is a single file: **`Pages/Geometric Calculator/index.html`**. It's your export with one
-small snippet at the end that loads the floating bar. The bar holds a Home button, two dropdowns
-(**Simulations** and **Manuals**, listing every page below), Google sign-in shared with the main site, a
+small snippet at the end that loads the floating bar. The bar holds a Home button, three dropdowns
+(**Simulations**, **Calculations** and **Manuals**, listing every page below), Google sign-in shared with the main site, a
 **social** button that unfolds the GitHub / X / YouTube / Patreon links only when pressed, and the hide
 toggle. The bar itself lives in [`assets/js/page-chrome.js`](../../assets/js/page-chrome.js), never in
 the calculator file.
 
-Every page below carries the same two dropdowns, and the current page is marked in its menu:
+Every page below carries the same three dropdowns, and the current page is marked in its menu:
 
 | Dropdown | File | Page |
 | --- | --- | --- |
@@ -15,6 +15,8 @@ Every page below carries the same two dropdowns, and the current page is marked 
 | Simulations | `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification |
 | Simulations | `Galactic Lensing/galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy Part 1: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` and live checks against the Fifteen Lemmas |
 | Simulations | `Galactic Lensing/tri_engine_soliton.html` | Part 2: three active engines, cross-engine TQF and the soliton crystal |
+| Calculations | `Galactic Lensing/tri_engine_convergence.html` | Tri-Engine Convergence: Part 2 run in reverse. Three exact calculations, one per engine, scheduled asynchronously on one clock, converging into a triple quad with an automatic TQF readout and memory on the outer and inner manifolds |
+| Calculations | `index.html` | The engine's own exact calculator (its Terminal tab) |
 | Manuals | `manual.html` | Engine instruction manual & explainer |
 | Manuals | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses |
 | Manuals | `Galactic Lensing/galactic_companion.html` | Companion guide: from one engine to the triple quad, lemma by lemma, and Part 2 |
@@ -74,7 +76,7 @@ snippet (Home, sign-in and the social button only) is:
 - `data-extras`: plain buttons after Home, as JSON, e.g.
   `[{"href":"manual.html","label":"Manual","icon":"book"}]`. (A single button can also be given as
   `data-extra-href`, `data-extra-label`, `data-extra-icon`.) For automatic installs, set `extra` on the page.
-- Icons: `book`, `engine`, `trace`, `numogram`, `lensing` or `soliton`.
+- Icons: `book`, `engine`, `trace`, `numogram`, `lensing`, `soliton` or `calc`.
 - `data-compact="true"`: shows the bar's buttons as icons only, with their names on hover. The
   engine uses this so the bar fits between its two side panels. For automatic installs, set `"compact": true`.
 - The social links are the `SOCIAL_LINKS` list at the top of `assets/js/page-chrome.js`. Change them
@@ -86,7 +88,7 @@ Add the page to `pages` in `scripts/page-chrome-targets.json`:
 
 ```json
 {
-    "menus": { "geometric-calculator": [ "…the two dropdowns…" ] },
+    "menus": { "geometric-calculator": [ "…the three dropdowns…" ] },
     "pages": [
         { "file": "Pages/Geometric Calculator/index.html", "position": "top", "compact": true, "menus": "geometric-calculator" },
         { "file": "Pages/Some Other Tool/index.html", "position": "bottom-right" }
@@ -103,7 +105,7 @@ every menu link, for each file.
   the latest *Deploy static content to Pages* run on the Actions tab succeeded.
 - The bar may be hidden. Look for a small round **•••** button at the top centre and click it.
   Phones start with it hidden.
-- The social links are inside the share-icon button next to the Manuals dropdown.
+- The social links are inside the share-icon button after the Manuals dropdown.
 - Hard-refresh the page (Ctrl/Cmd + Shift + R). GitHub Pages can serve a cached copy for a few minutes.
 
 ## Keeping the manual current
@@ -116,3 +118,6 @@ script at the bottom of `manual.html` too.
 `Galactic Lensing/tri_engine_manual.html` documents Part 2's controls, panels and expected experiment
 results. If a control is added, renamed or changes its range or default in `tri_engine_soliton.html`,
 update chapters 4, 7 and 14 of the manual, and the labs at its end if the clock, node or tile formulas change.
+
+`Galactic Lensing/tri_engine_convergence.html` is built from the same source as Part 2 (its engines, crystal,
+exact frames and tiles are Part 2's code), so a change to those parts of Part 2 reaches it on the next build.
