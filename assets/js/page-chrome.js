@@ -17,7 +17,7 @@
 //   data-extras    plain buttons after Home as JSON: [{"href": "...", "label": "...", "icon": "..."}]
 //   data-extra-href, data-extra-label, data-extra-icon   one such button
 //   data-compact   "true" shows every button as an icon only (names on hover)
-// Icons: book, engine, trace, numogram, lensing, soliton.
+// Icons: book, engine, trace, numogram, lensing, soliton, calc.
 
 const SITE_ROOT = new URL("../../", import.meta.url).href;
 const STORE_KEY = "ebayednoob-page-chrome-collapsed";
@@ -45,6 +45,7 @@ const ICONS = {
     lensing: svg('<circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="12" r="6"/><path d="M2.5 12c3-5 16-5 19 0M2.5 12c3 5 16 5 19 0" stroke-opacity="0.55"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"'),
     soliton: svg('<circle cx="12" cy="8.2" r="4.2"/><circle cx="8.6" cy="14.1" r="4.2"/><circle cx="15.4" cy="14.1" r="4.2"/><circle cx="12" cy="12.2" r="1.3" fill="currentColor" stroke="none"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.7"'),
     trace: svg('<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
+    calc: svg('<rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
     social: svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'),
     caret: svg('<path d="m6 9 6 6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
     hide: svg('<path d="m15 18-6-6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),

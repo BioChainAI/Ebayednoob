@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tri-Engine Convergence</title>
+<meta name="description" content="The Tri-Engine Soliton run in reverse: three separate exact calculations on three geometric engines, scheduled asynchronously on one clock, each leaving a trail from the outer to the inner manifold, converging into a triple quad with an automatic Triple-Quad Formula readout, and held in memory on both manifolds.">
+<style>
+:root, :root[data-theme="dark"] {
+    --bg: #0a0a1a; --panel: rgba(17, 19, 40, 0.86); --panel-2: #101228; --line: rgba(148, 163, 184, 0.18); --line-2: rgba(148, 163, 184, 0.32);
+    --text: #e6e8f2; --muted: #9aa3bd; --faint: #6b7390; --gold: #f5c542; --space: #05050f;
+    --sys1: #ff7a3d; --sys2: #2dd4bf; --sys3: #8b5cf6; --fourth: #ffe6a3;
+    --pass: #34d399; --tol: #fbbf24; --fail: #f87171;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --bg: #f4f5fb; --panel: rgba(255, 255, 255, 0.92); --panel-2: #ffffff; --line: rgba(30, 41, 59, 0.14); --line-2: rgba(30, 41, 59, 0.28);
+        --text: #161a2e; --muted: #4b5470; --faint: #737b96; --gold: #b7860b; --sys1: #d9480f; --sys2: #0f9488; --sys3: #6d28d9; --fourth: #b7860b;
+        --pass: #059669; --tol: #b45309; --fail: #dc2626; color-scheme: light;
+    }
+}
+:root[data-theme="light"] {
+    --bg: #f4f5fb; --panel: rgba(255, 255, 255, 0.92); --panel-2: #ffffff; --line: rgba(30, 41, 59, 0.14); --line-2: rgba(30, 41, 59, 0.28);
+    --text: #161a2e; --muted: #4b5470; --faint: #737b96; --gold: #b7860b; --sys1: #d9480f; --sys2: #0f9488; --sys3: #6d28d9; --fourth: #b7860b;
+    --pass: #059669; --tol: #b45309; --fail: #dc2626; color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 var(--sans); overflow-x: hidden; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.5), transparent 60%), radial-gradient(1px 1px at 72% 34%, rgba(255,255,255,0.4), transparent 60%),
+        radial-gradient(1px 1px at 38% 72%, rgba(255,255,255,0.35), transparent 60%), radial-gradient(1px 1px at 88% 82%, rgba(255,255,255,0.45), transparent 60%),
+        radial-gradient(1.5px 1.5px at 55% 10%, rgba(255,255,255,0.4), transparent 60%), radial-gradient(1px 1px at 22% 52%, rgba(255,255,255,0.3), transparent 60%); }
+:root[data-theme="light"] body::before { opacity: 0; }
+.mono, code { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--sys2); }
+button, select, input { font: inherit; color: var(--text); }
+button, select { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--gold); }
+button.on { border-color: var(--gold); color: var(--gold); }
+input[type="range"] { accent-color: var(--gold); vertical-align: middle; }
+.wrap { max-width: 1680px; margin: 0 auto; padding: 0 16px 40px; }
+header.hero { padding: 64px 0 10px; }
+header.hero h1 { margin: 0; font-size: clamp(1.4rem, 3vw, 2.1rem); letter-spacing: -0.01em; }
+header.hero h1 .g { background: linear-gradient(90deg, var(--sys1), var(--sys2) 50%, var(--sys3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header.hero p { margin: 4px 0 0; color: var(--muted); max-width: 1100px; }
+.tags-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* Epistemic tags */
+.tag { display: inline-block; font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid; letter-spacing: 0.02em; white-space: nowrap; cursor: help; vertical-align: 1px; }
+.t-PROVEN { color: #34d399; border-color: rgba(52,211,153,0.6); background: rgba(52,211,153,0.1); }
+.t-ESTABLISHED { color: #60a5fa; border-color: rgba(96,165,250,0.6); background: rgba(96,165,250,0.1); }
+.t-CORRESPONDENCE { color: #facc15; border-color: rgba(250,204,21,0.6); background: rgba(250,204,21,0.08); }
+.t-DEFINITION { color: #9ca3af; border-color: rgba(156,163,175,0.6); background: rgba(156,163,175,0.08); }
+.t-COMPUTED { color: #22d3ee; border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.08); }
+.t-EMPIRICAL { color: #fb923c; border-color: rgba(251,146,60,0.6); background: rgba(251,146,60,0.08); }
+.t-HEURISTIC { color: #fbbf24; border-color: rgba(251,191,36,0.6); background: rgba(251,191,36,0.08); }
+.t-CONJECTURAL { color: #f87171; border-color: rgba(248,113,113,0.6); background: rgba(248,113,113,0.08); }
+.t-OPEN { color: #f8fafc; border-color: rgba(248,250,252,0.7); background: rgba(248,250,252,0.06); }
+:root[data-theme="light"] .t-OPEN { color: #111827; border-color: #111827; }
+:root[data-theme="light"] .t-CORRESPONDENCE, :root[data-theme="light"] .t-HEURISTIC { color: #92400e; }
+:root[data-theme="light"] .t-COMPUTED { color: #0e7490; }
+#tip { position: fixed; z-index: 50; max-width: 340px; padding: 7px 9px; border-radius: 8px; background: #0f1224; color: #e6e8f2; border: 1px solid rgba(245,197,66,0.6);
+    font-size: 12px; line-height: 1.4; pointer-events: none; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+
+/* Controls */
+.controls { position: sticky; top: 64px; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 12px; margin: 10px 0 12px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(8px); }
+.controls .grp { display: flex; align-items: center; gap: 6px; }
+.controls label { color: var(--muted); font-size: 12.5px; }
+.controls .val { font: 12px var(--mono); color: var(--text); min-width: 40px; display: inline-block; }
+#btn-play { min-width: 74px; font-weight: 600; }
+
+/* Layout */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto; gap: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
+.panel h2 { margin: 0 0 2px; font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.panel .sub { margin: 0 0 8px; color: var(--muted); font-size: 12.5px; }
+#panel-a { grid-row: 1 / span 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 172px; }
+#space { position: relative; flex: none; height: max(480px, calc(100vh - 310px)); min-height: 480px; border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at center, #11122b 0%, var(--space) 70%); border: 1px solid var(--line); touch-action: none; }
+#space canvas { display: block; }
+#space .msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; color: #9aa3bd; }
+.sys-labels { position: absolute; left: 10px; top: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 3; }
+.sys-labels button { text-align: left; font-size: 12px; padding: 4px 9px; background: rgba(10,10,26,0.72); color: #e6e8f2; border-color: rgba(148,163,184,0.35); }
+.sys-labels button .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.sys-labels button.dim { opacity: 0.45; }
+#gears { position: absolute; right: 10px; bottom: 10px; width: 190px; height: 83px; z-index: 3; background: rgba(10,10,26,0.72); border: 1px solid rgba(148,163,184,0.35); border-radius: 8px; }
+#scale-note { position: absolute; left: 10px; bottom: 10px; z-index: 3; font: 11px var(--mono); color: #9aa3bd; background: rgba(10,10,26,0.72); padding: 3px 7px; border-radius: 6px; max-width: 62%; }
+#hover { position: absolute; z-index: 4; pointer-events: none; display: none; background: rgba(10,10,26,0.92); color: #e6e8f2; border: 1px solid rgba(245,197,66,0.6); border-radius: 8px; padding: 6px 8px; font: 11.5px var(--mono); white-space: nowrap; }
+
+/* Dashboard */
+.sysgrids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sysgrid { border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
+.sysgrid h3 { margin: 0 0 4px; font-size: 12.5px; display: flex; justify-content: space-between; gap: 4px; flex-wrap: wrap; }
+.sysgrid table { width: 100%; border-collapse: collapse; font: 11px var(--mono); }
+.sysgrid th, .sysgrid td { padding: 2px 3px; text-align: right; border-bottom: 1px solid var(--line); }
+.sysgrid th { color: var(--muted); font-weight: 500; }
+.sysgrid td.cls { text-align: left; color: var(--muted); }
+.sysgrid td.cell { cursor: pointer; border-radius: 4px; }
+.sysgrid td.active { outline: 1px solid var(--gold); background: rgba(245,197,66,0.12); }
+.sysgrid td.hl { background: rgba(255,255,255,0.12); }
+.tier-line { font: 10.5px var(--mono); color: var(--muted); margin-top: 3px; }
+.sec { margin-top: 10px; }
+.sec h3 { margin: 0 0 4px; font-size: 13px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tbl-wrap { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; }
+table.res { width: 100%; border-collapse: collapse; font: 11px var(--mono); }
+table.res th, table.res td { padding: 3px 4px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.res th { color: var(--muted); font-weight: 500; text-align: right; }
+table.res td:first-child, table.res th:first-child { text-align: left; }
+table.res tr:last-child td { border-bottom: 0; }
+.st { font: 700 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; }
+.st-pass { color: #052e1a; background: var(--pass); }
+.st-tol { color: #2a1a00; background: var(--tol); }
+.st-fail { color: #2b0505; background: var(--fail); }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; font: 11px var(--mono); }
+.kv div > span:not(.st) { color: var(--muted); }
+#spark { width: 100%; height: 60px; display: block; border: 1px solid var(--line); border-radius: 8px; }
+#lens { width: 100%; display: block; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); }
+
+/* Log */
+.logbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 6px; }
+.logbar h2 { margin: 0; font-size: 15px; }
+#vsum { font: 12px var(--mono); }
+#log { height: 300px; overflow: auto; background: #06061a; color: #cfd6ea; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 11.5px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+:root[data-theme="light"] #log { background: #0b1022; }
+#log .pass { color: #34d399; } #log .fail { color: #f87171; } #log .hd { color: #f5c542; }
+.notes { margin-top: 12px; color: var(--muted); font-size: 12.5px; }
+.notes li { margin: 3px 0; }
+
+/* Panel D: lemma compliance */
+#panel-d { margin-top: 12px; }
+.d-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.d-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px; min-width: 0; }
+.d-card h3 { margin: 0 0 6px; font-size: 13px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.d-card button { margin-top: 6px; }
+.cyc { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.cyc div { border: 1px solid var(--line); border-radius: 6px; padding: 4px 1px; text-align: center; font: 10.5px/1.35 var(--mono); color: var(--muted); }
+.cyc div b { display: block; font-size: 12px; color: var(--text); }
+.cyc div.win { border-color: var(--gold); }
+.cyc div.now { background: rgba(245, 197, 66, 0.2); border-color: var(--gold); color: var(--text); }
+.mono-sm { font: 11px/1.5 var(--mono); overflow-wrap: anywhere; color: var(--text); }
+table.res td.cellq, table.res td.pk { cursor: pointer; }
+table.res td.cellq:hover, table.res td.pk:hover { background: var(--panel-2); }
+table.res td.erased { color: var(--fail); text-decoration: line-through; }
+table.res td.recov { color: var(--pass); }
+table.res td.pk.sel { outline: 1px solid var(--gold); outline-offset: -1px; }
+.rnd { color: var(--tol); margin-left: 2px; }
+.fk-bar { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-top: 8px; font-size: 12px; }
+.fk-bar label { color: var(--muted); }
+.fk-bar a { color: var(--gold); }
+.loss { color: var(--fail); } .nolss { color: var(--pass); }
+.st-na { color: var(--muted); border: 1px solid var(--line-2); }
+table.lemmas td { white-space: normal; text-align: left; font-family: var(--sans); font-size: 12px; line-height: 1.4; }
+table.lemmas td:first-child { font-family: var(--mono); white-space: nowrap; }
+table.lemmas td:last-child { white-space: nowrap; }
+table.lemmas th { text-align: left; }
+@media (max-width: 1100px) {
+    .d-grid { grid-template-columns: minmax(0, 1fr); }
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    #panel-a { grid-row: auto; position: static; }
+    #space { height: 70vh; min-height: 460px; }
+}
+@media (max-width: 640px) {
+    table.lemmas, table.lemmas tbody, table.lemmas tr, table.lemmas td { display: block; }
+    table.lemmas thead { display: none; }
+    table.lemmas tr { padding: 6px 4px; border-bottom: 1px solid var(--line); }
+    table.lemmas td { border: 0; padding: 1px 4px; white-space: normal !important; }
+    table.lemmas td:first-child { font-weight: 700; }
+    .sysgrids { grid-template-columns: minmax(0, 1fr); }
+    .controls { position: static; }
+    #space { height: 62vh; min-height: 380px; }
+    #gears { width: 150px; height: 66px; }
+    #scale-note { display: none; }
+}
+
+/* ---- Part 2 additions ---- */
+#crystal { position: relative; height: 380px; border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at center, #15122e 0%, var(--space) 75%); border: 1px solid var(--line); touch-action: none; }
+#crystal canvas { display: block; }
+#crystal .msg { position: absolute; inset: 0; display: grid; place-items: center; color: #9aa3bd; }
+#sol-state { position: absolute; left: 10px; top: 10px; z-index: 3; font: 600 11px var(--mono); padding: 3px 8px; border-radius: 6px; }
+#sol-step { position: absolute; right: 10px; bottom: 10px; z-index: 3; font: 11px var(--mono); color: #cfd6ea; background: rgba(10,10,26,0.72); padding: 3px 7px; border-radius: 6px; text-align: right; }
+.sol-locked { background: rgba(52,211,153,0.2); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.6); }
+.sol-tol { background: rgba(251,191,36,0.18); color: #fcd34d; border: 1px solid rgba(251,191,36,0.6); }
+.sol-active { background: rgba(248,113,113,0.18); color: #fca5a5; border: 1px solid rgba(248,113,113,0.6); }
+.hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; margin-top: 6px; }
+.hud div { border: 1px solid var(--line); border-radius: 6px; padding: 3px 4px; font: 10.5px/1.3 var(--mono); min-height: 40px; overflow: hidden; }
+.hud div b { display: block; font-size: 10px; color: var(--muted); font-weight: 600; }
+.hud div.in { background: var(--panel-2); border-style: dashed; }
+.hud div.c0 { border-color: rgba(255,0,85,0.6); } .hud div.c1 { border-color: rgba(0,242,255,0.6); } .hud div.c2 { border-color: rgba(255,215,0,0.6); }
+.hud div.bad { background: rgba(248,113,113,0.16); } .hud div.warn { background: rgba(251,191,36,0.14); }
+.gate { font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line-2); color: var(--muted); }
+.gate.open { color: #6ee7b7; border-color: rgba(52,211,153,0.6); }
+.crys-play { display: flex; gap: 10px; align-items: center; margin-top: 6px; font: 11px var(--mono); color: #00b8c4; }
+#progress-container { flex: 1; height: 6px; background: var(--line-2); border-radius: 3px; cursor: pointer; }
+#progress-fill { height: 100%; width: 0; background: #00f2ff; border-radius: 3px; }
+.crys-ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; margin-top: 6px; font-size: 11.5px; }
+.crys-ctl label { display: flex; flex-direction: column; color: var(--muted); }
+.crys-ctl label span.v { font-family: var(--mono); color: var(--text); }
+.crys-ctl input[type=range] { width: 100%; }
+.crys-ctl input:disabled { opacity: 0.4; }
+.crys-checks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+.crys-checks label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+@media (max-width: 640px) { .crys-ctl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cls-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+
+/* ---- Convergence additions ---- */
+#console { margin-bottom: 12px; }
+.jobs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.job { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: var(--panel-2); min-width: 0; }
+.job-h { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12.5px; }
+.job-st { margin-left: auto; font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line-2); color: var(--muted); white-space: nowrap; }
+.job-st.queued { color: #93c5fd; border-color: rgba(147,197,253,0.6); }
+.job-st.running { color: #fcd34d; border-color: rgba(251,191,36,0.6); }
+.job-st.held, .job-st.done { color: #6ee7b7; border-color: rgba(52,211,153,0.6); }
+.job-st.err { color: #fca5a5; border-color: rgba(248,113,113,0.6); }
+.job-in { display: flex; gap: 6px; margin-top: 6px; }
+.job-in input { flex: 1; min-width: 0; font: 13px var(--mono); background: var(--panel); border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 8px; }
+.job-in input:focus { outline: 1px solid var(--gold); }
+.job-bar { height: 5px; background: var(--line-2); border-radius: 3px; margin-top: 6px; overflow: hidden; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; }
+.job-bar i { display: block; height: 100%; background: transparent; }
+.job-out { margin-top: 6px; min-height: 4.6em; white-space: pre-wrap; }
+.job-ctl { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+.job-ctl .chip { font: 11.5px var(--mono); padding: 3px 9px; border-radius: 999px; }
+.dot3 { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+table.res td.memc { cursor: pointer; }
+table.res td.memc:hover { background: var(--panel-2); }
+table.res td.alt { color: var(--fail); }
+@media (max-width: 900px) { .jobs { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div id="tip" role="tooltip"></div>
+<div class="wrap">
+<header class="hero">
+    <h1><span class="g">Tri-Engine Convergence</span> <span style="font-size:0.5em;color:var(--muted);font-weight:600">Galactic Lensing Hierarchy · Part 2, reversed</span></h1>
+    <p>The Tri-Engine Soliton run backwards. Part 2 takes one set of measurements, splits it across three engines and reads what they leave over as the emergent fourth. Here three separate calculations run on the three engines at once. Each job starts on its own schedule but all three share one geometric clock. A job enters on the outer manifold (T4), winds inward one tier per turn of the wheel leaving a trail, and latches on the inner manifold (T0). When all three have landed they converge. Their exact sum becomes the fourth of a triple quad, the three landing nodes are read out as a Triple-Quad triangle (the quadrance-out), and the word is held in memory on both manifolds, where any one lost value is rebuilt from the other three. <a href="tri_engine_soliton.html">Part 2</a> · <a href="tri_engine_manual.html">Part 2 manual</a> · <a href="galactic_companion.html#part2">Guide</a></p>
+    <div class="tags-legend" id="tags-legend"></div>
+</header>
+
+<div class="controls" aria-label="Simulation controls">
+    <div class="grp"><button id="btn-play" type="button">Pause</button></div>
+    <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-1" max="1" step="0.01" value="0"><span class="val" id="speed-v">1.0×</span></div>
+    <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-trail" type="button" class="on">Trails</button><button id="btn-mem" type="button" class="on">Memory</button><button id="btn-t3" type="button" class="on" title="Tier 3: show the crystal's two ghost poles ±(1,1,1) and their bridges.">Tier 3 poles</button></div>
+    <div class="grp"><label for="ten">Tension</label><input id="ten" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="ten-v">0°</span></div>
+    <div class="grp"><label for="tor">Torsion</label><input id="tor" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="tor-v">0°</span><span class="gate open" id="gate" data-basis="Spec §1A.4: zero-drag resonance when Δθ = θ_ten − θ_tor ≡ 0 (mod 30°). The π/6 of Lemma 5 Part 3 is an acoustic phase, not a rotation angle, so the gate is shown without claiming a lemma proves it [HEURISTIC].">π/6 gate</span></div>
+    <div class="grp"><label for="kappa">Coupling κ</label><input id="kappa" type="range" min="0" max="2" step="0.05" value="1"><span class="val" id="kappa-v">1.00</span></div>
+    <div class="grp"><button id="btn-clear-trails" type="button">Clear trails</button><button id="btn-verify" type="button">Run self-test</button><button id="btn-theme" type="button" aria-label="Toggle light or dark theme">Light</button></div>
+</div>
+
+<section class="panel" id="console" aria-label="Calculations">
+    <h2>Calculations · three engines, one clock <span class="tag t-DEFINITION" data-basis="Each job is compiled to a postfix program and evaluated in exact BigInt rationals (Layer B). Its steps are scheduled on the engine clock: 30 pulses per tier, outermost first, so a job takes the 150 pulses of one engine-v10 calculation. A job may be submitted at any time; it waits on the outer manifold until the shared wheel reaches node 0, so the three engines can be at different depths while always sampling the same node.">DEFINITION</span></h2>
+    <p class="sub">One expression per engine. Digits, decimals, fractions, + − × ÷, ^ (whole-number powers), brackets and unary minus are exact. sqrt, sin, cos and π are exact where the answer is rational (sqrt(16/9) = 4/3, cos(0) = 1); otherwise they are rationalized at 2⁻⁴⁸ and marked ≈.</p>
+    <div class="jobs">
+        <div class="job" id="job-0"><div class="job-h"><span class="dot3" style="background:#ff0055"></span>A → Engine I<span class="job-st" id="job-st-0">idle</span></div>
+            <div class="job-in"><input id="expr-0" value="0.1 + 0.2" spellcheck="false" aria-label="Calculation A"><button id="run-0" type="button">Run</button></div>
+            <div class="job-bar" id="job-bar-0"><i></i><i></i><i></i><i></i><i></i></div><div class="job-out mono-sm" id="job-out-0"></div></div>
+        <div class="job" id="job-1"><div class="job-h"><span class="dot3" style="background:#00f2ff"></span>B → Engine II<span class="job-st" id="job-st-1">idle</span></div>
+            <div class="job-in"><input id="expr-1" value="0.3" spellcheck="false" aria-label="Calculation B"><button id="run-1" type="button">Run</button></div>
+            <div class="job-bar" id="job-bar-1"><i></i><i></i><i></i><i></i><i></i></div><div class="job-out mono-sm" id="job-out-1"></div></div>
+        <div class="job" id="job-2"><div class="job-h"><span class="dot3" style="background:#ffd700"></span>C → Engine III<span class="job-st" id="job-st-2">idle</span></div>
+            <div class="job-in"><input id="expr-2" value="3/10" spellcheck="false" aria-label="Calculation C"><button id="run-2" type="button">Run</button></div>
+            <div class="job-bar" id="job-bar-2"><i></i><i></i><i></i><i></i><i></i></div><div class="job-out mono-sm" id="job-out-2"></div></div>
+    </div>
+    <div class="job-ctl">
+        <span>Presets:</span>
+        <button class="chip" type="button" data-preset="ieee">IEEE trap (equal)</button>
+        <button class="chip" type="button" data-preset="ceiling">64-bit ceiling (equal)</button>
+        <button class="chip" type="button" data-preset="pyth">Pythagoras (equal)</button>
+        <button class="chip" type="button" data-preset="mixed">three different</button>
+        <button class="chip" type="button" data-preset="approx">approximate</button>
+        <span style="flex:1"></span>
+        <button id="run-all" type="button" title="All three enter on the same gate and land on the same pulse">Run all · aligned</button>
+        <button id="run-stagger" type="button" title="A enters now, B one wheel turn later, C two turns later: A and B are held in memory until C lands">Run staggered · async</button>
+    </div>
+</section>
+
+<div class="grid">
+    <!-- Panel A -->
+    <section class="panel" id="panel-a" aria-label="Panel A: three engines, three calculations">
+        <h2>A · Three engines, three calculations <span class="tag t-DEFINITION" data-basis="The three engines of Part 2: Systems I, II, III at their log radii, turned by σˢ (120° about (1, 1, 1)), pure Lemma 4 tier frames, counter-rotating helices. Each job's head visits node k of its current tier on every pulse; the trail is drawn in the helices' co-rotating frame, where Layer B evaluates nodes.">DEFINITION</span></h2>
+        <p class="sub">Each calculation's head <span class="cls-dot" style="background:#ff0055"></span>A <span class="cls-dot" style="background:#00f2ff"></span>B <span class="cls-dot" style="background:#ffd700"></span>C winds from T4 to T0 of its engine and leaves a trail, with a marker where each tier begins. The faint line joins the heads, which always sit on the same node. On convergence the landing triangle appears with its exact closure P₄* (white) and the inferred fourth P₄ (diamond), which slides into the core. Memory beads: each value on its engine's outer manifold, the parity Y (gold) on the inner manifolds.</p>
+        <div id="space">
+            <div class="msg" id="space-msg">Loading Three.js r158…</div>
+            <canvas id="gears" width="380" height="165" aria-label="12/10/8 gear chain"></canvas>
+            <div id="scale-note"></div>
+        </div>
+    </section>
+
+    <!-- Panel B -->
+    <section class="panel" id="panel-b" aria-label="Panel B: the convergence core">
+        <h2>B · Convergence core <span class="tag t-PROVEN" data-basis="The crystal of Part 2 on the monograph's geometry: Cube 1 with Δ₁ ∪ −Δ₁ (Proposition 7.16), the nine C₉ rays of Lemma 8.2, the poles ±(1, 1, 1), and three (2,3) trefoils (Lemma 8 Step 6) on the golden carrier (Proposition 6.5). Here each TwistorPair is one calculation.">§7.5 · Lemma 8</span></h2>
+        <p class="sub">The Part 2 crystal with its roles reversed. Each TwistorPair is one calculation. It starts outside the lattice and its two streams converge as the job winds inward, becoming one stream when the result latches. The core appears when all three have converged, placed by the Proposition 7.14 gauge of the three results: on the axis when they agree, off it when they differ. If memory parity fails, the trefoils shear.</p>
+        <div id="crystal"><div class="msg" id="crystal-msg">Loading…</div><span id="sol-state" class="sol-tol">IDLE</span><span id="sol-step"></span></div>
+        <div class="crys-play"><span>STEP <span id="step-count">000</span>/720</span><div id="progress-container" title="The outer gear within this turn (720 frames = 60 pulses)"><div id="progress-fill"></div></div></div>
+        <div class="crys-ctl">
+            <label>Micro-twist <span class="v" id="c-twist-v">2.50</span><input type="range" id="c-twist" min="0" max="15" step="0.01" value="2.5"></label>
+            <label>Buckle radius <span class="v" id="c-buckle-v">3.0</span><input type="range" id="c-buckle" min="0.5" max="8" step="0.1" value="3"></label>
+            <label>Inverse sep <span class="v" id="c-sep-v">0.8</span><input type="range" id="c-sep" min="0.1" max="2" step="0.1" value="0.8"></label>
+            <label>Torus radius <span class="v" id="c-torus-v">20.2</span><input type="range" id="c-torus" min="10" max="40" step="0.1" value="20.2" disabled></label>
+            <label>Z-scale <span class="v" id="c-z-v">10.0</span><input type="range" id="c-z" min="5" max="30" step="0.1" value="10" disabled></label>
+            <label>Pole height <span class="v" id="c-pole-v">34.6</span><input type="range" id="c-pole" min="10" max="50" step="0.1" value="34.6" disabled></label>
+        </div>
+        <div class="crys-checks">
+            <label title="Lock the carrier to the monograph: golden radii with R + r = √(8/3) so the lobes sit on the C9 rays (Lemma 8.2), z-scale 1, poles at ±(1,1,1). Units are the crystal file's: 20 per cubit."><input type="checkbox" id="c-lock" checked> Lemma 8.2 geometry</label>
+            <label><input type="checkbox" id="c-lattice" checked> 64-voxel lattice</label>
+            <label><input type="checkbox" id="c-bridge" checked> Bridges</label>
+            <label><input type="checkbox" id="c-nodes" checked> Nodes</label>
+            <label><input type="checkbox" id="c-lemma" checked> Lemma objects</label>
+            <label><input type="checkbox" id="c-scope"> Orthogonal scope</label>
+            <label><input type="checkbox" id="c-spin"> Spinor turn</label>
+        </div>
+        <div class="sec">
+            <h3>The 4 × 4 memory layer, §7.7 <span class="tag t-PROVEN" data-basis="Monograph §7.7: 12 boundary cells in ring order and 4 interior cells. Here ring cell j holds (word j mod 3, structure ⌊j/3⌋) of the three newest memory words, structure 0–2 = A, B, C and 3 = the parity Y. So each word's group of four is an orbit of the 90° rotation (shift by 3), as Part 2's classes are. The interior holds the newest word's gauge s, Re z, b − c and the TQF ratio χ.">§7.7</span></h3>
+            <div class="hud" id="hud"></div>
+        </div>
+        <div class="sec">
+            <h3>Convergence gauge, Proposition 7.14 <span class="tag t-PROVEN" data-basis="Proposition 7.14 Part 1: three channels (a, b, c) are recovered exactly from s = a + b + c and z = a + ωb + ω²c. Here a, b, c are the three results, z is kept exactly as (a − (b + c)/2, b − c), and the recovery is re-checked in BigInt. s is the total Y.">Prop 7.14</span></h3>
+            <div class="kv" id="gauge-out"></div>
+        </div>
+    </section>
+
+    <!-- Panel C -->
+    <section class="panel" id="panel-c" aria-label="Panel C: quadrance out and memory">
+        <h2>C · Quadrance out and memory <span class="tag t-PROVEN" data-basis="Lemma 5 Part 6(a) (TQF in Gram form), Lemma 4 Part 2 (Weitzenböck), Proposition G1 and Proposition 7.11 (one erasure per group of four is rebuilt exactly), Lemma 15 Part 3 (recursive Merkle chain).">exact</span></h2>
+        <div class="sec">
+            <h3>Quadrance out: the landing triangle <span class="tag t-PROVEN" data-basis="When the third job lands, the three landing nodes (T0, node 29, one per engine) are rationalized at 2⁻²⁴ in each engine's cubit frame, turned exactly by σˢ, and read out automatically: Q₁, Q₂, Q₃, A_R in both forms (Lemma 5 Part 6(a)), χ (Lemma 4 Part 2) and the exact closure P₄* = P_II + P_III − P_I. Each node's phase is shifted by Δφ = κ(π/6)tanh(d), d = (x − x̄)/(|x̄| + 1), the result's deviation from the mean [DEFINITION], so the triangle is equilateral exactly when the three results agree.">Lemma 5 · 4</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>word</th><th>Q₁</th><th>Q₂</th><th>Q₃</th><th>A_R poly = Gram</th><th>χ (≤ 1/√3)</th><th>Δφ A · B · C (mrad)</th><th>state</th></tr></thead><tbody id="tqf-rows"></tbody></table></div>
+            <div class="kv" id="quad-out" style="margin-top:6px"></div>
+        </div>
+        <div class="sec">
+            <h3>Memory: outer and inner manifolds <span class="tag t-PROVEN" data-basis="Each converged word is a group of four: A, B, C on the outer manifolds (T4) of Engines I, II, III, and their parity Y = A + B + C on the inner manifold (T0). Either side restores the other: one lost value per word is rebuilt exactly (Proposition G1, Proposition 7.11). Words are written at address = word number mod 30, the node of the wheel where they are drawn. Each word also keeps the Lemma 15 Merkle chain of its four tiles, which locates an altered cell.">G1 · 7.11 · 15</span></h3>
+            <div class="tbl-wrap"><table class="res quad"><thead><tr><th>addr</th><th>A · T4 I</th><th>B · T4 II</th><th>C · T4 III</th><th>Y · T0</th><th>parity</th><th>chain</th><th>word</th></tr></thead><tbody id="mem-rows"></tbody></table></div>
+            <div class="mono-sm" id="mem-out" style="margin-top:4px"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><button id="mem-restore" type="button">Restore all</button><button id="mem-alter" type="button">Alter one cell</button><button id="mem-repair" type="button">Locate and repair</button></div>
+            <div class="mono-sm" id="mem-act" style="margin-top:4px"></div>
+        </div>
+        <div class="sec">
+            <h3>Tiles and the memory root <span class="tag t-DEFINITION" data-basis="§6.1 Table 4 fields, Form 3. Each memory cell is a 64-bit tile: step [63:61] from the outer gear at the convergence pulse, wheel sector of node 29, structure bits 0–2 for A, B, C and 3 for Y, gate low bits = address, slot = 4·(address mod 3) + structure, binary32 core. Each leaf is the tile followed by the exact value (Lemma 15 Part 3); the South Halo is a pre-filter only (Lemma 15 Part 2).">§6.1 · 15</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>newest word</th><th>A</th><th>B</th><th>C</th><th>Y</th></tr></thead><tbody id="tile-rows"></tbody></table></div>
+            <div class="mono-sm" id="root-out" style="margin-top:6px"></div>
+        </div>
+    </section>
+</div>
+
+<!-- Panel D -->
+<section class="panel" id="panel-d" aria-label="Panel D: lemma compliance">
+    <h2>D · Fifteen-Lemma compliance, Part 2 reversed <span class="tag t-PROVEN" data-basis="Each row names the monograph result that governs a part of this page and re-checks it live where it applies.">live</span></h2>
+    <p class="sub">How the convergence calculator uses the monograph, and which of its choices are definitions. <span id="lemma-sum"></span></p>
+    <div class="tbl-wrap"><table class="res lemmas"><thead><tr><th>result</th><th>what it governs on this page</th><th>live check</th><th>result</th></tr></thead><tbody id="lemma-rows"></tbody></table></div>
+</section>
+
+<div class="logbar">
+    <h2>Telemetry log</h2>
+    <span id="vsum"></span>
+    <button id="btn-clear" type="button">Clear</button>
+</div>
+<div id="log" role="log" aria-live="polite"></div>
+
+<ul class="notes" id="notes">
+    <li><strong>What is reversed.</strong> Part 2 analyses: one measured total per class is split into three systems' models and the residual, the emergent fourth. This page composes: three independent results go in, and their exact total is the fourth. In both, the four make a group whose any one member is fixed by the other three (Proposition G1). Part 2's lock means the three engines agree about the data; here it means the three calculations agree with each other.</li>
+    <li><strong>One clock, three schedules.</strong> All three engines run on engine v10's master clock (pulse p, node k = p mod 30). A job may be submitted at any moment, but it waits on the outer manifold until the wheel reaches node 0. It then spends one full wheel turn on each tier: T4 ingest, T3 compile, T2 and T1 evaluate, T0 reduce and latch, landing on node 29 after 150 pulses. Jobs started on different turns are at different depths, yet every engine always samples the same node, so their results can be combined with no clock conversion. A job that lands first is held in memory until the others arrive <span class="tag t-DEFINITION" data-basis="The arithmetic is exact and finishes at submission; what the clock schedules is when each of its steps is applied and shown. This mirrors engine v10, which also resolves a calculation over one 150-pulse traversal.">DEFINITION</span>.</li>
+    <li><strong>Quadrance out.</strong> On convergence the page reads out, with no further input, the Triple-Quad Formula of the three landing nodes: three quadrances, the quadrea in two exact forms, the ratio χ and the exact closure P₄*. The triangle encodes agreement, not the values themselves. Values are kept exactly in memory, which is why the readout and the memory are separate.</li>
+    <li><strong>Memory on both manifolds.</strong> A, B, C are written to the outer manifolds and Y to the inner manifold, at the word's address on the wheel. Erase any one cell of a word (click it) and it is rebuilt from the other three. "Alter one cell" changes a stored value by 2⁻²⁴ without updating the others. Parity then detects it, the Merkle chain locates it (the deepest layer that differs is the altered leaf), and the parity rebuilds it.</li>
+    <li><strong>Shared with Part 2.</strong> The engines, the exact frames, the cross-engine TQF, the crystal, the gauge, the §7.7 layer and the tiles are Part 2's code, built from the same source.</li>
+</ul>
+</div>
+
+<!-- Three.js r158 (classic build); falls back to jsdelivr and unpkg copies of the same release if cdnjs has no r158 path -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js" onerror="window.__threeFallback = true"></script>
+<script>
+// ===== CORE:BEGIN =====
+// ---------- Python-compatible number formatting (for line-by-line parity with the script) ----------
+const pyExp = (s) => s.replace(/e([+-])(\d)$/, "e$10$2");
+const fE = (x, p) => pyExp(x.toExponential(p));
+const fF = (x, p, w = 0) => x.toFixed(p).padStart(w);
+const fD = (n, w = 0) => String(n).padStart(w);
+function fG(x, p) {
+    if (x === 0) return "0";
+    const e = Number(x.toExponential(p - 1).split("e")[1]);
+    const strip = (m) => (m.includes(".") ? m.replace(/0+$/, "").replace(/\.$/, "") : m);
+    if (e < -4 || e >= p) { const [m, ex] = x.toExponential(p - 1).split("e"); return pyExp(strip(m) + "e" + ex); }
+    return strip(x.toFixed(Math.max(0, p - 1 - e)));
+}
+const pyFloat = (x) => (Number.isInteger(x) ? x.toFixed(1) : String(x));
+const pyStrList = (a) => "[" + a.map((s) => `'${s}'`).join(", ") + "]";
+
+// ---------- Exact rationals (BigInt) ----------
+const absB = (a) => (a < 0n ? -a : a);
+function gcdB(a, b) { a = absB(a); b = absB(b); while (b) { [a, b] = [b, a % b]; } return a; }
+class Fraction {
+    constructor(num, den = 1n) {
+        let n = BigInt(num), d = BigInt(den);
+        if (d === 0n) throw new RangeError("Fraction with zero denominator");
+        if (d < 0n) { n = -n; d = -d; }
+        const g = gcdB(n, d);
+        this.n = n / g; this.d = d / g;
+    }
+    add(o) { return new Fraction(this.n * o.d + o.n * this.d, this.d * o.d); }
+    sub(o) { return new Fraction(this.n * o.d - o.n * this.d, this.d * o.d); }
+    mul(o) { return new Fraction(this.n * o.n, this.d * o.d); }
+    div(o) { return new Fraction(this.n * o.d, this.d * o.n); }
+    neg() { return new Fraction(-this.n, this.d); }
+    eq(o) { return this.n === o.n && this.d === o.d; }
+    isZero() { return this.n === 0n; }
+    toNumber() { return Number(this.n) / Number(this.d); }
+    toString() { return this.d === 1n ? this.n.toString() : `${this.n}/${this.d}`; }
+    // Rationalize a float at declared precision 2^-k (Layer A3): round(x * 2^k) / 2^k
+    static fromFloat(x, k) { const s = 2 ** k; return new Fraction(BigInt(Math.round(x * s)), 1n << BigInt(k)); }
+}
+Fraction.ZERO = new Fraction(0n); Fraction.ONE = new Fraction(1n); Fraction.TWO = new Fraction(2n);
+
+// ---------- Exact quaternions over Q: [w, x, y, z] ----------
+function qmul(a, b) {
+    const [w1, x1, y1, z1] = a, [w2, x2, y2, z2] = b;
+    return [
+        w1.mul(w2).sub(x1.mul(x2)).sub(y1.mul(y2)).sub(z1.mul(z2)),
+        w1.mul(x2).add(x1.mul(w2)).add(y1.mul(z2)).sub(z1.mul(y2)),
+        w1.mul(y2).sub(x1.mul(z2)).add(y1.mul(w2)).add(z1.mul(x2)),
+        w1.mul(z2).add(x1.mul(y2)).sub(y1.mul(x2)).add(z1.mul(w2))
+    ];
+}
+const qconj = (a) => [a[0], a[1].neg(), a[2].neg(), a[3].neg()];
+function qinv(a) { const n = a.reduce((s, x) => s.add(x.mul(x)), Fraction.ZERO); return qconj(a).map((x) => x.div(n)); }
+const Q_ONE = [Fraction.ONE, Fraction.ZERO, Fraction.ZERO, Fraction.ZERO];
+const qprod = (...qs) => qs.reduce((p, q) => qmul(p, q), Q_ONE);
+const qeq = (a, b) => a.every((x, i) => x.eq(b[i]));
+// Cayley map (Lemma 9 Part 3): (u1, u2, u3) in Q^3 -> rational unit quaternion
+function cayleyMap(u1, u2, u3) {
+    const n2 = u1.mul(u1).add(u2.mul(u2)).add(u3.mul(u3));
+    const d = Fraction.ONE.add(n2);
+    return [Fraction.ONE.sub(n2).div(d), u1.mul(Fraction.TWO).div(d), u2.mul(Fraction.TWO).div(d), u3.mul(Fraction.TWO).div(d)];
+}
+
+// ---------- Python's random module (MT19937, seed by init_by_array, randint via getrandbits) ----------
+class PyRandom {
+    constructor(seed) {
+        this.mt = new Uint32Array(624); this.i = 625;
+        const key = []; let s = BigInt(seed); if (s < 0n) s = -s;
+        do { key.push(Number(s & 0xffffffffn)); s >>= 32n; } while (s > 0n);
+        this.initByArray(key);
+    }
+    initGenrand(s) {
+        const mt = this.mt; mt[0] = s >>> 0;
+        for (let i = 1; i < 624; i++) { const p = mt[i - 1] ^ (mt[i - 1] >>> 30); mt[i] = (Math.imul(1812433253, p) + i) >>> 0; }
+        this.i = 624;
+    }
+    initByArray(key) {
+        this.initGenrand(19650218); const mt = this.mt; let i = 1, j = 0;
+        for (let k = Math.max(624, key.length); k; k--) {
+            const p = mt[i - 1] ^ (mt[i - 1] >>> 30);
+            mt[i] = ((mt[i] ^ Math.imul(p, 1664525)) + key[j] + j) >>> 0; i++; j++;
+            if (i >= 624) { mt[0] = mt[623]; i = 1; } if (j >= key.length) j = 0;
+        }
+        for (let k = 623; k; k--) {
+            const p = mt[i - 1] ^ (mt[i - 1] >>> 30);
+            mt[i] = ((mt[i] ^ Math.imul(p, 1566083941)) - i) >>> 0; i++;
+            if (i >= 624) { mt[0] = mt[623]; i = 1; }
+        }
+        mt[0] = 0x80000000;
+    }
+    uint32() {
+        const mt = this.mt;
+        if (this.i >= 624) {
+            for (let k = 0; k < 624; k++) {
+                const y = (mt[k] & 0x80000000) | (mt[(k + 1) % 624] & 0x7fffffff);
+                mt[k] = mt[(k + 397) % 624] ^ (y >>> 1) ^ (y & 1 ? 0x9908b0df : 0);
+            }
+            this.i = 0;
+        }
+        let y = mt[this.i++];
+        y ^= y >>> 11; y ^= (y << 7) & 0x9d2c5680; y ^= (y << 15) & 0xefc60000; y ^= y >>> 18;
+        return y >>> 0;
+    }
+    getrandbits(k) { return this.uint32() >>> (32 - k); } // k <= 32 is all the script needs
+    randbelow(n) { const k = Math.floor(Math.log2(n)) + 1; let r = this.getrandbits(k); while (r >= n) r = this.getrandbits(k); return r; }
+    randint(a, b) { return a + this.randbelow(b - a + 1); }
+}
+
+// ---------- Physics constants (Layer A, floating point; same values as the script) ----------
+const PHYS = { G: 6.67430e-11, c: 299792458.0, GMsun: 1.3271244e20, pc: 3.0856775814913673e16, AU: 149597870700.0,
+               M_BH: 4.297e6, R0_pc: 8275.0, yr: 365.25 * 86400, mas: Math.PI / 180 / 3600 / 1000 };
+PHYS.GM = PHYS.M_BH * PHYS.GMsun;
+PHYS.R0 = PHYS.R0_pc * PHYS.pc;
+PHYS.rs = 2 * PHYS.GM / PHYS.c ** 2;
+PHYS.tS = 2 * PHYS.GM / PHYS.c ** 3;
+
+// The seven pulsars (SKAO chapter Table 1), in the script's order
+const PULSARS = [
+    { name: "J1746-2849", P: 1.48, DM: 1360, off: 12.3, tau: "266 @1.5 GHz", rem: "" },
+    { name: "J1746-2850", P: 1.08, DM: 941, off: 11.3, tau: "-", rem: "magnetar-like" },
+    { name: "J1746-2856", P: 0.95, DM: 1155, off: 15.6, tau: "450 @1 GHz", rem: "" },
+    { name: "J1745-2900", P: 3.76, DM: 1778, off: 0.04, tau: "1300 @1 GHz", rem: "magnetar" },
+    { name: "J1745-2912", P: 0.19, DM: 1106, off: 14.5, tau: "750 @1 GHz", rem: "" },
+    { name: "J1745-2910", P: 0.98, DM: 1088, off: 12.9, tau: "-", rem: "position poorly known" },
+    { name: "J1746-2829", P: 1.89, DM: 1309, off: 31.8, tau: "67 @1 GHz", rem: "magnetar-like" }
+];
+const projPc = (p) => PHYS.R0 * p.off * 60 * 1000 * PHYS.mas / PHYS.pc;
+
+// ---------- Verification: a line-by-line port of verify_galactic_hierarchy.py ----------
+function runVerification() {
+    const out = []; let failed = null;
+    const log = (tag, ...a) => out.push(`[${tag}] ` + a.join(" "));
+    const check = (tag, cond, msg) => { log(tag, msg, "->", cond ? "PASS" : "FAIL"); if (!cond && !failed) failed = `${tag} ${msg}`; };
+    const { G, c, GMsun, pc, AU, yr, mas, M_BH, R0_pc, GM, R0 } = PHYS;
+    const random = new PyRandom(20261026);
+
+    // A
+    log("A", `M_BH = ${fG(M_BH, 4)} Msun, R0 = ${fF(R0_pc, 0)} pc, GM = ${fE(GM, 4)} m^3/s^2`);
+    // B
+    const rs = 2 * GM / c ** 2, thE_inf = Math.sqrt(2 * rs / R0), tS = 2 * GM / c ** 3;
+    log("B", `Schwarzschild radius r_s = ${fE(rs, 4)} m = ${fF(rs / AU, 4)} AU; angular size at R0 = ${fF(rs / R0 / mas * 1e3, 2)} uas`);
+    log("B", `Einstein radius, source at infinity: ${fF(thE_inf / mas / 1e3, 3)} arcsec`);
+    for (const dls of [0.01, 0.1, 1.0, 30.0]) {
+        const Dls = dls * pc, Ds = R0 + Dls;
+        const th = Math.sqrt(2 * rs * Dls / (R0 * Ds)), RE = Math.sqrt(2 * rs * Dls * R0 / Ds);
+        log("B", `source ${pyFloat(dls).padStart(5)} pc behind Sgr A*: theta_E = ${fF(th / mas, 3, 8)} mas, R_E (at lens) = ${fF(RE / AU, 1, 7)} AU`);
+    }
+    log("B", `Shapiro scale 2GM/c^3 = ${fF(tS, 2)} s`);
+    const sigma = 100e3, r_infl = GM / sigma ** 2 / pc;
+    log("B", `sphere of influence GM/sigma^2 (sigma = 100 km/s) = ${fF(r_infl, 2)} pc`);
+    const M_NSC = 2.5e7;
+    log("B", `nuclear star cluster mass / M_BH = ${fF(M_NSC / M_BH, 1)} (NSC 2.5e7 Msun within ~4.2 pc half-light radius)`);
+    for (const r_pc of [0.097, 1.0, 30.0]) {
+        const eps = GM / (c ** 2 * r_pc * pc);
+        log("B", `weak-field parameter GM/(c^2 r) at ${pyFloat(r_pc)} pc = ${fE(eps, 2)} (second-order terms ~ eps^2 = ${fE(eps ** 2, 1)}, a fraction ~eps of the first-order terms)`);
+    }
+    check("B", GM / (c ** 2 * 0.097 * pc) < 1e-5, "Sgr A* field is weak (GM/c^2 r < 1e-5) at every known pulsar: superposition holds");
+    log("B", `strong-field region: a few r_s ~ ${fF(3 * rs / AU, 2)} AU, where superposition fails (System I inner tiers only)`);
+    // C
+    for (const p of PULSARS) {
+        const rproj = R0 * p.off * 60 * 1000 * mas / pc;
+        const Pk = 2 * Math.PI * Math.sqrt((rproj * pc) ** 3 / GM) / yr;
+        log("C", `${p.name}: P=${fF(p.P, 2, 5)} s DM=${fD(p.DM, 5)} offset ${fF(p.off, 2, 5)}' -> projected ${fF(rproj, 2, 6)} pc; ` +
+                 `Keplerian period about Sgr A* alone at that radius ${fG(Pk, 3)} yr ${p.rem}`);
+    }
+    check("C", PULSARS.length === 7, "seven known pulsars within 100 pc projected");
+    check("C", PULSARS.every((p) => R0 * p.off * 60e3 * mas / pc < 100), "all seven within 100 pc projected at R0 = 8275 pc");
+    const outside = PULSARS.filter((p) => R0 * p.off * 60e3 * mas / pc > r_infl).map((p) => p.name);
+    log("C", `pulsars outside Sgr A*'s sphere of influence (~${fF(r_infl, 1)} pc): ${outside.length} of 7 -> ${pyStrList(outside)}`);
+    // D
+    const v_perp = 236e3, r_mag = 0.097 * pc, a_max = GM / r_mag ** 2;
+    log("D", `magnetar transverse velocity: v/c = ${fE(v_perp / c, 3)} (Doppler scale on P)`);
+    log("D", `max line-of-sight acceleration a/c at r >= 0.097 pc: ${fE(a_max / c, 3)} s^-1 (upper bound: true r >= projected)`);
+    const P_orb = 2 * Math.PI * Math.sqrt(r_mag ** 3 / GM), shapiro_rate = tS * 2 * Math.PI / P_orb;
+    log("D", `Keplerian period at 0.097 pc: ${fF(P_orb / yr, 0)} yr; Shapiro-delay rate bound ~ ${fE(shapiro_rate, 2)} (s/s)`);
+    log("D", `ratio Doppler / Shapiro-rate = ${fE((v_perp / c) / shapiro_rate, 1)}`);
+    check("D", (v_perp / c) / shapiro_rate > 1e4, "Shapiro-rate term is >1e4 below the Doppler term for the magnetar");
+    // E
+    log("E", "astrometric shift theta_E^2/theta if each pulsar sat behind Sgr A* at a depth equal to its projected offset:");
+    for (const p of PULSARS) {
+        const theta = p.off * 60 * 1000 * mas, dls = R0 * theta, th2 = 2 * rs * dls / (R0 * (R0 + dls));
+        log("E", `  ${p.name}: depth ${fF(dls / pc, 2, 6)} pc, shift ${fF(th2 / theta / mas * 1e3, 3, 9)} uas`);
+    }
+    const RE01 = Math.sqrt(2 * rs * 0.1 * pc), p_align = (RE01 / (0.1 * pc)) ** 2, cross_t = RE01 / v_perp / yr;
+    const shift_scale = 2 * rs / R0 / mas * 1e3;
+    log("E", `  all shifts are close to 2 r_s / R0 = ${fF(shift_scale, 2)} uas: with depth = R0*theta, theta_E^2/theta = 2 r_s/(R0 + depth)`);
+    check("E", Math.abs(20.43 - shift_scale) < 0.2, "the astrometric shift is ~2 r_s/R0 ~ 20 uas, independent of offset when depth equals the projected offset");
+    log("E", `magnetar-depth source (0.1 pc): R_E = ${fF(RE01 / AU, 1)} AU, instantaneous alignment probability ~ (R_E/r)^2 = ${fE(p_align, 1)},` +
+             ` Einstein-crossing time at 236 km/s = ${fF(cross_t, 2)} yr`);
+    check("E", p_align < 1e-4, "strong lensing of a 0.1 pc pulsar by Sgr A* is rare (< 1e-4 at any instant)");
+    // F
+    for (const Mg of [1e10, 1e11]) log("F", `2GM/c^3 for ${fE(Mg, 0)} Msun = ${fF(2 * Mg * GMsun / c ** 3 / 86400, 2)} days (a constant offset, absorbed by the timing fit)`);
+    const acc = 2.32e-10;
+    log("F", `Gaia EDR3 solar-system acceleration ${fE(acc, 2)} m/s^2 -> aberration drift ${fF(acc / c * yr / mas * 1e3, 2)} uas/yr ` +
+             "(published 5.05 +- 0.35 uas/yr)");
+    check("F", Math.abs(acc / c * yr / mas * 1e3 - 5.05) < 0.1, "acceleration reproduces the published 5.05 uas/yr drift");
+    log("F", `same acceleration as a pulsar period-derivative term a/c = ${fE(acc / c, 2)} s^-1`);
+    // G
+    const k = 4.740470463, mu_l = 6.411, mu_b = 0.219;
+    const V_tot = k * mu_l * R0_pc / 1000, W_tot = k * mu_b * R0_pc / 1000;
+    log("G", `Sgr A* apparent motion -> (Theta0 + V_sun) = ${fF(V_tot, 1)} km/s, W_sun = ${fF(W_tot, 2)} km/s at R0 = ${fF(R0_pc, 0)} pc`);
+    log("G", `with V_sun = 12.24 km/s (Schoenrich et al. 2010): Theta0 = ${fF(V_tot - 12.24, 1)} km/s`);
+    log("G", "Reid & Brunthaler 2020 report the residual (intrinsic Sgr A* motion): -0.58 +- 2.23 km/s (rotation), " +
+             "-0.85 +- 0.75 km/s (toward NGP): closure consistent with zero");
+    log("G", `R0 systematic (33 pc) alone moves (Theta0+V_sun) by ${fF(k * mu_l * 0.033, 2)} km/s`);
+    // H: exact arithmetic
+    const F = (n, d = 1) => new Fraction(BigInt(n), BigInt(d));
+    const rq = (scale = 9) => {
+        const u = [0, 1, 2].map(() => { const n = random.randint(-scale, scale); return F(n, random.randint(1, scale)); });
+        return cayleyMap(u[0], u[1], u[2]);
+    };
+    // H1
+    let ok = true;
+    for (let i = 0; i < 2000; i++) {
+        const [I, II, III, R] = [0, 1, 2, 3].map(() => { const n = random.randint(-(10 ** 6), 10 ** 6); return F(n, random.randint(1, 10 ** 3)); });
+        const T = I.add(II).add(III).add(R);
+        ok = ok && T.sub(II).sub(III).sub(R).eq(I) && T.sub(I).sub(III).sub(R).eq(II) && T.sub(I).sub(II).sub(R).eq(III) && T.sub(I).sub(II).sub(III).eq(R);
+    }
+    check("H1", ok, "2000 exact cases: any one of {I, II, III, residual} is recovered from the measured total and the other three");
+    { const T = F(7), I = F(2); const pairs = new Set(); for (let n = 0; n < 50; n++) { const x = F(n); pairs.add(`${x}|${T.sub(I).sub(F(1)).sub(x)}`); }
+      check("H1", pairs.size === 50, "two unknown components with one total: 50 distinct consistent pairs (not recoverable)"); }
+    // H2
+    let ok_open = true, ok_detect = true, ok_cyc = true;
+    for (let i = 0; i < 500; i++) {
+        const H1 = rq(), H2 = rq(), H3 = rq();
+        const H4_meas = qinv(qprod(H1, H2, H3));
+        ok_open = ok_open && qeq(qprod(H1, H2, H3, H4_meas), Q_ONE);
+        const eps = rq(50);
+        if (!qeq(eps, Q_ONE)) ok_detect = ok_detect && !qeq(qprod(H1, qmul(eps, H2), H3, H4_meas), Q_ONE);
+        const H4_cyc = qinv(qprod(H1, qmul(eps, H2), H3));
+        ok_cyc = ok_cyc && qeq(qprod(H1, qmul(eps, H2), H3, H4_cyc), Q_ONE);
+    }
+    check("H2", ok_open, "500 exact cases: four independently measured frame legs close, H1H2H3H4 = 1");
+    check("H2", ok_detect, "500 exact cases: an error in any one measured leg breaks closure (open convention detects it)");
+    check("H2", ok_cyc, "500 exact cases: if the fourth leg is computed from the other three, closure holds even with the error (vacuous)");
+    // H3
+    const classes = ["astrometry", "timing", "velocity"], sides = ["model", "data"];
+    const slots = Array.from({ length: 6 }, (_, k) => [classes[k % 3], sides[k % 2]]);
+    const slotStr = "{" + slots.map(([a, b], k) => `${k}: ('${a}', '${b}')`).join(", ") + "}";
+    check("H3", new Set(slots.map((s) => s.join())).size === 6, `k -> (k mod 3, k mod 2) is a bijection Z/6 -> C3 x C2: ${slotStr}`);
+    // H4
+    const Rn = [0, 1, 2, 3, 4].map((n) => 5 * n * n + 15 * n + 15);
+    const systems = [["I", rs / pc, 2.0], ["II", 2.0, 200.0], ["III", 200.0, 1.0e5]];
+    const isclose = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(Math.abs(a), Math.abs(b));
+    for (const [name, r_in, r_out] of systems) {
+        const shells = [0, 1, 2, 3, 4].map((n) => r_in * (r_out / r_in) ** ((Rn[n] - Rn[0]) / (Rn[4] - Rn[0])));
+        const mono = shells.every((s, i) => i === 4 || s < shells[i + 1]);
+        const ends = isclose(shells[0], r_in) && isclose(shells[4], r_out);
+        check("H4", mono && ends, `System ${name}: tiers at r = ` + shells.map((s) => fG(s, 3)).join(", ") + " pc (monotone, exact ends)");
+    }
+    log("H4", "fractions (R_n - R_0)/(R_4 - R_0) =", pyStrList([0, 1, 2, 3, 4].map((n) => F(Rn[n] - Rn[0], Rn[4] - Rn[0]).toString())));
+    // H5
+    ok = true;
+    for (let i = 0; i < 500; i++) {
+        const A = rq(), Iq = rq();
+        const E = qprod(A, qinv(Iq), qinv(A));
+        ok = ok && E[0].eq(Iq[0]) && qeq(qprod(A, Iq, qinv(A), E), Q_ONE);
+    }
+    check("H5", ok, "500 exact cases: frame change E = A I^-1 A^-1 closes A I A^-1 E = 1 and keeps Re(E) = Re(I)");
+    // H6
+    const g = (a, b) => (b ? g(b, a % b) : a);
+    check("H6", g(7, 6) === 1 && g(7, 30) === 1 && g(7, 60) === 1, "7 is coprime to 6, 30 and 60: no equal partition of the seven pulsars over the engine's channels");
+    check("H6", PULSARS.filter((p) => R0 * p.off * 60e3 * mas / pc <= 2.0).length === 1 && PULSARS.length - 1 === 6,
+          "placement by radius: 1 pulsar in System I (< 2 pc), 6 in System II (2-200 pc), 0 in System III");
+    out.push("");
+    out.push(failed ? `FAILED: ${failed}` : "All checks passed.");
+    return out;
+}
+// ===== CORE:END =====
+
+
+// =====================================================================
+// Engine v10 structures (kept exactly)
+// =====================================================================
+const TIERS_SPEC = [
+    { n: 0, W: 16, R: 15,  r: 4,  freq: 96, rotAxis: 'Z' },
+    { n: 1, W: 14, R: 35,  r: 6,  freq: 84, rotAxis: 'X' },
+    { n: 2, W: 12, R: 65,  r: 8,  freq: 72, rotAxis: 'Z' },
+    { n: 3, W: 10, R: 105, r: 10, freq: 60, rotAxis: 'X' },
+    { n: 4, W: 8,  R: 155, r: 12, freq: 48, rotAxis: 'Z' }
+];
+const TOTAL_NODES = 30, TOTAL_CALC_PULSES = 150;
+const tensionAngleDeg = 180, torsionAngleDeg = 150, holonomyDrift = 0.0;
+const currentClutchState = { eta: 1.0 };
+function getTierOrientationQuat(tierId) {
+    const tier = TIERS_SPEC[tierId];
+    const euler = new THREE.Euler(0, 0, 0, 'XYZ');
+    if (tier.rotAxis === 'X') euler.x = Math.PI / 2;
+    const tensionRad = ((tensionAngleDeg - 180) * Math.PI) / 180;
+    const slipRad = ((1.0 - currentClutchState.eta) * 28 + holonomyDrift * 50) * (Math.PI / 180);
+    const torsionRad = ((torsionAngleDeg - 150) * Math.PI) / 180;
+    if (tierId >= 3) {
+        euler.y = tensionRad;
+    } else if (tierId === 2) {
+        euler.z = torsionRad + slipRad * 0.5;
+        euler.y = tensionRad * 0.25;
+    } else {
+        euler.z = torsionRad + slipRad;
+        euler.y = -torsionRad * 0.35;
+    }
+    return new THREE.Quaternion().setFromEuler(euler);
+}
+function getNodeTelemetry(k, stageIdx) {
+    const currentTierId = Math.max(0, Math.min(4, 4 - stageIdx));
+    let upperTierId, lowerTierId;
+    if (currentTierId === 4) { upperTierId = 3; lowerTierId = 2; }
+    else if (currentTierId === 0) { upperTierId = 2; lowerTierId = 1; }
+    else { upperTierId = currentTierId + 1; lowerTierId = currentTierId - 1; }
+    const curTier = TIERS_SPEC[currentTierId], upperTier = TIERS_SPEC[upperTierId], lowerTier = TIERS_SPEC[lowerTierId];
+    const theta = (k / TOTAL_NODES) * Math.PI * 2;
+    const c3Phase = (k % 3) * ((2 * Math.PI) / 3);
+    const c2Chiral = (k % 2 === 0) ? 1 : -1;
+    const phiCur = curTier.W * theta * c2Chiral + c3Phase;
+    const phiUp  = upperTier.W * (theta + 0.22) * c2Chiral + c3Phase + (2 * Math.PI / 3);
+    const phiLow = lowerTier.W * (theta - 0.22) * c2Chiral + c3Phase + (4 * Math.PI / 3);
+    function tierPointWithDynamics(tier, angTheta, angPhi) {
+        const px = (tier.R + tier.r * Math.cos(angPhi)) * Math.cos(angTheta);
+        const py = (tier.R + tier.r * Math.cos(angPhi)) * Math.sin(angTheta);
+        const pz = tier.r * Math.sin(angPhi);
+        return new THREE.Vector3(px, py, pz).applyQuaternion(getTierOrientationQuat(tier.n));
+    }
+    const pNode = tierPointWithDynamics(curTier, theta, phiCur);
+    const pUpper = tierPointWithDynamics(upperTier, theta + 0.18, phiUp);
+    const pLower = tierPointWithDynamics(lowerTier, theta - 0.18, phiLow);
+    const Q1 = pNode.distanceToSquared(pUpper), Q2 = pNode.distanceToSquared(pLower), Q3 = pUpper.distanceToSquared(pLower);
+    const denomProj = Q1 + Q2 + Q3 + 1e-6;
+    const sumQ = Q1 + Q2 + Q3;
+    const AR = Math.max(0, (sumQ * sumQ) - 2 * (Q1 * Q1 + Q2 * Q2 + Q3 * Q3));
+    const qScale = 0.65 + (Math.sqrt(AR) / (denomProj + 1.0)) * 0.45;
+    return { Q1, Q2, Q3, AR, qScale, projQ: (Q1 + Q2) / denomProj, currentTierId, upperTierId, lowerTierId };
+}
+// drawClockPumpCanvas (v10), with the clock state passed in
+function drawClockPumpCanvas(canvas, outerFrameN, eta, piCycleStepK) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const cx1 = 110, cy1 = H / 2;
+    const outerAng = (outerFrameN / 720) * Math.PI * 2;
+    const midAng = -(outerFrameN / 72) * Math.PI * 2 * eta;
+    const innerAng = (outerFrameN / 10) * Math.PI * 2 * 0.1 + holonomyDrift;
+    function drawGear(cx, cy, radius, teeth, rot, stroke, fill) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.beginPath();
+        for (let i = 0; i < teeth * 2; i++) {
+            const r = (i % 2 === 0) ? radius + 4 : radius - 3;
+            const a = (i / (teeth * 2)) * Math.PI * 2;
+            if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    }
+    drawGear(cx1, cy1, 62, 12, outerAng, '#8b5cf6', 'rgba(139,92,246,0.10)');
+    drawGear(cx1, cy1, 42, 10, midAng, '#2dd4bf', 'rgba(45,212,191,0.10)');
+    drawGear(cx1, cy1, 22, 8, innerAng, '#ff7a3d', 'rgba(255,122,61,0.14)');
+    const cx2 = 280, cy2 = H / 2;
+    ctx.beginPath(); ctx.arc(cx2, cy2, 58, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(245,197,66,0.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+    for (let s = 1; s <= 8; s++) {
+        const a = (s * Math.PI) / 4 - Math.PI / 2, active = (s === piCycleStepK);
+        ctx.beginPath(); ctx.moveTo(cx2 + Math.cos(a) * 14, cy2 + Math.sin(a) * 14); ctx.lineTo(cx2 + Math.cos(a) * 52, cy2 + Math.sin(a) * 52);
+        ctx.strokeStyle = active ? '#f5c542' : (s === 2 || s === 6 ? '#fb923c' : 'rgba(148,163,184,0.35)'); ctx.lineWidth = active ? 2.5 : 1.2; ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(230,232,242,0.85)'; ctx.font = '600 15px ui-monospace, monospace';
+    ctx.fillText('12 · 10 · 8', 66, H - 8); ctx.fillText(`n = ${String(outerFrameN).padStart(3)}/720`, 210, H - 8);
+}
+
+// =====================================================================
+// Systems, tiers, pulsars
+// =====================================================================
+const FRAC = [0, 1 / 7, 5 / 14, 9 / 14, 1];
+const FRAC_STR = ['0', '1/7', '5/14', '9/14', '1'];
+const SYSTEMS = [
+    { id: 'I', name: 'Sgr A* domain', rIn: PHYS.rs / PHYS.pc, rOut: 2.0, colors: [0xff5a36, 0xff8f3d, 0xffc25a], css: '--sys1', yaw: 0 },
+    { id: 'II', name: 'Nuclear region', rIn: 2.0, rOut: 200.0, colors: [0x22d3ee, 0x2dd4bf, 0x7dd3fc], css: '--sys2', yaw: 60 },
+    { id: 'III', name: 'Galaxy', rIn: 200.0, rOut: 100000.0, colors: [0x8b5cf6, 0x6366f1, 0xc4b5fd], css: '--sys3', yaw: 120 }
+];
+function tierRadius(system, n) { const { rIn, rOut } = system; return rIn * Math.pow(rOut / rIn, FRAC[n]); }
+const CLASSES = ['astrometry', 'timing', 'velocity'];
+const UNITS = ['µas', '×10⁻¹⁸ s⁻¹', 'km/s'];
+const SIGMA = [0.5, 0.05, 2.0];           // 1σ per class [DEFINITION]
+const K_RAT = 24;                         // declared rationalization precision 2^-24
+const R_INFL = PHYS.GM / (100e3) ** 2 / PHYS.pc;
+PULSARS.forEach((p, i) => {
+    p.r = projPc(p);
+    p.sys = p.r <= 2 ? 0 : p.r <= 200 ? 1 : 2;
+    p.pa = (i * 137.50776) * Math.PI / 180;   // illustrative position angle [DEFINITION]
+    p.theta = p.off * 60 * 1000 * PHYS.mas;   // radians
+});
+const MAGNETAR = PULSARS.findIndex(p => p.name === 'J1745-2900');
+const DISPLAY_ORDER = ['J1745-2900', 'J1746-2850', 'J1746-2849', 'J1745-2910', 'J1745-2912', 'J1746-2856', 'J1746-2829'].map(n => PULSARS.findIndex(p => p.name === n));
+
+// =====================================================================
+// Layer A: physics (floating point)
+// =====================================================================
+const M_NSC = 2.5e7, A_NSC = 4.2 / (1 + Math.SQRT2);  // Hernquist scale for a 4.2 pc half-mass radius
+const M_II = r => M_NSC * r * r / ((r + A_NSC) ** 2);
+const ACC_GAIA = 2.32e-10, V_REFLEX = 4.740470463 * 6.411 * PHYS.R0_pc / 1000;
+const T_REF = 2026 + 298 / 365.25;                    // 2026 October 26
+const EPOCH_YR = 0.25;
+const V_MAG = 236e3, DLS_MAG = 0.1;                   // magnetar transverse velocity; lens-event depth (pc)
+const RE_MAG = Math.sqrt(2 * PHYS.rs * DLS_MAG * PHYS.pc);              // Einstein radius at the lens (m)
+const THE_MAG = Math.sqrt(2 * PHYS.rs * DLS_MAG * PHYS.pc / (PHYS.R0 * (PHYS.R0 + DLS_MAG * PHYS.pc)));  // rad
+const TE_YR = RE_MAG / V_MAG / PHYS.yr;                                 // 1.19 yr
+const U0 = 0.3;                                                         // event impact parameter (θ_E units) [DEFINITION]
+const YUKAWA = { alpha: 0.01, lambda: 1.0 };                            // §7.1 test hypothesis [CONJECTURAL]
+function weakShiftUas(Mmsun, theta, depthPc) {
+    const rsM = 2 * Mmsun * PHYS.GMsun / PHYS.c ** 2, Dls = depthPc * PHYS.pc;
+    return 2 * rsM * Dls / (PHYS.R0 * (PHYS.R0 + Dls)) / theta / PHYS.mas * 1e3;
+}
+const centroidShiftUas = u => THE_MAG * u / (u * u + 2) / PHYS.mas * 1e3;
+const magnification = u => (u * u + 2) / (u * Math.sqrt(u * u + 4));
+// Shapiro delay of the source relative to the lens: Δt_S = −(2GM/c³) ln(|r| − r·k̂), with |r| − r·k̂ = b²/(|r| + D)
+function shapiroDelay(bM, dM) { const rr = Math.hypot(bM, dM); return -PHYS.tS * Math.log(bM * bM / (rr + dM)); }
+// Second derivative of the Shapiro delay along b(t)² = b0² + v²τ²: the term it adds to Ṗ/P (s⁻¹)
+function shapiroCurv(tauS, b0, v) { const s = b0 * b0 + v * v * tauS * tauS; return -2 * PHYS.tS * v * v * (b0 * b0 - v * v * tauS * tauS) / (s * s); }
+function eventGeom(tObs) {
+    const ev = state.event; if (!ev) return null;
+    const tau = tObs - ev.t0;                       // years from closest approach
+    if (Math.abs(tau) > 3 * TE_YR) return { active: false, tau };
+    const u = Math.hypot(U0, tau / TE_YR);
+    const edgeU = Math.hypot(U0, 3);
+    const b0 = U0 * RE_MAG, tauS = tau * PHYS.yr, edgeS = 3 * TE_YR * PHYS.yr;
+    return {
+        active: true, tau, u, mu: magnification(u),
+        astro: centroidShiftUas(u) - centroidShiftUas(edgeU),
+        timing: (shapiroCurv(tauS, b0, V_MAG) - shapiroCurv(edgeS, b0, V_MAG)) * 1e18,
+        dShapiro: shapiroDelay(u * RE_MAG, DLS_MAG * PHYS.pc) - shapiroDelay(edgeU * RE_MAG, DLS_MAG * PHYS.pc),
+        thetaPlus: 0.5 * (u + Math.sqrt(u * u + 4)), thetaMinus: 0.5 * (u - Math.sqrt(u * u + 4))
+    };
+}
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(seed) { const r = mulberry32(seed); const u = Math.max(1e-12, r()), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+// Six channels per system for one sightline
+function computeChannels(pi, tObs, epoch) {
+    const p = PULSARS[pi], r = p.r, rm = r * PHYS.pc;
+    const model = [
+        [weakShiftUas(PHYS.M_BH, p.theta, PHYS.R0 * p.theta / PHYS.pc), PHYS.GM / rm ** 2 / PHYS.c * 1e18, Math.sqrt(PHYS.GM / rm) / 1e3],
+        [weakShiftUas(M_II(r), p.theta, PHYS.R0 * p.theta / PHYS.pc), M_II(r) * PHYS.GMsun / rm ** 2 / PHYS.c * 1e18, Math.sqrt(M_II(r) * PHYS.GMsun / rm) / 1e3],
+        [5.04 * (tObs - 2016.0), ACC_GAIA / PHYS.c * 1e18, V_REFLEX]
+    ];
+    const data = model.map((row, s) => row.map((v, c) => v + state.noise * SIGMA[c] * gauss((epoch * 131 + s * 17 + c * 7 + pi * 1009) | 0)));
+    let ev = null;
+    if (state.signal === 'scalar') {
+        for (let s = 0; s < 2; s++) {
+            const f = YUKAWA.alpha * (1 + r / YUKAWA.lambda) * Math.exp(-r / YUKAWA.lambda);
+            data[s][1] += model[s][1] * f;
+            data[s][2] += model[s][2] * (Math.sqrt(1 + f) - 1);
+        }
+    } else if (state.signal === 'lensing' || state.signal === 'shapiro') {
+        ev = eventGeom(tObs);
+        if (ev && ev.active) {
+            data[0][1] += ev.timing;
+            if (state.signal === 'lensing') data[0][0] += ev.astro;
+        }
+    }
+    return { model, data, ev };
+}
+
+// =====================================================================
+// Layer B: exact rational engine
+// =====================================================================
+const RAT = x => Fraction.fromFloat(x, K_RAT);
+const fracAbs = f => (f.n < 0n ? f.neg() : f);
+const fracLe = (a, b) => a.n * b.d <= b.n * a.d;
+const bits = f => Math.max(f.n < 0n ? (-f.n).toString(2).length : f.n.toString(2).length, f.d.toString(2).length);
+function layerB(ch) {
+    return CLASSES.map((cls, c) => {
+        const Ys = [0, 1, 2].map(s => RAT(ch.model[s][c]));
+        const Y = [0, 1, 2].reduce((acc, s) => acc.add(RAT(ch.data[s][c])), Fraction.ZERO);
+        const YR = Y.sub(Ys[0]).sub(Ys[1]).sub(Ys[2]);
+        const identity = Y.eq(Ys[0].add(Ys[1]).add(Ys[2]).add(YR));
+        const recovered = Y.sub(Ys[0]).sub(Ys[2]).sub(YR).eq(Ys[1]);
+        const tolF = Fraction.fromFloat(3 * SIGMA[c] * state.noise * Math.sqrt(3), K_RAT);
+        const status = YR.isZero() ? 'pass' : (fracLe(fracAbs(YR), tolF) ? 'tol' : 'fail');
+        return { Y, Ys, YR, identity, recovered, status, tol: tolF.toNumber() };
+    });
+}
+// Frame legs (floating-point rotations -> rational Cayley quaternions)
+function quatFromMatrix(m) {
+    const t = m[0][0] + m[1][1] + m[2][2]; let w, x, y, z;
+    if (t > 0) { const s = Math.sqrt(t + 1) * 2; w = s / 4; x = (m[2][1] - m[1][2]) / s; y = (m[0][2] - m[2][0]) / s; z = (m[1][0] - m[0][1]) / s; }
+    else if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) { const s = Math.sqrt(1 + m[0][0] - m[1][1] - m[2][2]) * 2; w = (m[2][1] - m[1][2]) / s; x = s / 4; y = (m[0][1] + m[1][0]) / s; z = (m[0][2] + m[2][0]) / s; }
+    else if (m[1][1] > m[2][2]) { const s = Math.sqrt(1 + m[1][1] - m[0][0] - m[2][2]) * 2; w = (m[0][2] - m[2][0]) / s; x = (m[0][1] + m[1][0]) / s; y = s / 4; z = (m[1][2] + m[2][1]) / s; }
+    else { const s = Math.sqrt(1 + m[2][2] - m[0][0] - m[1][1]) * 2; w = (m[1][0] - m[0][1]) / s; x = (m[0][2] + m[2][0]) / s; y = (m[1][2] + m[2][1]) / s; z = s / 4; }
+    return [w, x, y, z];
+}
+const axisAngle = (ax, ang) => { const n = Math.hypot(...ax), s = Math.sin(ang / 2); return [Math.cos(ang / 2), ax[0] / n * s, ax[1] / n * s, ax[2] / n * s]; };
+const fmul = (a, b) => [a[0]*b[0]-a[1]*b[1]-a[2]*b[2]-a[3]*b[3], a[0]*b[1]+a[1]*b[0]+a[2]*b[3]-a[3]*b[2], a[0]*b[2]-a[1]*b[3]+a[2]*b[0]+a[3]*b[1], a[0]*b[3]+a[1]*b[2]-a[2]*b[1]+a[3]*b[0]];
+function exactLeg(q, k) {          // inverse Cayley u = v/(1 + w), rationalized at 2^-k, then the exact Cayley map
+    if (q[0] < 0) q = q.map(v => -v);
+    const u = [q[1], q[2], q[3]].map(v => Fraction.fromFloat(v / (1 + q[0]), k));
+    return cayleyMap(u[0], u[1], u[2]);
+}
+const ICRS_TO_GAL = [[-0.0548755604, -0.8734370902, -0.4838350155], [0.4941094279, -0.4448296300, 0.7469822445], [-0.8676661490, -0.1980763734, 0.4559837762]];
+const D2R = Math.PI / 180;
+function legAngle(q) { const v = Math.hypot(q[1].toNumber(), q[2].toNumber(), q[3].toNumber()); return 2 * Math.atan2(v, Math.abs(q[0].toNumber())); }
+const qbits = q => Math.max(...q.map(f => f.d.toString(2).length));
+function buildLegs(pi, epoch) {
+    const p = PULSARS[pi];
+    const H1 = exactLeg(quatFromMatrix(ICRS_TO_GAL), 20);
+    const H2 = exactLeg(fmul(axisAngle([0, 0, 1], -0.056 * D2R), axisAngle([0, 1, 0], 0.046 * D2R)), 30);
+    const H3 = exactLeg(axisAngle([0, -Math.sin(p.pa), Math.cos(p.pa)], p.theta), 40);
+    const sigLeg = 0.1 * PHYS.mas;                                 // 0.1 mas per independently measured leg [DEFINITION]
+    const un = [0, 1, 2].map(i => state.noise * sigLeg / 4 * gauss((epoch * 7919 + i * 104729 + pi * 31) | 0));
+    const delta = cayleyMap(...un.map(v => Fraction.fromFloat(v, 48)));
+    const H4 = qmul(qinv(qprod(H1, H2, H3)), delta);              // independent measurement of the fourth leg
+    return { legs: [H1, H2, H3, H4], tol: 5 * Math.max(state.noise, 0) * sigLeg };
+}
+// The closure depends only on the sightline, the epoch, the noise level and any injected error, and costs several
+// milliseconds of BigInt work, so it is computed once per such state and reused between pulses
+let frameClosureCache = { key: null, value: null };
+function frameClosure(pi, epoch) {
+    const key = `${pi}|${epoch}|${state.noise}|${state.error ? state.error.leg + ':' + state.error.eps.join(',') : ''}`;
+    if (frameClosureCache.key !== key) frameClosureCache = { key, value: computeFrameClosure(pi, epoch) };
+    return frameClosureCache.value;
+}
+function computeFrameClosure(pi, epoch) {
+    const { legs, tol } = buildLegs(pi, epoch);
+    const L = legs.slice();
+    const err = state.error;
+    if (err) L[err.leg] = qmul(err.eps, L[err.leg]);
+    const open = qprod(L[0], L[1], L[2], L[3]);
+    const openExact = qeq(open, Q_ONE), openAngle = legAngle(open);
+    const H4cyc = qinv(qprod(L[0], L[1], L[2]));                  // the cyclic convention: fourth computed from the others
+    const cyc = qprod(L[0], L[1], L[2], H4cyc);
+    const openStatus = openExact ? 'pass' : (openAngle <= tol ? 'tol' : 'fail');
+    // Theorem 7.18 frame invariance
+    const A = qmul(legs[0], legs[1]), I = legs[2];
+    const E = qprod(A, qinv(I), qinv(A));
+    const reEq = E[0].eq(I[0]), closes = qeq(qprod(A, I, qinv(A), E), Q_ONE);
+    const dir = [0, Math.cos(p_pa(pi)), Math.sin(p_pa(pi))].map(v => Fraction.fromFloat(v, 30));
+    const v = [Fraction.ZERO, ...dir], vr = qprod(A, v, qinv(A));
+    const quad = q => q.slice(1).reduce((s, x) => s.add(x.mul(x)), Fraction.ZERO);
+    return { legs: L, open, openExact, openAngle, openStatus, cycExact: qeq(cyc, Q_ONE), tol, inv: { reEq, closes, quadEq: quad(v).eq(quad(vr)), reI: I[0], reE: E[0] } };
+}
+const p_pa = pi => PULSARS[pi].pa;
+const f32 = new DataView(new ArrayBuffer(4));
+
+// =====================================================================
+// Fifteen-Lemma layer: §6.1 packets, Lemma 15 Merkle chain, Lemma 8 cycle,
+// Proposition 7.11 erasure, and the live compliance checks of Panel D
+// =====================================================================
+const qnorm = q => q.reduce((s, x) => s.add(x.mul(x)), Fraction.ZERO);
+// Exact value of a double as a fraction (for the Form 3 exactness flag)
+function fracOfDouble(x) {
+    if (x === 0) return Fraction.ZERO;
+    const dv = new DataView(new ArrayBuffer(8)); dv.setFloat64(0, x);
+    const hi = dv.getUint32(0), lo = dv.getUint32(4), e = (hi >>> 20) & 0x7ff;
+    let m = (BigInt(hi & 0xfffff) << 32n) | BigInt(lo), E;
+    if (e === 0) E = -1074; else { m |= 1n << 52n; E = e - 1075; }
+    if (hi >>> 31) m = -m;
+    return E >= 0 ? new Fraction(m << BigInt(E), 1n) : new Fraction(m, 1n << BigInt(-E));
+}
+
+// ---------- SHA-256 (FIPS 180-4), synchronous so the chain is recomputed every update ----------
+const SHA_K = Uint32Array.from([0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2]);
+function sha256(msg) {
+    const l = msg.length, nb = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(nb);
+    m.set(msg); m[l] = 0x80;
+    const dv = new DataView(m.buffer);
+    dv.setUint32(nb - 4, (l * 8) >>> 0); dv.setUint32(nb - 8, Math.floor(l / 0x20000000));
+    const H = Uint32Array.from([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]), w = new Uint32Array(64);
+    const rot = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < nb; o += 64) {
+        for (let i = 0; i < 16; i++) w[i] = dv.getUint32(o + 4 * i);
+        for (let i = 16; i < 64; i++) { const a = w[i - 15], b = w[i - 2]; w[i] = (w[i - 16] + (rot(a, 7) ^ rot(a, 18) ^ (a >>> 3)) + w[i - 7] + (rot(b, 17) ^ rot(b, 19) ^ (b >>> 10))) >>> 0; }
+        let [a, b, c, d, e, f, g, h] = H;
+        for (let i = 0; i < 64; i++) {
+            const t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + SHA_K[i] + w[i]) >>> 0;
+            const t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+            h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+        }
+        H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
+    }
+    const out = new Uint8Array(32), odv = new DataView(out.buffer);
+    H.forEach((v, i) => odv.setUint32(4 * i, v));
+    return out;
+}
+const toHex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+const utf8 = s => new TextEncoder().encode(s);
+const concatBytes = (a, b) => { const r = new Uint8Array(a.length + b.length); r.set(a); r.set(b, a.length); return r; };
+const wordBytes = w => Uint8Array.from({ length: 8 }, (_, i) => Number((w >> BigInt(56 - 8 * i)) & 0xffn));
+
+// ---------- 64-bit Einstein Tile, monograph §6.1 Tables 4–5 with the stream use of spec §5.3 ----------
+const WHEEL = [1, 7, 11, 13, 17, 19, 23, 29];                 // (ℤ/30ℤ)×, Lemma 4 Part 5
+const B_PLUS = WHEEL.filter(u => u % 5 === 1 || u % 5 === 4); // quadratic residues mod 5: {1, 11, 19, 29}
+// Wheel field [60:58]: the unit u_i with u_i ≤ k < u_(i+1) on the 30-node wheel (node 0 belongs to 29) [DEFINITION]
+const wheelSector = k => { let u = 7; WHEEL.forEach((w, i) => { if (w <= k) u = i; }); return u; };
+// Step-multiplexed index [47:44] (Table 4): circle phase s ∈ ℤ/9 at steps 1–2, half-cube l at step 3,
+// ghost index 0 (central cell) at step 6, otherwise one of the 12 coordinates of aff(3) (here the stream slot)
+const muxIndex = (step, k, slot) => (step <= 2 ? k % 9 : step === 3 ? k % 16 : step === 6 ? 0 : slot % 12);
+const STRUCT_NAMES = ['System I', 'System II', 'System III', 'residual R'];
+function packTile(f) {
+    return (BigInt(f.step - 1) << 61n) | (BigInt(f.wheel) << 58n) | (BigInt(f.struct) << 56n) | (BigInt(f.gate) << 48n) |
+           (BigInt(f.mux) << 44n) | (BigInt(f.form) << 40n) | (BigInt(f.slot) << 36n) | (BigInt(f.scale) << 32n) | BigInt(f.core >>> 0);
+}
+function decodeTile(w) {
+    const g = (hi, lo) => Number((w >> BigInt(lo)) & ((1n << BigInt(hi - lo + 1)) - 1n));
+    return { step: g(63, 61) + 1, wheel: g(60, 58), struct: g(57, 56), halo: g(63, 56), gate: g(55, 48), comp: g(55, 54), slice: g(53, 48),
+             mux: g(47, 44), form: g(43, 40), slot: g(39, 36), scale: g(35, 32), core: g(31, 0) };
+}
+const hexWord = w => '0x' + w.toString(16).toUpperCase().padStart(16, '0');
+// Twelve streams per update: stream slot 4·class + structure, structure 0–2 = Y_I..Y_III, 3 = Y_R (spec §5.3)
+function makePackets(ck, B) {
+    const out = [];
+    for (let c = 0; c < 3; c++) for (let s = 0; s < 4; s++) {
+        const rat = s < 3 ? B[c].Ys[s] : B[c].YR, v = rat.toNumber(), slot = 4 * c + s;
+        f32.setFloat32(0, v);
+        const core = f32.getUint32(0), exact = fracOfDouble(f32.getFloat32(0)).eq(rat);
+        const word = packTile({ step: ck.piCycleStepK, wheel: wheelSector(ck.k), struct: s, gate: (0 << 6) | (ck.epoch % 64),
+                                mux: muxIndex(ck.piCycleStepK, ck.k, slot), form: 3, slot, scale: 0, core });
+        out.push({ kind: 'data', key: `d:${slot}`, c, s, slot, rat, word, exact });
+    }
+    return out;
+}
+// ---------- Frame-leg packets (spec §5.3: "12–15: the four quaternion components of a frame leg") ----------
+// Stream ID for leg ℓ = (structure bits ℓ, slot 12–15), the same pattern as the data streams (structure s, slot 4c + s)
+// [DEFINITION]. Form 3: one binary32 component per packet, component also in gate bits 55–54. Form 1: the whole leg in one packet.
+const LEG_NAMES = ['H1 ICRS → Galactic', 'H2 Galactic → Sgr A*', 'H3 Sgr A* → pulsar', 'H4 pulsar → observer'];
+const GATE_HOLONOMY = 0b11;   // geometric gate (Forms 0–2): locus 0, C9 offset 0, harmonic flag 11 = holonomy H
+// Form 1 (Table 5): 2Q gcd-reduced and sign-normalized (first non-zero coordinate positive). Core word [DEFINITION of byte order]:
+// bits 31–24 = loss flag (bit 31) + 2w (bits 30–24), bits 23–16 = x, 15–8 = y, 7–0 = z, signed bytes in [−127, 127].
+function hurwitzEncode(q) {
+    const L = q.reduce((l, f) => l / gcdB(l, f.d) * f.d, 1n);
+    let v = q.map(f => 2n * f.n * (L / f.d));
+    const g = v.reduce((a, x) => gcdB(a, x), 0n) || 1n;
+    v = v.map(x => x / g);
+    if ((v.find(x => x !== 0n) || 0n) < 0n) v = v.map(x => -x);
+    const bitsNeeded = Math.max(...v.map(x => absB(x).toString(2).length));
+    let b, loss = false;
+    if (v[0] <= 127n && v.slice(1).every(x => absB(x) <= 127n)) b = v.map(Number);
+    else {   // renormalize to the nearest representable direction on the 7-bit grid and set the loss flag
+        loss = true;
+        let f = q.map(x => x.toNumber()); if ((f.find(x => x !== 0) || 0) < 0) f = f.map(x => -x);
+        const m = Math.max(...f.map(Math.abs)); b = f.map(x => Math.round(x * 127 / m));
+    }
+    const byte = x => (x < 0 ? 256 + x : x) & 0xff;
+    const core = (((loss ? 0x80 : 0) | (b[0] & 0x7f)) << 24 | byte(b[1]) << 16 | byte(b[2]) << 8 | byte(b[3])) >>> 0;
+    return { b, loss, core, bitsNeeded, err: hurwitzAngleError(q, b) };
+}
+function hurwitzDecode(core) {
+    const sb = x => (x > 127 ? x - 256 : x);
+    return { loss: !!(core >>> 31), b: [(core >>> 24) & 0x7f, sb((core >>> 16) & 0xff), sb((core >>> 8) & 0xff), sb(core & 0xff)] };
+}
+// Rotation-angle difference between the exact leg and the decoded direction: 4·asin(|q̂ − b̂|/2) with matched signs
+function hurwitzAngleError(q, b) {
+    const f = q.map(x => x.toNumber()), nb = Math.hypot(...b);
+    if (!nb) return Math.PI;
+    let bh = b.map(x => x / nb); const dot = f.reduce((s, x, i) => s + x * bh[i], 0); if (dot < 0) bh = bh.map(x => -x);
+    return 4 * Math.asin(Math.min(1, Math.hypot(...f.map((x, i) => x - bh[i])) / 2));
+}
+function makeFramePackets(ck, legs, mode) {
+    const out = [], step = ck.piCycleStepK, wheel = wheelSector(ck.k);
+    legs.forEach((q, l) => {
+        if (mode === 'f3') q.forEach((comp, j) => {
+            f32.setFloat32(0, comp.toNumber());
+            const core = f32.getUint32(0), exact = fracOfDouble(f32.getFloat32(0)).eq(comp);
+            const word = packTile({ step, wheel, struct: l, gate: (j << 6) | (ck.epoch % 64), mux: muxIndex(step, ck.k, 12 + j), form: 3, slot: 12 + j, scale: 0, core });
+            out.push({ kind: 'f3', key: `f:${l}:${j}`, leg: l, j, rat: comp, word, exact, leafText: comp.toString() });
+        });
+        else {
+            const h = hurwitzEncode(q);
+            const word = packTile({ step, wheel, struct: l, gate: GATE_HOLONOMY, mux: muxIndex(step, ck.k, 12 + l), form: 1, slot: 12 + l, scale: 0, core: h.core });
+            out.push({ kind: 'f1', key: `f:${l}:q`, leg: l, q, h, word, exact: !h.loss, leafText: q.map(String).join(',') });
+        }
+    });
+    return out;
+}
+// Lemma 15 Part 3: τN = H(GN), τd = H(Gd ‖ τd+1); leaf Gd = tile word ‖ the exact value it stands for
+const leafBytes = p => concatBytes(wordBytes(p.word), utf8(p.leafText !== undefined ? p.leafText : p.rat.toString()));
+function merkleChain(leaves) {
+    const N = leaves.length, tau = new Array(N + 1);
+    tau[N] = sha256(leaves[N - 1]);
+    for (let d = N - 1; d >= 1; d--) tau[d] = sha256(concatBytes(leaves[d - 1], tau[d + 1]));
+    return tau;
+}
+
+// ---------- Lemma 8: the 8-step cycle and its gcd-reduced spinors (1 + i)^k ----------
+const STEP_THETA = ['π/4', 'π/2', '3π/4', 'π', '5π/4', '3π/2', '7π/4', '2π'];
+const GAUSS_STEPS = (() => {
+    const out = []; let re = 1n, im = 0n;
+    for (let k = 1; k <= 8; k++) {
+        [re, im] = [re - im, re + im];                  // multiply by (1 + i)
+        const g = gcdB(re, im) || 1n;
+        out.push({ k, raw: [re, im], red: [re / g, im / g] });
+    }
+    return out;
+})();
+const fmtGauss = ([a, b]) => {
+    const im = b === 0n ? '' : (b === 1n ? 'i' : b === -1n ? '−i' : `${b}i`.replace('-', '−'));
+    if (a === 0n) return im || '0';
+    const re = `${a}`.replace('-', '−');
+    return im ? `${re}${b > 0n ? '+' : ''}${im}` : re;
+};
+const phaseOf = k => (k === 2 ? 'onload' : k === 6 ? 'offload' : 'third');
+
+// ---------- Exact checks that do not depend on the data (computed once) ----------
+const STATIC = (() => {
+    const F = n => new Fraction(BigInt(n), 1n), Z = Fraction.ZERO, O = Fraction.ONE;
+    const T = TIERS_SPEC;
+    const l4p1 = T.every(t => t.r + t.W === 20 && 2 * t.r + 2 * t.W === 40 && t.R === 5 * t.n * t.n + 15 * t.n + 15 && t.r === 2 * t.n + 4 && t.W === 16 - 2 * t.n) && T.reduce((s, t) => s + t.W, 0) === 60;
+    const mm = (A, B) => A.map((r, i) => B[0].map((_, j) => r.reduce((s, _, k) => s + A[i][k] * B[k][j], 0)));
+    const RX = [[1, 0, 0], [0, 0, -1], [0, 1, 0]], RXi = [[1, 0, 0], [0, 0, 1], [0, -1, 0]], RY = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]], RYi = [[0, 0, -1], [0, 1, 0], [1, 0, 0]];
+    const Ue = mm(RY, RXi), Uo = mm(RX, RYi), I3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+    const eqM = (A, B) => A.every((r, i) => r.every((v, j) => v === B[i][j]));
+    const lemmaUe = [[0, -1, 0], [0, 0, 1], [-1, 0, 0]];
+    const axisFixed = (U) => { const v = [-1, 1, 1]; return U.every((r, i) => r.reduce((s, x, j) => s + x * v[j], 0) === v[i]); };
+    const l4p2 = eqM(Ue, lemmaUe) && eqM(mm(Ue, Uo), I3) && eqM(mm(mm(Ue, Ue), Ue), I3) && axisFixed(Ue);
+    const half = new Fraction(1n, 2n), h = [half, half.neg(), half, half];
+    const hp = [Q_ONE]; for (let i = 1; i <= 6; i++) hp.push(qmul(hp[i - 1], h));
+    const l4p4 = qnorm(h).eq(O) && h[0].eq(half) && qeq(hp[3], [O.neg(), Z, Z, Z]) && qeq(hp[6], Q_ONE) && !qeq(hp[2], Q_ONE);
+    const l4p5 = WHEEL.length === 8 && WHEEL.every(u => gcdB(BigInt(u), 30n) === 1n) && B_PLUS.join() === '1,11,19,29';
+    const l7p2 = T.reduce((s, t) => s + t.r, 0) === 5 * T[2].r && T.reduce((s, t) => s + t.W, 0) === 5 * T[2].W && T[2].r === 8 && T[2].W === 12;
+    const windows = GAUSS_STEPS.filter(g => g.red[0] === 0n).map(g => g.k);
+    const l8 = windows.join() === '2,6' && fmtGauss(GAUSS_STEPS[1].red) === 'i' && fmtGauss(GAUSS_STEPS[5].red) === '−i' && fmtGauss(GAUSS_STEPS[7].raw) === '16';
+    const shells = T.map(t => [t.R - t.r, t.R + t.r]);
+    const gaps = shells.slice(1).map((sh, i) => sh[0] - shells[i][1]);
+    const l10 = gaps.join() === '10,16,22,28' && shells[0][0] === 11 && 11 * 11 > 12;   // 11 > 2√3  ⇔  121 > 12
+    // The log map r ↦ r_in (r_out/r_in)^((x − 15)/140) is increasing, so disjoint cubit shells stay disjoint in every system
+    const fr = shells.map(([a, b]) => [new Fraction(BigInt(a - 15), 140n), new Fraction(BigInt(b - 15), 140n)]);
+    const l10map = fr.slice(1).every((sh, i) => !fracLe(sh[0], fr[i][1]));
+    const blocks = Array.from({ length: 10 }, (_, l) => Array.from({ length: 72 }, (_, m) => m).filter(m => Math.floor(10 * m / 72) === l).length);
+    const l12blocks = blocks.join() === '8,7,7,7,7,8,7,7,7,7';
+    // Proposition 11.4: integer carriers f_i share a window of k pulses (1/60 s each) iff lcm(60/gcd(60, f_i)) divides k
+    const gcdN = (a, b) => (b ? gcdN(b, a % b) : a), lcmN = (a, b) => a / gcdN(a, b) * b;
+    const window11 = T.map(t => 60 / gcdN(60, t.freq)).reduce(lcmN, 1);
+    const csMod60 = Number(9192631770n % 60n);
+    const l11 = T.every(t => Number.isInteger(t.W)) && window11 === 5 && csMod60 === 30;
+    return { l4p1, l4p2, l4p4, l4p5, l7p2, l8, windows, l10, l10map, gaps, blocks, l12blocks, window11, csMod60, l11, Ue, hp };
+})();
+
+// ---------- Panel D state and rendering ----------
+const quadErased = new Set();
+let lastPackets = null, lastFramePk = [], lastAll = null, lastTau = null, selKey = 'd:5', lastLemmaKey = '', fkMode = '';
+function updateLemmaLayer(ck, B, Fr) {
+    const packets = makePackets(ck, B);
+    const frames = state.framePk === 'off' ? [] : makeFramePackets(ck, Fr.legs, state.framePk);
+    const all = packets.concat(frames);
+    const tau = merkleChain(all.map(leafBytes));
+    lastPackets = packets; lastFramePk = frames; lastAll = all; lastTau = tau;
+    renderFrameTable(frames);
+    // Panel B packet table (§6.1)
+    // cells are built once and updated in place so clicks are never lost to a re-render
+    if (!$('#pk-rows td.pk')) $('#pk-rows').innerHTML = CLASSES.map((cls, c) => `<tr><td>${cls}</td>${[0, 1, 2, 3].map(s => `<td class="pk${`d:${4 * c + s}` === selKey ? ' sel' : ''}" data-key="d:${4 * c + s}" data-slot="${4 * c + s}"></td>`).join('')}</tr>`).join('');
+    packets.forEach(p => { const td = $(`#pk-rows td[data-slot="${p.slot}"]`);
+        td.innerHTML = hexWord(p.word) + (p.exact ? '' : '<span class="rnd">≈</span>');
+        td.title = p.exact ? 'binary32 holds the exact value' : 'binary32 is rounded; the exact rational is in the Merkle leaf'; });
+    renderDecode();
+    // Merkle (Lemma 15)
+    const halos = [...new Set(packets.map(p => decodeTile(p.word).halo))].map(h => '0x' + h.toString(16).toUpperCase().padStart(2, '0'));
+    $('#mk-out').innerHTML = `root τ₁ <span title="${toHex(tau[1])}">${toHex(tau[1]).slice(0, 24)}…</span><br>
+        τ<sub>${all.length}</sub> = H(G<sub>${all.length}</sub>) <span title="${toHex(tau[all.length])}">${toHex(tau[all.length]).slice(0, 16)}…</span> · ${all.length} leaves (tile ‖ exact value)${frames.length ? `: 12 data + ${frames.length} frame` : ''}<br>
+        South Halo [63:56] this update: ${halos.join(', ')} · <span style="color:var(--muted)">2⁵⁶/2⁸ = 2⁴⁸ payloads per value: pre-filter only</span>`;
+    renderQuad(B);
+    const key = [ck.epoch, state.noise, state.signal, state.error ? state.error.leg : -1, Fr.openStatus, state.sight, state.framePk, state.lemmaFrames].join('|');
+    if (key !== lastLemmaKey) { lastLemmaKey = key; renderLemmaRows(B, Fr, all, tau); }
+}
+const fmtErr = a => (a === 0 ? '0 (exact)' : a / D2R >= 0.01 ? (a / D2R).toFixed(3) + '°' : fmtAngle(a));
+function renderFrameTable(frames) {
+    const mode = state.framePk;
+    $('#fk-wrap').hidden = mode === 'off';
+    if (mode !== fkMode) {
+        fkMode = mode;
+        if (mode === 'f3') {
+            $('#fk-head').innerHTML = '<tr><th>leg</th><th>w (slot 12)</th><th>x (13)</th><th>y (14)</th><th>z (15)</th></tr>';
+            $('#fk-rows').innerHTML = LEG_NAMES.map((n, l) => `<tr><td>${n}</td>${[0, 1, 2, 3].map(j => `<td class="pk" data-key="f:${l}:${j}"></td>`).join('')}</tr>`).join('');
+        } else if (mode === 'f1') {
+            $('#fk-head').innerHTML = '<tr><th>leg</th><th>tile (Form 1)</th><th>2Q bytes (w, x, y, z)</th><th>exact needs</th><th>loss</th><th>angle error</th></tr>';
+            $('#fk-rows').innerHTML = LEG_NAMES.map((n, l) => `<tr><td>${n}</td><td class="pk" data-key="f:${l}:q"></td><td id="fk-b-${l}"></td><td id="fk-n-${l}"></td><td id="fk-l-${l}"></td><td id="fk-e-${l}"></td></tr>`).join('');
+        } else { $('#fk-rows').innerHTML = ''; $('#fk-head').innerHTML = ''; }
+        if (selKey.startsWith('f:')) selKey = 'd:5';
+    }
+    frames.forEach(p => {
+        const td = $(`#fk-rows td[data-key="${p.key}"]`); if (!td) return;
+        td.classList.toggle('sel', p.key === selKey);
+        td.innerHTML = hexWord(p.word) + (p.exact ? '' : '<span class="rnd">≈</span>');
+        if (p.kind === 'f1') {
+            $(`#fk-b-${p.leg}`).textContent = p.h.b.join(', ');
+            $(`#fk-n-${p.leg}`).textContent = `${p.h.bitsNeeded} bits`;
+            $(`#fk-l-${p.leg}`).innerHTML = p.h.loss ? '<span class="loss">set</span>' : '<span class="nolss">clear</span>';
+            $(`#fk-e-${p.leg}`).textContent = fmtErr(p.h.err);
+        }
+    });
+    const lossy = frames.filter(p => !p.exact).length;
+    $('#fk-note').innerHTML = mode === 'off' ? '' : mode === 'f3'
+        ? `16 packets: leg ℓ in structure bits, component in slot 12–15 and gate bits 55–54. ${16 - lossy}/16 components fit binary32 exactly; the rest are marked ≈, and every exact component is in its Merkle leaf.`
+        : `4 packets, one per leg. Form 1 holds a quaternion exactly only when 2Q fits 7-bit/8-bit bytes; these legs need ${Math.min(...frames.map(p => p.h.bitsNeeded))}–${Math.max(...frames.map(p => p.h.bitsNeeded))} bits (Lemma 13), so the loss flag is set and the direction is rounded. The exact legs are in the Merkle leaves.`;
+}
+function renderDecode() {
+    const p = lastAll && lastAll.find(x => x.key === selKey); if (!p) return;
+    const d = decodeTile(p.word);
+    const head = `step k = ${d.step} (θ = ${STEP_THETA[d.step - 1]}, ${phaseOf(d.step)}) · wheel u = ${WHEEL[d.wheel]} (${B_PLUS.includes(WHEEL[d.wheel]) ? 'B₊' : 'B₋'}) · index ${d.mux} · `;
+    if (p.kind === 'data') $('#pk-decode').innerHTML = `slot ${d.slot} (${CLASSES[p.c]}, ${STRUCT_NAMES[d.struct]}) · ` + head +
+        `Form ${d.form} (exact binary32) · component ${'wxyz'[d.comp]} · slice ${d.slice} · scale 2⁻${d.scale} · payload ${Math.fround(p.rat.toNumber())} ${p.exact ? '= exact value' : `≈ ${p.rat.toString()}`}`;
+    else if (p.kind === 'f3') $('#pk-decode').innerHTML = `slot ${d.slot} (projection ${'wxyz'[d.slot - 12]}) · structure bits ${d.struct} = leg ${LEG_NAMES[d.struct]} · ` + head +
+        `Form ${d.form} (exact binary32) · component ${'wxyz'[d.comp]} · slice ${d.slice} · payload ${Math.fround(p.rat.toNumber())} ${p.exact ? '= exact value' : `≈ ${p.rat.toString()}`}`;
+    else {
+        const h = hurwitzDecode(d.core);
+        $('#pk-decode').innerHTML = `slot ${d.slot} · structure bits ${d.struct} = leg ${LEG_NAMES[d.struct]} · ` + head +
+            `Form ${d.form} (Hurwitz) · gate: locus ${(d.gate >> 5) & 7}, C9/sense ${(d.gate >> 2) & 7}, harmonic flag ${(d.gate & 3).toString(2).padStart(2, '0')} (holonomy) · ` +
+            `2Q = (${h.b.join(', ')}) · loss flag ${h.loss ? '<span class="loss">set</span>: direction rounded by ' + fmtErr(p.h.err) : '<span class="nolss">clear</span>: exact'} · exact leg needs ${p.h.bitsNeeded}-bit coordinates`;
+    }
+}
+function renderQuad(B) {
+    const vals = B.map(b => [...b.Ys, b.YR]);
+    const groups = B.map((b, c) => { const lost = [0, 1, 2, 3].filter(s => quadErased.has(`${c}:${s}`)); return { lost, ok: lost.length <= 1 }; });
+    if (!$('#quad-rows td.cellq')) $('#quad-rows').innerHTML = CLASSES.map((cls, c) => `<tr><td>${cls}</td>${[0, 1, 2, 3].map(s => `<td class="cellq" data-q="${c}:${s}"></td>`).join('')}<td id="quad-st-${c}"></td></tr>`).join('');
+    B.forEach((b, c) => {
+        const g = groups[c];
+        [0, 1, 2, 3].forEach(s => {
+            const td = $(`#quad-rows td[data-q="${c}:${s}"]`);
+            if (!quadErased.has(`${c}:${s}`)) { td.className = 'cellq'; td.textContent = fmt(vals[c][s].toNumber(), 5); td.title = vals[c][s].toString(); return; }
+            if (!g.ok) { td.className = 'cellq erased'; td.textContent = 'lost'; td.title = 'two or more values of this group are lost'; return; }
+            const rec = [0, 1, 2, 3].filter(t => t !== s).reduce((acc, t) => acc.sub(vals[c][t]), b.Y);
+            td.className = 'cellq recov'; td.textContent = `↺ ${fmt(rec.toNumber(), 5)} ${rec.eq(vals[c][s]) ? '✓' : '✗'}`; td.title = `Y − (other three) = ${rec.toString()}`;
+        });
+        $(`#quad-st-${c}`).innerHTML = g.lost.length === 0 ? '<span class="st st-pass">intact</span>' : g.ok ? '<span class="st st-pass">rebuilt</span>' : `<span class="st st-fail">${g.lost.length} lost</span>`;
+    });
+    const lost = groups.reduce((s, g) => s + g.lost.length, 0), bad = groups.filter(g => !g.ok).length;
+    $('#quad-out').textContent = lost === 0 ? 'Click any cell to erase it. Each row is one group of four; its measured total Y is the parity.'
+        : bad ? `${lost} erased; ${bad} group(s) lost two or more and cannot be rebuilt. Up to three losses survive, one per group (Proposition 7.11).`
+        : `${lost} erased, at most one per group: every value is rebuilt exactly as Y minus the other three.`;
+}
+function renderCycle(ck) {
+    const k = ck.piCycleStepK;
+    $('#cyc').innerHTML = GAUSS_STEPS.map(g => `<div class="${g.k === 2 || g.k === 6 ? 'win' : ''}${g.k === k ? ' now' : ''}"><b>${g.k}</b>${STEP_THETA[g.k - 1]}<br>${fmtGauss(g.red)}</div>`).join('');
+    $('#cyc-out').innerHTML = `step k = ${k} · θ = ${STEP_THETA[k - 1]} · (1+i)^${k} = ${fmtGauss(GAUSS_STEPS[k - 1].raw)} → ${fmtGauss(GAUSS_STEPS[k - 1].red)} · phase: <b>${phaseOf(k)}</b>` +
+        (k === 2 ? ' (handshake window: new data in)' : k === 6 ? ' (handshake window: model updates out)' : ' (residual traffic and the TT(BIPM) reference)');
+}
+const ok = b => (b ? '<span class="st st-pass">PASS</span>' : '<span class="st st-fail">FAIL</span>');
+const NA = '<span class="st st-na">not used</span>';
+const DEFN = '<span class="st st-na">definition</span>';
+function renderLemmaRows(B, Fr, packets, tau) {
+    const S = STATIC;
+    const legsUnit = Fr.legs.every(q => qnorm(q).eq(Fraction.ONE));
+    const openNorm = qnorm(Fr.open).eq(Fraction.ONE);
+    const A = qmul(Fr.legs[0], Fr.legs[1]), balancer = qeq(qmul(A, qinv(A)), Q_ONE);
+    const legBits = Fr.legs.map(qbits), prodBits = qbits(Fr.open);
+    const dataPk = packets.filter(p => p.kind === 'data'), framePk = packets.filter(p => p.kind !== 'data');
+    const roundTrip = packets.every(p => packTile({ ...decodeTile(p.word) }) === p.word) &&
+        dataPk.every(p => { const d = decodeTile(p.word); return d.slot === p.slot && d.struct === p.s && d.form === 3; }) &&
+        framePk.every(p => { const d = decodeTile(p.word); return d.struct === p.leg && d.slot === 12 + (p.kind === 'f3' ? p.j : p.leg) && d.form === (p.kind === 'f3' ? 3 : 1); });
+    const exactCount = dataPk.filter(p => p.exact).length;
+    const f1 = framePk.filter(p => p.kind === 'f1');
+    const f1ok = f1.every(p => { const h = hurwitzDecode(decodeTile(p.word).core); return h.loss === p.h.loss && h.b.join() === p.h.b.join() && (p.h.loss || p.h.err < 1e-12); });
+    const f3 = framePk.filter(p => p.kind === 'f3');
+    const f3norm = f3.length ? Math.max(...[0, 1, 2, 3].map(l => Math.abs(f3.filter(p => p.leg === l).reduce((s, p) => s + Math.fround(p.rat.toNumber()) ** 2, 0) - 1))) : 0;
+    const framesDrawn = drawnFramesCheck();
+    const parity = B.every(b => b.identity && b.recovered);
+    const rows = [
+        ['1–3', 'Zhao\'s synthetic lemmas (homothety, spiral similarity, symmedian bundle)', 'No triangle-centre construction is used by this page.', NA],
+        ['4', 'Tier laws R<sub>n</sub> = 5n² + 15n + 15, r<sub>n</sub> = 2n + 4, W<sub>n</sub> = 16 − 2n; ρ<sub>n</sub> + W<sub>n</sub> = 20, ΣW = 60 (Part 1)', 'All five tiers of TIERS_SPEC, exact integers', ok(S.l4p1)],
+        ['4', 'Tier frames Rot<sub>x</sub>(π/2) (even n), Rot<sub>y</sub>(π/2) (odd n); U<sub>even</sub> is the 120° turn about (−1, 1, 1) (Part 2)', 'U<sub>even</sub> = Rot<sub>y</sub>Rot<sub>x</sub><sup>−1</sup> equals the lemma\'s integer matrix, U³ = I, axis fixed', ok(S.l4p2)],
+        ['4', 'Panel A draws the pure Lemma 4 frames when "Lemma 4 frames" is on (no engine offsets)', state.lemmaFrames ? (framesDrawn === null ? 'Scene not loaded' : `Each drawn step q<sub>n+1</sub>q<sub>n</sub><sup>−1</sup> is 120° about ±(−1, 1, 1)/√3 to ${framesDrawn.toExponential(1)} (floating point)`) : 'Off: Panel A shows the engine v10 frames', state.lemmaFrames ? (framesDrawn === null ? DEFN : ok(framesDrawn < 1e-9)) : '<span class="st st-na">off</span>'],
+        ['4', 'Hurwitz spinor h = (1 − i + j + k)/2 (Part 4)', 'N(h) = 1, h³ = −1, h⁶ = +1 in exact quaternions', ok(S.l4p4)],
+        ['4', '30-node wheel and its 8 units, split by (·/5) into B₊ = {1, 11, 19, 29} (Part 5); tile field [60:58]', 'φ(30) = 8 units, B₊ = quadratic residues mod 5', ok(S.l4p5)],
+        ['5', 'Lower Manifold: voxel cube, core, harmonic bundle, Hurwitz box', 'The page has no voxel cube or quaternion core.', NA],
+        ['6', 'Five-moment channel M, I, J, S, C<sub>p</sub>', 'Systems exchange no fluid profiles here.', NA],
+        ['7', 'Central tier T₂: r₂ = 8, W₂ = 12 are the mean and median (Part 2)', 'Exact sums over TIERS_SPEC', ok(S.l7p2)],
+        ['7', 'Implied fourth as a parity element (Part 3(d)), additive form: Y<sub>R</sub> = Y − Y<sub>I</sub> − Y<sub>II</sub> − Y<sub>III</sub> (Proposition G1)', 'Identity and recovery of Y<sub>II</sub> in all three classes, BigInt', ok(parity)],
+        ['8', '8-step cycle θ<sub>k</sub> = kπ/4; gcd-reduced spinors (1 + i)<sup>k</sup>; tile field [63:61] = k − 1', `|sin θ<sub>k</sub>| = 1 only at k = ${S.windows.join(' and ')}; q₂ = i, q₆ = −i, (1 + i)⁸ = 16`, ok(S.l8)],
+        ['8 · 7.5', 'Handshake windows: onload at k = 2, offload at k = 6, third phase otherwise (spec §4.7 after Proposition 7.14)', 'Scheduling convention shown in the cycle strip', DEFN],
+        ['9', 'Cayley map C<sub>rat</sub>(u) = (1 − |u|², 2u)/(1 + |u|²) builds every frame leg (Part 3)', 'N(H<sub>j</sub>) = 1 exactly for the four legs', ok(legsUnit)],
+        ['9', 'Prime-triplet CRT (Parts 1–2) and ECDLP obstructions (Part 4)', 'Form 2 is not used; no discrete-log claim is made.', NA],
+        ['10', 'Disjoint shells [R<sub>n</sub> − r<sub>n</sub>, R<sub>n</sub> + r<sub>n</sub>] with gaps 10, 16, 22, 28; separation 11 − 2√3 > 0', `Gaps ${S.gaps.join(', ')}; 121 > 12`, ok(S.l10)],
+        ['10', 'Each system\'s tiers come from the order-preserving log map, so its shells stay disjoint', 'Mapped shell fractions (R ± r − 15)/140 are strictly increasing', ok(S.l10map)],
+        ['10 · 7.6', 'Systems I–III share the boundary radii 2 pc and 200 pc (spec §4.1), so Theorem 7.6 (engines in disjoint cells) does not apply: the three systems are radial ranges of one mass model, not engines in a stack', 'Stated departure', DEFN],
+        ['11', 'Integer windings W<sub>n</sub> (rational closure, Part 1) and the 60-pulse register (Proposition 11.4). The register schedules packets only; pulsar data are folded on each pulsar\'s own ephemeris (spec §4.7)', `Tier carriers 96, 84, 72, 60, 48 Hz share a window every ${S.window11} pulses (1/12 s); ν<sub>Cs</sub> ≡ ${S.csMod60} (mod 60)`, ok(S.l11)],
+        ['12', 'Open convention H = q₀ q₇₁₉⁻¹ is the only genuine closure test; the cyclic convention is vacuous', `Open: ${Fr.openStatus === 'pass' ? 'closes exactly' : Fr.openStatus === 'tol' ? 'within tolerance' : 'detects the error'} · cyclic: ${Fr.cycExact ? '1 identically' : '≠ 1'}`, ok(Fr.cycExact && (state.error ? Fr.openStatus === 'fail' : Fr.openStatus !== 'fail'))],
+        ['12', 'Middle-gear blocks A<sub>l</sub> = {m : ⌊10m/72⌋ = l} (Part 1); the page\'s outerFrameN = 12·pulseCount mod 720', `Sizes (${S.blocks.join(', ')})`, ok(S.l12blocks)],
+        ['13', 'Denominator growth in S³ ∩ ℚ⁴ (Part 1); short fixed chains instead of renormalization (Part 3)', `Leg denominators ${legBits.join(', ')} bits; product ${prodBits} bits ≤ ${legBits.reduce((a, b) => a + b, 0)}`, ok(prodBits <= legBits.reduce((a, b) => a + b, 0))],
+        ['14', 'Fokker–Planck sieve and circularity boundary', 'No prime sampling is done here.', NA],
+        ['15', `Recursive Merkle chain τ<sub>d</sub> = H(G<sub>d</sub> ‖ τ<sub>d+1</sub>) over all ${packets.length} streams of each update (Part 3; spec B5)`, `Root ${toHex(tau[1]).slice(0, 12)}…; use "Tamper" to see a change caught`, ok(tau[1].length === 32)],
+        ['15', 'South Halo [63:56] is a cache pre-filter, not an integrity check (Part 2)', 'Halo depends only on step, wheel and structure; tampering leaves it unchanged', DEFN],
+        ['§6.1', 'Einstein Tile fixed fields (Table 4) and Form 3 (Table 5)', `${packets.length}/${packets.length} packets decode and re-encode bit for bit; ${exactCount}/12 data values fit binary32 exactly (the rest are marked ≈ and kept exactly in the leaf)`, ok(roundTrip)],
+        ['§6.1 · 13', 'Frame-leg packets: Form 1 (Hurwitz) is exact only while its loss flag is clear; Lemma 13 says rational legs outgrow any fixed width', f1.length ? `${f1.filter(p => !p.h.loss).length}/4 legs fit the bytes exactly; loss flag set on ${f1.filter(p => p.h.loss).length}, worst direction error ${fmtErr(Math.max(...f1.map(p => p.h.err)))}; flags decode correctly` : f3.length ? `Form 3 mode: ${f3.filter(p => p.exact).length}/16 components fit binary32 exactly` : 'Frame-leg packets are off', f1.length ? ok(f1ok) : f3.length ? ok(roundTrip) : '<span class="st st-na">off</span>'],
+        ['§7.4', 'Twelve-engine hierarchy: 3 groups × (3 + 1), the "triple quad" (Propositions 7.11, 7.13)', 'Erasure grid: one loss per group is rebuilt exactly', ok(parity)],
+        ['§7.6', 'Four-structure frame change I, A, Ā, E with E = A I⁻¹ A⁻¹ (Theorem 7.18)', 'Re(E) = Re(I), A I A⁻¹ E = 1, quadrance kept', ok(Fr.inv.reEq && Fr.inv.closes && Fr.inv.quadEq)],
+        ['§7.7', 'Projection checks: norm w² + x² + y² + z² = 1; balancer A·Ā = 1', `N(H₁H₂H₃H₄) = 1 ${openNorm ? 'exactly' : 'fails'}; A·A⁻¹ = 1${f3.length ? `; Form 3 projection streams decode to |N − 1| ≤ ${f3norm.toExponential(1)}` : ''}`, ok(openNorm && balancer && (!f3.length || f3norm < 1e-6))]
+    ];
+    $('#lemma-rows').innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+    const pass = rows.filter(r => r[3].includes('st-pass')).length, fail = rows.filter(r => r[3].includes('st-fail')).length;
+    $('#lemma-sum').innerHTML = `${pass} live checks pass${fail ? `, <span style="color:var(--fail)">${fail} fail</span>` : ''} · ${rows.length - pass - fail} rows are definitions or not used`;
+}
+function tamperDemo() {
+    if (!lastPackets) return;
+    const all = lastAll, slot = Math.floor(Math.random() * all.length), p = all[slot];
+    let word2 = p.word, text2;
+    if (p.kind === 'f1') { const q2 = p.q.slice(); q2[1] = q2[1].add(new Fraction(1n, 1n << 24n)); text2 = q2.map(String).join(','); }
+    else { const bumped = p.rat.add(new Fraction(1n, 1n << 24n)); f32.setFloat32(0, bumped.toNumber()); word2 = (p.word & ~0xffffffffn) | BigInt(f32.getUint32(0)); text2 = bumped.toString(); }
+    const leaves = all.map(leafBytes);
+    leaves[slot] = concatBytes(wordBytes(word2), utf8(text2));
+    const tau2 = merkleChain(leaves);
+    const diff = [];
+    for (let d = 1; d <= all.length; d++) if (toHex(tau2[d]) !== toHex(lastTau[d])) diff.push(d);
+    const haloSame = decodeTile(word2).halo === decodeTile(p.word).halo, wordSame = word2 === p.word;
+    const what = p.kind === 'data' ? `${CLASSES[p.c]}, ${STRUCT_NAMES[p.s]}` : p.kind === 'f3' ? `${LEG_NAMES[p.leg]}, component ${'wxyz'[p.j]}` : `${LEG_NAMES[p.leg]}, x component`;
+    $('#mk-tamper-out').innerHTML = `Leaf ${slot + 1} (${what}) changed by 2⁻²⁴: tile word ${wordSame ? '<b>unchanged</b> (binary32 cannot see it)' : 'changed'}; South Halo ${haloSame ? '<b>unchanged</b>' : 'changed'}; ` +
+        `root ${toHex(tau2[1]) !== toHex(lastTau[1]) ? '<b style="color:var(--fail)">changed</b>' : 'unchanged'} (τ<sub>d</sub> differs for d = 1…${Math.max(...diff)}; deepest differing layer d = ${Math.max(...diff)}).`;
+    log(`[B5] tamper test: leaf ${slot + 1} + 2^-24 -> tile ${wordSame ? 'unchanged' : 'changed'}, halo ${haloSame ? 'unchanged' : 'changed'}, Merkle root ${toHex(tau2[1]) !== toHex(lastTau[1]) ? 'CHANGED (caught)' : 'unchanged'}`, 'hd');
+}
+// Panel A tier frames. Lemma 4 mode is the exact standard: Rot_x(π/2) for even n, Rot_y(π/2) for odd n, with none of
+// the engine's tension, torsion or clutch-slip offsets (the clutch then changes only the spin rate). Off: engine v10 frames.
+const lemmaTierQuat = n => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(n % 2 === 0 ? 1 : 0, n % 2 === 0 ? 0 : 1, 0), Math.PI / 2);
+// Display check: the drawn step q_(n+1) q_n⁻¹ must be the 120° turn about ±(−1, 1, 1)/√3 (U_even, or U_odd = U_even⁻¹)
+function drawnFramesCheck() {
+    if (!three || !three.systems.length) return null;
+    const qs = three.systems[0].tiers.map(t => t.tg.quaternion.clone());
+    let worst = 0;
+    for (let n = 0; n < 4; n++) {
+        const d = qs[n + 1].clone().multiply(qs[n].clone().invert());
+        const w = Math.min(1, Math.abs(d.w)), ang = 2 * Math.acos(w), s = Math.sign(d.w) || 1;
+        const ax = new THREE.Vector3(d.x * s, d.y * s, d.z * s).normalize(), target = new THREE.Vector3(-1, 1, 1).normalize();
+        worst = Math.max(worst, Math.abs(ang - 2 * Math.PI / 3), 1 - Math.abs(ax.dot(target)));
+    }
+    return worst;
+}
+
+
+
+// =====================================================================
+// State and clock (Part 2's clock)
+// =====================================================================
+const state = { playing: true, speed: 1, logScale: true, eta: 1, noise: 0, signal: 'none', error: null, sight: MAGNETAR, event: null,
+                tension: 0, torsion: 0, kappa: 1, trails: true, memory: true, tier3: true, lemmaFrames: true, framePk: 'off', solo: null };
+const SPIN = [1, -1, 1];                       // counter-rotating nested engines: I and III forward, II backward [DEFINITION]
+const sim = { t: 0, prevT: 0, phase: SYSTEMS.map(() => [0, 0, 0, 0, 0]), prevPhase: SYSTEMS.map(() => [0, 0, 0, 0, 0]) };
+const RATE = 0.5, DT = 1 / 60;
+const clockOf = t => {
+    const pulseCount = Math.floor(t * 60 + 1e-9), outerFrameN = (pulseCount * 12) % 720;
+    return { pulseCount, outerFrameN, stage: Math.floor((pulseCount % TOTAL_CALC_PULSES) / TOTAL_NODES), k: pulseCount % TOTAL_NODES,
+             epoch: Math.floor(pulseCount / 60), piCycleStepK: Math.floor(outerFrameN / 90) + 1 };
+};
+const stepOfPulse = p => Math.floor(((p * 12) % 720) / 90) + 1;
+function physicsStep(dt) {
+    sim.prevT = sim.t;
+    for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.prevPhase[s][n] = sim.phase[s][n];
+    const dSim = dt * state.speed * RATE;
+    sim.t += dSim;
+    for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.phase[s][n] += SPIN[s] * state.eta * (TIERS_SPEC[n].freq / 60) * 2 * Math.PI * dSim;
+}
+
+// =====================================================================
+// UI helpers: tags with tooltips, log
+// =====================================================================
+const $ = s => document.querySelector(s);
+const TAG_BASIS = {
+    PROVEN: 'A complete proof is given in the specification and the identity is asserted by the script.',
+    ESTABLISHED: 'Cited standard physics or mathematics.',
+    CORRESPONDENCE: 'Equal counts only; no structure-preserving map is claimed.',
+    DEFINITION: 'A design convention of this system.',
+    COMPUTED: 'An evaluated formula, reproduced by verify_galactic_hierarchy.py.',
+    EMPIRICAL: 'A measurement, with its source and uncertainty.',
+    HEURISTIC: 'A modelling choice motivated by analogy rather than proof.',
+    CONJECTURAL: 'Needs new evidence before it can be accepted.',
+    OPEN: 'A stated problem awaiting resolution.'
+};
+const tag = (t, basis) => `<span class="tag t-${t}" data-basis="${(basis || TAG_BASIS[t]).replace(/"/g, '&quot;')}">${t}</span>`;
+$('#tags-legend').innerHTML = Object.keys(TAG_BASIS).map(t => tag(t)).join('');
+const tip = $('#tip');
+document.addEventListener('pointerover', e => {
+    const t = e.target.closest('[data-basis]');
+    if (!t) { tip.style.display = 'none'; return; }
+    tip.textContent = t.dataset.basis; tip.style.display = 'block';
+    const r = t.getBoundingClientRect();
+    tip.style.left = Math.min(window.innerWidth - 350, Math.max(8, r.left)) + 'px';
+    tip.style.top = (r.bottom + 6 + 120 > window.innerHeight ? r.top - 8 - tip.offsetHeight : r.bottom + 6) + 'px';
+});
+const logEl = $('#log');
+function log(line, cls) {
+    const div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = line;
+    logEl.appendChild(div);
+    while (logEl.childElementCount > 600) logEl.firstChild.remove();
+    logEl.scrollTop = logEl.scrollHeight;
+}
+const fmt = (x, d = 4) => { if (x === 0) return '0'; const a = Math.abs(x); return (a >= 1e5 || a < 1e-3) ? x.toExponential(d - 1) : x.toPrecision(d).replace(/\.?0+$/, m => (m.includes('.') ? '' : m)); };
+const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+const fmtFrac = (f, max = 26) => {   // exact; a power-of-two denominator is written 2ᵏ to keep the column narrow
+    let s = f.toString();
+    if (f.d > 1n && (f.d & (f.d - 1n)) === 0n) s = `${f.n}/2${String(f.d.toString(2).length - 1).replace(/\d/g, c => SUP[c])}`;
+    return s.length > max ? s.slice(0, max - 1) + '…' : s;
+};
+
+
+
+const CLASS_HEX = [0xff0055, 0x00f2ff, 0xffd700], CLASS_CSS = ['#ff0055', '#00f2ff', '#ffd700'];   // the crystal file's pair colours, one per calculation
+const CALC = ['A', 'B', 'C'], ENG = ['I', 'II', 'III'], STRUCT3 = ['A', 'B', 'C', 'Y'];
+const STAGE_NAMES = ['T4 · ingest and anchor', 'T3 · compile', 'T2 · evaluate', 'T1 · evaluate', 'T0 · reduce and latch'];
+
+// =====================================================================
+// Layer B for three engines (Part 2): exact frames, nodes and the cross-engine TQF
+// =====================================================================
+// Exact integer maps (all orthogonal with integer entries, so they act on ℚ³ without rounding)
+const ROT_X = (v, neg) => [v[0], neg(v[2]), v[1]];   // Rot_x(π/2): (x, y, z) ↦ (x, −z, y)   (even tiers, Lemma 4)
+const ROT_Y = (v, neg) => [v[2], v[1], neg(v[0])];   // Rot_y(π/2): (x, y, z) ↦ (z, y, −x)   (odd tiers, Lemma 4)
+const C3 = v => [v[2], v[0], v[1]];                  // σ: 120° about (1, 1, 1), x ↦ y ↦ z ↦ x
+const c3pow = (v, s) => { for (let i = 0; i < s; i++) v = C3(v); return v; };
+const NEG_F = f => f.neg(), NEG_N = x => -x;
+const frameOf = (n, v, neg) => (n % 2 === 0 ? ROT_X(v, neg) : ROT_Y(v, neg));
+const SIG_F = [new Fraction(1n, 2n), new Fraction(1n, 20n), new Fraction(2n, 1n)];   // σ per class, exactly the SIGMA of Part 1
+// Tension turns the outer tiers (T4, T3) about local y; Torsion turns the inner tiers (T2–T0) the other way about local z
+function modRot(p, n) {
+    const a = n >= 3 ? state.tension * D2R : -state.torsion * D2R, c = Math.cos(a), s = Math.sin(a);
+    return n >= 3 ? [c * p[0] + s * p[2], p[1], -s * p[0] + c * p[2]] : [c * p[0] - s * p[1], s * p[0] + c * p[1], p[2]];
+}
+// Node on tier n = 4 − S at θ_k = 2πk/30 with φ = W_n θ_k χ_k + 2πc/3 + Δφ (spec §2A); χ_k = (−1)^k
+function torusPoint(R, r, n, k, c, dphi) {
+    const th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = TIERS_SPEC[n].W * th * chi + 2 * Math.PI * c / 3 + dphi;
+    return modRot([(R + r * Math.cos(ph)) * Math.cos(th), (R + r * Math.cos(ph)) * Math.sin(th), r * Math.sin(ph)], n);
+}
+function exactNode(s, c, k, S, dphi) {
+    const n = 4 - S, T = TIERS_SPEC[n];
+    const P = torusPoint(T.R, T.r, n, k, c, dphi).map(x => RAT(x));          // Layer A → B at 2⁻²⁴, in cubits
+    return c3pow(frameOf(n, P, NEG_F), s);                                    // then exact frame and exact σˢ
+}
+const vsub = (a, b) => a.map((x, i) => x.sub(b[i])), vadd = (a, b) => a.map((x, i) => x.add(b[i]));
+const vdot = (a, b) => a.reduce((acc, x, i) => acc.add(x.mul(b[i])), Fraction.ZERO);
+const F3 = new Fraction(3n), F4 = new Fraction(4n);
+const fbits = f => Math.max((f.n < 0n ? -f.n : f.n).toString(2).length, f.d.toString(2).length);
+function tqf(P) {
+    const u = vsub(P[1], P[0]), v = vsub(P[2], P[0]), w = vsub(P[2], P[1]);
+    const Q1 = vdot(u, u), Q2 = vdot(w, w), Q3 = vdot(v, v), S = Q1.add(Q2).add(Q3), S2 = S.mul(S);
+    const poly = S2.sub(Fraction.TWO.mul(Q1.mul(Q1).add(Q2.mul(Q2)).add(Q3.mul(Q3))));
+    const uv = vdot(u, v), gram = F4.mul(Q1.mul(Q3).sub(uv.mul(uv)));
+    const lock = !S.isZero() && F3.mul(poly).eq(S2);
+    const chi = S.isZero() ? 0 : Math.sqrt(Math.max(0, poly.toNumber())) / S.toNumber();
+    return { Q: [Q1, Q2, Q3], S, poly, gram, same: poly.eq(gram), nonneg: !(poly.n < 0n), weitz: fracLe(F3.mul(poly), S2), lock, chi,
+             qScale: 0.65 + 0.45 * chi, P4star: vsub(vadd(P[1], P[2]), P[0]), bits: Math.max(...[Q1, Q2, Q3, poly].map(fbits)) };
+}
+
+// Engine-frame loop: σ lifts to the Hurwitz unit ω = (1 + i + j + k)/2
+const HALF = new Fraction(1n, 2n), OMEGA = [HALF, HALF, HALF, HALF];
+const OMEGA_LOOP = qprod(OMEGA, OMEGA, OMEGA), OMEGA_H4 = qinv(OMEGA_LOOP);
+
+// §7.7 layer: ring order clockwise from the top-left corner; interior = w, x, y, z
+const RING = [[0, 0], [0, 1], [0, 2], [0, 3], [1, 3], [2, 3], [3, 3], [3, 2], [3, 1], [3, 0], [2, 0], [1, 0]], INNER = [[1, 1], [1, 2], [2, 1], [2, 2]];
+
+const C9 = (() => {   // Lemma 8.2: x(s) = −(1/3)(1,1,1) + √(8/3)(cos(2πs/9) u + sin(2πs/9) v), u = (2,−1,−1)/√6, v = (0,1,−1)/√2
+    const u = [2 / Math.sqrt(6), -1 / Math.sqrt(6), -1 / Math.sqrt(6)], v = [0, 1 / Math.SQRT2, -1 / Math.SQRT2], R9 = Math.sqrt(8 / 3);
+    const pts = Array.from({ length: 9 }, (_, s) => [0, 1, 2].map(i => -1 / 3 + R9 * (Math.cos(2 * Math.PI * s / 9) * u[i] + Math.sin(2 * Math.PI * s / 9) * v[i])));
+    const onSphere = pts.every(p => Math.abs(p[0] ** 2 + p[1] ** 2 + p[2] ** 2 - 3) < 1e-12);
+    const corners = pts.map((p, s) => p.every(x => Math.abs(Math.abs(x) - 1) < 1e-12) ? s : -1).filter(s => s >= 0);
+    // trefoil c: lobes at azimuth 2t with 3t + 2πc/3 ≡ 0 (mod 2π), i.e. 40°·(3m − 2c) → ray indices
+    const lobes = [0, 1, 2].map(c => [0, 1, 2].map(m => (((3 * m - 2 * c) % 9) + 9) % 9).sort((a, b) => a - b));
+    const partition = lobes.flat().sort((a, b) => a - b).join() === '0,1,2,3,4,5,6,7,8';
+    return { u, v, R9, pts, onSphere, corners, lobes, partition };
+})();
+const CUBE_STATIC = (() => {
+    const D1 = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]], all = D1.concat(D1.map(p => p.map(x => -x)));
+    const cube = new Set(all.map(p => p.join())).size === 8 && all.every(p => p.every(x => Math.abs(x) === 1));
+    // Proposition 7.14 counts and the §7.7 ring: shift by 3 keeps the class, shift by 4 advances it
+    const shift3 = RING.every((_, j) => ((j + 3) % 12) % 3 === j % 3), shift4 = RING.every((_, j) => ((j + 4) % 12) % 3 === (j % 3 + 1) % 3);
+    const omega6 = qeq(qprod(OMEGA, OMEGA, OMEGA, OMEGA, OMEGA, OMEGA), Q_ONE) && qeq(OMEGA_LOOP, [Fraction.ONE.neg(), Fraction.ZERO, Fraction.ZERO, Fraction.ZERO]);
+    const iToJ = qeq(qprod(OMEGA, [Fraction.ZERO, Fraction.ONE, Fraction.ZERO, Fraction.ZERO], qinv(OMEGA)), [Fraction.ZERO, Fraction.ZERO, Fraction.ONE, Fraction.ZERO]);
+    // C3 permutation is orthogonal: it preserves every exact dot product (checked on a rational vector)
+    const tv = [new Fraction(3n, 7n), new Fraction(-5n, 11n), new Fraction(2n, 13n)], perm = vdot(C3(tv), C3(tv)).eq(vdot(tv, tv)) && c3pow(tv, 3).every((x, i) => x.eq(tv[i]));
+    const frames = [0, 1, 2, 3, 4].every(n => { const f = frameOf(n, tv, NEG_F); return vdot(f, f).eq(vdot(tv, tv)); });
+    return { cube, shift3, shift4, omega6, iToJ, perm, frames };
+})();
+
+
+// =====================================================================
+// The calculator: exact rational expressions, with the non-rational functions marked
+// =====================================================================
+const APPROX_K = 48, MAX_BITS = 8192;
+const flen = f => Math.max(absB(f.n).toString(2).length, f.d.toString(2).length);
+function toNum(f) {   // a Fraction as a double, also when its numerator or denominator is beyond 2^1024
+    const sh = Math.max(0, flen(f) - 1000);
+    return sh ? Number(f.n >> BigInt(sh)) / Number(f.d >> BigInt(sh)) : Number(f.n) / Number(f.d);
+}
+const decFrac = s => { const [i, f = ''] = s.split('.'); return new Fraction(BigInt((i || '0') + f), 10n ** BigInt(f.length)); };
+const isqrtB = n => { if (n < 2n) return n; let x = n, y = (x + 1n) >> 1n; while (y < x) { x = y; y = (x + n / x) >> 1n; } return x; };
+function approx(x, what) {
+    if (!Number.isFinite(x)) throw new Error(`${what} is not a finite number`);
+    return { f: Fraction.fromFloat(x, APPROX_K), exact: false };
+}
+function tokenize(src) {
+    const s = src.toLowerCase().replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-').replace(/π/g, 'pi').replace(/√/g, 'sqrt');
+    const re = /\s*(?:(\d+\.\d*|\.\d+|\d+)|(sqrt|sin|cos|pi)|([-+*/^()]))/y, out = [];
+    while (!/^\s*$/.test(s.slice(re.lastIndex))) {
+        const at = re.lastIndex, m = re.exec(s);
+        if (!m) { const bad = s.slice(at).trim(); throw new Error(`cannot read "${bad.slice(0, 8)}" at position ${s.length - bad.length + 1}`); }
+        if (m[1] !== undefined) out.push({ t: 'num', text: m[1] });
+        else if (m[2]) out.push({ t: m[2] === 'pi' ? 'const' : 'fn', text: m[2] });
+        else out.push({ t: 'op', text: m[3] });
+    }
+    if (!out.length) throw new Error('empty expression');
+    return out;
+}
+// Shunting-yard to postfix. Unary minus binds tighter than × and ÷ but looser than ^, so −2^2 = −4.
+const PREC = { '+': 1, '-': 1, '*': 2, '/': 2, neg: 3, '^': 4 }, RIGHT = { '^': true, neg: true };
+function compile(tokens) {
+    const out = [], st = []; let prev = 'start', lastFn = '';
+    for (const tk of tokens) {
+        if (prev === 'fn' && tk.text !== '(') throw new Error(`${lastFn} needs brackets: ${lastFn}( … )`);
+        if (tk.t === 'num' || tk.t === 'const') {
+            if (prev === 'operand') throw new Error(`missing operator before ${tk.text}`);
+            out.push(tk); prev = 'operand';
+        } else if (tk.t === 'fn') {
+            if (prev === 'operand') throw new Error(`missing operator before ${tk.text}`);
+            st.push({ t: 'fn', text: tk.text }); prev = 'fn'; lastFn = tk.text;
+        } else if (tk.text === '(') {
+            if (prev === 'operand') throw new Error('missing operator before "("');
+            st.push({ t: 'lp' }); prev = 'lp';
+        } else if (tk.text === ')') {
+            if (prev !== 'operand') throw new Error('empty or unfinished brackets');
+            while (st.length && st[st.length - 1].t !== 'lp') out.push(st.pop());
+            if (!st.length) throw new Error('unmatched ")"');
+            st.pop();
+            if (st.length && st[st.length - 1].t === 'fn') out.push(st.pop());
+            prev = 'operand';
+        } else {
+            const op = tk.text;
+            if (prev !== 'operand') {
+                if (op === '+') continue;
+                if (op === '-') { st.push({ t: 'op', text: 'neg' }); prev = 'op'; continue; }
+                throw new Error(`"${op}" needs a number before it`);
+            }
+            while (st.length) {
+                const top = st[st.length - 1];
+                if (top.t !== 'op') break;
+                if (PREC[top.text] > PREC[op] || (PREC[top.text] === PREC[op] && !RIGHT[op])) out.push(st.pop()); else break;
+            }
+            st.push({ t: 'op', text: op }); prev = 'op';
+        }
+    }
+    if (prev !== 'operand') throw new Error('the expression ends early');
+    while (st.length) { const top = st.pop(); if (top.t === 'lp') throw new Error('unmatched "("'); out.push(top); }
+    return out;
+}
+function unaryOp(name, a) {
+    if (name === 'neg') return { f: a.f.neg(), exact: a.exact };
+    if (name === 'sqrt') {
+        if (a.f.n < 0n) throw new Error('square root of a negative number');
+        const rn = isqrtB(a.f.n), rd = isqrtB(a.f.d);
+        if (rn * rn === a.f.n && rd * rd === a.f.d) return { f: new Fraction(rn, rd), exact: a.exact };
+        return approx(Math.sqrt(toNum(a.f)), 'the square root');
+    }
+    if (a.f.isZero()) return { f: name === 'sin' ? Fraction.ZERO : Fraction.ONE, exact: a.exact };   // sin 0 = 0, cos 0 = 1
+    return approx(name === 'sin' ? Math.sin(toNum(a.f)) : Math.cos(toNum(a.f)), name);
+}
+function binaryOp(op, a, b) {
+    const ex = a.exact && b.exact;
+    if (op === '+') return { f: a.f.add(b.f), exact: ex };
+    if (op === '-') return { f: a.f.sub(b.f), exact: ex };
+    if (op === '*') return { f: a.f.mul(b.f), exact: ex };
+    if (op === '/') { if (b.f.isZero()) throw new Error('division by zero'); return { f: a.f.div(b.f), exact: ex }; }
+    if (b.f.d === 1n) {                                           // ^ with a whole exponent: exact
+        const n = b.f.n, e = absB(n);
+        if (a.f.isZero() && n < 0n) throw new Error('zero to a negative power');
+        if (e > 0n && flen(a.f) * Number(e) > MAX_BITS) throw new Error(`the power needs more than ${MAX_BITS} bits`);
+        const f = new Fraction(a.f.n ** e, a.f.d ** e);
+        return { f: n < 0n ? Fraction.ONE.div(f) : f, exact: ex };
+    }
+    if (b.f.d === 2n && a.f.n >= 0n) {                            // ^ (m/2): exact when the base is a rational square
+        const rn = isqrtB(a.f.n), rd = isqrtB(a.f.d);
+        if (rn * rn === a.f.n && rd * rd === a.f.d) return binaryOp('^', { f: new Fraction(rn, rd), exact: a.exact }, { f: new Fraction(b.f.n), exact: b.exact });
+    }
+    const x = toNum(a.f) ** toNum(b.f);
+    if (Number.isNaN(x)) throw new Error('a negative base needs a whole exponent');
+    return approx(x, 'the power');
+}
+const fmtShort = (f, max) => { const t = f.toString(); return t.length <= max ? t : fmtFrac(f, max); };   // plain fraction unless it is long
+const showV = v => (v.exact ? '' : '≈') + fmtShort(v.f, 22);
+function evaluate(rpn) {
+    const stack = [], steps = [], literals = [];
+    for (const tk of rpn) {
+        if (tk.t === 'num' || tk.t === 'const') {
+            const v = tk.t === 'num' ? { f: decFrac(tk.text), exact: true } : approx(Math.PI, 'π');
+            stack.push(v); literals.push(`${tk.text === 'pi' ? 'π' : tk.text} → ${showV(v)}`);
+        } else if (tk.t === 'fn' || tk.text === 'neg') {
+            const a = stack.pop(), r = unaryOp(tk.text, a);
+            stack.push(r); steps.push(`${tk.text === 'neg' ? '−' : tk.text}(${showV(a)}) = ${showV(r)}`);
+        } else {
+            const b = stack.pop(), a = stack.pop(), r = binaryOp(tk.text, a, b);
+            stack.push(r); steps.push(`${showV(a)} ${{ '+': '+', '-': '−', '*': '×', '/': '÷', '^': '^' }[tk.text]} ${showV(b)} = ${showV(r)}`);
+        }
+        if (flen(stack[stack.length - 1].f) > MAX_BITS) throw new Error(`a value needs more than ${MAX_BITS} bits`);
+    }
+    if (stack.length !== 1) throw new Error('malformed expression');
+    return { value: stack[0], steps, literals };
+}
+function prepareJob(src) {
+    const rpn = compile(tokenize(src)), ev = evaluate(rpn);
+    const nL = ev.literals.length, nO = ev.steps.length, sched = new Map();
+    const at = (i, line) => { if (!sched.has(i)) sched.set(i, []); sched.get(i).push(line); };
+    ev.literals.forEach((l, j) => at(Math.floor(j * 30 / nL), `anchor ${l}`));
+    at(30, `postfix: ${rpn.map(t => (t.text === 'neg' ? '±' : t.text === 'pi' ? 'π' : t.text)).join(' ')}`);
+    if (!nO) at(60, 'no operations: the value passes straight through');
+    ev.steps.forEach((s, j) => at(60 + Math.floor(j * 60 / nO), s));
+    const v = ev.value;
+    at(120, `reduced: ${fmtFrac(v.f, 40)} (gcd of numerator and denominator = 1)${v.exact ? '' : ' · approximate'}`);
+    at(149, `latch at node 29: ${showV(v)}`);
+    return { src, rpn, value: v, sched };
+}
+const fmtExact = f => fmtShort(f, 32);
+const fmtVal = v => (v.exact ? `${fmtExact(v.f)}${v.f.d === 1n ? '' : ` = ${fmt(toNum(v.f), 10)}`}` : `≈ ${String(+toNum(v.f).toPrecision(16))} (on the 2⁻⁴⁸ grid)`);
+// Exact agreement of the three results (z = 0 in the gauge), as distinct from the triangle's lock, which is read at the 2⁻²⁴ grid
+const agree = w => w.G.X.isZero() && w.G.Yc.isZero();
+
+// =====================================================================
+// Jobs on the shared clock
+// =====================================================================
+const jobs = [0, 1, 2].map(s => ({ s, st: 'idle', prog: null, gate: 0, p0: null, i: -1, msg: '', landPulse: null, last: null }));
+const trails = [[], [], []], checkpoints = [[], [], []], completed = [];
+let lastPulse = 0;
+const nextGate = (p, turns = 0) => (Math.floor(p / 30) + 1) * 30 + 30 * turns;
+function submit(s, turns = 0) {
+    const J = jobs[s], src = $(`#expr-${s}`).value.trim();
+    if (J.st === 'running') return false;
+    let prog;
+    try { prog = prepareJob(src); }
+    catch (e) { Object.assign(J, { st: 'err', msg: e.message, prog: null }); renderJob(s); log(`[${CALC[s]}] not started: ${e.message}`, 'fail'); return false; }
+    if (J.st === 'held') log(`[${CALC[s]}] replaces the result held on Engine ${ENG[s]} (${fmtVal(J.prog.value)})`);
+    Object.assign(J, { st: 'queued', prog, gate: nextGate(lastPulse, turns), p0: null, i: -1, msg: '', landPulse: null });
+    log(`[${CALC[s]}] ${src} = ${fmtVal(prog.value)} queued on Engine ${ENG[s]}'s outer manifold; enters T4 at pulse ${J.gate} (node 0)`);
+    if (!state.playing) setPlaying(true);
+    renderJob(s);
+    return true;
+}
+function processPulse(p) {
+    for (const J of jobs) {
+        const s = J.s;
+        if (J.st === 'queued' && p >= J.gate) {
+            J.st = 'running'; J.p0 = J.gate; trails[s] = []; checkpoints[s] = [];
+            log(`[${CALC[s]}] enters T4 of Engine ${ENG[s]} at pulse ${J.p0}`);
+        }
+        if (J.st !== 'running') continue;
+        const i = p - J.p0, S = Math.floor(i / 30), n = 4 - S, k = p % 30;
+        J.i = i;
+        trails[s].push({ n, k });
+        if (i % 30 === 0) checkpoints[s].push({ n, k });
+        const lines = J.prog.sched.get(i);
+        if (lines) J.msg = lines.join('\n');
+        if (i === 149) {
+            J.st = 'held'; J.landPulse = p;
+            completed.push({ s, p0: J.p0, land: p });
+            const waiting = jobs.filter(o => o.st !== 'held').map(o => CALC[o.s]);
+            log(`[${CALC[s]}] latched on T0 of Engine ${ENG[s]} at pulse ${p} (node ${k}): ${fmtVal(J.prog.value)}${waiting.length ? ` · held in memory, waiting for ${waiting.join(' and ')}` : ''}`, 'pass');
+        }
+    }
+    if (jobs.every(J => J.st === 'held')) converge(p);
+}
+
+// =====================================================================
+// Convergence: the triple quad, the gauge and the automatic quadrance-out
+// =====================================================================
+let memory = [], wordCount = 0, latest = null, memErased = new Set(), lastRendered = '';
+const gaugeExact = (a, b, c) => {
+    const s = a.add(b).add(c), X = a.sub(b.add(c).div(Fraction.TWO)), Yc = b.sub(c);
+    const a2 = s.add(Fraction.TWO.mul(X)).div(F3), b2 = s.sub(a2).add(Yc).div(Fraction.TWO), c2 = s.sub(a2).sub(Yc).div(Fraction.TWO);
+    return { s, X, Yc, recovered: a2.eq(a) && b2.eq(b) && c2.eq(c) };
+};
+// Δφ from each result's deviation from the mean [DEFINITION]: equal results give equal phases, hence an exact lock
+function readout(vals) {
+    const Y = vals[0].add(vals[1]).add(vals[2]), m = Y.div(F3), den = Math.abs(toNum(m)) + 1;
+    const dphi = vals.map(x => state.kappa * (Math.PI / 6) * Math.tanh(toNum(x.sub(m)) / den));
+    const nodes = [0, 1, 2].map(s => exactNode(s, 0, 29, 4, dphi[s]));          // T0, node 29, the same class phase in all three
+    const T = tqf(nodes);
+    return { dphi, nodes, T, Q4: vdot(T.P4star, T.P4star) };
+}
+const cellTile = (w, j, v) => {
+    f32.setFloat32(0, toNum(v));
+    const slot = 4 * (w.addr % 3) + j;
+    return { word: packTile({ step: w.step, wheel: wheelSector(w.k), struct: j, gate: w.addr % 64, mux: muxIndex(w.step, w.k, slot), form: 3, slot, scale: 0, core: f32.getUint32(0) }),
+             exact: fracOfDouble(f32.getFloat32(0)).eq(v) };
+};
+const leavesOf = w => w.cells.map((v, j) => concatBytes(wordBytes(cellTile(w, j, v).word), utf8(v.toString())));
+const chainOf = w => merkleChain(leavesOf(w)).map(t => (t ? toHex(t) : ''));
+const parityOk = w => w.cells[0].add(w.cells[1]).add(w.cells[2]).eq(w.cells[3]);
+function converge(p) {
+    const vals = jobs.map(J => J.prog.value);
+    const cells = [...vals.map(v => v.f), vals[0].f.add(vals[1].f).add(vals[2].f)];
+    const addr = wordCount % 30;
+    const w = { id: wordCount, addr, pulse: p, step: stepOfPulse(p), k: p % 30, src: jobs.map(J => J.prog.src), exact: vals.map(v => v.exact),
+                cells, orig: cells.slice(), starts: jobs.map(J => J.p0), lands: jobs.map(J => J.landPulse), altered: null };
+    Object.assign(w, readout(cells.slice(0, 3)), { G: gaugeExact(cells[0], cells[1], cells[2]) });
+    w.tau0 = chainOf(w);
+    memory = memory.filter(o => o.addr !== addr);
+    [...memErased].filter(key => key.startsWith(`${addr}:`)).forEach(key => memErased.delete(key));
+    memory.push(w); wordCount++; latest = w;
+    jobs.forEach(J => { J.st = 'done'; J.last = J.prog; });
+    const spread = Math.max(...w.starts) - Math.min(...w.starts);
+    log(`[Σ] converged at pulse ${p}: Y = A + B + C = ${fmtExact(w.G.s)}${vals.every(v => v.exact) ? ' (exact)' : ' (approximate inputs)'} · entries ${spread ? `staggered over ${spread} pulses` : 'aligned'} · written to address ${addr}: A, B, C on T4, Y on T0`, 'hd');
+    log(`[Q] quadrance out: Q = (${w.T.Q.map(q => fmt(q.toNumber(), 6)).join(', ')}), A_R = ${fmt(w.T.poly.toNumber(), 6)} (poly ${w.T.same ? '=' : '≠'} Gram), χ = ${w.T.chi.toFixed(6)}, ${agree(w) ? 'LOCK: the three results are equal' : w.T.lock ? 'LOCK at the 2^-24 grid, although the results differ below it' : 'deformed: the results differ'} · |P4*|² = ${fmt(w.Q4.toNumber(), 6)}`, w.T.lock ? 'pass' : '');
+    renderAll(true);
+}
+// The newest word's readout follows κ, tension and torsion
+function refreshReadout() { if (latest) Object.assign(latest, readout(latest.cells.slice(0, 3))); renderAll(true); }
+
+// =====================================================================
+// Memory: erase, alter, locate and repair
+// =====================================================================
+function rebuild(w, j) {   // the cell j of word w from the other three
+    const c = w.cells;
+    return j === 3 ? c[0].add(c[1]).add(c[2]) : [0, 1, 2].filter(i => i !== j).reduce((acc, i) => acc.sub(c[i]), c[3]);
+}
+function alterOne() {
+    if (!memory.length) { $('#mem-act').textContent = 'Nothing in memory yet: converge a word first.'; return; }
+    const r = Math.random(), w = memory[Math.floor(r * memory.length)], j = Math.floor(Math.random() * 4);
+    w.cells[j] = w.cells[j].add(new Fraction(1n, 1n << 24n));
+    w.altered = w.altered === null ? j : -1;      // −1: more than one cell altered
+    $('#mem-act').innerHTML = `Address ${w.addr}: ${STRUCT3[j]} (${j < 3 ? `T4 of Engine ${ENG[j]}` : 'T0'}) changed by 2⁻²⁴, the other cells untouched.`;
+    log(`[M] address ${w.addr}: cell ${STRUCT3[j]} altered by 2^-24 -> parity ${parityOk(w) ? 'still holds' : 'FAILS (detected)'}`, 'fail');
+    renderAll(true);
+}
+function locate(w) {   // Lemma 15: the deepest layer of the chain that differs is the altered leaf
+    const now = chainOf(w);
+    let deepest = 0;
+    for (let d = 1; d <= 4; d++) if (now[d] !== w.tau0[d]) deepest = d;
+    return deepest ? deepest - 1 : null;
+}
+function repairAll() {
+    const bad = memory.filter(w => !parityOk(w) || locate(w) !== null);
+    if (!bad.length) { $('#mem-act').textContent = 'Every word passes parity and matches its chain: nothing to repair.'; return; }
+    const lines = bad.map(w => {
+        const j = locate(w);
+        if (j === null) return `address ${w.addr}: parity fails but the chain matches (cannot happen unless the chain was rewritten)`;
+        const before = w.cells[j];
+        w.cells[j] = rebuild(w, j);
+        if (chainOf(w)[1] === w.tau0[1]) { w.altered = null; return `address ${w.addr}: chain locates ${STRUCT3[j]}, parity rebuilds it, root matches again`; }
+        w.cells[j] = before;
+        return `address ${w.addr}: more than one cell was altered, so one parity cannot rebuild it (two unknowns, one equation)`;
+    });
+    $('#mem-act').innerHTML = lines.join('<br>');
+    lines.forEach(l => log(`[M] repair: ${l}`, /cannot/.test(l) ? 'fail' : 'pass'));
+    renderAll(true);
+}
+
+// =====================================================================
+// Console, Panel B readouts, Panel C tables
+// =====================================================================
+const stCls = { pass: 'st-pass', tol: 'st-tol', fail: 'st-fail' };
+function renderJob(s) {
+    const J = jobs[s], st = $(`#job-st-${s}`), out = $(`#job-out-${s}`), bars = [...$(`#job-bar-${s}`).children];
+    const label = { idle: 'idle', queued: 'queued · T4', running: `running · T${4 - Math.floor(Math.max(0, J.i) / 30)}`, held: 'latched · held', done: 'converged', err: 'error' }[J.st];
+    st.textContent = label; st.className = `job-st ${J.st}`;
+    const doneTiers = J.st === 'running' ? Math.floor(J.i / 30) + 1 : (J.st === 'held' || J.st === 'done') ? 5 : 0;
+    bars.forEach((b, n) => { b.style.background = n < doneTiers ? (n === doneTiers - 1 && J.st === 'running' ? CLASS_CSS[s] : CLASS_CSS[s] + '99') : 'transparent'; });
+    $(`#run-${s}`).disabled = J.st === 'running';
+    let text = '';
+    if (J.st === 'idle') text = 'Ready. Press Run, or Run all.';
+    else if (J.st === 'err') text = `Error: ${J.msg}`;
+    else if (J.st === 'queued') text = `${J.prog.src} = ${fmtVal(J.prog.value)}\nHeld on the outer manifold (T4, node 0) until pulse ${J.gate}: ${Math.max(0, J.gate - lastPulse)} pulses to go.`;
+    else if (J.st === 'running') text = `Stage ${Math.floor(J.i / 30)} · ${STAGE_NAMES[Math.floor(J.i / 30)]} · pulse ${J.i + 1}/150 · node ${(J.p0 + J.i) % 30}\n${J.msg}`;
+    else if (J.st === 'held') text = `Latched on T0 at pulse ${J.landPulse}: ${fmtVal(J.prog.value)}\nHeld in memory until ${jobs.filter(o => o.st !== 'held').map(o => CALC[o.s]).join(' and ')} land${jobs.filter(o => o.st !== 'held').length === 1 ? 's' : ''}.`;
+    else if (J.st === 'done') text = `${J.last.src} = ${fmtVal(J.last.value)}\nEntered pulse ${latest ? latest.starts[s] : '?'}, landed pulse ${latest ? latest.lands[s] : '?'} · converged into word ${latest ? latest.addr : '?'}.`;
+    out.textContent = text;
+}
+function renderTqf() {
+    const w = latest;
+    if (!w) { $('#tqf-rows').innerHTML = '<tr><td colspan="8" style="text-align:left;color:var(--muted)">No convergence yet: run three calculations.</td></tr>'; $('#quad-out').innerHTML = ''; return; }
+    const T = w.T;
+    $('#tqf-rows').innerHTML = `<tr><td>addr ${w.addr}</td>${T.Q.map(q => `<td title="${q.toString()}">${fmt(q.toNumber(), 6)}</td>`).join('')}` +
+        `<td title="poly = Gram = ${T.poly.toString()}">${fmt(T.poly.toNumber(), 6)} <span class="st ${T.same ? 'st-pass' : 'st-fail'}">${T.same ? '≡' : '≠'}</span></td>` +
+        `<td title="3·A_R ${T.lock ? '=' : '<'} S² (Weitzenböck ${T.weitz ? 'holds' : 'FAILS'}); 1/√3 = ${(1 / Math.sqrt(3)).toFixed(6)}">${T.chi.toFixed(6)}</td>` +
+        `<td>${w.dphi.map(d => (d * 1e3).toFixed(1)).join(' · ')}</td><td>${T.lock ? `<span class="st st-pass"${agree(w) ? '' : ' title="The nodes coincide on the 2⁻²⁴ grid, but A, B, C are not exactly equal (z ≠ 0)"'}>LOCK${agree(w) ? '' : ' ≈'}</span>` : '<span class="st st-tol">deformed</span>'}</td></tr>`;
+    const P = T.P4star;
+    $('#quad-out').innerHTML = `
+        <div><span>Y = A + B + C</span><br><span title="${w.G.s.toString()}">${fmtFrac(w.G.s, 28)}</span>${w.exact.every(Boolean) ? ' <span class="st st-pass">exact</span>' : ' <span class="rnd">≈ inputs</span>'}</div>
+        <div><span>Y as a decimal</span><br>${String(+toNum(w.G.s).toPrecision(16))}</div>
+        <div><span>P₄* = P_II + P_III − P_I</span><br><span title="${P.map(String).join(', ')}">(${P.map(x => fmt(x.toNumber(), 5)).join(', ')})</span></div>
+        <div><span>|P₄*|² (quadrance out)</span><br><span title="${w.Q4.toString()}">${fmt(w.Q4.toNumber(), 8)}</span></div>
+        <div><span>entries · landings</span><br>${w.starts.join(', ')} · ${w.lands.join(', ')}</div>`;
+}
+function renderMemory() {
+    const rows = memory.slice().sort((a, b) => b.id - a.id);
+    if (!rows.length) { $('#mem-rows').innerHTML = '<tr><td colspan="8" style="text-align:left;color:var(--muted)">Empty. Each convergence writes one word.</td></tr>'; $('#mem-out').textContent = ''; }
+    else $('#mem-rows').innerHTML = rows.map(w => {
+        const lost = [0, 1, 2, 3].filter(j => memErased.has(`${w.addr}:${j}`)), par = parityOk(w), loc = locate(w);
+        const cells = w.cells.map((v, j) => {
+            const key = `${w.addr}:${j}`, altered = loc === j || (w.altered === j);
+            if (!memErased.has(key)) return `<td class="memc${altered && !par ? ' alt' : ''}" data-m="${key}" title="${v.toString()}">${fmtShort(v, 16)}</td>`;
+            if (lost.length > 1) return `<td class="memc erased" data-m="${key}" title="two or more cells of this word are lost">lost</td>`;
+            const r = rebuild(w, j);
+            return `<td class="memc recov" data-m="${key}" title="rebuilt from the other three: ${r.toString()}">↺ ${fmtFrac(r, 14)} ${r.eq(v) ? '✓' : '✗'}</td>`;
+        }).join('');
+        const grp = lost.length === 0 ? '<span class="st st-pass">intact</span>' : lost.length === 1 ? '<span class="st st-pass">rebuilt</span>' : `<span class="st st-fail">${lost.length} lost</span>`;
+        return `<tr><td>${w.addr}</td>${cells}<td>${par ? '<span class="st st-pass">Y = ΣT4</span>' : '<span class="st st-fail">FAIL</span>'}</td><td>${loc === null ? '<span class="st st-pass">matches</span>' : `<span class="st st-fail">leaf ${STRUCT3[loc]}</span>`}</td><td>${grp}</td></tr>`;
+    }).join('');
+    const nl = memErased.size, flagged = memory.filter(w => !parityOk(w)).length;
+    $('#mem-out').textContent = !memory.length ? '' : `${memory.length}/30 addresses in use. ` + (nl ? `${nl} cell(s) erased in view: one per word is rebuilt as Y − (other two) or A + B + C. ` : 'Click any cell to erase it. ') + (flagged ? `${flagged} word(s) fail parity: press Locate and repair.` : '');
+}
+function renderTiles() {
+    const w = latest;
+    if (!w) { $('#tile-rows').innerHTML = ''; $('#root-out').textContent = ''; return; }
+    $('#tile-rows').innerHTML = `<tr><td>addr ${w.addr}</td>${w.cells.map((v, j) => { const t = cellTile(w, j, v); return `<td title="${v.toString()}">${hexWord(t.word)}${t.exact ? '' : '<span class="rnd">≈</span>'}</td>`; }).join('')}</tr>`;
+    const ordered = memory.slice().sort((a, b) => a.addr - b.addr), leaves = ordered.flatMap(leavesOf), tau = merkleChain(leaves);
+    const halos = [...new Set(w.cells.map((v, j) => decodeTile(cellTile(w, j, v).word).halo))].map(h => '0x' + h.toString(16).toUpperCase().padStart(2, '0'));
+    $('#root-out').innerHTML = `memory root τ₁ <span title="${toHex(tau[1])}">${toHex(tau[1]).slice(0, 24)}…</span> over ${leaves.length} leaves (tile ‖ exact value) · newest word's chain τ₁ ${w.tau0[1].slice(0, 12)}… · step k = ${w.step} (${phaseOf(w.step)}) · South Halo ${halos.join(', ')} <span style="color:var(--muted)">(pre-filter only)</span>`;
+}
+function renderHud() {
+    const hud = $('#hud');
+    if (!hud.children.length) {
+        const cells = Array.from({ length: 16 }, () => document.createElement('div'));
+        RING.forEach(([r, c], j) => { cells[r * 4 + c].dataset.ring = j; });
+        INNER.forEach(([r, c], j) => { cells[r * 4 + c].dataset.inner = j; cells[r * 4 + c].className = 'in'; });
+        cells.forEach(d => hud.appendChild(d));
+    }
+    const recent = memory.slice().sort((a, b) => b.id - a.id).slice(0, 3);
+    [...hud.children].forEach(d => {
+        if (d.dataset.ring !== undefined) {
+            const j = +d.dataset.ring, slot = j % 3, st = Math.floor(j / 3), w = recent[slot];
+            d.style.borderColor = st < 3 ? CLASS_CSS[st] + 'aa' : 'rgba(245,197,66,0.8)';
+            d.className = w && !parityOk(w) ? 'bad' : '';
+            d.innerHTML = `<b>${j} · ${STRUCT3[st]}${w ? ` @${w.addr}` : ''}</b>${w ? fmtShort(w.cells[st], 9) : '—'}`;
+            d.title = w ? `ring cell ${j}: word at address ${w.addr}, ${STRUCT3[st]} = ${w.cells[st].toString()}` : `ring cell ${j}: empty`;
+        } else {
+            const j = +d.dataset.inner, w = latest;
+            const vals = w ? [w.G.s, w.G.X, w.G.Yc] : [];
+            d.innerHTML = `<b>${['s = Y', 'Re z', 'b − c', 'χ'][j]}</b>${!w ? '—' : j < 3 ? fmtShort(vals[j], 9) : w.T.chi.toFixed(5)}`;
+            d.title = !w ? '' : j < 3 ? vals[j].toString() : `χ = ${w.T.chi} (1/√3 at lock)`;
+        }
+    });
+}
+function solStateOf() {
+    if (memory.some(w => !parityOk(w))) return 'fail';
+    if (jobs.some(J => J.st === 'running' || J.st === 'queued')) return 'busy';
+    if (jobs.some(J => J.st === 'held')) return 'hold';
+    return latest ? (agree(latest) ? 'lock' : 'conv') : 'idle';
+}
+function renderGauge() {
+    const w = latest;
+    if (!w) { $('#gauge-out').innerHTML = '<div><span>gauge</span><br>after the first convergence</div>'; return; }
+    const G = w.G;
+    $('#gauge-out').innerHTML = `
+        <div><span>a, b, c = A, B, C</span><br>${w.cells.slice(0, 3).map(x => fmt(toNum(x), 4)).join(', ')}</div>
+        <div><span>s = a + b + c (axis) = Y</span><br>${fmt(toNum(G.s), 6)}</div>
+        <div><span>z = (a − (b+c)/2) + i(√3/2)(b − c)</span><br>${fmt(toNum(G.X), 4)} + ${fmt(toNum(G.Yc), 4)}·(√3/2)i</div>
+        <div><span>(a, b, c) from (s, z)</span><br><span class="st ${G.recovered ? 'st-pass' : 'st-fail'}">${G.recovered ? 'exact' : 'FAIL'}</span></div>
+        <div><span>agreement</span><br>${G.X.isZero() && G.Yc.isZero() ? '<span class="st st-pass">z = 0: a = b = c</span>' : '<span class="st st-tol">z ≠ 0</span>'}</div>`;
+}
+function renderAll(force) {
+    jobs.forEach((J, s) => renderJob(s));
+    const key = [wordCount, memory.map(w => w.cells.map(String).join()).join('|'), [...memErased].join(), state.kappa, state.tension, state.torsion, crys.lock, completed.length].join('#');
+    if (!force && key === lastRendered) return;
+    lastRendered = key;
+    renderTqf(); renderMemory(); renderTiles(); renderHud(); renderGauge(); renderLemmaRows3();
+}
+
+// =====================================================================
+// Panel D: lemma rows
+// =====================================================================
+const okB = b => (b ? '<span class="st st-pass">PASS</span>' : '<span class="st st-fail">FAIL</span>');
+const NA3 = '<span class="st st-na">not used</span>', DEF3 = '<span class="st st-na">definition</span>', HEU3 = '<span class="st st-na">heuristic</span>', WAIT3 = '<span class="st st-na">after a convergence</span>';
+function renderLemmaRows3() {
+    const S = STATIC, C = CUBE_STATIC, w = latest, drawn = drawnFramesCheck();
+    const clockOk = completed.every(j => j.p0 % 30 === 0 && j.land - j.p0 === 149 && j.land % 30 === 29);
+    const words = memory, intact = words.filter(o => o.altered === null);
+    // one altered cell is always detected and located; two can cancel in the parity (one equation), so only one is a test
+    const parityRow = words.every(o => (o.altered === null ? parityOk(o) : o.altered === -1 || !parityOk(o)));
+    const locateRow = words.every(o => (o.altered === null ? locate(o) === null : o.altered === -1 || locate(o) === o.altered));
+    const erasureRow = intact.every(o => [0, 1, 2, 3].every(j => rebuild(o, j).eq(o.cells[j])));
+    let arithOk = true;
+    if (w) try { arithOk = w.src.every((src, s) => prepareJob(src).value.f.eq(w.orig[s])); } catch (e) { arithOk = false; }
+    const tilesOk = !w || w.cells.every((v, j) => { const t = cellTile(w, j, v).word; return packTile({ ...decodeTile(t) }) === t; });
+    const gateOpen = Math.abs(((state.tension - state.torsion) % 30 + 30) % 30) < 1e-9;
+    const rows = [
+        ['Lemma 4', 'Tier laws R<sub>n</sub> = 5n² + 15n + 15, ρ<sub>n</sub> = 2n + 4, W<sub>n</sub> = 16 − 2n for all three engines', 'Exact integers in TIERS_SPEC', okB(S.l4p1)],
+        ['Lemma 4', 'Pure tier frames Rot<sub>x</sub>(π/2), Rot<sub>y</sub>(π/2), applied exactly to the landing nodes and drawn in Panel A', `Integer maps keep exact quadrances; drawn steps are 120° turns to ${drawn === null ? '–' : drawn.toExponential(1)}`, okB(C.frames && (drawn === null || drawn < 1e-9))],
+        ['§H4', 'Each engine at its system\'s log radii (Part 1)', 'Order-preserving map of the shells', okB(S.l10map)],
+        ['§7.1–7.2, 7.13', 'The three engines are related by σ: (x, y, z) ↦ (z, x, y), 120° about (1, 1, 1)', 'σ orthogonal with integer entries, σ³ = 1', okB(C.perm)],
+        ['Lemma 11', 'One clock for all three engines: a job enters at node 0, spends one 30-node turn on each tier and lands at node 29 after 150 pulses, whenever it was submitted', `${completed.length} job(s) completed, all on the gate`, okB(clockOk)],
+        ['Layer B', 'Calculations: ℚ is closed under + − × ÷ and whole powers, so these results are exact; sqrt, sin, cos, π are exact only where the value is rational (Niven, Lemma 13 Part 2) and are otherwise marked ≈', w ? `Newest word's three expressions re-evaluated independently: ${arithOk ? 'bit for bit' : 'MISMATCH'}` : 'after a convergence', w ? okB(arithOk) : WAIT3],
+        ['Lemma 5 Part 6(a)', 'Quadrance out: A<sub>R</sub> = (ΣQ)² − 2ΣQ² = 4(|u|²|v|² − ⟨u,v⟩²) for the landing triangle', w ? `Both forms equal and ≥ 0 in BigInt (${w.T.bits}-bit values)` : 'after a convergence', w ? okB(w.T.same && w.T.nonneg) : WAIT3],
+        ['Lemma 4 Part 2', 'Weitzenböck: χ ≤ 1/√3 with equality iff equilateral. Equal results give equal phases, hence an exact lock', w ? `χ = ${w.T.chi.toFixed(6)}; ${w.dphi.every(d => d === w.dphi[0]) ? 'phases agree and the triangle is locked' : 'phases differ'}` : 'after a convergence', w ? okB(w.T.weitz && (!w.dphi.every(d => d === w.dphi[0]) || w.T.lock)) : WAIT3],
+        ['Prop. G1, Lemma 7 Part 3(d)', 'Each memory word is a group of four: Y = A + B + C. Parity fails exactly on the words whose cells were altered', `${words.length} word(s); ${words.filter(o => !parityOk(o)).length} flagged`, okB(parityRow)],
+        ['Prop. 7.11', 'Either manifold restores the other: one lost cell per word is rebuilt exactly; two are not', `All four single erasures of ${intact.length} intact word(s) rebuild bit for bit`, okB(erasureRow)],
+        ['Lemma 15 Part 3', 'Each word keeps the Merkle chain of its four leaves; the deepest differing layer locates an altered cell', `${words.filter(o => locate(o) !== null).length} word(s) differ from their chain`, okB(locateRow)],
+        ['§6.1, Lemma 15', 'Memory cells as 64-bit tiles (Form 3) chained by SHA-256 into the memory root; South Halo is a pre-filter only', w ? '4/4 newest tiles re-encode bit for bit' : 'after a convergence', w ? okB(tilesOk) : WAIT3],
+        ['Prop. 7.14', 'Convergence gauge: (A, B, C) split into s = Y (axis) and z (plane) and recovered exactly; z = 0 iff the three agree', w ? `Recovery ${w.G.recovered ? 'exact' : 'fails'}` : 'after a convergence', w ? okB(w.G.recovered) : WAIT3],
+        ['Lemma 13 Part 2', 'σ lifts to the Hurwitz unit ω = (1 + i + j + k)/2 (120°, finite order)', 'ω⁶ = 1, ω³ = −1, ω i ω⁻¹ = j (exact)', okB(C.omega6 && C.iToJ)],
+        ['§7.7', '4 × 4 memory layer: the three newest words on the ring (groups of four = shift-by-3 orbits), the gauge inside', 'Ring shifts exact', okB(C.shift3 && C.shift4)],
+        ['Lemma 8.2, 8.2″', 'Crystal: the nine C<sub>9</sub> rays at 40° on |x| = √3; exactly three are cube corners', `cube corners at s = ${C9.corners.join(', ')}`, okB(C9.onSphere && C9.corners.join() === '0,3,6')],
+        ['Lemma 8 Step 6, Prop. 6.5', 'Three trefoils, one per calculation, with lobes on the rays of Δ₁, Δ₂, Δ₃', crys.lock ? `Lobe rays ${C9.lobes.map(l => '{' + l.join(',') + '}').join(' ')} partition the nine` : 'Carrier unlocked', crys.lock ? okB(C9.partition) : '<span class="st st-na">free</span>'],
+        ['Props. 7.16–7.17', 'The central cube: Δ₁ ∪ −Δ₁ are the 8 vertices of Cube 1', 'Exact integer vertices', okB(C.cube)],
+        ['Thm. 7.5, Lemma 8', 'Outer-gear step k = ⌊frame/90⌋ + 1 in the tiles and the crystal readout; windows at k = 2, 6', `|sin θ<sub>k</sub>| = 1 only at k = ${S.windows.join(' and ')}`, okB(S.l8)],
+        ['Lemma 10', 'Disjoint shells inside each engine, so a trail never jumps between tiers mid-turn', 'Shell gaps 10, 16, 22, 28 (exact)', okB(S.l10)],
+        ['Definition', 'Δφ = κ(π/6)tanh(d) with d = (x − x̄)/(|x̄| + 1); trails in the co-rotating frame; 150-pulse step schedule', 'Design choices of this page', DEF3],
+        ['Lemma 5 Part 3', 'The spec\'s π/6 "zero-drag" gate', `Gate ${gateOpen ? 'open' : 'closed'} (Δθ = ${state.tension - state.torsion}°)`, HEU3],
+        ['1–3, 6, 9, 14, physics', 'Triangle centres, the five-moment channel, CRT addressing, the Fokker–Planck sieve and Part 2\'s lensing physics', 'Not used here', NA3]
+    ];
+    $('#lemma-rows').innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+    const pass = rows.filter(r => r[3].includes('st-pass')).length, fail = rows.filter(r => r[3].includes('st-fail')).length;
+    $('#lemma-sum').innerHTML = `${pass} live checks pass${fail ? `, <span style="color:var(--fail)">${fail} fail</span>` : ''} · ${rows.length - pass - fail} rows are waiting, definitions, heuristics or not used`;
+}
+
+// =====================================================================
+// Panel A: three engines, three calculations (Three.js)
+// =====================================================================
+let three = null, crystal = null;
+const dispR = r => state.logScale ? 6 + 20 * (Math.log10(Math.max(r, 1e-12)) - Math.log10(PHYS.rs / PHYS.pc)) : r / 1e5 * 234;
+const AXIS111 = () => new THREE.Vector3(1, 1, 1).normalize();
+function glowTexture(inner, outer) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, inner); gr.addColorStop(0.25, inner); gr.addColorStop(1, outer);
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+}
+const lineGeo = n => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); return g; };
+function setLine(line, pts) { const a = line.geometry.attributes.position; pts.forEach((p, i) => a.setXYZ(i, p.x, p.y, p.z)); a.needsUpdate = true; line.geometry.setDrawRange(0, pts.length); line.geometry.computeBoundingSphere(); }
+function disposeObj(o) { o.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material) x.material.dispose(); }); }
+function makeRenderer(host, msgEl) {
+    if (typeof THREE === 'undefined') { msgEl.textContent = 'Three.js r158 could not be loaded. The exact panels still run.'; return null; }
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { msgEl.textContent = 'WebGL is not available in this browser.'; return null; }
+    msgEl.remove();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    host.insertBefore(renderer.domElement, host.firstChild);
+    return renderer;
+}
+function wireOrbit(el, o, min, max) {
+    const pts = new Map(); let pinch = 0;
+    el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); });
+    el.addEventListener('pointermove', e => {
+        if (!pts.has(e.pointerId)) return;
+        const [px, py] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+        if (pts.size === 1) { o.theta -= (e.clientX - px) * 0.006; o.phi = Math.min(Math.PI - 0.05, Math.max(0.05, o.phi - (e.clientY - py) * 0.006)); }
+        else if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) o.radius = Math.min(max, Math.max(min, o.radius * pinch / d)); pinch = d; }
+    });
+    const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = 0; };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', e => { e.preventDefault(); o.radius = Math.min(max, Math.max(min, o.radius * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
+}
+
+function initThree() {
+    const host = $('#space'), renderer = makeRenderer(host, $('#space-msg'));
+    if (!renderer) return;
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(50, 1, 0.01, 20000);
+    three = { renderer, scene, camera, orbit: { theta: 0.75, phi: 1.1, radius: 880 }, systems: [], root: new THREE.Group() };
+    scene.add(three.root);
+    const sp = new Float32Array(1500 * 3), rnd = mulberry32(20261027);
+    for (let i = 0; i < 1500; i++) { const u = rnd() * 2 - 1, a = rnd() * 2 * Math.PI, s = Math.sqrt(1 - u * u); sp.set([3000 * s * Math.cos(a), 3000 * u, 3000 * s * Math.sin(a)], i * 3); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xb8c0e0, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0.7 })));
+    three.sgr = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,236,200,1)', 'rgba(255,120,40,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
+    three.sgr.scale.set(22, 22, 1); scene.add(three.sgr);
+    three.soliton = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,240,170,1)', 'rgba(245,197,66,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    three.soliton.scale.set(14, 14, 1); scene.add(three.soliton);
+    // per engine: the job's head, its trail, its tier checkpoints and its memory beads (30 outer, 30 inner)
+    three.jobs = [0, 1, 2].map(s => {
+        const mat = new THREE.MeshBasicMaterial({ color: CLASS_HEX[s] });
+        const head = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 14), mat); scene.add(head);
+        const trail = new THREE.Line(lineGeo(152), new THREE.LineBasicMaterial({ color: CLASS_HEX[s], transparent: true, opacity: 0.9 })); scene.add(trail);
+        const marks = [0, 1, 2, 3, 4].map(() => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(1), new THREE.MeshBasicMaterial({ color: CLASS_HEX[s], wireframe: true })); scene.add(m); return m; });
+        const outer = Array.from({ length: 30 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: CLASS_HEX[s], transparent: true })); m.visible = false; scene.add(m); return m; });
+        const inner = Array.from({ length: 30 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xf5c542, transparent: true })); m.visible = false; scene.add(m); return m; });
+        return { head, trail, marks, outer, inner };
+    });
+    three.sync = new THREE.Line(lineGeo(4), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })); scene.add(three.sync);
+    three.tri = new THREE.Line(lineGeo(4), new THREE.LineBasicMaterial({ color: 0xf5c542, transparent: true, opacity: 0.9 })); scene.add(three.tri);
+    three.p4 = new THREE.Mesh(new THREE.OctahedronGeometry(1), new THREE.MeshBasicMaterial({ color: 0xf5c542, wireframe: true })); scene.add(three.p4);
+    three.p4s = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff })); scene.add(three.p4s);
+    buildEngines();
+    wireOrbit(renderer.domElement, three.orbit, 2, 4000);
+    new ResizeObserver(() => resizeR(three, host)).observe(host);
+    resizeR(three, host);
+}
+function resizeR(R, host) { if (!R) return; const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return; R.renderer.setSize(w, h); R.camera.aspect = w / h; R.camera.updateProjectionMatrix(); }
+const tierDisp = (s, n) => { const D = Math.max(0.02, dispR(tierRadius(SYSTEMS[s], n))); return { D, tube: Math.max(0.004, D * 0.006 * (2 * n + 4)) }; };
+function buildEngines() {
+    if (!three) return;
+    three.systems.forEach(sg => { three.root.remove(sg.group); disposeObj(sg.group); });
+    three.systems = [];
+    SYSTEMS.forEach((sys, s) => {
+        const group = new THREE.Group(); group.quaternion.setFromAxisAngle(AXIS111(), 2 * Math.PI * s / 3);   // σˢ
+        const tiers = [];
+        for (let n = 0; n < 5; n++) {
+            const { D, tube } = tierDisp(s, n);
+            const tg = new THREE.Group(); tg.quaternion.copy(lemmaTierQuat(n));     // pure Lemma 4 frame
+            const mg = new THREE.Group(); tg.add(mg);                                  // tension / torsion
+            mg.add(new THREE.Mesh(new THREE.TorusGeometry(D, tube, 12, 180), new THREE.MeshBasicMaterial({ color: sys.colors[0], transparent: true, opacity: 0.14, depthWrite: false, blending: THREE.AdditiveBlending })));
+            const hg = new THREE.Group(); mg.add(hg);
+            for (let k = 0; k < 6; k++) {
+                const cls = k % 3, side = k % 2, chiral = side === 0 ? 1 : -1, phase = cls * 2 * Math.PI / 3, W = TIERS_SPEC[n].W, N = Math.max(240, W * 30), pts = [];
+                for (let i = 0; i <= N; i++) { const th = i / N * 2 * Math.PI, ph = W * th * chiral + phase, rr = tube * 1.12; pts.push(new THREE.Vector3((D + rr * Math.cos(ph)) * Math.cos(th), (D + rr * Math.cos(ph)) * Math.sin(th), rr * Math.sin(ph))); }
+                hg.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: sys.colors[cls], transparent: true, opacity: side ? 0.32 : 0.5 })));
+            }
+            group.add(tg); tiers.push({ tg, mg, hg, D, tube });
+        }
+        three.root.add(group);
+        three.systems.push({ group, tiers });
+    });
+    applyModulation();
+}
+function applyModulation() {
+    if (!three) return;
+    three.systems.forEach(sg => sg.tiers.forEach((t, n) => {
+        const a = n >= 3 ? state.tension * D2R : -state.torsion * D2R;
+        t.mg.quaternion.setFromAxisAngle(new THREE.Vector3(n >= 3 ? 0 : 0, n >= 3 ? 1 : 0, n >= 3 ? 0 : 1), a);
+    }));
+}
+
+// A node of engine s in the helices' co-rotating frame (Part 2's display node without the spin), lifted off the tube by `lift`
+function dispPoint(s, n, k, dphi = 0, lift = 1.12) {
+    const { D, tube } = tierDisp(s, n), rr = tube * lift, th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = TIERS_SPEC[n].W * th * chi + dphi;
+    const q = modRot([(D + rr * Math.cos(ph)) * Math.cos(th), (D + rr * Math.cos(ph)) * Math.sin(th), rr * Math.sin(ph)], n);
+    return new THREE.Vector3(...c3pow(frameOf(n, q, NEG_N), s));
+}
+const spinOf = (s, n, alpha) => sim.prevPhase[s][n] + (sim.phase[s][n] - sim.prevPhase[s][n]) * alpha;
+const ease = x => x * x * (3 - 2 * x);
+const beadSize = (s, n) => Math.max(1.4, tierDisp(s, n).D * 0.03);
+function headOf(s, pf) {   // the head of engine s at fractional pulse pf: on its trail, gliding to the next node
+    const J = jobs[s];
+    if (J.st === 'queued') return dispPoint(s, 4, 0);
+    if (J.st === 'running') {
+        const i = Math.min(149, Math.max(0, pf - J.p0)), i0 = Math.floor(i), e = ease(i - i0), i1 = Math.min(149, i0 + 1);
+        const at = j => dispPoint(s, 4 - Math.floor(j / 30), (J.p0 + j) % 30);
+        return at(i0).lerp(at(i1), e);
+    }
+    if (J.st === 'held') return dispPoint(s, 0, 29);
+    if (J.st === 'done' && latest) return dispPoint(s, 0, 29, latest.dphi[s]);
+    return null;
+}
+function updateScene(alpha, tI) {
+    if (!three) return;
+    three.systems.forEach((sg, s) => sg.tiers.forEach((t, n) => { t.hg.rotation.z = spinOf(s, n, alpha); }));
+    const pf = Math.max(0, tI * 60), heads = [];
+    three.jobs.forEach((G, s) => {
+        const h = headOf(s, pf);
+        G.head.visible = !!h;
+        if (h) { G.head.position.copy(h); G.head.scale.setScalar(Math.max(2.4, tierDisp(s, jobs[s].st === 'running' ? 4 - Math.floor((pf - jobs[s].p0) / 30) : jobs[s].st === 'queued' ? 4 : 0).D * 0.035)); heads.push(h); }
+        const pts = trails[s].map(v => dispPoint(s, v.n, v.k));
+        if (h && jobs[s].st === 'running') pts.push(h);
+        G.trail.visible = state.trails && pts.length > 1;
+        if (G.trail.visible) setLine(G.trail, pts.slice(-152));
+        G.marks.forEach((m, j) => {
+            const c = checkpoints[s][j];
+            m.visible = state.trails && !!c;
+            if (c) { m.position.copy(dispPoint(s, c.n, c.k)); m.scale.setScalar(Math.max(2, tierDisp(s, c.n).D * 0.04)); }
+        });
+        const byAddr = new Map(memory.map(w => [w.addr, w]));
+        for (let a = 0; a < 30; a++) {
+            const w = byAddr.get(a), o = G.outer[a], inn = G.inner[a];
+            o.visible = inn.visible = state.memory && !!w;
+            if (!w) continue;
+            const bad = !parityOk(w);
+            o.position.copy(dispPoint(s, 4, a, 0, 2.2)); o.scale.setScalar(beadSize(s, 4));
+            o.material.opacity = memErased.has(`${a}:${s}`) ? 0.25 : 1; o.material.color.setHex(bad && locate(w) === s ? 0xf87171 : CLASS_HEX[s]);
+            inn.position.copy(dispPoint(s, 0, a, 0, 2.2)); inn.scale.setScalar(beadSize(s, 0));
+            inn.material.opacity = memErased.has(`${a}:3`) ? 0.25 : 1; inn.material.color.setHex(bad && locate(w) === 3 ? 0xf87171 : 0xf5c542);
+        }
+    });
+    const running = jobs.filter(J => J.st === 'running').length;
+    three.sync.visible = running >= 1 && heads.length >= 2;
+    if (three.sync.visible) setLine(three.sync, [...heads, heads[0]]);
+    // the landing triangle, its exact closure and the inferred fourth sliding into the core over 30 pulses
+    const w = latest, show = !!w && jobs.every(J => J.st === 'done');
+    three.tri.visible = three.p4.visible = three.p4s.visible = show;
+    const core = w ? gaugeDisplay(gaugeNorm(w)) : [0, 0, 0];
+    three.soliton.position.lerp(new THREE.Vector3(core[0] * 4, core[1] * 4, core[2] * 4), 0.12);
+    three.soliton.material.opacity = w ? 1 : 0.45;
+    if (show) {
+        const P = [0, 1, 2].map(s => dispPoint(s, 0, 29, w.dphi[s]));
+        setLine(three.tri, [P[0], P[1], P[2], P[0]]);
+        three.tri.material.opacity = w.T.lock ? 0.5 : 0.95;
+        const u = P[1].clone().sub(P[0]), v = P[2].clone().sub(P[0]);
+        const latch = Math.min(1, Math.max(0, (pf - w.pulse) / 29));
+        three.p4.position.copy(P[0].clone().add(u.clone().add(v).multiplyScalar(w.T.qScale)).lerp(three.soliton.position, ease(latch))); three.p4.scale.setScalar(5);
+        three.p4s.position.copy(P[1].clone().add(P[2]).sub(P[0])); three.p4s.scale.setScalar(2.2);
+    }
+    const o = three.orbit;
+    three.camera.position.setFromSphericalCoords(o.radius, o.phi, o.theta);
+    three.camera.lookAt(0, 0, 0);
+    three.renderer.render(three.scene, three.camera);
+}
+// The gauge of the three results scaled by the largest |value|, so the core's place shows agreement, not magnitude
+const numF = x => ({ toNumber: () => x });
+function gaugeNorm(w) {
+    const v = w.cells.slice(0, 3).map(toNum), M = Math.max(...v.map(Math.abs)) || 1, [a, b, c] = v.map(x => x / M);
+    return { X: numF(a - (b + c) / 2), Yc: numF(b - c), s: numF(a + b + c) };
+}
+// Saturated display vector of the gauge: (z in the plane spanned by u, v, s along the axis)/3, in crystal units
+function gaugeDisplay(G) {
+    const X = G.X.toNumber(), Yc = G.Yc.toNumber(), s = G.s.toNumber(), n = [1, 1, 1].map(x => x / Math.sqrt(3));
+    const d = [0, 1, 2].map(i => (X * C9.u[i] + (Math.sqrt(3) / 2) * Yc * C9.v[i] + s * n[i]) / 3);
+    const m = Math.hypot(...d); if (!m) return [0, 0, 0];
+    const k = 1.2 * Math.tanh(m / 2) / m; return d.map(x => x * k);
+}
+
+
+// =====================================================================
+// Panel B: the convergence core (Part 2's crystal, roles reversed)
+// =====================================================================
+const PHI = (1 + Math.sqrt(5)) / 2, U20 = 20;
+const LEMMA_RC = C9.R9 / (1 + PHI), LEMMA_RCAR = PHI * LEMMA_RC;      // golden carrier with R + r = √(8/3)
+const crys = { twist: 2.5, buckle: 3.0, pairSep: 0.8, lock: true, torusR: LEMMA_RCAR * U20, zScale: 10, poleH: Math.sqrt(3) * U20,
+               lattice: true, bridge: true, nodes: true, lemma: true, scope: false, spin: false };
+const PARTICLES = 200, GHOST_PARTICLES = 100;
+function discTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 32, 0, 2 * Math.PI); g.fill();
+    return new THREE.CanvasTexture(c);
+}
+function initCrystal() {
+    const host = $('#crystal'), renderer = makeRenderer(host, $('#crystal-msg'));
+    if (!renderer) return;
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+    crystal = { renderer, scene, camera, orbit: { theta: 0.6, phi: 1.25, radius: 6.4 } };
+    const tex = discTexture();
+    // lemma coordinates; the view turns (1, 1, 1) to the vertical
+    const view = new THREE.Group(); view.quaternion.setFromUnitVectors(AXIS111(), new THREE.Vector3(0, 1, 0)); scene.add(view);
+    const spin = new THREE.Group(); view.add(spin); crystal.spin = spin; crystal.view = view;
+    const V = a => new THREE.Vector3(a[0], a[1], a[2]);
+    // 64-voxel lattice V = [−2, 2]³ (Lemma 5; the crystal file's 80-unit, 4 × 4 × 4 wireframe)
+    const lv = [];
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) { const a = -2 + i, b = -2 + j; lv.push(a, -2, b, a, 2, b, -2, a, b, 2, a, b, b, a, -2, b, a, 2); }
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
+    crystal.lattice = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x8a90a8, transparent: true, opacity: 0.1 }));
+    spin.add(crystal.lattice);
+    // lemma objects: Cube 1, Δ₁ ∪ −Δ₁, the circumsphere, the nine C9 rays and their ring
+    const lemma = new THREE.Group(); spin.add(lemma); crystal.lemma = lemma;
+    crystal.cube = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({ color: 0xf5c542, transparent: true, opacity: 0.9 }));
+    lemma.add(crystal.cube);
+    const D1 = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(V), D1m = D1.map(p => p.clone().negate());
+    const tetra = (P, col) => { const pts = []; for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) pts.push(P[i], P[j]); return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.3 })); };
+    lemma.add(tetra(D1, 0xff0055), tetra(D1m, 0x00f2ff));
+    lemma.add(new THREE.Mesh(new THREE.SphereGeometry(Math.sqrt(3), 24, 16), new THREE.MeshBasicMaterial({ color: 0x8b5cf6, wireframe: true, transparent: true, opacity: 0.06 })));
+    const rays = C9.pts.map(V);
+    rays.forEach(p => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), new THREE.MeshBasicMaterial({ color: 0x34d399 })); m.position.copy(p); lemma.add(m); });
+    lemma.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(rays), new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.55 })));
+    // three TwistorPairs: two particle streams (A = model, B = data) and a structural node at their centroid
+    crystal.basis = { n: AXIS111(), u: V(C9.u), v: V(C9.v), c0: new THREE.Vector3(-1 / 3, -1 / 3, -1 / 3) };
+    const nodeGroup = new THREE.Group(); spin.add(nodeGroup); crystal.nodeGroup = nodeGroup;
+    crystal.pairs = [0, 1, 2].map(c => {
+        const g = new THREE.Group(); spin.add(g);
+        const mat = new THREE.PointsMaterial({ color: CLASS_HEX[c], size: 0.1, map: tex, transparent: true, opacity: 0.95, alphaTest: 0.3, depthWrite: false });
+        const mk = () => { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PARTICLES * 3), 3)); const p = new THREE.Points(geo, mat); g.add(p); return p; };
+        const node = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 16), new THREE.MeshBasicMaterial({ color: CLASS_HEX[c], wireframe: true, transparent: true, opacity: 0.9 }));
+        nodeGroup.add(node);
+        return { g, a: mk(), b: mk(), node, centroid: new THREE.Vector3() };
+    });
+    // two GhostPairs: a spiral stream from the centre to each pole, and the pole node
+    crystal.poleGroup = new THREE.Group(); spin.add(crystal.poleGroup);
+    crystal.ghosts = [1, -1].map(sg => {
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(GHOST_PARTICLES * 3), 3));
+        const stream = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xcfe6ff, size: 0.06, map: tex, transparent: true, opacity: 0.7, alphaTest: 0.3, depthWrite: false }));
+        const node = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0x9ad8ff, wireframe: true, transparent: true, opacity: 0.9 }));
+        crystal.poleGroup.add(stream, node);
+        return { sg, stream, node };
+    });
+    // bridges: Tier 2 (green: core to pair nodes, ring of pair nodes) and Tier 3 (blue: axis, poles to pair nodes)
+    crystal.bridgeT2 = new THREE.LineSegments(lineGeo(12), new THREE.LineBasicMaterial({ color: 0x88ff88, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending }));
+    crystal.bridgeT3 = new THREE.LineSegments(lineGeo(16), new THREE.LineBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending }));
+    spin.add(crystal.bridgeT2, crystal.bridgeT3);
+    // EmergentCore at the Proposition 7.14 gauge
+    crystal.core = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 20), new THREE.MeshBasicMaterial({ color: 0xffe08a }));
+    crystal.coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(255,250,220,0.95)', 'rgba(245,197,66,0)'), blending: THREE.AdditiveBlending, depthWrite: false }));
+    crystal.coreGlow.scale.set(0.6, 0.6, 1);
+    crystal.arrow = new THREE.Line(lineGeo(2), new THREE.LineBasicMaterial({ color: 0xffe08a }));
+    spin.add(crystal.core, crystal.coreGlow, crystal.arrow);
+    // orthogonal scope: the 16 streams of §7.7 (12 on a ring, 4 inside), driven by the data
+    crystal.scope = new THREE.Group(); view.add(crystal.scope);
+    crystal.scopeNodes = Array.from({ length: 16 }, (_, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), new THREE.MeshBasicMaterial({ color: i < 12 ? CLASS_HEX[i % 3] : 0xffffff })); crystal.scope.add(m); return m; });
+    crystal.scopeLinks = new THREE.LineSegments(lineGeo(2 * 28), new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5 }));
+    crystal.scope.add(crystal.scopeLinks);
+    wireOrbit(renderer.domElement, crystal.orbit, 3, 24);
+    new ResizeObserver(() => resizeR(crystal, host)).observe(host);
+    resizeR(crystal, host);
+}
+// (2,3) torus knot: tube angle 3t + 2πc/3, torus angle 2t, centred at c0 on the (1,1,1) axis (crystal file's getTorusTrefoilPoint)
+function crystalCarrier() {
+    return crys.lock ? { R: LEMMA_RCAR, r: LEMMA_RC, z: 1 } : { R: crys.torusR / U20, r: LEMMA_RC, z: crys.zScale / 10 };
+}
+function trefoilPoint(t, c, B, K) {
+    const ph = 3 * t + 2 * Math.PI * c / 3, rad = K.R + K.r * Math.cos(ph);
+    return B.c0.clone().addScaledVector(B.u, rad * Math.cos(2 * t)).addScaledVector(B.v, rad * Math.sin(2 * t)).addScaledVector(B.n, K.z * K.r * Math.sin(ph));
+}
+// Frenet frame by finite differences (crystal file's computeQuaternionFrame): N from dT, B = T × N
+function frenet(t, c, B, K) {
+    const e = 0.01, p0 = trefoilPoint(t, c, B, K), p1 = trefoilPoint(t + e, c, B, K), p2 = trefoilPoint(t + 2 * e, c, B, K);
+    const T = p1.clone().sub(p0).normalize(), T2 = p2.clone().sub(p1).normalize(), N = T2.sub(T).normalize(), Bn = new THREE.Vector3().crossVectors(T, N).normalize();
+    return { p: p0, N, B: Bn };
+}
+
+const crysAnim = { flow: 0, last: null, shear: 0, mag: [0, 0, 0], prog: [0, 0, 0] };
+const EASE_K = 0.12;
+function progressOf(s, pf) {
+    const J = jobs[s];
+    if (J.st === 'running') return Math.min(1, Math.max(0, (pf - J.p0) / 149));
+    return J.st === 'held' || J.st === 'done' ? 1 : 0;
+}
+function updateCrystal(frameF, tI) {
+    if (!crystal) return;
+    const Bs = crystal.basis, K = crystalCarrier(), pf = Math.max(0, tI * 60), sol = solStateOf();
+    let dF = crysAnim.last === null ? 0 : frameF - crysAnim.last;
+    if (dF < -360) dF += 720;
+    if (dF < 0 || dF > 360) dF = 0;
+    crysAnim.flow = (crysAnim.flow + Math.min(dF, 1)) % 720; crysAnim.last = frameF;
+    const timeRad = crysAnim.flow / 720 * 4 * Math.PI;
+    crystal.spin.quaternion.setFromAxisAngle(Bs.n, crys.spin ? frameF * D2R : 0);
+    crystal.lattice.visible = crys.lattice; crystal.lemma.visible = crys.lemma; crystal.nodeGroup.visible = crys.nodes;
+    crystal.bridgeT2.visible = crys.bridge; crystal.bridgeT3.visible = crys.bridge && state.tier3;
+    crysAnim.shear += ((sol === 'fail' ? 0.5 : 0) - crysAnim.shear) * EASE_K;
+    const shear = crysAnim.shear, buckle = crys.buckle / U20, sepA = crys.pairSep * 0.5;
+    crystal.pairs.forEach((P, c) => {
+        crysAnim.prog[c] += (progressOf(c, pf) - crysAnim.prog[c]) * EASE_K;
+        const prog = crysAnim.prog[c], mag = prog;
+        const e = Bs.u.clone().multiplyScalar(Math.cos(2 * Math.PI * c / 3)).addScaledVector(Bs.v, Math.sin(2 * Math.PI * c / 3));
+        P.g.position.copy(e.multiplyScalar(1.3 * (1 - prog)));          // starts outside the lattice, converges as the job winds inward
+        P.g.quaternion.setFromAxisAngle(Bs.n, (c - 1) * shear);
+        P.a.material.opacity = jobs[c].st === 'idle' || jobs[c].st === 'err' ? 0.35 : 0.95;
+        const pa = P.a.geometry.attributes.position, pb = P.b.geometry.attributes.position, sepB = Math.PI - sepA - mag * (Math.PI - 2 * sepA);
+        const cen = new THREE.Vector3();
+        for (let i = 0; i < PARTICLES; i++) {
+            const t = ((i / PARTICLES) * 2 * Math.PI + timeRad) % (2 * Math.PI), f = frenet(t, c, Bs, K), tw = t * crys.twist;
+            const a = f.p.clone().addScaledVector(f.N, buckle * Math.cos(tw + sepA)).addScaledVector(f.B, buckle * Math.sin(tw + sepA));
+            const b = f.p.clone().addScaledVector(f.N, buckle * Math.cos(tw + sepB)).addScaledVector(f.B, buckle * Math.sin(tw + sepB));
+            pa.setXYZ(i, a.x, a.y, a.z); pb.setXYZ(i, b.x, b.y, b.z); cen.add(a).add(b);
+        }
+        pa.needsUpdate = pb.needsUpdate = true;
+        P.centroid.copy(cen.multiplyScalar(1 / (2 * PARTICLES))).applyQuaternion(P.g.quaternion).add(P.g.position);
+        P.node.position.copy(P.centroid);
+    });
+    const G = latest ? gaugeNorm(latest) : null;
+    const poleR = crys.lock ? Math.sqrt(3) : crys.poleH / U20, sAx = G ? 0.25 * Math.tanh(G.s.toNumber() / 3) : 0;
+    crystal.poleGroup.visible = state.tier3;
+    crystal.poleGroup.position.lerp(Bs.n.clone().multiplyScalar(sAx), EASE_K);
+    const perp1 = Bs.u, perp2 = Bs.v, tmp = new THREE.Vector3();
+    crystal.ghosts.forEach(gh => {
+        gh.node.position.copy(Bs.n.clone().multiplyScalar(gh.sg * poleR));
+        const pos = gh.stream.geometry.attributes.position;
+        for (let i = 0; i < GHOST_PARTICLES; i++) {
+            const t = i / GHOST_PARTICLES, ang = t * Math.PI * 8 + timeRad, h = t * poleR * gh.sg;
+            tmp.copy(Bs.n).multiplyScalar(h).addScaledVector(perp1, 0.1 * Math.cos(ang)).addScaledVector(perp2, 0.1 * Math.sin(ang));
+            pos.setXYZ(i, tmp.x, tmp.y, tmp.z);
+        }
+        pos.needsUpdate = true;
+    });
+    const g = G ? gaugeDisplay(G) : [0, 0, 0], coreP = crystal.core.position.lerp(new THREE.Vector3(g[0], g[1], g[2]), EASE_K).clone();
+    crystal.core.visible = crystal.coreGlow.visible = crystal.arrow.visible = !!latest;
+    crystal.coreGlow.position.copy(coreP);
+    setLine(crystal.arrow, [new THREE.Vector3(), coreP]);
+    const nodes = crystal.pairs.map(P => P.centroid), north = crystal.ghosts[0].node.position.clone().add(crystal.poleGroup.position), south = crystal.ghosts[1].node.position.clone().add(crystal.poleGroup.position);
+    const hub = latest ? coreP : new THREE.Vector3();
+    setLine(crystal.bridgeT2, [nodes[0], hub, nodes[1], hub, nodes[2], hub, nodes[0], nodes[1], nodes[1], nodes[2], nodes[2], nodes[0]]);
+    setLine(crystal.bridgeT3, [north, hub, south, hub, ...nodes.flatMap(p => [p, north, p, south])]);
+    updateScope(timeRad);
+    const col = sol === 'fail' ? 0xf87171 : sol === 'lock' || sol === 'conv' ? 0xf5c542 : 0xfbbf24;
+    crystal.cube.material.color.setHex(col); crystal.cube.material.opacity = sol === 'lock' ? 0.95 : 0.5;
+    crystal.core.material.color.setHex(sol === 'fail' ? 0xf87171 : 0xffe08a);
+    const o = crystal.orbit;
+    crystal.camera.position.setFromSphericalCoords(o.radius, o.phi, o.theta); crystal.camera.lookAt(0, 0, 0);
+    crystal.renderer.render(crystal.scene, crystal.camera);
+}
+function updateReadouts(frameF) {
+    const k = Math.floor(frameF / 90) % 8 + 1, red = GAUSS_STEPS[k - 1].red, spinSign = Math.cos(frameF * D2R / 2) >= 0 ? '+' : '−';
+    $('#sol-step').innerHTML = `step k = ${k} · spinor ${fmtGauss(red)}${k === 2 || k === 6 ? ' · window' : ''} · sign ${spinSign}`;
+    $('#step-count').textContent = String(Math.floor(frameF)).padStart(3, '0');
+    $('#progress-fill').style.width = (frameF / 720 * 100).toFixed(2) + '%';
+    const sol = solStateOf(), st = $('#sol-state');
+    const busy = jobs.map(J => (J.st === 'running' ? `${CALC[J.s]} T${4 - Math.floor(J.i / 30)}` : J.st === 'queued' ? `${CALC[J.s]} queued` : J.st === 'held' ? `${CALC[J.s]} held` : null)).filter(Boolean).join(' · ');
+    st.className = sol === 'fail' ? 'sol-active' : sol === 'lock' || sol === 'conv' ? 'sol-locked' : 'sol-tol';
+    st.textContent = { fail: 'PARITY FAIL · memory altered', busy: `COMPUTING · ${busy}`, hold: `HOLDING · ${busy}`, lock: 'CONVERGED · LOCK: A = B = C', conv: `CONVERGED · Y = A + B + C${latest && latest.T.lock ? ' · lock within 2⁻²⁴' : ''}`, idle: 'IDLE · run three calculations' }[sol];
+}
+// Orthogonal scope: the 16 cells of the §7.7 memory layer, ring nodes pushed out by |value| (relative to their word), inner by the gauge
+function updateScope(timeRad) {
+    crystal.scope.visible = crys.scope;
+    if (!crys.scope) return;
+    const recent = memory.slice().sort((a, b) => b.id - a.id).slice(0, 3), pts = [], G = latest ? gaugeNorm(latest) : null;
+    crystal.scopeNodes.forEach((m, i) => {
+        if (i < 12) {
+            const w = recent[i % 3], st = Math.floor(i / 3), ang = i / 12 * 2 * Math.PI;
+            let push = 0;
+            if (w) { const v = w.cells.map(toNum), M = Math.max(...v.map(Math.abs)) || 1; push = 0.3 * Math.abs(v[st]) / M; }
+            m.position.set((0.5 + push) * Math.cos(ang), 0, (0.5 + push) * Math.sin(ang));
+        } else {
+            const j = i - 12, val = G ? [G.s, G.X, G.Yc, numF(latest.T.chi * Math.sqrt(3) - 1)][j].toNumber() : 0, ang = j / 4 * 2 * Math.PI + Math.PI / 4;
+            m.position.set(0.2 * Math.cos(ang), 0.2 * Math.tanh(val), 0.2 * Math.sin(ang));
+        }
+        pts.push(m.position);
+    });
+    const seg = [];
+    for (let j = 0; j < 12; j++) seg.push(pts[j], pts[(j + 1) % 12], pts[j], pts[(j + 3) % 12]);
+    for (let j = 0; j < 4; j++) seg.push(pts[12 + j], pts[12 + (j + 1) % 4]);
+    setLine(crystal.scopeLinks, seg);
+    crystal.scope.rotation.y = -timeRad;
+}
+
+// =====================================================================
+// Self-test
+// =====================================================================
+function runSelfTest() {
+    log('──── Self-test: exact calculator, triple quad, gauge, quadrance-out, chain and clock ────', 'hd');
+    const t0 = performance.now(), res = [];
+    const check = (tag, cond, msg) => { res.push(cond); log(`[${tag}] ${msg} -> ${cond ? 'PASS' : 'FAIL'}`, cond ? 'pass' : 'fail'); };
+    const ev = s => prepareJob(s).value, F = (n, d = 1) => new Fraction(BigInt(n), BigInt(d));
+    check('V1', ev('0.1 + 0.2').f.eq(F(3, 10)) && ev('0.1 + 0.2').exact, '0.1 + 0.2 = 3/10 exactly (binary doubles give 0.30000000000000004)');
+    check('V1', ev('9.0000000000000005 + 0.30000008').f.eq(decFrac('9.3000000800000005')), '9.0000000000000005 + 0.30000008 = 9.3000000800000005, past the 64-bit ceiling');
+    check('V1', ev('1/3*3').f.eq(Fraction.ONE) && ev('2^-3').f.eq(F(1, 8)) && ev('-2^2').f.eq(F(-4)) && ev('(-2)^2').f.eq(F(4)) && ev('2*-3+1').f.eq(F(-5)) && ev('2^3^2').f.eq(F(512)),
+          '1/3·3 = 1, 2^−3 = 1/8, −2^2 = −4, (−2)^2 = 4, 2·−3 + 1 = −5, 2^3^2 = 512');
+    check('V1', ev('sqrt(16/9)').exact && ev('sqrt(16/9)').f.eq(F(4, 3)) && ev('(9/4)^(1/2)').f.eq(F(3, 2)) && ev('cos(0)').exact && !ev('sqrt(2)').exact && !ev('pi').exact,
+          'sqrt(16/9) = 4/3 and (9/4)^(1/2) = 3/2 exactly, cos(0) = 1 exactly; sqrt(2) and π marked approximate');
+    check('V1', ['1/0', '(1+2', '1+', '2 3', 'sqrt 4', 'x+1', '0^-1'].every(s => { try { prepareJob(s); return false; } catch (e) { return true; } }), 'malformed input, division by zero and 0^−1 are rejected');
+    const rnd = mulberry32(20261028), rf = () => F(Math.floor((rnd() - 0.5) * 2e6), 1 + Math.floor(rnd() * 1000));
+    let ok = true;
+    for (let i = 0; i < 2000 && ok; i++) { const w = { cells: [rf(), rf(), rf()] }; w.cells.push(w.cells[0].add(w.cells[1]).add(w.cells[2])); ok = [0, 1, 2, 3].every(j => rebuild(w, j).eq(w.cells[j])); }
+    check('V2', ok, '2000 random words: each of A, B, C, Y is rebuilt exactly from the other three (Proposition G1)');
+    ok = true;
+    for (let i = 0; i < 500 && ok; i++) ok = gaugeExact(rf(), rf(), rf()).recovered;
+    check('V3', ok, '500 random triples: (a, b, c) recovered exactly from s and z (Proposition 7.14)');
+    ok = true; let n4 = 0;
+    for (let i = 0; i < 120 && ok; i++) { const S = Math.floor(rnd() * 5), k = Math.floor(rnd() * 30), d = (rnd() - 0.5) * 2; const T = tqf([0, 1, 2].map(s => exactNode(s, 0, k, S, d))); ok = T.lock && T.same; n4++; }
+    check('V4', ok, `${n4} random equal-phase landings on every tier: the triangle is exactly equilateral (3A_R = S², Lemma 4 Part 2)`);
+    ok = true;
+    for (let i = 0; i < 200 && ok; i++) { const T = tqf([0, 1, 2].map(() => [rf(), rf(), rf()])); ok = T.same && T.nonneg && T.weitz; }
+    check('V5', ok, '200 random rational triangles: poly = Gram ≥ 0 and 3A_R ≤ S² (Lemma 5 Part 6(a), Weitzenböck)');
+    ok = true;
+    for (let j = 0; j < 4 && ok; j++) { const w = { addr: 7, step: 3, k: 29, cells: [F(1, 10), F(1, 5), F(3, 10), F(3, 5)] }; w.tau0 = chainOf(w); w.cells[j] = w.cells[j].add(F(1, 1 << 24)); ok = locate(w) === j; }
+    check('V6', ok, 'altering any one of a word\'s four leaves is located by the deepest differing layer of its Merkle chain (Lemma 15 Part 3)');
+    ok = true;
+    for (let i = 0; i < 30 && ok; i++) { const p0 = 30 * Math.floor(rnd() * 1000), land = p0 + 149; ok = land % 30 === 29 && Math.floor((land - p0) / 30) === 4 && [0, 1, 2, 3, 4].every(S => (p0 + 30 * S) % 30 === 0); }
+    check('V7', ok, '30 random gates: a job entering at node 0 spends one wheel turn per tier and lands on T0 at node 29');
+    const pass = res.filter(Boolean).length;
+    log(`──── ${pass}/${res.length} PASS; ${(performance.now() - t0).toFixed(0)} ms ────`, pass === res.length ? 'pass' : 'fail');
+    $('#vsum').innerHTML = `<span class="st ${pass === res.length ? 'st-pass' : 'st-fail'}">self-test ${pass}/${res.length} PASS</span>`;
+}
+
+// =====================================================================
+// Controls
+// =====================================================================
+const PRESETS = {
+    ieee: ['0.1 + 0.2', '0.3', '3/10'],
+    ceiling: ['9.0000000000000005 + 0.30000008', '9.3000000800000005', '93000000800000005/10000000000000000'],
+    pyth: ['3^2 + 4^2', '5^2', '(1 + 2*2)^2'],
+    mixed: ['2/3 + 1/7', '(1 + 2) * (3 + 4)', '-5/8'],
+    approx: ['sqrt(2)^2 / 2', 'sqrt(16/9) * 3/4', '2*sin(pi/6)']
+};
+function setPlaying(v) { state.playing = v; $('#btn-play').textContent = v ? 'Pause' : 'Play'; }
+function wireControls() {
+    $('#btn-play').onclick = () => setPlaying(!state.playing);
+    const sp = $('#speed'); sp.oninput = () => { state.speed = 10 ** parseFloat(sp.value); $('#speed-v').textContent = state.speed.toFixed(state.speed < 1 ? 2 : 1) + '×'; };
+    const toggle = (id, key, after) => { const b = $(id); b.onclick = () => { state[key] = !state[key]; b.classList.toggle('on', state[key]); if (after) after(); }; };
+    toggle('#btn-log', 'logScale', () => { buildEngines(); three && (three.orbit.radius = state.logScale ? 880 : 620); });
+    toggle('#btn-trail', 'trails'); toggle('#btn-mem', 'memory'); toggle('#btn-t3', 'tier3');
+    const gate = () => { const open = Math.abs(((state.tension - state.torsion) % 30 + 30) % 30) < 1e-9; $('#gate').classList.toggle('open', open); $('#gate').textContent = open ? 'π/6 gate · open' : 'π/6 gate · closed'; };
+    $('#ten').oninput = e => { state.tension = +e.target.value; $('#ten-v').textContent = state.tension + '°'; applyModulation(); gate(); refreshReadout(); };
+    $('#tor').oninput = e => { state.torsion = +e.target.value; $('#tor-v').textContent = state.torsion + '°'; applyModulation(); gate(); refreshReadout(); };
+    gate();
+    $('#kappa').oninput = e => { state.kappa = +e.target.value; $('#kappa-v').textContent = state.kappa.toFixed(2); refreshReadout(); };
+    $('#btn-clear-trails').onclick = () => { [0, 1, 2].forEach(s => { if (jobs[s].st !== 'running') { trails[s] = []; checkpoints[s] = []; } }); };
+    [0, 1, 2].forEach(s => {
+        $(`#run-${s}`).onclick = () => submit(s);
+        $(`#expr-${s}`).addEventListener('keydown', e => { if (e.key === 'Enter') submit(s); });
+    });
+    $('#run-all').onclick = () => { [0, 1, 2].forEach(s => submit(s, 0)); };
+    $('#run-stagger').onclick = () => { [0, 1, 2].forEach(s => submit(s, s)); };
+    document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+        PRESETS[b.dataset.preset].forEach((x, s) => { $(`#expr-${s}`).value = x; });
+        log(`[P] preset "${b.textContent}" loaded: press Run all or Run staggered`);
+    }));
+    $('#mem-rows').addEventListener('click', e => { const td = e.target.closest('td[data-m]'); if (!td) return; const k = td.dataset.m; memErased.has(k) ? memErased.delete(k) : memErased.add(k); renderAll(true); });
+    $('#mem-restore').onclick = () => { memErased.clear(); renderAll(true); };
+    $('#mem-alter').onclick = alterOne;
+    $('#mem-repair').onclick = repairAll;
+    // crystal controls (the crystal file's sliders, in its units: 20 per cubit)
+    const cs = (id, key, digits) => { const el = $(id); el.oninput = () => { crys[key] = +el.value; $(id + '-v').textContent = (+el.value).toFixed(digits); }; };
+    cs('#c-twist', 'twist', 2); cs('#c-buckle', 'buckle', 1); cs('#c-sep', 'pairSep', 1); cs('#c-torus', 'torusR', 1); cs('#c-z', 'zScale', 1); cs('#c-pole', 'poleH', 1);
+    const lockUI = () => {
+        ['#c-torus', '#c-z', '#c-pole'].forEach(id => { $(id).disabled = crys.lock; });
+        if (crys.lock) [['#c-torus', 'torusR', LEMMA_RCAR * U20], ['#c-z', 'zScale', 10], ['#c-pole', 'poleH', Math.sqrt(3) * U20]].forEach(([id, key, v]) => { crys[key] = v; $(id).value = v; $(id + '-v').textContent = v.toFixed(1); });
+        renderAll(true);
+    };
+    const ck = (id, key, after) => { const el = $(id); el.onchange = () => { crys[key] = el.checked; if (after) after(); }; };
+    ck('#c-lock', 'lock', lockUI); ck('#c-lattice', 'lattice'); ck('#c-bridge', 'bridge'); ck('#c-nodes', 'nodes'); ck('#c-lemma', 'lemma'); ck('#c-scope', 'scope'); ck('#c-spin', 'spin');
+    lockUI();
+    $('#btn-verify').onclick = runSelfTest;
+    $('#btn-clear').onclick = () => { logEl.innerHTML = ''; };
+    const themeBtn = $('#btn-theme');
+    const setTheme = t => { document.documentElement.dataset.theme = t; themeBtn.textContent = t === 'dark' ? 'Light' : 'Dark'; try { localStorage.setItem('glh-theme', t); } catch (e) { /* storage unavailable */ } };
+    let stored = null; try { stored = localStorage.getItem('glh-theme'); } catch (e) { stored = null; }
+    setTheme(stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+    themeBtn.onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+}
+
+// =====================================================================
+// Main loop: fixed 1/60 s physics step; every pulse is processed in order, so no job step is ever skipped
+// =====================================================================
+let acc = 0, lastWall = performance.now();
+function frame(now) {
+    const dtWall = Math.min(0.25, (now - lastWall) / 1000); lastWall = now;
+    if (state.playing) { acc += dtWall; while (acc >= DT) { physicsStep(DT); acc -= DT; } }
+    else { sim.prevT = sim.t; for (let s = 0; s < 3; s++) for (let n = 0; n < 5; n++) sim.prevPhase[s][n] = sim.phase[s][n]; }
+    const alpha = state.playing ? acc / DT : 1, ck = clockOf(sim.t);
+    if (ck.pulseCount !== lastPulse) {
+        for (let p = lastPulse + 1; p <= ck.pulseCount; p++) processPulse(p);
+        lastPulse = ck.pulseCount;
+        drawClockPumpCanvas($('#gears'), ck.outerFrameN, state.eta, ck.piCycleStepK);
+        renderAll(false);
+    }
+    const tInterp = sim.prevT + (sim.t - sim.prevT) * alpha, frameF = (tInterp * 720) % 720;
+    updateScene(alpha, tInterp);
+    updateCrystal(frameF, tInterp);
+    updateReadouts(frameF);
+    requestAnimationFrame(frame);
+}
+function start() {
+    wireControls();
+    initThree();
+    initCrystal();
+    log('[P2R] three engines, three calculations, one clock: jobs enter at node 0, wind T4 -> T0 in 150 pulses, converge into Y = A + B + C, read out by the TQF and held on both manifolds', 'hd');
+    drawClockPumpCanvas($('#gears'), 0, state.eta, 1);
+    $('#scale-note').textContent = 'log radii: display = 6 + 20·log10(r / r_s); engines turned by σˢ about (1,1,1)';
+    renderAll(true);
+    requestAnimationFrame(frame);
+    setTimeout(runSelfTest, 400);
+}
+// Three.js r158 comes from cdnjs if it serves that release; otherwise the same release is tried from jsdelivr and
+// then unpkg. Nothing at the top level of this script touches THREE, so the page runs (without 3D) even if all fail.
+const THREE_FALLBACKS = ['https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js', 'https://unpkg.com/three@0.158.0/build/three.min.js'];
+function boot(i = 0) {
+    if (typeof THREE !== 'undefined' || i >= THREE_FALLBACKS.length) { start(); return; }
+    const s = document.createElement('script');
+    s.src = THREE_FALLBACKS[i];
+    s.onload = () => (typeof THREE !== 'undefined' ? start() : boot(i + 1));
+    s.onerror = () => boot(i + 1);
+    document.head.appendChild(s);
+}
+boot();
+
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>
