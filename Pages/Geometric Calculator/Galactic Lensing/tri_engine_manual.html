@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tri-Engine Soliton Manual - Ebayednoob</title>
+    <meta name="description" content="Operating manual for the Tri-Engine Soliton (Galactic Lensing Hierarchy Part 2): every control, panel, readout and live check, the clock, the soliton states, step-by-step experiments with their expected results, troubleshooting and reference tables.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #020617;
+            --panel: #0b1222;
+            --panel-2: #0f172a;
+            --line: rgba(34, 211, 238, 0.16);
+            --line-strong: rgba(34, 211, 238, 0.38);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --faint: #64748b;
+            --cyan: #22d3ee;
+            --fuchsia: #e879f9;
+            --amber: #fbbf24;
+            --rose: #fb7185;
+            --emerald: #34d399;
+            --sky: #38bdf8;
+            --purple: #c084fc;
+            --gold: #f5c542;
+            --sys1: #ff7a3d; --sys2: #2dd4bf; --sys3: #8b5cf6; --sysR: #ffe6a3;
+            --t4: #f43f5e; --t3: #f59e0b; --t2: #10b981; --t1: #a855f7; --t0: #38bdf8;
+            --mono: 'Fira Code', ui-monospace, monospace;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+        body {
+            margin: 0; background: var(--bg); color: var(--text);
+            font: 16px/1.7 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(1200px 600px at 85% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+                radial-gradient(900px 600px at -10% 20%, rgba(255, 122, 61, 0.08), transparent 60%);
+        }
+        a { color: var(--cyan); text-decoration-color: rgba(34, 211, 238, 0.4); text-underline-offset: 3px; }
+        a:hover { color: #67e8f9; }
+        code, kbd, .mono { font-family: var(--mono); font-size: 0.88em; }
+        code { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(51, 65, 85, 0.7); border-radius: 5px; padding: 0.05em 0.35em; color: #a5f3fc; }
+        strong { color: #f8fafc; }
+        h1, h2, h3, h4 { line-height: 1.25; color: #f8fafc; }
+        h2 { font-size: 1.75rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+        h3 { font-size: 1.2rem; margin: 2rem 0 0.5rem; color: #cffafe; }
+        h4 { font-size: 1rem; margin: 1.4rem 0 0.4rem; color: #e0f2fe; }
+        p { margin: 0.7rem 0; }
+        ul, ol { padding-left: 1.4rem; }
+        li { margin: 0.25rem 0; }
+
+        .hero { padding: 92px 20px 40px; text-align: center; border-bottom: 1px solid var(--line); }
+        .eyebrow { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin: 0.6rem auto 0.8rem; max-width: 940px; letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ff7a3d, #2dd4bf 50%, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .hero p.lede { max-width: 760px; margin: 0 auto; color: #cbd5e1; font-size: 1.08rem; }
+        .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1.6rem; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-size: 0.95rem; }
+        .btn-primary { background: linear-gradient(90deg, #c2410c, #0f766e 55%, #6d28d9); color: #fff; }
+        .btn-primary:hover { color: #fff; filter: brightness(1.1); }
+        .btn-ghost { border-color: var(--line-strong); color: #cffafe; background: rgba(8, 47, 73, 0.35); }
+        .btn-ghost:hover { background: rgba(8, 47, 73, 0.6); color: #fff; }
+        .hero-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1.8rem; }
+        .stat { font-family: var(--mono); font-size: 0.8rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(15, 23, 42, 0.7); color: #cbd5e1; }
+        .stat b { color: var(--gold); }
+
+        .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 40px; max-width: 1240px; margin: 0 auto; padding: 32px 20px 80px; }
+        .toc { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 90px); overflow-y: auto; padding-right: 6px; font-size: 0.88rem; }
+        .toc-title { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+        .toc ol { list-style: none; padding: 0; margin: 0; }
+        .toc li { margin: 0; }
+        .toc a { display: block; padding: 5px 10px; border-left: 2px solid rgba(51, 65, 85, 0.6); color: var(--muted); text-decoration: none; }
+        .toc a:hover { color: #e2e8f0; border-left-color: #475569; }
+        .toc a.active { color: var(--gold); border-left-color: var(--gold); background: rgba(120, 53, 15, 0.25); }
+        .toc .part { margin: 14px 0 4px 10px; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fuchsia); }
+        .toc-mobile { display: none; }
+        main { min-width: 0; max-width: 880px; }
+
+        section.chapter { padding: 8px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
+        section.chapter:last-of-type { border-bottom: 0; }
+        .chapter-num { font-family: var(--mono); font-size: 0.78rem; color: var(--fuchsia); letter-spacing: 0.1em; }
+        .chapter-intro { color: #cbd5e1; font-size: 1.04rem; }
+
+        .callout { border: 1px solid; border-radius: 12px; padding: 14px 16px; margin: 1.2rem 0; background: rgba(15, 23, 42, 0.75); }
+        .callout > :first-child { margin-top: 0; }
+        .callout > :last-child { margin-bottom: 0; }
+        .callout .label { display: inline-block; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+        .plain { border-color: rgba(52, 211, 153, 0.4); } .plain .label { color: var(--emerald); }
+        .tryit { border-color: rgba(34, 211, 238, 0.45); background: rgba(8, 47, 73, 0.3); } .tryit .label { color: var(--cyan); }
+        .note { border-color: rgba(251, 191, 36, 0.45); } .note .label { color: var(--amber); }
+        .deep { border-color: rgba(192, 132, 252, 0.45); } .deep .label { color: var(--purple); }
+
+        .table-wrap { position: relative; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--line); border-radius: 12px; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(51, 65, 85, 0.5); vertical-align: top; }
+        th { background: rgba(15, 23, 42, 0.95); color: #a5f3fc; font-weight: 600; font-size: 0.82rem; white-space: nowrap; }
+        tr:last-child td { border-bottom: 0; }
+        td.num, th.num { text-align: right; font-family: var(--mono); white-space: nowrap; }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: rgba(15, 23, 42, 0.7); }
+        .card h4 { margin-top: 0; }
+        .card p { margin: 0.3rem 0 0; font-size: 0.93rem; color: #cbd5e1; }
+        figure { margin: 1.4rem 0; }
+        figure svg { display: block; width: 100%; height: auto; }
+        figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 8px; text-align: center; }
+        .steps { counter-reset: step; list-style: none; padding: 0; }
+        .steps > li { counter-increment: step; position: relative; padding: 4px 0 10px 46px; }
+        .steps > li::before { content: counter(step); position: absolute; left: 0; top: 4px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+            font-family: var(--mono); font-weight: 600; font-size: 0.85rem; color: #020617; background: linear-gradient(135deg, #ff7a3d, #8b5cf6); }
+
+        /* Epistemic tags (the nine of the monograph) */
+        .tag { font-family: var(--mono); font-size: 0.72rem; padding: 1px 7px; border-radius: 5px; border: 1px solid; white-space: nowrap; vertical-align: 1px; }
+        .t-PROVEN { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.55); }
+        .t-ESTABLISHED { color: #93c5fd; border-color: rgba(96, 165, 250, 0.55); }
+        .t-CORRESPONDENCE { color: #fde047; border-color: rgba(250, 204, 21, 0.55); }
+        .t-DEFINITION { color: #cbd5e1; border-color: rgba(148, 163, 184, 0.55); }
+        .t-COMPUTED { color: #67e8f9; border-color: rgba(34, 211, 238, 0.55); }
+        .t-EMPIRICAL { color: #fdba74; border-color: rgba(251, 146, 60, 0.55); }
+        .t-HEURISTIC { color: #fcd34d; border-color: rgba(245, 158, 11, 0.55); }
+        .t-CONJECTURAL { color: #fca5a5; border-color: rgba(248, 113, 113, 0.55); }
+        .t-OPEN { color: #f8fafc; border-color: rgba(248, 250, 252, 0.55); }
+
+        .lab { border: 1px solid var(--line-strong); border-radius: 14px; background: linear-gradient(180deg, rgba(8, 47, 73, 0.35), rgba(15, 23, 42, 0.8)); padding: 16px; margin: 1.4rem 0; }
+        .lab-title { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+        .lab input[type="text"], .lab select, .lab input[type="number"] {
+            background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px 8px; font: 0.9rem var(--mono); }
+        .lab input[type="number"] { width: 4.6rem; }
+        .lab input[type="text"] { width: 100%; }
+        .lab-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+        .lab-row label { font-size: 0.85rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+        .chip { font: 0.8rem var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid #334155; background: #0f172a; color: #cbd5e1; cursor: pointer; }
+        .chip:hover { border-color: var(--cyan); color: #fff; }
+        .chip.on { border-color: var(--gold); color: #fff; background: rgba(120, 53, 15, 0.35); }
+        .out { font-family: var(--mono); font-size: 0.86rem; background: #020617; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; }
+        .out .k { color: var(--muted); }
+        .out .bad { color: var(--rose); }
+        .out .good { color: var(--emerald); }
+        .out .warn { color: var(--amber); }
+
+        /* Triple-quad widget */
+        table.quad td, table.quad th { text-align: center; font-family: var(--mono); font-size: 0.85rem; }
+        table.quad td.q { cursor: pointer; user-select: none; }
+        table.quad td.q:hover { background: rgba(34, 211, 238, 0.08); }
+        table.quad td.lost { color: var(--rose); text-decoration: line-through; }
+        table.quad td.rec { color: var(--emerald); }
+        table.quad td.f4 { color: var(--fuchsia); }
+
+        /* Tile widget */
+        .bits64 { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 2px; margin: 10px 0; }
+        .bits64 .b { aspect-ratio: 1; display: grid; place-items: center; font: 9px var(--mono); border-radius: 3px; border: 1px solid #1e293b; color: #64748b; }
+        .bits64 .b.on { color: #020617; font-weight: 600; }
+        .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); }
+        .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
+
+        /* Stepper */
+        .stepper-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .stage-text { min-height: 4.5em; }
+
+        .gloss { display: grid; grid-template-columns: 220px 1fr; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .gloss dt, .gloss dd { margin: 0; padding: 9px 12px; border-bottom: 1px solid rgba(51, 65, 85, 0.45); }
+        .gloss dt { font-weight: 600; color: #a5f3fc; background: rgba(15, 23, 42, 0.9); }
+        .gloss dd { color: #cbd5e1; font-size: 0.93rem; }
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+        footer { text-align: center; color: var(--faint); font-size: 0.85rem; padding: 30px 20px 60px; border-top: 1px solid var(--line); }
+
+        @media (max-width: 1023px) {
+            .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 20px; }
+            .toc { display: none; }
+            .toc-mobile { display: block; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); }
+            .toc-mobile summary { cursor: pointer; font-weight: 600; }
+            .toc-mobile ol { margin: 8px 0 0; padding-left: 1.2rem; columns: 2; column-gap: 20px; font-size: 0.9rem; }
+        }
+        @media (max-width: 640px) {
+            body { font-size: 15px; }
+            .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }
+            .gloss { grid-template-columns: minmax(0, 1fr); }
+            .gloss dt { border-bottom: 0; padding-bottom: 2px; }
+            .toc-mobile ol { columns: 1; }
+            h2 { font-size: 1.45rem; }
+            .bits64 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+        }
+        /* Part 2 manual additions */
+        .hudmap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; max-width: 520px; margin: 1rem 0; }
+        .hudmap div { border: 1px solid #334155; border-radius: 8px; padding: 8px 6px; font: 0.78rem var(--mono); text-align: center; color: #cbd5e1; background: rgba(15, 23, 42, 0.8); }
+        .hudmap .c0 { border-color: rgba(255, 0, 85, 0.7); } .hudmap .c1 { border-color: rgba(0, 242, 255, 0.7); } .hudmap .c2 { border-color: rgba(255, 215, 0, 0.7); }
+        .hudmap .in { border-style: dashed; color: #f8fafc; background: rgba(30, 41, 59, 0.9); }
+        td.mono { font-family: var(--mono); font-size: 0.84rem; }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="eyebrow">BioChain AI &middot; Galactic Lensing Hierarchy &middot; Part 2 manual</div>
+    <h1>Tri-Engine Soliton: The Operating Manual</h1>
+    <p class="lede">Every control, panel, readout and check of <a href="tri_engine_soliton.html">Part 2</a>, what each one changes, and what to expect when you use it. The theory behind the page (why three engines, why the triangle locks, where the crystal comes from) is in the <a href="galactic_companion.html#part2">companion guide</a>. This manual is about running the simulation.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="tri_engine_soliton.html">Open Part 2</a>
+        <a class="btn btn-ghost" href="#start">Quick start</a>
+        <a class="btn btn-ghost" href="#controls">Control reference</a>
+        <a class="btn btn-ghost" href="#experiments">Experiments</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat"><b>4</b> panels &middot; <b>15</b> main controls</span>
+        <span class="stat"><b>6</b> crystal sliders &middot; <b>7</b> toggles</span>
+        <span class="stat"><b>16</b> tiles per update</span>
+        <span class="stat"><b>26</b> lemma rows, <b>19</b> live checks</span>
+        <span class="stat"><b>19/19</b> verification checks</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li class="part">I &middot; Start here</li>
+            <li><a href="#start">1. Quick start</a></li>
+            <li><a href="#layout">2. The screen</a></li>
+            <li><a href="#tags">3. Tags, tooltips and theme</a></li>
+            <li class="part">II &middot; Controls</li>
+            <li><a href="#controls">4. The control bar</a></li>
+            <li><a href="#clock">5. The clock</a></li>
+            <li class="part">III &middot; Panels</li>
+            <li><a href="#panel-a">6. Panel A: three engines</a></li>
+            <li><a href="#panel-b">7. Panel B: the crystal</a></li>
+            <li><a href="#hud">8. The 4 &times; 4 layer and the gauge</a></li>
+            <li><a href="#panel-c">9. Panel C: triple parity</a></li>
+            <li><a href="#panel-d">10. Panel D: lemma rows</a></li>
+            <li><a href="#log">11. Log and verification</a></li>
+            <li class="part">IV &middot; Working with it</li>
+            <li><a href="#states">12. Locked, breathing, active</a></li>
+            <li><a href="#lock">13. The lock, by hand</a></li>
+            <li><a href="#experiments">14. Experiments</a></li>
+            <li><a href="#trouble">15. Troubleshooting</a></li>
+            <li class="part">V &middot; Reference</li>
+            <li><a href="#reference">16. Numbers and constants</a></li>
+            <li><a href="#glossary">17. Glossary</a></li>
+        </ol>
+    </nav>
+
+    <main>
+        <details class="toc-mobile">
+            <summary>Contents</summary>
+            <ol>
+                <li><a href="#start">Quick start</a></li>
+                <li><a href="#layout">The screen</a></li>
+                <li><a href="#tags">Tags, tooltips and theme</a></li>
+                <li><a href="#controls">The control bar</a></li>
+                <li><a href="#clock">The clock</a></li>
+                <li><a href="#panel-a">Panel A: three engines</a></li>
+                <li><a href="#panel-b">Panel B: the crystal</a></li>
+                <li><a href="#hud">The 4 × 4 layer and the gauge</a></li>
+                <li><a href="#panel-c">Panel C: triple parity</a></li>
+                <li><a href="#panel-d">Panel D: lemma rows</a></li>
+                <li><a href="#log">Log and verification</a></li>
+                <li><a href="#states">Locked, breathing, active</a></li>
+                <li><a href="#lock">The lock, by hand</a></li>
+                <li><a href="#experiments">Experiments</a></li>
+                <li><a href="#trouble">Troubleshooting</a></li>
+                <li><a href="#reference">Numbers and constants</a></li>
+                <li><a href="#glossary">Glossary</a></li>
+            </ol>
+        </details>
+
+        <!-- ================================================================ 1 -->
+        <section class="chapter" id="start">
+            <div class="chapter-num">CHAPTER 1</div>
+            <h2>Quick start</h2>
+            <p class="chapter-intro">Part 2 runs three copies of the geometric engine, one for each system around Sgr&nbsp;A* (I: the black hole's domain, II: the nuclear region, III: the Galaxy). On every pulse it compares the three copies exactly. Everything they fail to account for collects in one place, the <em>emergent fourth</em>, drawn as a crystal at the centre.</p>
+            <ol class="steps">
+                <li><strong>Open the page and wait two seconds.</strong> Three.js loads, both 3D views start, and the verification runs on its own. The log ends with <code>19 checks PASS, 0 FAIL; 66/66 lines identical</code>, and the badge next to the log title turns green.</li>
+                <li><strong>Read the badge in the crystal's top-left corner.</strong> At start it says <span class="tag t-PROVEN">LOCKED · Y_R = 0, H = 1</span>. With no noise and no signal the model accounts for every measurement exactly, and the frame legs close exactly.</li>
+                <li><strong>Look at Panel C's first table.</strong> All three rows say <strong>LOCK</strong> with \(\chi = 0.577350 = 1/\sqrt3\). Each class's three nodes, one per engine, make an exactly equilateral triangle.</li>
+                <li><strong>Move Noise to 1σ.</strong> The badge changes to <span class="tag t-HEURISTIC">BREATHING</span>, the triangles deform (\(\chi\) drops just below \(1/\sqrt3\)), the trefoils' streams pull together and the core drifts off centre. The residuals are inside the tolerance that noise allows.</li>
+                <li><strong>Press Inject error.</strong> One of the four measured frame legs is perturbed. The badge changes to <span class="tag t-CONJECTURAL">ACTIVE</span>, the holonomy row says FAIL with the closure angle, and the three trefoils shear against each other. Press it again (it now reads Clear error) and set Noise back to 0 to return to the lock.</li>
+            </ol>
+            <div class="callout plain">
+                <div class="label">In one sentence</div>
+                <p>When all three engines tell the same story, the triangle is equilateral and the crystal sits still. When they disagree, the triangle deforms and the crystal moves by an exactly invertible amount, so you can read the disagreement back off it.</p>
+            </div>
+            <p>New to the series? <a href="galactic_lensing_hierarchy.html">Part 1</a> builds the three systems and the residual from one engine. Its ideas (residual parity, frame closure, the tiles) are reused here without change. The <a href="galactic_companion.html">companion guide</a> explains both parts lemma by lemma.</p>
+        </section>
+
+        <!-- ================================================================ 2 -->
+        <section class="chapter" id="layout">
+            <div class="chapter-num">CHAPTER 2</div>
+            <h2>The screen</h2>
+            <p class="chapter-intro">From top to bottom: the site bar, the title, the control bar, four panels, the telemetry log and the notes.</p>
+            <figure>
+                <svg viewBox="0 0 720 470" role="img" aria-labelledby="lay-t">
+                    <title id="lay-t">Page layout on a wide screen</title>
+                    <rect x="250" y="6" width="220" height="22" rx="11" fill="rgba(15,23,42,0.9)" stroke="#2dd4bf" stroke-opacity="0.5"/>
+                    <text x="360" y="21" text-anchor="middle" font-size="11" fill="#cbd5e1">site bar</text>
+                    <rect x="10" y="38" width="700" height="34" rx="6" fill="none" stroke="#334155"/>
+                    <text x="22" y="60" font-size="13" fill="#f8fafc" font-weight="700">Tri-Engine Soliton</text>
+                    <text x="180" y="60" font-size="11" fill="#94a3b8">title, links and tag legend</text>
+                    <rect x="10" y="80" width="700" height="34" rx="6" fill="rgba(8,47,73,0.35)" stroke="#22d3ee" stroke-opacity="0.5"/>
+                    <text x="22" y="101" font-size="11" fill="#a5f3fc">Control bar: Play · Speed · Log radii · TQF web · Tier 3 · Tension · Torsion · κ · Noise · Signal · Error · Epoch · Sightline · Verify · Theme</text>
+                    <rect x="10" y="122" width="345" height="236" rx="10" fill="rgba(15,23,42,0.75)" stroke="#ff7a3d" stroke-opacity="0.6"/>
+                    <text x="24" y="144" font-size="13" fill="#fdba74" font-weight="700">A · Three active engines</text>
+                    <text x="24" y="164" font-size="11" fill="#94a3b8">3D view of Systems I, II, III</text>
+                    <text x="24" y="180" font-size="11" fill="#94a3b8">node markers, TQF triangles, P₄, P₄*</text>
+                    <rect x="24" y="300" width="150" height="46" rx="6" fill="none" stroke="#8b5cf6" stroke-opacity="0.6"/>
+                    <text x="99" y="327" text-anchor="middle" font-size="10" fill="#c4b5fd">12/10/8 gears · 8 steps</text>
+                    <rect x="365" y="122" width="345" height="114" rx="10" fill="rgba(15,23,42,0.75)" stroke="#f5c542" stroke-opacity="0.6"/>
+                    <text x="379" y="144" font-size="13" fill="#fde68a" font-weight="700">B · Soliton core</text>
+                    <text x="379" y="164" font-size="11" fill="#94a3b8">crystal view · STEP bar · crystal controls</text>
+                    <text x="379" y="180" font-size="11" fill="#94a3b8">§7.7 4 × 4 layer · Prop. 7.14 gauge</text>
+                    <rect x="365" y="244" width="345" height="114" rx="10" fill="rgba(15,23,42,0.75)" stroke="#34d399" stroke-opacity="0.6"/>
+                    <text x="379" y="266" font-size="13" fill="#6ee7b7" font-weight="700">C · Triple parity</text>
+                    <text x="379" y="286" font-size="11" fill="#94a3b8">cross-engine TQF · erasure grid</text>
+                    <text x="379" y="302" font-size="11" fill="#94a3b8">holonomy · 16 tiles and Merkle root</text>
+                    <rect x="10" y="366" width="700" height="44" rx="10" fill="rgba(15,23,42,0.75)" stroke="#c084fc" stroke-opacity="0.6"/>
+                    <text x="24" y="393" font-size="13" fill="#e9d5ff" font-weight="700">D · Fifteen-Lemma compliance, Part 2</text>
+                    <text x="290" y="393" font-size="11" fill="#94a3b8">26 rows, re-checked live</text>
+                    <rect x="10" y="418" width="700" height="44" rx="10" fill="#020617" stroke="#1e293b"/>
+                    <text x="24" y="445" font-size="13" fill="#cbd5e1" font-weight="700">Telemetry log</text>
+                    <text x="150" y="445" font-size="11" fill="#94a3b8">verification badge · Clear · then the notes</text>
+                </svg>
+                <figcaption>On screens wider than 1100&nbsp;px, Panel A fills the left column and stays in view while you scroll Panels B and C on the right. On narrower screens the panels stack in the order A, B, C, D.</figcaption>
+            </figure>
+            <div class="grid-2">
+                <div class="card"><h4>A · Three active engines</h4><p>The three engines at their nested log radii, each turned 120° from the last. Shows where each class's three nodes are and the triangle they make. <a href="#panel-a">Chapter 6</a>.</p></div>
+                <div class="card"><h4>B · Soliton core</h4><p>The emergent fourth as a crystal. It sits still at lock and moves with the residuals. Below it are the §7.7 layer and the exact gauge. <a href="#panel-b">Chapters 7</a> and <a href="#hud">8</a>.</p></div>
+                <div class="card"><h4>C · Triple parity</h4><p>The exact numbers: the cross-engine TQF, the erasure grid, the frame loop and the 16 tiles chained by a Merkle root. <a href="#panel-c">Chapter 9</a>.</p></div>
+                <div class="card"><h4>D · Compliance</h4><p>One row per monograph result the page uses, each re-checked against the live state. <a href="#panel-d">Chapter 10</a>.</p></div>
+            </div>
+        </section>
+
+        <!-- ================================================================ 3 -->
+        <section class="chapter" id="tags">
+            <div class="chapter-num">CHAPTER 3</div>
+            <h2>Tags, tooltips and theme</h2>
+            <p>Every claim on the page carries one of the monograph's epistemic tags. The legend under the title lists them, and hovering a tag (or tapping it on a phone) shows its basis: which lemma it rests on, or why it is only a design choice.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Tag</th><th>Means</th><th>Typical use on this page</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="tag t-PROVEN">PROVEN</span></td><td>A complete proof exists and the identity is checked</td><td>The TQF forms, Weitzenböck, residual parity, the gauge recovery</td></tr>
+                    <tr><td><span class="tag t-ESTABLISHED">ESTABLISHED</span></td><td>Standard physics or mathematics</td><td>Lensing, Shapiro delay</td></tr>
+                    <tr><td><span class="tag t-COMPUTED">COMPUTED</span></td><td>An evaluated formula, reproduced by the reference script</td><td>The physics numbers in the log</td></tr>
+                    <tr><td><span class="tag t-EMPIRICAL">EMPIRICAL</span></td><td>A measurement with a source</td><td>Pulsar periods and offsets, the Gaia drift</td></tr>
+                    <tr><td><span class="tag t-DEFINITION">DEFINITION</span></td><td>A design convention of this page</td><td>What drives Δφ, the clock mapping, the display scales</td></tr>
+                    <tr><td><span class="tag t-HEURISTIC">HEURISTIC</span></td><td>Motivated by analogy, not proof</td><td>The π/6 gate, the P₄ scale</td></tr>
+                    <tr><td><span class="tag t-CORRESPONDENCE">CORRESPONDENCE</span></td><td>Equal counts only</td><td>12 crystal nodes vs. 12 streams vs. aff(3)</td></tr>
+                    <tr><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td><td>Needs new evidence</td><td>The §7.1 scalar-field test signal</td></tr>
+                </tbody>
+            </table></div>
+            <p>Most numbers in Panel C also have tooltips: hover a quadrance, a residual or a tile word to see its exact rational value. The <strong>Light / Dark</strong> button switches the theme. Your choice is stored in the browser and shared with Part 1.</p>
+        </section>
+
+        <!-- ================================================================ 4 -->
+        <section class="chapter" id="controls">
+            <div class="chapter-num">CHAPTER 4</div>
+            <h2>The control bar</h2>
+            <p class="chapter-intro">The bar under the title holds everything that changes the simulation's state. The crystal's own display controls sit under the crystal (<a href="#panel-b">Chapter 7</a>).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Control</th><th>Range (default)</th><th>What it does</th><th>Watch</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Pause / Play</strong></td><td>(playing)</td><td>Stops and restarts the clock. The views stay live, so you can still orbit them and use every other control while paused.</td><td>STEP counter, epoch</td></tr>
+                    <tr><td><strong>Speed</strong></td><td>0.10× – 10× on a log scale (0.17× ≈ 1/6)</td><td>Rate of simulated time. At 1/6× the outer gear advances one frame per 60&nbsp;Hz display frame, the crystal file's own pace, and an epoch takes 12&nbsp;s. At 1× an epoch takes 2&nbsp;s.</td><td>Gears, STEP bar</td></tr>
+                    <tr><td><strong>Log radii</strong></td><td>on</td><td>On: display radius \(6 + 20\log_{10}(r/r_s)\), so all three systems (from \(r_s\) to 100&nbsp;kpc) fit. Off: linear radii, where Systems I and II shrink to a dot. Changing it rebuilds Panel A and resets its zoom.</td><td>Panel A</td></tr>
+                    <tr><td><strong>TQF web</strong></td><td>on</td><td>Shows the inferred fourth vertex \(P_4\) (wireframe diamond), the exact closure \(P_4^*\) (white dot) and, whenever the soliton is not locked, the three web edges from \(P_4\) to the nodes.</td><td>Panel A</td></tr>
+                    <tr><td><strong>Tier 3 poles</strong></td><td>on</td><td>Shows the crystal's two ghost poles with their spiral streams and the blue Tier 3 bridges. Off leaves the ten-node seed (core and nine rays).</td><td>Panel B</td></tr>
+                    <tr><td><strong>Tension</strong></td><td>−90° – 90° (0°)</td><td>Turns the outer tiers T4 and T3 about their local \(y\) axis, the same way in all three engines.</td><td>Panel A shapes; the lock holds</td></tr>
+                    <tr><td><strong>Torsion</strong></td><td>−90° – 90° (0°)</td><td>Turns the inner tiers T2–T0 the opposite way about their local \(z\) axis, in all three engines.</td><td>Panel A shapes; the lock holds</td></tr>
+                    <tr><td><strong>π/6 gate</strong></td><td>indicator</td><td>Reads <em>open</em> when Tension − Torsion is a multiple of 30°. The specification calls this a zero-drag resonance; no lemma proves that, so it is tagged heuristic and changes nothing else.</td><td>The gate chip</td></tr>
+                    <tr><td><strong>Coupling κ</strong></td><td>0 – 2 (1.00)</td><td>Scales how strongly each system's residual turns its nodes: \(\Delta\varphi = \kappa(\pi/6)\tanh(r/3)\). At 0 the triangles stay locked whatever the residuals do.</td><td>Δφ column, χ</td></tr>
+                    <tr><td><strong>Noise</strong></td><td>0 – 10σ (0)</td><td>Adds Gaussian measurement noise of that many σ to every channel of every system, and to the four frame legs (0.1&nbsp;mas per leg per σ). The draws are seeded by epoch and sightline, so the same settings give the same numbers. The tolerances grow with it (<a href="#states">Chapter 12</a>).</td><td>Badge, residuals</td></tr>
+                    <tr><td><strong>Inject signal</strong></td><td>None / Shapiro / Lensing / Scalar</td><td><em>Shapiro</em> and <em>Lensing</em> start an event on the magnetar J1745-2900 (and switch the sightline to it), with closest approach 3 Einstein times (3.57&nbsp;yr, about 14 epochs) later. Shapiro adds only the timing term, Lensing adds timing and astrometry. <em>Scalar field</em> adds the §7.1 Yukawa test (α = 0.01, λ = 1&nbsp;pc) to the timing and velocity of Systems I and II.</td><td>TQF rows, gauge</td></tr>
+                    <tr><td><strong>Inject error</strong></td><td>toggle</td><td>Perturbs one of the four measured frame legs at random by a random exact rotation (a few degrees). The button then reads <em>Clear error</em>.</td><td>Holonomy, shear</td></tr>
+                    <tr><td><strong>Epoch ◀ ▶</strong></td><td>0, 1, 2, …</td><td>Pauses and jumps one epoch (a quarter year of observing time). The readout shows the epoch and the observing date.</td><td>Everything</td></tr>
+                    <tr><td><strong>Sightline</strong></td><td>7 pulsars (J1745-2900)</td><td>Chooses which pulsar's measurements all three engines analyse. The list shows each one's projected distance and which system it sits in.</td><td>Residual sizes</td></tr>
+                    <tr><td><strong>Run Verification</strong></td><td>button</td><td>Re-runs the line-by-line port of <code>verify_galactic_hierarchy.py</code> into the log (<a href="#log">Chapter 11</a>). It also runs once on its own at start.</td><td>Log badge</td></tr>
+                    <tr><td><strong>Light / Dark</strong></td><td>follows the system</td><td>Switches the colour theme.</td><td></td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note">
+                <div class="label">Two kinds of σ</div>
+                <p>The page uses σ for two different things. <strong>σ the rotation</strong> is the 120° turn \((x,y,z)\mapsto(z,x,y)\) that relates the three engines. <strong>σ the uncertainty</strong> is the 1-sigma error per class (0.5&nbsp;µas, 0.05&nbsp;×10⁻¹⁸&nbsp;s⁻¹, 2&nbsp;km/s) used by Noise and by the residuals "in units of σ". Context always tells them apart.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 5 -->
+        <section class="chapter" id="clock">
+            <div class="chapter-num">CHAPTER 5</div>
+            <h2>The clock</h2>
+            <p class="chapter-intro">Part 2 runs on engine v10's master clock. One simulated time \(t\) drives every readout, so the engines, the crystal, the packets and the log always agree.</p>
+            $$p = \lfloor 60t \rfloor,\qquad k = p \bmod 30,\qquad S = \Big\lfloor \frac{p \bmod 150}{30} \Big\rfloor,\qquad n = 4 - S,$$
+            $$f = 12p \bmod 720,\qquad \text{epoch} = \lfloor p/60 \rfloor,\qquad \text{step} = \lfloor f/90 \rfloor + 1.$$
+            <div class="table-wrap"><table>
+                <thead><tr><th>Quantity</th><th>Range</th><th>Meaning</th><th>Shown in</th></tr></thead>
+                <tbody>
+                    <tr><td>pulse \(p\)</td><td>0, 1, 2, …</td><td>One sampling event. Layer B re-evaluates the nodes on every pulse.</td><td>(internal)</td></tr>
+                    <tr><td>node \(k\)</td><td>0–29</td><td>Which of the 30 nodes on the active tier is sampled, in all three engines at once</td><td>Panel C note</td></tr>
+                    <tr><td>stage \(S\), tier \(n\)</td><td>0–4, T4–T0</td><td>Each tier is active for 30 pulses, outermost first. A full pass of all five tiers is 150 pulses (2.5 epochs). During stage 4 (tier T0) the \(P_4\) markers slide into the soliton: the specification's core latch.</td><td>Panel C note</td></tr>
+                    <tr><td>outer frame \(f\)</td><td>0–719</td><td>The outer 12-tooth gear's position. One full turn is one epoch and one 720-step loop of the crystal.</td><td>STEP counter, gears</td></tr>
+                    <tr><td>step</td><td>1–8</td><td>The spinor step \((1+i)^k\) of Lemma 8, 90 frames each. Steps 2 and 6 are the handshake windows.</td><td>Crystal readout, gears, tiles</td></tr>
+                    <tr><td>epoch</td><td>0, 1, 2, …</td><td>60 pulses = a quarter year of observing time from 2026 October 26. Noise draws change once per epoch.</td><td>Epoch readout, log</td></tr>
+                </tbody>
+            </table></div>
+            <p>Simulated time advances by \(0.5 \times \text{Speed}\) per real second. Panel A's nodes glide smoothly from one pulse's position to the next and ride their spinning helices. Layer B always evaluates the whole pulse, in the helices' co-rotating frame <span class="tag t-DEFINITION">DEFINITION</span>.</p>
+            <div class="lab" id="clock-lab">
+                <div class="lab-title">Clock calculator</div>
+                <div class="lab-row">
+                    <label>simulated time t <input type="number" id="ck-t" value="2.4" step="0.05" min="0"></label>
+                    <label>speed × <input type="number" id="ck-speed" value="0.1667" step="0.05" min="0.1" max="10"></label>
+                    <button class="chip" type="button" data-t="0">start</button>
+                    <button class="chip" type="button" data-t="1.6">stage 4 (T0)</button>
+                    <button class="chip" type="button" data-t="3.15">step 2 window</button>
+                </div>
+                <div class="out" id="ck-out"></div>
+            </div>
+        </section>
+
+        <!-- ================================================================ 6 -->
+        <section class="chapter" id="panel-a">
+            <div class="chapter-num">CHAPTER 6</div>
+            <h2>Panel A: three active engines</h2>
+            <p class="chapter-intro">A 3D view of the three engines nested around Sgr&nbsp;A*, each a five-tier engine at its own system's radii.</p>
+            <h3>What is drawn</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Object</th><th>Looks like</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>Tier tori</td><td>Faint rings in the system's colours: orange (I), teal (II), violet (III)</td><td>Tiers T0–T4 of each engine at radii \(r_{\text{in}}(r_{\text{out}}/r_{\text{in}})^{0, 1/7, 5/14, 9/14, 1}\), in the pure Lemma 4 frames</td></tr>
+                    <tr><td>Helices</td><td>Six coloured windings per tier</td><td>The three class phases \(2\pi c/3\) in both chiralities. They spin: I and III forward, II backward</td></tr>
+                    <tr><td>Node markers</td><td>Spheres: <span class="dot" style="background:#ff0055"></span>astrometry, <span class="dot" style="background:#00f2ff"></span>timing, <span class="dot" style="background:#ffd700"></span>velocity</td><td>The same node \(k\) of the active tier in each engine, one marker per class per engine (9 in all)</td></tr>
+                    <tr><td>Triangles</td><td>Lines joining a class's three markers</td><td>The cross-engine TQF triangle. Faint when locked, bright when deformed</td></tr>
+                    <tr><td>\(P_4\)</td><td>Wireframe diamond in the class colour</td><td>The inferred fourth vertex \(P_{\text{I}} + q(u + v)\) with \(q = 0.65 + 0.45\chi\) <span class="tag t-HEURISTIC">HEURISTIC</span></td></tr>
+                    <tr><td>\(P_4^*\)</td><td>Small white dot</td><td>The exact closure \(P_{\text{II}} + P_{\text{III}} - P_{\text{I}}\)</td></tr>
+                    <tr><td>Web</td><td>Three edges from \(P_4\) to the nodes</td><td>Drawn only while the soliton is not locked (and TQF web is on)</td></tr>
+                    <tr><td>Soliton</td><td>Gold glow at the centre</td><td>The emergent fourth, placed by the Proposition 7.14 gauge. It dims slightly when not locked</td></tr>
+                    <tr><td>Sgr A*</td><td>Larger orange glow at the centre</td><td>The black hole</td></tr>
+                    <tr><td>Gears</td><td>Inset, bottom of the panel</td><td>The 12/10/8 gear chain of engine v10 and the 8-step dial: the active step is gold, the two windows orange</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Moving the camera</h3>
+            <ul>
+                <li><strong>Orbit:</strong> drag with the mouse or one finger.</li>
+                <li><strong>Zoom:</strong> mouse wheel or pinch. The zoom runs from radius 2 to 4000. The default is 880 with log radii and 620 with linear radii.</li>
+                <li>The camera always looks at Sgr&nbsp;A*. Toggling <em>Log radii</em> resets the zoom.</li>
+            </ul>
+            <div class="callout note">
+                <div class="label">Reading the triangles</div>
+                <p>Panel A draws each node at its engine's display radius, so the triangles span the whole hierarchy and look very lopsided. The exact triangle that Panel C measures lives in the engines' own frames, where the three engines are congruent. Judge the lock from Panel C, not from the picture.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 7 -->
+        <section class="chapter" id="panel-b">
+            <div class="chapter-num">CHAPTER 7</div>
+            <h2>Panel B: the crystal</h2>
+            <p class="chapter-intro">The emergent fourth as a Tier 3 crystal, ported from <code>torsional_twistor_tier_3_crystal_2.html</code> and set on the monograph's geometry. It has its own 3D view: drag to orbit, wheel or pinch to zoom (radius 3 to 24, default 6.4). The view turns the body diagonal (1,&nbsp;1,&nbsp;1) upright.</p>
+            <h3>What is drawn</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Object</th><th>Looks like</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>Three TwistorPairs</td><td>Two particle streams each, in the class colours</td><td>One pair per class. Each stream follows a (2,3) trefoil, offset by the buckle radius and turned by the micro-twist. Stream A is the model, stream B the data</td></tr>
+                    <tr><td>Pair nodes</td><td>Wireframe spheres in the class colours</td><td>The centroid of each pair's two streams</td></tr>
+                    <tr><td>Core</td><td>Bright sphere with a glow and a line from the centre</td><td>The EmergentCore at the Proposition 7.14 gauge of the residuals. Gold when locked, amber when breathing, red when active</td></tr>
+                    <tr><td>Ghost poles</td><td>Blue wireframe spheres with spiral streams</td><td>\(\pm(1,1,1)\) on the C<sub>3</sub> axis (Tier 3 poles must be on)</td></tr>
+                    <tr><td>Tier 2 bridges</td><td>Green lines</td><td>Core to each pair node, and the ring of pair nodes</td></tr>
+                    <tr><td>Tier 3 bridges</td><td>Blue lines</td><td>Poles to the core and to each pair node</td></tr>
+                    <tr><td>Cube 1</td><td>Gold wireframe cube</td><td>\(K = [-1,1]^3\). Bright gold at lock, dimmed and recoloured otherwise</td></tr>
+                    <tr><td>\(\Delta_1\), \(-\Delta_1\)</td><td>Magenta and cyan tetrahedra inside the cube</td><td>The two tetrahedra whose 8 vertices are the cube's corners</td></tr>
+                    <tr><td>C<sub>9</sub> rays</td><td>Nine green points on a green ring</td><td>The Lemma 8.2 ray endpoints at 40° on the sphere \(|x| = \sqrt3\) (faint violet)</td></tr>
+                    <tr><td>Lattice</td><td>Faint grey grid</td><td>The 64-voxel cube \(V = [-2,2]^3\)</td></tr>
+                    <tr><td>Orthogonal scope</td><td>16 small nodes and cyan chords (off by default)</td><td>The 16 streams of §7.7: 12 on a ring, 4 inside (<a href="#hud">Chapter 8</a>)</td></tr>
+                </tbody>
+            </table></div>
+            <h3>How it responds</h3>
+            <ul>
+                <li><strong>A class residual</strong> (\(Y_R/\sigma = r\)) shifts that pair along its own 120° direction by \(0.25\tanh(r/3)\) cubits and pulls its two streams together. They merge fully at \(|r| = 5\).</li>
+                <li><strong>The sum</strong> \(s = a + b + c\) of the three residuals lifts the poles along the axis by \(0.25\tanh(s/3)\).</li>
+                <li><strong>The core</strong> moves to \((z \text{ in the plane} + s \text{ on the axis})/3\), through a saturating scale that keeps it inside the cube.</li>
+                <li><strong>A frame error</strong> (open closure failing) twists the three trefoils against each other about the axis, by up to 0.7&nbsp;rad.</li>
+                <li>All of these ease toward their targets (12% per frame), so the crystal glides rather than jumps.</li>
+            </ul>
+            <h3>The readouts</h3>
+            <ul>
+                <li><strong>State badge</strong> (top left): LOCKED, BREATHING or ACTIVE (<a href="#states">Chapter 12</a>).</li>
+                <li><strong>Step readout</strong> (bottom right): <code>step k = 3 · spinor 2i · sign +</code>. The spinor is \((1+i)^k\) reduced to its direction, "window" marks steps 2 and 6, and the sign is the spinor's sign over the 720° turn (it flips at frames 180 and 540).</li>
+                <li><strong>STEP 000/720 bar:</strong> the outer-gear frame. Click anywhere on the bar to seek within the current epoch. The particle flow advances at most one step per display frame, so the streams never strobe at high speed, while the counter and the spinor turn follow the gear exactly.</li>
+            </ul>
+            <h3>Sliders</h3>
+            <p>The sliders use the crystal file's units: 20 per cubit.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Slider</th><th>Range (default)</th><th>Effect</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Micro-twist</strong></td><td>0 – 15 (2.50)</td><td>How fast each stream winds around its trefoil. 0 gives two flat ribbons.</td></tr>
+                    <tr><td><strong>Buckle radius</strong></td><td>0.5 – 8 (3.0 = 0.15 cubit)</td><td>How far the streams sit from the trefoil curve.</td></tr>
+                    <tr><td><strong>Inverse sep</strong></td><td>0.1 – 2 (0.8)</td><td>The streams' angular offset at lock. A and B sit π minus this value apart around the curve, so larger values bring them closer.</td></tr>
+                    <tr><td><strong>Torus radius</strong></td><td>10 – 40 (20.2)</td><td>The carrier's major radius. Locked at the golden value \(R = \varphi r\) with \(R + r = \sqrt{8/3}\) cubits.</td></tr>
+                    <tr><td><strong>Z-scale</strong></td><td>5 – 30 (10.0)</td><td>Stretches the trefoils along the axis (10 = no stretch). Locked at 10.</td></tr>
+                    <tr><td><strong>Pole height</strong></td><td>10 – 50 (34.6)</td><td>Distance of the ghost poles from the centre. Locked at \(\sqrt3\) cubits (34.6).</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Checkboxes</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Checkbox</th><th>Default</th><th>Effect</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Lemma 8.2 geometry</strong></td><td>on</td><td>Locks the carrier to the monograph, so the trefoils' lobes sit exactly on the nine rays and the poles at \(\pm(1,1,1)\). It disables the last three sliders and resets them to the lemma values. Off frees them, and Panel D's Lemma 8 Step 6 row then reports how far the lobes leave the rays.</td></tr>
+                    <tr><td><strong>64-voxel lattice</strong></td><td>on</td><td>Shows the \([-2,2]^3\) grid.</td></tr>
+                    <tr><td><strong>Bridges</strong></td><td>on</td><td>Shows the Tier 2 (green) and Tier 3 (blue) bridges. Tier 3 also needs Tier 3 poles.</td></tr>
+                    <tr><td><strong>Nodes</strong></td><td>on</td><td>Shows the three pair nodes.</td></tr>
+                    <tr><td><strong>Lemma objects</strong></td><td>on</td><td>Shows Cube 1, the two tetrahedra, the circumsphere and the nine rays.</td></tr>
+                    <tr><td><strong>Orthogonal scope</strong></td><td>off</td><td>Shows the 16-stream scope.</td></tr>
+                    <tr><td><strong>Spinor turn</strong></td><td>off</td><td>Turns the whole crystal 1° per outer frame about the axis: 720° per epoch, the spinor double cover.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <!-- ================================================================ 8 -->
+        <section class="chapter" id="hud">
+            <div class="chapter-num">CHAPTER 8</div>
+            <h2>The 4 &times; 4 layer and the gauge</h2>
+            <h3>The §7.7 layer</h3>
+            <p>Below the crystal, a 4 × 4 grid lays out all 16 streams as §7.7 places a structure's engines. The 12 boundary cells hold the 12 streams in ring order, clockwise from the top-left corner. Ring cell \(j\) holds class \(j \bmod 3\) of structure \(\lfloor j/3 \rfloor\). The 4 interior cells hold \(w, x, y, z\) of the measured holonomy \(H_1H_2H_3H_4\).</p>
+            <div class="hudmap" aria-label="Cell map of the 4 by 4 layer">
+                <div class="c0">0 · astro I</div><div class="c1">1 · timing I</div><div class="c2">2 · veloc I</div><div class="c0">3 · astro II</div>
+                <div class="c2">11 · veloc R</div><div class="in">w</div><div class="in">x</div><div class="c1">4 · timing II</div>
+                <div class="c1">10 · timing R</div><div class="in">y</div><div class="in">z</div><div class="c2">5 · veloc II</div>
+                <div class="c0">9 · astro R</div><div class="c2">8 · veloc III</div><div class="c1">7 · timing III</div><div class="c0">6 · astro III</div>
+            </div>
+            <ul>
+                <li>Cell borders use the class colours. Cells 9, 10 and 11 are the residuals: they turn amber within tolerance and red past it.</li>
+                <li>The interior reads \(w = 1\), \(x = y = z = 0\) exactly when the legs close. Otherwise it is tinted and shows the approximate values. Hover any cell for its exact rational.</li>
+                <li>Shifting the ring by 3 cells (the square's 90° turn) keeps every class in its own group of four. Shifting by 4 (the 120° step) moves each group to the next class. Panel D checks both.</li>
+            </ul>
+            <h3>The soliton gauge (Proposition 7.14)</h3>
+            <p>The gauge readout turns the three residuals into the crystal's position, and back:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Row</th><th>Shows</th></tr></thead>
+                <tbody>
+                    <tr><td>a, b, c = Y_R/σ</td><td>The astrometry, timing and velocity residuals in units of their σ (exact rationals)</td></tr>
+                    <tr><td>s = a + b + c (axis)</td><td>The part along the axis: it lifts the poles</td></tr>
+                    <tr><td>z = (a − (b+c)/2) + i(√3/2)(b − c)</td><td>The part in the plane, kept exactly as the pair \((a - (b+c)/2,\ b - c)\)</td></tr>
+                    <tr><td>(a, b, c) from (s, z)</td><td><em>exact</em> when the three residuals are recovered from \(s\) and \(z\) in BigInt. It is re-checked on every update</td></tr>
+                    <tr><td>soliton</td><td>locked / tol / active</td></tr>
+                </tbody>
+            </table></div>
+            <p>The guide has a <a href="galactic_companion.html#gauge-lab">gauge lab</a> where you can type your own residuals.</p>
+        </section>
+
+        <!-- ================================================================ 9 -->
+        <section class="chapter" id="panel-c">
+            <div class="chapter-num">CHAPTER 9</div>
+            <h2>Panel C: triple parity</h2>
+            <p class="chapter-intro">Panel C holds the exact arithmetic, in four sections. Every value here is a BigInt rational. The decimals you see are rounded for display, and the tooltips give the exact value.</p>
+            <h3>Cross-engine TQF per class</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>Q₁, Q₂, Q₃</td><td>Quadrances (squared distances) I–II, II–III, III–I of the class's three nodes, in cubits²</td></tr>
+                    <tr><td>A_R poly = Gram</td><td>The quadrea from \((\Sigma Q)^2 - 2\Sigma Q^2\), with ≡ when it equals the Gram form \(4(|u|^2|v|^2 - \langle u,v\rangle^2)\) exactly</td></tr>
+                    <tr><td>χ (≤ 1/√3)</td><td>\(\sqrt{A_R}/(Q_1+Q_2+Q_3)\). It equals 0.577350 exactly when the triangle is equilateral. Hover for the Weitzenböck test and \(P_4\)'s scale</td></tr>
+                    <tr><td>Δφ I · II · III</td><td>The three engines' phase offsets for this class, in milliradians</td></tr>
+                    <tr><td>state</td><td>LOCK when \(3A_R = S^2\) exactly, otherwise <em>deformed</em></td></tr>
+                </tbody>
+            </table></div>
+            <p>The note under the table gives the node and tier being sampled and the largest bit length involved.</p>
+            <h3>The triple quad: residual parity</h3>
+            <p>Each row is one class's group of four: the three systems' model values and the residual R. Their sum is the measured total \(Y\), which acts as the parity.</p>
+            <ul>
+                <li><strong>Click a cell</strong> to erase it. With one loss in a row the cell shows <code>↺ value ✓</code>: it was rebuilt exactly as \(Y\) minus the other three, and the group column reads <em>rebuilt</em>.</li>
+                <li><strong>Erase a second cell</strong> in the same row: both show <em>lost</em> and the group reads <em>2 lost</em>. One total cannot fix two unknowns.</li>
+                <li>You can lose up to three values at once, one per row, and still rebuild everything (Proposition 7.11). <strong>Restore all</strong> brings every cell back.</li>
+            </ul>
+            <h3>Holonomy: engine frames and measured legs</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Row</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>engine step σ ↦ ω</td><td>The 120° step between engines as the Hurwitz unit \((1+i+j+k)/2\), of order 6</td></tr>
+                    <tr><td>loop I → II → III → I</td><td>\(\omega^3 = -1\): a full turn</td></tr>
+                    <tr><td>computed fourth H₄ = (ω³)⁻¹</td><td>Closes the loop by construction. Labelled <em>cyclic: tests nothing</em></td></tr>
+                    <tr><td>measured legs H₁H₂H₃H₄ (open)</td><td>The real test: the product of the four independently measured frame legs. <em>PASS exact</em>, <em>within tolerance</em> or <em>FAIL</em> with the closure angle</td></tr>
+                </tbody>
+            </table></div>
+            <h3>16 Einstein Tiles and the Merkle root</h3>
+            <p>Each update packs 16 values into 64-bit tiles (monograph §6.1). The first three rows hold the twelve streams: astrometry, timing and velocity for System I, II, III and R. The fourth row holds the four holonomy projections \(w, x, y, z\). A ≈ mark means the 32-bit float in the tile is not exactly the rational it stands for, which is why each leaf also carries the exact value.</p>
+            <p>The line below gives the root \(\tau_1\) of the SHA-256 chain over all 16 leaves, the current step and its phase (onload at step 2, offload at step 6, third otherwise), and the South Halo bytes. The South Halo is a quick pre-filter, not an integrity check.</p>
+            <p><strong>Tamper with one leaf</strong> adds \(2^{-24}\) to one random value and re-hashes. The root always changes. The tile word may not, because a float can be too coarse to show the change, and the South Halo never does. That is why the chain hashes the exact value.</p>
+            <div class="lab" id="tile-lab">
+                <div class="lab-title">Tile decoder</div>
+                <p style="margin:0 0 6px;font-size:0.9rem;color:var(--muted)">Paste any tile word from Panel C (hover to copy the exact value, or select the hex text).</p>
+                <div class="lab-row">
+                    <input type="text" id="tl-in" value="0x850013103EA7F686" spellcheck="false" style="max-width:20rem">
+                    <button class="chip" type="button" id="tl-ex1">a stream tile</button>
+                    <button class="chip" type="button" id="tl-ex2">a projection tile</button>
+                </div>
+                <div class="out" id="tl-out"></div>
+            </div>
+        </section>
+
+        <!-- ================================================================ 10 -->
+        <section class="chapter" id="panel-d">
+            <div class="chapter-num">CHAPTER 10</div>
+            <h2>Panel D: lemma rows</h2>
+            <p class="chapter-intro">Each row names a monograph result, says what it governs on this page, and re-checks it live where a check applies. The summary line counts the results. At start it reads <em>19 live checks pass · 7 rows are definitions, heuristics, counts or not used</em>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Result</th><th>Checked live</th><th>Can it fail?</th></tr></thead>
+                <tbody>
+                    <tr><td>Lemma 4 (laws)</td><td>Tier radii, widths and windings are the exact integers of the lemma</td><td>Only if the code is changed</td></tr>
+                    <tr><td>Lemma 4 (frames)</td><td>The integer tier frames preserve exact quadrances, and the drawn frame steps are 120° turns</td><td>Only if the code is changed</td></tr>
+                    <tr><td>§H4</td><td>Each engine sits at its log radii</td><td>Only if the code is changed</td></tr>
+                    <tr><td>§7.1–7.2, 7.13</td><td>σ is orthogonal and σ³ = 1, exactly</td><td>Only if the code is changed</td></tr>
+                    <tr><td>Lemma 5 Part 6(a)</td><td>Both TQF forms agree and are ≥ 0 for all three classes</td><td>No: an identity, checked in BigInt</td></tr>
+                    <tr><td>Lemma 4 Part 2</td><td>Weitzenböck holds, and every class whose three Δφ agree is locked</td><td>No: equal phases force the lock exactly</td></tr>
+                    <tr><td>Lemma 7 Part 3(d), G1</td><td>The four-term identity and the recovery of \(Y_{\text{II}}\)</td><td>No: an identity</td></tr>
+                    <tr><td>Lemma 12, G2</td><td>The open closure passes without an error and catches an injected one, while the cyclic closure is always 1</td><td>Yes, if detection failed. With an error injected the open closure must read FAIL, and the row then passes</td></tr>
+                    <tr><td>Lemma 9 Part 3</td><td>All four legs are exact unit quaternions</td><td>No</td></tr>
+                    <tr><td>Lemma 13 Part 2</td><td>ω⁶ = 1, ω³ = −1, ωiω⁻¹ = j</td><td>No</td></tr>
+                    <tr><td>Lemma 8.2, 8.2″</td><td>The nine rays lie on \(|x|^2 = 3\), and exactly rays 0, 3, 6 are cube corners</td><td>No</td></tr>
+                    <tr><td>Lemma 8 Step 6, Prop. 6.5</td><td>The three trefoils' lobe sets partition the nine rays</td><td>With the geometry unlocked the row reads <em>free</em> and shows the lobe offset</td></tr>
+                    <tr><td>Props. 7.16–7.17</td><td>\(\Delta_1 \cup -\Delta_1\) is the 8 vertices of Cube 1</td><td>No</td></tr>
+                    <tr><td>Prop. 7.14</td><td>The gauge recovers (a, b, c) exactly</td><td>No</td></tr>
+                    <tr><td>Thm. 7.5, Lemma 13 Part 4</td><td>\(|\sin\theta_k| = 1\) only at the windows k = 2, 6, and \((1+i)^8 = 16\)</td><td>No</td></tr>
+                    <tr><td>§7.7</td><td>The ring shifts, and \(w^2+x^2+y^2+z^2 = 1\) exactly</td><td>No</td></tr>
+                    <tr><td>§6.1, Lemma 15</td><td>All 16 tiles re-encode bit for bit, and the root is 32 bytes</td><td>No</td></tr>
+                    <tr><td>Lemma 10, Thm. 7.6</td><td>The shell gaps inside an engine are 10, 16, 22, 28</td><td>No</td></tr>
+                    <tr><td>Lemma 11</td><td>The tier carriers share a window every 5 pulses, and the caesium frequency's residue mod 60</td><td>No</td></tr>
+                </tbody>
+            </table></div>
+            <p>The other seven rows are not tests. They record a definition (the engine-frame loop, the §7.5 bipyramid, the crystal-file port), a heuristic (the π/6 gate), a count-only correspondence (12 = 12), what was deliberately not adopted from the crystal file (its "ECC" bits), and the lemmas Part 2 does not use. A red FAIL anywhere means the page has a bug. The experiments in <a href="#experiments">Chapter 14</a> never produce one.</p>
+        </section>
+
+        <!-- ================================================================ 11 -->
+        <section class="chapter" id="log">
+            <div class="chapter-num">CHAPTER 11</div>
+            <h2>Log and verification</h2>
+            <p>The telemetry log at the bottom records what happens. <strong>Clear</strong> empties it.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Prefix</th><th>Written when</th><th>Contains</th></tr></thead>
+                <tbody>
+                    <tr><td><code>[P2] epoch …</code></td><td>Every new epoch</td><td>Sightline, soliton state, lock per class, \(Y_R/\sigma\), \(s\) and the gauge recovery</td></tr>
+                    <tr><td><code>[P2] frames: …</code></td><td>Every new epoch</td><td>The engine loop ω³, the measured legs' verdict and the start of the Merkle root</td></tr>
+                    <tr><td><code>[P2] tamper test</code></td><td>Tamper button</td><td>Whether the root caught the change</td></tr>
+                    <tr><td><code>[E]</code></td><td>Shapiro or lensing injected or removed</td><td>Einstein time and the date of closest approach</td></tr>
+                    <tr><td><code>[7.1]</code></td><td>Scalar field injected</td><td>The Yukawa parameters</td></tr>
+                    <tr><td><code>[H2]</code></td><td>Inject or clear error</td><td>Which leg, by how much, and the open-closure verdict</td></tr>
+                    <tr><td><code>[A]</code>–<code>[H]</code></td><td>Run Verification</td><td>The reference script's sections: constants, scales, the seven pulsars, Doppler vs. Shapiro, lensing, the far field, Sgr A*'s motion and the exact checks H1–H4</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>Run Verification</strong> runs a line-by-line port of <code>verify_galactic_hierarchy.py</code> (the same code as Part 1) and compares each line with the script's own output under Python 3.13. The result goes into the badge next to the log title: <code>19/19 PASS · 66/66 lines match</code>. A mismatch means the browser's arithmetic disagrees with the reference somewhere. The log then shows which line, and the badge turns red.</p>
+        </section>
+
+        <!-- ================================================================ 12 -->
+        <section class="chapter" id="states">
+            <div class="chapter-num">CHAPTER 12</div>
+            <h2>Locked, breathing, active</h2>
+            <p class="chapter-intro">The soliton has three states. They are decided exactly, from Layer B's rationals.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>State</th><th>Condition</th><th>What you see</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="tag t-PROVEN">LOCKED</span></td><td>Every class residual \(Y_R\) is exactly 0 <em>and</em> the measured legs close exactly</td><td>Gold core at the centre, gold cube, streams at full separation, interior cells (1, 0, 0, 0), no web in Panel A</td></tr>
+                    <tr><td><span class="tag t-HEURISTIC">BREATHING</span></td><td>Not locked, but every residual and the closure are within tolerance</td><td>Amber core and cube, the core drifts, the residual cells turn amber</td></tr>
+                    <tr><td><span class="tag t-CONJECTURAL">ACTIVE</span></td><td>Any residual or the closure is past tolerance</td><td>Red core and cube, red cells, shear if the legs fail</td></tr>
+                </tbody>
+            </table></div>
+            <p>The tolerances scale with the Noise slider <span class="tag t-DEFINITION">DEFINITION</span>:</p>
+            $$|Y_R| \le 3\,\sigma_c \cdot \text{Noise}\cdot\sqrt3 \quad\text{(per class)}, \qquad \text{closure angle} \le 5 \cdot \text{Noise} \cdot 0.1\ \text{mas}.$$
+            <p>So with Noise at 0 the tolerance is 0, and anything non-zero is ACTIVE. That is why an injected signal or error goes straight to ACTIVE, while noise alone stays BREATHING.</p>
+            <div class="callout plain">
+                <div class="label">Lock of the triangle vs. lock of the soliton</div>
+                <p>They are different tests. A triangle's LOCK in Panel C asks whether the three engines' phases agree for that class. The soliton's LOCKED asks whether every residual is zero and the legs close. With Coupling κ = 0 the triangles stay locked while the soliton breathes. With an injected frame error the triangles stay locked while the soliton is active.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ 13 -->
+        <section class="chapter" id="lock">
+            <div class="chapter-num">CHAPTER 13</div>
+            <h2>The lock, by hand</h2>
+            <p class="chapter-intro">This lab rebuilds one class's triangle from the page's own formulas, in floating point, so you can see how Δφ deforms it. The page does the same in exact rationals.</p>
+            <p>Each engine \(s\) places its node on tier \(n\) at</p>
+            $$\theta_k = \frac{2\pi k}{30}, \qquad \varphi_s = W_n\,\theta_k\,(-1)^k + \frac{2\pi c}{3} + \Delta\varphi_s, \qquad \Delta\varphi_s = \kappa\,\frac{\pi}{6}\tanh\frac{r_s}{3},$$
+            <p>then applies its tier's Lemma 4 frame and the rotation \(\sigma^s\). If the three \(\Delta\varphi_s\) agree, the three nodes are \(P, \sigma P, \sigma^2 P\) and the triangle is exactly equilateral.</p>
+            <div class="lab" id="lock-lab">
+                <div class="lab-title">Cross-engine triangle</div>
+                <div class="lab-row">
+                    <label>r<sub>I</sub> <input type="number" id="lk-r0" value="0" step="0.5"></label>
+                    <label>r<sub>II</sub> <input type="number" id="lk-r1" value="0" step="0.5"></label>
+                    <label>r<sub>III</sub> <input type="number" id="lk-r2" value="0" step="0.5"></label>
+                    <label>κ <input type="number" id="lk-k" value="1" step="0.1" min="0" max="2"></label>
+                </div>
+                <div class="lab-row">
+                    <label>tier <select id="lk-n"><option value="4">T4</option><option value="3">T3</option><option value="2">T2</option><option value="1">T1</option><option value="0">T0</option></select></label>
+                    <label>node k <input type="number" id="lk-node" value="0" min="0" max="29" step="1"></label>
+                    <label>class <select id="lk-c"><option value="0">astrometry</option><option value="1">timing</option><option value="2">velocity</option></select></label>
+                    <label>tension° <input type="number" id="lk-ten" value="0" step="5" min="-90" max="90"></label>
+                    <label>torsion° <input type="number" id="lk-tor" value="0" step="5" min="-90" max="90"></label>
+                </div>
+                <div class="lab-row">
+                    <button class="chip" type="button" data-lk="0,0,0">lock</button>
+                    <button class="chip" type="button" data-lk="2,2,2">equal residuals</button>
+                    <button class="chip" type="button" data-lk="-3,0,0">System I only</button>
+                    <button class="chip" type="button" data-lk="-0.9,-1.6,0.7">noise-like</button>
+                </div>
+                <div class="out" id="lk-out"></div>
+            </div>
+            <p>Try <em>equal residuals</em>: all three engines turn by the same Δφ, so the triangle stays equilateral even though every residual is 2σ. Tension and torsion act the same way in all three engines, so they never break the lock either.</p>
+        </section>
+
+        <!-- ================================================================ 14 -->
+        <section class="chapter" id="experiments">
+            <div class="chapter-num">CHAPTER 14</div>
+            <h2>Experiments</h2>
+            <p class="chapter-intro">Each recipe starts from a fresh page (reload, or set every control back to its default). The outcomes below were recorded on the J1745-2900 sightline at epoch 0 with the page paused. Noise values change from epoch to epoch, so the exact numbers will differ at other epochs, but the pattern will not.</p>
+
+            <h3>1 · The baseline lock</h3>
+            <p>Do nothing. The badge reads LOCKED. All three TQF rows read LOCK with χ = 0.577350 and Δφ = 0.0 · 0.0 · 0.0. The gauge is (0, 0, 0) with recovery <em>exact</em>, the measured legs read <em>PASS exact</em>, and Panel D shows 19 checks passing.</p>
+
+            <h3>2 · Noise</h3>
+            <ol>
+                <li>Set Noise to 1σ. The badge changes to BREATHING. All three classes deform slightly (χ ≈ 0.57731, 0.57732, 0.57723). The Δφ column shows offsets of a few hundred mrad that differ between engines. The gauge reads about (−0.88, −1.62, 0.72) and the legs read <em>within tolerance</em> (about 161&nbsp;µas).</li>
+                <li>Raise it to 3σ. The residuals triple (−2.65, −4.87, 2.17) but so does the tolerance, so the badge stays BREATHING. The streams of the timing pair nearly merge, since |b| approaches 5.</li>
+            </ol>
+
+            <h3>3 · Coupling off</h3>
+            <p>With Noise at 3σ, set Coupling κ to 0. All three triangles snap back to LOCK (Δφ = 0) while the badge stays BREATHING and the gauge keeps its values. The triangles show the phase coupling; the soliton shows the residuals.</p>
+
+            <h3>4 · Tension and torsion</h3>
+            <p>Back at the defaults, set Tension to 40° and Torsion to 15°. Panel A's tiers tilt and the triangles change shape on screen, but Panel C still reads LOCK with χ = 0.577350: the turn is the same in all three engines. The π/6 gate reads <em>closed</em> (Δθ = 25°). Set Torsion to 10° and it opens (Δθ = 30°), and nothing else changes.</p>
+
+            <h3>5 · A lensing event</h3>
+            <ol>
+                <li>Choose <em>Lensing event</em>. The log notes the injection and the closest approach about 3.57 years away. At first nothing changes: the event starts at its edge, where its signal is zero by construction.</li>
+                <li>Press Epoch ▶ fourteen times (to about 2030.3). The badge reads ACTIVE. Astrometry and timing are deformed, with Δφ = −523.6 · 0.0 · 0.0: System I's phase saturates at −π/6 while II and III stay at 0. Velocity stays LOCK. The gauge's timing residual is millions of σ, so the core sits at its saturated offset.</li>
+            </ol>
+
+            <h3>6 · A Shapiro event</h3>
+            <p>Choose <em>Shapiro event</em> and step fourteen epochs. Now only timing deforms. Astrometry and velocity stay locked, because a Shapiro delay has no astrometric term.</p>
+
+            <h3>7 · The scalar field and its range</h3>
+            <ol>
+                <li>Choose <em>Scalar field</em> on J1745-2900 (0.10&nbsp;pc). Timing and velocity deform, with Δφ non-zero in Systems I and II and zero in III. Astrometry stays locked. The badge reads ACTIVE.</li>
+                <li>Switch the sightline to J1746-2850 (27.2&nbsp;pc). Everything locks again. The Yukawa factor \(e^{-r/\lambda}\) with λ = 1&nbsp;pc is about \(10^{-12}\) there, far below the 2⁻²⁴ grid Layer B uses, so the residual is exactly zero. The test can only see a short-range field on sightlines inside its range.</li>
+            </ol>
+
+            <h3>8 · A frame error</h3>
+            <p>Press Inject error. The badge reads ACTIVE, and the measured legs read FAIL with an angle (the leg and the size are random: one run gave 12.15°). The four interior cells turn red, and the trefoils shear. All three triangles stay LOCK and the gauge stays at 0, because a frame error moves no node and adds no residual. Panel D's Lemma 12 row still passes: catching the error is the expected result. Press Clear error.</p>
+
+            <h3>9 · Erasure</h3>
+            <p>In the triple-quad grid, click one cell in each row: three cells show ↺ with ✓ and every group reads <em>rebuilt</em>. Click a second cell in one row: both cells in that row read <em>lost</em>. Press Restore all.</p>
+
+            <h3>10 · Tampering</h3>
+            <p>Press Tamper with one leaf a few times. The root changes every time. The South Halo never changes, and the tile word sometimes does not either, when \(2^{-24}\) is below the float's resolution at that value.</p>
+
+            <h3>11 · Freeing the crystal</h3>
+            <p>Untick Lemma 8.2 geometry and set Torus radius to 25 (the crystal file's own value). The lobes leave the rays. Panel D's Lemma 8 Step 6 row reads <em>free</em> with the offset (about 4.8 units), and the summary drops to 18 live checks. Tick it again to snap back.</p>
+
+            <h3>12 · Windows and the spinor</h3>
+            <p>Pause and click the STEP bar at about one-sixth of its length (frames 90–179). The readout says <code>step k = 2 · spinor i · window</code>. At about three-quarters (frames 450–539) it says <code>step k = 6 · spinor −i · window</code>, with the sign now −: the same orientation, the opposite spinor. Tick Spinor turn to watch the crystal make its 720° turn per epoch.</p>
+        </section>
+
+        <!-- ================================================================ 15 -->
+        <section class="chapter" id="trouble">
+            <div class="chapter-num">CHAPTER 15</div>
+            <h2>Troubleshooting</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead>
+                <tbody>
+                    <tr><td>"Loading Three.js r158…" does not go away</td><td>The page tries three CDNs in turn (cdnjs, jsdelivr, unpkg). A content blocker or a firewall may be stopping all of them. Hard-refresh (Ctrl/Cmd + Shift + R), or allow those sites.</td></tr>
+                    <tr><td>"Three.js r158 could not be loaded. The exact panels still run."</td><td>All three CDNs failed. Panels C and D, the gauge, the layer and the log still work, and only the two 3D views are missing.</td></tr>
+                    <tr><td>"WebGL is not available in this browser."</td><td>Turn on hardware acceleration in the browser settings, or try another browser.</td></tr>
+                    <tr><td>Choppy animation</td><td>Lower the speed, untick the lattice and the scope, or close other heavy tabs. Each update does exact BigInt work, and phones have less headroom.</td></tr>
+                    <tr><td>Lost in a 3D view</td><td>Zoom out with the wheel or a pinch. Toggling Log radii resets Panel A's zoom. Reloading resets both views.</td></tr>
+                    <tr><td>Numbers differ from this manual</td><td>Noise draws depend on the epoch and the sightline, and the injected error is random. Pause at epoch 0 on J1745-2900 to compare.</td></tr>
+                    <tr><td>Nothing moves</td><td>The clock is paused. The Epoch buttons and the STEP bar pause it on purpose. Press Play.</td></tr>
+                    <tr><td>The site bar covers something</td><td>Press the ‹ button at the right end of the bar to tuck it into a small ••• button, and press that to bring it back. Phones start with it tucked away.</td></tr>
+                    <tr><td>A red FAIL in Panel D or the log</td><td>Not expected from any control. Note the settings, epoch and sightline, and report it on GitHub.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <!-- ================================================================ 16 -->
+        <section class="chapter" id="reference">
+            <div class="chapter-num">CHAPTER 16</div>
+            <h2>Numbers and constants</h2>
+            <h3>Tiers (Lemma 4, the same in all three engines)</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Tier</th><th class="num">R (cubits)</th><th class="num">r</th><th class="num">W</th><th class="num">helix rate</th><th>frame</th><th class="num">log-radius exponent</th></tr></thead>
+                <tbody>
+                    <tr><td>T0</td><td class="num">15</td><td class="num">4</td><td class="num">16</td><td class="num">96</td><td>Rot<sub>x</sub>(π/2)</td><td class="num">0</td></tr>
+                    <tr><td>T1</td><td class="num">35</td><td class="num">6</td><td class="num">14</td><td class="num">84</td><td>Rot<sub>y</sub>(π/2)</td><td class="num">1/7</td></tr>
+                    <tr><td>T2</td><td class="num">65</td><td class="num">8</td><td class="num">12</td><td class="num">72</td><td>Rot<sub>x</sub>(π/2)</td><td class="num">5/14</td></tr>
+                    <tr><td>T3</td><td class="num">105</td><td class="num">10</td><td class="num">10</td><td class="num">60</td><td>Rot<sub>y</sub>(π/2)</td><td class="num">9/14</td></tr>
+                    <tr><td>T4</td><td class="num">155</td><td class="num">12</td><td class="num">8</td><td class="num">48</td><td>Rot<sub>x</sub>(π/2)</td><td class="num">1</td></tr>
+                </tbody>
+            </table></div>
+            <p>\(R_n = 5n^2 + 15n + 15\), \(\rho_n = 2n + 4\), \(W_n = 16 - 2n\). The helix rate is in turns per 60 units of simulated time.</p>
+            <h3>Systems</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>System</th><th>Region</th><th>Inner radius</th><th>Outer radius</th><th>Rotation</th><th>Spin</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="dot" style="background:var(--sys1)"></span>I</td><td>Sgr A* domain</td><td>\(r_s \approx 4.1\times10^{-7}\) pc</td><td>2 pc</td><td>σ⁰ (0°)</td><td>forward</td></tr>
+                    <tr><td><span class="dot" style="background:var(--sys2)"></span>II</td><td>Nuclear region</td><td>2 pc</td><td>200 pc</td><td>σ¹ (120°)</td><td>backward</td></tr>
+                    <tr><td><span class="dot" style="background:var(--sys3)"></span>III</td><td>Galaxy</td><td>200 pc</td><td>100 kpc</td><td>σ² (240°)</td><td>forward</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Sightlines</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Pulsar</th><th class="num">projected distance</th><th>sits in</th><th>notes</th></tr></thead>
+                <tbody>
+                    <tr><td>J1745-2900</td><td class="num">0.10 pc</td><td>System I</td><td>magnetar, the default and the event target</td></tr>
+                    <tr><td>J1746-2850</td><td class="num">27.20 pc</td><td>System II</td><td>magnetar-like</td></tr>
+                    <tr><td>J1746-2849</td><td class="num">29.61 pc</td><td>System II</td><td></td></tr>
+                    <tr><td>J1745-2910</td><td class="num">31.05 pc</td><td>System II</td><td>position poorly known</td></tr>
+                    <tr><td>J1745-2912</td><td class="num">34.90 pc</td><td>System II</td><td></td></tr>
+                    <tr><td>J1746-2856</td><td class="num">37.55 pc</td><td>System II</td><td></td></tr>
+                    <tr><td>J1746-2829</td><td class="num">76.55 pc</td><td>System II</td><td>magnetar-like</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Measurement classes</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Class</th><th>Unit</th><th class="num">1σ</th><th>Colour</th></tr></thead>
+                <tbody>
+                    <tr><td>astrometry</td><td>µas</td><td class="num">0.5</td><td><span class="dot" style="background:#ff0055"></span>magenta</td></tr>
+                    <tr><td>timing</td><td>×10⁻¹⁸ s⁻¹</td><td class="num">0.05</td><td><span class="dot" style="background:#00f2ff"></span>cyan</td></tr>
+                    <tr><td>velocity</td><td>km/s</td><td class="num">2.0</td><td><span class="dot" style="background:#ffd700"></span>gold</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Other constants</h3>
+            <div class="table-wrap"><table>
+                <tbody>
+                    <tr><td>Rationalization grid (Layer A → B)</td><td class="mono">2⁻²⁴</td></tr>
+                    <tr><td>Clock</td><td class="mono">60 pulses per unit of t; 30 nodes; 150 pulses per pass; 720 frames per epoch; 8 steps of 90 frames</td></tr>
+                    <tr><td>Simulated time rate</td><td class="mono">0.5 × Speed per second</td></tr>
+                    <tr><td>Epoch</td><td class="mono">0.25 yr from 2026 October 26</td></tr>
+                    <tr><td>Phase coupling</td><td class="mono">Δφ = κ (π/6) tanh(r/3), saturating at ±523.6 mrad for κ = 1</td></tr>
+                    <tr><td>Frame-leg noise</td><td class="mono">0.1 mas per leg per σ of Noise</td></tr>
+                    <tr><td>Lensing event</td><td class="mono">t_E = 1.19 yr, impact 0.3 θ_E, source 0.1 pc behind Sgr A*, 236 km/s</td></tr>
+                    <tr><td>Scalar test</td><td class="mono">Yukawa α = 0.01, λ = 1 pc, Systems I and II</td></tr>
+                    <tr><td>Crystal units</td><td class="mono">20 per cubit; carrier R = 20.2, r = 12.5, R + r = 32.7 = √(8/3) cubits; poles at 34.6</td></tr>
+                    <tr><td>Display radius (log)</td><td class="mono">6 + 20 log₁₀(r / r_s)</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <!-- ================================================================ 17 -->
+        <section class="chapter" id="glossary">
+            <div class="chapter-num">CHAPTER 17</div>
+            <h2>Glossary</h2>
+            <dl class="gloss">
+                <dt>Layer A / Layer B</dt><dd>Layer A is the floating-point physics. Layer B is the exact rational engine: values cross at a 2⁻²⁴ grid and from then on every operation is exact BigInt.</dd>
+                <dt>Quadrance Q</dt><dd>A squared distance, the rational-trigonometry replacement for length.</dd>
+                <dt>Quadrea A<sub>R</sub></dt><dd>Sixteen times the squared area of a triangle, computed from its three quadrances.</dd>
+                <dt>χ</dt><dd>\(\sqrt{A_R}/(Q_1+Q_2+Q_3)\). Never above \(1/\sqrt3\), and equal to it only for an equilateral triangle.</dd>
+                <dt>Lock (triangle)</dt><dd>\(3A_R = S^2\) exactly: the three engines agree for that class.</dd>
+                <dt>LOCKED (soliton)</dt><dd>Every residual is zero and the measured frame legs close exactly.</dd>
+                <dt>Residual Y<sub>R</sub></dt><dd>The measured total minus the three systems' models: the emergent fourth.</dd>
+                <dt>Δφ, κ</dt><dd>A node's phase offset, driven by its system's own residual. κ is the coupling strength.</dd>
+                <dt>P₄, P₄*</dt><dd>The inferred fourth vertex of a class's triangle (heuristic scale), and its exact closure \(P_{\text{II}} + P_{\text{III}} - P_{\text{I}}\).</dd>
+                <dt>Gauge (s, z)</dt><dd>Proposition 7.14's exact, invertible split of the three residuals into an axial part \(s\) and a planar part \(z\).</dd>
+                <dt>Open / cyclic closure</dt><dd>Open multiplies four independently measured legs and can fail. Cyclic computes the fourth from the other three and always closes, so it tests nothing (Lemma 12).</dd>
+                <dt>ω</dt><dd>The Hurwitz unit \((1+i+j+k)/2\): the 120° turn between engines as a quaternion. ω³ = −1.</dd>
+                <dt>Einstein Tile</dt><dd>A 64-bit word (§6.1) carrying a step, wheel sector, structure, gate, index, form, slot, scale and a 32-bit core.</dd>
+                <dt>South Halo</dt><dd>The tile's top byte, a quick pre-filter. It is not an integrity check; the Merkle root is.</dd>
+                <dt>Merkle root τ₁</dt><dd>The head of the SHA-256 chain over all 16 leaves, each the tile word plus its exact value (Lemma 15).</dd>
+                <dt>Pulse, stage, epoch, step</dt><dd>The clock's units (<a href="#clock">Chapter 5</a>).</dd>
+                <dt>Cubit</dt><dd>The engine's length unit: tier radii are in cubits, and the crystal uses 20 display units per cubit.</dd>
+            </dl>
+            <p>The <a href="galactic_companion.html#glossary">companion guide's glossary</a> covers the theory terms.</p>
+        </section>
+    </main>
+</div>
+
+<footer>
+    <p><a href="tri_engine_soliton.html">Part 2: Tri-Engine Soliton</a> &middot; <a href="galactic_lensing_hierarchy.html">Part 1: Galactic Lensing Hierarchy</a> &middot; <a href="galactic_companion.html">Companion guide</a> &middot; <a href="../index.html">Geometric Engine</a> &middot; <a href="../manual.html">Engine Manual</a> &middot; <a href="../../../index.html">Ebayednoob home</a></p>
+    <p>&copy; 2026 BioChain AI &middot; Ebayednoob. Written for the Tri-Engine Soliton as of October 27, 2026, against <em>The Geometric Engine of Time: The Fifteen Lemmas</em>.</p>
+</footer>
+
+<script>
+// ---------- Math rendering (KaTeX, optional: the page reads fine without it) ----------
+window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+            delimiters: [{ left: "$$", right: "$$", display: true }, { left: "\\(", right: "\\)", display: false }],
+            ignoredClasses: ["out", "lab-title"],
+            throwOnError: false
+        });
+    }
+});
+
+// ---------- Table of contents: highlight the chapter in view ----------
+(() => {
+    const links = [...document.querySelectorAll(".toc a")];
+    const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            links.forEach((a) => a.classList.remove("active"));
+            byId.get(e.target.id)?.classList.add("active");
+        });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    document.querySelectorAll("section.chapter").forEach((s) => obs.observe(s));
+    document.querySelectorAll(".toc-mobile a").forEach((a) => a.addEventListener("click", () => a.closest("details").open = false));
+})();
+
+const $ = (s) => document.querySelector(s);
+const num = (id, lo, hi, fallback) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback; };
+
+// ---------- Clock calculator (the page's clockOf, tObsOf and step readout) ----------
+(() => {
+    const T_REF = 2026 + 298 / 365.25, EPOCH_YR = 0.25, RATE = 0.5;
+    const GAUSS = ["1+i", "2i", "−2+2i", "−4", "−4−4i", "−8i", "8−8i", "16"], DIR = ["1+i", "i", "−1+i", "−1", "−1−i", "−i", "1−i", "1"];
+    function render() {
+        const t = num("#ck-t", 0, 1e6, 0), speed = num("#ck-speed", 0.1, 10, 1 / 6);
+        const p = Math.floor(t * 60 + 1e-9), k = p % 30, S = Math.floor((p % 150) / 30), f = (p * 12) % 720, step = Math.floor(f / 90) + 1, epoch = Math.floor(p / 60);
+        const secPerEpoch = 1 / (RATE * speed), framesPerDisplay = 720 / (secPerEpoch * 60);
+        const phase = step === 2 ? "onload window" : step === 6 ? "offload window" : "third";
+        $("#ck-out").innerHTML =
+            `<span class="k">pulse</span> p = ${p} · <span class="k">node</span> k = ${k} · <span class="k">stage</span> S = ${S} → tier T${4 - S}${S === 4 ? ' <span class="warn">(core latch: P₄ slides into the soliton)</span>' : ""}<br>` +
+            `<span class="k">outer frame</span> f = ${f}/720 · <span class="k">step</span> ${step} (${phase}) · spinor (1+i)^${step} = ${GAUSS[step - 1]} → direction ${DIR[step - 1]} · sign ${Math.cos(f * Math.PI / 360) >= 0 ? "+" : "−"}<br>` +
+            `<span class="k">epoch</span> ${epoch} · observing date ${(T_REF + t * EPOCH_YR).toFixed(3)}<br>` +
+            `<span class="k">at ${speed.toFixed(3)}×</span> one epoch takes ${secPerEpoch.toFixed(1)} s and the outer gear moves ${framesPerDisplay.toFixed(2)} frame${framesPerDisplay === 1 ? "" : "s"} per 60 Hz display frame` +
+            (framesPerDisplay > 1.0001 ? ' <span class="k">(the particle flow stays at 1)</span>' : "");
+    }
+    ["#ck-t", "#ck-speed"].forEach((id) => $(id).addEventListener("input", render));
+    document.querySelectorAll("#clock-lab [data-t]").forEach((b) => b.addEventListener("click", () => { $("#ck-t").value = b.dataset.t; render(); }));
+    render();
+})();
+
+// ---------- Cross-engine triangle (the page's torusPoint, modRot, frameOf and σ, in floating point) ----------
+(() => {
+    const TIERS = [{ W: 16, R: 15, r: 4 }, { W: 14, R: 35, r: 6 }, { W: 12, R: 65, r: 8 }, { W: 10, R: 105, r: 10 }, { W: 8, R: 155, r: 12 }];
+    const D2R = Math.PI / 180;
+    const modRot = (p, n, ten, tor) => {
+        const a = n >= 3 ? ten * D2R : -tor * D2R, c = Math.cos(a), s = Math.sin(a);
+        return n >= 3 ? [c * p[0] + s * p[2], p[1], -s * p[0] + c * p[2]] : [c * p[0] - s * p[1], s * p[0] + c * p[1], p[2]];
+    };
+    const frame = (n, v) => (n % 2 === 0 ? [v[0], -v[2], v[1]] : [v[2], v[1], -v[0]]);
+    const sigma = (v, s) => { for (let i = 0; i < s; i++) v = [v[2], v[0], v[1]]; return v; };
+    const sub = (a, b) => a.map((x, i) => x - b[i]), dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+    function node(n, k, c, dphi, ten, tor, s) {
+        const T = TIERS[n], th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = T.W * th * chi + 2 * Math.PI * c / 3 + dphi;
+        const p = modRot([(T.R + T.r * Math.cos(ph)) * Math.cos(th), (T.R + T.r * Math.cos(ph)) * Math.sin(th), T.r * Math.sin(ph)], n, ten, tor);
+        return sigma(frame(n, p), s);
+    }
+    function render() {
+        const kappa = num("#lk-k", 0, 2, 1), r = [0, 1, 2].map((i) => num(`#lk-r${i}`, -1e9, 1e9, 0));
+        const n = +$("#lk-n").value, k = Math.round(num("#lk-node", 0, 29, 0)), c = +$("#lk-c").value;
+        const ten = num("#lk-ten", -90, 90, 0), tor = num("#lk-tor", -90, 90, 0);
+        const dphi = r.map((x) => kappa * (Math.PI / 6) * Math.tanh(x / 3));
+        const P = [0, 1, 2].map((s) => node(n, k, c, dphi[s], ten, tor, s));
+        const u = sub(P[1], P[0]), v = sub(P[2], P[0]), w = sub(P[2], P[1]);
+        const Q1 = dot(u, u), Q2 = dot(w, w), Q3 = dot(v, v), S = Q1 + Q2 + Q3;
+        const poly = S * S - 2 * (Q1 * Q1 + Q2 * Q2 + Q3 * Q3), gram = 4 * (Q1 * Q3 - dot(u, v) ** 2);
+        const chi = Math.sqrt(Math.max(0, poly)) / S, same = dphi.every((d) => d === dphi[0]);
+        const rel = Math.abs(3 * poly - S * S) / (S * S), lock = rel < 1e-12;
+        $("#lk-out").innerHTML =
+            `<span class="k">Δφ I · II · III</span> ${dphi.map((d) => (d * 1e3).toFixed(1)).join(" · ")} mrad ${same ? '<span class="good">(equal)</span>' : '<span class="warn">(differ)</span>'}<br>` +
+            `<span class="k">Q₁, Q₂, Q₃</span> ${[Q1, Q2, Q3].map((q) => q.toFixed(4)).join(", ")} cubits²<br>` +
+            `<span class="k">A_R</span> poly ${poly.toFixed(3)} · Gram ${gram.toFixed(3)} · <span class="k">χ</span> ${chi.toFixed(6)} (1/√3 = 0.577350)<br>` +
+            (lock ? '<span class="good">LOCK: the triangle is equilateral (3A_R = S² to float precision; the page checks it exactly)</span>'
+                  : `<span class="warn">deformed: 3A_R falls short of S² by ${(rel * 100).toPrecision(3)}%</span>`);
+    }
+    document.querySelectorAll("#lock-lab input, #lock-lab select").forEach((e) => e.addEventListener("input", render));
+    document.querySelectorAll("#lock-lab [data-lk]").forEach((b) => b.addEventListener("click", () => {
+        b.dataset.lk.split(",").forEach((x, i) => { $(`#lk-r${i}`).value = x; });
+        render();
+    }));
+    render();
+})();
+
+// ---------- Tile decoder (the page's decodeTile, §6.1 Table 4) ----------
+(() => {
+    const WHEEL = [1, 7, 11, 13, 17, 19, 23, 29], CLASSES = ["astrometry", "timing", "velocity"], STRUCT = ["System I", "System II", "System III", "residual R / emergent fourth"];
+    const f32 = new DataView(new ArrayBuffer(4));
+    function render() {
+        const raw = $("#tl-in").value.trim().replace(/^0x/i, "").replace(/[\s_]/g, "");
+        if (!/^[0-9a-f]{1,16}$/i.test(raw)) { $("#tl-out").innerHTML = '<span class="bad">Enter up to 16 hex digits, e.g. 0x850013103EA7F686.</span>'; return; }
+        const w = BigInt("0x" + raw);
+        const g = (hi, lo) => Number((w >> BigInt(lo)) & ((1n << BigInt(hi - lo + 1)) - 1n));
+        const step = g(63, 61) + 1, wheel = g(60, 58), struct = g(57, 56), halo = g(63, 56), gate = g(55, 48), mux = g(47, 44), form = g(43, 40), slot = g(39, 36), scale = g(35, 32), core = g(31, 0);
+        f32.setUint32(0, core);
+        const value = f32.getFloat32(0);
+        const what = slot < 12 ? `stream: ${CLASSES[Math.floor(slot / 4)] ?? "?"}, ${STRUCT[slot % 4]}` : `projection ${"wxyz"[slot - 12]} of the measured holonomy`;
+        const hex = (x, d) => "0x" + x.toString(16).toUpperCase().padStart(d, "0");
+        $("#tl-out").innerHTML =
+            `<span class="k">[63:61] step</span> ${step}${step === 2 ? " (onload window)" : step === 6 ? " (offload window)" : ""} · <span class="k">[60:58] wheel</span> ${wheel} (unit ${WHEEL[wheel]}) · <span class="k">[57:56] structure</span> ${struct}<br>` +
+            `<span class="k">South Halo [63:56]</span> ${hex(halo, 2)} <span class="k">(pre-filter only)</span><br>` +
+            `<span class="k">[55:48] gate</span> ${hex(gate, 2)} = component ${gate >> 6}, epoch mod 64 = ${gate & 63} · <span class="k">[47:44] index</span> ${mux} · <span class="k">[43:40] form</span> ${form}${form === 3 ? " (binary32 value)" : form === 1 ? " (Hurwitz quaternion)" : ""}<br>` +
+            `<span class="k">[39:36] slot</span> ${slot} → ${what} · <span class="k">[35:32] scale</span> ${scale}<br>` +
+            `<span class="k">[31:0] core</span> ${hex(core, 8)}` + (form === 3 ? ` = ${value}` : "");
+    }
+    $("#tl-in").addEventListener("input", render);
+    $("#tl-ex1").addEventListener("click", () => { $("#tl-in").value = "0x850013103EA7F686"; render(); });
+    $("#tl-ex2").addEventListener("click", () => { $("#tl-in").value = "0x870003C03F800000"; render(); });
+    render();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

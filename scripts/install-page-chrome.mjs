@@ -1,13 +1,17 @@
-// Adds the floating site chrome (assets/js/page-chrome.js: Home, Google sign-in, social links)
-// to the pages listed in scripts/page-chrome-targets.json, or to the files given as arguments.
+// Adds the floating site chrome (assets/js/page-chrome.js: Home, dropdown menus, Google sign-in and the
+// folded social links) to the pages listed in scripts/page-chrome-targets.json, or to the files given as arguments.
 //
 //   node scripts/install-page-chrome.mjs              install into every listed page
 //   node scripts/install-page-chrome.mjs <file.html>  install into one file (position "top")
-//   node scripts/install-page-chrome.mjs --check      exit 1 if a listed page is missing it
+//   node scripts/install-page-chrome.mjs --check      exit 1 if a listed page is missing it or is out of date
 //
-// Each target is { "file", "position"?, "extra"?: { "href", "label", "icon"? } | [ ...several ] };
-// "extra" adds buttons after Home (used to link the Geometric Calculator's pages to each other);
-// "compact": true shows those buttons as icons only, for pages with little free space at the top.
+// The targets file is { "menus": { "<set>": [ menu, ... ] }, "pages": [ page, ... ] } (a bare list of pages
+// also works). A page is { "file", "position"?, "compact"?, "menus"?: "<set>", "extra"? }:
+//   "menus"    names a menu set; each menu is { "label", "icon"?, "items": [ item, ... ] } and each item is
+//              { "file" (repo-relative) or "href" (used as is), "label", "icon"?, "note"?, "section"? }.
+//              "file" links are rewritten relative to each page, so one set serves pages in any folder.
+//   "extra"    plain buttons after Home: one { "href", "label", "icon"? } or a list.
+//   "compact"  true shows the bar's buttons as icons only, for pages with little free space at the top.
 //
 // Safe to run any number of times: an existing block (or a hand-pasted page-chrome.js script tag)
 // is replaced, never duplicated. The Pages deploy runs this, so a raw export pushed as-is still
@@ -26,15 +30,30 @@ const BARE_TAG_RE = /[ \t]*<script\b[^>]*page-chrome\.js[^>]*>\s*<\/script>[ \t]
 
 const attr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
-function chromeBlock(file, position = "top", extra = null, compact = false) {
-    const rel = path.relative(path.dirname(path.resolve(ROOT, file)), MODULE).split(path.sep).map(encodeURIComponent).join("/");
+const relHref = (from, to) => path.relative(path.dirname(path.resolve(ROOT, from)), path.resolve(ROOT, to)).split(path.sep).map(encodeURIComponent).join("/");
+
+function menuList(file, menus) {
+    return (menus || []).map((m) => ({
+        label: m.label, icon: m.icon,
+        items: (m.items || []).map(({ file: target, href, label, icon, note, section }) => {
+            const item = { href: target ? relHref(file, target) : href, label, icon };
+            if (note) item.note = note;
+            if (section) item.section = section;
+            return item;
+        }).filter((x) => x.href)
+    })).filter((m) => m.items.length);
+}
+
+function chromeBlock(file, { position = "top", extra = null, compact = false, menus = null } = {}) {
+    const rel = relHref(file, MODULE);
     const list = (Array.isArray(extra) ? extra : extra ? [extra] : []).filter((x) => x?.href);
     const extraAttrs = list.length === 1
         ? ` data-extra-href="${attr(list[0].href)}" data-extra-label="${attr(list[0].label || "More")}" data-extra-icon="${attr(list[0].icon || "book")}"`
         : list.length > 1
             ? ` data-extras="${attr(JSON.stringify(list.map(({ href, label, icon }) => ({ href, label, icon }))))}"`
             : "";
-    return `${START}\n<script type="module" src="${rel}" data-position="${attr(position)}"${extraAttrs}${compact ? ' data-compact="true"' : ""}></script>\n${END}\n`;
+    const menuAttr = menus?.length ? ` data-menus="${attr(JSON.stringify(menus))}"` : "";
+    return `${START}\n<script type="module" src="${rel}" data-position="${attr(position)}"${extraAttrs}${menuAttr}${compact ? ' data-compact="true"' : ""}></script>\n${END}\n`;
 }
 
 function inject(html, block) {
@@ -46,16 +65,23 @@ function inject(html, block) {
 async function targets(args) {
     const files = args.filter((a) => !a.startsWith("--"));
     if (files.length) return files.map((file) => ({ file, position: "top" }));
-    return JSON.parse(await readFile(path.join(ROOT, "scripts/page-chrome-targets.json"), "utf8"));
+    const config = JSON.parse(await readFile(path.join(ROOT, "scripts/page-chrome-targets.json"), "utf8"));
+    const pages = Array.isArray(config) ? config : config.pages || [];
+    const sets = Array.isArray(config) ? {} : config.menus || {};
+    return pages.map((p) => {
+        if (p.menus && !sets[p.menus]) throw new Error(`${p.file}: unknown menu set "${p.menus}"`);
+        return { ...p, menus: p.menus ? menuList(p.file, sets[p.menus]) : null };
+    });
 }
 
 const args = process.argv.slice(2);
 const check = args.includes("--check");
 let stale = 0;
-for (const { file, position = "top", extra = null, compact = false } of await targets(args)) {
+for (const target of await targets(args)) {
+    const { file } = target;
     const full = path.resolve(ROOT, file);
     const html = await readFile(full, "utf8");
-    const next = inject(html, chromeBlock(file, position, extra, compact));
+    const next = inject(html, chromeBlock(file, target));
     if (next === html) {
         console.log(`ok        ${file}`);
     } else if (check) {

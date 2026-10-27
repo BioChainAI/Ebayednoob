@@ -211,7 +211,7 @@ table.lemmas th { text-align: left; }
 <div class="wrap">
 <header class="hero">
     <h1><span class="g">Tri-Engine Soliton</span> <span style="font-size:0.5em;color:var(--muted);font-weight:600">Galactic Lensing Hierarchy · Part 2</span></h1>
-    <p>Systems I, II and III as three active geometric engines, nested at their log radii and related by the exact 120° turn about (1, 1, 1). Each pulse samples the same node of all three engines for each observable class, and the three nodes make a triangle whose Triple-Quad Formula is evaluated in exact rational arithmetic. The emergent fourth, the closure residual, becomes a soliton crystal at Sgr A*: the monograph's 12-node bipyramid around Cube 1, threaded by three trefoils, that stays locked at the centre while the books balance and moves when they do not. <a href="galactic_lensing_hierarchy.html">Part 1</a> · <a href="galactic_companion.html#part2">Guide</a></p>
+    <p>Systems I, II and III as three active geometric engines, nested at their log radii and related by the exact 120° turn about (1, 1, 1). Each pulse samples the same node of all three engines for each observable class, and the three nodes make a triangle whose Triple-Quad Formula is evaluated in exact rational arithmetic. The emergent fourth, the closure residual, becomes a soliton crystal at Sgr A*: the monograph's 12-node bipyramid around Cube 1, threaded by three trefoils, that stays locked at the centre while the books balance and moves when they do not. <a href="galactic_lensing_hierarchy.html">Part 1</a> · <a href="galactic_companion.html#part2">Guide</a> · <a href="tri_engine_manual.html">Manual</a></p>
     <div class="tags-legend" id="tags-legend"></div>
 </header>
 
@@ -1359,8 +1359,9 @@ function tqf(P) {
     return { Q: [Q1, Q2, Q3], S, poly, gram, same: poly.eq(gram), nonneg: !(poly.n < 0n), weitz: fracLe(F3.mul(poly), S2), lock, chi,
              qScale: 0.65 + 0.45 * chi, P4star: vsub(vadd(P[1], P[2]), P[0]), bits: Math.max(...[Q1, Q2, Q3, poly].map(fbits)) };
 }
-// Per-system data-minus-model in units of σ drives each node's phase offset [DEFINITION]
-const sysResid = (ch, s, c) => (ch.data[s][c] - ch.model[s][c]) / SIGMA[c];
+// Per-system data-minus-model in units of σ drives each node's phase offset [DEFINITION]. It is taken as Layer B sees it
+// (both rationalized at 2⁻²⁴), so a float difference below that grid never gives one engine a phase the others lack.
+const sysResid = (ch, s, c) => RAT(ch.data[s][c]).sub(RAT(ch.model[s][c])).toNumber() / SIGMA[c];
 const dphiOf = (ch, s, c) => state.kappa * (Math.PI / 6) * Math.tanh(sysResid(ch, s, c) / 3);
 // Engine-frame loop: σ lifts to the Hurwitz unit ω = (1 + i + j + k)/2
 const HALF = new Fraction(1n, 2n), OMEGA = [HALF, HALF, HALF, HALF];
@@ -1523,7 +1524,10 @@ const CUBE_STATIC = (() => {
 function renderLemmaRows2(L) {
     const S = STATIC, C = CUBE_STATIC, T = L.T, Fr = L.Fr;
     const allSame = T.every(t => t.same && t.nonneg && t.weitz);
-    const lockOk = T.every((t, c) => t.S.isZero() || t.lock === L.dphi.every(d => d[c] === L.dphi[0][c]));
+    // Equal phases force the lock exactly (σ is orthogonal). Unequal phases deform the triangle unless their difference
+    // is too small to move a node on the 2⁻²⁴ grid, so only the first direction is a test.
+    const phaseEq = c => L.dphi.every(d => d[c] === L.dphi[0][c]);
+    const lockOk = T.every((t, c) => t.S.isZero() || !phaseEq(c) || t.lock);
     const projNorm = qnorm(Fr.open).eq(Fraction.ONE), legsUnit = Fr.legs.every(q => qnorm(q).eq(Fraction.ONE));
     const roundTrip = L.all.every(p => packTile({ ...decodeTile(p.word) }) === p.word);
     const parity = L.B.every(b => b.identity && b.recovered);
@@ -1535,7 +1539,7 @@ function renderLemmaRows2(L) {
         ['§H4', 'Each engine at its system\'s log radii: exponents (R<sub>n</sub> − 15)/140 = 0, 1/7, 5/14, 9/14, 1', 'Shared with Part 1; the reference-script port checks it', okB(S.l10map)],
         ['§7.1–7.2, 7.13', 'The three engines are related by σ: (x, y, z) ↦ (z, x, y), the exact 120° turn about (1, 1, 1) that cycles the three cosets of Theorem 7.2', 'σ is orthogonal with integer entries and σ³ = 1 (exact)', okB(C.perm)],
         ['Lemma 5 Part 6(a)', 'Cross-engine TQF: A<sub>R</sub> = (ΣQ)² − 2ΣQ² = 4(|u|²|v|² − ⟨u,v⟩²) for each class', `Both forms equal and ≥ 0 in BigInt for all 3 classes (${Math.max(...T.map(t => t.bits))}-bit values)`, okB(allSame)],
-        ['Lemma 4 Part 2', 'Weitzenböck: χ = √A<sub>R</sub>/S ≤ 1/√3, equality iff equilateral. Lock = equal phases in all three engines', `${T.filter(t => t.lock).length}/3 classes locked (3A<sub>R</sub> = S² exactly); lock occurs exactly when the three Δφ agree`, okB(T.every(t => t.weitz) && lockOk)],
+        ['Lemma 4 Part 2', 'Weitzenböck: χ = √A<sub>R</sub>/S ≤ 1/√3, equality iff equilateral. Lock = equal phases in all three engines', `${T.filter(t => t.lock).length}/3 classes locked (3A<sub>R</sub> = S² exactly); every class whose three Δφ agree is locked`, okB(T.every(t => t.weitz) && lockOk)],
         ['Lemma 7 Part 3(d), G1', 'The triple quad: Y = Y<sub>I</sub> + Y<sub>II</sub> + Y<sub>III</sub> + Y<sub>R</sub> per class, with erasure recovery', 'Identity and recovery of Y<sub>II</sub> in all three classes', okB(parity)],
         ['Lemma 7 Part 3(b), 12', 'Engine-frame loop: three steps ω give ω³ = −1; the computed fourth H<sub>4</sub> = (ω³)<sup>−1</sup> closes by construction (cyclic) and is shown as a parity element only', 'The spec\'s H<sub>4</sub> = (H<sub>1</sub>H<sub>2</sub>H<sub>3</sub>)<sup>−1</sup> is vacuous as a test; the open closure of the measured legs is the test', DEF2],
         ['Lemma 12, G2', 'Measured frame legs under the open convention drive the soliton\'s shear', `Open: ${Fr.openStatus === 'pass' ? 'closes exactly' : Fr.openStatus === 'tol' ? 'within tolerance' : 'detects the error'}; cyclic: 1 identically`, okB(Fr.cycExact && (state.error ? Fr.openStatus === 'fail' : Fr.openStatus !== 'fail'))],
@@ -2048,7 +2052,7 @@ function boot(i = 0) {
 boot();
 </script>
 <!-- page-chrome:start -->
-<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-extras="[{&quot;href&quot;:&quot;galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1&quot;,&quot;icon&quot;:&quot;lensing&quot;},{&quot;href&quot;:&quot;galactic_companion.html&quot;,&quot;label&quot;:&quot;Guide&quot;,&quot;icon&quot;:&quot;book&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Open Engine&quot;,&quot;icon&quot;:&quot;engine&quot;}]"></script>
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;}]}]"></script>
 <!-- page-chrome:end -->
 </body>
 </html>

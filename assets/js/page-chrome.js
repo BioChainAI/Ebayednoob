@@ -1,6 +1,8 @@
-// Floating site chrome for standalone tools: a Home button, Google sign-in shared with the main
-// site (same Firebase project, local persistence) and social links. Everything renders inside a
-// shadow root, so the host page's CSS and this module's CSS never touch each other.
+// Floating site chrome for standalone tools: a Home button, dropdown menus (for example the Geometric
+// Calculator's simulations and its manuals), Google sign-in shared with the main site (same Firebase
+// project, local persistence) and the social links, which stay folded behind one button until it is
+// pressed. Everything renders inside a shadow root, so the host page's CSS and this module's CSS never
+// touch each other.
 //
 // Add it to any page with one line (path relative to that page), or list the page in
 // scripts/page-chrome-targets.json and let scripts/install-page-chrome.mjs add it:
@@ -8,10 +10,14 @@
 // Optional attributes on that script tag:
 //   data-position  "top" (default), "bottom-left" or "bottom-right"
 //   data-home      URL for the Home button (default: the site's index.html)
-//   data-extra-href, data-extra-label, data-extra-icon ("book", "engine", "trace", "numogram", "lensing" or "soliton")
-//                  one extra button after Home, e.g. a tool's manual (relative to the page)
-//   data-extras    several extra buttons as JSON: [{"href": "...", "label": "...", "icon": "..."}]
+//   data-menus     dropdown menus as JSON: [{"label": "Simulations", "icon": "engine", "items": [
+//                      {"href": "...", "label": "...", "icon": "...", "note": "...", "section": "..."}]}]
+//                  hrefs are relative to the page; "note" is a second line, "section" a heading the item
+//                  starts (repeat it on the following items). The current page is marked in its menu.
+//   data-extras    plain buttons after Home as JSON: [{"href": "...", "label": "...", "icon": "..."}]
+//   data-extra-href, data-extra-label, data-extra-icon   one such button
 //   data-compact   "true" shows every button as an icon only (names on hover)
+// Icons: book, engine, trace, numogram, lensing, soliton.
 
 const SITE_ROOT = new URL("../../", import.meta.url).href;
 const STORE_KEY = "ebayednoob-page-chrome-collapsed";
@@ -39,6 +45,8 @@ const ICONS = {
     lensing: svg('<circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="12" r="6"/><path d="M2.5 12c3-5 16-5 19 0M2.5 12c3 5 16 5 19 0" stroke-opacity="0.55"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"'),
     soliton: svg('<circle cx="12" cy="8.2" r="4.2"/><circle cx="8.6" cy="14.1" r="4.2"/><circle cx="15.4" cy="14.1" r="4.2"/><circle cx="12" cy="12.2" r="1.3" fill="currentColor" stroke="none"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="1.7"'),
     trace: svg('<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'),
+    social: svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'),
+    caret: svg('<path d="m6 9 6 6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
     hide: svg('<path d="m15 18-6-6 6-6"/>', "0 0 24 24", 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'),
     grip: svg('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>')
 };
@@ -58,6 +66,7 @@ const CSS = `
 .dock[data-position="bottom-right"] { bottom: 10px; right: 10px; flex-direction: row-reverse; }
 .dock.collapsed .full { display: none; }
 .dock.compact .label { display: none; }
+.dock.compact .bar-btn { padding: 0 6px; min-width: 30px; }
 .dock.compact .home, .dock.compact .extra, .dock.compact .signin { padding: 0; width: 30px; }
 .dock:not(.collapsed) .expand { display: none; }
 .full { display: flex; align-items: center; gap: 4px; }
@@ -72,26 +81,42 @@ a:focus-visible, button:focus-visible { outline: 2px solid #2dd4bf; outline-offs
 .icon { padding: 0; width: 30px; }
 svg { width: 16px; height: 16px; flex: none; }
 .extra { color: #5eead4; }
+.dd-btn { color: #5eead4; }
+.dd-btn .caret svg { width: 12px; height: 12px; transition: transform .15s; }
+.dd-btn[aria-expanded="true"] { background: rgba(45, 212, 191, 0.2); color: #fff; }
+.dd-btn[aria-expanded="true"] .caret svg { transform: rotate(180deg); }
+.dd-btn.here::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #f5c542; margin-left: -2px; }
 .signin { background: #fff; color: #1f2937; font-weight: 600; }
 .signin:hover { background: #e5e7eb; color: #111827; }
 .avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: #0d9488; color: #fff;
     display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }
 .name { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; }
 .menu {
-    position: absolute; top: calc(100% + 6px); right: 0; min-width: 210px; padding: 6px; border-radius: 12px;
-    background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(45, 212, 191, 0.35); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-    display: flex; flex-direction: column; gap: 2px;
+    position: absolute; top: calc(100% + 6px); left: 0; min-width: 210px; max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 70px); overflow-y: auto; padding: 6px; border-radius: 12px;
+    background: rgba(15, 23, 42, 0.97); border: 1px solid rgba(45, 212, 191, 0.35); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    display: flex; flex-direction: column; gap: 2px; line-height: 1.3;
 }
+.menu.wide { width: 300px; }
 .dock[data-position^="bottom"] .menu { top: auto; bottom: calc(100% + 6px); }
 .menu .who { padding: 6px 10px 8px; font-size: 12px; color: #94a3b8; line-height: 1.4; overflow-wrap: anywhere; }
+.menu .sect { padding: 8px 10px 3px; font: 600 10.5px/1 Inter, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
+.menu .sect:first-child { padding-top: 4px; }
 .menu a, .menu button { justify-content: flex-start; border-radius: 8px; padding: 0 10px; }
+.menu a.item { height: auto; min-height: 34px; padding: 6px 10px; align-items: flex-start; white-space: normal; }
+.menu a.item svg { margin-top: 1px; color: #5eead4; }
+.menu .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.menu .txt b { font-weight: 600; color: #e5e7eb; }
+.menu .txt small { font-size: 11.5px; color: #94a3b8; }
+.menu a.item[aria-current="page"] { background: rgba(245, 197, 66, 0.12); box-shadow: inset 2px 0 0 #f5c542; }
+.menu a.item[aria-current="page"] .txt b::after { content: " \\00b7  you are here"; font-weight: 500; font-size: 11px; color: #f5c542; }
 .menu .danger { color: #fca5a5; }
-.auth { position: relative; display: inline-flex; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-@media (max-width: 640px) { .label { display: none; } a, button { padding: 0 6px; } }
+@media (max-width: 640px) { .bar-btn .label, .home .label, .signin .label { display: none; } a, button { padding: 0 6px; } }
 `;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const iconOr = (name, fallback = "book") => (ICONS[name] ? name : fallback);
 
 function readCollapsed() {
     try {
@@ -105,19 +130,48 @@ function saveCollapsed(v) {
     try { localStorage.setItem(STORE_KEY, v ? "1" : "0"); } catch { /* storage unavailable */ }
 }
 
-// Extra buttons from data-extras (JSON list) and/or the single data-extra-* attributes.
-function readExtras(script) {
-    const list = [];
+function readJSON(script, key) {
     try {
-        const parsed = JSON.parse(script?.dataset.extras || "[]");
-        if (Array.isArray(parsed)) list.push(...parsed);
+        const parsed = JSON.parse(script?.dataset[key] || "[]");
+        return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
-        console.warn("page-chrome: data-extras is not valid JSON", e);
+        console.warn(`page-chrome: data-${key} is not valid JSON`, e);
+        return [];
     }
+}
+
+// Plain buttons from data-extras (JSON list) and/or the single data-extra-* attributes.
+function readExtras(script) {
+    const list = readJSON(script, "extras");
     if (script?.dataset.extraHref) list.unshift({ href: script.dataset.extraHref, label: script.dataset.extraLabel, icon: script.dataset.extraIcon });
     return list
         .filter((x) => x && typeof x.href === "string" && x.href)
-        .map((x) => ({ href: x.href, label: x.label || "More", icon: ICONS[x.icon] ? x.icon : "book" }));
+        .map((x) => ({ href: x.href, label: x.label || "More", icon: iconOr(x.icon) }));
+}
+
+// Dropdown menus from data-menus. Links resolve against the page, and the one that is this page is marked.
+function readMenus(script) {
+    const here = location.pathname.replace(/\/index\.html$/, "/");
+    return readJSON(script, "menus")
+        .filter((m) => m && Array.isArray(m.items))
+        .map((m) => {
+            const items = m.items.filter((x) => x && typeof x.href === "string" && x.href).map((x) => {
+                let current = false;
+                try { current = new URL(x.href, location.href).pathname.replace(/\/index\.html$/, "/") === here; } catch { /* bad URL */ }
+                return { href: x.href, label: x.label || x.href, icon: iconOr(x.icon), note: x.note || "", section: x.section || "", current };
+            });
+            return { label: m.label || "Menu", icon: iconOr(m.icon, "book"), items };
+        })
+        .filter((m) => m.items.length);
+}
+
+function menuHTML(id, items) {
+    let section = "";
+    return `<div class="menu wide" id="${id}" hidden>${items.map((x) => {
+        const head = x.section && x.section !== section ? `<div class="sect">${esc(x.section)}</div>` : "";
+        section = x.section || section;
+        return `${head}<a class="item" href="${esc(x.href)}"${x.current ? ' aria-current="page"' : ""}>${ICONS[x.icon]}<span class="txt"><b>${esc(x.label)}</b>${x.note ? `<small>${esc(x.note)}</small>` : ""}</span></a>`;
+    }).join("")}</div>`;
 }
 
 function mount() {
@@ -125,7 +179,7 @@ function mount() {
     const script = document.querySelector('script[src*="page-chrome.js"]');
     const position = ["top", "bottom-left", "bottom-right"].includes(script?.dataset.position) ? script.dataset.position : "top";
     const home = script?.dataset.home || new URL("index.html", SITE_ROOT).href;
-    const extras = readExtras(script);
+    const extras = readExtras(script), menus = readMenus(script);
 
     const host = document.createElement("div");
     host.id = "ebayednoob-page-chrome";
@@ -137,17 +191,18 @@ function mount() {
             <div class="full">
                 <a class="home" href="${esc(home)}" title="Back to the main site" aria-label="Home">${ICONS.home}<span class="label">Home</span></a>
                 ${extras.map((x) => `<a class="extra" href="${esc(x.href)}" title="${esc(x.label)}">${ICONS[x.icon]}<span class="label">${esc(x.label)}</span></a>`).join("")}
+                ${menus.map((m, i) => `<button class="bar-btn dd-btn${m.items.some((x) => x.current) ? " here" : ""}" type="button" data-menu="pc-menu-${i}" aria-controls="pc-menu-${i}" aria-expanded="false" title="${esc(m.label)}">${ICONS[m.icon]}<span class="label">${esc(m.label)}</span><span class="caret">${ICONS.caret}</span></button>${menuHTML(`pc-menu-${i}`, m.items)}`).join("")}
                 <span class="sep"></span>
-                ${SOCIAL_LINKS.map((l) => `<a class="icon" href="${esc(l.href)}" target="_blank" rel="noopener noreferrer" title="${esc(l.label)}" aria-label="${esc(l.label)}">${ICONS[l.icon]}</a>`).join("")}
-                <span class="sep"></span>
-                <div class="auth">
-                    <button class="signin" type="button" title="Sign in with Google" aria-label="Sign in with Google" hidden>${ICONS.google}<span class="label">Sign in</span></button>
-                    <button class="profile" type="button" hidden aria-haspopup="menu" aria-expanded="false"></button>
-                    <div class="menu" role="menu" hidden>
-                        <div class="who"></div>
-                        <a role="menuitem" href="${esc(new URL("control-panel/index.html", SITE_ROOT).href)}">Control Panel</a>
-                        <button role="menuitem" class="danger signout" type="button">Sign out</button>
-                    </div>
+                <button class="bar-btn dd-btn" type="button" data-menu="pc-social" aria-controls="pc-social" aria-expanded="false" title="Social links" aria-label="Social links">${ICONS.social}<span class="caret">${ICONS.caret}</span></button>
+                <div class="menu" id="pc-social" hidden>
+                    ${SOCIAL_LINKS.map((l) => `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${ICONS[l.icon]}<span>${esc(l.label)}</span></a>`).join("")}
+                </div>
+                <button class="signin" type="button" title="Sign in with Google" aria-label="Sign in with Google" hidden>${ICONS.google}<span class="label">Sign in</span></button>
+                <button class="profile dd-btn" type="button" data-menu="pc-account" aria-controls="pc-account" hidden aria-expanded="false"></button>
+                <div class="menu" id="pc-account" hidden>
+                    <div class="who"></div>
+                    <a href="${esc(new URL("control-panel/index.html", SITE_ROOT).href)}">Control Panel</a>
+                    <button class="danger signout" type="button">Sign out</button>
                 </div>
                 <button class="icon collapse" type="button" title="Hide site menu" aria-label="Hide site menu">${ICONS.hide}</button>
             </div>
@@ -155,7 +210,35 @@ function mount() {
     document.body.appendChild(host);
 
     const $ = (sel) => root.querySelector(sel);
-    const dock = $(".dock"), expandBtn = $(".expand"), signinBtn = $(".signin"), profileBtn = $(".profile"), menu = $(".menu");
+    const dock = $(".dock"), expandBtn = $(".expand"), signinBtn = $(".signin"), profileBtn = $(".profile");
+    const triggers = [...root.querySelectorAll("[data-menu]")];
+    const menuOf = (btn) => root.getElementById(btn.dataset.menu);
+
+    // One dropdown open at a time. Each opens under its own button, kept inside the window.
+    const closeMenu = () => triggers.forEach((b) => { b.setAttribute("aria-expanded", "false"); menuOf(b).hidden = true; });
+    const openMenu = (btn, focusFirst = false) => {
+        closeMenu();
+        const menu = menuOf(btn);
+        menu.hidden = false;
+        btn.setAttribute("aria-expanded", "true");
+        const d = dock.getBoundingClientRect(), b = btn.getBoundingClientRect(), w = menu.offsetWidth;
+        const left = Math.min(Math.max(b.left + b.width / 2 - w / 2, 8), window.innerWidth - 8 - w);
+        menu.style.left = `${left - d.left}px`;
+        if (focusFirst) menu.querySelector("a, button")?.focus();
+    };
+    triggers.forEach((btn) => {
+        btn.addEventListener("click", () => (btn.getAttribute("aria-expanded") === "true" ? closeMenu() : openMenu(btn)));
+        btn.addEventListener("keydown", (e) => { if (e.key === "ArrowDown") { e.preventDefault(); openMenu(btn, true); } });
+        const menu = menuOf(btn);
+        menu.addEventListener("keydown", (e) => {
+            const items = [...menu.querySelectorAll("a, button")], i = items.indexOf(root.activeElement);
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                e.preventDefault();
+                items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus();
+            } else if (e.key === "Escape") { closeMenu(); btn.focus(); }
+        });
+        menu.addEventListener("click", (e) => { if (e.target.closest("a")) closeMenu(); });
+    });
 
     const setCollapsed = (v, persist = true) => {
         dock.classList.toggle("collapsed", v);
@@ -163,17 +246,14 @@ function mount() {
         if (v) closeMenu();
         if (persist) saveCollapsed(v);
     };
-    const closeMenu = () => { menu.hidden = true; profileBtn.setAttribute("aria-expanded", "false"); };
     setCollapsed(readCollapsed(), false);
     expandBtn.addEventListener("click", () => setCollapsed(false));
     $(".collapse").addEventListener("click", () => setCollapsed(true));
-    profileBtn.addEventListener("click", () => {
-        menu.hidden = !menu.hidden;
-        profileBtn.setAttribute("aria-expanded", String(!menu.hidden));
-    });
     document.addEventListener("pointerdown", (e) => { if (!e.composedPath().includes(host)) closeMenu(); });
     window.addEventListener("blur", closeMenu); // clicks inside an iframe never reach this document
+    window.addEventListener("resize", closeMenu);
     root.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+    root.addEventListener("focusout", (e) => { if (e.relatedTarget && !root.contains(e.relatedTarget)) closeMenu(); });
 
     // Auth loads after the dock is on screen, so a blocked or offline Firebase never hides the links.
     import("./firebase.js").then(({ auth, db, signInWithGoogle, signOut, onAuthStateChanged, sessionEmail }) => {
