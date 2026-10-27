@@ -16,6 +16,7 @@ Every page below carries the same three dropdowns, and the current page is marke
 | Simulations | `Galactic Lensing/galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy Part 1: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` and live checks against the Fifteen Lemmas |
 | Simulations | `Galactic Lensing/tri_engine_soliton.html` | Part 2: three active engines, cross-engine TQF and the soliton crystal |
 | Calculations | `Galactic Lensing/tri_engine_convergence.html` | Tri-Engine Convergence: Part 2 run in reverse. Three exact calculations, one per engine, scheduled asynchronously on one clock, converging into a triple quad with an automatic TQF readout and memory on the outer and inner manifolds |
+| Calculations | `Zero Point Calculations/zero_point_tri_engine.html` | Zero-Point Tri-Engine: the convergence calculator on the zero-point eight-step cycle. Every frame of the 720-frame register is one step (k = F mod 8, branch j = F mod 3, joint frame n = F mod 24); each engine carries one instruction per joint cycle, onloaded at its k = 2 frame and offloaded twelve frames later at k = 6; results pair at the zero point and each register closes with the 720 → 72 → 10 pump and the memory test |
 | Calculations | `index.html` | The engine's own exact calculator (its Terminal tab) |
 | Manuals | `manual.html` | Engine instruction manual & explainer |
 | Manuals | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses |
@@ -121,3 +122,15 @@ update chapters 4, 7 and 14 of the manual, and the labs at its end if the clock,
 
 `Galactic Lensing/tri_engine_convergence.html` is built from the same source as Part 2 (its engines, crystal,
 exact frames and tiles are Part 2's code), so a change to those parts of Part 2 reaches it on the next build.
+
+`Zero Point Calculations/zero_point_tri_engine.html` is generated from the convergence calculator's source and built
+the same way, so it carries the same Part 2 code. It adds the zero-point clock of *The Geometric Engine of Time*
+(Table 4, Proposition 3.7 and Table 5): each engine is one 120° branch and moves one instruction per 24-frame joint
+cycle, with onloads at joint frames 18, 10 and 2 and offloads twelve frames later. A register is frames
+720(r − 1) + 1 … 720r; at frame 720r it closes, and the pump (Proposition 3.9) evaluates each engine's engaged
+frames. With the clutch holding finished engines, a register in which a calculation ran closes with a residual
+that its compensator H = P⁻¹ removes. In free-run or with the membrane, every engine turns all 720 frames and the
+register closes with P = 1. The page's self-test (rows Z1–Z6) checks the eight-step clock, the a = 0 tetrahedron and
+its null lifts, the joint schedule, the non-commutative pump on random rational frames, the cyclic holonomy and the
+four-track clock. If the clock, the schedule or the pump changes, update those rows and the Table 5 constants
+(`ON_PHASE`, `OFF_PHASE`) together.
