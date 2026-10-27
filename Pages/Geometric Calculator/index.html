@@ -1298,21 +1298,25 @@
             if (!calcState.isComputing) {
                 calcState.computeStage = stageIdx;
             }
-            // Automatically enable Archimedean Triangulation on Stage Scope so the user immediately sees that stage's TQF web
-            const cbTri = document.getElementById('cb-vis-triangulation');
+            // The Archimedean TQF stays as the user set it (off by default); when it is on, the polygons follow this stage
             const scopeSel = document.getElementById('select-triangulation-mode');
-            if (cbTri && !cbTri.checked) {
-                cbTri.checked = true;
-            }
             if (scopeSel && scopeSel.value === 'single') {
                 scopeSel.value = 'stage';
             }
 
             const pulseIdx = stageIdx * TOTAL_NODES + selectedNodeIndex;
-            const progress01 = (pulseIdx + 1) / TOTAL_CALC_PULSES;
+            const progress01 = (pulseIdx + 0.5) / TOTAL_CALC_PULSES;   // the middle of the pulse's slot, so the node is kept
             applyUnifiedTrajectoryProgress(progress01, 'stage_click');
             updateCalcUI();
-            showToast(`Inspecting Stage ${stageIdx} (Tier T${4 - stageIdx}) — 30-Node TQF Triangulation & Telemetry Loaded.`);
+            const triOn = document.getElementById('cb-vis-triangulation')?.checked;
+            showToast(`Inspecting Stage ${stageIdx} (Tier T${4 - stageIdx}) — 30-node telemetry loaded${triOn ? '; TQF polygons follow this stage' : '. Tick Archimedean Triangulation (TQF) in VISIBILITY, or press ALL TQF, to see its polygons'}.`);
+        }
+
+        // Select the whole-system scope without switching the TQF on (only the TQF controls do: the checkbox, ALL TQF, Visualize)
+        function showFullSystemScope() {
+            const scopeSel = document.getElementById('select-triangulation-mode');
+            if (scopeSel) scopeSel.value = 'all_system';
+            updateTriangulationVisuals();
         }
 
         function enableFullSystemTQF() {
@@ -1321,11 +1325,11 @@
             if (cbTri) cbTri.checked = true;
             if (scopeSel) scopeSel.value = 'all_system';
             updateTriangulationVisuals();
-            showToast("Full-System Archimedean TQF Lattice Enabled (All 5 Stages × 30 Nodes = 150 Polygons).");
+            showToast("Whole-system Archimedean TQF on: all 150 polygons drawn, the inspected stage lit up to its current node.");
         }
 
         function applyUnifiedTrajectoryProgress(progress01, source) {
-            const clamped = Math.max(0.01, Math.min(1.0, progress01));
+            const clamped = Math.max(0.5 / TOTAL_CALC_PULSES, Math.min(1.0, progress01));
             state.scanPercent = Math.max(1, Math.min(100, Math.round(clamped * 100)));
 
             const pulseIndex = Math.min(TOTAL_CALC_PULSES - 1, Math.max(0, Math.floor(clamped * TOTAL_CALC_PULSES)));
@@ -1505,9 +1509,9 @@
                 desc.innerText = "Continuous diffusion collapses into 64 discrete voxel slots. Full-system 4-vertex TQF polygons (V1, V2, V3, V4) are now projected across all 5 manifolds.";
                 document.getElementById('metric-1-lbl').innerText = "Einstein Tile";
                 document.getElementById('metric-1-val').innerText = "16 Fibers × 4 Phases";
-                synth.innerHTML = `<strong class="text-purple-300 uppercase">[Full-System TQF Enabled]:</strong> All 150 4-vertex TQF polygons (<code class="text-sky-300">V1</code>, <code class="text-amber-300">V2</code>, <code class="text-emerald-300">V3</code>, <code class="text-fuchsia-300">V4</code>) are now active across T4..T0!`;
+                synth.innerHTML = `<strong class="text-purple-300 uppercase">[Full-System TQF Enabled]:</strong> All 150 4-vertex TQF polygons (<code class="text-sky-300">V1</code>, <code class="text-amber-300">V2</code>, <code class="text-emerald-300">V3</code>, <code class="text-fuchsia-300">V4</code>) are drawn across T4..T0; the inspected stage is lit up to its current node and the rest are ghosted.`;
                 if (toriGroup) toriGroup.children.forEach(mesh => { mesh.material.opacity = 0.10; mesh.material.emissiveIntensity = 0.05; });
-                enableFullSystemTQF();
+                enableFullSystemTQF();   // this button asks for the polygons by name
                 setRightTab('visibility');
             } else if (stage === 3) {
                 icon.className = "fa-solid fa-atom text-xl text-amber-400 animate-pulse";
@@ -1518,7 +1522,7 @@
                 document.getElementById('metric-1-val').innerText = "720° / 12:1 Ratio";
                 synth.innerHTML = `<strong class="text-amber-300 uppercase">[Counter-Rotating Fields]:</strong> Drag the <span class="text-rose-400">Tension</span> and <span class="text-sky-400">Torsion</span> sliders below to physically twist the 3D nodes and TQF polygons!`;
                 if (scalarCore) scalarCore.material.emissiveIntensity = 2.0;
-                enableFullSystemTQF();
+                showFullSystemScope();
                 setRightTab('telemetry');
             } else if (stage === 4) {
                 icon.className = "fa-solid fa-compass-drafting text-xl text-emerald-400";
@@ -1609,10 +1613,9 @@
 
         function applyMaximumTorsionShear() {
             const shearTorsion = (tensionAngleDeg + 45) % 360;
-            const cbTri = document.getElementById('cb-vis-triangulation');
-            if (cbTri && !cbTri.checked) cbTri.checked = true;
             updatePaperDynamics(tensionAngleDeg, shearTorsion);
-            showToast(`Applied 15° Off-Resonance Torsion Shear (Δθ = 45°): Observe the 3D TQF polygons & quadrances twist!`);
+            const triOn = document.getElementById('cb-vis-triangulation')?.checked;
+            showToast(`Applied 15° Off-Resonance Torsion Shear (Δθ = 45°): ${triOn ? 'observe the 3D TQF polygons & quadrances twist!' : 'watch the quadrances change; tick Archimedean Triangulation (TQF) to see the polygons twist.'}`);
         }
 
         function setCalcMode(mode) {
@@ -2112,7 +2115,7 @@
             state.activeNode = k;
             const stageIdx = calcState.isComputing ? calcState.computeStage : calcState.inspectedStage;
             const pulseIdx = stageIdx * TOTAL_NODES + k;
-            const progress01 = (pulseIdx + 1) / TOTAL_CALC_PULSES;
+            const progress01 = (pulseIdx + 0.5) / TOTAL_CALC_PULSES;   // the middle of the pulse's slot, so node k itself is selected
             applyUnifiedTrajectoryProgress(progress01, 'stage_click');
         }
 
@@ -2167,13 +2170,14 @@
             updateTriangulationVisuals();
             const cb = document.getElementById('cb-vis-triangulation');
             if (cb && cb.checked) {
-                showToast("Full-System 4-Vertex Archimedean TQF Polygons & Persistent Trails Enabled.");
+                showToast("Archimedean TQF on: the inspected stage's polygons are lit up to the current node and follow every stage, node or scan change.");
             }
         }
 
         // Full-System 4-Vertex Archimedean Triangulation (TQF) Polygon & Trail Renderer
         function updateTriangulationVisuals() {
             if (!triangulationGroup) return;
+            triangulationGroup.children.forEach(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
             triangulationGroup.clear();
 
             const cb = document.getElementById('cb-vis-triangulation');
@@ -2253,15 +2257,19 @@
                 if (showTrailV4) addVertexTrailLine(trailV4Pts, VERTEX_COLORS.v4Inferred);
             }
 
-            // 2. Determine which (stage, node) polygons to render
+            // 2. Determine which (stage, node) polygons to render. Only the inspected phase is live: the inspected stage's
+            //    polygons up to the current node. The rest of the scope (other stages, later nodes) is drawn as faint ghosts.
             const stageList = (mode === 'all_system') ? [0, 1, 2, 3, 4] : [inspectedStg];
             const nodeList  = (mode === 'single') ? [activeK] : Array.from({ length: TOTAL_NODES }, (_, i) => i);
+            const isLive = (sIdx, k) => sIdx === inspectedStg && k <= activeK;
 
             // Batched arrays for shaded polygon faces and edges so 150 polygons render at 60 FPS
             const facePositions = [];
             const faceColors = [];
             const baseEdgePts = [];
             const inferredEdgePts = [];
+            const ghostEdgePts = [];
+            const ghostFacePositions = [];
 
             const cV1 = new THREE.Color(VERTEX_COLORS.v1Node);
             const cV2 = new THREE.Color(VERTEX_COLORS.v2Upper);
@@ -2282,6 +2290,17 @@
                 nodeList.forEach(k => {
                     const data = getNodeTelemetry(k, sIdx);
                     const isCurrentHighlight = (sIdx === inspectedStg && k === activeK);
+                    if (!isLive(sIdx, k)) {
+                        ghostEdgePts.push(
+                            data.pNode, data.pUpper, data.pUpper, data.pLower, data.pLower, data.pNode,
+                            data.pUpper, data.pInferred, data.pLower, data.pInferred, data.pNode, data.pInferred
+                        );
+                        if (shadedFaces) ghostFacePositions.push(
+                            data.pNode.x, data.pNode.y, data.pNode.z, data.pUpper.x, data.pUpper.y, data.pUpper.z, data.pLower.x, data.pLower.y, data.pLower.z,
+                            data.pUpper.x, data.pUpper.y, data.pUpper.z, data.pInferred.x, data.pInferred.y, data.pInferred.z, data.pLower.x, data.pLower.y, data.pLower.z
+                        );
+                        return;
+                    }
 
                     // Edges of the 4-vertex polygon: (V1-V2, V2-V3, V3-V1) and (V2-V4, V3-V4, V1-V4)
                     baseEdgePts.push(
@@ -2317,8 +2336,8 @@
                         );
                     }
 
-                    // Vertex markers
-                    const scaleMul = isCurrentHighlight ? 3.2 : (mode === 'all_system' ? 1.35 : 1.9);
+                    // Vertex markers (live polygons only)
+                    const scaleMul = isCurrentHighlight ? 3.2 : 1.9;
 
                     const m1 = new THREE.Mesh(v1Geo, v1Mat);
                     m1.position.copy(data.pNode);
@@ -2347,7 +2366,7 @@
                 const baseMat = new THREE.LineBasicMaterial({
                     color: VERTEX_COLORS.v1Node,
                     transparent: true,
-                    opacity: mode === 'all_system' ? 0.42 : 0.78
+                    opacity: 0.78
                 });
                 triangulationGroup.add(new THREE.LineSegments(baseGeo, baseMat));
             }
@@ -2357,7 +2376,7 @@
                 const infMat = new THREE.LineBasicMaterial({
                     color: VERTEX_COLORS.v4Inferred,
                     transparent: true,
-                    opacity: mode === 'all_system' ? 0.50 : 0.85
+                    opacity: 0.85
                 });
                 triangulationGroup.add(new THREE.LineSegments(infGeo, infMat));
             }
@@ -2370,10 +2389,21 @@
                     vertexColors: true,
                     side: THREE.DoubleSide,
                     transparent: true,
-                    opacity: mode === 'all_system' ? 0.16 : 0.28,
+                    opacity: 0.28,
                     depthWrite: false
                 });
                 triangulationGroup.add(new THREE.Mesh(polyGeo, polyMat));
+            }
+
+            // Ghosts: the rest of the scope, so the inspected phase stands out without hiding where the others sit
+            if (ghostEdgePts.length > 0) {
+                const gGeo = new THREE.BufferGeometry().setFromPoints(ghostEdgePts);
+                triangulationGroup.add(new THREE.LineSegments(gGeo, new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.09, depthWrite: false })));
+            }
+            if (ghostFacePositions.length > 0) {
+                const gFace = new THREE.BufferGeometry();
+                gFace.setAttribute('position', new THREE.Float32BufferAttribute(ghostFacePositions, 3));
+                triangulationGroup.add(new THREE.Mesh(gFace, new THREE.MeshBasicMaterial({ color: 0x94a3b8, side: THREE.DoubleSide, transparent: true, opacity: 0.035, depthWrite: false })));
             }
         }
 
