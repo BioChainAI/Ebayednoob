@@ -22,6 +22,8 @@ Every page below carries the same three dropdowns, and the current page is marke
 | Manuals | `tracer.html` | Calculation Tracer: trace mechanics, rational trig and the computational bypasses |
 | Manuals | `Galactic Lensing/galactic_companion.html` | Companion guide: from one engine to the triple quad, lemma by lemma, and Part 2 |
 | Manuals | `Galactic Lensing/tri_engine_manual.html` | Tri-Engine Soliton operating manual: every control and panel of Part 2, experiments, troubleshooting |
+| Manuals | `../../Fractal Processing/Geometric Engine of Time/Geometric Engine of Time Interactive Explainer.html` | The Geometric Engine of Time: interactive explainer of the conditional P = NP equivalence (also listed in the Fractal Processing hub). The bar sits at the bottom right there, clear of the page's own sticky header |
+| Manuals | `../../Fractal Processing/Fractal Processing Learning Hub.html` | Fractal Processing tutorial hub (link only: the hub has its own sign-in for tutorial progress, so it does not carry the bar) |
 
 The menus are defined once, in the `menus` section of
 [`scripts/page-chrome-targets.json`](../../scripts/page-chrome-targets.json). To add a page to a dropdown,
