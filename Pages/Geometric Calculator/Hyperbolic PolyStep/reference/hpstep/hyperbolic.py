@@ -97,6 +97,13 @@ def klein_weights(V, w):
     return lam / lam.sum(axis=-1, keepdims=True)
 
 
+def lift_spatial(y):
+    """Back onto the sheet by keeping the spatial part and recomputing y0 = sqrt(1 + |ybar|^2): always valid, unlike
+    dividing by sqrt(-<y, y>), which fails once rounding makes <y, y> positive (far out, near the horizon)."""
+    y = np.asarray(y, dtype=float)
+    return np.concatenate([np.sqrt(1 + np.sum(y[..., 1:] ** 2, axis=-1, keepdims=True)), y[..., 1:]], axis=-1)
+
+
 def project_to_sheet(y):
     """Renormalise a timelike vector onto the upper sheet (used to clean float drift)."""
     return y / np.sqrt(-lorentz(y, y))[..., None] * np.sign(y[..., :1])

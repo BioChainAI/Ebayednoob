@@ -309,6 +309,7 @@
     H.kleinWeights = (V, w) => { const lam = V.map((v, k) => w[k] * v[0]); const S = lam.reduce((a, b) => a + b, 0); return lam.map(v => v / S); };
     H.J = d => Array.from({ length: d + 1 }, (_, i) => Array.from({ length: d + 1 }, (_, j) => (i === j ? (i === 0 ? -1 : 1) : 0)));
     H.lorentzInverse = L => { const d = L.length - 1; return H.matmul(H.matmul(H.J(d), H.transpose(L)), H.J(d)); };
+    H.liftSpatial = y => { let q = 1; for (let i = 1; i < y.length; i++) q += y[i] * y[i]; return [Math.sqrt(q), ...y.slice(1)]; };   // keep ȳ, recompute y0
     H.projectToSheet = y => { const n = Math.sqrt(-H.lorentz(y, y)) * Math.sign(y[0]); return y.map(v => v / n); };
     H.solve = (A, B) => {                                            // float Gauss-Jordan with partial pivoting: A^-1 B
         const n = A.length, M = A.map((row, i) => [...row, ...B[i]]);
@@ -756,7 +757,9 @@
     function transvection(a, b, frac) {
         const dd = H.dist(a, b);
         if (dd < 1e-15) return a.map((_, i) => a.map((_, j) => (i === j ? 1 : 0)));
-        const vo = H.matvec(H.lorentzInverse(H.boost(a)), b), sp = vo.slice(1), n = H.norm(sp), u = sp.map(x => x / n);
+        const vo = H.matvec(H.lorentzInverse(H.boost(a)), b), sp = vo.slice(1), n = H.norm(sp);
+        if (!(n > 0)) return a.map((_, i) => a.map((_, j) => (i === j ? 1 : 0)));   // a and b equal to rounding
+        const u = sp.map(x => x / n);
         const c = H.expAt(a, u.map(x => frac * dd * x));
         return H.matmul(H.boost(c), H.lorentzInverse(H.boost(a)));
     }
@@ -828,7 +831,8 @@
                         moved.push(H.norm(shift.slice(1)));
                     } else {
                         const T = transvection(V[j], common, this.mu);
-                        st.X.forEach(row => { row[i] = H.matvec(T, row[i]); });
+                        // float states back onto the sheet: rounding near the horizon otherwise compounds (Amendment 3)
+                        st.X.forEach(row => { row[i] = st.Xq ? H.matvec(T, row[i]) : H.liftSpatial(H.matvec(T, row[i])); });
                         moved.push(this.mu * H.dist(V[j], common));
                     }
                     this.solvers[j].clamp(st.X, [i]);

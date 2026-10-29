@@ -48,7 +48,10 @@ def _transvection(a, b, frac):
     if dd < 1e-15:
         return np.eye(len(a))
     v_origin = H.lorentz_inverse(H.boost(a)) @ b                 # b seen from a, at the origin
-    u = v_origin[1:] / np.linalg.norm(v_origin[1:])
+    nrm = np.linalg.norm(v_origin[1:])
+    if not nrm > 0:                                              # a and b equal to rounding
+        return np.eye(len(a))
+    u = v_origin[1:] / nrm
     c = H.exp_at(a, frac * dd * u)
     return H.boost(c) @ H.lorentz_inverse(H.boost(a))
 
@@ -182,6 +185,8 @@ class TriChannel:
                 else:
                     T = _transvection(V[j], common, self.mu)
                     st.X[:, i, :] = st.X[:, i, :] @ T.T
+                    if st.Xq is None:                       # float states back onto the sheet (exact ones are snapped)
+                        st.X[:, i, :] = H.lift_spatial(st.X[:, i, :])
                     moved.append(float(self.mu * H.dist(V[j], common)))
                 self.solvers[j].clamp(st.X, [i])                    # the membrane respects the horizon too
                 if st.Xq is not None:
@@ -215,7 +220,9 @@ class TriChannel:
                 c = H.exp_at(a, (self.mu * dd)[:, None] * u)
                 T = H.boost(c) @ Linv
                 T[dd < 1e-15] = np.eye(a.shape[-1])
-                st.X[:, hyp, :] = np.einsum('pmi,mji->pmj', st.X[:, hyp, :], T)
+                # back onto the sheet: without this, rounding near the horizon compounds from one membrane to the next
+                # (Amendment 3)
+                st.X[:, hyp, :] = H.lift_spatial(np.einsum('pmi,mji->pmj', st.X[:, hyp, :], T))
                 moved.extend((self.mu * dd).tolist())
             if flat:
                 shift = self.mu * (common_flat - V[j, flat, :])
