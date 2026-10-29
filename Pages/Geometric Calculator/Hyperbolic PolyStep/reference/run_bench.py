@@ -423,6 +423,18 @@ def decide(bench):
                 both0 = all(by[a][k] == 0 and by[b][k] == 0 for k in set(by[a]) & set(by[b])) if bench in ('B1', 'B3') else False
                 out.append({'bench': bench, 'cell': cell, 'claim': claim, 'compare': f'{a} - {b}', 'decisive': decisive,
                             'floor': both0, **r})
+        # The preregistered secondary metrics, reported as effects (lower is better for a cost, so the sign is flipped):
+        # B1 final conflicts, B3 final tree distance, B4 coarse accuracy.
+        sec = {'B1': ('final conflicts', lambda r: -r['certified']), 'B3': ('final tree distance', lambda r: -r['certified']),
+               'B4': ('coarse accuracy', lambda r: r['coarse_accuracy'])}.get(bench)
+        if sec:
+            name, fn = sec
+            ra = {key(r): fn(r) for r in sub if r['method'] == 'hyper3'}
+            rb = {key(r): fn(r) for r in sub if r['method'] == 'flat3'}
+            pairs = sorted(set(ra) & set(rb))
+            if pairs:
+                out.append({'bench': bench, 'cell': cell, 'claim': 'secondary', 'compare': f'{name}: hyper3 better than flat3 by',
+                            'decisive': False, 'floor': False, **bootstrap_decision([ra[k] - rb[k] for k in pairs])})
         if bench in ('B1', 'B2'):                                  # C2 on the hyperbolic three-channel runs
             rhos = [r['c2']['spearman'] for r in sub if r['method'] == 'hyper3' and 'spearman' in r.get('c2', {})
                     and np.isfinite(r['c2']['spearman'])]

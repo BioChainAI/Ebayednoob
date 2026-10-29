@@ -286,7 +286,7 @@
             <h3>The B3 control (Prop 5.13)</h3>
             <p>Under the membership objective, no method can find a uniformly placed target in fewer than \((N+1)/2\) evaluations on average: the first \(k\) queries hit it with probability at most \(k/N\). So \(\mathbb{E}[\min(T, N)] \ge (N+1)/2\), where \(T\) is the evaluation that first scores the target and a run that never does counts as \(N\). A method whose whole interval lies below the bound would be a bug, with information leaking from the target.</p>
             <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Method</th><th>Mean of min(T, N)</th><th>95% interval</th><th>(N + 1)/2</th><th>Runs</th><th>Result</th></tr></thead><tbody id="res-control"></tbody></table></div>
-            <details class="more"><summary>Descriptive comparisons: the membrane, polystep and the random floor</summary>
+            <details class="more"><summary>Descriptive comparisons: secondary metrics, the membrane, polystep and the random floor</summary>
                 <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Comparison</th><th>Mean difference</th><th>95% interval</th><th>Pairs</th><th>Reading</th></tr></thead><tbody id="res-desc"></tbody></table></div>
             </details>
             <details class="more"><summary>Every cell and method: primary metric, success rate, certified cost</summary>
@@ -389,7 +389,7 @@
 
     // ---------------------------------------------------------------- results
     const cellLabel = (b, c) => b + ' · ' + (b === 'B1' ? `n ${c.n}, c ${c.c}` : b === 'B2' ? `n ${c.n}` : b === 'B3' ? `depth ${c.L}, ${c.objective}` : '2,000 training points');
-    const pill = d => `<span class="pill ${/supported|passes/.test(d) ? 'good' : /refuted|BUG/.test(d) ? 'bad' : 'mid'}">${d}</span>`;
+    const pill = d => `<span class="pill ${/supported|passes|ahead/.test(d) ? 'good' : /refuted|BUG|behind/.test(d) ? 'bad' : 'mid'}">${d}</span>`;
     const f4 = v => (Math.abs(v) >= 100 ? v.toFixed(1) : v.toFixed(4));
     const metricName = { B1: 'success rate', B2: 'clauses satisfied', B3: 'success rate', B4: 'test accuracy' };
     function renderResults(R) {
@@ -399,7 +399,8 @@
         $('res-C2').innerHTML = D.filter(d => d.claim === 'C2').map(row).join('') || '<tr><td colspan="6">No runs yet.</td></tr>';
         $('res-C3').innerHTML = D.filter(d => d.claim === 'C3').map(row).join('') || '<tr><td colspan="6">No runs yet.</td></tr>';
         $('res-control').innerHTML = D.filter(d => d.claim === 'control').map(d => `<tr><td>${cellLabel(d.bench, d.cell)}</td><td>${d.compare.split(':')[0]}</td><td class="num">${d.mean.toFixed(0)}</td><td class="num">[${d.ci95[0].toFixed(0)}, ${d.ci95[1].toFixed(0)}]</td><td class="num">${d.bound.toFixed(1)}</td><td class="num">${d.n}</td><td>${pill(d.decision)}</td></tr>`).join('') || '<tr><td colspan="7">No runs yet.</td></tr>';
-        $('res-desc').innerHTML = D.filter(d => !['C1', 'C2', 'C3', 'control'].includes(d.claim)).map(d => row(Object.assign({}, d, { decision: d.decision === 'supported' ? 'hyper3 higher' : d.decision === 'refuted' ? 'hyper3 not higher' : 'no clear difference' }))).join('');
+        const reading = d => (d.ci95[0] === 0 && d.ci95[1] === 0 ? 'no difference: both 0' : d.ci95[0] > 0 ? 'hyper3 ahead' : d.ci95[1] < 0 ? 'hyper3 behind' : 'no clear difference');
+        $('res-desc').innerHTML = D.filter(d => !['C1', 'C2', 'C3', 'control'].includes(d.claim)).map(d => row(Object.assign({}, d, { decision: reading(d), floor: false }))).join('');
         $('res-summary').innerHTML = R.summary.map(s => `<tr><td>${cellLabel(s.bench, s.cell)}</td><td>${s.method}</td><td class="num">${s.runs}</td><td class="num">${s.metric.toFixed(4)} <span class="k">${metricName[s.bench]}</span></td><td class="num">${s.success_rate === null ? '—' : (100 * s.success_rate).toFixed(0) + '%'}</td><td class="num">${s.certified.toFixed(2)}</td><td class="num">${s.evals_to_success === null ? '—' : s.evals_to_success.toLocaleString()}</td></tr>`).join('');
         const S = R.settings || {};
         $('res-settings').innerHTML = Object.keys(S).sort().map(b => Object.keys(S[b]).sort().map(m => { const x = S[b][m]; return `<tr><td>${b}</td><td>${m}</td><td class="num">${x.epsilon.toFixed(4)}</td><td class="num">${x.step_radius.toFixed(3)}</td><td class="num">${x.mu.toFixed(3)}</td><td>${x.schedule}</td></tr>`; }).join('')).join('');
