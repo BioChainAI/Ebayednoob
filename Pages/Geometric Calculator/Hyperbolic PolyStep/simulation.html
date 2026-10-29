@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperbolic PolyStep Simulation - Ebayednoob</title>
+    <meta name="description" content="Hyperbolic PolyStep, live: three channels of a gradient-free hyperbolic optimiser on the zero-point clock, solving 3-colouring, MAX-SAT, tree-address search or training a hard-threshold network, with exact certificates, the membrane, the memory chain and the register pump.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/hp.css">
+    <script src="hyperbolic_core.js"></script>
+    <script src="parity.js"></script>
+    <style>
+        body { font-size: 15px; }
+        .sim-head { padding: 28px 20px 14px; max-width: 1400px; margin: 0 auto; }
+        .sim-head h1 { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2.2rem); background: linear-gradient(90deg, #ff0055, #00f2ff 50%, #ffd700); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .sim-head p { margin: 6px 0 0; color: #cbd5e1; max-width: 980px; }
+        kbd { font: 0.78rem var(--mono); border: 1px solid #334155; border-radius: 4px; padding: 0 5px; background: #0f172a; }
+        .bar { position: sticky; top: 0; z-index: 20; background: rgba(2, 6, 23, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+        .bar-in { max-width: 1400px; margin: 0 auto; padding: 8px 20px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+        .bar label { font-size: 0.8rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+        .bar select, .bar input[type=number] { background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 7px; padding: 4px 6px; font: 0.82rem var(--mono); }
+        .bar input[type=range] { width: 96px; accent-color: var(--cyan); }
+        .bar label[hidden] { display: none; }
+        .bar .val { font: 0.78rem var(--mono); color: #cbd5e1; min-width: 3.2em; }
+        .btn-s { font: 600 0.84rem Inter, sans-serif; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; cursor: pointer; }
+        .btn-s:hover { border-color: var(--cyan); }
+        .btn-s.primary { background: linear-gradient(90deg, #9f1239, #0e7490); border-color: transparent; color: #fff; min-width: 74px; }
+        .grid { max-width: 1400px; margin: 0 auto; padding: 14px 20px 60px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .panel { border: 1px solid var(--line); border-radius: 14px; background: rgba(11, 18, 34, 0.85); padding: 12px 14px; min-width: 0; }
+        .panel h2 { font-size: 1rem; margin: 0 0 2px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+        .panel h2 .tagp { font: 0.7rem var(--mono); color: var(--fuchsia); letter-spacing: 0.08em; }
+        .panel .sub { font-size: 0.82rem; color: var(--muted); margin: 0 0 8px; }
+        .panel canvas { display: block; width: 100%; height: auto; border-radius: 10px; background: #020617; }
+        .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px 12px; font: 0.8rem var(--mono); margin-top: 8px; }
+        .kv div span { display: block; color: var(--faint); font-size: 0.72rem; }
+        .tscroll { overflow-x: auto; }
+        table.ch { width: 100%; border-collapse: collapse; font: 0.8rem var(--mono); }
+        table.ch th, table.ch td { padding: 5px 6px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); text-align: right; white-space: nowrap; }
+        table.ch th:first-child, table.ch td:first-child { text-align: left; }
+        .words { font: 0.74rem/1.55 var(--mono); color: #cbd5e1; max-height: 170px; overflow: auto; margin-top: 8px; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 8px; background: #020617; }
+        .log { font: 0.74rem/1.55 var(--mono); color: #cbd5e1; max-height: 220px; overflow: auto; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 8px; background: #020617; }
+        .log .good { color: var(--emerald); } .log .bad { color: var(--rose); } .log .warn { color: var(--amber); }
+        .meter { height: 8px; border-radius: 99px; background: #1e293b; overflow: hidden; margin-top: 6px; }
+        .meter > div { height: 100%; background: linear-gradient(90deg, #0e7490, #a16207); width: 0; }
+        .pill { font: 0.72rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .5); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .5); }
+        .wide { grid-column: 1 / -1; }
+        @media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } .bar-in { padding: 8px 12px; } .grid { padding: 12px; } }
+    </style>
+</head>
+<body data-root="">
+<div class="sim-head">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Simulation &middot; Phase 3</div>
+    <h1>Three Channels, One Clock</h1>
+    <p>Gradient-free search in hyperbolic space, live. Channels A, B and C each take one hyperbolic PolyStep step per 24-frame joint cycle, at their offload frame. At every zero point Helix B certifies their best answers exactly and the clutch acts. With the exact track on, every 720-frame register closes with the pump. Everything runs on <a href="explainers/core-reference.html">the browser core</a>, which matches the Python reference line for line. Keys: Space plays or pauses, <kbd>.</kbd> advances one frame, <kbd>z</kbd> jumps to the next zero point. <a href="explainers/simulation-manual.html">Manual</a> &middot; <a href="index.html">Hub</a></p>
+</div>
+<div class="bar"><div class="bar-in">
+    <button class="btn-s primary" id="b-play">Play</button>
+    <button class="btn-s" id="b-frame" title="Advance one frame">+1 frame</button>
+    <button class="btn-s" id="b-zero" title="Advance to the next zero point">&rarr; zero point</button>
+    <button class="btn-s" id="b-reset">Reset</button>
+    <label>speed <input id="in-speed" type="range" min="0" max="3.4" step="0.05" value="1.6"><span class="val" id="v-speed"></span></label>
+    <label>problem <select id="in-prob"><option value="B1">B1 · 3-colouring</option><option value="B2">B2 · MAX-3-SAT</option><option value="B3">B3 · tree address</option><option value="B4">B4 · hard-threshold net</option></select></label>
+    <label id="lbl-size">size <select id="in-size"></select></label>
+    <label id="lbl-obj" hidden>objective <select id="in-obj"><option value="graded">graded</option><option value="membership">membership (control)</option></select></label>
+    <label>geometry <select id="in-geo"><option value="hyperbolic">hyperbolic</option><option value="flat">curvature 0</option></select></label>
+    <label>clutch <select id="in-clutch"><option value="membrane">membrane</option><option value="free">free</option><option value="hold">hold</option></select></label>
+    <label>&mu; <input id="in-mu" type="range" min="0" max="0.8" step="0.05" value="0.3"><span class="val" id="v-mu"></span></label>
+    <label>&epsilon; <input id="in-eps" type="range" min="-2" max="0.3" step="0.05" value="-0.3"><span class="val" id="v-eps"></span></label>
+    <label>r <input id="in-r" type="range" min="0.05" max="3" step="0.05" value="0.6"><span class="val" id="v-r"></span></label>
+    <label>particles <select id="in-P"><option>2</option><option selected>4</option><option>8</option></select></label>
+    <label>seed <input id="in-seed" type="number" value="1000" min="1" max="999999" style="width:6.2rem"></label>
+    <label title="Exact states and the register pump (B1 and B2, one factor per step)"><input type="checkbox" id="in-exact"> exact track</label>
+</div></div>
+
+<div class="grid">
+    <section class="panel">
+        <h2>Poincar&eacute; view <span class="tagp" id="view-tag"></span></h2>
+        <p class="sub" id="view-sub"></p>
+        <canvas id="cv-view" width="560" height="560" aria-label="Poincaré disk view of the channels"></canvas>
+        <div class="kv" id="view-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>The clock <span class="tagp">ZERO-POINT CYCLE</span></h2>
+        <p class="sub">Eight spinor steps per turn, three branches, a 24-frame joint cycle. Each channel steps at its offload frame (&#9660;); the channels pair at joint frame 0.</p>
+        <canvas id="cv-clock" width="560" height="300" aria-label="The eight-step dial"></canvas>
+        <canvas id="cv-strip" width="560" height="120" style="margin-top:8px" aria-label="The 24-frame schedule"></canvas>
+        <div class="kv" id="clock-kv"></div>
+        <div class="meter" title="frames into the 720-frame register"><div id="reg-meter"></div></div>
+    </section>
+    <section class="panel">
+        <h2>The answer <span class="tagp">HELIX B</span></h2>
+        <p class="sub" id="ans-sub"></p>
+        <canvas id="cv-ans" width="560" height="380" aria-label="The certified answer"></canvas>
+        <div class="kv" id="ans-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Channels <span class="tagp">PAIRING &middot; CLUTCH &middot; MEMORY</span></h2>
+        <div class="tscroll"><table class="ch"><thead><tr><th>channel</th><th>steps</th><th>evaluations</th><th>incumbent</th><th>certified</th><th>stale</th><th>state</th></tr></thead><tbody id="ch-rows"></tbody></table></div>
+        <canvas id="cv-spark" width="560" height="150" style="margin-top:10px" aria-label="Certified cost of each channel at each zero point"></canvas>
+        <div class="kv" id="ch-kv"></div>
+        <div class="meter" title="evaluations used of the budget"><div id="budget-meter"></div></div>
+        <div class="words" id="words"></div>
+    </section>
+    <section class="panel">
+        <h2>Self-test <span class="tagp">PARITY WITH THE REFERENCE</span></h2>
+        <p class="sub">On load, six of the reference&rsquo;s seven trace files are replayed through the core running this page. The seventh, three channels over two full registers, takes several seconds; run it with the button.</p>
+        <div class="kv" id="test-kv"></div>
+        <p style="margin:10px 0 0"><button class="btn-s" id="b-fulltest">Run all seven</button></p>
+    </section>
+    <section class="panel">
+        <h2>Log</h2>
+        <div class="log" id="log" aria-live="polite"></div>
+    </section>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const C = HPCore, $ = id => document.getElementById(id);
+    const CH = ['A', 'B', 'C'], COL = ['#ff0055', '#00f2ff', '#ffd700'], SECT = ['#ff0055', '#00f2ff', '#ffd700'];
+    const STAGE = ['Snap', 'Seed', 'Onload', 'Project', 'Invert', 'Fold', 'Offload', 'Index'];
+    const CLASS8 = ['#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899'];
+    const PROBS = {
+        B1: { sizes: [[30, 'n = 30'], [60, 'n = 60'], [120, 'n = 120']], size: 60, eps: 0.5, r: 0.6, block: 8, clutch: 'membrane', exact: true },
+        B2: { sizes: [[100, 'n = 100'], [200, 'n = 200'], [500, 'n = 500']], size: 100, eps: 0.05, r: 0.5, block: 4, clutch: 'membrane', exact: true },
+        B3: { sizes: [[4, 'depth 4'], [6, 'depth 6'], [8, 'depth 8']], size: 6, eps: 0.5, r: 2.0, block: null, clutch: 'free', exact: false },
+        B4: { sizes: [[500, '500 training points'], [2000, '2,000 training points']], size: 500, eps: 0.05, r: 0.3, block: 6, clutch: 'membrane', exact: false },
+    };
+    let sim = null, playing = false, lastT = 0, acc = 0, selVertex = null;
+
+    const log = (msg, cls = '') => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = (sim ? `F${sim.tc.F} · ` : '') + msg; $('log').prepend(d); };
+    const fmt = (x, k = 3) => (Math.abs(x) >= 1000 ? x.toFixed(0) : x.toPrecision(k));
+
+    // ---------------------------------------------------------------- build a run from the controls
+    function readControls() {
+        const prob = $('in-prob').value, o = PROBS[prob];
+        return { prob, size: +$('in-size').value, obj: $('in-obj').value, geo: $('in-geo').value, clutch: $('in-clutch').value, mu: +$('in-mu').value,
+            eps: Math.pow(10, +$('in-eps').value), r: +$('in-r').value, P: +$('in-P').value, seed: Math.max(1, +$('in-seed').value || 1000),
+            exact: $('in-exact').checked && o.exact && $('in-geo').value === 'hyperbolic', block: o.block };
+    }
+    function setProblemDefaults() {
+        const o = PROBS[$('in-prob').value];
+        $('in-size').innerHTML = o.sizes.map(([v, l]) => `<option value="${v}"${v === o.size ? ' selected' : ''}>${l}</option>`).join('');
+        $('in-eps').value = Math.log10(o.eps).toFixed(2); $('in-r').value = o.r; $('in-clutch').value = o.clutch;
+        $('lbl-obj').hidden = $('in-prob').value !== 'B3';
+        $('in-exact').disabled = !o.exact; if (!o.exact) $('in-exact').checked = false;
+        $('in-clutch').querySelector('option[value=membrane]').disabled = $('in-prob').value === 'B3';
+    }
+    function build() {
+        const s = readControls(), hyper = s.geo === 'hyperbolic';
+        let prob, budget, init, m, d, extra = {};
+        if (s.prob === 'B1') { prob = new C.ThreeColouring(s.size, 4.4, new C.Rng(s.seed), hyper); budget = 400 * s.size; }
+        else if (s.prob === 'B2') { prob = new C.MaxSat(s.size, { seed: s.seed, hyper }); budget = 300 * s.size; }
+        else if (s.prob === 'B3') {
+            const target = C.TreeAddress.randomTarget(new C.Rng(s.seed), s.size);
+            prob = new C.TreeAddress(s.size, target, { objective: s.obj, hyper }); budget = prob.size; extra.horizon = null;
+        } else {
+            const data = C.P.hierarchicalData(new C.Rng(s.seed), s.size, 500);
+            prob = new C.HardThresholdNet(data, new C.Rng(s.seed + 1), { hyper }); budget = 200000;
+            if (hyper) extra.flatFactors = prob.flatFactors;
+        }
+        m = prob.m; d = prob.d;
+        const solvers = [], states = [], last = [null, null, null];
+        for (let j = 0; j < 3; j++) {
+            const cfg = Object.assign({ epsilon: s.eps, stepRadius: s.r, block: s.exact ? 1 : s.block, geometry: s.geo, exact: s.exact,
+                rotation: s.exact ? 'cayley_exact' : 'cayley' }, extra);
+            const sol = new C.PolyStepH(C.objective(prob), m, d, cfg, new C.Rng(1000 * s.seed + 10 + j));
+            const X0 = s.prob === 'B3' ? Array.from({ length: s.P }, () => [hyper ? [1, 0, 0] : [0, 0]]) : prob.initPoints(new C.Rng(1000 * s.seed + 20 + j), s.P);
+            states.push(sol.initState(X0));
+            const raw = sol.step.bind(sol);
+            sol.step = st => { const info = raw(st, true); last[j] = info; return info; };
+            solvers.push(sol);
+        }
+        const clutch = s.prob === 'B3' && s.clutch === 'membrane' ? 'free' : s.clutch;
+        const tc = new C.TriChannel(solvers, states, prob, { clutch, mu: s.mu, exactRegister: s.exact });
+        sim = { s, prob, tc, solvers, states, last, budget, series: [[], [], []], prevRest: [false, false, false] };
+        selVertex = null; acc = 0;
+        $('log').innerHTML = '';
+        log(`built ${s.prob} (${$('in-size').selectedOptions[0].textContent}), ${hyper ? 'hyperbolic' : 'curvature 0'}, clutch ${clutch}, ${s.P} particles per channel, budget ${budget.toLocaleString()} evaluations${s.exact ? ', exact track on' : ''}`);
+        if (s.prob === 'B3') log(`target address ${prob.target.join('')} at depth ${prob.L}; ${prob.size.toLocaleString()} addresses at that depth`);
+        render();
+    }
+
+    // ---------------------------------------------------------------- run
+    const onZero = (tc, costs, best) => {
+        costs.forEach((c, j) => sim.series[j].push(c));
+        const prev = sim.series[0].length > 1 ? Math.min(...sim.series.map(s => s[s.length - 2] ?? Infinity)) : Infinity;
+        if (Math.min(...costs) < prev) log(`zero point: channel ${CH[best]} certifies ${costs[best]}${sim.s.prob === 'B4' ? ' training errors' : sim.s.prob === 'B3' ? ' tree distance' : sim.s.prob === 'B2' ? ' unsatisfied clauses' : ' conflicts'}`, 'good');
+        tc.resting.forEach((r, j) => { if (r !== sim.prevRest[j]) log(`channel ${CH[j]} ${r ? 'rests (stalled)' : 'wakes'}`, 'warn'); });
+        sim.prevRest = tc.resting.slice();
+    };
+    function advance(frames) {
+        if (!sim) return;
+        const before = sim.tc.registers.length;
+        sim.tc.run({ frames, onZero });
+        for (let i = before; i < sim.tc.registers.length; i++) {
+            const r = sim.tc.registers[i];
+            log(`register ${r.F / 720} closed: pump ${r.pump_identity ? 'Q10 = Q8 = H = P^-1 exactly' : 'identity FAILED'}`, r.pump_identity ? 'good' : 'bad');
+        }
+        if (sim.tc.evaluations >= sim.budget && playing) { setPlaying(false); log('budget reached: paused', 'warn'); }
+    }
+    function setPlaying(v) { playing = v; $('b-play').textContent = v ? 'Pause' : 'Play'; lastT = performance.now(); }
+    function tick(t) {
+        if (playing && sim) {
+            const dt = Math.min(0.25, (t - lastT) / 1000); lastT = t;
+            acc += dt * Math.pow(10, +$('in-speed').value);
+            let n = Math.floor(acc); acc -= n;
+            const t0 = performance.now();
+            while (n > 0 && performance.now() - t0 < 28 && playing) { const k = Math.min(n, 24); advance(k); n -= k; }
+            render();
+        }
+        requestAnimationFrame(tick);
+    }
+
+    // ---------------------------------------------------------------- drawing helpers
+    function canvasCtx(cv) {
+        const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || cv.width, Hh = Math.round(W * cv.height / cv.width);
+        if (cv._w !== W) { cv._w = W; cv.width = W * dpr; cv.height = Hh * dpr; cv.style.height = Hh + 'px'; }
+        const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, cv.height / dpr);
+        return [ctx, W, cv.height / dpr];
+    }
+    const geo = (x, y, s) => {                                     // point at fraction s of the geodesic x -> y on the sheet
+        const d = C.H.dist(x, y); if (d < 1e-12) return x;
+        const a = Math.sinh((1 - s) * d) / Math.sinh(d), b = Math.sinh(s * d) / Math.sinh(d);
+        return x.map((v, i) => a * v + b * y[i]);
+    };
+    function diskView(cv, hyper, label) {
+        const [ctx, W, Hh] = canvasCtx(cv), R = Math.min(W, Hh) / 2 - 8, cx = W / 2, cy = Hh / 2;
+        ctx.fillStyle = '#050b1a'; ctx.beginPath(); if (hyper) ctx.arc(cx, cy, R, 0, 2 * Math.PI); else ctx.rect(cx - R, cy - R, 2 * R, 2 * R); ctx.fill();
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.stroke();
+        // hyperbolic: Poincaré coordinates of the first two spatial axes; flat: the plane scaled by the horizon
+        const P = y => { const p = hyper ? [y[1] / (1 + y[0]), y[2] / (1 + y[0])] : [y[0] / 8, y[1] / 8]; return [cx + R * p[0], cy - R * p[1]]; };
+        const dot = (y, col, r = 3, ring = false) => { const [a, b] = P(y); ctx.beginPath(); ctx.arc(a, b, r, 0, 2 * Math.PI); if (ring) { ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.stroke(); } else { ctx.fillStyle = col; ctx.fill(); } };
+        const line = (pts, col, w = 1) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); pts.forEach((y, i) => { const [a, b] = P(y); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.stroke(); };
+        ctx.fillStyle = '#64748b'; ctx.font = '11px Fira Code, monospace'; ctx.fillText(label, 10, 16);
+        return { ctx, W, Hh, R, cx, cy, P, dot, line };
+    }
+    function sectors(v) {
+        for (let j = 0; j < 3; j++) {
+            const a0 = (j * 120 - 60) * Math.PI / 180, a1 = (j * 120 + 60) * Math.PI / 180;
+            v.ctx.fillStyle = SECT[j] + '12'; v.ctx.beginPath(); v.ctx.moveTo(v.cx, v.cy); v.ctx.arc(v.cx, v.cy, v.R, -a1, -a0); v.ctx.closePath(); v.ctx.fill();
+        }
+    }
+    const twoD = (y, hyper) => (hyper ? [y[0], y[1], y[2]] : [y[0], y[1]]);   // first two axes of a factor
+
+    // ---------------------------------------------------------------- panel: Poincaré view
+    function drawView() {
+        const s = sim.s, hyper = s.geo === 'hyperbolic', st = sim.states, tc = sim.tc;
+        let sub = '', tag = '', kv = [];
+        if (s.prob === 'B1' || s.prob === 'B2') {
+            const lastAny = sim.last.find(Boolean);
+            if (selVertex === null || selVertex >= sim.prob.m) selVertex = lastAny ? lastAny.block[0] : 0;
+            const i = selVertex, v = diskView($('cv-view'), hyper, hyper ? (s.prob === 'B1' ? `factor ${i} (vertex ${i}) · Poincaré disk` : `factor ${i} · first two axes of H⁸`) : `factor ${i} · plane, scaled by the horizon 8`);
+            if (s.prob === 'B1') sectors(v);
+            else { v.ctx.strokeStyle = '#1e293b'; v.ctx.beginPath(); v.ctx.moveTo(v.cx - v.R, v.cy); v.ctx.lineTo(v.cx + v.R, v.cy); v.ctx.moveTo(v.cx, v.cy - v.R); v.ctx.lineTo(v.cx, v.cy + v.R); v.ctx.stroke(); }
+            sim.last.forEach((info, j) => {                       // the last step's polytope, where it moved this factor
+                if (!info || !info.block.includes(i)) return;
+                info.corners.forEach((cs, p) => {
+                    const x = info.Xbefore[p][i];
+                    cs.forEach((c, k) => {
+                        const y = c[i], w = info.W[p][k];
+                        if (hyper) v.line(Array.from({ length: 17 }, (_, q) => twoD(geo(x, y, q / 16), true)), COL[j] + '55', 1); else v.line([x, y], COL[j] + '55', 1);
+                        v.dot(twoD(y, hyper), COL[j] + 'aa', 1.5 + 6 * w);
+                    });
+                });
+            });
+            st.forEach((S, j) => S.X.forEach(row => v.dot(twoD(row[i], hyper), COL[j], 3.5)));
+            st.forEach((S, j) => { if (S.bestX) { const p = S.bestCost.indexOf(Math.min(...S.bestCost)); v.dot(twoD(S.bestX[p][i], hyper), COL[j], 7, true); } });
+            tag = s.prob === 'B1' ? 'COLOUR = NEAREST BRANCH' : 'TRUTH = SIGN';
+            sub = `Dots: each channel's particles in factor ${i}; rings: each channel's incumbent; faint: the last step's corners and their geodesics, sized by weight. Click the answer panel's graph to choose a vertex.`;
+            const k0 = hyper && st[0].X[0][i] ? Math.acosh(Math.max(1, st[0].X[0][i][0])) : 0;
+            kv = [['factor', i], ['A particle 0, distance from origin', hyper ? k0.toFixed(3) : C.H.norm(st[0].X[0][i]).toFixed(3)], ['horizon', '8']];
+        } else if (s.prob === 'B3') {
+            const prob = sim.prob, S = st[0], p0 = S.bestCost ? S.bestCost.indexOf(Math.min(...S.bestCost)) : 0, anchor = S.chart ? S.chart[p0] : [];
+            const v = diskView($('cv-view'), true, `the tree around node ${anchor.length ? anchor.join('') : 'root'} · Poincaré disk`);
+            const emb = prob.emb, nodes = [];
+            const childFrames = (M, word, depth) => { if (depth === 0 || word.length >= prob.L) return; for (const g of C.P.children(word)) { const N = C.H.matmul(M, emb.step[emb.slot(word, g)]); nodes.push([N.map(r => r[0]), word.concat(g), M.map(r => r[0])]); childFrames(N, word.concat(g), depth - 1); } };
+            let M0 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], base = anchor.slice();
+            if (anchor.length) { M0 = emb.stepInv[emb.slot(anchor.slice(0, -1), anchor[anchor.length - 1])]; base = anchor.slice(0, -1); }
+            nodes.push([M0.map(r => r[0]), base, null]);
+            childFrames(M0, base, 3);
+            const onTarget = w => w.length <= prob.target.length && w.every((g, i) => g === prob.target[i]);
+            nodes.forEach(([y, w, py]) => { if (py) v.line(Array.from({ length: 17 }, (_, q) => geo(py, y, q / 16)), onTarget(w) ? '#f5c542' : '#334155', onTarget(w) ? 2 : 1); });
+            nodes.forEach(([y, w]) => v.dot(y, w.length === prob.L ? (onTarget(w) ? '#f5c542' : '#475569') : onTarget(w) ? '#f5c542' : '#64748b', w.length === prob.L && onTarget(w) ? 6 : 2.5));
+            st.forEach((S2, j) => S2.X.forEach((row, p) => { if (S2.chart && S2.chart[p].join() === anchor.join()) v.dot(hyper ? row[0] : C.H.expOrigin(row[0]), COL[j], 4); }));
+            tag = 'ANCHORED CHART';
+            sub = 'The tree drawn in the frame of channel A’s best particle’s anchor node (one level up and three down). Gold: the path to the target. Dots: particles anchored at this node.';
+            kv = [['anchor', anchor.join('') || 'root'], ['target', prob.target.join('')], ['addresses at depth', prob.size.toLocaleString()]];
+        } else {
+            const prob = sim.prob, S = st[tc.memory.length ? tc.memory[tc.memory.length - 1].best : 0], p0 = S.bestCost ? S.bestCost.indexOf(Math.min(...S.bestCost)) : 0, state = S.bestX ? S.bestX[p0] : S.X[0];
+            const v = diskView($('cv-view'), hyper, hyper ? 'prototypes and encoded test points · Poincaré disk' : 'prototypes and encoded test points · plane / 8');
+            const D = prob.data.test;
+            for (let q = 0; q < Math.min(250, D.x.length); q++) {
+                const Wz = prob.enc.map(e => (hyper ? state[e].slice(1) : state[e]));
+                const z = [0, 1].map(c => { let t = 0; for (let jj = 0; jj < 16; jj++) t += Wz[jj][c] * D.x[q][jj]; return t; });
+                v.dot(hyper ? C.H.expOrigin(z) : z, CLASS8[D.y[q]] + '99', 2);
+            }
+            prob.protos.forEach((pi, k) => { v.dot(state[pi], CLASS8[k], 8, true); v.ctx.fillStyle = CLASS8[k]; const [a, b] = v.P(state[pi]); v.ctx.fillText(String(k), a + 8, b - 6); });
+            tag = 'NEAREST PROTOTYPE';
+            sub = 'Rings: the eight class prototypes of the best certified network. Dots: test inputs mapped by its encoder, coloured by their true class. The class is the nearest prototype, a hard argmin.';
+            kv = [['factors', `${prob.enc.length} Euclidean + 8 ${hyper ? 'hyperbolic' : 'flat'}`]];
+        }
+        $('view-sub').textContent = sub; $('view-tag').textContent = tag;
+        $('view-kv').innerHTML = kv.map(([k, v]) => `<div><span>${k}</span>${v}</div>`).join('');
+    }
+
+    // ---------------------------------------------------------------- panel: clock
+    function drawClock() {
+        const F = sim.tc.F, k = F % 8, n = F % 24, j = F % 3;
+        const [ctx, W, Hh] = canvasCtx($('cv-clock')), cx = Math.min(W / 2, 170), cy = Hh / 2, R = Math.min(Hh / 2 - 22, 120);
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+        for (let b = 0; b < 3; b++) {                             // the three branches as inner arcs
+            ctx.strokeStyle = COL[b] + (b === j ? 'ff' : '44'); ctx.lineWidth = b === j ? 7 : 4; ctx.beginPath();
+            ctx.arc(cx, cy, R * 0.55, (b * 120 - 50 - 90) * Math.PI / 180, (b * 120 + 50 - 90) * Math.PI / 180); ctx.stroke();
+        }
+        for (let s = 0; s < 8; s++) {
+            const a = (s * 45 - 90) * Math.PI / 180, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a), on = s === k;
+            ctx.fillStyle = on ? '#f5c542' : '#0f172a'; ctx.strokeStyle = on ? '#f5c542' : '#475569'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(x, y, on ? 11 : 8, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = on ? '#020617' : '#94a3b8'; ctx.font = '600 10px Fira Code, monospace'; ctx.textAlign = 'center'; ctx.fillText(String(s), x, y + 3.5);
+            ctx.fillStyle = on ? '#f5c542' : '#64748b'; ctx.font = '10px Inter, sans-serif';
+            ctx.fillText(STAGE[s], cx + (R + 24) * Math.cos(a), cy + (R + 24) * Math.sin(a) + 3);
+        }
+        ctx.textAlign = 'center'; ctx.fillStyle = '#f8fafc'; ctx.font = '600 20px Fira Code, monospace'; ctx.fillText('F ' + F, cx, cy - 4);
+        ctx.fillStyle = '#94a3b8'; ctx.font = '11px Fira Code, monospace'; ctx.fillText(`k ${k} · n ${n} · j ${j}`, cx, cy + 14);
+        // packets in flight, to the right of the dial
+        ctx.textAlign = 'left';
+        const x0 = Math.min(W - 230, cx + R + 70);
+        [0, 1, 2].forEach(c => {
+            const d = (n - C.ON[c] + 24) % 24, fly = d <= 12, y = 40 + c * 70;
+            ctx.fillStyle = COL[c]; ctx.font = '600 13px Inter, sans-serif'; ctx.fillText(`Channel ${CH[c]}`, x0, y);
+            ctx.fillStyle = '#cbd5e1'; ctx.font = '11px Fira Code, monospace';
+            ctx.fillText(fly ? `packet frame ${d}/12 · ${STAGE[(2 + d) % 8]}` : `waits: onload in ${(C.ON[c] - n + 24) % 24}`, x0, y + 17);
+            ctx.fillStyle = sim.tc.resting[c] ? '#fbbf24' : '#64748b'; ctx.fillText(sim.tc.resting[c] ? 'resting (clutch: hold)' : `${sim.states[c].iteration} steps`, x0, y + 33);
+        });
+        // strip
+        const [sx, SW, SH] = canvasCtx($('cv-strip')), cw = (SW - 30) / 24;
+        for (let q = 0; q < 24; q++) {
+            sx.fillStyle = q === n ? '#f5c542' : '#64748b'; sx.font = '9px Fira Code, monospace'; sx.textAlign = 'center'; sx.fillText(String(q), 30 + q * cw + cw / 2, 10);
+            [0, 1, 2].forEach(c => {
+                const d = (q - C.ON[c] + 24) % 24, fly = d <= 12, y = 16 + c * 32;
+                sx.fillStyle = fly ? COL[c] + (d <= 3 ? 'cc' : '44') : '#0f172a'; sx.fillRect(30 + q * cw + 1, y, cw - 2, 26);
+                if (d === 12) { sx.fillStyle = '#020617'; sx.fillText('▼', 30 + q * cw + cw / 2, y + 17); }
+            });
+            if (q === n) { sx.strokeStyle = '#f5c542'; sx.lineWidth = 2; sx.strokeRect(30 + q * cw, 14, cw, 98); }
+        }
+        sx.textAlign = 'left'; [0, 1, 2].forEach(c => { sx.fillStyle = COL[c]; sx.font = '600 12px Inter, sans-serif'; sx.fillText(CH[c], 8, 34 + c * 32); });
+        const reg = sim.tc.registers, lastReg = reg[reg.length - 1];
+        $('clock-kv').innerHTML = [['register', `${Math.floor(F / 720) + 1} · frame ${F % 720}/720`], ['spinor cycle', `${Math.floor((F % 720) / 8) + 1}/90`], ['joint cycle', `${Math.floor((F % 720) / 24) + 1}/30`],
+            ['pump (exact track)', sim.s.exact ? (lastReg ? `<span class="pill ${lastReg.pump_identity ? 'good' : 'bad'}">${reg.filter(r => r.pump_identity).length}/${reg.length} closed with H = P⁻¹</span>` : 'first register filling') : 'exact track off']]
+            .map(([a, b]) => `<div><span>${a}</span>${b}</div>`).join('');
+        $('reg-meter').style.width = `${(F % 720) / 7.2}%`;
+    }
+
+    // ---------------------------------------------------------------- panel: the answer
+    function bestCertified() {
+        const tc = sim.tc;
+        let bj = 0, bv = Infinity;
+        tc.states.forEach((S, j) => { if (S.bestCost) { const c = Math.min(...S.bestCost); if (c < bv) { bv = c; bj = j; } } });
+        const S = tc.states[bj], p = S.bestCost ? S.bestCost.indexOf(Math.min(...S.bestCost)) : 0;
+        return { j: bj, state: S.bestX ? S.bestX[p] : S.X[0], chart: S.chart ? (S.bestChart ? S.bestChart[p] : S.chart[p]) : null };
+    }
+    function drawAnswer() {
+        const s = sim.s, prob = sim.prob, hyper = s.geo === 'hyperbolic', b = bestCertified();
+        const [ctx, W, Hh] = canvasCtx($('cv-ans'));
+        let kv = [], sub = '';
+        if (s.prob === 'B1') {
+            const cols = prob.colours(b.state), conf = prob.helixB(b.state), n = prob.n, R = Math.min(W, Hh) / 2 - 22, cx = W / 2, cy = Hh / 2;
+            const pos = i => [cx + R * Math.cos(2 * Math.PI * i / n - Math.PI / 2), cy + R * Math.sin(2 * Math.PI * i / n - Math.PI / 2)];
+            prob.edges.forEach(([u, v]) => { const [a1, b1] = pos(u), [a2, b2] = pos(v), bad = cols[u] === cols[v]; ctx.strokeStyle = bad ? '#fb7185' : '#33415566'; ctx.lineWidth = bad ? 2 : 1; ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); });
+            for (let i = 0; i < n; i++) { const [a, c] = pos(i); ctx.fillStyle = SECT[cols[i]]; ctx.beginPath(); ctx.arc(a, c, i === selVertex ? 7 : 4.5, 0, 2 * Math.PI); ctx.fill(); if (i === selVertex) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); } }
+            sub = `The best certified colouring (channel ${CH[b.j]}): each vertex takes the branch nearest its point. Red edges join equal colours. Click a vertex to view its factor.`;
+            kv = [['conflicts (exact)', conf === 0 ? '<span class="pill good">0: a proper colouring</span>' : conf], ['edges', prob.edges.length], ['planted classes', 'hidden from the search']];
+            sim.pos = pos;
+        } else if (s.prob === 'B2') {
+            const t = prob.truth(b.state), un = prob.helixB(b.state), n = prob.n, cols = Math.ceil(Math.sqrt(n * W / Hh)), cell = Math.min((W - 20) / cols, (Hh - 50) / Math.ceil(n / cols));
+            t.forEach((v, i) => { ctx.fillStyle = v ? '#34d399' : '#475569'; ctx.fillRect(10 + (i % cols) * cell, 10 + Math.floor(i / cols) * cell, cell - 1.5, cell - 1.5); });
+            const frac = 1 - un / prob.lits.length;
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(10, Hh - 26, W - 20, 12); ctx.fillStyle = '#22d3ee'; ctx.fillRect(10, Hh - 26, (W - 20) * frac, 12);
+            ctx.fillStyle = '#cbd5e1'; ctx.font = '11px Fira Code, monospace'; ctx.fillText(`${(100 * frac).toFixed(2)}% of ${prob.lits.length} clauses satisfied`, 12, Hh - 32);
+            sub = `The best certified assignment (channel ${CH[b.j]}): green = true. polystep's own random 3-SAT generator, clause ratio 4.27.`;
+            kv = [['unsatisfied clauses (exact)', un], ['variables', n], ['satisfied', (100 * frac).toFixed(2) + '%']];
+        } else if (s.prob === 'B3') {
+            const cert = prob.helixB(b.state, b.chart || []), L = prob.L, cw = Math.min(40, (W - 120) / L);
+            const row = (label, w, y, col) => { ctx.fillStyle = col; ctx.font = '600 12px Inter, sans-serif'; ctx.fillText(label, 10, y + 18);
+                w.forEach((g, i) => { const ok = g === prob.target[i] && w.slice(0, i).every((x, q) => x === prob.target[q]); ctx.fillStyle = ok ? 'rgba(52,211,153,.25)' : 'rgba(251,113,133,.18)'; ctx.fillRect(110 + i * cw, y, cw - 4, 28);
+                    ctx.fillStyle = '#f8fafc'; ctx.font = '600 14px Fira Code, monospace'; ctx.fillText(String(g), 110 + i * cw + cw / 2 - 5, y + 19); }); };
+            row('target', prob.target, 20, '#f5c542');
+            sim.tc.states.forEach((S, j) => { const p = S.bestCost ? S.bestCost.indexOf(Math.min(...S.bestCost)) : 0; const st = S.bestX ? S.bestX[p] : S.X[0];
+                const c = prob.helixB(st, S.bestChart ? S.bestChart[p] : S.chart ? S.chart[p] : []); row(`channel ${CH[j]}`, c.word, 70 + j * 44, COL[j]); });
+            ctx.fillStyle = '#94a3b8'; ctx.font = '11px Fira Code, monospace'; ctx.fillText('digits: generators 1±2i, 1±2j, 1±2k (0-5); green: matches the target from the root', 10, Hh - 14);
+            sub = `Decoded addresses of each channel's incumbent against the target. Helix B certifies an address by its quaternion of norm 5^L and right-division.`;
+            kv = [['best tree distance', cert.distance === 0 ? '<span class="pill good">0: target found</span>' : cert.distance], ['certified by right-division', cert.certified ? 'yes' : 'no'], ['objective', prob.objective]];
+        } else {
+            const pred = prob.predict(b.state, prob.data.test.x), y = prob.data.test.y, M = Array.from({ length: 8 }, () => new Array(8).fill(0));
+            pred.forEach((p, i) => M[y[i]][p]++);
+            const cell = Math.min((W - 60) / 8, (Hh - 40) / 8), mx = Math.max(1, ...M.flat());
+            M.forEach((r, i) => r.forEach((v, j) => { ctx.fillStyle = `rgba(34,211,238,${(v / mx).toFixed(3)})`; ctx.fillRect(40 + j * cell, 10 + i * cell, cell - 2, cell - 2); if (v) { ctx.fillStyle = v / mx > 0.5 ? '#020617' : '#cbd5e1'; ctx.font = '10px Fira Code, monospace'; ctx.fillText(String(v), 40 + j * cell + 4, 10 + i * cell + cell / 2 + 3); } }));
+            ctx.fillStyle = '#94a3b8'; ctx.font = '10px Fira Code, monospace'; ctx.fillText('true class ↓  predicted →', 40, 10 + 8 * cell + 14);
+            const [acc1, coarse] = prob.accuracy(b.state);
+            sub = `The best certified network (channel ${CH[b.j]}) on held-out test data. Rows: true class; columns: predicted.`;
+            kv = [['test accuracy', (100 * acc1).toFixed(1) + '%'], ['coarse (tree level 2)', (100 * coarse).toFixed(1) + '%'], ['training errors (exact)', prob.helixB(b.state)]];
+        }
+        $('ans-sub').textContent = sub;
+        $('ans-kv').innerHTML = kv.map(([k, v]) => `<div><span>${k}</span>${v}</div>`).join('');
+    }
+
+    // ---------------------------------------------------------------- panel: channels
+    function drawChannels() {
+        const tc = sim.tc;
+        $('ch-rows').innerHTML = tc.states.map((S, j) => {
+            const inc = S.bestCost ? Math.min(...S.bestCost) : NaN, cert = tc.bestCert[j];
+            return `<tr><td style="color:${COL[j]}">${CH[j]} · branch ${j}</td><td>${S.iteration}</td><td>${S.evaluations.toLocaleString()}</td><td>${isFinite(inc) ? fmt(inc) : '-'}</td><td>${isFinite(cert) ? cert : '-'}</td><td>${tc.stale[j]}</td><td>${tc.resting[j] ? '<span class="pill">resting</span>' : 'running'}</td></tr>`;
+        }).join('');
+        const [ctx, W, Hh] = canvasCtx($('cv-spark')), S = sim.series, n = S[0].length, mx = Math.max(1, ...S.flat());
+        ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(34, Hh - 18); ctx.lineTo(W - 6, Hh - 18); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.font = '10px Fira Code, monospace'; ctx.fillText(String(mx), 4, 14); ctx.fillText('0', 20, Hh - 20); ctx.fillText('certified cost per zero point →', W - 190, Hh - 4);
+        S.forEach((s, j) => { ctx.strokeStyle = COL[j]; ctx.lineWidth = 1.7; ctx.beginPath(); s.forEach((v, i) => { const x = 34 + (W - 44) * (n > 1 ? i / (n - 1) : 0), y = 8 + (Hh - 30) * (1 - v / mx); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); });
+        const mem = tc.memory, ml = tc.membraneLog[tc.membraneLog.length - 1];
+        // verify the chain from the first word: every hash must follow from its word and the previous hash
+        let chain = true; mem.forEach((w, i) => { const re = C.memoryWord(w.F, w.costs, w.best, i ? mem[i - 1].hash : ''); if (re.hash !== w.hash) chain = false; });
+        $('ch-kv').innerHTML = [['evaluations', `${tc.evaluations.toLocaleString()} / ${sim.budget.toLocaleString()}`], ['zero points', mem.length],
+            ['memory chain', mem.length ? `<span class="pill ${chain ? 'good' : 'bad'}">${chain ? 'intact' : 'BROKEN'}</span>` : '-'],
+            ['membrane removed', ml ? fmt(ml.differentialRemoved) : sim.s.clutch === 'membrane' ? '-' : 'off']].map(([a, b]) => `<div><span>${a}</span>${b}</div>`).join('');
+        $('budget-meter').style.width = `${Math.min(100, 100 * tc.evaluations / sim.budget)}%`;
+        $('words').innerHTML = mem.slice(-8).reverse().map(w => `F${w.F} · A ${w.costs[0]} B ${w.costs[1]} C ${w.costs[2]} · Y ${w.Y} · best ${CH[w.best]} · ${w.hash}`).join('<br>') || 'Memory words appear at each zero point (every 24 frames).';
+    }
+    function render() { if (!sim) return; drawView(); drawClock(); drawAnswer(); drawChannels(); document.body.dataset.frame = sim.tc.F; }
+
+    // ---------------------------------------------------------------- self-test
+    async function selfTest(files) {
+        $('test-kv').innerHTML = '<div><span>status</span>loading traces…</div>';
+        try {
+            const traces = {};
+            await Promise.all(files.map(async f => { const r = await fetch('reference/traces/' + f, { cache: 'no-cache' }); if (!r.ok) throw new Error(f + ' ' + r.status); traces[f] = await r.json(); }));
+            await new Promise(r => setTimeout(r, 30));
+            const t0 = performance.now(), R = HPParity.runParity(C, traces), by = {};
+            R.lines.forEach(l => { by[l.file] = by[l.file] || [0, 0]; by[l.file][1]++; if (l.ok) by[l.file][0]++; });
+            const all = R.passed === R.total;
+            $('test-kv').innerHTML = `<div><span>trace lines</span><span class="pill ${all ? 'good' : 'bad'}">${R.passed}/${R.total} match</span></div>` +
+                Object.entries(by).map(([f, [p, t]]) => `<div><span>${f}</span>${p}/${t}</div>`).join('') + `<div><span>time</span>${((performance.now() - t0) / 1000).toFixed(1)} s</div>`;
+            document.body.dataset.selftest = `${R.passed}/${R.total}`;
+            log(`self-test: ${R.passed}/${R.total} trace lines match the Python reference`, all ? 'good' : 'bad');
+        } catch (e) { $('test-kv').innerHTML = `<div><span>status</span><span class="pill bad">could not load traces: ${e.message}</span></div>`; document.body.dataset.selftest = 'error'; }
+    }
+
+    // ---------------------------------------------------------------- controls
+    const labels = () => { $('v-speed').textContent = `${Math.round(Math.pow(10, +$('in-speed').value))} f/s`; $('v-mu').textContent = (+$('in-mu').value).toFixed(2);
+        $('v-eps').textContent = Math.pow(10, +$('in-eps').value).toFixed(3); $('v-r').textContent = (+$('in-r').value).toFixed(2); };
+    $('b-play').onclick = () => setPlaying(!playing);
+    $('b-frame').onclick = () => { setPlaying(false); advance(1); render(); };
+    $('b-zero').onclick = () => { setPlaying(false); advance(24 - (sim.tc.F % 24) || 24); render(); };
+    $('b-reset').onclick = () => { setPlaying(false); build(); };
+    $('in-prob').onchange = () => { setPlaying(false); setProblemDefaults(); labels(); build(); };
+    ['in-size', 'in-obj', 'in-geo', 'in-clutch', 'in-mu', 'in-eps', 'in-r', 'in-P', 'in-seed', 'in-exact'].forEach(id => $(id).addEventListener('change', () => { setPlaying(false); labels(); build(); }));
+    ['in-speed', 'in-mu', 'in-eps', 'in-r'].forEach(id => $(id).addEventListener('input', labels));
+    $('cv-ans').addEventListener('click', e => {
+        if (!sim || sim.s.prob !== 'B1' || !sim.pos) return;
+        const b = $('cv-ans').getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+        let best = null, bd = 400; for (let i = 0; i < sim.prob.n; i++) { const [a, c] = sim.pos(i), d = (a - x) ** 2 + (c - y) ** 2; if (d < bd) { bd = d; best = i; } }
+        if (best !== null) { selVertex = best; render(); }
+    });
+    $('b-fulltest').onclick = () => selfTest(HPParity.files);
+    document.addEventListener('keydown', e => {                    // Space: play or pause; '.': one frame; z: next zero point
+        if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(e.target.tagName)) return;
+        if (e.key === ' ') { e.preventDefault(); $('b-play').click(); } else if (e.key === '.') $('b-frame').click(); else if (e.key === 'z') $('b-zero').click();
+    });
+    window.addEventListener('resize', render);
+    window.HPSim = { get sim() { return sim; }, advance, build, setPlaying, render };
+
+    // Settings from the address, for the manual's experiments: ?prob=B1&size=30&geo=flat&clutch=hold&mu=0.3&eps=0.5&r=0.6&P=4&seed=7&exact=1&obj=membership&play=1
+    function fromAddress() {
+        const q = new URLSearchParams(location.search), set = (id, v) => { if (v !== null && [...$(id).options].some(o => o.value === v)) $(id).value = v; };
+        set('in-prob', q.get('prob')); setProblemDefaults();
+        ['size', 'geo', 'clutch', 'obj', 'P'].forEach(k => set('in-' + k, q.get(k)));
+        const num = (k, lo, hi) => { const v = parseFloat(q.get(k)); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : null; };
+        if (num('mu', 0, 0.8) !== null) $('in-mu').value = num('mu', 0, 0.8);
+        if (num('eps', 0.01, 2) !== null) $('in-eps').value = Math.log10(num('eps', 0.01, 2)).toFixed(2);
+        if (num('r', 0.05, 3) !== null) $('in-r').value = num('r', 0.05, 3);
+        if (num('seed', 1, 999999) !== null) $('in-seed').value = Math.round(num('seed', 1, 999999));
+        if (q.get('exact') === '1' && !$('in-exact').disabled) $('in-exact').checked = true;
+        return q.get('play') === '1';
+    }
+    const autoplay = fromAddress(); labels(); build(); if (autoplay) setPlaying(true);
+    requestAnimationFrame(tick);
+    window.addEventListener('load', () => setTimeout(() => selfTest(HPParity.files.filter(f => f !== 'channels_b1.json')), 60));
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="bottom-right" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;explainers/hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

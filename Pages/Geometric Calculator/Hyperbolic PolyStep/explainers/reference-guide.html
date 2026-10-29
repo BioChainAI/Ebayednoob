@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Reference Guide - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 5 of Hyperbolic PolyStep: the Python reference built in Phase 1. Installing and running it, its modules and how they connect, what its 80 tests check, the traces the browser core must reproduce, the benchmark runner, and three things learned while building it.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <style>pre.code { background: #020617; border: 1px solid #1e293b; border-radius: 10px; padding: 12px 14px; overflow-x: auto; font: 0.84rem/1.55 var(--mono); color: #cbd5e1; }
+        pre.code .c { color: #64748b; }</style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 5 &middot; Phase 1</div>
+    <h1>The Python Reference</h1>
+    <p class="lede">The first working implementation: the hyperbolic step on polystep&rsquo;s own solvers, the four problems with their exact certificates, and the three channels on the zero-point clock. It is the authority every later phase is checked against.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#modules">Module map</a>
+        <a class="btn btn-ghost" href="#tests">What the tests check</a>
+        <a class="btn btn-ghost" href="#findings">Three findings</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat"><b>6</b> modules &middot; <b>2</b> runners</span>
+        <span class="stat"><b>80/80</b> tests pass</span>
+        <span class="stat"><b>4</b> trace files for the browser port</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#install">2. Install and run</a></li>
+            <li><a href="#modules">3. Module map</a></li>
+            <li><a href="#api">4. Using the step</a></li>
+            <li><a href="#tests">5. What the tests check</a></li>
+            <li><a href="#findings">6. Three findings</a></li>
+            <li><a href="#traces">7. Traces for the browser</a></li>
+            <li><a href="#bench">8. The benchmark runner</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#install">Install and run</a></li><li><a href="#modules">Module map</a></li>
+            <li><a href="#api">Using the step</a></li><li><a href="#tests">What the tests check</a></li><li><a href="#findings">Three findings</a></li>
+            <li><a href="#traces">Traces for the browser</a></li><li><a href="#bench">The benchmark runner</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The reference takes the step and polystep, and feeds the browser core and the proofs page.</p>
+            <div data-hp-map="focus" data-node="ref"></div>
+        </section>
+
+        <section class="chapter" id="install">
+            <div class="chapter-num">02</div>
+            <h2>Install and run</h2>
+<pre class="code"><span class="c"># from Pages/Geometric Calculator/Hyperbolic PolyStep/reference</span>
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install --index-url https://download.pytorch.org/whl/cpu torch   <span class="c"># CPU build (or plain `pip install torch`)</span>
+pip install -r requirements.txt                                      <span class="c"># polystep 1.1.1, numpy, pytest</span>
+
+python -m pytest -q tests          <span class="c"># 80 tests, about half a minute</span>
+python run_traces.py               <span class="c"># writes traces/*.json for the browser core</span>
+python run_bench.py smoke          <span class="c"># every benchmark and method once, tiny sizes</span></pre>
+            <div class="callout note"><span class="label">On this build machine</span>
+                <p>The PyTorch CPU index was unreachable, so the default PyPI build of torch (2.15) was installed; it runs on the CPU too. Its first import takes most of a minute, which is most of the test suite&rsquo;s first-run time.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="modules">
+            <div class="chapter-num">03</div>
+            <h2>Module map</h2>
+            <p class="chapter-intro">Six modules in <code>reference/hpstep/</code>, two runners, and the tests. Arrows point from a module to the modules that use it. Hover a box to light up its connections.</p>
+            <figure><div class="map-wrap"><svg id="mod-map" viewBox="0 0 960 420" role="img" aria-label="How the reference modules connect"></svg></div>
+                <figcaption>Gold: from polystep. Purple: geometry. Cyan: the solver. Green: problems and runners. Grey: tests.</figcaption></figure>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Module</th><th>Holds</th><th>Key names</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">prng.py</td><td>The shared generator: xoshiro128** seeded by splitmix32, and the draws built on it</td><td class="mono">Rng, next_u32, random, below, sample, rational</td></tr>
+                    <tr><td class="mono">hyperbolic.py</td><td>The hyperboloid in float: the Lorentz form, boosts, exp and log at the origin, charts, the Lorentzian centroid and its Klein weights</td><td class="mono">lorentz, boost, exp_at, lorentz_centroid, klein_weights</td></tr>
+                    <tr><td class="mono">exact.py</td><td>The exact track: rational linear algebra, Cayley rotations, the ghost map, exact corners, the snap, Lorentz displacements and the pump</td><td class="mono">cayley, ghost, point_at, snap, displacement, pump</td></tr>
+                    <tr><td class="mono">step.py</td><td>The hyperbolic step and its curvature-0 counterpart on product spaces; polystep&rsquo;s solvers for the weights; exact mode; the horizon; elitist incumbents</td><td class="mono">StepConfig, PolyStepH.step, clamp</td></tr>
+                    <tr><td class="mono">problems.py</td><td>B1&ndash;B4: instances, float and exact decoders, objectives, Helix B; the anchored tree embedding; memory words</td><td class="mono">ThreeColouring, MaxSat, TreeAddress, HardThresholdNet</td></tr>
+                    <tr><td class="mono">channels.py</td><td>Three channels on the 24-frame schedule: pairing, Helix B, the clutch modes, the membrane, memory and the exact register</td><td class="mono">TriChannel, schedule_facts, ON, OFF</td></tr>
+                    <tr><td class="mono">run_traces.py</td><td>Writes the seeded traces the browser core must reproduce</td><td class="mono">traces/*.json</td></tr>
+                    <tr><td class="mono">run_bench.py</td><td>The preregistered runners, tuning and the decision rule</td><td class="mono">smoke, tune, run, decide</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="api">
+            <div class="chapter-num">04</div>
+            <h2>Using the step</h2>
+<pre class="code">from hpstep import Rng, PolyStepH, StepConfig, TriChannel
+from hpstep.problems import ThreeColouring
+
+prob = ThreeColouring(60, 4.4, Rng(1000))                 <span class="c"># B1: n = 60, average degree 4.4</span>
+cfg = StepConfig(epsilon=0.5, step_radius=0.6, block=8)   <span class="c"># move 8 vertices per step</span>
+solvers, states = [], []
+for j in range(3):                                        <span class="c"># channels A, B, C</span>
+    s = PolyStepH(prob, prob.m, 2, cfg, Rng(10 + j))
+    states.append(s.init_state(prob.init_points(Rng(20 + j), 4)))
+    solvers.append(s)
+tc = TriChannel(solvers, states, prob, clutch='membrane').run(budget=24_000)
+print(tc.memory[-1])     <span class="c"># the last zero point's word: certified costs, their sum Y, the chain link</span></pre>
+            <p><code>StepConfig</code> covers:</p>
+            <ul>
+                <li>the temperature and the radii, as floats or polystep schedules such as <code>CosineEpsilon</code> and <code>PowerDecay</code>;</li>
+                <li>the solver (<code>'softmax'</code> or <code>'sinkhorn'</code>);</li>
+                <li>the geometry (<code>'hyperbolic'</code> or <code>'flat'</code>);</li>
+                <li>the rotation (<code>'cayley'</code>, <code>'cayley_exact'</code> or polystep&rsquo;s <code>'haar'</code>);</li>
+                <li>exact mode, the snap grid and the horizon;</li>
+                <li><code>probe_jitter</code>, for polystep&rsquo;s theory mode.</li>
+            </ul>
+        </section>
+
+        <section class="chapter" id="tests">
+            <div class="chapter-num">05</div>
+            <h2>What the tests check</h2>
+            <p class="chapter-intro">80 tests, all passing. The properties are checked on random instances, in exact arithmetic wherever the claim is exact.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Claim</th><th>Check</th><th>Instances</th><th>Result</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">H1</td><td>Every corner, probe and snapped state satisfies \(\langle y,y\rangle = -1\) exactly; one-factor steps build their corners exactly, product steps snap them</td><td class="num">1,000 + products</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td class="mono">H2</td><td>One factor moves at most r; in a product each factor moves at most r; the horizon never lengthens a move</td><td class="num">1,300 + 300</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td class="mono">H3</td><td>No nearby point of the sheet beats the centroid&rsquo;s weighted Lorentzian distance</td><td class="num">1,000</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td class="mono">H4</td><td>Corners at \(gx\) equal \(g\) times corners at \(x\) exactly, for rational Lorentz \(g\); the step agrees to \(10^{-9}\)</td><td class="num">1,000</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td class="mono">H5</td><td>At curvature \(-c\) the step approaches the flat step, the gap shrinking at least fivefold per decade of \(c\)</td><td class="num">c = 10&#8315;&sup2; &hellip; 10&#8315;&#8309;</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td class="mono">H6</td><td>Tiny &epsilon; lands on the best corner; the incumbent never rises</td><td class="num">1,000 + run</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td class="mono">H7</td><td>Q&#8317;&sup1;&#8304;&#8318; = Q&#8317;&#8312;&#8318; = H = P&#8315;&sup1; exactly in the Lorentz group, and P carries the register&rsquo;s first state to its last</td><td class="num">50 registers + 2 live</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td>polystep parity</td><td>The weights are polystep&rsquo;s SoftmaxSolver; the curvature-0 step lands where <code>polystep.PolyStep.step</code> lands, given the same rotation, for both solvers</td><td class="num">2</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td>Problems</td><td>Decoders agree exactly and in float; Helix B equals the search cost; polystep&rsquo;s MAX-SAT generator reproduced; tree words distinct, right-division recovers them, anchored decoding exact; B4 shapes</td><td class="num">9 tests</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td>Schedule</td><td>Onloads at k = 2, offloads at k = 6, twelve frames apart, never sharing a frame, two packets in flight at most; 30 steps per channel per register; the budget counted exactly</td><td class="num">5 tests</td><td><span class="status s-done">pass</span></td></tr>
+                    <tr><td>Generator</td><td>The published xoshiro128** vector from state (1, 2, 3, 4)</td><td class="num">3 tests</td><td><span class="status s-done">pass</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>These checks are numerical and exact evidence, not proofs. The claims ledger now marks H1&ndash;H7 as <span class="tag t-COMPUTED">COMPUTED</span>; the written proofs that would make them <span class="tag t-PROVEN">PROVEN</span> are Phase 4.</p>
+        </section>
+
+        <section class="chapter" id="findings">
+            <div class="chapter-num">06</div>
+            <h2>Three findings from building it</h2>
+            <div class="callout deep"><span class="label">1 &middot; polystep does prove convergence, under conditions</span>
+                <p>The Phase 0 pages said polystep makes no convergence claim. Its experiment code shows otherwise: its paper proves a convergence theorem in a &ldquo;theory mode&rdquo;. That mode uses a power-decay step radius \(r_t = r_0(t+1)^{-(1/2+\gamma)}\), square-summable and not summable, with a flat &epsilon; and probe jitter. The pages are corrected. Whether the theorem transfers to the hyperbolic step is a new open row in the ledger, T1, and the reference implements theory mode so that it can be tested.</p>
+            </div>
+            <div class="callout note"><span class="label">2 &middot; float64 cannot reach depth 8 of the tree from the root</span>
+                <p>B3&rsquo;s deepest targets are about 24 units from the origin. There the hyperboloid coordinates are near \(e^{24} \approx 10^{10}\), and the constraint \(\langle y,y\rangle = -1\) falls below float64&rsquo;s resolution: a depth-8 node computed from the root has \(\langle y,y\rangle \approx -48\). The limit sits near distance \(\tfrac12\ln(1/\varepsilon_{\text{mach}}) \approx 18\). The fix is the standard one for hyperbolic embeddings (a tiling-based model): each point is held in the frame of a tree node near it, and re-anchored after every step. The step does not care which frame it runs in (H4), so nothing about the method changes. A test now pins the failure, so it cannot quietly return.</p>
+            </div>
+            <div class="callout note"><span class="label">3 &middot; Direction-only decoders need a horizon</span>
+                <p>A colour depends only on a point&rsquo;s angle, and a truth value only on a sign, so nothing stops particles drifting outward. In a trace run one did, past distance 18, where the exact snap&rsquo;s \(2^{-24}\) grid can no longer hold it, and the next centroid overflowed. Every factor now stays in a ball of radius 8, the same in both geometries. A point that leaves is moved radially back: the nearest point of a convex ball, so a move never gets longer (H2 survives) and the decoded answer never changes. The membrane&rsquo;s recentring has to respect it too; at first it did not.</p>
+            </div>
+            <p>Findings 2 and 3, and two smaller choices, are recorded in the preregistration as <strong>Amendment 1</strong>, dated before any tuning or measured run. None changes a preregistered size, budget, metric or decision rule.</p>
+        </section>
+
+        <section class="chapter" id="traces">
+            <div class="chapter-num">07</div>
+            <h2>Traces for the browser</h2>
+            <p class="chapter-intro">Phase 2&rsquo;s JavaScript core is trusted only if it reproduces these files. Rationals are written as <code>"p/q"</code>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>File</th><th>Holds</th><th>Must match</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">prng.json</td><td>The published vector, seeded outputs, floats, bounded draws, a sample, rationals and a Cayley rotation</td><td>Exactly</td></tr>
+                    <tr><td class="mono">geometry.json</td><td>Ghost map, exp at a point, distance and Klein chart on 12 cases; exact ghost points and boosts</td><td>Exact fields exactly, floats within \(10^{-12}\)</td></tr>
+                    <tr><td class="mono">step_b1.json</td><td>24 steps of one channel on a 9-vertex 3-colouring, one vertex per step: rotations, exact corners, costs, weights, snapped states, Helix B</td><td>Rotations, corners, costs, states and counts exactly; weights within \(10^{-12}\)</td></tr>
+                    <tr><td class="mono">channels_b1.json</td><td>Three channels for two registers with the membrane: memory words, 60 steps each, both registers closing with H = P&#8315;&sup1;</td><td>Exactly</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="bench">
+            <div class="chapter-num">08</div>
+            <h2>The benchmark runner</h2>
+<pre class="code">python run_bench.py smoke             <span class="c"># checks the code runs; results are labelled smoke, never evidence</span>
+python run_bench.py tune B1           <span class="c"># Phase 4: 24 tuning runs per method, seeds 9000-9023 -&gt; settings.json</span>
+python run_bench.py run B1            <span class="c"># Phase 4: every cell, instance and seed -&gt; results/B1.jsonl</span>
+python run_bench.py decide B1         <span class="c"># Phase 4: the paired bootstrap decision per claim and cell</span></pre>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Method</th><th>What it is</th><th>Role</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">hyper3</td><td>Three channels of 4 particles on the clock, hyperbolic step</td><td>The method</td></tr>
+                    <tr><td class="mono">flat3</td><td>The same at curvature 0</td><td>Primary baseline for C1</td></tr>
+                    <tr><td class="mono">hyper1</td><td>One channel of 12 particles</td><td>C3 ablation</td></tr>
+                    <tr><td class="mono">hyper3_free</td><td>Membrane off</td><td>Membrane ablation</td></tr>
+                    <tr><td class="mono">polystep</td><td>polystep 1.1.1 itself: <code>PolyStep</code> on the flattened problem, <code>PolyStepOptimizer</code> for B4</td><td>Second baseline</td></tr>
+                    <tr><td class="mono">random</td><td>Random search; random address order without replacement on B3</td><td>Floor; B3&rsquo;s control</td></tr>
+                </tbody>
+            </table></div>
+            <p>The smoke run completes every benchmark with every method at tiny sizes and untuned settings. Its numbers say nothing about any claim. For C2, every hyperbolic step of B1 and B2 logs its Klein length and the block&rsquo;s mean Klein radius, and each run reports their Spearman correlation.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="build-and-verify.html">&larr; Build and verification</a>
+                <a class="btn btn-ghost" href="../index.html#library">Back to the library &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 5 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+<script>
+// Module map: one list of modules and imports, drawn as columns
+(function () {
+    const C = { src: '#f5c542', geo: '#c084fc', sol: '#22d3ee', app: '#34d399', test: '#94a3b8' };
+    const N = [
+        { id: 'polystep', label: 'polystep 1.1.1', sub: 'solvers · rotations · baseline', k: 'src', x: 20, y: 40 },
+        { id: 'prng', label: 'prng.py', sub: 'xoshiro128**', k: 'geo', x: 20, y: 150 },
+        { id: 'hyperbolic', label: 'hyperbolic.py', sub: 'float sheet, charts', k: 'geo', x: 20, y: 250 },
+        { id: 'exact', label: 'exact.py', sub: 'Fractions, snap, pump', k: 'geo', x: 20, y: 340 },
+        { id: 'step', label: 'step.py', sub: 'PolyStepH, StepConfig', k: 'sol', x: 260, y: 150 },
+        { id: 'problems', label: 'problems.py', sub: 'B1–B4, Helix B', k: 'app', x: 260, y: 300 },
+        { id: 'channels', label: 'channels.py', sub: 'TriChannel', k: 'sol', x: 500, y: 220 },
+        { id: 'traces', label: 'run_traces.py', sub: 'traces/*.json', k: 'app', x: 740, y: 120 },
+        { id: 'bench', label: 'run_bench.py', sub: 'smoke · tune · run · decide', k: 'app', x: 740, y: 230 },
+        { id: 'tests', label: 'tests/', sub: '80 tests', k: 'test', x: 740, y: 340 }];
+    const E = [['polystep', 'step'], ['polystep', 'bench'], ['prng', 'exact'], ['prng', 'step'], ['hyperbolic', 'step'], ['exact', 'step'], ['hyperbolic', 'problems'],
+        ['hyperbolic', 'channels'], ['exact', 'channels'], ['step', 'channels'], ['problems', 'channels'], ['step', 'traces'], ['channels', 'traces'], ['problems', 'traces'],
+        ['channels', 'bench'], ['problems', 'bench'], ['step', 'tests'], ['channels', 'tests'], ['problems', 'tests']];
+    const W = 200, H = 52, by = Object.fromEntries(N.map(n => [n.id, n]));
+    let s = '<defs><marker id="ma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>';
+    E.forEach(([a, b]) => { const A = by[a], B = by[b]; const x1 = A.x + W, y1 = A.y + H / 2, x2 = B.x, y2 = B.y + H / 2;
+        const d = A.x === B.x ? `M${x1},${y1} C${x1 + 40},${y1} ${x1 + 40},${y2} ${x1},${y2}` : `M${x1},${y1} C${(x1 + x2) / 2},${y1} ${(x1 + x2) / 2},${y2} ${x2},${y2}`;
+        s += `<path class="map-edge" data-a="${a}" data-b="${b}" d="${d}" stroke="${C[A.k]}" stroke-opacity="0.55" marker-end="url(#ma)"/>`; });
+    N.forEach(n => { s += `<g class="map-node" data-id="${n.id}" tabindex="0" transform="translate(${n.x},${n.y})"><rect width="${W}" height="${H}" rx="10" fill="rgba(15,23,42,.95)" stroke="${C[n.k]}" stroke-width="1.6"/>` +
+        `<text x="14" y="21" fill="#f8fafc" font-family="Fira Code, monospace" font-size="13" font-weight="600">${n.label}</text><text x="14" y="39" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">${n.sub}</text></g>`; });
+    const svg = document.getElementById('mod-map'); svg.innerHTML = s;
+    const lit = id => { svg.classList.toggle('dim', !!id); svg.querySelectorAll('.map-node').forEach(g => g.classList.toggle('lit', !!id && (g.dataset.id === id || E.some(e => (e[0] === id && e[1] === g.dataset.id) || (e[1] === id && e[0] === g.dataset.id)))));
+        svg.querySelectorAll('.map-edge').forEach(p => p.classList.toggle('lit', p.dataset.a === id || p.dataset.b === id)); };
+    svg.querySelectorAll('.map-node').forEach(g => { g.addEventListener('mouseenter', () => lit(g.dataset.id)); g.addEventListener('focus', () => lit(g.dataset.id)); g.addEventListener('mouseleave', () => lit(null)); g.addEventListener('blur', () => lit(null)); });
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

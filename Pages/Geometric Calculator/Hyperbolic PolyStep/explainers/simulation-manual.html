@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Manual - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 7 of Hyperbolic PolyStep: the operating manual for the Phase 3 simulation page. Every control, panel and readout, how they connect to the browser core, the exact track and its register pump, and experiments to run with what to expect.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <style>
+        kbd { font: 0.8rem var(--mono); border: 1px solid #334155; border-radius: 4px; padding: 0 5px; background: #0f172a; }
+        .exp { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 12px 0; background: rgba(11, 18, 34, 0.7); }
+        .exp h4 { margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+        .exp h4 a { font: 0.78rem var(--mono); }
+        .exp p { margin: 0.35rem 0 0; }
+        .exp .saw { font: 0.82rem var(--mono); color: #cbd5e1; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 7 &middot; Phase 3</div>
+    <h1>The Simulation Manual</h1>
+    <p class="lede">How to drive <a href="../simulation.html">the simulation page</a>: three channels of the hyperbolic step on the zero-point clock, solving one of four problems while Helix B certifies their answers exactly. Every control, every panel and every readout, with experiments to run.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="../simulation.html">Open the simulation</a>
+        <a class="btn btn-ghost" href="#wiring">How it is wired</a>
+        <a class="btn btn-ghost" href="#experiments">Experiments</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat"><b>16</b> controls &middot; <b>6</b> panels</span>
+        <span class="stat"><b>4</b> problems &middot; <b>3</b> clutches &middot; <b>2</b> geometries</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#start">2. Quick start</a></li>
+            <li><a href="#wiring">3. How it is wired</a></li>
+            <li><a href="#controls">4. Controls</a></li>
+            <li><a href="#panels">5. Panels and readouts</a></li>
+            <li><a href="#exact">6. The exact track</a></li>
+            <li><a href="#experiments">7. Experiments</a></li>
+            <li><a href="#script">8. Scripting and links</a></li>
+            <li><a href="#limits">9. Reading results honestly</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#start">Quick start</a></li><li><a href="#wiring">How it is wired</a></li><li><a href="#controls">Controls</a></li>
+            <li><a href="#panels">Panels and readouts</a></li><li><a href="#exact">The exact track</a></li><li><a href="#experiments">Experiments</a></li><li><a href="#script">Scripting and links</a></li><li><a href="#limits">Reading results honestly</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The simulation is the end of the build: it runs <a href="core-reference.html">the browser core</a>, which reproduces the <a href="reference-guide.html">Python reference</a>, and shows the <a href="channels.html">three channels</a>, the <a href="hyperbolic-step.html">step</a>, the memory and Helix B working together. Its results feed the proofs-and-results page of Phase 4.</p>
+            <div data-hp-map="focus" data-node="sim"></div>
+        </section>
+
+        <section class="chapter" id="start">
+            <div class="chapter-num">02</div>
+            <h2>Quick start</h2>
+            <ol class="steps">
+                <li><strong>Open the page.</strong> It opens paused at frame 0 with B1 (60 vertices) built, and replays six of the reference&rsquo;s trace files through the core. The Self-test panel should read <em>105/105 match</em> within a second or two.</li>
+                <li><strong>Press Play</strong> (or <kbd>Space</kbd>). The clock turns, each channel steps at its offload frame, and every 24 frames a zero point certifies the three incumbents and writes a memory word.</li>
+                <li><strong>Watch the answer.</strong> On B1, red edges are conflicts in the best certified colouring. The count falls as the channels work. The run pauses itself when the evaluation budget is spent.</li>
+                <li><strong>Change something.</strong> Every setting except speed rebuilds the run from frame 0, so two runs with the same settings and seed are identical.</li>
+            </ol>
+            <div class="callout tryit"><span class="label">Keys</span>
+                <p><kbd>Space</kbd> plays or pauses, <kbd>.</kbd> advances one frame and <kbd>z</kbd> jumps to the next zero point. Keys are ignored while a control has focus.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="wiring">
+            <div class="chapter-num">03</div>
+            <h2>How it is wired</h2>
+            <p class="chapter-intro">The page holds no solver logic of its own. Controls build objects from the core, the core advances them, and the panels read them. The chart shows which control reaches which object and which panel reads which object.</p>
+            <figure><div class="map-wrap">
+<svg viewBox="0 0 900 450" role="img" aria-label="Wiring of the simulation page: controls feed the problem instance, the three solvers and the TriChannel, which feed the six panels">
+<defs><marker id="wa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<g font-family="Inter, system-ui, sans-serif">
+<text x="20" y="12" fill="#64748b" font-size="11" font-family="Fira Code, monospace">CONTROLS</text><text x="345" y="12" fill="#64748b" font-size="11" font-family="Fira Code, monospace">THE CORE (hyperbolic_core.js)</text><text x="690" y="12" fill="#64748b" font-size="11" font-family="Fira Code, monospace">PANELS</text>
+<g transform="translate(20,20)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">Play · +1 frame · zero point</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">speed, keys Space . z</text></g>
+<g transform="translate(20,80)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">problem · size · objective</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">B1–B4 and their sizes</text></g>
+<g transform="translate(20,140)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">seed</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">instance and generators</text></g>
+<g transform="translate(20,200)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">geometry · ε · r · particles</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">the step</text></g>
+<g transform="translate(20,260)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">exact track</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">B1, B2 hyperbolic</text></g>
+<g transform="translate(20,320)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">clutch · μ</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">what the zero point does</text></g>
+<g transform="translate(20,380)"><rect width="200" height="44" rx="9" fill="rgba(15,23,42,.95)" stroke="#334155"/><text x="12" y="19" fill="#f8fafc" font-size="12.5" font-weight="600">Run all seven</text><text x="12" y="35" fill="#94a3b8" font-size="10.5" font-family="Fira Code, monospace">self-test button</text></g>
+<g transform="translate(345,50)"><rect width="220" height="64" rx="11" fill="rgba(15,23,42,.95)" stroke="#34d399" stroke-width="1.5"/><text x="14" y="29.0" fill="#f8fafc" font-size="13.5" font-weight="700">Problem instance</text><text x="14" y="46.0" fill="#cbd5e1" font-size="11" font-family="Fira Code, monospace">objective · decoder · Helix B</text></g>
+<g transform="translate(345,160)"><rect width="220" height="64" rx="11" fill="rgba(15,23,42,.95)" stroke="#22d3ee" stroke-width="1.5"/><text x="14" y="29.0" fill="#f8fafc" font-size="13.5" font-weight="700">3 × PolyStepH</text><text x="14" y="46.0" fill="#cbd5e1" font-size="11" font-family="Fira Code, monospace">channels A, B, C: the step</text></g>
+<g transform="translate(345,270)"><rect width="220" height="64" rx="11" fill="rgba(15,23,42,.95)" stroke="#f5c542" stroke-width="1.5"/><text x="14" y="29.0" fill="#f8fafc" font-size="13.5" font-weight="700">TriChannel</text><text x="14" y="46.0" fill="#cbd5e1" font-size="11" font-family="Fira Code, monospace">clock · clutch · memory · pump</text></g>
+<g transform="translate(345,376)"><rect width="220" height="52" rx="11" fill="rgba(15,23,42,.95)" stroke="#94a3b8" stroke-width="1.5"/><text x="14" y="23.0" fill="#f8fafc" font-size="13.5" font-weight="700">Reference traces</text><text x="14" y="40.0" fill="#cbd5e1" font-size="11" font-family="Fira Code, monospace">parity.js against reference/</text></g>
+<g transform="translate(690,40)"><rect width="190" height="40" rx="9" fill="rgba(8,47,73,.45)" stroke="#0e7490"/><text x="14" y="25" fill="#f8fafc" font-size="13" font-weight="600">Poincaré view</text></g>
+<g transform="translate(690,110)"><rect width="190" height="40" rx="9" fill="rgba(8,47,73,.45)" stroke="#0e7490"/><text x="14" y="25" fill="#f8fafc" font-size="13" font-weight="600">The answer</text></g>
+<g transform="translate(690,180)"><rect width="190" height="40" rx="9" fill="rgba(8,47,73,.45)" stroke="#0e7490"/><text x="14" y="25" fill="#f8fafc" font-size="13" font-weight="600">The clock</text></g>
+<g transform="translate(690,250)"><rect width="190" height="40" rx="9" fill="rgba(8,47,73,.45)" stroke="#0e7490"/><text x="14" y="25" fill="#f8fafc" font-size="13" font-weight="600">Channels</text></g>
+<g transform="translate(690,320)"><rect width="190" height="40" rx="9" fill="rgba(8,47,73,.45)" stroke="#0e7490"/><text x="14" y="25" fill="#f8fafc" font-size="13" font-weight="600">Log</text></g>
+<g transform="translate(690,384)"><rect width="190" height="40" rx="9" fill="rgba(8,47,73,.45)" stroke="#0e7490"/><text x="14" y="25" fill="#f8fafc" font-size="13" font-weight="600">Self-test</text></g>
+<g fill="none" stroke="#64748b" stroke-width="1.3" marker-end="url(#wa)" opacity=".85">
+<path d="M220,42 C282,42 282,302 343,302"/>
+<path d="M220,102 C282,102 282,82 343,82"/>
+<path d="M220,162 C282,162 282,82 343,82"/>
+<path d="M220,162 C282,162 282,192 343,192"/>
+<path d="M220,222 C282,222 282,192 343,192"/>
+<path d="M220,222 C282,222 282,82 343,82"/>
+<path d="M220,282 C282,282 282,192 343,192"/>
+<path d="M220,282 C282,282 282,302 343,302"/>
+<path d="M220,342 C282,342 282,302 343,302"/>
+<path d="M220,402 C282,402 282,402 343,402"/>
+<path d="M565,82 C626,82 626,130 688,130"/>
+<path d="M565,82 C626,82 626,60 688,60"/>
+<path d="M565,192 C626,192 626,60 688,60"/>
+<path d="M565,302 C626,302 626,200 688,200"/>
+<path d="M565,302 C626,302 626,270 688,270"/>
+<path d="M565,302 C626,302 626,340 688,340"/>
+<path d="M565,302 C626,302 626,130 688,130"/>
+<path d="M565,402 C626,402 626,404 688,404"/>
+<path d="M565,402 C626,402 626,340 688,340"/>
+</g></g></svg>
+            </div><figcaption>Controls (left) build the core&rsquo;s objects (centre); panels (right) only read them. The page wraps each solver&rsquo;s step to keep its last polytope for the Poincar&eacute; view.</figcaption></figure>
+            <p>A build makes one problem instance from <em>problem</em>, <em>size</em>, <em>objective</em> and <em>seed</em>; three <code>PolyStepH</code> solvers, one per channel, each with its own generator (seeded \(1000\,s + 10 + j\)) and its own starting particles (seeded \(1000\,s + 20 + j\)); and one <code>TriChannel</code> that owns the clock. Play calls <code>TriChannel.run({ frames })</code> in batches of at most 24 frames, spending no more than about 28&nbsp;ms per animation frame, so the page stays responsive at any speed.</p>
+        </section>
+
+        <section class="chapter" id="controls">
+            <div class="chapter-num">04</div>
+            <h2>Controls</h2>
+            <p class="chapter-intro">The control bar stays at the top of the screen while you scroll. Changing any setting except speed pauses the run and rebuilds it.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Play / Pause</strong></td><td>Runs the clock at the chosen speed. Pauses itself when the evaluation budget is reached.</td></tr>
+                    <tr><td><strong>+1 frame</strong></td><td>Advances exactly one frame. A channel steps only on its offload frame, so most single frames change the clock and nothing else.</td></tr>
+                    <tr><td><strong>&rarr; zero point</strong></td><td>Advances to the next frame with \(n = F \bmod 24 = 0\), where certification, the memory word and the clutch happen.</td></tr>
+                    <tr><td><strong>Reset</strong></td><td>Rebuilds the current settings at frame 0.</td></tr>
+                    <tr><td><strong>speed</strong></td><td>Frames per second, on a log scale from 1 to about 2,500. The default is 40. At high speeds the page runs as many frames as fit in its time slice, so the true rate depends on the problem.</td></tr>
+                    <tr><td><strong>problem</strong></td><td>B1 planted 3-colouring, B2 MAX-3-SAT at clause ratio 4.27 (polystep&rsquo;s own generator), B3 address search in the norm-5 quaternion tree, B4 a hard-threshold network on hierarchical data. Choosing one loads its defaults (below).</td></tr>
+                    <tr><td><strong>size</strong></td><td>B1: 30, 60 or 120 vertices. B2: 100, 200 or 500 variables. B3: depth 4, 6 or 8 (750, 18,750 or 468,750 addresses). B4: 500 or 2,000 training points.</td></tr>
+                    <tr><td><strong>objective</strong> (B3 only)</td><td><em>graded</em> scores a point by its tree distance to the target; <em>membership</em> only says whether it is the target, the control from the <a href="benchmarks.html">preregistration</a>.</td></tr>
+                    <tr><td><strong>geometry</strong></td><td><em>hyperbolic</em> runs the step on the hyperboloid; <em>curvature 0</em> runs the same step in flat space, the comparison every benchmark makes.</td></tr>
+                    <tr><td><strong>clutch</strong></td><td>What the zero point does after certifying. <em>free</em>: nothing. <em>hold</em>: a channel with three zero points without improvement rests (takes no steps) until another channel improves, and at least one channel always runs. <em>membrane</em>: every channel moves a fraction \(\mu\) of the way towards the weighted common point of the three incumbents. B3 cannot use the membrane, because its particles live in different charts, and runs it as <em>free</em>.</td></tr>
+                    <tr><td><strong>\(\mu\)</strong></td><td>The membrane&rsquo;s pull, from 0 to 0.8. Each channel&rsquo;s particles move by one rigid motion (a transvection in hyperbolic factors) that takes its incumbent \(\mu\) of the way to the common point.</td></tr>
+                    <tr><td><strong>\(\varepsilon\)</strong></td><td>The softmax temperature that turns the polytope&rsquo;s corner costs into weights. Small \(\varepsilon\) chases the best corner; large \(\varepsilon\) averages.</td></tr>
+                    <tr><td><strong>r</strong></td><td>The step radius: corners sit at hyperbolic distance r from the particle (H2: a step never moves a point further than r).</td></tr>
+                    <tr><td><strong>particles</strong></td><td>2, 4 or 8 particles per channel. Each particle costs \(2d\) evaluations per factor it steps.</td></tr>
+                    <tr><td><strong>seed</strong></td><td>Seeds the instance and, through the formulas above, every generator. Same settings and same seed give the same run.</td></tr>
+                    <tr><td><strong>exact track</strong></td><td>B1 and B2, hyperbolic only. Corners come from exact Cayley rotations and rational step lengths, states are snapped to the \(2^{-24}\) Poincar&eacute; grid and held as rationals, one factor moves per step, and every 720-frame register closes with the pump check (chapter 6).</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Problem defaults</th><th>\(\varepsilon\)</th><th>r</th><th>factors per step</th><th>clutch</th><th>budget (evaluations)</th></tr></thead>
+                <tbody>
+                    <tr><td>B1 3-colouring</td><td>0.5</td><td>0.6</td><td>8</td><td>membrane</td><td>400 &times; n</td></tr>
+                    <tr><td>B2 MAX-3-SAT</td><td>0.05</td><td>0.5</td><td>4</td><td>membrane</td><td>300 &times; n</td></tr>
+                    <tr><td>B3 tree address</td><td>0.5</td><td>2.0</td><td>all (one)</td><td>free</td><td>the number of addresses at that depth</td></tr>
+                    <tr><td>B4 threshold net</td><td>0.05</td><td>0.3</td><td>6</td><td>membrane</td><td>200,000</td></tr>
+                </tbody>
+            </table></div>
+            <p>B3&rsquo;s budget equals the number of addresses, so the search is allowed exactly what exhaustive enumeration would need.</p>
+        </section>
+
+        <section class="chapter" id="panels">
+            <div class="chapter-num">05</div>
+            <h2>Panels and readouts</h2>
+            <h3>The Poincar&eacute; view</h3>
+            <p>What it draws depends on the problem.</p>
+            <ul>
+                <li><strong>B1 and B2</strong>: one factor of the product space, as a Poincar&eacute; disk (or, at curvature 0, the plane scaled so the horizon of radius 8 is the edge). Solid dots are each channel&rsquo;s particles; rings are each channel&rsquo;s incumbent. The faint spokes are the last step&rsquo;s polytope: geodesics from each particle to its \(2d\) corners, with corner dots sized by their softmax weight. On B1 the three tinted sectors are the three colours; a vertex takes the colour of the sector its point lies in. On B2 the factor is a point of \(H^8\) and the view shows its first two axes; a variable is true when its point lies on the positive side. The view starts on factor 0; on B1, click a vertex in the answer panel to show its factor. The spokes appear only when the last step moved the factor on show, so with 8 of 60 factors per step they come and go.</li>
+                <li><strong>B3</strong>: the tree drawn in the frame of channel A&rsquo;s best particle&rsquo;s anchor node, one level up and three down. Every edge is a geodesic, so the tree fans out towards the rim, as trees do in hyperbolic space. The gold path leads to the target. The dots are particles anchored at this node.</li>
+                <li><strong>B4</strong>: the eight class prototypes of the best certified network (rings, numbered) and up to 250 test inputs mapped through its encoder, coloured by true class. The network assigns each input to its nearest prototype.</li>
+            </ul>
+            <h3>The clock</h3>
+            <p>The dial shows the eight spinor stages (Snap, Seed, Onload, Project, Invert, Fold, Offload, Index) with the current one lit, \(k = F \bmod 8\). The three inner arcs are the branches, \(j = F \bmod 3\). Beside the dial, each channel&rsquo;s packet: in flight for the 12 frames from its onload (\(n\) = 18, 10, 2) to its offload (\(n\) = 6, 22, 14), where it steps. The strip below lays out the whole 24-frame joint cycle, with &#9660; at each offload. The readouts give the register (720 frames), the spinor cycle (90 per register), the joint cycle (30 per register) and, on the exact track, the pump result. The bar fills through the current register.</p>
+            <h3>The answer</h3>
+            <p>Helix B&rsquo;s view: the best certified answer so far, decoded and checked exactly.</p>
+            <ul>
+                <li><strong>B1</strong>: the graph on a circle, vertices coloured by their decoded colour, conflicting edges in red. <em>conflicts (exact)</em> is the integer count; 0 means a proper colouring.</li>
+                <li><strong>B2</strong>: one cell per variable (green true), and the share of clauses satisfied. <em>unsatisfied clauses (exact)</em> is the integer count.</li>
+                <li><strong>B3</strong>: the target address and each channel&rsquo;s decoded incumbent, digit by digit; green digits agree with the target from the root. <em>best tree distance</em> 0 means the target was found, and <em>certified by right-division</em> confirms the decoded word divides back out of its quaternion of norm \(5^L\).</li>
+                <li><strong>B4</strong>: the confusion matrix on held-out test data (rows true class, columns predicted), test accuracy, accuracy at the coarse level of the class tree, and the exact count of training errors, which is what Helix B certifies.</li>
+            </ul>
+            <h3>Channels</h3>
+            <p>One row per channel: steps taken, evaluations used, the incumbent&rsquo;s objective value (the search&rsquo;s own, possibly graded, score), its best certified cost, how many zero points since it last improved (<em>stale</em>), and whether it is running or resting. The chart plots each channel&rsquo;s certified cost at every zero point. Below it: evaluations against the budget, the number of zero points, the memory chain and the largest move the membrane made at the last zero point.</p>
+            <p>The memory words list the latest eight records: frame, the three certified costs, their sum Y, the winning channel and the hash. Each hash is SHA-256 of the record together with the previous hash, cut to 16 hex digits. On every redraw the page recomputes the whole chain from the first word and shows <em>intact</em> only if every hash follows.</p>
+            <h3>Self-test and log</h3>
+            <p>The self-test replays the reference&rsquo;s trace files through the core on this page, exactly as <a href="core-reference.html#parity">the core reference</a> does: 105 lines from six files on load, and all 169 with <em>Run all seven</em>, which adds three channels over two full exact registers. The log lists builds, every improving zero point, channels resting and waking, closed registers and the self-test result, newest first.</p>
+        </section>
+
+        <section class="chapter" id="exact">
+            <div class="chapter-num">06</div>
+            <h2>The exact track</h2>
+            <p class="chapter-intro">With the exact track on, every state is a rational point on the sheet, so its history can be checked exactly. Each register is checked with the paper&rsquo;s 720 &rarr; 72 &rarr; 10 pump.</p>
+            <p>Whenever a particle&rsquo;s factor moves, at a step or in the membrane, the core records the exact Lorentz matrix that moved it, \(\Delta = L_{x_\text{new}} L_{x_\text{old}}^{-1}\), in that frame&rsquo;s slot. Frames where the factor did not move hold the identity. At frame 720 it forms, for every channel, particle and factor:</p>
+            <p>2397P = \Delta_{720}\cdots\Delta_1,\qquad Q_{10} = \prod_{m} \delta_m,\qquad Q_8 = \prod_{\ell}\Big(\prod_{m \in \text{block } \ell} \delta_m\Big),\qquad H = Q_8\,Q_{10}\,P,2397</p>
+            <p>where \(\delta_m\) is the inverse of the product over the \(m\)-th run of ten frames. It then checks \(Q_{10} = Q_8 = H = P^{-1}\) and that \(P\) carries the register&rsquo;s starting point exactly to its final point. The clock panel&rsquo;s pill reads <em>closed with H = P&#8315;&sup1;</em> only when every check holds for every factor of every particle of every channel.</p>
+            <div class="callout note"><span class="label">Cost, and how Phase 3 cut it</span>
+                <p>With the membrane on, every factor moves at every zero point, so a register holds about 30 non-identity matrices per factor. For B1 with 30 vertices and 4 particles that means 360 pumps per register. The first version reduced every rational entry after every product. A register then took 48 seconds, 44 of them in the pump, nearly all spent computing greatest common divisors. The core now runs the pump on integer matrices over one common denominator, never reduces them, and compares by cross-multiplication. It also skips identity frames, builds the Lorentz inverse as \(J L^\top J\) without multiplying, and sums each matrix entry before reducing it once. A whole register now takes about 2.7 seconds, half a second of it in the pump at frame 720.</p>
+            </div>
+            <div class="callout limit"><span class="label">What the pump does and does not show</span>
+                <p>It shows that the exact track&rsquo;s bookkeeping is closed: the states recorded across a register compose to the motion actually made, and the paper&rsquo;s regrouping identity holds exactly in the Lorentz group (H7). It says nothing about the quality of the answer. That is Helix B&rsquo;s job.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="experiments">
+            <div class="chapter-num">07</div>
+            <h2>Experiments</h2>
+            <p class="chapter-intro">Each link opens the simulation with the settings filled in. The results quoted are single runs with seed 1000 to the full budget, computed with the same core. They show what to look for. They are not evidence for or against any claim (chapter 9).</p>
+
+            <div class="exp"><h4>1. Hyperbolic against flat <a href="../simulation.html?prob=B1&amp;size=60">B1 hyperbolic</a> <a href="../simulation.html?prob=B1&amp;size=60&amp;geo=flat">B1 flat</a></h4>
+                <p>Run both to the budget and compare the certified conflicts. Then do the same at <a href="../simulation.html?prob=B2&amp;size=100">B2, n = 100</a> and its <a href="../simulation.html?prob=B2&amp;size=100&amp;geo=flat">flat twin</a>.</p>
+                <p class="saw">seed 1000: B1 n=60 hyperbolic 4, flat 2 · B1 n=30 hyperbolic 1, flat 2 · B2 n=100 hyperbolic 21, flat 19 unsatisfied</p>
+                <p>Single runs show no consistent edge either way. Whether the hyperbolic step beats curvature 0 at equal budget is conjecture C1, tested on B1, B3 and B4. It is decided by the preregistered runs over many seeds, not by any one run here.</p></div>
+
+            <div class="exp"><h4>2. The clutch <a href="../simulation.html?prob=B1&amp;size=60&amp;clutch=membrane">membrane</a> <a href="../simulation.html?prob=B1&amp;size=60&amp;clutch=free">free</a> <a href="../simulation.html?prob=B1&amp;size=60&amp;clutch=hold">hold</a></h4>
+                <p>With <em>hold</em>, watch the Channels panel: stalled channels rest and spend no evaluations, so the same budget lasts more frames. With <em>membrane</em>, watch the Poincar&eacute; view jump at each zero point as the channels are pulled together.</p>
+                <p class="saw">seed 1000, B1 n=60: membrane 4, free 6, hold 4 conflicts · hold used 2,390 frames for the same 24,064 evaluations, against 1,502</p></div>
+
+            <div class="exp"><h4>3. The graded objective and its control <a href="../simulation.html?prob=B3&amp;size=6">B3 graded</a> <a href="../simulation.html?prob=B3&amp;size=6&amp;obj=membership">B3 membership</a></h4>
+                <p>The same tree, the same target, the same budget. Graded scoring tells the search how far it is from the target; membership only tells it whether it is there.</p>
+                <p class="saw">seed 1000, depth 6: graded found the target (distance 0, first certified at frame 312); membership ended at distance 12, the largest possible at depth 6 (not even the first digit agrees). At depth 8 membership ended at 16, again the largest.</p>
+                <p>A gradient-free search still needs a signal. Against membership alone, no method can beat blind sampling (Prop 5.13 of the paper), and the preregistration uses that as a check on the implementation: under membership, evaluations to the target must match \((N + 1)/2\), and anything faster is treated as a bug.</p></div>
+
+            <div class="exp"><h4>4. Temperature <a href="../simulation.html?prob=B2&amp;size=100&amp;eps=0.05">B2, &epsilon; = 0.05</a> <a href="../simulation.html?prob=B2&amp;size=100&amp;eps=0.5">B2, &epsilon; = 0.5</a></h4>
+                <p>Watch the corner dots in the Poincar&eacute; view. At small \(\varepsilon\) one corner takes nearly all the weight; at large \(\varepsilon\) the weights spread and the step averages.</p>
+                <p class="saw">seed 1000, n=100: &epsilon; 0.05 ended at 21 unsatisfied, &epsilon; 0.5 at 23</p></div>
+
+            <div class="exp"><h4>5. Close a register exactly <a href="../simulation.html?prob=B1&amp;size=30&amp;exact=1&amp;P=2">B1, n = 30, exact</a></h4>
+                <p>Press <kbd>z</kbd> repeatedly, or play at high speed, until frame 720. The page pauses for about half a second at frame 720 while it runs the pump. The log then shows <em>register 1 closed: pump Q10 = Q8 = H = P^-1 exactly</em> and the clock pill turns green.</p></div>
+
+            <div class="exp"><h4>6. The self-test, in full <a href="../simulation.html">open</a></h4>
+                <p>Press <em>Run all seven</em>. All 169 lines should match, including the three-channel trace, whose memory hashes and two closed registers must agree with Python&rsquo;s bit for bit.</p></div>
+
+            <div class="exp"><h4>7. Training without gradients <a href="../simulation.html?prob=B4&amp;size=500">B4, 500 points</a></h4>
+                <p>The network has hard thresholds, so it has no useful gradient. Watch the training errors fall at the zero points and the prototypes separate in the Poincar&eacute; view. With eight classes, chance is 12.5%.</p></div>
+        </section>
+
+        <section class="chapter" id="script">
+            <div class="chapter-num">08</div>
+            <h2>Scripting and links</h2>
+            <p class="chapter-intro">The page reads its settings from the address and exposes its run to the browser console.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Address parameter</th><th>Values</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">prob</td><td>B1, B2, B3, B4</td></tr>
+                    <tr><td class="mono">size</td><td>a value from that problem&rsquo;s size list (30/60/120, 100/200/500, 4/6/8, 500/2000)</td></tr>
+                    <tr><td class="mono">geo</td><td>hyperbolic, flat</td></tr>
+                    <tr><td class="mono">clutch</td><td>membrane, free, hold</td></tr>
+                    <tr><td class="mono">obj</td><td>graded, membership</td></tr>
+                    <tr><td class="mono">mu, eps, r</td><td>numbers, clamped to the sliders&rsquo; ranges (eps 0.01&ndash;2)</td></tr>
+                    <tr><td class="mono">P, seed</td><td>2, 4 or 8 particles; a seed from 1 to 999,999</td></tr>
+                    <tr><td class="mono">exact, play</td><td>1 turns the exact track on (where allowed) or starts playing at once</td></tr>
+                </tbody>
+            </table></div>
+<pre class="code" style="background:#020617;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;overflow-x:auto;font:0.84rem/1.55 var(--mono);color:#cbd5e1">HPSim.advance(720)          // run 720 frames now
+HPSim.render()              // redraw the panels
+HPSim.sim.tc.memory         // every memory word: { F, costs, Y, best, hash }
+HPSim.sim.tc.registers      // [{ F: 720, pump_identity: true }, ...]
+HPSim.sim.states[0].X       // channel A's particles, float coordinates
+document.body.dataset.frame // the current frame, also set for tests</pre>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">09</div>
+            <h2>Reading results honestly</h2>
+            <div class="callout limit"><span class="label">What the page is and is not</span>
+                <ul>
+                    <li><strong>One run is an anecdote.</strong> The page runs one seed at untuned defaults. The benchmark decisions come from the preregistered runs of the Python reference: many seeds, tuned on separate seeds, with fixed decision rules. Those runs are Phase 4.</li>
+                    <li><strong>The certificates are exact; the search is not guaranteed.</strong> A certified 0 is a proof that the answer is correct. A certified 4 says only that the search found nothing better within its budget.</li>
+                    <li><strong>B4 runs are the browser&rsquo;s own.</strong> Its data come from Box&ndash;Muller sampling, which is not traced, so a B4 run here need not match the reference&rsquo;s with the same seed.</li>
+                    <li><strong>Sizes are small.</strong> The core is plain JavaScript with BigInt rationals. The page shows tens to hundreds of variables, not the reference&rsquo;s largest cells.</li>
+                    <li><strong>No convergence claim.</strong> The paper&rsquo;s convergence theorem covers polystep&rsquo;s theory mode, not these settings, and its hyperbolic analogue is open (ledger row T1).</li>
+                </ul>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="core-reference.html">&larr; The browser core</a>
+                <a class="btn btn-ghost" href="../simulation.html">Open the simulation &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 7 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

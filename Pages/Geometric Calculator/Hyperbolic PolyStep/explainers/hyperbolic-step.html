@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hyperbolic Step - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 1 of Hyperbolic PolyStep: polystep's gradient-free step, the same step on the hyperboloid with exact rational vertices and a Klein-model centroid, a live Poincaré and Klein diagram, the correspondence with polystep's code, and the properties H1 to H7.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 1</div>
+    <h1>The Hyperbolic Step</h1>
+    <p class="lede">polystep&rsquo;s gradient-free step, and the same step on the hyperboloid: corners along geodesics, every corner an exact rational point, and a centroid that is an ordinary weighted average in the Klein model.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#lab">Try the live diagram</a>
+        <a class="btn btn-ghost" href="../index.html#map">System map</a>
+        <a class="btn btn-ghost" href="#properties">H1&ndash;H7</a>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#euclid">2. polystep&rsquo;s step</a></li>
+            <li><a href="#hyper">3. The step on the hyperboloid</a></li>
+            <li><a href="#lab">4. Live diagram</a></li>
+            <li><a href="#exact">5. The exact route</a></li>
+            <li><a href="#code">6. Correspondence with polystep</a></li>
+            <li><a href="#properties">7. Properties H1&ndash;H7</a></li>
+            <li><a href="#not">8. What it does not promise</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#euclid">polystep&rsquo;s step</a></li><li><a href="#hyper">The step on the hyperboloid</a></li>
+            <li><a href="#lab">Live diagram</a></li><li><a href="#exact">The exact route</a></li><li><a href="#code">Correspondence with polystep</a></li>
+            <li><a href="#properties">Properties H1&ndash;H7</a></li><li><a href="#not">What it does not promise</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The step draws on five ideas (left) and feeds the three channels, the Python reference and the proofs page (right). Click any box to go to its explainer.</p>
+            <div data-hp-map="focus" data-node="step"></div>
+        </section>
+
+        <section class="chapter" id="euclid">
+            <div class="chapter-num">02</div>
+            <h2>polystep&rsquo;s step</h2>
+            <p class="chapter-intro">polystep improves a set of particles (candidate parameter vectors) without gradients. One step, for one particle \(x \in \mathbb{R}^d\):</p>
+            <ol class="steps">
+                <li><strong>Corners.</strong> Take the \(2d\) corners of the orthoplex, \(u_k = \pm e_i\). Turn them by a random rotation \(R\) (Haar on \(SO(d)\)) and scale by the step radius \(r\): \(V_k = x + r\,R\,u_k\).</li>
+                <li><strong>Probes and costs.</strong> Score the loss at probe points along each direction, \(x + s_j\,\rho\,R\,u_k\), and average: \(C_k\). With the defaults (one probe, \(\rho = 2r\)) the probe sits on the corner.</li>
+                <li><strong>Weights.</strong> \(w = \operatorname{softmax}(-C/\varepsilon)\), or Sinkhorn, which also balances the weights across particles.</li>
+                <li><strong>Move.</strong> \(x' = \sum_k w_k V_k\), the weighted barycentre of the corners.</li>
+            </ol>
+            <p>Because the corners are a finite distance away, the step crosses flat regions of losses built from thresholds, rounding or argmax, where gradients are zero or undefined. That is why it trains spiking and quantized networks.</p>
+            <div class="callout note"><span class="label">What polystep guarantees, and what it does not</span>
+                <p>Its paper (TMLR 2026) proves a convergence theorem under stated conditions. polystep&rsquo;s experiments call this setting <em>theory mode</em>: a square-summable, non-summable step radius \(r_t = r_0 (t+1)^{-(1/2+\gamma)}\) (its <code>PowerDecay</code>, \(0 < \gamma \le 1/2\)), a flat &epsilon; and a small probe-radius jitter. Its default settings (adaptive radii, quadratic models, momentum) are outside that theorem. Its README says they &ldquo;do not inherit classical direct-search or trust-region guarantees&rdquo;, and they are judged by experiment. Specialised solvers beat it on MAX-SAT, and backpropagation is faster on differentiable models.</p>
+                <p>Whether the theorem carries over to the hyperbolic step is an open question of this project (ledger row T1). It is not assumed here.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="hyper">
+            <div class="chapter-num">03</div>
+            <h2>The step on the hyperboloid</h2>
+            <p class="chapter-intro">Hyperbolic space as the upper sheet of a hyperboloid in Minkowski space, with the Lorentz form</p>
+            $$\langle a,b\rangle = -a_0b_0 + a_1b_1 + \dots + a_db_d,\qquad \mathbb{H}^d = \{\,y : \langle y,y\rangle = -1,\ y_0 > 0\,\},\qquad \cosh d(y,z) = -\langle y,z\rangle.$$
+            <p>Its isometries are Lorentz matrices. The origin is \(o = (1,0,\dots,0)\), and the boost that carries \(o\) to a point \(x\) is</p>
+            $$L_x = \begin{pmatrix} x_0 & \bar x^{\top} \\ \bar x & I + \dfrac{\bar x\,\bar x^{\top}}{1+x_0}\end{pmatrix},\qquad \bar x = (x_1,\dots,x_d).$$
+            <ol class="steps">
+                <li><strong>Corners along geodesics.</strong> Turn the orthoplex at the origin and walk a distance \(r\) along each direction, then carry the result to \(x\):
+                    $$V_k = L_x\begin{pmatrix}\cosh r\\ \sinh r\;R\,u_k\end{pmatrix}.$$
+                    Each \(V_k\) is at hyperbolic distance exactly \(r\) from \(x\). Probes are the same with \(s_j\rho\) in place of \(r\).</li>
+                <li><strong>Costs.</strong> Decode each probe into an answer (a colour, a truth assignment, a network&rsquo;s weights; see <a href="benchmarks.html#decoders">the decoders</a>) and score it as a black box. Nothing here needs a gradient.</li>
+                <li><strong>Weights.</strong> Unchanged: \(w = \operatorname{softmax}(-C/\varepsilon)\) or Sinkhorn. The solvers only ever see the cost matrix, so polystep&rsquo;s own solvers are reused as they are.</li>
+                <li><strong>Centroid.</strong> Average in Minkowski space and return to the sheet:
+                    $$s = \sum_k w_k V_k,\qquad x' = \frac{s}{\sqrt{-\langle s,s\rangle}}.$$
+                    In the Klein model, where a point is \(\kappa(y) = \bar y / y_0\) and geodesics are straight, the normalisation cancels and the centroid is a plain convex combination:
+                    $$\kappa(x') = \sum_k \lambda_k\,\kappa(V_k),\qquad \lambda_k = \frac{w_k\,V_{k,0}}{\sum_j w_j\,V_{j,0}} \ \ge 0,\quad \sum_k\lambda_k = 1.$$</li>
+            </ol>
+            <div class="callout plain"><span class="label">In plain words</span>
+                <p>Look around in every direction of a turned cross, the same distance along straight hyperbolic paths. Score what you see. Move to a weighted middle of the corners. In the Klein picture that middle is an ordinary weighted average, so it can never land outside the corners, and never further than one step away.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="lab">
+            <div class="chapter-num">04</div>
+            <h2>Live diagram</h2>
+            <p class="chapter-intro">One particle in the hyperbolic plane (\(d = 2\), four corners), drawn twice: in the Poincar&eacute; disk, where angles are true and geodesics are arcs, and in the Klein disk, where geodesics are straight. The loss is a staircase of the distance to the gold target, so it has no useful gradient. Click either disk to move the target.</p>
+            <div class="lab">
+                <div class="lab-title">The step, computed live</div>
+                <div class="duo">
+                    <div class="pane"><h5>Poincar&eacute; disk</h5><canvas id="cv-poin" width="360" height="360" aria-label="Poincaré disk view of one step"></canvas></div>
+                    <div class="pane"><h5>Klein disk</h5><canvas id="cv-klein" width="360" height="360" aria-label="Klein disk view of the same step"></canvas></div>
+                </div>
+                <div class="lab-row">
+                    <label>step radius r <input id="in-r" type="range" min="0.1" max="2" step="0.05" value="0.8"><span class="mono" id="v-r">0.80</span></label>
+                    <label>temperature &epsilon; <input id="in-eps" type="range" min="-2" max="0.7" step="0.05" value="-0.6"><span class="mono" id="v-eps">0.25</span></label>
+                    <label>rotation <input id="in-rot" type="range" min="0" max="90" step="1" value="20"><span class="mono" id="v-rot">20&deg;</span></label>
+                </div>
+                <div class="lab-row">
+                    <button class="chip" id="b-step">Take the step</button>
+                    <button class="chip" id="b-run">Run 10 steps</button>
+                    <button class="chip" id="b-rand">Random rotation</button>
+                    <button class="chip" id="b-reset">Reset</button>
+                </div>
+                <div class="out" id="lab-out"></div>
+                <p class="mono" style="font-size:0.78rem;color:var(--muted);margin:8px 0 0">White: the particle x and the circle of radius r around it. Coloured: the four corners and their geodesics, sized by weight. Cyan: the hyperbolic centroid x&prime;. Grey ring (Poincar&eacute; only): the plain average of the corners&rsquo; Poincar&eacute; coordinates, which is <em>not</em> the hyperbolic centroid.</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try this</span>
+                <ul>
+                    <li>Push &epsilon; to the left. The weights pile onto the best corner and x&prime; lands on it (H6).</li>
+                    <li>Push &epsilon; to the right. The weights even out and x&prime; stays near x. On the Klein side it is always inside the polygon of corners, so the readout&rsquo;s d(x, x&prime;) never exceeds r (H2).</li>
+                    <li>Move the target near the rim and run 10 steps. Near the rim the same hyperbolic radius covers less and less of the disk: that is the shrinking-step effect of conjecture C2.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="chapter" id="exact">
+            <div class="chapter-num">05</div>
+            <h2>The exact route</h2>
+            <p class="chapter-intro">The search runs in floating point (track A). The certificates run in exact rationals (track B), and the paper supplies a rational version of every ingredient.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Ingredient</th><th>Float (track A)</th><th>Exact rational (track B)</th><th>Source</th></tr></thead>
+                <tbody>
+                    <tr><td>Walk a distance r</td><td>\(\cosh r,\ \sinh r\)</td><td>Choose \(t = \tanh(r/2) \in \mathbb{Q}\): \(\cosh r = \frac{1+t^2}{1-t^2},\ \sinh r = \frac{2t}{1-t^2}\)</td><td>The ghost map in one dimension (&sect;3.2)</td></tr>
+                    <tr><td>Rotation R</td><td>Haar-random, polystep&rsquo;s <code>get_random_rotation_matrices</code></td><td>Cayley map \(R = (I-A)(I+A)^{-1}\), \(A\) skew with rational entries; exactly orthogonal. In three dimensions, the rational quaternions of the existing core</td><td>Fifteen Lemmas; <code>cayleyMap</code> in the core</td></tr>
+                    <tr><td>Boost \(L_x\)</td><td>As above</td><td>Rational whenever \(x\) is a rational point of the sheet</td><td>&sect;4.2</td></tr>
+                    <tr><td>A point of the sheet</td><td>Any</td><td>\(G(p) = ((1+|p|^2),\,2p)/(1-|p|^2)\) for rational \(p\) in the unit ball</td><td>Prop 3.3</td></tr>
+                    <tr><td>Centroid</td><td>\(s/\sqrt{-\langle s,s\rangle}\)</td><td>The Klein point \(\kappa(x')\) is rational; returning to the sheet needs one square root, so the state is <strong>snapped</strong>: its Poincar&eacute; point is rounded to a declared grid \(2^{-k}\) and lifted by \(G\). The snap&rsquo;s distance is logged on track C</td><td>&sect;8.10, the exact-first convention</td></tr>
+                </tbody>
+            </table></div>
+            <p>So every corner, probe and stored state is an exact rational point of the hyperboloid, checkable by \(\langle y,y\rangle = -1\) in exact arithmetic. The only approximation is the snap, it is declared, and its size is recorded every step. This is the same convention the tri-engine pages use when they rationalise at \(2^{-24}\).</p>
+            <div class="callout deep"><span class="label">Deeper</span>
+                <p>The paper&rsquo;s {4,3,5} cell gives a natural exact radius: its face-neighbour boost has \(\tanh(\vartheta/2) = a = \varphi^{-3/2}\), entries in \(\mathbb{Z}[\sqrt\varphi]\) (Prop 4.3). A step radius of one cell inradius is available exactly in that ring, an option for later, not part of the first build.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="code">
+            <div class="chapter-num">06</div>
+            <h2>Correspondence with polystep</h2>
+            <p class="chapter-intro">What changes, function by function, in polystep 1.1.1.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>polystep</th><th>Does</th><th>Hyperbolic version</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">geometry.get_orthoplex_vertices</td><td>\(\pm e_i\)</td><td>Unchanged, in the tangent space at the origin</td></tr>
+                    <tr><td class="mono">geometry.get_random_rotation_matrices</td><td>Haar rotations</td><td>Unchanged for track A; Cayley rotations for track B</td></tr>
+                    <tr><td class="mono">_compiled._rotate_and_translate</td><td>\(x + rRu\)</td><td>\(L_x(\cosh r, \sinh r\,Ru)\)</td></tr>
+                    <tr><td class="mono">_compiled._compute_probe_points</td><td>\(x + s\rho Ru\)</td><td>\(L_x(\cosh s\rho, \sinh s\rho\,Ru)\)</td></tr>
+                    <tr><td class="mono">costs.compute_cost_matrix</td><td>Average over probes</td><td>Unchanged, after decoding</td></tr>
+                    <tr><td class="mono">solvers.SoftmaxSolver, SinkhornSolver</td><td>Weights from costs</td><td>Reused as they are</td></tr>
+                    <tr><td class="mono">_compiled._barycentric_projection</td><td>\(\sum w_k V_k\)</td><td>Lorentzian centroid (Klein convex combination), then the snap</td></tr>
+                    <tr><td class="mono">epsilon.CosineEpsilon, LinearEpsilon</td><td>Schedules for &epsilon; and radii</td><td>Reused; radii are now hyperbolic lengths</td></tr>
+                    <tr><td class="mono">blockwise, subspaces</td><td>Search a few coordinates at a time</td><td>A product of small hyperbolic factors \((\mathbb{H}^{d})^m\), one polytope per factor</td></tr>
+                    <tr><td class="mono">PolyStepOptimizer, train()</td><td>Network training loop</td><td>The Euclidean baseline, run from the library itself</td></tr>
+                </tbody>
+            </table></div>
+            <p>polystep is Apache-2.0. The reference imports it; anything ported to the browser carries its notice and credits An T. Le, <em>Training Non-Differentiable Networks via Optimal Transport</em>, TMLR 2026.</p>
+        </section>
+
+        <section class="chapter" id="properties">
+            <div class="chapter-num">07</div>
+            <h2>Properties H1&ndash;H7</h2>
+            <p class="chapter-intro">What can honestly be proved about the step. Each has a proof sketch here. The full proofs, with live checks on the browser core, are on the <a href="proofs-and-results.html">proofs page</a>: hence <span class="tag t-PROVEN">PROVEN</span>. Each is also tested by the Python reference on random instances, in exact arithmetic where the claim is exact (<a href="reference-guide.html#tests">the test table</a>).</p>
+
+            <h3>H1 &middot; Everything stays on the sheet <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>\(L_x\) preserves the Lorentz form, and \((\cosh r, \sinh r\,Ru)\) lies on the sheet because \(\cosh^2 r - \sinh^2 r\,|Ru|^2 = 1\) for a unit \(u\). With rational \(t\), a Cayley \(R\) and a rational \(x\), every coordinate is rational and \(\langle V,V\rangle = -1\) holds exactly. The snapped state is \(G(p)\) of a rational \(p\), so it is on the sheet exactly too.</p>
+
+            <h3>H2 &middot; One step moves at most r <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>Apply \(L_x^{-1}\), an isometry: \(x\) goes to the origin and every corner to Klein radius \(\tanh r\). Seen from the origin, the Klein ball of Euclidean radius \(\tanh r\) is exactly the hyperbolic ball of radius \(r\), because \(d(o, y) = \operatorname{artanh}|\kappa(y)|\). The centroid&rsquo;s Klein point is a convex combination of the corners&rsquo; and so lies in that ball, and the centroid commutes with Lorentz maps. Hence \(d(x, x') \le r\). The snap adds at most its logged residual.</p>
+            <p>In a product of factors, each factor moves at most r: its corners are within r of it, and its centroid is a Klein convex combination of them. Every factor is also kept inside a ball of radius 8 about the origin, the declared horizon; a point outside is moved radially back to the ball&rsquo;s nearest point. That projection onto a convex set never lengthens a move, so H2 survives it (<a href="reference-guide.html#findings">why the horizon exists</a>).</p>
+
+            <h3>H3 &middot; The centroid is the best compromise <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>With the squared Lorentzian distance \(d_L^2(y,z) = -2 - 2\langle y,z\rangle\), the weighted sum \(\sum_k w_k\,d_L^2(y, V_k) = -2\sum w_k - 2\langle y, s\rangle\) is smallest when \(\langle y, s\rangle\) is largest. For future timelike vectors, the reversed Cauchy&ndash;Schwarz inequality gives \(\langle y, s\rangle \le -\sqrt{-\langle s,s\rangle}\), with equality only when \(y\) is parallel to \(s\). So \(x' = s/\sqrt{-\langle s,s\rangle}\) is the unique minimiser (Law, Liao, Snell and Zemel, ICML 2019).</p>
+
+            <h3>H4 &middot; Any chart gives the same step <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>For a Lorentz map \(g\), the boost \(L_{gx}\) equals \(g L_x Q\) for a rotation \(Q\) fixing the origin. \(Q\) is absorbed into the random rotation, whose Haar law it does not change. The objective seen through \(g\) gives the same costs, hence the same weights, and the centroid is equivariant: the step at \(gx\) is \(g\) applied to the step at \(x\). With the rotation fixed rather than random, this is an exact identity, and the reference tests it with rational Lorentz maps.</p>
+
+            <h3>H5 &middot; Flat space gives polystep back <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>At curvature \(-c\), distances scale by \(\sqrt c\). As \(c \to 0\): \(\cosh(\sqrt c\,r) \to 1\), \(\sinh(\sqrt c\,r)/\sqrt c \to r\), the Klein chart becomes the Euclidean chart, and \(\lambda_k \to w_k\) because every \(V_{k,0} \to 1\). The step tends to \(\sum_k w_k(x + rRu_k)\), polystep&rsquo;s step. So the hyperbolic version is a curvature-one deformation of polystep, not a different algorithm.</p>
+
+            <h3>H6 &middot; Small &epsilon; picks the best corner <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>As \(\varepsilon \to 0\), \(\operatorname{softmax}(-C/\varepsilon)\) concentrates on the corners of least cost, and the centroid of one corner is that corner. Keeping the best answer seen (an elitist incumbent) gives a cost that never increases. The particle itself can move to a worse cost when \(\varepsilon > 0\); no descent is claimed for it.</p>
+
+            <h3>H7 &middot; The register&rsquo;s holonomy is exact <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>After the snap, consecutive states are rational points, so each step&rsquo;s displacement \(\Delta q_n = L_{x_n}L_{x_{n-1}}^{-1}\) is a rational Lorentz matrix. The paper&rsquo;s pump (Prop 3.9) is pure group algebra and holds without commutativity: over each 720-frame register \(H = Q^{(8)}Q^{(10)}P = P^{-1}\) exactly. This certifies the exact bookkeeping of every trajectory. It says nothing about whether the trajectory is making progress.</p>
+        </section>
+
+        <section class="chapter" id="not">
+            <div class="chapter-num">08</div>
+            <h2>What it does not promise</h2>
+            <div class="callout limit"><span class="label">Limits</span>
+                <ul>
+                    <li><strong>No convergence guarantee yet.</strong> H1&ndash;H7 are about where the step lands, not about reaching an optimum. Whether polystep&rsquo;s convergence theorem transfers to the hyperboloid under its theory-mode conditions is open (T1); the reference implements theory mode so the question can be tested.</li>
+                    <li><strong>No free search.</strong> A step costs \(2d\) evaluations per particle per probe. Against a yes/no objective, no step rule beats the volume of the space (paper, Prop 5.13).</li>
+                    <li><strong>Curvature is a hypothesis, not a gift.</strong> In one dimension the hyperbolic line is isometric to the real line, so curvature only matters for factors of dimension two or more. Whether it helps is conjecture C1, decided by the <a href="benchmarks.html#prereg">preregistered benchmarks</a>.</li>
+                </ul>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="../index.html">&larr; Hub</a>
+                <a class="btn btn-ghost" href="channels.html">Next: three channels on the clock &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 1 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+
+<script>
+// Live diagram: one hyperbolic PolyStep step in H² (hyperboloid model), drawn in the Poincaré and Klein disks.
+(function () {
+    const $ = id => document.getElementById(id);
+    const lor = (a, b) => -a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const dist = (a, b) => Math.acosh(Math.max(1, -lor(a, b)));
+    const fromPoin = ([x, y]) => { const q = x * x + y * y; return [(1 + q) / (1 - q), 2 * x / (1 - q), 2 * y / (1 - q)]; };
+    const toPoin = Y => [Y[1] / (1 + Y[0]), Y[2] / (1 + Y[0])];
+    const toKlein = Y => [Y[1] / Y[0], Y[2] / Y[0]];
+    const fromKlein = ([x, y]) => { const g = 1 / Math.sqrt(1 - x * x - y * y); return [g, g * x, g * y]; };
+    const boost = x => { const [x0, a, b] = x, k = 1 / (1 + x0);
+        return [[x0, a, b], [a, 1 + a * a * k, a * b * k], [b, a * b * k, 1 + b * b * k]]; };
+    const mul = (M, v) => M.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+    const at = (x, s, ang) => mul(boost(x), [Math.cosh(s), Math.sinh(s) * Math.cos(ang), Math.sinh(s) * Math.sin(ang)]);
+    const COL = ['#ff0055', '#00f2ff', '#ffd700', '#c084fc'];
+    let X = [1, 0, 0], T = fromPoin([0.55, 0.42]), last = null;
+    const cost = Y => Math.floor(4 * dist(Y, T)) / 4;   // staircase: no useful gradient
+
+    function compute() {
+        const r = +$('in-r').value, eps = Math.pow(10, +$('in-eps').value), th = +$('in-rot').value * Math.PI / 180;
+        const V = [0, 1, 2, 3].map(k => at(X, r, th + k * Math.PI / 2));
+        const C = V.map(cost), m = Math.min(...C), e = C.map(c => Math.exp(-(c - m) / eps)), Z = e.reduce((a, b) => a + b, 0), w = e.map(v => v / Z);
+        const s = [0, 1, 2].map(i => V.reduce((a, v, k) => a + w[k] * v[i], 0)), n = Math.sqrt(-lor(s, s)), X2 = s.map(v => v / n);
+        const lam = V.map((v, k) => w[k] * v[0]), L = lam.reduce((a, b) => a + b, 0);
+        const eu = V.map(toPoin).reduce((a, p, k) => [a[0] + w[k] * p[0], a[1] + w[k] * p[1]], [0, 0]);
+        return { r, eps, th, V, C, w, X2, lam: lam.map(v => v / L), eu };
+    }
+    function disk(cv, proj) {
+        const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 360;
+        if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(W * dpr); }
+        const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const R = W / 2 - 8, c = W / 2, P = Y => { const [x, y] = proj(Y); return [c + R * x, c - R * y]; };
+        ctx.clearRect(0, 0, W, W);
+        ctx.fillStyle = '#050b1a'; ctx.beginPath(); ctx.arc(c, c, R, 0, 2 * Math.PI); ctx.fill();
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.stroke();
+        return { ctx, P, W, R, c };
+    }
+    function draw(cv, proj, S, poincare) {
+        const { ctx, P } = disk(cv, proj);
+        const line = (pts, color, w, dash) => { ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach((Y, i) => { const [a, b] = P(Y); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.stroke(); ctx.setLineDash([]); };
+        const dot = (Y, color, rad, ring) => { const [a, b] = P(Y); ctx.beginPath(); ctx.arc(a, b, rad, 0, 2 * Math.PI); if (ring) { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke(); } else { ctx.fillStyle = color; ctx.fill(); } };
+        // staircase level sets around the target
+        for (let q = 0.25; q < 4; q += 0.25) line(Array.from({ length: 97 }, (_, i) => at(T, q, i * Math.PI / 48)), 'rgba(245,197,66,0.10)', 1);
+        line(Array.from({ length: 97 }, (_, i) => at(X, S.r, i * Math.PI / 48)), 'rgba(248,250,252,0.55)', 1.2, [4, 4]);
+        if (!poincare) line([...S.V, S.V[0]], 'rgba(148,163,184,0.45)', 1);   // the corners' polygon: straight in Klein
+        S.V.forEach((v, k) => line(Array.from({ length: 33 }, (_, i) => at(X, S.r * i / 32, S.th + k * Math.PI / 2)), COL[k], 1.6));
+        S.V.forEach((v, k) => dot(v, COL[k], 3 + 9 * S.w[k]));
+        if (poincare) { const [a, b] = S.eu, q = a * a + b * b; if (q < 1) dot(fromPoin([a, b]), '#94a3b8', 6, true); }
+        dot(T, '#f5c542', 6); dot(X, '#f8fafc', 5); dot(S.X2, '#22d3ee', 6, true); dot(S.X2, '#22d3ee', 2.5);
+    }
+    function render() {
+        const S = last = compute();
+        $('v-r').textContent = S.r.toFixed(2); $('v-eps').textContent = S.eps.toFixed(2); $('v-rot').textContent = $('in-rot').value + '°';
+        draw($('cv-poin'), toPoin, S, true); draw($('cv-klein'), toKlein, S, false);
+        const d = dist(X, S.X2), on = lor(S.X2, S.X2) + 1;
+        $('lab-out').innerHTML =
+            `<span class="k">corner costs</span> ${S.C.map((c, k) => `<span style="color:${COL[k]}">${c.toFixed(2)}</span>`).join(' · ')}<br>` +
+            `<span class="k">weights w</span> ${S.w.map(v => v.toFixed(3)).join(' · ')} <span class="k">· Klein λ</span> ${S.lam.map(v => v.toFixed(3)).join(' · ')}<br>` +
+            `<span class="k">d(x, x′)</span> ${d.toFixed(4)} ${d <= S.r + 1e-12 ? `<span class="good">≤ r = ${S.r.toFixed(2)} (H2)</span>` : '<span class="bad">exceeds r</span>'}` +
+            ` <span class="k">· ⟨x′,x′⟩ + 1</span> ${on.toExponential(1)} <span class="k">· cost at x</span> ${cost(X).toFixed(2)} <span class="k">→ x′</span> ${cost(S.X2).toFixed(2)}`;
+    }
+    const step = () => { X = last.X2; $('in-rot').value = Math.floor(Math.random() * 91); render(); };
+    ['in-r', 'in-eps', 'in-rot'].forEach(id => $(id).addEventListener('input', render));
+    $('b-step').onclick = step;
+    $('b-run').onclick = () => { let i = 0; const go = () => { step(); if (++i < 10) setTimeout(go, 160); }; go(); };
+    $('b-rand').onclick = () => { $('in-rot').value = Math.floor(Math.random() * 91); render(); };
+    $('b-reset').onclick = () => { X = [1, 0, 0]; render(); };
+    const pick = (cv, inv) => e => {
+        const b = cv.getBoundingClientRect(), R = b.width / 2 - 8, x = (e.clientX - b.left - b.width / 2) / R, y = -(e.clientY - b.top - b.height / 2) / R;
+        if (x * x + y * y < 0.96) { T = inv([x, y]); render(); }
+    };
+    $('cv-poin').addEventListener('click', pick($('cv-poin'), fromPoin));
+    $('cv-klein').addEventListener('click', pick($('cv-klein'), fromKlein));
+    window.addEventListener('resize', render);
+    render();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

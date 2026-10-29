@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problems and Benchmarks - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 3 of Hyperbolic PolyStep: how points of hyperbolic space become discrete answers, the four preregistered benchmarks with budgets and decision rules fixed in advance, and the chart of what the results can and cannot decide.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 3</div>
+    <h1>Problems, Benchmarks and the Boundary</h1>
+    <p class="lede">How a point of hyperbolic space becomes a colouring, a truth assignment, a tree address or a network&rsquo;s weights; the four benchmarks, fixed before any code runs; and what their results can and cannot decide.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#prereg">The preregistration</a>
+        <a class="btn btn-ghost" href="#boundary">The boundary chart</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#decoders">2. Decoders</a></li>
+            <li><a href="#prereg">3. The preregistration</a></li>
+            <li><a href="#rules">4. Common rules</a></li>
+            <li><a href="#b1">5. B1 &middot; 3-colouring</a></li>
+            <li><a href="#b2">6. B2 &middot; MAX-3-SAT</a></li>
+            <li><a href="#b3">7. B3 &middot; Tree address</a></li>
+            <li><a href="#b4">8. B4 &middot; Hard-threshold net</a></li>
+            <li><a href="#boundary">9. The boundary</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#decoders">Decoders</a></li><li><a href="#prereg">The preregistration</a></li>
+            <li><a href="#rules">Common rules</a></li><li><a href="#b1">B1 &middot; 3-colouring</a></li><li><a href="#b2">B2 &middot; MAX-3-SAT</a></li>
+            <li><a href="#b3">B3 &middot; Tree address</a></li><li><a href="#b4">B4 &middot; Hard-threshold net</a></li><li><a href="#boundary">The boundary</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The decoders turn the step&rsquo;s points into answers for Helix B. The preregistration takes the decoders and the paper&rsquo;s limits and fixes the experiments whose results go to the proofs page.</p>
+            <div data-hp-map="focus" data-node="problems"></div>
+            <div data-hp-map="focus" data-node="prereg"></div>
+        </section>
+
+        <section class="chapter" id="decoders">
+            <div class="chapter-num">02</div>
+            <h2>Decoders</h2>
+            <p class="chapter-intro">The search moves continuous points; the problems want discrete answers. A decoder is a fixed, exact rule between the two. It has flat regions and jumps, which is why a gradient is useless here and polystep&rsquo;s finite steps are not.</p>
+            <div class="grid-2">
+                <figure style="margin:0"><div class="map-wrap mini" style="padding:4px"><svg id="dec-colour" viewBox="0 0 300 300" style="min-width:0" role="img" aria-label="The colour decoder: three 120-degree sectors of the Poincaré disk"></svg></div>
+                    <figcaption>Colour = nearest branch direction. The sectors are the three branches of the clock, so channel colours and problem colours coincide.</figcaption></figure>
+                <div>
+                    <div class="table-wrap" style="margin-top:0"><table>
+                        <thead><tr><th>Problem</th><th>Point</th><th>Decoded answer</th></tr></thead>
+                        <tbody>
+                            <tr><td>3-colouring</td><td>One point of \(\mathbb{H}^2\) per vertex</td><td>Branch (0&deg;, 120&deg;, 240&deg;) nearest its angle</td></tr>
+                            <tr><td>MAX-3-SAT</td><td>Blocks of 8 variables in \(\mathbb{H}^8\)</td><td>True where the Poincar&eacute; coordinate is positive</td></tr>
+                            <tr><td>Tree address</td><td>One point of \(\mathbb{H}^2\)</td><td>Nearest depth-L node of the embedded norm-5 tree</td></tr>
+                            <tr><td>Hard-threshold net</td><td>An encoder in \(\mathbb{R}^{32}\) and 8 prototypes in \(\mathbb{H}^2\)</td><td>The class of the nearest prototype</td></tr>
+                        </tbody>
+                    </table></div>
+                    <div class="callout note"><span class="label">Why depth might help</span>
+                        <p>In the colour decoder only the angle matters, but the step&rsquo;s length is hyperbolic. A point far from the centre is a committed colour, and a fixed hyperbolic radius there barely changes its angle. Points near the centre are undecided and swing freely. That is conjecture C2.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="chapter" id="prereg">
+            <div class="chapter-num">03</div>
+            <h2>The preregistration</h2>
+            <p class="chapter-intro">Registered 2026-10-29, before any solver code exists. The full text is <a href="https://github.com/BioChainAI/Ebayednoob/blob/main/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/PREREGISTRATION.md"><code>PREREGISTRATION.md</code></a>; this chapter summarises it. A change is a dated amendment with its reason, never a silent edit.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Claim</th><th>Statement</th><th>Tested by</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">C1</td><td>On tree-structured problems the hyperbolic step beats the same step at curvature 0, at equal budget</td><td>B1, B3, B4</td><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td></tr>
+                    <tr><td class="mono">C2</td><td>Hyperbolic depth acts as built-in annealing</td><td>B1, B2</td><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td></tr>
+                    <tr><td class="mono">C3</td><td>Three scheduled channels beat one channel with three times the particles</td><td>B1 ablation</td><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="rules">
+            <div class="chapter-num">04</div>
+            <h2>Common rules</h2>
+            <ul>
+                <li><strong>Budget.</strong> One evaluation is one candidate scored. Every method in a comparison gets the same budget.</li>
+                <li><strong>Baselines.</strong> The primary comparison is the same code at curvature 0, which by H5 is polystep&rsquo;s step: it isolates curvature and nothing else. polystep 1.1.1 itself on the flattened problem is a second baseline, and random search a floor.</li>
+                <li><strong>Tuning.</strong> 24 tuning runs per method on separate instances (seeds 9000&ndash;9023), then the settings are frozen in <code>reference/settings.json</code>.</li>
+                <li><strong>Pairing.</strong> Instance seeds 1000 + i, method seeds 0, 1, 2; results paired by instance and seed.</li>
+                <li><strong>Decision.</strong> Mean paired difference with a 95% bootstrap interval (10,000 resamples, seed 7): <span class="status s-done">supported</span> if above 0, <span class="status" style="color:#fca5a5;border-color:rgba(248,113,113,.55)">refuted</span> if at or below 0, <span class="status s-planned">inconclusive</span> otherwise. Every cell reported.</li>
+            </ul>
+            <figure><div class="map-wrap mini"><svg viewBox="0 0 760 120" role="img" aria-label="The three possible decisions by where the 95% interval falls">
+                <g font-family="Inter, system-ui, sans-serif" font-size="12">
+                    <line x1="40" y1="60" x2="720" y2="60" stroke="#475569"/><line x1="380" y1="30" x2="380" y2="92" stroke="#f8fafc" stroke-dasharray="3 3"/>
+                    <text x="380" y="110" fill="#94a3b8" text-anchor="middle" font-family="Fira Code, monospace">0 (no effect)</text>
+                    <line x1="430" y1="44" x2="640" y2="44" stroke="#34d399" stroke-width="6" stroke-linecap="round"/><text x="535" y="30" fill="#6ee7b7" text-anchor="middle">supported: interval above 0</text>
+                    <line x1="300" y1="60" x2="470" y2="60" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/><text x="300" y="84" fill="#cbd5e1" text-anchor="middle">inconclusive: straddles 0</text>
+                    <line x1="110" y1="76" x2="350" y2="76" stroke="#fb7185" stroke-width="6" stroke-linecap="round"/><text x="160" y="100" fill="#fca5a5" text-anchor="middle">refuted: at or below 0</text>
+                </g></svg></div><figcaption>Three possible outcomes for each claim and cell, by where the 95% interval of the paired difference falls.</figcaption></figure>
+        </section>
+
+        <section class="chapter" id="b1">
+            <div class="chapter-num">05</div>
+            <h2>B1 &middot; Graph 3-colouring</h2>
+            <div class="table-wrap"><table><tbody>
+                <tr><th>Instances</th><td>Planted 3-colourable graphs, average degree c &isin; {4.0, 4.4, 4.69}, n &isin; {60, 120, 300}, 20 per cell</td></tr>
+                <tr><th>State and step</th><td>\((\mathbb{H}^2)^n\); each step moves a random block of 8 vertices with an orthoplex in its 16-dimensional tangent space</td></tr>
+                <tr><th>Cost</th><td>Monochromatic edges, counted exactly by Helix B</td></tr>
+                <tr><th>Budget</th><td>400 &middot; n evaluations</td></tr>
+                <tr><th>Method</th><td>Three channels of 4 particles on the schedule, membrane on</td></tr>
+                <tr><th>Metric</th><td>Success (a proper colouring within budget); also final conflicts and evaluations to success</td></tr>
+                <tr><th>Ablations</th><td>One channel of 12 particles (C3); membrane off</td></tr>
+                <tr><th>C2 measure</th><td>Spearman correlation between a step&rsquo;s Klein length and the block&rsquo;s mean Klein radius; supported below &minus;0.3 with an interval excluding 0</td></tr>
+            </tbody></table></div>
+        </section>
+
+        <section class="chapter" id="b2">
+            <div class="chapter-num">06</div>
+            <h2>B2 &middot; MAX-3-SAT</h2>
+            <div class="table-wrap"><table><tbody>
+                <tr><th>Instances</th><td>Random 3-SAT at clause ratio 4.27 (polystep&rsquo;s generator), n &isin; {100, 500, 2000}, 20 per cell</td></tr>
+                <tr><th>State</th><td>Blocks of 8 variables, one \(\mathbb{H}^8\) factor each</td></tr>
+                <tr><th>Cost</th><td>Fraction of unsatisfied clauses, counted exactly</td></tr>
+                <tr><th>Budget</th><td>300 &middot; n evaluations</td></tr>
+                <tr><th>Metric</th><td>Fraction satisfied at the end of the budget</td></tr>
+                <tr><th>Note</th><td>polystep&rsquo;s published rows (about 98% at 5,000 and 100,000 variables) are quoted for orientation only; they used other budgets</td></tr>
+            </tbody></table></div>
+            <div class="callout limit"><span class="label">Expectation</span>
+                <p>Random 3-SAT has no tree structure, so C1 is not tested here and specialised SAT solvers will stay ahead. B2 is there for C2 and as an honest yardstick against polystep&rsquo;s own benchmark.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="b3">
+            <div class="chapter-num">07</div>
+            <h2>B3 &middot; Tree address search, with a negative control</h2>
+            <p class="chapter-intro">The paper&rsquo;s norm-5 tree has \(6\cdot 5^{L-1}\) addresses at depth L. It is embedded in \(\mathbb{H}^2\) (Sarkar&rsquo;s construction, scale \(\tau = 3\)), and a point decodes to its nearest depth-L node.</p>
+            <div class="grid-2">
+                <div class="card"><h4>Graded objective</h4><p>Cost = tree distance from the decoded node to the target. The landscape points toward the target, so a good step rule should find it in far fewer than \(6\cdot5^{L-1}\) evaluations. Tests C1 at L &isin; {4, 6, 8}.</p></div>
+                <div class="card"><h4>Membership objective (the control)</h4><p>Cost 0 at the target, 1 everywhere else. By the paper&rsquo;s Prop 5.13 no method can average fewer than about half the level&rsquo;s size. If any method does, the run is treated as a bug (the target leaking into the search), not as a result.</p></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="b4">
+            <div class="chapter-num">08</div>
+            <h2>B4 &middot; A hard-threshold network</h2>
+            <div class="table-wrap"><table><tbody>
+                <tr><th>Data</th><td>Eight classes at the leaves of a depth-3 binary tree; inputs in \(\mathbb{R}^{16}\) from hierarchical Gaussian means (offsets halving per level, noise 0.5); 2,000 train and 1,000 test points per seed</td></tr>
+                <tr><th>Model</th><td>Encoder \(x \mapsto \exp_o(Wx) \in \mathbb{H}^2\); 8 prototypes in \(\mathbb{H}^2\); prediction = nearest prototype, a hard argmin</td></tr>
+                <tr><th>Parameters</th><td>\(W \in \mathbb{R}^{32}\) and prototypes in \((\mathbb{H}^2)^8\): a mixed Euclidean and hyperbolic product</td></tr>
+                <tr><th>Counterpart</th><td>The same model with prototypes in \(\mathbb{R}^2\); also polystep&rsquo;s <code>PolyStepOptimizer</code></td></tr>
+                <tr><th>Budget</th><td>\(2\cdot10^5\) evaluations per seed, 10 seeds</td></tr>
+                <tr><th>Metric</th><td>Test accuracy; also accuracy at the coarse level of the tree</td></tr>
+            </tbody></table></div>
+            <p>This is the gradient-free <em>training</em> part of the project: a network whose prediction is a hard argmin has no useful gradient, and the step trains it on a hyperbolic parameter space directly.</p>
+        </section>
+
+        <section class="chapter" id="boundary">
+            <div class="chapter-num">09</div>
+            <h2>The boundary</h2>
+            <p class="chapter-intro">Three kinds of statement, settled three different ways. No result in one column moves a statement into another.</p>
+            <figure><div class="map-wrap"><svg viewBox="0 0 900 360" role="img" aria-label="Boundary chart: proved properties, measured claims, and what is out of reach">
+                <g font-family="Inter, system-ui, sans-serif">
+                    <g transform="translate(10,20)"><rect width="280" height="300" rx="14" fill="rgba(6,78,59,.25)" stroke="#34d399"/>
+                        <text x="140" y="32" fill="#6ee7b7" font-size="15" font-weight="700" text-anchor="middle">Proved about the step</text>
+                        <text x="140" y="52" fill="#94a3b8" font-size="11" text-anchor="middle" font-family="Fira Code, monospace">settled by proof + exact test</text>
+                        <g font-size="12.5" fill="#e2e8f0"><text x="20" y="88">H1 on the sheet, exactly</text><text x="20" y="114">H2 moves at most r</text><text x="20" y="140">H3 centroid is optimal</text><text x="20" y="166">H4 same step in any chart</text><text x="20" y="192">H5 flat limit is polystep</text><text x="20" y="218">H6 small ε, best corner</text><text x="20" y="244">H7 exact register holonomy</text></g>
+                        <text x="140" y="284" fill="#94a3b8" font-size="11" text-anchor="middle">about where the step lands,</text><text x="140" y="298" fill="#94a3b8" font-size="11" text-anchor="middle">not whether it finds optima</text></g>
+                    <g transform="translate(310,20)"><rect width="280" height="300" rx="14" fill="rgba(120,53,15,.22)" stroke="#fbbf24"/>
+                        <text x="140" y="32" fill="#fde68a" font-size="15" font-weight="700" text-anchor="middle">Measured</text>
+                        <text x="140" y="52" fill="#94a3b8" font-size="11" text-anchor="middle" font-family="Fira Code, monospace">settled by preregistered experiment</text>
+                        <g font-size="12.5" fill="#e2e8f0"><text x="20" y="92">C1 curvature helps on trees</text><text x="38" y="110" fill="#94a3b8" font-size="11">B1, B3, B4</text><text x="20" y="142">C2 depth as annealing</text><text x="38" y="160" fill="#94a3b8" font-size="11">B1, B2</text><text x="20" y="192">C3 three scheduled channels</text><text x="38" y="210" fill="#94a3b8" font-size="11">B1 ablation</text></g>
+                        <text x="140" y="270" fill="#94a3b8" font-size="11" text-anchor="middle">supported, refuted or inconclusive,</text><text x="140" y="284" fill="#94a3b8" font-size="11" text-anchor="middle">only on the tested sizes and budgets</text></g>
+                    <g transform="translate(610,20)"><rect width="280" height="300" rx="14" fill="rgba(136,19,55,.22)" stroke="#fb7185"/>
+                        <text x="140" y="32" fill="#fca5a5" font-size="15" font-weight="700" text-anchor="middle">Out of reach</text>
+                        <text x="140" y="52" fill="#94a3b8" font-size="11" text-anchor="middle" font-family="Fira Code, monospace">settled elsewhere, or open</text>
+                        <g font-size="12.5" fill="#e2e8f0"><text x="20" y="92">L1 a general SAT solver of</text><text x="38" y="110">this kind ⇔ P = NP (Thm 5.11)</text><text x="20" y="142">L2 black-box search costs</text><text x="38" y="160">the volume (Prop 5.13)</text><text x="20" y="192">L3 P versus NP: OPEN</text></g>
+                        <text x="140" y="270" fill="#94a3b8" font-size="11" text-anchor="middle">no benchmark result, good or bad,</text><text x="140" y="284" fill="#94a3b8" font-size="11" text-anchor="middle">bears on these</text></g>
+                    <g stroke="#64748b" stroke-width="2" fill="none"><path d="M292,170 L308,170"/><path d="M592,170 L608,170"/></g>
+                    <g fill="#fb7185" font-size="18" font-weight="700" text-anchor="middle"><text x="300" y="176">×</text><text x="600" y="176">×</text></g>
+                    <text x="450" y="348" fill="#94a3b8" font-size="12" text-anchor="middle">× : a result in one column never moves a statement into the next</text>
+                </g>
+            </svg></div></figure>
+            <div class="pager">
+                <a class="btn btn-ghost" href="channels.html">&larr; Three channels</a>
+                <a class="btn btn-ghost" href="build-and-verify.html">Next: build and verification &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 3 &middot; <a href="../index.html">Hub</a></footer>
+<script>
+// The colour decoder: three 120° sectors of the Poincaré disk, with sample points of each colour
+(function () {
+    const C = ['#ff0055', '#00f2ff', '#ffd700'], cx = 150, cy = 150, R = 136;
+    let s = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#050b1a" stroke="#334155"/>`;
+    for (let j = 0; j < 3; j++) {
+        const a0 = (j * 120 - 60) * Math.PI / 180, a1 = (j * 120 + 60) * Math.PI / 180;
+        s += `<path d="M${cx},${cy} L${cx + R * Math.cos(a0)},${cy - R * Math.sin(a0)} A${R},${R} 0 0 0 ${cx + R * Math.cos(a1)},${cy - R * Math.sin(a1)} Z" fill="${C[j]}22" stroke="${C[j]}55"/>`;
+        const a = j * 120 * Math.PI / 180;
+        s += `<line x1="${cx}" y1="${cy}" x2="${cx + R * Math.cos(a)}" y2="${cy - R * Math.sin(a)}" stroke="${C[j]}" stroke-width="2"/>`;
+        s += `<text x="${cx + (R + 0) * 0.62 * Math.cos(a)}" y="${cy - 0.62 * R * Math.sin(a) - 8}" fill="${C[j]}" font-family="Fira Code, monospace" font-size="12" text-anchor="middle">${j * 120}°</text>`;
+    }
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 60; i++) {
+        const ang = rnd() * 2 * Math.PI, rad = Math.tanh(rnd() * 2.2 / 2), deg = ((ang * 180 / Math.PI) + 360) % 360;
+        const j = Math.round(deg / 120) % 3;
+        s += `<circle cx="${cx + R * rad * Math.cos(ang)}" cy="${cy - R * rad * Math.sin(ang)}" r="${2 + 3 * rad}" fill="${C[j]}"/>`;
+    }
+    s += `<text x="${cx}" y="${cy + 4}" fill="#94a3b8" font-size="10" font-family="Fira Code, monospace" text-anchor="middle">undecided</text>`;
+    document.getElementById('dec-colour').innerHTML = s;
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

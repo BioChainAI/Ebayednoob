@@ -1,0 +1,179 @@
+<body>
+<div id="tip" role="tooltip"></div>
+<div class="wrap">
+<header class="hero">
+    <h1><span class="g">Zero-Point Tri-Engine</span> <span style="font-size:0.5em;color:var(--muted);font-weight:600">Zero Point Calculations · the eight-step cycle inside the 720-frame register</span></h1>
+    <p>The <a href="../Galactic%20Lensing/tri_engine_convergence.html">Tri-Engine Convergence</a> calculator, rebuilt on the zero-point cycle of <em>The Geometric Engine of Time: The Zero-Point Eight-Step Cycle</em>. Every frame of the 720-frame outer gear is one zero-point step: spinor step k = F mod 8, branch j = F mod 3, joint frame n = F mod 24. So one register holds 90 spinor cycles and 30 joint cycles (Proposition 3.7), not one stretched cycle. The three engines are the three 120° branches. Each carries one instruction of its calculation per joint cycle: onloaded at its k = 2 frame, lifted, projected, inverted and folded back exactly, then offloaded at its k = 6 frame twelve frames later. Calculations of different lengths finish at different times. The three results pair at the zero point, and every register closes with the 720 → 72 → 10 pump and the open memory test. <a href="../Galactic%20Lensing/tri_engine_soliton.html">Part 2</a> · <a href="../Galactic%20Lensing/tri_engine_manual.html">Part 2 manual</a> · <a href="../Galactic%20Lensing/galactic_companion.html#part2">Guide</a> · <a href="../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html">The paper, explained interactively</a></p>
+    <div class="tags-legend" id="tags-legend"></div>
+</header>
+
+<div class="controls" aria-label="Simulation controls">
+    <div class="grp"><button id="btn-play" type="button">Play</button><button id="btn-step" type="button" title="Pause and advance one frame: one zero-point step">▶ frame</button><button id="btn-zero" type="button" title="Pause and advance to the next zero point of the joint cycle (joint frame 0)">▶ zero point</button></div>
+    <div class="grp"><label for="speed">Speed</label><input id="speed" type="range" min="-2" max="1" step="0.01" value="-1.3"><span class="val" id="speed-v">0.05×</span><span class="val" id="fps-v" style="min-width:auto;color:var(--muted)">18 frames/s</span></div>
+    <div class="grp"><button id="btn-log" type="button" class="on">Log radii</button><button id="btn-trail" type="button" class="on">Trails</button><button id="btn-mem" type="button" class="on">Memory</button><button id="btn-t3" type="button" class="on" title="Tier 3: show the crystal's two ghost poles ±(1,1,1) and their bridges.">Tier 3 poles</button></div>
+    <div class="grp"><label for="ten">Tension</label><input id="ten" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="ten-v">0°</span></div>
+    <div class="grp"><label for="tor">Torsion</label><input id="tor" type="range" min="-90" max="90" step="1" value="0"><span class="val" id="tor-v">0°</span><span class="gate open" id="gate" data-basis="Spec §1A.4: zero-drag resonance when Δθ = θ_ten − θ_tor ≡ 0 (mod 30°). The π/6 of Lemma 5 Part 3 is an acoustic phase, not a rotation angle, so the gate is shown without claiming a lemma proves it [HEURISTIC].">π/6 gate</span></div>
+    <div class="grp"><label for="kappa">Coupling κ</label><input id="kappa" type="range" min="0" max="2" step="0.05" value="1"><span class="val" id="kappa-v">1.00</span></div>
+    <div class="grp"><button id="btn-clear-trails" type="button">Clear trails</button><button id="btn-verify" type="button">Run self-test</button><button id="btn-theme" type="button" aria-label="Toggle light or dark theme">Light</button></div>
+</div>
+
+<section class="panel" id="console" aria-label="Calculations">
+    <h2>Calculations · three branches, one zero-point clock <span class="tag t-DEFINITION" data-basis="Each job is compiled to a postfix program and evaluated in exact BigInt rationals (Layer B). Each literal and each operation is one instruction, and a final reduce-and-latch closes the program. The branch carries one instruction per joint cycle of 24 frames: onload at its k = 2 frame, offload at its k = 6 frame 12 frames later (Proposition 3.7). The zero-point stages carry the branch's geometry and are checked exactly; the value itself comes from the exact evaluation. As Definition 1.1 says, the lifts change how a point is represented, not what is computed.">DEFINITION</span></h2>
+    <p class="sub">One expression per branch. Digits, decimals, fractions, + − × ÷, ^ (whole-number powers), brackets and unary minus are exact. sqrt, sin, cos and π are exact where the answer is rational; otherwise they are rationalized at 2⁻⁴⁸ and marked ≈. A job takes as many joint cycles as it has instructions, so longer calculations land later.</p>
+    <div class="jobs">
+        <div class="job" id="job-0"><div class="job-h"><span class="dot3" style="background:#ff0055"></span>A → Engine I · branch 0 (0°)<span class="job-st" id="job-st-0">idle</span></div>
+            <div class="job-in"><input id="expr-0" value="0.1 + 0.2" spellcheck="false" aria-label="Calculation A"><button id="run-0" type="button">Run</button></div>
+            <div class="job-bar" id="job-bar-0"><i></i><i></i><i></i><i></i><i></i></div><div class="job-out mono-sm" id="job-out-0"></div></div>
+        <div class="job" id="job-1"><div class="job-h"><span class="dot3" style="background:#00f2ff"></span>B → Engine II · branch 1 (120°)<span class="job-st" id="job-st-1">idle</span></div>
+            <div class="job-in"><input id="expr-1" value="0.3" spellcheck="false" aria-label="Calculation B"><button id="run-1" type="button">Run</button></div>
+            <div class="job-bar" id="job-bar-1"><i></i><i></i><i></i><i></i><i></i></div><div class="job-out mono-sm" id="job-out-1"></div></div>
+        <div class="job" id="job-2"><div class="job-h"><span class="dot3" style="background:#ffd700"></span>C → Engine III · branch 2 (240°)<span class="job-st" id="job-st-2">idle</span></div>
+            <div class="job-in"><input id="expr-2" value="3/10" spellcheck="false" aria-label="Calculation C"><button id="run-2" type="button">Run</button></div>
+            <div class="job-bar" id="job-bar-2"><i></i><i></i><i></i><i></i><i></i></div><div class="job-out mono-sm" id="job-out-2"></div></div>
+    </div>
+    <div class="job-ctl">
+        <span>Presets:</span>
+        <button class="chip" type="button" data-preset="ieee">IEEE trap (equal)</button>
+        <button class="chip" type="button" data-preset="ceiling">64-bit ceiling (equal)</button>
+        <button class="chip" type="button" data-preset="pyth">Pythagoras (equal)</button>
+        <button class="chip" type="button" data-preset="mixed">three different</button>
+        <button class="chip" type="button" data-preset="approx">approximate</button>
+        <span style="flex:1"></span>
+        <label for="clutch" style="display:inline-flex;gap:6px;align-items:center" title="What a finished engine does while it waits for the others">Clutch <select id="clutch"><option value="hold" selected>hold finished engines</option><option value="free">free-run (all turn)</option><option value="membrane">free-run + membrane</option></select></label>
+        <button id="run-all" type="button" title="All three onload in the same joint cycle, each at its own branch frame">Run all · same cycle</button>
+        <button id="run-stagger" type="button" title="A onloads now, B one joint cycle later, C two cycles later">Run staggered · async</button>
+    </div>
+</section>
+
+<section class="panel" id="panel-z" aria-label="Panel Z: the zero-point cycle">
+    <h2>Z · The zero-point cycle at frame resolution <span class="tag t-PROVEN" data-basis="Propositions 2.2–2.4 (the Gaussian clock 1 + i, its spatial and spinor angles, Niven's bound), 3.1–3.3 (three tetrahedra, the paraboloid and conformal lifts), 3.7 (the joint 24-frame schedule), 3.9 (the 720 → 72 → 10 pump), 7.1 (six handshakes as C₃ × C₂), 8.2 (spreads) and Definitions 3.6 and 3.12, all re-checked live.">Props 2.2–3.9</span></h2>
+    <p class="sub">The dial is the eight-step cycle, advanced once per frame. The strip is one joint cycle of 24 frames: each branch onloads at its k = 2 frame (filled) and offloads at its k = 6 frame twelve frames later (outlined). A register of 720 frames holds 30 strips and 90 turns of the dial. On this page a frame is engine v10's 1/720 s (12 per pulse), so a register is one second. The paper takes a frame to be a pulse of 1/60 s.</p>
+    <div class="zp-grid">
+        <div class="zp-col">
+            <canvas id="zp-dial" width="320" height="320" aria-label="Eight-step zero-point dial"></canvas>
+            <div class="kv" id="zp-now"></div>
+        </div>
+        <div class="zp-col">
+            <h3>Joint 24-frame schedule <span class="tag t-PROVEN" data-basis="Proposition 3.7: n ↦ (n mod 8, n mod 3) is an isomorphism Z/24 ≅ Z/8 × Z/3. Onloads fall at frames 2, 10, 18 on branches 2, 1, 0 and offloads at 6, 14, 22 on branches 0, 2, 1. A branch reaches its offload 12 frames after its onload, the unique Δ with Δ ≡ 4 (mod 8) and Δ ≡ 0 (mod 3).">Prop 3.7</span></h3>
+            <div class="zp-strip" id="zp-strip"></div>
+            <div class="mono-sm" id="zp-strip-note" style="margin-top:4px"></div>
+            <h3>Register</h3>
+            <div class="kv" id="zp-reg"></div>
+            <h3>The zero point: three closure tests <span class="tag t-DEFINITION" data-basis="Definition 3.12: the zero point is the state in which the chosen orientation, metric and memory invariants have returned to their prescribed values. Spinor test: q₈ = +1 and not merely q₄ = −1. Geometric test: every branch transform followed by its exact inverse restores the metric, the tetrahedral edges and the core cube. Memory test: the open holonomy P = 1, or a recorded residual removed by a specified compensator. The cyclic holonomy is identically 1 and is not a test (Proposition 3.13).">Def 3.12</span></h3>
+            <div class="kv" id="zp-tests"></div>
+        </div>
+        <div class="zp-col">
+            <h3>The eight stages <span class="tag t-PROVEN" data-basis="Table 4 of the paper. Spatial angle is about the x-axis; the spread A_k² = sin²(kπ/4) is read exactly from the reduced state (Proposition 8.2).">Table 4</span></h3>
+            <div class="tbl-wrap"><table class="res" id="zp-stages"><thead><tr><th>k</th><th>stage</th><th>spinor</th><th>reduced</th><th>spatial</th><th>spread</th><th>operation</th></tr></thead><tbody></tbody></table></div>
+            <h3>Four tracks of the spinor clock <span class="tag t-PROVEN" data-basis="§8.10. Track B, exact and primary: the reduced Gaussian state of (1 + i)^F. Track A, readout and proposer: e^{iπ/4} multiplied in floating point once per frame. Track R, residues: (1 + i)^F modulo 881, where 881 ≡ 1 (mod 4) splits Z[i] with i ↦ 387. Track C (rational approximants) is not needed for the clock (Table 14). A track A value is accepted when it agrees with B's readout within tolerance; a disagreement is assigned to the track that fails its own identity.">§8.10</span></h3>
+            <div class="kv" id="zp-tracks"></div>
+            <h3>Branch packets <span class="tag t-PROVEN" data-basis="Each packet's branch point is the cube vertex x_j of the a = 0 triad (Proposition 3.1, corrected frame). Onload lifts it to the null cone, X(x) = (x, |x|²/2, 1), with ⟨X, X⟩ = 0 and −2⟨X(x), X(x*)⟩ = |x − x*|² = 8 (Proposition 3.3). Project applies the ghost map G(p) = ((1 + |p|²), 2p)/(1 − |p|²) to p = x/2, a point of t² − |y|² = 1. Fold applies both inverses in reverse order and must return x exactly.">Prop 3.3</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>branch</th><th>packet now</th><th>exact round trips</th></tr></thead><tbody id="zp-pkts"></tbody></table></div>
+        </div>
+    </div>
+</section>
+
+<div class="grid">
+    <!-- Panel A -->
+    <section class="panel" id="panel-a" aria-label="Panel A: three engines, three branches">
+        <h2>A · Three engines, three branches <span class="tag t-DEFINITION" data-basis="The three engines of Part 2: Systems I, II, III at their log radii, turned by σˢ (120° about (1, 1, 1)), pure Lemma 4 tier frames, counter-rotating helices. Engine s is branch s of the zero-point cycle, since σ carries branch 0 to branch 1 to branch 2. A job's head goes round its tier once per 360 frames (12 per node) and steps inward as its instructions are offloaded.">DEFINITION</span></h2>
+        <p class="sub">Each calculation's head <span class="cls-dot" style="background:#ff0055"></span>A <span class="cls-dot" style="background:#00f2ff"></span>B <span class="cls-dot" style="background:#ffd700"></span>C leaves a trail frame by frame. It descends a tier each time a fifth of its instructions has been offloaded, and a marker shows where each tier begins. At the zero point the landing triangle appears with its exact closure P₄* (white) and the inferred fourth P₄ (diamond). Memory beads show each value on its engine's outer manifold and the parity Y (gold) on the inner manifolds. The inset dial now turns once every 8 frames.</p>
+        <div id="space">
+            <div class="msg" id="space-msg">Loading Three.js r158…</div>
+            <canvas id="gears" width="380" height="165" aria-label="12/10/8 gear chain and the zero-point dial"></canvas>
+            <div id="scale-note"></div>
+        </div>
+    </section>
+
+    <!-- Panel B -->
+    <section class="panel" id="panel-b" aria-label="Panel B: the convergence core">
+        <h2>B · Convergence core <span class="tag t-PROVEN" data-basis="The crystal of Part 2 on the monograph's geometry: Cube 1 with Δ₁ ∪ −Δ₁ (Proposition 7.16), the nine C₉ rays of Lemma 8.2 (the paper's nine-phase wheel, Proposition 2.1), the poles ±(1, 1, 1), and three (2,3) trefoils (Lemma 8 Step 6) on the golden carrier (Proposition 6.5). Each TwistorPair is one branch.">§7.5 · Lemma 8</span></h2>
+        <p class="sub">Each TwistorPair is one branch. It starts outside the lattice and its two streams merge as the branch's instructions are offloaded. The core appears at the zero point where the three pair, placed by the C₃ split of Proposition 3.4: on the axis when the results agree, off it when they differ. If memory parity fails, the trefoils shear.</p>
+        <div id="crystal"><div class="msg" id="crystal-msg">Loading…</div><span id="sol-state" class="sol-tol">IDLE</span><span id="sol-step"></span></div>
+        <div class="crys-play"><span>FRAME <span id="step-count">000</span>/720</span><div id="progress-container" title="The 720-frame register: 30 joint cycles, 90 spinor cycles"><div id="progress-fill"></div></div></div>
+        <div class="crys-ctl">
+            <label>Micro-twist <span class="v" id="c-twist-v">2.50</span><input type="range" id="c-twist" min="0" max="15" step="0.01" value="2.5"></label>
+            <label>Buckle radius <span class="v" id="c-buckle-v">3.0</span><input type="range" id="c-buckle" min="0.5" max="8" step="0.1" value="3"></label>
+            <label>Inverse sep <span class="v" id="c-sep-v">0.8</span><input type="range" id="c-sep" min="0.1" max="2" step="0.1" value="0.8"></label>
+            <label>Torus radius <span class="v" id="c-torus-v">20.2</span><input type="range" id="c-torus" min="10" max="40" step="0.1" value="20.2" disabled></label>
+            <label>Z-scale <span class="v" id="c-z-v">10.0</span><input type="range" id="c-z" min="5" max="30" step="0.1" value="10" disabled></label>
+            <label>Pole height <span class="v" id="c-pole-v">34.6</span><input type="range" id="c-pole" min="10" max="50" step="0.1" value="34.6" disabled></label>
+        </div>
+        <div class="crys-checks">
+            <label title="Lock the carrier to the monograph: golden radii with R + r = √(8/3) so the lobes sit on the C9 rays (Lemma 8.2), z-scale 1, poles at ±(1,1,1). Units are the crystal file's: 20 per cubit."><input type="checkbox" id="c-lock" checked> Lemma 8.2 geometry</label>
+            <label><input type="checkbox" id="c-lattice" checked> 64-voxel lattice</label>
+            <label><input type="checkbox" id="c-bridge" checked> Bridges</label>
+            <label><input type="checkbox" id="c-nodes" checked> Nodes</label>
+            <label><input type="checkbox" id="c-lemma" checked> Lemma objects</label>
+            <label><input type="checkbox" id="c-scope"> Orthogonal scope</label>
+            <label><input type="checkbox" id="c-spin"> Spinor turn</label>
+        </div>
+        <div class="sec">
+            <h3>The 4 × 4 memory layer, §7.7 <span class="tag t-PROVEN" data-basis="Monograph §7.7: 12 boundary cells in ring order and 4 interior cells. Ring cell j holds (word j mod 3, structure ⌊j/3⌋) of the three newest memory words, structure 0–2 = A, B, C and 3 = the parity Y, so each word's group of four is an orbit of the 90° rotation (shift by 3). The interior holds the newest word's s, Re z, b − c and χ.">§7.7</span></h3>
+            <div class="hud" id="hud"></div>
+        </div>
+        <div class="sec">
+            <h3>Pairing gauge, Propositions 3.4 and 7.14 <span class="tag t-PROVEN" data-basis="Proposition 3.4 (the C₃ Fourier split, as Proposition 7.14 Part 1): three channels (a, b, c) are recovered exactly from s = a + b + c and z = a + ωb + ω²c. Here a, b, c are the three results, z is kept exactly as (a − (b + c)/2, b − c), and the recovery is re-checked in BigInt. s is the total Y: the fixed line, z the rotating plane.">Prop 3.4</span></h3>
+            <div class="kv" id="gauge-out"></div>
+        </div>
+    </section>
+
+    <!-- Panel C -->
+    <section class="panel" id="panel-c" aria-label="Panel C: quadrance out, pump and memory">
+        <h2>C · Quadrance out, pump and memory <span class="tag t-PROVEN" data-basis="Lemma 5 Part 6(a) (TQF in Gram form), Lemma 4 Part 2 (Weitzenböck), Proposition 3.9 (block telescoping and the pump holonomy), Propositions 3.10 and G1 (one erasure per group of four is rebuilt exactly), Lemma 15 Part 3 (recursive Merkle chain).">exact</span></h2>
+        <div class="sec">
+            <h3>Quadrance out: the triangle at the zero point <span class="tag t-PROVEN" data-basis="At the zero point the three results are read at the same node of T0 (the node of the pairing frame). Each engine's node is rationalized at 2⁻²⁴ in its cubit frame, turned exactly by σˢ, and read out automatically: Q₁, Q₂, Q₃, A_R in both forms (Lemma 5 Part 6(a)), χ (Lemma 4 Part 2) and the exact closure P₄* = P_II + P_III − P_I. Each node's phase is shifted by Δφ = κ(π/6)tanh(d), d = (x − x̄)/(|x̄| + 1) [DEFINITION], so the triangle is equilateral exactly when the results agree and no carried spin differs.">Lemma 5 · 4</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>word</th><th>Q₁</th><th>Q₂</th><th>Q₃</th><th>A_R poly = Gram</th><th>χ (≤ 1/√3)</th><th>Δφ A · B · C (mrad)</th><th>state</th></tr></thead><tbody id="tqf-rows"></tbody></table></div>
+            <div class="kv" id="quad-out" style="margin-top:6px"></div>
+        </div>
+        <div class="sec">
+            <h3>The 720 → 72 → 10 pump and the memory test <span class="tag t-PROVEN" data-basis="Proposition 3.9: with Δq_n = q_n q_{n−1}⁻¹, each ten-frame block telescopes, ΔQ_m = q_{10m+9} q_{10m−1}⁻¹; with δ_m = ΔQ_m⁻¹ and the inner blocks A_ℓ = {m : ⌊10m/72⌋ = ℓ} of sizes (8,7,7,7,7,8,7,7,7,7), Q⁽¹⁰⁾ = Q⁽⁸⁾ = P⁻¹ and H = Q⁽⁸⁾Q⁽¹⁰⁾P = P⁻¹. The cycle closes, H = 1, iff P = 1. Here q_n is each engine's own outer-gear orientation, a rotation about the engine's axis by its engaged frames/720 of a turn, held exactly as a residue modulo 720 (Proposition 2.5): a one-axis, hence abelian, instance of the pump.">Prop 3.9</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>engine</th><th>engaged so far</th><th>P, last register</th><th>Q⁽¹⁰⁾</th><th>Q⁽⁸⁾</th><th>H</th><th>memory test</th></tr></thead><tbody id="pump-rows"></tbody></table></div>
+            <div class="mono-sm" id="pump-note" style="margin-top:4px"></div>
+        </div>
+        <div class="sec">
+            <h3>Timing clutch and the orthogonal membrane <span class="tag t-DEFINITION" data-basis="Each engine has its own clock: the frames during which its clutch is engaged. Its helices, and any result latched on them, turn only while engaged. Hold: a finished engine disengages, so its result stays where it landed while the others catch up. Free-run: every engine turns on every frame, so a held result rides its counter-rotating helix. Membrane: free-run, but the three carried spins are split as in Proposition 3.4 into a common rotation s (harmless) and an orthogonal differential z (the shear); z is removed exactly at the zero point where the three pair.">clutch</span></h3>
+            <canvas id="clutch-gears" width="680" height="150" aria-label="Master gear and the three engines' own gears"></canvas>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>engine</th><th>clutch</th><th>own clock</th><th>own gear</th><th>spin since landing</th></tr></thead><tbody id="clutch-rows"></tbody></table></div>
+            <div class="kv" id="membrane-out" style="margin-top:6px"></div>
+        </div>
+        <div class="sec">
+            <h3>Memory: outer and inner manifolds <span class="tag t-PROVEN" data-basis="Each paired word is a group of four: A, B, C on the outer manifolds (T4) of Engines I, II, III, and their parity Y = A + B + C on the inner manifold (T0). Either side restores the other: one lost value per word is rebuilt exactly (Proposition 3.10, Proposition G1). Words are written at address = word number mod 30. Each word keeps the Lemma 15 Merkle chain of its four tiles, which locates an altered cell.">3.10 · G1 · 15</span></h3>
+            <div class="tbl-wrap"><table class="res quad"><thead><tr><th>addr</th><th>A · T4 I</th><th>B · T4 II</th><th>C · T4 III</th><th>Y · T0</th><th>parity</th><th>chain</th><th>word</th></tr></thead><tbody id="mem-rows"></tbody></table></div>
+            <div class="mono-sm" id="mem-out" style="margin-top:4px"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><button id="mem-restore" type="button">Restore all</button><button id="mem-alter" type="button">Alter one cell</button><button id="mem-repair" type="button">Locate and repair</button></div>
+            <div class="mono-sm" id="mem-act" style="margin-top:4px"></div>
+        </div>
+        <div class="sec">
+            <h3>Tiles and the memory root <span class="tag t-DEFINITION" data-basis="§6.1 Table 4 fields, Form 3. Each memory cell is a 64-bit tile: the three-bit step field [63:61] holds the zero-point step of the pairing frame (8, the Snap), wheel sector of its node, structure bits 0–2 for A, B, C and 3 for Y, gate low bits = address, slot = 4·(address mod 3) + structure, binary32 core. Each leaf is the tile followed by the exact value (Lemma 15 Part 3); the South Halo is a pre-filter only.">§6.1 · 15</span></h3>
+            <div class="tbl-wrap"><table class="res"><thead><tr><th>newest word</th><th>A</th><th>B</th><th>C</th><th>Y</th></tr></thead><tbody id="tile-rows"></tbody></table></div>
+            <div class="mono-sm" id="root-out" style="margin-top:6px"></div>
+        </div>
+    </section>
+</div>
+
+<!-- Panel D -->
+<section class="panel" id="panel-d" aria-label="Panel D: compliance">
+    <h2>D · Compliance with the zero-point paper and the Fifteen Lemmas <span class="tag t-PROVEN" data-basis="Each row names the result that governs a part of this page and re-checks it live where it applies.">live</span></h2>
+    <p class="sub">How the zero-point tri-engine uses the paper and the monograph, and which of its choices are definitions. <span id="lemma-sum"></span></p>
+    <div class="tbl-wrap"><table class="res lemmas"><thead><tr><th>result</th><th>what it governs on this page</th><th>live check</th><th>result</th></tr></thead><tbody id="lemma-rows"></tbody></table></div>
+</section>
+
+<div class="logbar">
+    <h2>Telemetry log</h2>
+    <span id="vsum"></span>
+    <button id="btn-clear" type="button">Clear</button>
+</div>
+<div id="log" role="log" aria-live="polite"></div>
+
+<ul class="notes" id="notes">
+    <li><strong>What changes from the convergence calculator.</strong> There, the eight-step cycle was read off the outer gear as one step per 90 frames, so one 720-frame turn was one spinor cycle. The paper supersedes that reading (Errata 10.2, item 2): 720 is a frame count, and under the exact generator 1 + i the spinor returns every 8 frames, 90 times per register (Proposition 3.7(4)). Here every frame is a zero-point step, and everything that was gated by the old windows is now gated by the frame schedule.</li>
+    <li><strong>Branches are engines.</strong> The nine-phase wheel splits into three 120° triads (Proposition 2.1). The a = 0 triad, in the corrected frame, is three cube vertices, and σ, the 120° turn that relates the three engines, carries each branch to the next. So engine s is branch s. A branch onloads at its k = 2 frame and offloads 12 frames later at k = 6 (Proposition 3.7), once per joint cycle. A calculation therefore runs one instruction per joint cycle, and calculations of different lengths finish at different frames.</li>
+    <li><strong>Pairing at the zero point.</strong> When all three have latched, they pair at the next zero point of the joint cycle (joint frame 0, a Snap). Their exact total is the fourth of the triple quad, the C₃ split gives s and z, and the landing triangle is read out by the TQF. The zero point is a closure state with three tests (Definition 3.12). The spinor test is the clock itself. The geometric test is every packet's exact round trip. The memory test is the open holonomy of each engine's gear over the register, which the 720 → 72 → 10 pump evaluates (Proposition 3.9). With the clutch holding a finished engine, that engine's gear falls behind and the register closes with a recorded residual. That is the case Definition 3.12 allows for: a residual P ≠ 1 that a compensator (H = P⁻¹) removes.</li>
+    <li><strong>Four tracks.</strong> The spinor clock is computed three ways (§8.10). Floating point (track A) drifts slowly. The exact reduced state (track B) cannot drift. Residues modulo 881 (track R) fingerprint B. The page accepts A only within tolerance of B.</li>
+    <li><strong>Frame convention.</strong> This page keeps engine v10's frame, 12 per pulse, so the register is one second. The paper takes a frame to be one pulse of 1/60 s, so its register is 12 s. Its zero-point identities (Propositions 3.7, 3.9, 7.1) count frames and hold under either convention. Its clock-window table (Proposition 3.8) is stated for its own frame and is not used here <span class="tag t-DEFINITION" data-basis="A design choice of this page, made so that the engines, the clutch and the gears keep the clock of engine v10 and of the other tri-engine pages.">DEFINITION</span>.</li>
+    <li><strong>What it does not claim.</strong> The lifts into the null cone and the hyperboloid are embeddings that change how a point is represented (Definition 1.1). The value of each calculation comes from the exact evaluation, and nothing here bears on P versus NP, which the paper leaves open (Theorem 5.11).</li>
+</ul>
+</div>
+
+<!-- Three.js r158 (classic build); falls back to jsdelivr and unpkg copies of the same release if cdnjs has no r158 path -->
