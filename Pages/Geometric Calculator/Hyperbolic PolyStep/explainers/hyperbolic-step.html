@@ -64,8 +64,9 @@
                 <li><strong>Move.</strong> \(x' = \sum_k w_k V_k\), the weighted barycentre of the corners.</li>
             </ol>
             <p>Because the corners are a finite distance away, the step crosses flat regions of losses built from thresholds, rounding or argmax, where gradients are zero or undefined. That is why it trains spiking and quantized networks.</p>
-            <div class="callout note"><span class="label">polystep&rsquo;s own caveat</span>
-                <p>The package states that its radius controllers and quadratic models &ldquo;do not inherit classical direct-search or trust-region guarantees&rdquo;. Its results are empirical; specialised solvers beat it on MAX-SAT, and backpropagation is faster on differentiable models. Nothing here changes that.</p>
+            <div class="callout note"><span class="label">What polystep guarantees, and what it does not</span>
+                <p>Its paper (TMLR 2026) proves a convergence theorem under stated conditions. polystep&rsquo;s experiments call this setting <em>theory mode</em>: a square-summable, non-summable step radius \(r_t = r_0 (t+1)^{-(1/2+\gamma)}\) (its <code>PowerDecay</code>, \(0 < \gamma \le 1/2\)), a flat &epsilon; and a small probe-radius jitter. Its default settings (adaptive radii, quadratic models, momentum) are outside that theorem. Its README says they &ldquo;do not inherit classical direct-search or trust-region guarantees&rdquo;, and they are judged by experiment. Specialised solvers beat it on MAX-SAT, and backpropagation is faster on differentiable models.</p>
+                <p>Whether the theorem carries over to the hyperbolic step is an open question of this project (ledger row T1). It is not assumed here.</p>
             </div>
         </section>
 
@@ -199,7 +200,7 @@
             <h2>What it does not promise</h2>
             <div class="callout limit"><span class="label">Limits</span>
                 <ul>
-                    <li><strong>No convergence guarantee,</strong> exactly as for polystep. H1&ndash;H7 are about where the step lands, not about reaching an optimum.</li>
+                    <li><strong>No convergence guarantee yet.</strong> H1&ndash;H7 are about where the step lands, not about reaching an optimum. Whether polystep&rsquo;s convergence theorem transfers to the hyperboloid under its theory-mode conditions is open (T1); the reference implements theory mode so the question can be tested.</li>
                     <li><strong>No free search.</strong> A step costs \(2d\) evaluations per particle per probe. Against a yes/no objective, no step rule beats the volume of the space (paper, Prop 5.13).</li>
                     <li><strong>Curvature is a hypothesis, not a gift.</strong> In one dimension the hyperbolic line is isometric to the real line, so curvature only matters for factors of dimension two or more. Whether it helps is conjecture C1, decided by the <a href="benchmarks.html#prereg">preregistered benchmarks</a>.</li>
                 </ul>

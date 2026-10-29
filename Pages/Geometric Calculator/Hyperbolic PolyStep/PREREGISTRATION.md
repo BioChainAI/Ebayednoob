@@ -108,4 +108,20 @@ of this preregistration.
 
 ## Amendments
 
-None.
+### Amendment 1 · 2026-10-29 · implementation details fixed in Phase 1, before any tuning or measured run
+
+None of these changes a preregistered setting (sizes, budgets, seeds, metrics, decision rules). They record choices
+the reference had to make, so that the measured runs are judged against the method as built.
+
+1. **Horizon.** Every factor of a state stays in the closed ball of radius 8 about the origin.
+   - In hyperbolic geometry this is hyperbolic distance; at curvature 0 it is Euclidean distance.
+   - A point that leaves the ball, after a step or after the membrane, is moved radially back onto it: the nearest point of the ball.
+   - It is needed because in B1 and B2 only a point's direction is decoded, so particles can drift outward without limit. Beyond hyperbolic distance about 17 the exact snap's 2^-24 grid, and float64 hyperboloid coordinates, can no longer hold a point.
+   - The projection never lengthens a step (H2 still holds) and never changes a decoded answer.
+2. **B3 charts.** In B3 each particle is held in the frame of a tree node near it, and re-anchored after every step (a tiling-based coordinate model).
+   - It is needed because at depth 8 (distance about 24) float64 coordinates measured from the root lose the sheet constraint.
+   - The step is unchanged (H4), and B3's curvature-0 counterpart uses the same anchoring, with straight-line steps in the anchor's tangent plane.
+   - The membrane is not used on B3, since it would mix points of different charts; B3 runs with the clutch on "free".
+3. **polystep on B3.** The library's `PolyStep` has no re-anchoring hook. On B3 it searches the root chart and is limited by float64 beyond distance about 18 (depth 6). It is the secondary baseline; C1 is decided against curvature 0, which is anchored.
+4. **Counting.** polystep's evaluations are counted by wrapping its objective, since its default polytopes differ from the orthoplex. The final scoring of its particles is not counted. It keeps no incumbent; its best final particle is certified.
+5. **The snap rounds halves up** (`floor(x + 1/2)`), as the browser's `Math.round` does, so the two implementations agree on every grid point.

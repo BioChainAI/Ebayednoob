@@ -30,7 +30,7 @@
           desc: 'The lemma set behind the engine: exact rational quaternions, the TQF and Weitzenböck lock, parity groups and the Merkle chain. The certifier and the memory reuse them.',
           refs: 'Lemmas 4–15', href: '../Galactic%20Lensing/galactic_companion.html' },
         { id: 'polystep', col: 0, row: 3.5, kind: 'source', status: 'source', label: 'polystep 1.1.1', sub: 'Le, TMLR 2026 · Apache-2.0',
-          desc: 'Gradient-free training by optimal transport: rotate a polytope around each particle, score its vertices, weight them by softmax or Sinkhorn and move to the weighted barycentre. It makes no convergence claim; its results are empirical.',
+          desc: 'Gradient-free training by optimal transport: rotate a polytope around each particle, score its vertices, weight them by softmax or Sinkhorn and move to the weighted barycentre. Its paper proves convergence under stated conditions (its theory mode: a power-decay step radius, a flat ε, probe jitter); its default heuristics are outside that theorem and are judged empirically.',
           refs: 'solver.py, geometry.py, solvers/', href: 'https://github.com/anindex/polystep' },
         { id: 'zp', col: 0, row: 6, kind: 'existing', status: 'existing', label: 'Zero-Point Tri-Engine', sub: 'the schedule, running',
           desc: 'The existing page that runs three engines on the 24-frame joint schedule inside the 720-frame register. The simulation page is generated from its template.',
