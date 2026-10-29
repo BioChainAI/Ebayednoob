@@ -28,7 +28,7 @@
     </div>
     <div class="hero-stats">
         <span class="stat"><b>6</b> modules &middot; <b>2</b> runners</span>
-        <span class="stat"><b>80/80</b> tests pass</span>
+        <span class="stat"><b>82/82</b> tests pass</span>
         <span class="stat"><b>4</b> trace files for the browser port</span>
     </div>
 </header>
@@ -68,7 +68,7 @@ python3 -m venv .venv &amp;&amp; . .venv/bin/activate
 pip install --index-url https://download.pytorch.org/whl/cpu torch   <span class="c"># CPU build (or plain `pip install torch`)</span>
 pip install -r requirements.txt                                      <span class="c"># polystep 1.1.1, numpy, pytest</span>
 
-python -m pytest -q tests          <span class="c"># 80 tests, about half a minute</span>
+python -m pytest -q tests          <span class="c"># 82 tests, about half a minute</span>
 python run_traces.py               <span class="c"># writes traces/*.json for the browser core</span>
 python run_bench.py smoke          <span class="c"># every benchmark and method once, tiny sizes</span></pre>
             <div class="callout note"><span class="label">On this build machine</span>
@@ -126,7 +126,7 @@ print(tc.memory[-1])     <span class="c"># the last zero point's word: certified
         <section class="chapter" id="tests">
             <div class="chapter-num">05</div>
             <h2>What the tests check</h2>
-            <p class="chapter-intro">80 tests, all passing. The properties are checked on random instances, in exact arithmetic wherever the claim is exact.</p>
+            <p class="chapter-intro">82 tests, all passing: the 80 of Phase 1, and two added in Phase 4. One checks that the batched membrane equals the factor loop; the other, that float states stay on the sheet (Amendment 3). The properties are checked on random instances, in exact arithmetic wherever the claim is exact.</p>
             <div class="table-wrap"><table>
                 <thead><tr><th>Claim</th><th>Check</th><th>Instances</th><th>Result</th></tr></thead>
                 <tbody>
@@ -217,7 +217,7 @@ python run_bench.py decide B1         <span class="c"># Phase 4: the paired boot
         { id: 'channels', label: 'channels.py', sub: 'TriChannel', k: 'sol', x: 500, y: 220 },
         { id: 'traces', label: 'run_traces.py', sub: 'traces/*.json', k: 'app', x: 740, y: 120 },
         { id: 'bench', label: 'run_bench.py', sub: 'smoke · tune · run · decide', k: 'app', x: 740, y: 230 },
-        { id: 'tests', label: 'tests/', sub: '80 tests', k: 'test', x: 740, y: 340 }];
+        { id: 'tests', label: 'tests/', sub: '82 tests', k: 'test', x: 740, y: 340 }];
     const E = [['polystep', 'step'], ['polystep', 'bench'], ['prng', 'exact'], ['prng', 'step'], ['hyperbolic', 'step'], ['exact', 'step'], ['hyperbolic', 'problems'],
         ['hyperbolic', 'channels'], ['exact', 'channels'], ['step', 'channels'], ['problems', 'channels'], ['step', 'traces'], ['channels', 'traces'], ['problems', 'traces'],
         ['channels', 'bench'], ['problems', 'bench'], ['step', 'tests'], ['channels', 'tests'], ['problems', 'tests']];

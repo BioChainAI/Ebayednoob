@@ -16,8 +16,8 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | 1 · Python reference | `reference/hpstep`: the hyperbolic step on polystep's own solvers, B1–B4 with exact Helix B, three channels on the clock; 80 passing tests (H1–H7, parity with polystep); `traces/`; the benchmark runner; Amendment 1 to the preregistration | done |
 | 2 · JavaScript core | `hyperbolic_core.js` (no dependencies) and `parity.js`: 169/169 trace lines match, in Node (`node tests/parity.cjs`) and live in the browser | done |
 | 3 · Simulation page | `simulation.html`: three channels live on the zero-point clock for B1–B4, written on the browser core (not the Zero-Point template); exact register pump, Helix B, memory chain, on-load self-test (105/105; 169/169 in full); settings by address; the simulation manual | done |
-| 4 · Proofs and results | Full proofs of H1–H7 with live self-tests; the preregistered benchmarks run, with their decisions | next |
-| 5 · Integration | Site bar, cross-links, documentation | planned |
+| 4 · Proofs and results | `explainers/proofs-and-results.html`: full proofs of Lemma S and H1–H7, checked live (`proofs.js`); T1 reduced, still open. The preregistered benchmarks were run under Amendments 2 and 3 (7,740 runs, results in `reference/results/`). C1 refuted, C2 supported, C3 refuted; the B3 control passes | done |
+| 5 · Integration | Site bar, cross-links, documentation | next |
 
 ## Files
 
@@ -31,6 +31,7 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | `explainers/reference-guide.html` | Explainer 5: the Python reference, its module map, tests, findings, traces and runner |
 | `explainers/core-reference.html` | Explainer 6: the browser core, with a live parity check and three channels running in the page |
 | `explainers/simulation-manual.html` | Explainer 7: the simulation page's wiring, every control and panel, the exact track, experiments |
+| `explainers/proofs-and-results.html`, `proofs.js` | Explainer 8: proofs of H1–H7 with live checks, T1, the benchmark results and decisions |
 | `simulation.html` | The simulation: three channels on the zero-point clock, live (e.g. `simulation.html?prob=B1&size=30&exact=1`) |
 | `hyperbolic_core.js`, `parity.js`, `tests/parity.cjs` | The browser core, the trace replay, and its Node runner |
 | `assets/hp.css` | Shared style |
