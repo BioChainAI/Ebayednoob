@@ -1,7 +1,8 @@
-// Hyperbolic PolyStep: hub and explainers render, charts draw every node and edge, links resolve, the lab's step obeys H2.
+// Hyperbolic PolyStep: hub, explainers and simulation render, charts draw every node and edge, links resolve, the lab's
+// step obeys H2, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'simulation.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -19,7 +20,7 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       const anchors = [...document.querySelectorAll('a[href^="#"]')].map(a => a.getAttribute('href')).filter(h => h.length > 1 && !document.querySelector(h));
       return { title: document.title, katex: document.querySelectorAll('.katex').length, katexErr: document.querySelectorAll('.katex-error').length,
         fullNodes: full ? full.querySelectorAll('.map-node').length : null, fullEdges: full ? full.querySelectorAll('.map-edge').length : null,
-        expect: [HPMap.NODES.length, HPMap.EDGES.length], focus: focus.map(s => s.querySelectorAll('.map-node').length),
+        expect: typeof HPMap === 'undefined' ? null : [HPMap.NODES.length, HPMap.EDGES.length], focus: focus.map(s => s.querySelectorAll('.map-node').length),
         bad: uniq.filter((u, i) => st[i] !== 200), deadAnchors: anchors, scrollW: document.documentElement.scrollWidth, innerW: innerWidth };
     });
     let ok = !errs.length && !r.katexErr && !r.bad.length && !r.deadAnchors.length && r.scrollW <= r.innerW && r.focus.every(n => n >= 2) && (r.fullNodes === null || (r.fullNodes === r.expect[0] && r.fullEdges === r.expect[1]));
@@ -39,6 +40,17 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       await pg.click('#b-run'); await pg.waitForFunction(() => document.body.dataset.run !== undefined, null, { timeout: 120000 });
       r.run = await pg.evaluate(() => [document.body.dataset.run, document.querySelector('#run-out').textContent.slice(0, 90)]);
       ok = ok && r.parity === '169/169';
+    }
+    if (p === 'simulation.html') {
+      r.opened = await pg.evaluate(() => [document.body.dataset.frame, document.querySelector('#b-play').textContent]);
+      await pg.waitForFunction(() => document.body.dataset.selftest, null, { timeout: 120000 });
+      r.selftest = await pg.evaluate(() => document.body.dataset.selftest);
+      r.probs = [];
+      for (const q of ['B1', 'B2', 'B3', 'B4']) { await pg.selectOption('#in-prob', q); r.probs.push(await pg.evaluate(() => { HPSim.advance(96); HPSim.render(); return HPSim.sim.tc.memory.length; })); }
+      await pg.goto(BASE + p + '?prob=B1&size=30&exact=1&P=2'); await pg.waitForTimeout(300);
+      r.register = await pg.evaluate(() => { HPSim.advance(720); HPSim.render(); return HPSim.sim.tc.registers; });
+      r.scrollW2 = await pg.evaluate(() => document.documentElement.scrollWidth);
+      ok = ok && r.opened[0] === '0' && r.opened[1] === 'Play' && r.selftest === '105/105' && r.probs.every(n => n === 4) && r.register.length === 1 && r.register[0].pump_identity && r.scrollW2 <= r.innerW;
     }
     if (p === 'explainers/channels.html') { r.charts = await pg.evaluate(() => [document.querySelectorAll('#packet-chart rect').length, document.querySelectorAll('#schedule-chart rect').length]); ok = ok && r.charts[0] === 13 && r.charts[1] === 73; }
     if (!ok) fail++;

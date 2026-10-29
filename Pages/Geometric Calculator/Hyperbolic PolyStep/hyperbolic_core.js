@@ -182,8 +182,14 @@
     // ============================================================ track B: matrices and the sheet over Q
     const X = {};
     X.eye = n => Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? Q.ONE : Q.ZERO)));
-    X.matmul = (A, B) => A.map(row => B[0].map((_, c) => row.reduce((s, a, k) => s.add(a.mul(B[k][c])), Q.ZERO)));
-    X.matvec = (A, v) => A.map(row => row.reduce((s, a, k) => s.add(a.mul(v[k])), Q.ZERO));
+    // A sum of products, accumulated unreduced and reduced once: the same rational as adding term by term.
+    const dot = (row, col) => {
+        let n = 0n, d = 1n;
+        for (let k = 0; k < row.length; k++) { const a = row[k], b = col(k); if (a.n === 0n || b.n === 0n) continue; const tn = a.n * b.n, td = a.d * b.d; if (td === d) n += tn; else { n = n * td + tn * d; d *= td; } }
+        return n === 0n ? Q.ZERO : new Q(n, d);
+    };
+    X.matmul = (A, B) => A.map(row => B[0].map((_, c) => dot(row, k => B[k][c])));
+    X.matvec = (A, v) => A.map(row => dot(row, k => v[k]));
     X.transpose = A => A[0].map((_, j) => A.map(row => row[j]));
     X.inverse = A => {                                               // Gauss-Jordan over Q
         const n = A.length, M = A.map((row, i) => [...row, ...Array.from({ length: n }, (_, j) => (i === j ? Q.ONE : Q.ZERO))]);
@@ -223,7 +229,7 @@
         return L;
     };
     X.J = d => { const M = X.eye(d + 1); M[0][0] = Q.ONE.neg(); return M; };
-    X.lorentzInverse = L => { const d = L.length - 1; return X.matmul(X.matmul(X.J(d), X.transpose(L)), X.J(d)); };
+    X.lorentzInverse = L => L.map((row, i) => row.map((_, j) => ((i === 0) !== (j === 0) ? L[j][i].neg() : L[j][i])));   // J L^T J
     X.isLorentz = L => { const d = L.length - 1; return X.matEq(X.matmul(X.matmul(X.transpose(L), X.J(d)), L), X.J(d)); };
     X.coshSinh = t => { t = Q.from(t); const tt = t.mul(t); return [Q.ONE.add(tt).div(Q.ONE.sub(tt)), Q.TWO.mul(t).div(Q.ONE.sub(tt))]; };
     X.pointAt = (x, t, u) => { const [c, s] = X.coshSinh(t); return X.matvec(X.boost(x), [c, ...u.map(ui => s.mul(ui))]); };
@@ -244,8 +250,10 @@
     X.toFloat = y => y.map(v => v.toNumber());
     X.displacement = (xPrev, xNew) => (xPrev.every((v, i) => v.eq(xNew[i])) ? X.eye(xNew.length) : X.matmul(X.boost(xNew), X.lorentzInverse(X.boost(xPrev))));
     // The 720 -> 72 -> 10 pump (Prop 3.9) in any group: returns P, Q10, Q8, H = Q8 Q10 P and P^-1.
-    X.pump = (dq, mul, inv, one) => {
+    // Increments that are the identity itself (frames where a factor did not move) are skipped, not multiplied.
+    X.pump = (dq, mul0, inv0, one) => {
         if (dq.length !== 720) throw new RangeError('a register has 720 increments');
+        const mul = (a, b) => (a === one ? b : b === one ? a : mul0(a, b)), inv = a => (a === one ? one : inv0(a));
         let P = one; for (const x of dq) P = mul(x, P);
         const dQ = [];
         for (let m = 0; m < 72; m++) { let B = one; for (let i = 0; i < 10; i++) B = mul(dq[10 * m + i], B); dQ.push(B); }
@@ -254,6 +262,22 @@
         let Q8 = one;
         for (let l = 0; l < 10; l++) { let A = one; for (let m = 0; m < 72; m++) if (Math.floor(10 * m / 72) === l) A = mul(A, delta[m]); Q8 = mul(Q8, A); }
         return { P, Q10, Q8, H: mul(mul(Q8, Q10), P), Pinv: inv(P) };
+    };
+    // The same pump on one factor's register, run on integer matrices over a common denominator (N / D) and never
+    // reduced: products of rationals without a gcd per entry, equalities by cross-multiplication. Exact, and fast
+    // enough for a live page, where reducing every entry dominated. Checks Q10 = Q8 = H = P^-1 and P start = end.
+    X.pumpHolds = (dq, start, end) => {
+        const lcm = (a, b) => (a / gcdB(a, b)) * b;
+        const intMat = A => { let D = 1n; for (const r of A) for (const q of r) D = lcm(D, q.d); return { N: A.map(r => r.map(q => q.n * (D / q.d))), D }; };
+        const intVec = v => { let D = 1n; for (const q of v) D = lcm(D, q.d); return { N: v.map(q => q.n * (D / q.d)), D }; };
+        const k = start.length, one = { N: Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => (i === j ? 1n : 0n))), D: 1n };
+        const mul0 = (A, B) => ({ N: A.N.map(row => B.N[0].map((_, c) => { let t = 0n; for (let q = 0; q < k; q++) t += row[q] * B.N[q][c]; return t; })), D: A.D * B.D });
+        const inv0 = L => ({ N: L.N.map((row, i) => row.map((_, j) => ((i === 0) !== (j === 0) ? -L.N[j][i] : L.N[j][i]))), D: L.D });   // J L^T J
+        const eq = (A, B) => A.N.every((row, i) => row.every((v, j) => v * B.D === B.N[i][j] * A.D));
+        const r = X.pump(dq.map(x => (x ? intMat(x) : one)), mul0, inv0, one);
+        const v = intVec(start), y = intVec(end);
+        const tele = r.P.N.every((row, i) => { let t = 0n; for (let q = 0; q < k; q++) t += row[q] * v.N[q]; return t * y.D === y.N[i] * r.P.D * v.D; });
+        return eq(r.Q10, r.Pinv) && eq(r.Q8, r.Pinv) && eq(r.H, r.Pinv) && tele;
     };
     X.innerBlockSizes = () => Array.from({ length: 10 }, (_, l) => Array.from({ length: 72 }, (_, m) => m).filter(m => Math.floor(10 * m / 72) === l).length);
 
@@ -748,18 +772,15 @@
             this.regDq = this.states.map(st => st.X.map(row => row.map(() => new Array(720).fill(null))));
             this.regStart = this.states.map(st => st.Xq.map(row => row.slice()));
         }
-        record(j, before) {
+        record(j, before, only = null) {
             if (!this.exactRegister) return;
             const idx = (this.F - 1) % 720, st = this.states[j];
-            st.Xq.forEach((row, p) => row.forEach((y, i) => { const b = before[p][i]; if (!y.every((v, c) => v.eq(b[c]))) this.regDq[j][p][i][idx] = X.displacement(b, y); }));
+            st.Xq.forEach((row, p) => row.forEach((y, i) => { if (only !== null && i !== only) return; const b = before[p][i]; if (!y.every((v, c) => v.eq(b[c]))) this.regDq[j][p][i][idx] = X.displacement(b, y); }));
         }
         closeRegister() {
-            const one = X.eye(this.states[0].X[0][0].length);
             let ok = true;
             this.states.forEach((st, j) => st.Xq.forEach((row, p) => row.forEach((y, i) => {
-                const dq = this.regDq[j][p][i].map(x => x || one), r = X.pump(dq, X.matmul, X.lorentzInverse, one);
-                const tele = X.matvec(r.P, this.regStart[j][p][i]).every((v, c) => v.eq(y[c]));
-                ok = ok && X.matEq(r.Q10, r.Pinv) && X.matEq(r.Q8, r.Pinv) && X.matEq(r.H, r.Pinv) && tele;
+                ok = ok && X.pumpHolds(this.regDq[j][p][i], this.regStart[j][p][i], y);
             })));
             this.registers.push({ F: this.F, pump_identity: ok });
             this.resetRegister();
@@ -813,7 +834,7 @@
                     this.solvers[j].clamp(st.X, [i]);
                     if (st.Xq) {
                         st.Xq.forEach((row, p) => { row[i] = X.snap(st.X[p][i], this.solvers[j].cfg.snapBits)[0]; st.X[p][i] = X.toFloat(row[i]); });
-                        this.record(j, before);
+                        this.record(j, before, i);
                     }
                 });
             }

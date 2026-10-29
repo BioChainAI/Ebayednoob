@@ -92,10 +92,10 @@
         { id: 'jscore', col: 3, row: 3.5, kind: 'artifact', status: 'done', label: 'JavaScript core', sub: 'hyperbolic_core.js',
           desc: 'Built in Phase 2: hyperbolic_core.js, the reference ported function for function with no dependencies. It reproduces all 169 lines of the reference’s traces (exact fields exactly, floats to 1e-12), checked live in the browser.',
           refs: 'Phase 2 · 169/169 trace lines', explainer: 'explainers/core-reference.html' },
-        { id: 'sim', col: 3, row: 5, kind: 'artifact', status: 'next', label: 'Simulation page', sub: 'three channels, live',
-          desc: 'The multi-channel solver running on the zero-point clock, with a Poincaré view of the particles and polytopes, cost traces, the clutch and membrane, the pump and Helix B certificates. It opens paused.',
-          refs: 'Phase 3', explainer: BUILD },
-        { id: 'proofs', col: 3, row: 6.5, kind: 'artifact', status: 'planned', label: 'Proofs and results', sub: 'H1–H7 · B1–B4',
+        { id: 'sim', col: 3, row: 5, kind: 'artifact', status: 'done', label: 'Simulation page', sub: 'three channels, live',
+          desc: 'Built in Phase 3 on the browser core: the three channels on the zero-point clock for any of the four problems, with a Poincaré view of the particles and the last step’s polytopes, the clock, Helix B’s certified answer, the memory chain, the clutch and membrane, and the exact register pump. It opens paused and checks itself against the reference on load.',
+          refs: 'Phase 3 · simulation.html', explainer: 'explainers/simulation-manual.html', href: 'simulation.html' },
+        { id: 'proofs', col: 3, row: 6.5, kind: 'artifact', status: 'next', label: 'Proofs and results', sub: 'H1–H7 · B1–B4',
           desc: 'Full proofs of H1–H7 with live self-tests, and the preregistered benchmark results with their decisions.',
           refs: 'Phase 4', explainer: BENCH }
     ];
@@ -143,7 +143,7 @@
         const link = target(n), list = arr => arr.length ? arr.map(m => `<a href="#" data-pick="${m.id}">${esc(m.label)}</a>`).join(' · ') : '—';
         return `<h4><span class="dot" style="background:${KIND[n.kind].color}"></span>${esc(n.label)} <span class="status ${n.status === 'done' || n.status === 'built' ? 's-done' : n.status === 'next' ? 's-next' : n.status === 'existing' || n.status === 'source' ? 's-existing' : 's-planned'}">${STATUS[n.status]}</span></h4>
             <p>${esc(n.desc)}</p>
-            <p class="links">${esc(KIND[n.kind].name)} · ${esc(n.refs)}${link ? ` · <a href="${link}">${n.explainer ? 'Read the explainer' : 'Open'} →</a>` : ''}</p>
+            <p class="links">${esc(KIND[n.kind].name)} · ${esc(n.refs)}${link ? ` · <a href="${link}">${n.explainer ? 'Read the explainer' : 'Open'} →</a>` : ''}${n.explainer && n.href && !n.href.includes('#') ? ` · <a href="${url(n.href)}">Open →</a>` : ''}</p>
             <p class="links">Draws on: ${list(ins(n.id))}<br>Feeds: ${list(outs(n.id))}</p>`;
     }
     function wire(svg, detail, pick) {
