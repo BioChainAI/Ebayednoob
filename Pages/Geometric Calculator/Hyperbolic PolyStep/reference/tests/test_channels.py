@@ -56,3 +56,33 @@ def test_H7_exact_register_closes_with_the_pump_identity():
     tc, _ = make(n=9, clutch='membrane', exact=True, P=1, block=1)
     tc.run(frames=1440)
     assert [r['pump_identity'] for r in tc.registers] == [True, True]
+
+
+def test_batched_membrane_is_the_factor_loop():
+    """Float runs move all factors at once; one membrane must give the factor-by-factor loop's result, to rounding.
+    (Over a whole run the two drift apart, as any two orders of float operations do in a chaotic search.) Checked on
+    B1 states that reach the horizon and on B4's mixed product with Euclidean factors."""
+    import copy
+    from hpstep import problems as PB
+    for prob, P, init in ((ThreeColouring(30, 4.4, Rng(5)), 4, {'spread': 0.69}),
+                          (PB.HardThresholdNet(PB.hierarchical_data(Rng(6), n_train=50, n_test=20), Rng(7)), 3, {})):
+        flat = getattr(prob, 'flat_factors', ())
+        sols, sts = [], []
+        for j in range(3):
+            cfg = StepConfig(epsilon=0.3, step_radius=1.5, block=None, flat_factors=flat)
+            sol = PolyStepH(prob, prob.m, prob.d, cfg, Rng(70 + j))
+            sts.append(sol.init_state(prob.init_points(Rng(80 + j), P, **init)))
+            sols.append(sol)
+        tc = TriChannel(sols, sts, prob, clutch='free', mu=0.6)
+        tc.run(frames=24 * 5)                                     # rich states, some on the horizon
+        certs = [tc.certify(j) for j in range(3)]
+        results = []
+        for batched in (True, False):
+            t2 = copy.deepcopy(tc)
+            t2.clutch, t2.batched_membrane = 'membrane', batched
+            t2.membrane(certs)
+            results.append((np.stack([st.X for st in t2.states]), t2.membrane_log[-1]['differential_removed']))
+        a, b = results
+        assert np.isfinite(a[0]).all() and np.isfinite(b[0]).all()
+        assert np.max(np.abs(a[0] - b[0]) / np.maximum(1, np.abs(b[0]))) < 1e-10
+        assert abs(a[1] - b[1]) <= 1e-12 * max(1.0, b[1])

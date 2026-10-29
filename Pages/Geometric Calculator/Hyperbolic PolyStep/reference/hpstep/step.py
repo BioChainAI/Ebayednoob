@@ -155,14 +155,18 @@ class PolyStepH:
         if R is None:
             return 0
         count = 0
+        hyp = [i for i in idx if self.hyper and i not in self.cfg.flat_factors]
+        if hyp:                                                   # all hyperbolic factors at once (elementwise maths)
+            sub = Xs[:, hyp, :]
+            out = np.arccosh(np.maximum(1.0, sub[..., 0])) > R
+            if np.any(out):
+                v = H.log_origin(sub[out])
+                sub[out] = H.exp_origin(v * (R / np.linalg.norm(v, axis=-1, keepdims=True)))
+                Xs[:, hyp, :] = sub
+                count += int(out.sum())
         for i in idx:
             if self.hyper and i not in self.cfg.flat_factors:
-                rad = np.arccosh(np.maximum(1.0, Xs[:, i, 0]))
-                out = rad > R
-                if np.any(out):
-                    v = H.log_origin(Xs[out, i, :])
-                    Xs[out, i, :] = H.exp_origin(v * (R / np.linalg.norm(v, axis=-1, keepdims=True)))
-                    count += int(out.sum())
+                continue
             else:
                 z = Xs[:, i, 1:] if self.hyper else Xs[:, i, :]
                 n = np.linalg.norm(z, axis=-1)

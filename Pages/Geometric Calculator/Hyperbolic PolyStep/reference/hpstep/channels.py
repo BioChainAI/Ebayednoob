@@ -68,6 +68,7 @@ class TriChannel:
         self.best_cert = [math.inf] * self.k
         self.memory, self.log, self.registers = [], [], []
         self.membrane_log = []
+        self.batched_membrane = True     # float runs move all factors at once; False keeps the factor loop
         self.reg_dq = None
         if exact_register:
             self._reset_register()
@@ -162,6 +163,10 @@ class TriChannel:
                     moved.append(float(np.linalg.norm(shift)))
             self.membrane_log.append({'F': self.F, 'differential_removed': max(moved) if moved else 0.0})
             return
+        if self.batched_membrane and all(st.Xq is None for st in self.states):   # float runs: all factors at once
+            self._membrane_batched(pts, w, moved)
+            self.membrane_log.append({'F': self.F, 'differential_removed': max(moved) if moved else 0.0})
+            return
         for i in range(pts[0].shape[0]):                            # factor by factor
             V = np.array([p[i] for p in pts])
             if i in self.solvers[0].cfg.flat_factors:
@@ -185,6 +190,38 @@ class TriChannel:
                         st.X[p, i] = X.to_float(st.Xq[p][i])
                     self._record(j, before)
         self.membrane_log.append({'F': self.F, 'differential_removed': max(moved) if moved else 0.0})
+
+    def _membrane_batched(self, pts, w, moved):
+        """The membrane of the factor-by-factor loop below, for all factors at once. The factors are independent, so
+        this is the same map; only the order of float operations differs (agreement to about 1e-15, checked by the
+        tests). Exact runs keep the loop, whose snapped states the browser core's traces follow."""
+        V = np.stack([np.asarray(p, dtype=float) for p in pts])      # (k, m, d+1)
+        m = V.shape[1]
+        flat = [i for i in range(m) if i in self.solvers[0].cfg.flat_factors]
+        hyp = [i for i in range(m) if i not in self.solvers[0].cfg.flat_factors]
+        if hyp:
+            Vh = V[:, hyp, :]
+            common = H.lorentz_centroid(np.swapaxes(Vh, 0, 1), np.broadcast_to(w, (len(hyp), len(w))))   # (h, d+1)
+        if flat:
+            common_flat = np.einsum('k,kmd->md', w, V[:, flat, :])
+        for j, st in enumerate(self.states):
+            if hyp:
+                a = Vh[j]
+                dd = H.dist(a, common)
+                Linv = H.lorentz_inverse(H.boost(a))
+                vo = np.einsum('mij,mj->mi', Linv, common)[:, 1:]
+                nrm = np.linalg.norm(vo, axis=-1, keepdims=True)
+                u = vo / np.where(nrm > 0, nrm, 1.0)
+                c = H.exp_at(a, (self.mu * dd)[:, None] * u)
+                T = H.boost(c) @ Linv
+                T[dd < 1e-15] = np.eye(a.shape[-1])
+                st.X[:, hyp, :] = np.einsum('pmi,mji->pmj', st.X[:, hyp, :], T)
+                moved.extend((self.mu * dd).tolist())
+            if flat:
+                shift = self.mu * (common_flat - V[j, flat, :])
+                st.X[:, flat, 1:] += shift[None, :, 1:]
+                moved.extend(np.linalg.norm(shift[:, 1:], axis=-1).tolist())
+            self.solvers[j].clamp(st.X, list(range(m)))
 
     def run(self, frames=None, budget=None, on_zero=None):
         """Advance the clock. Stops after `frames` frames or once the evaluations reach `budget`."""

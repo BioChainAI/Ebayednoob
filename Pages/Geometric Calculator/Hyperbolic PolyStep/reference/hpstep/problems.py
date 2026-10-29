@@ -212,6 +212,9 @@ class TreeEmbedding:
         self.tau = tau
         self.step = [_rot(2 * math.pi * k / 6) @ _boost_x(tau) @ _rot(math.pi) for k in range(6)]
         self.step_inv = [H.lorentz_inverse(S) for S in self.step]
+        # For speed: each node's children with their slots and child points, keyed by the node's last letter.
+        self._kids = {last: [(g, self.slot([] if last is None else [last], g), *self.step[self.slot([] if last is None else [last], g)][:, 0])
+                             for g in children([] if last is None else [last])] for last in [None, *range(6)]}
 
     def slot(self, word, g):
         kids = children(word)
@@ -243,10 +246,9 @@ class TreeEmbedding:
         word, local, on_path = [], up[0], True
         for level in range(L):
             best, bg, bs = None, None, None
-            for g in children(word):
-                sl = self.slot(word, g)
-                c = self.step[sl][:, 0]
-                dd = local[0] * c[0] - local[1] * c[1] - local[2] * c[2]       # cosh of the distance
+            l0, l1, l2 = local[0], local[1], local[2]
+            for g, sl, c0, c1, c2 in self._kids[word[-1] if word else None]:
+                dd = l0 * c0 - l1 * c1 - l2 * c2                              # cosh of the distance
                 if best is None or dd < best:
                     best, bg, bs = dd, g, sl
             word.append(bg)
