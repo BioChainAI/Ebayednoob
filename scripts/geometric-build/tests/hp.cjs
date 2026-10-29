@@ -1,8 +1,8 @@
 // Hyperbolic PolyStep: hub, explainers and simulation render, charts draw every node and edge, links resolve, the lab's
-// step obeys H2, the simulation opens paused, passes its self-test and closes an exact register with the pump.
+// step obeys H2, the proofs page's live checks hold and its results load, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'simulation.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'simulation.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -40,6 +40,11 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       await pg.click('#b-run'); await pg.waitForFunction(() => document.body.dataset.run !== undefined, null, { timeout: 120000 });
       r.run = await pg.evaluate(() => [document.body.dataset.run, document.querySelector('#run-out').textContent.slice(0, 90)]);
       ok = ok && r.parity === '169/169';
+    }
+    if (p === 'explainers/proofs-and-results.html') {
+      await pg.waitForFunction(() => document.body.dataset.checks && document.body.dataset.theory && document.body.dataset.results, null, { timeout: 120000 });
+      r.proofs = await pg.evaluate(() => [document.body.dataset.checksOk, document.body.dataset.checks, document.body.dataset.theory, document.body.dataset.results]);
+      ok = ok && r.proofs[0] === 'true' && +r.proofs[2] < 1e-3 && r.proofs[3] !== 'none';
     }
     if (p === 'simulation.html') {
       r.opened = await pg.evaluate(() => [document.body.dataset.frame, document.querySelector('#b-play').textContent]);

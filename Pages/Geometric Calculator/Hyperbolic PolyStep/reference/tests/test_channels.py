@@ -61,10 +61,11 @@ def test_H7_exact_register_closes_with_the_pump_identity():
 def test_batched_membrane_is_the_factor_loop():
     """Float runs move all factors at once; one membrane must give the factor-by-factor loop's result, to rounding.
     (Over a whole run the two drift apart, as any two orders of float operations do in a chaotic search.) Checked on
-    B1 states that reach the horizon and on B4's mixed product with Euclidean factors."""
+    B1 states that reach the horizon, on B2's factors of H^8, and on B4's mixed product with Euclidean factors."""
     import copy
     from hpstep import problems as PB
     for prob, P, init in ((ThreeColouring(30, 4.4, Rng(5)), 4, {'spread': 0.69}),
+                          (PB.MaxSat(100, seed=1000), 4, {}),
                           (PB.HardThresholdNet(PB.hierarchical_data(Rng(6), n_train=50, n_test=20), Rng(7)), 3, {})):
         flat = getattr(prob, 'flat_factors', ())
         sols, sts = [], []

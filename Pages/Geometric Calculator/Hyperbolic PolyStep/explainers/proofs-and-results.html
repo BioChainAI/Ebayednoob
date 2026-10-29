@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proofs and Results - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 8 of Hyperbolic PolyStep: full proofs of the step's properties H1 to H7 with live checks on the browser core, what is known about polystep's convergence theorem on the hyperboloid, and the preregistered benchmark results with their decisions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <script src="../hyperbolic_core.js"></script>
+    <script src="../proofs.js"></script>
+    <style>
+        .proof { border-left: 3px solid #334155; padding: 2px 0 2px 14px; margin: 0.8rem 0; }
+        .proof > p:first-child::before { content: 'Proof. '; font-weight: 700; color: #e2e8f0; }
+        .proof > p:last-child::after { content: ' \220E'; color: var(--muted); }
+        .stmt { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); margin: 0.6rem 0; }
+        .stmt > p:first-child { margin-top: 0; } .stmt > p:last-child { margin-bottom: 0; }
+        .checks td.num, .res td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+        .pill { font: 0.74rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .55); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .55); }
+        .pill.mid { color: #fde68a; border-color: rgba(251, 191, 36, .55); }
+        .ledger-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 12px 0; }
+        .ledger-cards .card b { font-size: 1.15rem; }
+        #tm-canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: #020617; }
+        details.more summary { cursor: pointer; color: var(--muted); }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 8 &middot; Phase 4</div>
+    <h1>Proofs and Results</h1>
+    <p class="lede">The seven properties of the hyperbolic step, proved in full and checked live on the code that runs the simulation. What carries over from polystep&rsquo;s convergence theorem and what does not. And the preregistered benchmarks, run as registered, with every cell and every decision.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#checks">Live checks</a>
+        <a class="btn btn-ghost" href="#lemma">The proofs</a>
+        <a class="btn btn-ghost" href="#t1">Convergence (T1)</a>
+        <a class="btn btn-ghost" href="#results">Benchmark results</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat" id="stat-checks">live checks: running&hellip;</span>
+        <span class="stat"><b>H1&ndash;H7</b> proved &middot; <b>T1</b> open</span>
+        <span class="stat" id="stat-results">results: loading&hellip;</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#checks">2. Live checks</a></li>
+            <li><a href="#setting">3. Setting and notation</a></li>
+            <li><a href="#lemma">4. Lemma S: the step seen from x</a></li>
+            <li><a href="#h1">5. H1 &middot; on the sheet</a></li>
+            <li><a href="#h2">6. H2 &middot; at most r</a></li>
+            <li><a href="#h3">7. H3 &middot; best compromise</a></li>
+            <li><a href="#h4">8. H4 &middot; equivariance</a></li>
+            <li><a href="#h5">9. H5 &middot; flat limit</a></li>
+            <li><a href="#h6">10. H6 &middot; small &epsilon;</a></li>
+            <li><a href="#h7">11. H7 &middot; the pump</a></li>
+            <li><a href="#t1">12. Convergence (T1)</a></li>
+            <li><a href="#results">13. Benchmark results</a></li>
+            <li><a href="#decides">14. What this decides</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#checks">Live checks</a></li><li><a href="#setting">Setting and notation</a></li>
+            <li><a href="#lemma">Lemma S</a></li><li><a href="#h1">H1</a></li><li><a href="#h2">H2</a></li><li><a href="#h3">H3</a></li><li><a href="#h4">H4</a></li>
+            <li><a href="#h5">H5</a></li><li><a href="#h6">H6</a></li><li><a href="#h7">H7</a></li><li><a href="#t1">Convergence (T1)</a></li>
+            <li><a href="#results">Benchmark results</a></li><li><a href="#decides">What this decides</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">This page settles the claims ledger. The proofs rest on the step as it is defined in <a href="hyperbolic-step.html">Explainer 1</a>. The live checks run <a href="core-reference.html">the browser core</a>. The results come from the <a href="reference-guide.html">Python reference</a>, under the <a href="benchmarks.html#prereg">preregistration</a> and its two amendments.</p>
+            <div data-hp-map="focus" data-node="proofs"></div>
+        </section>
+
+        <section class="chapter" id="checks">
+            <div class="chapter-num">02</div>
+            <h2>Live checks</h2>
+            <p class="chapter-intro">Each property is tested here, now, on seeded random instances, by the same <code>hyperbolic_core.js</code> that runs the simulation. Exact claims are checked in exact rational arithmetic. Every check also runs a <em>control</em>: a deliberately wrong input that the check must reject, so that a check which cannot fail would show up.</p>
+            <div class="lab">
+                <div class="lab-title">H1&ndash;H7 in this browser</div>
+                <div class="lab-row">
+                    <button class="chip" id="b-checks1">Run again</button>
+                    <button class="chip" id="b-checks10">Run 10&times; as many</button>
+                    <label>seed <input id="in-pseed" type="number" value="2026" min="1" max="999999" style="width:6rem"></label>
+                </div>
+                <div class="table-wrap"><table class="checks">
+                    <thead><tr><th>Property</th><th>Trials passed</th><th>Worst case</th><th>Controls rejected</th><th>What is measured</th></tr></thead>
+                    <tbody id="check-rows"><tr><td colspan="5">Running&hellip;</td></tr></tbody>
+                </table></div>
+                <div class="out" id="check-out">&nbsp;</div>
+            </div>
+            <p>The Python reference checks the same properties with its own 80 tests. Among them, the curvature-0 step is checked to equal polystep&rsquo;s own step exactly, using the library itself (<a href="reference-guide.html#tests">reference guide</a>).</p>
+        </section>
+
+        <section class="chapter" id="setting">
+            <div class="chapter-num">03</div>
+            <h2>Setting and notation</h2>
+            <p>Minkowski space \(\mathbb{R}^{1,d}\) carries the form \(\langle a,b\rangle = -a_0b_0 + \sum_{i\ge1} a_ib_i\). Hyperbolic space is the upper sheet \(\mathbb{H}^d = \{y : \langle y,y\rangle = -1,\ y_0 > 0\}\), with \(\cosh d(y,z) = -\langle y,z\rangle\). The origin is \(o = (1,0,\dots,0)\), and \(\bar y = (y_1,\dots,y_d)\). The boost \(L_x\) carries \(o\) to \(x\):</p>
+            <p>$$L_x = \begin{pmatrix} x_0 & \bar x^{\top} \\ \bar x & I + \dfrac{\bar x\,\bar x^{\top}}{1+x_0}\end{pmatrix}.$$</p>
+            <p>The Klein chart is \(\kappa(y) = \bar y / y_0\). One step for one particle \(x\) and one factor of dimension \(d\) works as follows. A rotation \(R\in SO(d)\) turns the orthoplex directions \(u_k = \pm e_i\) (\(k = 1,\dots,2d\)). The corners are</p>
+            <p>$$V_k = L_x\begin{pmatrix}\cosh r\\ \sinh r\,R u_k\end{pmatrix}.$$</p>
+            <p>A solver turns the corners&rsquo; costs into weights \(w\) with \(w_k \ge 0\) and \(\sum_k w_k = 1\). The new point is</p>
+            <p>$$x' = \frac{s}{\sqrt{-\langle s,s\rangle}},\qquad s = \sum_k w_k V_k.$$</p>
+            <p>The weights come from polystep&rsquo;s softmax, or from its Sinkhorn plan normalised per particle. In a product of factors, a step moves a block of factors. Each corner is cut into chunks \(v_{k,i}\) with \(\sum_i |v_{k,i}|^2 = 1\), and factor \(i\) moves to \(L_{x_i}(\cosh(r|v_{k,i}|), \sinh(r|v_{k,i}|)\,\hat v_{k,i})\), at distance \(r|v_{k,i}| \le r\).</p>
+            <div class="callout plain"><span class="label">One fact used throughout</span>
+                <p><strong>Lemma 0.</strong> For \(a, b \in \mathbb{H}^d\), \(-\langle a,b\rangle \ge 1\), with equality only when \(a = b\). Hence if \(w \ge 0\) and \(\sum w_k = 1\), then \(s = \sum w_k V_k\) has \(-\langle s,s\rangle \ge 1\) and \(s_0 > 0\), so \(x'\) is well defined and lies on the sheet.</p>
+                <div class="proof"><p>Since \(a_0^2 = 1 + |\bar a|^2\) and \(b_0^2 = 1 + |\bar b|^2\), we have \((a_0b_0 - 1)^2 - |\bar a|^2|\bar b|^2 = (a_0 - b_0)^2 \ge 0\). Cauchy&ndash;Schwarz then gives \(\bar a\cdot\bar b \le |\bar a||\bar b| \le a_0b_0 - 1\), that is \(-\langle a,b\rangle = a_0b_0 - \bar a\cdot\bar b \ge 1\). Equality forces \(a_0 = b_0\) and \(\bar a = \bar b\). For \(s\), \(-\langle s,s\rangle = \sum_{j,k} w_jw_k(-\langle V_j,V_k\rangle) \ge (\sum w)^2 = 1\), and \(s_0 = \sum w_k V_{k,0} > 0\).</p></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="lemma">
+            <div class="chapter-num">04</div>
+            <h2>Lemma S: the step seen from x</h2>
+            <p class="chapter-intro">One identity carries most of what follows. Seen from the particle, the hyperbolic step moves in exactly the direction polystep would, by a slightly shorter distance.</p>
+            <div class="stmt">
+                <p><strong>Lemma S</strong> <span class="tag t-PROVEN">PROVEN</span>. Let \(m = \sum_k w_k\,R u_k \in \mathbb{R}^d\), the barycentre of the turned orthoplex directions. Then \(|m| \le 1\). If \(m = 0\), then \(x' = x\). Otherwise</p>
+                <p>$$x' = L_x \begin{pmatrix}\cosh\delta\\ \sinh\delta\ \hat m\end{pmatrix},\qquad \delta = \operatorname{artanh}\big(|m|\tanh r\big),\quad \hat m = m/|m|.$$</p>
+                <p>So \(x' = \exp_x(\delta\,\hat m)\) in the frame carried by \(L_x\), and \(d(x,x') = \delta\).</p>
+            </div>
+            <div class="proof"><p>\(L_x^{-1}\) is linear and preserves the form, so apply it to everything. The corners become \((\cosh r, \sinh r\,Ru_k)\), and \(L_x^{-1}s = (\cosh r,\ \sinh r\,m)\). Normalising does not change the Klein point, so \(\kappa(L_x^{-1}x') = \tanh r\cdot m\). A point at distance \(\delta\) from \(o\) in direction \(\hat m\) is \((\cosh\delta, \sinh\delta\,\hat m)\), with Klein point \(\tanh\delta\,\hat m\). Matching the two gives \(\tanh\delta = |m|\tanh r\). Finally, \(|m| \le \sum w_k |Ru_k| = 1\).</p></div>
+            <p><strong>Consequences.</strong></p>
+            <ul>
+                <li><strong>The direction is polystep&rsquo;s.</strong> polystep moves its particle by \(r\,m\), with the same \(m\) if it is given the same costs. Pull the objective back to the tangent space at \(x\), \(f_x = f\circ\exp_x\). There, polystep&rsquo;s corners are \(rRu_k\), exactly the hyperbolic corners seen from \(x\).</li>
+                <li><strong>The length is shorter.</strong> \(\delta = \operatorname{artanh}(|m|\tanh r) \le r|m|\). The function \(a \mapsto \operatorname{artanh}(a\tanh r)\) is convex on \([0,1]\), is 0 at 0 and \(r\) at 1, so it lies below the chord \(a r\). The difference \(r|m| - \delta\) is about \(\tfrac{r^3}{3}|m|(1-|m|^2) \le 0.13\,r^3\) for \(r \le 1\); the maximum computed over \(r \le 1\) is \(0.1282\,r^3\).</li>
+                <li><strong>So:</strong> <em>the hyperbolic step is polystep&rsquo;s step on the pulled-back objective \(f_x\), shortened radially by a factor \(1 - O(r^2)\), and carried to the sheet by \(\exp_x\)</em>. Chapter 12 uses this.</li>
+            </ul>
+            <p>The browser core matches Lemma S to \(3\times10^{-12}\) relative on 2,000 random steps (\(d\) = 2&ndash;4, \(r\) up to 3).</p>
+        </section>
+
+        <section class="chapter" id="h1">
+            <div class="chapter-num">05</div>
+            <h2>H1 &middot; Everything stays on the sheet <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>For \(x\in\mathbb{H}^d\), \(L_x\) is a Lorentz matrix that maps the sheet to itself, and every corner, probe and new state lies on the sheet. On the exact track the following points have rational coordinates and satisfy \(\langle y,y\rangle = -1\) exactly:</p>
+                <ul>
+                    <li>every corner built from a rational \(x\), a rational \(t = \tanh(r/2)\) and a Cayley rotation;</li>
+                    <li>every snapped state \(G(p)\) of a rational \(p\) with \(|p| < 1\).</li>
+                </ul></div>
+            <div class="proof"><p>Write \(c = 1 + x_0\) and use \(|\bar x|^2 = x_0^2 - 1 = (x_0-1)c\).</p>
+                <p><em>The columns of \(L_x\) are orthonormal for the form.</em> The first column \(x\) has \(\langle x,x\rangle = -1\). The first column against column \(j \ge 1\) gives \(-x_0\bar x_j + \bar x_j + \bar x_j|\bar x|^2/c = \bar x_j(1 - x_0 + x_0 - 1) = 0\). Columns \(i, j \ge 1\) give \(\delta_{ij} + \bar x_i\bar x_j\big(-1 + 2/c + |\bar x|^2/c^2\big) = \delta_{ij} + \bar x_i\bar x_j\big(-1 + (2 + x_0 - 1)/c\big) = \delta_{ij}\). So \(L_x^{\top}JL_x = J\). Since \((L_x)_{00} = x_0 > 0\) and \(L_x o = x\), it keeps the upper sheet.</p>
+                <p><em>Corners.</em> \(\langle(\cosh r, \sinh r\,Ru), (\cosh r, \sinh r\,Ru)\rangle = -\cosh^2 r + \sinh^2 r\,|Ru|^2 = -1\), because \(R\) is orthogonal and \(|u| = 1\). With \(t\) rational, \(\cosh r = (1+t^2)/(1-t^2)\) and \(\sinh r = 2t/(1-t^2)\) are rational and satisfy \(\cosh^2 - \sinh^2 = 1\) identically. The Cayley map \(R = (I-A)(I+A)^{-1}\) of a rational skew \(A\) is defined, since \(A\) has imaginary eigenvalues so \(I+A\) is invertible. It is rational. And it is orthogonal: \(I-A\) and \(I+A\) commute, so \(R^{\top}R = (I-A)^{-1}(I+A)(I-A)(I+A)^{-1} = I\). The corner \(L_x(\cdot)\) is then a product of rational matrices and vectors, and stays on the sheet by the first part.</p>
+                <p><em>Snapped states.</em> For \(q = |p|^2 < 1\), \(G(p) = ((1+q), 2p)/(1-q)\) has \(\langle G,G\rangle = (-(1+q)^2 + 4q)/(1-q)^2 = -1\) and \(G_0 > 0\).</p>
+                <p><em>Float states.</em> \(x'\) is on the sheet by Lemma 0. In floating point, that holds up to rounding.</p></div>
+            <p><strong>Checked live:</strong> exact \(\langle y,y\rangle = -1\) for every corner and snapped state. <strong>Control:</strong> a corner nudged by \(2^{-60}\) in one coordinate must fail.</p>
+        </section>
+
+        <section class="chapter" id="h2">
+            <div class="chapter-num">06</div>
+            <h2>H2 &middot; One step moves each factor at most r <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>In every float step, every moved factor satisfies \(d(x_i, x_i') \le r\). This includes block moves in products, and holds after the horizon projection. On the exact track the snap adds at most its logged residual.</p></div>
+            <div class="proof"><p><em>One factor, full corners.</em> Lemma S gives \(d(x,x') = \operatorname{artanh}(|m|\tanh r) \le r\), since \(|m| \le 1\).</p>
+                <p><em>Block moves.</em> For factor \(i\), the corners seen from \(x_i\) are at distances \(\rho_k = r|v_{k,i}| \le r\), with Klein points \(\tanh\rho_k\,\hat v_{k,i}\), each of norm at most \(\tanh r\). The Klein point of the centroid is a convex combination of the corners&rsquo; Klein points:</p>
+                <p>$$\kappa(x') = \frac{\sum_k w_kV_{k,\cdot}}{\sum_j w_jV_{j,0}} = \sum_k \lambda_k\,\kappa(V_k),\qquad \lambda_k = \frac{w_kV_{k,0}}{\sum_j w_jV_{j,0}} \ge 0,\quad \sum_k\lambda_k = 1,$$</p>
+                <p>so its norm is at most \(\tanh r\), and \(d(x,x') = \operatorname{artanh}|\kappa| \le r\).</p>
+                <p><em>The horizon.</em> Let \(\Pi\) be the nearest-point projection onto the closed ball of radius 8 about \(o\). The ball is convex, and \(\mathbb{H}^d\) has non-positive curvature, so \(\Pi\) is 1-Lipschitz. The step starts inside, so \(\Pi x = x\), and \(d(x, \Pi x') = d(\Pi x, \Pi x') \le d(x,x') \le r\). The radial map the code uses (keep the direction from \(o\), cap the distance at 8) is this nearest-point projection, because geodesics through \(o\) are the rays of the ball.</p>
+                <p><em>The snap</em> moves a point by its residual \(\eta\), which the code logs on track C. The triangle inequality then gives \(d(x, \mathrm{snap}(x')) \le r + \eta\).</p></div>
+            <p><strong>Checked live:</strong> \(d(x,x') \le r\) on every moved factor of every particle, with the horizon on. The check allows for float rounding of the distance itself, about \(10^{-13}x_0x'_0/\sinh r\). <strong>Control:</strong> a move \(0.1\%\) longer than \(r\) must fail the same check.</p>
+        </section>
+
+        <section class="chapter" id="h3">
+            <div class="chapter-num">07</div>
+            <h2>H3 &middot; The centroid is the best compromise <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>With the squared Lorentzian distance \(d_L^2(y,z) = -2 - 2\langle y,z\rangle\), the new point \(x'\) is the unique minimiser over \(\mathbb{H}^d\) of \(F(y) = \sum_k w_k\,d_L^2(y, V_k)\). The minimum value is \(2\sqrt{-\langle s,s\rangle} - 2\). This is a known result (Law et al. 2019); here is the short proof.</p></div>
+            <div class="proof"><p>\(F(y) = -2 - 2\langle y, s\rangle\), so minimising \(F\) means minimising \(-\langle y,s\rangle\). Write \(\sigma = \sqrt{-\langle s,s\rangle}\), so \(s/\sigma = x'\in\mathbb{H}^d\). By Lemma 0, \(-\langle y, x'\rangle \ge 1\) with equality only at \(y = x'\). Hence \(-\langle y,s\rangle \ge \sigma\), with equality only at \(y = x'\), and \(F(x') = -2 + 2\sigma\).</p></div>
+            <p><strong>Checked live:</strong> \(F(y) \ge F(x')\) for points \(y\) near \(x'\) and far from it. <strong>Control:</strong> a corner itself must score worse than the centroid.</p>
+        </section>
+
+        <section class="chapter" id="h4">
+            <div class="chapter-num">08</div>
+            <h2>H4 &middot; Any chart gives the same step <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>Let \(g\) be an orientation-preserving isometry (\(g \in SO^+(1,d)\)), and let \(f^g = f\circ g^{-1}\) be the objective seen through \(g\). Put \(Q = (gL_x)^{-1}L_{gx}\). Then \(Q = \mathrm{diag}(1, \hat Q)\) with \(\hat Q \in SO(d)\), and</p>
+                <p>$$\mathrm{step}(f^g,\ gx,\ \hat Q^{-1}R) = g\cdot\mathrm{step}(f,\ x,\ R)$$</p>
+                <p>for any weight rule that depends only on the costs. With a Haar-random \(R\), the random step at \(gx\) therefore has the same law as \(g\) applied to the random step at \(x\).</p></div>
+            <div class="proof"><p>\(Qo = (gL_x)^{-1}gx = L_x^{-1}x = o\). A Lorentz matrix fixing \(o\) has the block form \(\mathrm{diag}(1,\hat Q)\) with \(\hat Q \in O(d)\). Its determinant is \(\det g\cdot\det L_x^{-1}\cdot\det L_{gx} = 1\), because boosts lie in the identity component; so \(\hat Q \in SO(d)\). The corners at \(gx\) with rotation \(\hat Q^{-1}R\) are</p>
+                <p>$$L_{gx}\begin{pmatrix}\cosh r\\ \sinh r\,\hat Q^{-1}Ru_k\end{pmatrix} = gL_xQ\begin{pmatrix}\cosh r\\ \sinh r\,\hat Q^{-1}Ru_k\end{pmatrix} = gL_x\begin{pmatrix}\cosh r\\ \sinh r\,Ru_k\end{pmatrix} = gV_k.$$</p>
+                <p>Their costs are \(f^g(gV_k) = f(V_k)\): the same cost matrix, in the same column order, so the same weights. With several particles, each has its own \(\hat Q_p\), and Sinkhorn sees the same matrix too. Then \(\sum w_k gV_k = gs\), and \(-\langle gs,gs\rangle = -\langle s,s\rangle\), so the new point is \(gx'\). For the law: Haar measure on \(SO(d)\) is invariant under left multiplication, so \(\hat Q^{-1}R\) is Haar whenever \(R\) is.</p></div>
+            <div class="callout limit"><span class="label">Where equivariance stops</span>
+                <ul>
+                    <li><strong>The horizon</strong> is a ball about a fixed origin, and <strong>the snap</strong> uses a fixed grid. Neither is equivariant, so H4 is a statement about the step itself.</li>
+                    <li><strong>Cayley rotations</strong> are not Haar, so only the deterministic statement holds for them.</li>
+                </ul>
+            </div>
+            <p><strong>Checked live:</strong> the core&rsquo;s step at \(gx\), with the rotation carried by \(g\), equals \(g\) applied to its step at \(x\), to \(10^{-9}\) in relative coordinates. \(\hat Q\) is checked to be a proper rotation. <strong>Control:</strong> the step at \(gx\) with the unadjusted rotation \(R\) must differ.</p>
+        </section>
+
+        <section class="chapter" id="h5">
+            <div class="chapter-num">09</div>
+            <h2>H5 &middot; Flat space gives polystep back <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>Fix the spatial point \(\xi\in\mathbb{R}^d\), the rotation \(R\), the radius \(r\) and \(\varepsilon\). Let \(f\) be continuous in spatial coordinates. Run the step on the hyperboloid of curvature \(-c\), \(\mathbb{H}_c = \{y : \langle y,y\rangle = -1/c,\ y_0 > 0\}\), at the point with spatial part \(\xi\). As \(c\to0\), the spatial part of the new point tends to polystep&rsquo;s step \(\sum_k w_k(\xi + rRu_k)\), with polystep&rsquo;s weights.</p></div>
+            <div class="proof"><p>On \(\mathbb{H}_c\), \(x_0 = \sqrt{1/c + |\xi|^2}\), and the boost from \(o_c = (1/\sqrt c, 0)\) to \(x\) is</p>
+                <p>$$L^{(c)}_x = \begin{pmatrix}\sqrt c\,x_0 & \sqrt c\,\xi^{\top}\\ \sqrt c\,\xi & I + \dfrac{c\,\xi\xi^{\top}}{1+\sqrt c\,x_0}\end{pmatrix}.$$</p>
+                <p>The corner in direction \(u = Ru_k\) at distance \(r\) is \(L^{(c)}_x(\cosh(\sqrt c\,r)/\sqrt c,\ b)\), with \(b = \tfrac{\sinh(\sqrt c\,r)}{\sqrt c}\,u\). Its spatial part is</p>
+                <p>$$\bar V_k = \xi\cosh(\sqrt c\,r) + b + \frac{c\,\xi\,(\xi\cdot b)}{1+\sqrt c\,x_0}.$$</p>
+                <p>As \(c\to0\): \(\cosh(\sqrt c\,r)\to1\), \(b\to ru\), and \(\sqrt c\,x_0 = \sqrt{1 + c|\xi|^2}\to1\), so the last term tends to 0. Hence \(\bar V_k \to \xi + rRu_k\), and \(\sqrt c\,V_{k,0}\to1\). The costs \(f(\bar V_k)\) converge by continuity, and the weights with them (softmax is continuous; so is Sinkhorn at fixed \(\varepsilon\)). The centroid&rsquo;s spatial part is \(\bar s/(\sqrt c\,\sigma)\), with \(\sqrt c\,\sigma = \sqrt{(\sqrt c\,s_0)^2 - c|\bar s|^2} \to 1\), since \(\sqrt c\,s_0 \to \sum w_k = 1\) and \(c|\bar s|^2 \to 0\). So it tends to \(\sum_k w_k(\xi + rRu_k)\).</p></div>
+            <p>Separately, the code&rsquo;s curvature-0 geometry <em>is</em> polystep&rsquo;s step: the corners are \(x + rRu_k\) and the move is the weighted barycentre. The Python tests check this against the library itself, and the live check against the formula.</p>
+            <p><strong>Checked live:</strong> the gap to polystep&rsquo;s step falls as \(c\) goes from \(10^{-1}\) to \(10^{-3}\) to \(10^{-5}\), and is below \(10^{-3}\) at the last. The core&rsquo;s flat step equals the formula to \(10^{-12}\). <strong>Control:</strong> at \(c = 1\) the step must differ from polystep&rsquo;s.</p>
+        </section>
+
+        <section class="chapter" id="h6">
+            <div class="chapter-num">10</div>
+            <h2>H6 &middot; Small &epsilon; picks the best corner <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>With softmax weights, let the least cost be attained only at corner \(k^*\), with gap \(\Delta > 0\) to the next. Then \(\sum_{k\ne k^*}w_k \le (2d-1)e^{-\Delta/\varepsilon}\), and \(x'\to V_{k^*}\) as \(\varepsilon\to0\). With ties, \(x'\) tends to the centroid of the tied corners with equal weights. The elitist incumbent (the best cost scored so far) never increases.</p></div>
+            <div class="proof"><p>\(w_k = e^{-(C_k - C_{\min})/\varepsilon}/Z\) with \(Z \ge 1\), so each \(k\ne k^*\) has \(w_k \le e^{-\Delta/\varepsilon}\). The map \(w\mapsto x' = s/\sqrt{-\langle s,s\rangle}\) is continuous on the simplex, because the denominator is at least 1 by Lemma 0. At \(w = e_{k^*}\) it gives \(V_{k^*}\). The tie case is the same argument at the uniform weights on the tied set. The incumbent is the minimum of all costs scored so far, and adding terms to a minimum cannot raise it.</p></div>
+            <p><strong>Not claimed:</strong> the particle itself may move to a worse cost when \(\varepsilon > 0\). With Sinkhorn, as \(\varepsilon\to0\) the plan tends to an optimal transport plan, which need not send each row to its own cheapest corner.</p>
+            <p><strong>Checked live:</strong> at \(\varepsilon = 10^{-3}\) with a gap of 0.1, the centroid sits on the best corner to rounding, and incumbents never rise over 15 steps. <strong>Control:</strong> at \(\varepsilon = 1\) the centroid must be off the corner.</p>
+        </section>
+
+        <section class="chapter" id="h7">
+            <div class="chapter-num">11</div>
+            <h2>H7 &middot; The register&rsquo;s holonomy is exact <span class="tag t-PROVEN">PROVEN</span></h2>
+            <div class="stmt"><p>Let \(x_0, \dots, x_{720}\) be one factor&rsquo;s exact states at the frames of a register, rational points of the sheet. Let \(\Delta_n = L_{x_n}L_{x_{n-1}}^{-1}\), the identity when the factor did not move. Every \(\Delta_n\) is a rational Lorentz matrix. Put:</p>
+                <ul>
+                    <li>\(P = \Delta_{720}\cdots\Delta_1\);</li>
+                    <li>\(B_m\), the ordered product over the \(m\)-th run of ten frames, and \(\delta_m = B_m^{-1}\);</li>
+                    <li>\(Q_{10} = \delta_1\cdots\delta_{72}\);</li>
+                    <li>\(Q_8 = A_0\cdots A_9\), where \(A_\ell\) is the ordered product of the \(\delta_m\) with \(\lfloor 10m/72\rfloor = \ell\);</li>
+                    <li>\(H = Q_8Q_{10}P\).</li>
+                </ul>
+                <p>Then \(P = L_{x_{720}}L_{x_0}^{-1}\), \(Px_0 = x_{720}\), and \(Q_{10} = Q_8 = H = P^{-1}\).</p></div>
+            <div class="proof"><p>\(L_x\) has rational entries for rational \(x\), since \(1 + x_0 \ne 0\). Its inverse \(JL_x^{\top}J\) is rational too, so every \(\Delta_n\) is a rational Lorentz matrix. The product telescopes to \(L_{x_{720}}L_{x_0}^{-1}\), and applying it to \(x_0 = L_{x_0}o\) gives \(L_{x_{720}}o = x_{720}\). By associativity \(P = B_{72}\cdots B_1\), so \(Q_{10} = B_1^{-1}\cdots B_{72}^{-1} = (B_{72}\cdots B_1)^{-1} = P^{-1}\). \(Q_8\) is the same word \(\delta_1\cdots\delta_{72}\), bracketed into ten groups, so it equals \(Q_{10}\). Finally \(H = P^{-1}P^{-1}P = P^{-1}\).</p></div>
+            <div class="callout note"><span class="label">What the check actually certifies</span>
+                <p>The identities \(Q_{10} = Q_8 = H = P^{-1}\) are group algebra; they hold for any invertible increments. The checks have teeth for two reasons:</p>
+                <ul>
+                    <li><strong>The inverse.</strong> The code inverts with \(JL^{\top}J\), which is the true inverse only for Lorentz matrices. A corrupted increment then breaks the identities.</li>
+                    <li><strong>The end point.</strong> \(Px_0 = x_{720}\) holds only if the recorded increments compose to the motion actually made. Swapping two increments breaks it.</li>
+                </ul>
+                <p>So H7 certifies the exact bookkeeping of every trajectory. It says nothing about the quality of the answer.</p>
+            </div>
+            <p><strong>Checked live:</strong> random exact registers close, and every increment is Lorentz. <strong>Controls:</strong> two swapped increments, or a wrong end point, must fail.</p>
+        </section>
+
+        <section class="chapter" id="t1">
+            <div class="chapter-num">12</div>
+            <h2>Convergence (T1) <span class="tag t-OPEN">OPEN</span></h2>
+            <p class="chapter-intro">polystep&rsquo;s paper proves convergence in its <em>theory mode</em>: a radius that decays like a power, \(r_t = r_0(t+1)^{-(1/2+\gamma)}\) (square-summable but not summable), a fixed \(\varepsilon\), and jittered probes. Does the theorem carry over to the hyperboloid? Lemma S reduces the question to a precise one, without settling it.</p>
+            <h3>What carries over</h3>
+            <ul>
+                <li><strong>Each step is polystep&rsquo;s step in a chart.</strong> By Lemma S, step \(t\) is: polystep&rsquo;s step on \(f_{x_t} = f\circ\exp_{x_t}\) at the origin of the tangent space, shortened radially by a factor \(1 - O(r_t^2)\), then mapped by \(\exp_{x_t}\). The square-summable radius makes the total shortening \(\sum_t O(r_t^3)\) finite.</li>
+                <li><strong>The iterates stay in a compact set.</strong> The horizon keeps them in the ball of radius 8. There the pulled-back objectives \(f_x\) have derivatives bounded uniformly in \(x\), if \(f\) is smooth, because the curvature terms of \(\exp_x\) are bounded on that ball.</li>
+                <li><strong>The space is a Hadamard manifold.</strong> It has curvature \(-1\) and is complete and simply connected. This is the setting of Riemannian stochastic approximation (for example Bonnabel 2013), where descent arguments with step sizes \(\sum\gamma_t = \infty\), \(\sum\gamma_t^2 < \infty\) are carried out in exactly this way.</li>
+            </ul>
+            <h3>What is missing</h3>
+            <ul>
+                <li><strong>Locality and robustness.</strong> The transfer needs polystep&rsquo;s proof to have two properties. It must be <em>local</em>: each step&rsquo;s analysis uses only that step&rsquo;s geometry. It must be <em>robust</em> to a radial shrinkage of \(1 - O(r_t^2)\) and to an \(x\)-dependent objective. Neither has been checked line by line against the paper&rsquo;s proof.</li>
+                <li><strong>Constants.</strong> The constants of the pulled-back objectives depend on \(x\) through the curvature. A bound uniform over the horizon ball is plausible but not written.</li>
+            </ul>
+            <p>So T1 stays <span class="tag t-OPEN">OPEN</span>, and the reduction is recorded as proved (Lemma S). Below is evidence, not proof: theory mode run live on a smooth objective, \(f(y) = d(y, y^*)^2\).</p>
+            <div class="lab">
+                <div class="lab-title">Theory mode, live</div>
+                <div class="lab-row">
+                    <label>r&#8320; <input type="range" id="tm-r" min="0.1" max="2" step="0.05" value="0.8"><span id="tm-rv">0.80</span></label>
+                    <label>&gamma; <input type="range" id="tm-g" min="0.01" max="0.49" step="0.01" value="0.1"><span id="tm-gv">0.10</span></label>
+                    <label>&epsilon; <input type="range" id="tm-e" min="0.01" max="1" step="0.01" value="0.1"><span id="tm-ev">0.10</span></label>
+                    <label>steps <select id="tm-n"><option>200</option><option selected>600</option><option>2000</option></select></label>
+                    <button class="chip" id="tm-run">Run 6 seeds</button>
+                </div>
+                <canvas id="tm-canvas" width="900" height="300" aria-label="Distance to the optimum against the step, hyperbolic and flat"></canvas>
+                <div class="out" id="tm-out">&nbsp;</div>
+            </div>
+            <p>Each line is one seed: the closest particle&rsquo;s distance to the optimum against the step, on log scales. Distances are computed as \(2\operatorname{asinh}(\tfrac12\sqrt{\langle a-b,a-b\rangle})\), which stays accurate for close points, where \(\operatorname{acosh}\) loses half its digits. Solid lines are the hyperbolic step on \(\mathbb{H}^2\). Dashed lines are the flat step on \(|z - z^*|^2\), with \(z^*\) the optimum&rsquo;s tangent coordinates. Both get 4 particles, a fixed \(\varepsilon\), probe jitter 0.1 and the same power-decay radius. On this smooth bowl both steps converge quickly: the weighted barycentre of a symmetric orthoplex acts like a smoothed gradient step. Lines that keep falling are what the theorem would predict; they are not a proof that it holds.</p>
+        </section>
+
+        <section class="chapter" id="results">
+            <div class="chapter-num">13</div>
+            <h2>Benchmark results</h2>
+            <p class="chapter-intro">The preregistered benchmarks, run by the Python reference as registered and amended. Every cell is shown. Each decision is the mean paired difference with a 95% bootstrap interval (10,000 resamples, seed 7). A claim is <span class="pill good">supported</span> when the interval lies above 0, <span class="pill bad">refuted</span> when it lies at or below 0, and <span class="pill mid">inconclusive</span> otherwise.</p>
+            <div id="res-status" class="out">Loading <code>reference/results/decisions.json</code>&hellip;</div>
+            <div class="ledger-cards" id="res-ledger"></div>
+            <div id="res-reading"></div>
+            <h3>C1 &middot; hyperbolic against curvature 0</h3>
+            <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Comparison</th><th>Mean difference</th><th>95% interval</th><th>Pairs</th><th>Decision</th></tr></thead><tbody id="res-C1"></tbody></table></div>
+            <h3>C2 &middot; shorter Klein steps further out</h3>
+            <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Measure</th><th>Mean Spearman</th><th>95% interval</th><th>Runs</th><th>Decision</th></tr></thead><tbody id="res-C2"></tbody></table></div>
+            <h3>C3 &middot; three channels against one with three times the particles</h3>
+            <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Comparison</th><th>Mean difference</th><th>95% interval</th><th>Pairs</th><th>Decision</th></tr></thead><tbody id="res-C3"></tbody></table></div>
+            <h3>The B3 control (Prop 5.13)</h3>
+            <p>Under the membership objective, no method can find a uniformly placed target in fewer than \((N+1)/2\) evaluations on average: the first \(k\) queries hit it with probability at most \(k/N\). So \(\mathbb{E}[\min(T, N)] \ge (N+1)/2\), where \(T\) is the evaluation that first scores the target and a run that never does counts as \(N\). A method whose whole interval lies below the bound would be a bug, with information leaking from the target.</p>
+            <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Method</th><th>Mean of min(T, N)</th><th>95% interval</th><th>(N + 1)/2</th><th>Runs</th><th>Result</th></tr></thead><tbody id="res-control"></tbody></table></div>
+            <details class="more"><summary>Descriptive comparisons: the membrane, polystep and the random floor</summary>
+                <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Comparison</th><th>Mean difference</th><th>95% interval</th><th>Pairs</th><th>Reading</th></tr></thead><tbody id="res-desc"></tbody></table></div>
+            </details>
+            <details class="more"><summary>Every cell and method: primary metric, success rate, certified cost</summary>
+                <div class="table-wrap"><table class="res"><thead><tr><th>Cell</th><th>Method</th><th>Runs</th><th>Primary metric</th><th>Success</th><th>Mean certified</th><th>Median evals to success</th></tr></thead><tbody id="res-summary"></tbody></table></div>
+            </details>
+            <details class="more"><summary>The tuned settings (Amendment 2)</summary>
+                <div class="table-wrap"><table class="res"><thead><tr><th>Benchmark</th><th>Method</th><th>&epsilon;</th><th>r</th><th>&mu;</th><th>Schedule</th></tr></thead><tbody id="res-settings"></tbody></table></div>
+            </details>
+        </section>
+
+        <section class="chapter" id="decides">
+            <div class="chapter-num">14</div>
+            <h2>What this decides</h2>
+            <div id="decides-body"></div>
+            <div class="callout limit"><span class="label">What none of it decides</span>
+                <ul>
+                    <li><strong>P versus NP</strong> stays open. A benchmark cannot show that a solver of this kind runs in polynomial time on every instance (paper, Thm 5.11).</li>
+                    <li><strong>Other problems, sizes and budgets.</strong> The decisions are about these benchmarks, at these sizes and budgets, with this tuning.</li>
+                    <li><strong>Convergence</strong> (T1) is open; see chapter 12.</li>
+                </ul>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="simulation-manual.html">&larr; The simulation manual</a>
+                <a class="btn btn-ghost" href="../index.html#ledger">The claims ledger &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 8 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id), C = HPCore;
+
+    // ---------------------------------------------------------------- live checks
+    const fmtW = (id, w) => w === null || w === undefined ? 'exact' : id === 'H2' ? (w > 1 ? `d / r = 1 + ${(w - 1).toExponential(1)} (rounding)` : `d / r = ${w.toFixed(6)}`) : id === 'H3' ? `min gap ${w.toExponential(2)}` : w.toExponential(2);
+    function runChecks(scale) {
+        $('check-out').textContent = 'running…';
+        setTimeout(() => {
+            const t0 = performance.now(), R = HPProofs.runProofChecks(C, { seed: +$('in-pseed').value || 2026, scale });
+            let all = true;
+            $('check-rows').innerHTML = R.map(r => {
+                const ok = r.passed === r.trials, cok = r.control[0] === r.control[1]; all = all && ok && cok;
+                return `<tr><td><a href="#${r.id.toLowerCase()}">${r.id}</a> · ${r.title}</td><td class="num"><span class="pill ${ok ? 'good' : 'bad'}">${r.passed.toLocaleString()} / ${r.trials.toLocaleString()}</span></td>` +
+                    `<td class="num">${fmtW(r.id, r.worst)}</td><td class="num"><span class="pill ${cok ? 'good' : 'bad'}">${r.control[0]} / ${r.control[1]}</span></td><td>${r.detail}</td></tr>`;
+            }).join('');
+            const n = R.reduce((a, r) => a + r.trials, 0);
+            $('check-out').innerHTML = `<span class="${all ? 'good' : 'bad'}">${all ? 'All properties hold' : 'A check failed'}</span> on ${n.toLocaleString()} trials, and every control was rejected · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+            $('stat-checks').innerHTML = `live checks: <b>${R.filter(r => r.passed === r.trials && r.control[0] === r.control[1]).length}/7</b> hold`;
+            document.body.dataset.checks = R.map(r => `${r.passed}/${r.trials}`).join(',');
+            document.body.dataset.checksOk = String(all);
+        }, 30);
+    }
+    $('b-checks1').onclick = () => runChecks(1);
+    $('b-checks10').onclick = () => runChecks(10);
+
+    // ---------------------------------------------------------------- theory mode
+    const H = C.H;
+    // distance accurate for close points: <a - b, a - b> = 4 sinh^2(d / 2), with no cancellation in acosh
+    const hdist = (a, b) => { const v = a.map((x, i) => x - b[i]), q = Math.max(0, H.lorentz(v, v)); return 2 * Math.asinh(Math.sqrt(q) / 2); };
+    function theoryRun(seed, hyper, r0, gamma, eps, steps, target) {
+        const zt = H.logOrigin(target);
+        const f = hyper ? pts => pts.map(row => hdist(row[0], target) ** 2) : pts => pts.map(row => (row[0][0] - zt[0]) ** 2 + (row[0][1] - zt[1]) ** 2);
+        const sol = new C.PolyStepH(f, 1, 2, { epsilon: eps, stepRadius: C.PowerDecay(r0, gamma), probeJitter: 0.1, horizon: null, geometry: hyper ? 'hyperbolic' : 'flat' }, new C.Rng(seed));
+        const st = sol.initState(Array.from({ length: 4 }, () => [hyper ? [1, 0, 0] : [0, 0]]));
+        const out = [];
+        for (let t = 0; t < steps; t++) {
+            sol.step(st);
+            const ds = st.X.map(row => (hyper ? hdist(row[0], target) : Math.hypot(row[0][0] - zt[0], row[0][1] - zt[1])));
+            out.push(Math.max(1e-12, Math.min(...ds)));
+        }
+        return out;
+    }
+    function drawTheory() {
+        const r0 = +$('tm-r').value, g = +$('tm-g').value, e = +$('tm-e').value, n = +$('tm-n').value;
+        $('tm-rv').textContent = r0.toFixed(2); $('tm-gv').textContent = g.toFixed(2); $('tm-ev').textContent = e.toFixed(2);
+        const target = H.expOrigin([1.6, -1.1]);
+        const runs = [];
+        for (let s = 1; s <= 6; s++) { runs.push([true, theoryRun(100 + s, true, r0, g, e, n, target)]); runs.push([false, theoryRun(100 + s, false, r0, g, e, n, target)]); }
+        const cv = $('tm-canvas'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 900, Hh = Math.round(W / 3);
+        cv.width = W * dpr; cv.height = Hh * dpr; cv.style.height = Hh + 'px';
+        const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
+        const lx = t => 44 + (W - 56) * Math.log10(t + 1) / Math.log10(n), ymin = -12, ymax = 1, ly = v => 10 + (Hh - 34) * (ymax - Math.log10(v)) / (ymax - ymin);
+        ctx.strokeStyle = '#1e293b'; ctx.fillStyle = '#64748b'; ctx.font = '10px Fira Code, monospace';
+        for (let p = ymin; p <= ymax; p += 2) { ctx.beginPath(); ctx.moveTo(44, ly(10 ** p)); ctx.lineTo(W - 10, ly(10 ** p)); ctx.stroke(); ctx.fillText('1e' + p, 4, ly(10 ** p) + 3); }
+        [1, 10, 100, 1000].filter(t => t <= n).forEach(t => ctx.fillText(String(t), lx(t - 1) - 6, Hh - 6));
+        const COLS = ['#22d3ee', '#f472b6', '#fbbf24', '#34d399', '#a78bfa', '#fb923c'];
+        runs.forEach(([hyper, d], i) => {
+            ctx.strokeStyle = COLS[Math.floor(i / 2)] + (hyper ? 'ff' : '99'); ctx.lineWidth = hyper ? 1.6 : 1.2; ctx.setLineDash(hyper ? [] : [5, 4]); ctx.beginPath();
+            d.forEach((v, t) => { const x = lx(t), y = ly(Math.max(10 ** ymin, v)); t ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+        });
+        ctx.setLineDash([]);
+        const fin = hyp => runs.filter(r => r[0] === hyp).map(r => r[1][r[1].length - 1]);
+        const med = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+        $('tm-out').innerHTML = `<span class="k">after ${n} steps, median best distance to the optimum:</span> hyperbolic ${med(fin(true)).toExponential(2)} · flat ${med(fin(false)).toExponential(2)} <span class="k">(start: ${H.dist([1, 0, 0], target).toFixed(2)})</span>`;
+        document.body.dataset.theory = String(med(fin(true)));
+    }
+    ['tm-r', 'tm-g', 'tm-e'].forEach(id => $(id).addEventListener('input', () => { $('tm-rv').textContent = (+$('tm-r').value).toFixed(2); $('tm-gv').textContent = (+$('tm-g').value).toFixed(2); $('tm-ev').textContent = (+$('tm-e').value).toFixed(2); }));
+    $('tm-run').onclick = drawTheory;
+
+    // ---------------------------------------------------------------- results
+    const cellLabel = (b, c) => b + ' · ' + (b === 'B1' ? `n ${c.n}, c ${c.c}` : b === 'B2' ? `n ${c.n}` : b === 'B3' ? `depth ${c.L}, ${c.objective}` : '2,000 training points');
+    const pill = d => `<span class="pill ${/supported|passes/.test(d) ? 'good' : /refuted|BUG/.test(d) ? 'bad' : 'mid'}">${d}</span>`;
+    const f4 = v => (Math.abs(v) >= 100 ? v.toFixed(1) : v.toFixed(4));
+    const metricName = { B1: 'success rate', B2: 'clauses satisfied', B3: 'success rate', B4: 'test accuracy' };
+    function renderResults(R) {
+        const D = R.decisions;
+        const row = d => `<tr><td>${cellLabel(d.bench, d.cell)}</td><td>${d.compare}${d.decisive ? '' : ' <span class="k">(not decisive)</span>'}</td><td class="num">${f4(d.mean)}</td><td class="num">[${f4(d.ci95[0])}, ${f4(d.ci95[1])}]</td><td class="num">${d.n}</td><td>${pill(d.decision)}${d.floor ? ' <span class="pill">floor: both 0</span>' : ''}</td></tr>`;
+        $('res-C1').innerHTML = D.filter(d => d.claim === 'C1').map(row).join('') || '<tr><td colspan="6">No runs yet.</td></tr>';
+        $('res-C2').innerHTML = D.filter(d => d.claim === 'C2').map(row).join('') || '<tr><td colspan="6">No runs yet.</td></tr>';
+        $('res-C3').innerHTML = D.filter(d => d.claim === 'C3').map(row).join('') || '<tr><td colspan="6">No runs yet.</td></tr>';
+        $('res-control').innerHTML = D.filter(d => d.claim === 'control').map(d => `<tr><td>${cellLabel(d.bench, d.cell)}</td><td>${d.compare.split(':')[0]}</td><td class="num">${d.mean.toFixed(0)}</td><td class="num">[${d.ci95[0].toFixed(0)}, ${d.ci95[1].toFixed(0)}]</td><td class="num">${d.bound.toFixed(1)}</td><td class="num">${d.n}</td><td>${pill(d.decision)}</td></tr>`).join('') || '<tr><td colspan="7">No runs yet.</td></tr>';
+        $('res-desc').innerHTML = D.filter(d => !['C1', 'C2', 'C3', 'control'].includes(d.claim)).map(d => row(Object.assign({}, d, { decision: d.decision === 'supported' ? 'hyper3 higher' : d.decision === 'refuted' ? 'hyper3 not higher' : 'no clear difference' }))).join('');
+        $('res-summary').innerHTML = R.summary.map(s => `<tr><td>${cellLabel(s.bench, s.cell)}</td><td>${s.method}</td><td class="num">${s.runs}</td><td class="num">${s.metric.toFixed(4)} <span class="k">${metricName[s.bench]}</span></td><td class="num">${s.success_rate === null ? '—' : (100 * s.success_rate).toFixed(0) + '%'}</td><td class="num">${s.certified.toFixed(2)}</td><td class="num">${s.evals_to_success === null ? '—' : s.evals_to_success.toLocaleString()}</td></tr>`).join('');
+        const S = R.settings || {};
+        $('res-settings').innerHTML = Object.keys(S).sort().map(b => Object.keys(S[b]).sort().map(m => { const x = S[b][m]; return `<tr><td>${b}</td><td>${m}</td><td class="num">${x.epsilon.toFixed(4)}</td><td class="num">${x.step_radius.toFixed(3)}</td><td class="num">${x.mu.toFixed(3)}</td><td>${x.schedule}</td></tr>`; }).join('')).join('');
+        const L = R.ledger || {};
+        $('res-ledger').innerHTML = ['C1', 'C2', 'C3'].map(c => L[c] ? `<div class="card"><h4>${c}</h4><b>${pill(L[c].status)}</b><p>${L[c].supported} supported · ${L[c].refuted} refuted · ${L[c].inconclusive} inconclusive, over ${L[c].cells} cells</p></div>` : `<div class="card planned"><h4>${c}</h4><p>not yet run</p></div>`).join('');
+        const runs = R.summary.reduce((a, s) => a + s.runs, 0);
+        $('res-status').innerHTML = `<span class="k">${runs.toLocaleString()} measured runs · ${D.length} comparisons · from</span> <code>reference/results/decisions.json</code>`;
+        $('stat-results').innerHTML = ['C1', 'C2', 'C3'].map(c => L[c] ? `${c} <b>${L[c].status}</b>` : `${c} pending`).join(' · ');
+        document.body.dataset.results = String(runs);
+    }
+    fetch('../reference/results/decisions.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+        .then(renderResults).catch(e => { $('res-status').textContent = 'No results file yet (' + e.message + ').'; document.body.dataset.results = 'none'; });
+
+    window.addEventListener('load', () => setTimeout(() => { runChecks(1); drawTheory(); }, 50));
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

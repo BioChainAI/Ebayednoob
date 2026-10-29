@@ -55,7 +55,7 @@
                 // control: a corner nudged by 2^-60 in one coordinate must leave the sheet
                 ctlRuns++; const V = X.pointAt(x, t, X.orthoplexDirections(R)[0]); V[1] = V[1].add(new Q(1n, 1n << 60n)); if (!X.onSheet(V)) ctl++;
             }
-            add('H1', 'Everything stays on the sheet', trials, passed, null, [ctl, ctlRuns], 'exact: <y, y> = -1 and y0 > 0 in rationals, for every corner and every snapped state');
+            add('H1', 'Everything stays on the sheet', trials, passed, null, [ctl, ctlRuns], 'exact: ⟨y, y⟩ = −1 and y0 > 0 in rationals, for every corner and every snapped state');
         }
 
         // ------------------------------------------------ H2: every factor moves at most r (with the horizon)
@@ -95,7 +95,7 @@
                 // control: the first corner is (almost surely) not the minimiser
                 ctlRuns++; if (F(V[0]) > Fc + 1e-12) ctl++;
             }
-            add('H3', 'The centroid is the best compromise', trials, passed, worst, [ctl, ctlRuns], 'smallest F(y) - F(centroid) seen over nearby and random y (must be >= 0)');
+            add('H3', 'The centroid is the best compromise', trials, passed, worst, [ctl, ctlRuns], 'smallest F(y) − F(centroid) seen over nearby and random y (must be ≥ 0)');
         }
 
         // ------------------------------------------------ H4: the step commutes with Lorentz isometries

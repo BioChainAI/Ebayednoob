@@ -1,12 +1,18 @@
-# Python reference (Phase 1)
+# Python reference (Phases 1 and 4)
 
 The reference implementation, built in Phase 1. It is the authority for every benchmark decision, and the browser core is checked against its traces. The full guide is [`../explainers/reference-guide.html`](../explainers/reference-guide.html).
 
 ```bash
-python -m pytest -q tests     # 80 tests
-python run_traces.py          # traces/*.json for the browser core
-python run_bench.py smoke     # every benchmark and method once, tiny sizes (never evidence)
+python -m pytest -q tests                 # 81 tests
+python run_traces.py                      # traces/*.json for the browser core
+python run_bench.py smoke                 # every benchmark and method once, tiny sizes (never evidence)
+python run_bench.py tune --jobs 4         # Phase 4: the preregistered tuning -> settings.json, results/tuning_*.json
+python run_bench.py run B1 --jobs 4       # Phase 4: the measured runs -> results/B1.jsonl (resumes where it stopped)
+python run_bench.py decide                # every decision, summary and the ledger -> results/decisions.json
 ```
+
+The Phase 4 runs follow `../PREREGISTRATION.md` with its Amendments 1 and 2. `settings.json` and `results/` are
+committed: they are the evidence the proofs-and-results page shows.
 
 ## Install
 

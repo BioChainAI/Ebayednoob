@@ -95,9 +95,9 @@
         { id: 'sim', col: 3, row: 5, kind: 'artifact', status: 'done', label: 'Simulation page', sub: 'three channels, live',
           desc: 'Built in Phase 3 on the browser core: the three channels on the zero-point clock for any of the four problems, with a Poincaré view of the particles and the last step’s polytopes, the clock, Helix B’s certified answer, the memory chain, the clutch and membrane, and the exact register pump. It opens paused and checks itself against the reference on load.',
           refs: 'Phase 3 · simulation.html', explainer: 'explainers/simulation-manual.html', href: 'simulation.html' },
-        { id: 'proofs', col: 3, row: 6.5, kind: 'artifact', status: 'next', label: 'Proofs and results', sub: 'H1–H7 · B1–B4',
-          desc: 'Full proofs of H1–H7 with live self-tests, and the preregistered benchmark results with their decisions.',
-          refs: 'Phase 4', explainer: BENCH }
+        { id: 'proofs', col: 3, row: 6.5, kind: 'artifact', status: 'done', label: 'Proofs and results', sub: 'H1–H7 · B1–B4',
+          desc: 'Built in Phase 4: full proofs of H1–H7 and of Lemma S (the step is polystep’s step in the frame of the particle, shortened), live checks of each property with controls that must fail, the reduction of T1, and the preregistered benchmarks run as registered, with every cell and decision.',
+          refs: 'Phase 4', explainer: 'explainers/proofs-and-results.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
