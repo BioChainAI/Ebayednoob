@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Channels on the Clock - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 2 of Hyperbolic PolyStep: how three solver channels run on the zero-point clock. One step per 12-frame packet, the 24-frame schedule, pairing and Helix B at the zero point, the clutch and membrane, and the pump over each 720-frame register.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 2</div>
+    <h1>Three Channels on the Zero-Point Clock</h1>
+    <p class="lede">The tri-engine becomes a three-channel solver. Each channel takes one hyperbolic step per joint cycle, carried by one 12-frame packet. The channels pair their certified answers at the zero point, and every 720-frame register closes with the pump.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#schedule">The schedule chart</a>
+        <a class="btn btn-ghost" href="../index.html#map">System map</a>
+        <a class="btn btn-ghost" href="../../Zero%20Point%20Calculations/zero_point_tri_engine.html">Zero-Point Tri-Engine</a>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#mapping">2. From engines to channels</a></li>
+            <li><a href="#packet">3. One step in one packet</a></li>
+            <li><a href="#schedule">4. The 24-frame schedule</a></li>
+            <li><a href="#pairing">5. Pairing and Helix B</a></li>
+            <li><a href="#clutch">6. Clutch and membrane</a></li>
+            <li><a href="#pump">7. The pump over a register</a></li>
+            <li><a href="#modes">8. Portfolio and partition</a></li>
+            <li><a href="#budget">9. The evaluation budget</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#mapping">From engines to channels</a></li><li><a href="#packet">One step in one packet</a></li>
+            <li><a href="#schedule">The 24-frame schedule</a></li><li><a href="#pairing">Pairing and Helix B</a></li><li><a href="#clutch">Clutch and membrane</a></li>
+            <li><a href="#pump">The pump over a register</a></li><li><a href="#modes">Portfolio and partition</a></li><li><a href="#budget">The evaluation budget</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The channels take the step, the clock and the existing Zero-Point Tri-Engine, and feed pairing and memory and the simulation page. The other two components on this page have charts of their own below.</p>
+            <div data-hp-map="focus" data-node="channels"></div>
+            <div class="grid-2">
+                <div data-hp-map="focus" data-node="memory"></div>
+                <div data-hp-map="focus" data-node="helixb"></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="mapping">
+            <div class="chapter-num">02</div>
+            <h2>From engines to channels</h2>
+            <p class="chapter-intro">Every mechanism of the tri-engine pages keeps its timing and gets a solver meaning.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Tri-engine</th><th>Solver channel</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>Engine I, II, III on branches 0, 1, 2 (0&deg;, 120&deg;, 240&deg;)</td><td>Channels A, B, C: three particle populations</td><td><span class="tag t-DEFINITION">DEFINITION</span></td></tr>
+                    <tr><td>One instruction per joint cycle, onload at k = 2, offload twelve frames later at k = 6</td><td>One hyperbolic step per joint cycle, carried by that packet</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                    <tr><td>Exact round trip of each packet (lift, ghost map, fold)</td><td>H1: every corner and state checked on the sheet exactly</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                    <tr><td>Latch a result, pair at the zero point (n = 0)</td><td>Each channel&rsquo;s incumbent is certified and compared at every zero point</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                    <tr><td>Timing clutch: hold a finished engine</td><td>Rest a stalled channel and stop spending its evaluations</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                    <tr><td>Orthogonal membrane: remove the differential z, keep the common s</td><td>Recentre the channels on their common incumbent, logging the differential removed</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                    <tr><td>Memory on the outer and inner manifolds, with parity and a Merkle chain</td><td>Best answers written as words; the parity recovers one erased channel record</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                    <tr><td>The 720 &rarr; 72 &rarr; 10 pump on each engine&rsquo;s gear</td><td>The pump on each channel&rsquo;s exact trajectory of Lorentz displacements (H7)</td><td><span class="tag t-DESIGN">DESIGN</span></td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="packet">
+            <div class="chapter-num">03</div>
+            <h2>One step in one packet</h2>
+            <p class="chapter-intro">A packet lasts twelve frames, from its branch&rsquo;s onload (k = 2) to its offload (k = 6), one and a half turns of the eight-step clock. The solver&rsquo;s work is laid on those frames so each stage of the clock does what its name says.</p>
+            <figure><div class="map-wrap mini"><svg id="packet-chart" viewBox="0 0 950 250" role="img" aria-label="The thirteen frames of one packet and the solver work on each"></svg></div>
+                <figcaption>Packet frame d (top), the clock stage k it lands on, and the solver work done there. Each of the eight stages (the paper&rsquo;s Table 4) has its own colour.</figcaption></figure>
+            <p>The step itself is done in the first half (d = 0 to 3): lift, corners, costs, centroid. The second half does the bookkeeping that makes the step trustworthy: the schedules update at the index stage, the new state is checked on the sheet at the zero point, the next rotation is seeded, Helix B certifies the incumbent during the second pass, and the offload writes the state and its displacement into the register.</p>
+        </section>
+
+        <section class="chapter" id="schedule">
+            <div class="chapter-num">04</div>
+            <h2>The 24-frame schedule</h2>
+            <p class="chapter-intro">The joint frame is n = F mod 24 (Proposition 3.7). Channel A onloads at n = 18, B at 10 and C at 2, each offloading twelve frames later, so every channel takes exactly one step per joint cycle: 30 per register, 90 across the three.</p>
+            <figure><div class="map-wrap mini"><svg id="schedule-chart" viewBox="0 0 880 230" role="img" aria-label="The three channels' packets across one 24-frame joint cycle"></svg></div>
+                <figcaption>One joint cycle. Filled bar: a channel&rsquo;s packet in flight. &#9650; onload, &#9660; offload. Gold column: the zero point, where the channels pair.</figcaption></figure>
+            <div class="callout plain"><span class="label">Why stagger the channels</span>
+                <p>At most two packets are ever in flight, and onloads and offloads never share a frame, so each zero point sees three freshly certified incumbents without any two channels writing at once. Whether this beats a plain round-robin is the paper&rsquo;s Open Problem 3, and it is tested here as conjecture C3.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="pairing">
+            <div class="chapter-num">05</div>
+            <h2>Pairing and Helix B</h2>
+            <p class="chapter-intro">The paper&rsquo;s machine splits work between Helix A, which proposes, and Helix B, which certifies in exact arithmetic. The channels are Helix A. Nothing they propose is believed until Helix B has checked it.</p>
+            <figure><div class="map-wrap mini"><svg viewBox="0 0 880 300" role="img" aria-label="Flow at the zero point: incumbents, Helix B, comparison, memory, clutch and membrane">
+                <defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+                <g font-family="Inter, system-ui, sans-serif" font-size="13">
+                    <g transform="translate(20,30)"><rect width="170" height="46" rx="10" fill="rgba(15,23,42,.95)" stroke="#ff0055"/><text x="14" y="20" fill="#f8fafc" font-weight="600">Channel A</text><text x="14" y="36" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">incumbent x*_A</text></g>
+                    <g transform="translate(20,122)"><rect width="170" height="46" rx="10" fill="rgba(15,23,42,.95)" stroke="#00f2ff"/><text x="14" y="20" fill="#f8fafc" font-weight="600">Channel B</text><text x="14" y="36" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">incumbent x*_B</text></g>
+                    <g transform="translate(20,214)"><rect width="170" height="46" rx="10" fill="rgba(15,23,42,.95)" stroke="#ffd700"/><text x="14" y="20" fill="#f8fafc" font-weight="600">Channel C</text><text x="14" y="36" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">incumbent x*_C</text></g>
+                    <g transform="translate(250,100)"><rect width="190" height="90" rx="12" fill="rgba(6,78,59,.35)" stroke="#34d399"/><text x="14" y="24" fill="#f8fafc" font-weight="600">Helix B (exact)</text><text x="14" y="44" fill="#cbd5e1" font-size="11.5">decode, then count conflicts</text><text x="14" y="60" fill="#cbd5e1" font-size="11.5">or clauses exactly; check the</text><text x="14" y="76" fill="#cbd5e1" font-size="11.5">state on the sheet (H1)</text></g>
+                    <g transform="translate(490,110)"><rect width="150" height="70" rx="12" fill="rgba(15,23,42,.95)" stroke="#22d3ee"/><text x="14" y="26" fill="#f8fafc" font-weight="600">Compare</text><text x="14" y="46" fill="#cbd5e1" font-size="11.5">best certified cost</text><text x="14" y="61" fill="#cbd5e1" font-size="11.5">wins the zero point</text></g>
+                    <g transform="translate(690,30)"><rect width="170" height="70" rx="12" fill="rgba(120,53,15,.35)" stroke="#f5c542"/><text x="14" y="26" fill="#f8fafc" font-weight="600">Memory word</text><text x="14" y="46" fill="#cbd5e1" font-size="11.5">A, B, C and the best,</text><text x="14" y="61" fill="#cbd5e1" font-size="11.5">parity + Merkle chain</text></g>
+                    <g transform="translate(690,190)"><rect width="170" height="70" rx="12" fill="rgba(76,29,149,.3)" stroke="#c084fc"/><text x="14" y="26" fill="#f8fafc" font-weight="600">Clutch, membrane</text><text x="14" y="46" fill="#cbd5e1" font-size="11.5">rest a stalled channel;</text><text x="14" y="61" fill="#cbd5e1" font-size="11.5">recentre on the common s</text></g>
+                    <g stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#fl)">
+                        <path d="M190,53 C220,53 225,125 248,128"/><path d="M190,145 L248,145"/><path d="M190,237 C220,237 225,165 248,162"/>
+                        <path d="M440,145 L488,145"/><path d="M640,135 C665,120 665,75 688,68"/><path d="M640,155 C665,170 665,215 688,222"/>
+                        <path d="M775,262 C775,296 105,296 105,262" stroke-dasharray="5 4"/>
+                    </g>
+                    <text x="440" y="276" fill="#64748b" font-size="11" font-family="Fira Code, monospace" text-anchor="middle">back to the channels for the next joint cycle</text>
+                </g>
+            </svg></div><figcaption>What happens at every zero point (n = 0).</figcaption></figure>
+            <p>Helix B&rsquo;s checks are cheap and exact: decoding a point to a colour or a truth assignment is a sign or angle test, counting monochromatic edges or unsatisfied clauses is integer arithmetic, and the sheet check is one exact Lorentz form. A memory word holds the three channel records and the best, with the parity that lets one erased record be rebuilt (Prop 3.10) and the Merkle chain that locates an altered one, as on the convergence calculator.</p>
+        </section>
+
+        <section class="chapter" id="clutch">
+            <div class="chapter-num">06</div>
+            <h2>Clutch and membrane</h2>
+            <p class="chapter-intro">The convergence calculator&rsquo;s three clutch modes carry over.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Mode</th><th>On the calculator</th><th>For the solver</th></tr></thead>
+                <tbody>
+                    <tr><td>hold</td><td>A finished engine stops turning until the others land</td><td>A channel whose incumbent has not improved for m joint cycles rests: its packets still run on schedule but spend no evaluations, and its share of the budget goes to the others</td></tr>
+                    <tr><td>free</td><td>Every engine turns every frame; the held results shear</td><td>Every channel steps every joint cycle regardless; the channels drift apart</td></tr>
+                    <tr><td>membrane</td><td>Free-run, then at the zero point the differential z is removed and the common rotation s kept</td><td>At the zero point each channel&rsquo;s population is moved by a boost toward the common incumbent (the Klein centroid of the three, weighted by certified cost); the differential removed is logged</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">Design choice to test</span>
+                <p>The membrane trades diversity for agreement. Too strong, and the three channels collapse onto one search; too weak, and they never share what they find. Its strength is a preregistered setting of benchmark B1, with an ablation that turns it off.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="pump">
+            <div class="chapter-num">07</div>
+            <h2>The pump over a register</h2>
+            <p class="chapter-intro">A register is 720 frames: frames \(720(r-1)+1\) to \(720r\), as on the Zero-Point page.</p>
+            <p>On each frame a channel&rsquo;s state either stays (the increment is the identity) or, at its offload, moves by its step&rsquo;s displacement \(\Delta q_n = L_{x_n}L_{x_{n-1}}^{-1}\), a rational Lorentz matrix after the snap. At the register&rsquo;s end the pump groups the 720 increments into 72 ten-frame blocks and then the inner blocks of sizes 8, 7, 7, 7, 7, 8, 7, 7, 7, 7, and returns</p>
+            $$P = \Delta q_{720}\cdots\Delta q_1,\qquad Q^{(10)} = Q^{(8)} = P^{-1},\qquad H = Q^{(8)}Q^{(10)}P = P^{-1}$$
+            <p>exactly, for every channel, in non-commutative exact arithmetic (H7; the Zero-Point page&rsquo;s self-test Z4 already checks the same identity on random rational frames). A channel that rested all register closes with P = 1.</p>
+            <div class="callout limit"><span class="label">What the pump checks</span>
+                <p>That the exact record of every step multiplies out: no step was lost, duplicated or corrupted. It is an audit of the bookkeeping, not evidence of progress toward a solution.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="modes">
+            <div class="chapter-num">08</div>
+            <h2>Portfolio and partition</h2>
+            <div class="grid-2">
+                <div class="card"><h4>Portfolio (first)</h4><p>All three channels attack the same instance from different starts and rotations. The zero point picks the best certified answer. Reuses the calculator&rsquo;s pairing exactly, so it is built first.</p></div>
+                <div class="card"><h4>Partition (second)</h4><p>The channels split the variables, like polystep&rsquo;s blockwise mode: each moves its own block while the others are frozen at their last offload. The zero point assembles one full answer from the three blocks for Helix B.</p></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="budget">
+            <div class="chapter-num">09</div>
+            <h2>The evaluation budget</h2>
+            <p class="chapter-intro">Comparisons are fair only at equal budgets, so the budget is counted the way polystep counts it: one evaluation is one candidate scored.</p>
+            $$\text{evaluations per register} = \underbrace{30}_{\text{steps per channel}} \times \sum_{\text{channels}} (\text{particles}) \times 2d \times (\text{probes}).$$
+            <p>For example, three channels of 4 particles in \(\mathbb{H}^{8}\) with one probe spend \(30 \times 12 \times 16 = 5{,}760\) evaluations per register. A rested channel spends none, which is how the clutch moves budget to the channels still improving.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="hyperbolic-step.html">&larr; The hyperbolic step</a>
+                <a class="btn btn-ghost" href="benchmarks.html">Next: problems and benchmarks &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 2 &middot; <a href="../index.html">Hub</a></footer>
+
+<script>
+// Charts drawn from the schedule constants of the Zero-Point Tri-Engine (Table 5 of the paper).
+(function () {
+    const ON = [18, 10, 2], CH = ['A', 'B', 'C'], COL = ['#ff0055', '#00f2ff', '#ffd700'];
+    const STAGE = ['Snap', 'Seed', 'Onload', 'Project', 'Invert', 'Fold', 'Offload', 'Index'];
+    const SCOL = ['#f5c542', '#94a3b8', '#22d3ee', '#c084fc', '#fb7185', '#34d399', '#38bdf8', '#fbbf24'];
+    const WORK = ['lift x to the sheet; draw the rotation', 'build the corners and probes', 'decode and score them (black box)', 'weights; Klein centroid x′', 'another branch offloads', 'update ε and radius; hash the state',
+                  'check x′ on the sheet (H1)', 'seed the next rotation', 'another branch onloads', 'Helix B: decode the incumbent', 'Helix B: exact count', 'snap x′; log the residual', 'write x′; record Δq in the register'];
+    const t = (x, y, s, o = {}) => `<text x="${x}" y="${y}" fill="${o.fill || '#cbd5e1'}" font-size="${o.size || 11}" font-family="${o.mono ? 'Fira Code, monospace' : 'Inter, system-ui, sans-serif'}" text-anchor="${o.anchor || 'middle'}"${o.weight ? ` font-weight="${o.weight}"` : ''}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}>${s}</text>`;
+
+    // Packet chart: 13 frames d = 0..12, starting at k = 2
+    let s = '', x0 = 30, cw = 63;
+    for (let d = 0; d <= 12; d++) {
+        const k = (2 + d) % 8, x = x0 + d * cw, own = d <= 3 || d === 12;
+        s += `<rect x="${x}" y="30" width="${cw - 4}" height="40" rx="7" fill="${own ? 'rgba(8,47,73,.6)' : 'rgba(15,23,42,.9)'}" stroke="${SCOL[k]}"${own ? '' : ' stroke-dasharray="4 3"'}/>`;
+        s += t(x + cw / 2 - 2, 46, 'd ' + d, { mono: true, fill: '#f8fafc' }) + t(x + cw / 2 - 2, 62, 'k ' + k, { mono: true, fill: SCOL[k] });
+        s += t(x + cw / 2 - 2, 88, STAGE[k], { fill: SCOL[k], size: 10.5, weight: 600 });
+        s += t(x + cw / 2 + 2, 104, WORK[d], { size: 10.5, anchor: 'start', rot: 50 });
+    }
+    s += t(30, 18, 'ONLOAD (branch k = 2)', { mono: true, anchor: 'start', fill: '#64748b', size: 10 }) + t(x0 + 12 * cw + cw - 4, 18, 'OFFLOAD (k = 6)', { mono: true, anchor: 'end', fill: '#64748b', size: 10 });
+    document.getElementById('packet-chart').innerHTML = s;
+
+    // Schedule chart: three rows, 24 joint frames
+    s = ''; x0 = 60; cw = 33;
+    for (let n = 0; n < 24; n++) {
+        s += t(x0 + n * cw + cw / 2, 24, n, { mono: true, fill: n === 0 ? '#f5c542' : '#94a3b8' }) + t(x0 + n * cw + cw / 2, 40, 'k' + (n % 8), { mono: true, size: 9, fill: '#64748b' });
+    }
+    s += `<rect x="${x0}" y="48" width="${cw}" height="150" fill="rgba(245,197,66,.14)" stroke="rgba(245,197,66,.6)"/>`;
+    CH.forEach((c, j) => {
+        const y = 60 + j * 46;
+        s += t(30, y + 20, c, { fill: COL[j], size: 15, weight: 700 });
+        for (let n = 0; n < 24; n++) {
+            const d = (n - ON[j] + 24) % 24, fly = d <= 12;
+            s += `<rect x="${x0 + n * cw + 2}" y="${y + 4}" width="${cw - 4}" height="26" rx="5" fill="${fly ? COL[j] + (d <= 3 ? 'cc' : '55') : 'rgba(15,23,42,.9)'}" stroke="${fly ? COL[j] : '#1e293b'}"/>`;
+            if (d === 0) s += t(x0 + n * cw + cw / 2, y + 22, '▲', { fill: '#020617', size: 12 });
+            if (d === 12) s += t(x0 + n * cw + cw / 2, y + 22, '▼', { fill: '#020617', size: 12 });
+        }
+    });
+    s += t(x0, 216, 'Solid: the step itself (d = 0–3). Faded: bookkeeping and Helix B (d = 4–12).', { anchor: 'start', fill: '#94a3b8', size: 11 });
+    document.getElementById('schedule-chart').innerHTML = s;
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

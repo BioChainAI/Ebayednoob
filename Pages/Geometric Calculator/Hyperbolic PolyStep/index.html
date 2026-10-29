@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperbolic PolyStep - Ebayednoob</title>
+    <meta name="description" content="Hyperbolic PolyStep: gradient-free training and a multi-channel combinatorics solver in hyperbolic space, built on polystep and the zero-point tri-engine. The hub: system map, explainer library, roadmap and claims ledger.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="assets/hp.css">
+    <script src="assets/hp-map.js"></script>
+</head>
+<body data-root="">
+<header class="hero">
+    <div class="eyebrow">BioChain AI &middot; Geometric Calculator &middot; Simulations</div>
+    <h1>Hyperbolic PolyStep</h1>
+    <p class="lede">Gradient-free training and a multi-channel combinatorics solver in hyperbolic space. It takes <a href="https://github.com/anindex/polystep">polystep</a>&rsquo;s optimal-transport step, moves it onto the hyperboloid with the zero-point paper&rsquo;s exact geometry, and runs three channels of it on the <a href="../Zero%20Point%20Calculations/zero_point_tri_engine.html">Zero-Point Tri-Engine</a>&rsquo;s clock. This page is the hub: every part of the project, how the parts connect, and where each is explained.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#map">System map</a>
+        <a class="btn btn-ghost" href="#library">Explainer library</a>
+        <a class="btn btn-ghost" href="#roadmap">Roadmap</a>
+        <a class="btn btn-ghost" href="#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">Phase <b>0</b> of 5: design and scaffold</span>
+        <span class="stat"><b>4</b> explainers written &middot; <b>4</b> reserved</span>
+        <span class="stat"><b>7</b> properties to prove &middot; <b>4</b> preregistered benchmarks</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#what">1. What this is</a></li>
+            <li><a href="#map">2. System map</a></li>
+            <li><a href="#library">3. Explainer library</a></li>
+            <li><a href="#roadmap">4. Roadmap</a></li>
+            <li><a href="#ledger">5. Claims ledger</a></li>
+            <li><a href="#conventions">6. How the folder grows</a></li>
+            <li><a href="#glossary">7. Glossary</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile">
+            <summary>Contents</summary>
+            <ol>
+                <li><a href="#what">What this is</a></li>
+                <li><a href="#map">System map</a></li>
+                <li><a href="#library">Explainer library</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#ledger">Claims ledger</a></li>
+                <li><a href="#conventions">How the folder grows</a></li>
+                <li><a href="#glossary">Glossary</a></li>
+            </ol>
+        </details>
+
+        <section class="chapter" id="what">
+            <div class="chapter-num">01</div>
+            <h2>What this is</h2>
+            <p class="chapter-intro">Three pieces meet here.</p>
+            <div class="grid-3">
+                <div class="card"><h4><span class="dot" style="background:var(--k-source)"></span>polystep</h4><p>A gradient-free optimizer. Each step turns a polytope around the current parameters, scores its corners, weights them by optimal transport and moves to their weighted average. It trains spiking, quantized and hard-routed networks that have no useful gradient.</p></div>
+                <div class="card"><h4><span class="dot" style="background:var(--k-math)"></span>The zero-point paper</h4><p>The exact geometry of hyperbolic space (the ghost map, the Klein model, boosts as complex rapidity), the eight-step clock and its 24-frame schedule, the 720-frame pump, and the limits of what any of it can decide.</p></div>
+                <div class="card"><h4><span class="dot" style="background:var(--k-existing)"></span>The tri-engine pages</h4><p>Three engines on one clock, pairing at the zero point, a timing clutch and membrane, and memory on the outer and inner manifolds. They become three solver channels.</p></div>
+            </div>
+            <p>Put together: <strong>polystep&rsquo;s step on the hyperboloid</strong>, with every candidate an exact rational point, run by <strong>three channels</strong> that each take one step per joint cycle and pair their certified answers at the zero point. It trains small hard-threshold networks and attacks combinatorial problems (3-colouring, MAX-SAT, tree addresses) without gradients.</p>
+            <div class="callout limit"><span class="label">What it will not show</span>
+                <p>A heuristic solver is the paper&rsquo;s Helix A: it proposes, and an exact certifier checks. Its successes or failures say nothing about P versus NP. The paper&rsquo;s Theorem 5.11 makes a general solver of this kind equivalent to P = NP only if it is an integrable encoding of SAT, which is open. Proposition 5.13 makes black-box search cost the whole volume of the tree, for any method. The <a href="explainers/benchmarks.html#boundary">boundary chart</a> lays out what the experiments can and cannot decide.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="map">
+            <div class="chapter-num">02</div>
+            <h2>System map</h2>
+            <p class="chapter-intro">Every part of the project and what feeds what, from the sources on the left to the pages and code on the right. Hover a box to light up its connections; click it for a description, its source in the paper or the code, and a link to the explainer that covers it.</p>
+            <div data-hp-map="full" data-select="step"></div>
+            <div class="callout plain"><span class="label">Reading the map</span>
+                <p>Solid boxes exist now: the sources, the existing tri-engine pages and the written preregistration. Dashed boxes are designed or planned and not built yet. Each explainer opens with a smaller chart of the same kind, centred on its own topic, so you can always see where you are.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="library">
+            <div class="chapter-num">03</div>
+            <h2>Explainer library</h2>
+            <p class="chapter-intro">Every part gets a full explainer. Four cover the design and are written now; four places are reserved for the modules still to be built, and each is written when its module lands.</p>
+            <h3>Written</h3>
+            <div class="grid-2">
+                <a class="card" href="explainers/hyperbolic-step.html"><h4>1 &middot; The hyperbolic step</h4><p>polystep&rsquo;s step, then the same step on the hyperboloid: geodesic vertices, exact rational lifts, the Klein centroid. A live Poincar&eacute; and Klein diagram, the correspondence with polystep&rsquo;s code, and the seven properties H1&ndash;H7 with proof sketches.</p><div class="meta">covers: step &middot; ghost map &middot; Klein model &middot; rapidity &middot; polytope &middot; weights</div></a>
+                <a class="card" href="explainers/channels.html"><h4>2 &middot; Three channels on the zero-point clock</h4><p>How one solver step rides one 12-frame packet, the 24-frame schedule of the three channels, pairing and Helix B at the zero point, the clutch and membrane, and the pump over each 720-frame register.</p><div class="meta">covers: channels &middot; memory &middot; clock &middot; pump &middot; Helix B</div></a>
+                <a class="card" href="explainers/benchmarks.html"><h4>3 &middot; Problems, benchmarks and the boundary</h4><p>The four problem decoders, the preregistered benchmarks with budgets and decision rules fixed in advance, and the chart of what the results can and cannot decide.</p><div class="meta">covers: decoders &middot; preregistration &middot; limits &middot; results page</div></a>
+                <a class="card" href="explainers/build-and-verify.html"><h4>4 &middot; Build and verification</h4><p>How the Python reference, the browser core and the page are built and checked against each other, the four arithmetic tracks, and the test plan for every phase.</p><div class="meta">covers: reference &middot; JS core &middot; simulation page &middot; four tracks</div></a>
+            </div>
+            <h3>Reserved for modules still to come</h3>
+            <div class="grid-2">
+                <div class="card planned"><h4>Python reference guide</h4><p>Installing and running the reference, its modules and functions, the Euclidean baseline, and how to read its traces and benchmark reports.</p><div class="meta">written in Phase 1</div></div>
+                <div class="card planned"><h4>JavaScript core reference</h4><p>Every function of <code>hyperbolic_core.js</code>, its arithmetic track, and the trace parity check against the reference.</p><div class="meta">written in Phase 2</div></div>
+                <div class="card planned"><h4>Simulation manual</h4><p>Every control, panel and readout of the simulation page, with step-by-step experiments, in the style of the Part 2 manual.</p><div class="meta">written in Phase 3</div></div>
+                <div class="card planned"><h4>Proofs and results</h4><p>Full proofs of H1&ndash;H7 with live self-tests, and the preregistered benchmark results with their decisions.</p><div class="meta">written in Phase 4</div></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="roadmap">
+            <div class="chapter-num">04</div>
+            <h2>Roadmap</h2>
+            <p class="chapter-intro">Six phases. Each ends with its code, its explainer, its node on the map moved from dashed to solid, and its tests passing.</p>
+            <figure>
+                <svg viewBox="0 0 900 120" role="img" aria-label="Six phases from scaffold to integration">
+                    <defs><marker id="ph-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+                    <g font-family="Inter, system-ui, sans-serif" font-size="13" text-anchor="middle">
+                        <g transform="translate(10,30)"><rect width="128" height="60" rx="10" fill="rgba(6,78,59,0.4)" stroke="#34d399"/><text x="64" y="26" fill="#f8fafc" font-weight="600">0 &middot; Scaffold</text><text x="64" y="45" fill="#6ee7b7" font-size="11" font-family="Fira Code, monospace">done</text></g>
+                        <g transform="translate(160,30)"><rect width="128" height="60" rx="10" fill="rgba(120,53,15,0.35)" stroke="#fbbf24" stroke-dasharray="5 4"/><text x="64" y="26" fill="#f8fafc" font-weight="600">1 &middot; Reference</text><text x="64" y="45" fill="#fde68a" font-size="11" font-family="Fira Code, monospace">next</text></g>
+                        <g transform="translate(310,30)"><rect width="128" height="60" rx="10" fill="rgba(15,23,42,0.9)" stroke="#64748b" stroke-dasharray="5 4"/><text x="64" y="26" fill="#f8fafc" font-weight="600">2 &middot; JS core</text><text x="64" y="45" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">planned</text></g>
+                        <g transform="translate(460,30)"><rect width="128" height="60" rx="10" fill="rgba(15,23,42,0.9)" stroke="#64748b" stroke-dasharray="5 4"/><text x="64" y="26" fill="#f8fafc" font-weight="600">3 &middot; Simulation</text><text x="64" y="45" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">planned</text></g>
+                        <g transform="translate(610,30)"><rect width="128" height="60" rx="10" fill="rgba(15,23,42,0.9)" stroke="#64748b" stroke-dasharray="5 4"/><text x="64" y="26" fill="#f8fafc" font-weight="600">4 &middot; Proofs</text><text x="64" y="45" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">planned</text></g>
+                        <g transform="translate(760,30)"><rect width="128" height="60" rx="10" fill="rgba(15,23,42,0.9)" stroke="#64748b" stroke-dasharray="5 4"/><text x="64" y="26" fill="#f8fafc" font-weight="600">5 &middot; Integrate</text><text x="64" y="45" fill="#94a3b8" font-size="11" font-family="Fira Code, monospace">planned</text></g>
+                        <g stroke="#475569" stroke-width="1.6" marker-end="url(#ph-arrow)"><line x1="140" y1="60" x2="158" y2="60"/><line x1="290" y1="60" x2="308" y2="60"/><line x1="440" y1="60" x2="458" y2="60"/><line x1="590" y1="60" x2="608" y2="60"/><line x1="740" y1="60" x2="758" y2="60"/></g>
+                    </g>
+                </svg>
+            </figure>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Phase</th><th>Delivers</th><th>Done when</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>0 &middot; Scaffold</td><td>This hub, the system map, four explainers, the preregistration, the reference skeleton; the calculator&rsquo;s build sources moved into the repository (<code>scripts/geometric-build/</code>)</td><td>The pages render, every link resolves, the build reproduces every existing page byte for byte</td><td><span class="status s-done">done</span></td></tr>
+                    <tr><td>1 &middot; Python reference</td><td><code>reference/</code>: the hyperbolic step on polystep&rsquo;s rotations and solvers, the Euclidean baseline from polystep itself, exact checks of H1&ndash;H7, seeded traces, benchmark runners</td><td>H1&ndash;H7 pass in exact arithmetic on random instances; traces written; the reference guide written</td><td><span class="status s-next">next</span></td></tr>
+                    <tr><td>2 &middot; JavaScript core</td><td><code>hyperbolic_core.js</code> on the existing exact core: float search, exact certificates</td><td>Every trace line matches the reference; the core reference written</td><td><span class="status s-planned">planned</span></td></tr>
+                    <tr><td>3 &middot; Simulation page</td><td>Three channels live on the zero-point clock: Poincar&eacute; view, cost traces, clutch and membrane, pump, Helix B certificates, problem selector</td><td>Opens paused; self-test passes; phone layout clean; the simulation manual written</td><td><span class="status s-planned">planned</span></td></tr>
+                    <tr><td>4 &middot; Proofs and results</td><td>Full proofs of H1&ndash;H7 with live self-tests; the preregistered benchmarks run, with their decisions</td><td>Every row of the claims ledger carries its final status</td><td><span class="status s-planned">planned</span></td></tr>
+                    <tr><td>5 &middot; Integration</td><td>Site bar, cross-links from the paper explainer and the tri-engine pages, documentation</td><td>The bar test passes on every page</td><td><span class="status s-planned">planned</span></td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="ledger">
+            <div class="chapter-num">05</div>
+            <h2>Claims ledger</h2>
+            <p class="chapter-intro">Every claim the project will make, its status now and where it is settled. Tags follow the papers: <span class="tag t-PROVEN">PROVEN</span> <span class="tag t-ESTABLISHED">ESTABLISHED</span> <span class="tag t-CONJECTURAL">CONJECTURAL</span> <span class="tag t-OPEN">OPEN</span>, plus <span class="tag t-DESIGN">DESIGN</span> for a proof sketched here whose full proof and test come later.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>#</th><th>Claim</th><th>Status now</th><th>Settled in</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">H1</td><td>Every vertex, probe and snapped state lies exactly on the hyperboloid</td><td><span class="tag t-DESIGN">DESIGN</span></td><td>Phase 1 exact check; Phase 4 live test</td></tr>
+                    <tr><td class="mono">H2</td><td>One step moves at most the step radius: d(x, x&prime;) &le; r</td><td><span class="tag t-DESIGN">DESIGN</span></td><td>Phase 1; Phase 4</td></tr>
+                    <tr><td class="mono">H3</td><td>The Lorentzian centroid is the unique minimiser of the weighted squared Lorentzian distance</td><td><span class="tag t-ESTABLISHED">ESTABLISHED</span></td><td>Law et al. 2019; checked numerically in Phase 1</td></tr>
+                    <tr><td class="mono">H4</td><td>The step commutes with hyperbolic isometries</td><td><span class="tag t-DESIGN">DESIGN</span></td><td>Phase 1 exact test with rational Lorentz maps</td></tr>
+                    <tr><td class="mono">H5</td><td>As the curvature goes to 0 the step becomes polystep&rsquo;s Euclidean step</td><td><span class="tag t-DESIGN">DESIGN</span></td><td>Phase 1 numerical limit; Phase 4 proof</td></tr>
+                    <tr><td class="mono">H6</td><td>As &epsilon; &rarr; 0 the step goes to the best vertex; keeping the best seen never increases the incumbent cost</td><td><span class="tag t-DESIGN">DESIGN</span></td><td>Phase 1; Phase 4</td></tr>
+                    <tr><td class="mono">H7</td><td>Each step&rsquo;s displacement is a rational Lorentz map, so the pump returns H = P&#8315;&sup1; exactly over every register</td><td><span class="tag t-DESIGN">DESIGN</span></td><td>Phase 2; Phase 3 live register test</td></tr>
+                    <tr><td class="mono">C1</td><td>On tree-structured problems the hyperbolic step beats the Euclidean step at equal evaluation budget</td><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td><td>Benchmarks B1, B3, B4 (preregistered)</td></tr>
+                    <tr><td class="mono">C2</td><td>Hyperbolic depth acts as built-in annealing: steps of a fixed hyperbolic radius shrink in Klein coordinates as a channel commits</td><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td><td>Benchmarks B1, B2</td></tr>
+                    <tr><td class="mono">C3</td><td>Three channels on the 24-frame schedule beat one channel with three times the particles at equal budget</td><td><span class="tag t-CONJECTURAL">CONJECTURAL</span></td><td>Benchmark B1 ablation; the paper&rsquo;s Open Problem 3</td></tr>
+                    <tr><td class="mono">L1</td><td>A general solver of this kind decides SAT in polynomial time only if P = NP</td><td><span class="tag t-PROVEN">PROVEN</span> (paper Thm 5.11)</td><td>Cited, not re-proved</td></tr>
+                    <tr><td class="mono">L2</td><td>Against a membership-only objective no method beats the volume of the tree</td><td><span class="tag t-PROVEN">PROVEN</span> (paper Prop 5.13)</td><td>Shown as the negative control of B3</td></tr>
+                    <tr><td class="mono">L3</td><td>P versus NP</td><td><span class="tag t-OPEN">OPEN</span></td><td>Not addressed by any result here</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="conventions">
+            <div class="chapter-num">06</div>
+            <h2>How the folder grows</h2>
+            <p class="chapter-intro">Every module added here ships with five things, so the explainers and charts stay complete.</p>
+            <ol class="steps">
+                <li><strong>The code</strong>, in <code>reference/</code> (Python) or beside this page (browser).</li>
+                <li><strong>A full explainer</strong> in <code>explainers/</code>, built on <code>assets/hp.css</code>, opening with its focused chart (<code>&lt;div data-hp-map="focus" data-node="&hellip;"&gt;</code>).</li>
+                <li><strong>A node on the system map</strong> in <code>assets/hp-map.js</code>, with its edges and its explainer. Every chart in the folder updates from that one list.</li>
+                <li><strong>A row in the claims ledger</strong> for anything it claims, with a status tag.</li>
+                <li><strong>Tests</strong>, and a line in the folder&rsquo;s <code>README.md</code>.</li>
+            </ol>
+            <p>The folder layout:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Path</th><th>Holds</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">index.html</td><td>This hub</td></tr>
+                    <tr><td class="mono">explainers/</td><td>One full explainer per topic</td></tr>
+                    <tr><td class="mono">assets/hp.css, assets/hp-map.js</td><td>Shared style; the system map data and its chart renderer</td></tr>
+                    <tr><td class="mono">reference/</td><td>The Python reference (Phase 1)</td></tr>
+                    <tr><td class="mono">README.md, PREREGISTRATION.md</td><td>The plan and file map; the benchmarks fixed in advance</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="glossary">
+            <div class="chapter-num">07</div>
+            <h2>Glossary</h2>
+            <dl class="gloss">
+                <dt>Hyperboloid</dt><dd>The points with \(-t^2 + |x|^2 = -1,\ t > 0\): a model of hyperbolic space in which isometries are Lorentz matrices.</dd>
+                <dt>Poincar&eacute; ball</dt><dd>Hyperbolic space drawn in the unit ball, angles true, geodesics circular arcs. Used for pictures.</dd>
+                <dt>Klein model</dt><dd>The same space in the unit ball with straight geodesics. Used for the centroid, which becomes a convex combination.</dd>
+                <dt>Ghost map</dt><dd>The paper&rsquo;s rational map from the ball to the hyperboloid, \(G(p) = ((1+|p|^2),\,2p)/(1-|p|^2)\).</dd>
+                <dt>Particle</dt><dd>One candidate solution being improved (a point, or a vector of parameters).</dd>
+                <dt>Polytope, vertices, probes</dt><dd>The candidate set around a particle: corners of a rotated orthoplex at the step radius, and probe points along each direction.</dd>
+                <dt>&epsilon; (temperature)</dt><dd>How sharply the weights favour low-cost vertices: small &epsilon; picks the best corner, large &epsilon; averages.</dd>
+                <dt>Channel</dt><dd>One of three particle populations, on one of the three 120&deg; branches of the clock.</dd>
+                <dt>Packet</dt><dd>The 12 frames from a branch&rsquo;s onload to its offload; it carries one solver step.</dd>
+                <dt>Helix A / Helix B</dt><dd>The proposer (the solver) and the exact certifier, as in the paper&rsquo;s machine model.</dd>
+                <dt>Register</dt><dd>720 frames; at its end the pump evaluates the holonomy of each channel&rsquo;s exact trajectory.</dd>
+            </dl>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; <a href="../Zero%20Point%20Calculations/zero_point_tri_engine.html">Zero-Point Tri-Engine</a> &middot; <a href="../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html">The paper, explained</a> &middot; polystep by An T. Le (Apache-2.0), <a href="https://github.com/anindex/polystep">github.com/anindex/polystep</a></footer>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;explainers/hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

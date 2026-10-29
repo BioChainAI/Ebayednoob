@@ -15,6 +15,7 @@ Every page below carries the same three dropdowns, and the current page is marke
 | Simulations | `numogram.html` | Engine / Numogram correspondence: three panels on one clock, with in-page verification |
 | Simulations | `Galactic Lensing/galactic_lensing_hierarchy.html` | Galactic Lensing Hierarchy Part 1: Sgr A* systems I–III, residual parity, frame closure and lensing, with a line-by-line port of `verify_galactic_hierarchy.py` and live checks against the Fifteen Lemmas |
 | Simulations | `Galactic Lensing/tri_engine_soliton.html` | Part 2: three active engines, cross-engine TQF and the soliton crystal |
+| Simulations | `Hyperbolic PolyStep/index.html` | Hyperbolic PolyStep hub: system map, explainer library, roadmap and claims ledger for gradient-free training and a three-channel solver in hyperbolic space |
 | Calculations | `Galactic Lensing/tri_engine_convergence.html` | Tri-Engine Convergence: Part 2 run in reverse. Three exact calculations, one per engine, scheduled asynchronously on one clock, converging into a triple quad with an automatic TQF readout and memory on the outer and inner manifolds |
 | Calculations | `Zero Point Calculations/zero_point_tri_engine.html` | Zero-Point Tri-Engine: the convergence calculator on the zero-point eight-step cycle. Every frame of the 720-frame register is one step (k = F mod 8, branch j = F mod 3, joint frame n = F mod 24); each engine carries one instruction per joint cycle, onloaded at its k = 2 frame and offloaded twelve frames later at k = 6; results pair at the zero point and each register closes with the 720 → 72 → 10 pump and the memory test |
 | Calculations | `index.html` | The engine's own exact calculator (its Terminal tab) |
@@ -24,6 +25,7 @@ Every page below carries the same three dropdowns, and the current page is marke
 | Manuals | `Galactic Lensing/tri_engine_manual.html` | Tri-Engine Soliton operating manual: every control and panel of Part 2, experiments, troubleshooting |
 | Manuals | `../../Fractal Processing/Geometric Engine of Time/Geometric Engine of Time Interactive Explainer.html` | The Geometric Engine of Time: interactive explainer of the conditional P = NP equivalence (also listed in the Fractal Processing hub). The bar sits at the bottom right there, clear of the page's own sticky header |
 | Manuals | `../../Fractal Processing/Fractal Processing Learning Hub.html` | Fractal Processing tutorial hub (link only: the hub has its own sign-in for tutorial progress, so it does not carry the bar) |
+| Manuals | `Hyperbolic PolyStep/explainers/*.html` | The four Hyperbolic PolyStep explainers: the hyperbolic step, three channels on the clock, problems and benchmarks, build and verification |
 
 The menus are defined once, in the `menus` section of
 [`scripts/page-chrome-targets.json`](../../scripts/page-chrome-targets.json). To add a page to a dropdown,
@@ -122,6 +124,10 @@ script at the bottom of `manual.html` too.
 results. If a control is added, renamed or changes its range or default in `tri_engine_soliton.html`,
 update chapters 4, 7 and 14 of the manual, and the labs at its end if the clock, node or tile formulas change.
 
+The Galactic Lensing pages and the Zero-Point Tri-Engine are generated from the templates in
+[`scripts/geometric-build/`](../../scripts/geometric-build/README.md): edit the templates there, run
+`python3 scripts/geometric-build/build.py`, then `node scripts/install-page-chrome.mjs`. Never edit the built pages directly.
+
 `Galactic Lensing/tri_engine_convergence.html` is built from the same source as Part 2 (its engines, crystal,
 exact frames and tiles are Part 2's code), so a change to those parts of Part 2 reaches it on the next build.
 
@@ -136,3 +142,11 @@ register closes with P = 1. The page's self-test (rows Z1–Z6) checks the eight
 its null lifts, the joint schedule, the non-commutative pump on random rational frames, the cyclic holonomy and the
 four-track clock. If the clock, the schedule or the pump changes, update those rows and the Table 5 constants
 (`ON_PHASE`, `OFF_PHASE`) together.
+
+## Hyperbolic PolyStep
+
+`Hyperbolic PolyStep/` is written by hand: a hub, four explainers in `explainers/`, a shared style
+(`assets/hp.css`) and the system map (`assets/hp-map.js`). Every chart in the folder is drawn from the map's one list of
+nodes and edges, so a new module adds its node there and every chart updates. The folder's `README.md` has the
+roadmap and the checklist each new module follows, and `PREREGISTRATION.md` fixes the benchmarks before any solver
+code runs. The site bar's `hyper` icon marks its menu items.

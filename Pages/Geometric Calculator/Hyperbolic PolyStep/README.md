@@ -1,0 +1,50 @@
+# Hyperbolic PolyStep
+
+Gradient-free training, and a multi-channel combinatorics solver, in hyperbolic space. The project has three parts:
+
+- [polystep](https://github.com/anindex/polystep)'s optimal-transport step (An T. Le, TMLR 2026, Apache-2.0);
+- the exact hyperbolic geometry of *The Geometric Engine of Time: The Zero-Point Cycle*;
+- the three engines of the Zero-Point Tri-Engine, used as three solver channels.
+
+Open [`index.html`](index.html) for the hub. It holds the system map, the explainer library, the roadmap and the claims ledger.
+
+## Status
+
+| Phase | Delivers | Status |
+| --- | --- | --- |
+| 0 · Scaffold | Hub, system map, four explainers, preregistration, reference skeleton; the calculator's build sources moved to `scripts/geometric-build/` | done |
+| 1 · Python reference | `reference/`: the hyperbolic step on polystep's rotations and solvers, the Euclidean baseline, exact checks of H1–H7, seeded traces, benchmark runners | next |
+| 2 · JavaScript core | `hyperbolic_core.js`, checked line by line against the reference traces | planned |
+| 3 · Simulation page | Three channels live on the zero-point clock, generated from the Zero-Point template | planned |
+| 4 · Proofs and results | Full proofs of H1–H7 with live self-tests; the preregistered benchmarks run, with their decisions | planned |
+| 5 · Integration | Site bar, cross-links, documentation | planned |
+
+## Files
+
+| Path | Holds |
+| --- | --- |
+| `index.html` | The hub |
+| `explainers/hyperbolic-step.html` | Explainer 1: the step, a live Poincaré and Klein diagram, the correspondence with polystep, H1–H7 |
+| `explainers/channels.html` | Explainer 2: three channels on the zero-point clock, packets, schedule, pairing, clutch, membrane, pump |
+| `explainers/benchmarks.html` | Explainer 3: decoders, the preregistered benchmarks, the boundary chart |
+| `explainers/build-and-verify.html` | Explainer 4: pipeline, four arithmetic tracks, trace parity, test plan |
+| `assets/hp.css` | Shared style |
+| `assets/hp-map.js` | The system map data (nodes and edges) and its chart renderer |
+| `PREREGISTRATION.md` | Benchmarks, budgets and decision rules, fixed before any code runs |
+| `reference/` | The Python reference (Phase 1) |
+
+## Adding a module
+
+Every module ships with five things, so the explainers and charts stay complete:
+
+1. **The code.**
+2. **A full explainer** in `explainers/`, built on `assets/hp.css`. It opens with its focused chart, `<div data-hp-map="focus" data-node="…">`.
+3. **A node in `assets/hp-map.js`**, with its edges and explainer link. Every chart in the folder is drawn from that list.
+4. **A row in the hub's claims ledger** for anything it claims, with a status tag.
+5. **Tests**, plus a line in this README.
+
+To change a node's status when it is built, edit its `status` in `assets/hp-map.js`. The status is one of `design`, `next`, `planned` or `done`.
+
+## Scope
+
+Nothing here bears on P versus NP. The step is a heuristic proposer (the paper's Helix A), checked by an exact certifier (Helix B). The paper's Theorem 5.11 and Propositions 5.9 and 5.13 mark the boundary, which `explainers/benchmarks.html#boundary` charts.
