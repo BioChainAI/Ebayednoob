@@ -1,7 +1,7 @@
 // Hyperbolic PolyStep: hub and explainers render, charts draw every node and edge, links resolve, the lab's step obeys H2.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -32,6 +32,13 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       for (let i = 0; i < 12; i++) { await pg.click('#b-step'); outs.push(await pg.textContent('#lab-out')); }
       for (const v of ['-2', '0.7']) { await pg.evaluate(v => { const e = document.querySelector('#in-eps'); e.value = v; e.dispatchEvent(new Event('input')); }, v); outs.push(await pg.textContent('#lab-out')); }
       r.labH2 = outs.every(o => /≤ r =/.test(o)); r.labSample = outs[outs.length - 1].slice(0, 120); ok = ok && r.labH2;
+    }
+    if (p === 'explainers/core-reference.html') {
+      await pg.waitForFunction(() => document.body.dataset.parity, null, { timeout: 120000 });
+      r.parity = await pg.evaluate(() => document.body.dataset.parity);
+      await pg.click('#b-run'); await pg.waitForFunction(() => document.body.dataset.run !== undefined, null, { timeout: 120000 });
+      r.run = await pg.evaluate(() => [document.body.dataset.run, document.querySelector('#run-out').textContent.slice(0, 90)]);
+      ok = ok && r.parity === '169/169';
     }
     if (p === 'explainers/channels.html') { r.charts = await pg.evaluate(() => [document.querySelectorAll('#packet-chart rect').length, document.querySelectorAll('#schedule-chart rect').length]); ok = ok && r.charts[0] === 13 && r.charts[1] === 73; }
     if (!ok) fail++;

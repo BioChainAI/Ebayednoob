@@ -7,6 +7,7 @@ corners, snapped states and Helix B's counts are exact rationals and must match 
 centroids go through exp and sqrt and must match within the stated tolerance. Rationals are written as "p/q".
 """
 import json
+import math
 import os
 from fractions import Fraction
 
@@ -55,7 +56,7 @@ def geometry_trace():
         v = np.array([1.5 * (2 * rng.random() - 1) for _ in range(d)])
         x = H.from_poincare(p)
         y = H.exp_at(x, v)
-        xq = X.ghost([Fraction(round(c * 2 ** 16), 2 ** 16) for c in p])
+        xq = X.ghost([Fraction(math.floor(c * 2 ** 16 + 0.5), 2 ** 16) for c in p])
         cases.append({'p': p.tolist(), 'v': v.tolist(), 'ghost_float': x.tolist(), 'exp_at': y.tolist(),
                       'dist': float(H.dist(x, y)), 'klein': H.to_klein(y).tolist(),
                       'ghost_exact_of_p16': qv(xq), 'boost_exact': [qv(r) for r in X.boost(xq)]})
@@ -102,12 +103,54 @@ def channel_trace():
             'evaluations': tc.evaluations, 'final_states': [[[qv(y) for y in row] for row in st.Xq] for st in tc.states]}
 
 
+def maxsat_trace():
+    """polystep's own generator (Python's random) and the shared-generator variant."""
+    from hpstep.problems import maxsat_instance
+    return {'polystep_50_42': maxsat_instance(50, 4.27, 42, 'polystep').tolist(),
+            'polystep_200_1000': maxsat_instance(200, 4.27, 1000, 'polystep').tolist(),
+            'xoshiro_40_3': maxsat_instance(40, 4.27, 3, 'xoshiro').tolist()}
+
+
+def tree_trace():
+    """Quaternion words, right-division, and anchored decoding of nodes held in an ancestor's frame."""
+    from hpstep import problems as PB
+    emb = PB.TreeEmbedding(3.0)
+    rng = Rng(77)
+    cases = []
+    for _ in range(40):
+        L = 1 + rng.below(8)
+        w = PB.TreeAddress.random_target(rng, L)
+        k = max(0, L - 2)
+        M = np.eye(3)
+        for i in range(k, L):
+            M = M @ emb.step[emb.slot(w[:i], w[i])]
+        y = M[:, 0]
+        cases.append({'word': w, 'anchor': w[:k], 'local': y.tolist(), 'decoded': emb.decode(y, L, w[:k]),
+                      'quaternion': [str(c) for c in PB.word_quaternion(w)]})
+    return cases
+
+
+def sinkhorn_trace():
+    """polystep's SinkhornSolver on small cost matrices (row-normalised plans). Parity here is approximate: both
+    sides stop at a convergence threshold."""
+    import torch
+    from polystep.solvers import SinkhornSolver
+    rng = Rng(5)
+    out = []
+    for P, V, eps in [(3, 8, 0.3), (4, 6, 0.1), (2, 10, 1.0), (5, 4, 0.5)]:
+        C = np.array([[rng.random() * 3 for _ in range(V)] for _ in range(P)])
+        W = SinkhornSolver(epsilon=eps).solve(torch.as_tensor(C), scale_cost=1.0).matrix.numpy()
+        out.append({'C': C.tolist(), 'epsilon': eps, 'W': (W / W.sum(axis=1, keepdims=True)).tolist()})
+    return out
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     meta = {'float_tolerance': FLOAT_TOL, 'rationals': 'strings "p/q"',
             'note': 'Exact fields must match exactly; float fields within float_tolerance (relative).'}
     files = {'prng.json': prng_trace(), 'geometry.json': geometry_trace(), 'step_b1.json': step_trace(),
-             'channels_b1.json': channel_trace()}
+             'channels_b1.json': channel_trace(), 'maxsat.json': maxsat_trace(), 'tree.json': tree_trace(),
+             'sinkhorn.json': sinkhorn_trace()}
     for name, data in files.items():
         with open(os.path.join(OUT, name), 'w') as fh:
             json.dump({'meta': meta, 'data': data}, fh, indent=1)

@@ -134,7 +134,7 @@ class PolyStepH:
         exact_pts = []
         if len(idx) == 1 and Rq is not None:
             from fractions import Fraction
-            t = Fraction(round(math.tanh(length / 2) * 2 ** k), 2 ** k)
+            t = Fraction(math.floor(math.tanh(length / 2) * 2 ** k + 0.5), 2 ** k)   # half up, as in the browser
             for u in X.orthoplex_directions(Rq):
                 row = list(st.Xq[p])
                 row[idx[0]] = X.point_at(st.Xq[p][idx[0]], t, u)

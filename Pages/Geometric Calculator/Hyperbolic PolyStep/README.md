@@ -14,8 +14,8 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | --- | --- | --- |
 | 0 · Scaffold | Hub, system map, four explainers, preregistration, reference skeleton; the calculator's build sources moved to `scripts/geometric-build/` | done |
 | 1 · Python reference | `reference/hpstep`: the hyperbolic step on polystep's own solvers, B1–B4 with exact Helix B, three channels on the clock; 80 passing tests (H1–H7, parity with polystep); `traces/`; the benchmark runner; Amendment 1 to the preregistration | done |
-| 2 · JavaScript core | `hyperbolic_core.js`, checked line by line against the reference traces | next |
-| 3 · Simulation page | Three channels live on the zero-point clock, generated from the Zero-Point template | planned |
+| 2 · JavaScript core | `hyperbolic_core.js` (no dependencies) and `parity.js`: 169/169 trace lines match, in Node (`node tests/parity.cjs`) and live in the browser | done |
+| 3 · Simulation page | Three channels live on the zero-point clock, generated from the Zero-Point template | next |
 | 4 · Proofs and results | Full proofs of H1–H7 with live self-tests; the preregistered benchmarks run, with their decisions | planned |
 | 5 · Integration | Site bar, cross-links, documentation | planned |
 
@@ -29,6 +29,8 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | `explainers/benchmarks.html` | Explainer 3: decoders, the preregistered benchmarks, the boundary chart |
 | `explainers/build-and-verify.html` | Explainer 4: pipeline, four arithmetic tracks, trace parity, test plan |
 | `explainers/reference-guide.html` | Explainer 5: the Python reference, its module map, tests, findings, traces and runner |
+| `explainers/core-reference.html` | Explainer 6: the browser core, with a live parity check and three channels running in the page |
+| `hyperbolic_core.js`, `parity.js`, `tests/parity.cjs` | The browser core, the trace replay, and its Node runner |
 | `assets/hp.css` | Shared style |
 | `assets/hp-map.js` | The system map data (nodes and edges) and its chart renderer |
 | `PREREGISTRATION.md` | Benchmarks, budgets and decision rules, fixed before any code runs |

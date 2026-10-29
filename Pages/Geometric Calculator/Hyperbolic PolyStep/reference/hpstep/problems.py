@@ -22,9 +22,9 @@ def _xy(Y, hyper):
 # ================================================================ B1: graph 3-colouring
 def planted_3col(n, c, rng):
     """A planted 3-colourable graph: vertices split into three equal classes (a random equipartition), then
-    round(c n / 2) distinct edges drawn uniformly among pairs in different classes. Returns (classes, edges)."""
+    round(c n / 2) (halves up) distinct edges drawn uniformly among pairs in different classes. Returns (classes, edges)."""
     classes = rng.shuffle([i % 3 for i in range(n)])
-    m = round(c * n / 2)
+    m = math.floor(c * n / 2 + 0.5)                   # half up, as in the browser
     sizes = [classes.count(k) for k in range(3)]
     cross = sizes[0] * sizes[1] + sizes[0] * sizes[2] + sizes[1] * sizes[2]
     if m > cross:

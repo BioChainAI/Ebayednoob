@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Core Reference - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 6 of Hyperbolic PolyStep: the browser core built in Phase 2. It checks itself live against the Python reference's traces, runs three channels in your browser, and documents every part of hyperbolic_core.js with its arithmetic track and the parity rules that make two languages agree.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <script src="../hyperbolic_core.js"></script>
+    <script src="../parity.js"></script>
+    <style>
+        pre.code { background: #020617; border: 1px solid #1e293b; border-radius: 10px; padding: 12px 14px; overflow-x: auto; font: 0.84rem/1.55 var(--mono); color: #cbd5e1; }
+        pre.code .c { color: #64748b; }
+        .parity-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 12px 0; }
+        .parity-files .pf { border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px; background: #020617; font: 0.8rem var(--mono); }
+        .parity-files .pf b { display: block; font-size: 1.1rem; }
+        .pf.ok b { color: var(--emerald); } .pf.bad b { color: var(--rose); } .pf.wait b { color: var(--muted); }
+        details.lines { margin-top: 8px; } details.lines summary { cursor: pointer; color: var(--muted); font-size: 0.86rem; }
+        details.lines ol { font: 0.78rem/1.6 var(--mono); max-height: 320px; overflow: auto; color: #cbd5e1; }
+        details.lines li.bad { color: var(--rose); }
+        #spark { width: 100%; height: 140px; display: block; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 6 &middot; Phase 2</div>
+    <h1>The Browser Core</h1>
+    <p class="lede"><code>hyperbolic_core.js</code> is the Python reference ported to JavaScript, function for function. It is trusted because it reproduces the reference&rsquo;s traces, and this page checks that live, in your browser, every time it loads.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#parity">Live parity check</a>
+        <a class="btn btn-ghost" href="#run">Run three channels</a>
+        <a class="btn btn-ghost" href="#api">What is in the core</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat" id="stat-parity">parity: checking&hellip;</span>
+        <span class="stat"><b>7</b> trace files &middot; <b>0</b> dependencies</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#parity">2. Live parity check</a></li>
+            <li><a href="#rules">3. How two languages agree</a></li>
+            <li><a href="#run">4. Run three channels</a></li>
+            <li><a href="#api">5. What is in the core</a></li>
+            <li><a href="#use">6. Using it</a></li>
+            <li><a href="#limits">7. Limits</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#parity">Live parity check</a></li><li><a href="#rules">How two languages agree</a></li>
+            <li><a href="#run">Run three channels</a></li><li><a href="#api">What is in the core</a></li><li><a href="#use">Using it</a></li><li><a href="#limits">Limits</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The core takes the Python reference (through its traces) and the four arithmetic tracks, and feeds the simulation page.</p>
+            <div data-hp-map="focus" data-node="jscore"></div>
+        </section>
+
+        <section class="chapter" id="parity">
+            <div class="chapter-num">02</div>
+            <h2>Live parity check</h2>
+            <p class="chapter-intro">This page fetches the reference&rsquo;s seven trace files and replays every one through the core loaded on this page. Exact fields must match exactly; floats within \(10^{-12}\) relative; Sinkhorn plans within \(10^{-5}\), since both sides stop at a convergence threshold.</p>
+            <div class="lab">
+                <div class="lab-title">Parity in this browser</div>
+                <div class="out" id="parity-sum">Loading traces&hellip;</div>
+                <div class="parity-files" id="parity-files"></div>
+                <details class="lines"><summary>Every line of the report</summary><ol id="parity-lines"></ol></details>
+                <div class="lab-row"><button class="chip" id="b-parity">Run again</button></div>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Trace</th><th>What is replayed</th><th>Match</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">prng.json</td><td>The published xoshiro128** vector, splitmix32 seeding, floats (bit for bit), bounded draws, a sample, rationals, an exact Cayley rotation</td><td>Exact</td></tr>
+                    <tr><td class="mono">geometry.json</td><td>Ghost map, exp at a point, distance, Klein chart on 12 cases; exact ghost points and boosts</td><td>Exact and \(10^{-12}\)</td></tr>
+                    <tr><td class="mono">step_b1.json</td><td>24 steps of one channel on a 9-vertex 3-colouring: block, exact rotation, exact corners, costs, snapped states, Helix B; weights</td><td>Exact and \(10^{-12}\)</td></tr>
+                    <tr><td class="mono">channels_b1.json</td><td>Three channels for two registers with the membrane: 60 zero-point memory words with their SHA-256 chain, both registers&rsquo; pump identity, all final exact states</td><td>Exact</td></tr>
+                    <tr><td class="mono">maxsat.json</td><td>polystep&rsquo;s own MAX-SAT generator, rebuilt through a port of Python&rsquo;s Mersenne Twister, and the shared-generator variant</td><td>Exact</td></tr>
+                    <tr><td class="mono">tree.json</td><td>40 norm-5 tree words: quaternions, right-division, anchored decoding</td><td>Exact</td></tr>
+                    <tr><td class="mono">sinkhorn.json</td><td>Four Sinkhorn plans from polystep&rsquo;s solver</td><td>\(10^{-5}\)</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout plain"><span class="label">Does the check catch anything?</span>
+                <p>Yes. Each fault below was injected into a copy of the core, and the check failed exactly where it should:</p>
+                <ul>
+                    <li>a Cayley map with its sign flipped failed 85 of 169 lines;</li>
+                    <li>a softmax temperature off by one part in \(10^7\) failed 25 (the snapped states move);</li>
+                    <li>one changed character in the memory hash&rsquo;s format failed 60.</li>
+                </ul>
+                <p>Rounding halves to even instead of up changed nothing. That is expected: the two rules differ only on an exact tie, and none occurs in these traces.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="rules">
+            <div class="chapter-num">03</div>
+            <h2>How two languages agree</h2>
+            <p class="chapter-intro">Python and JavaScript both use IEEE doubles, but agreeing to the last bit, and exactly on every rational, takes a few rules. Both implementations follow them.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Exact to float is correctly rounded.</strong> <code>Q.toNumber</code> divides with a 65-bit quotient and a sticky bit, then rounds once.</td><td>Python&rsquo;s <code>float(Fraction)</code> rounds once. Dividing two rounded numbers, the obvious way, can be one unit off, and every float the search sees comes from an exact point.</td></tr>
+                    <tr><td><strong>Float to exact is exact.</strong> <code>Q.fromDouble</code> reads the double&rsquo;s bits.</td><td>The snap measures its residual against <code>Fraction(float)</code>, which is exact.</td></tr>
+                    <tr><td><strong>Halves round up</strong>, <code>floor(x + 1/2)</code>: in the snap, the exact step length t and B1&rsquo;s edge count.</td><td>Python&rsquo;s <code>round</code> rounds halves to even; JavaScript&rsquo;s <code>Math.round</code> rounds them up. The reference was changed to match (Amendment 1).</td></tr>
+                    <tr><td><strong>One generator, written twice</strong>: xoshiro128** with splitmix32 seeding, plus a port of Python&rsquo;s Mersenne Twister for polystep&rsquo;s own instance generator.</td><td>Neither torch&rsquo;s nor the browser&rsquo;s generator can be reproduced in the other language.</td></tr>
+                    <tr><td><strong>Sums run left to right</strong>, in the order the reference writes them.</td><td>Floating-point addition is not associative.</td></tr>
+                    <tr><td><strong>The traced path avoids transcendental functions.</strong> It uses rational step lengths and exact Cayley rotations.</td><td><code>exp</code>, <code>cosh</code> and their kin may differ in the last bit between maths libraries. Where they remain (the weights), a tolerance is stated.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="run">
+            <div class="chapter-num">04</div>
+            <h2>Run three channels</h2>
+            <p class="chapter-intro">The core running on its own in this browser: three channels on the zero-point clock attack a planted 3-colouring (B1), with Helix B certifying at every zero point. The settings are untuned, so this shows that the core runs; it is not a benchmark.</p>
+            <div class="lab">
+                <div class="lab-title">Three channels, B1</div>
+                <div class="lab-row">
+                    <label>vertices <select id="in-n"><option>30</option><option selected>60</option><option>120</option></select></label>
+                    <label>clutch <select id="in-clutch"><option>membrane</option><option>free</option><option>hold</option></select></label>
+                    <label>geometry <select id="in-geo"><option value="hyperbolic">hyperbolic</option><option value="flat">curvature 0</option></select></label>
+                    <label>instance seed <input id="in-seed" type="number" value="1000" min="1" max="99999" style="width:6rem"></label>
+                    <button class="chip" id="b-run">Run 400 &middot; n evaluations</button>
+                </div>
+                <canvas id="spark" width="800" height="140" aria-label="Certified conflicts of each channel at each zero point"></canvas>
+                <div class="out" id="run-out">Press run.</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="api">
+            <div class="chapter-num">05</div>
+            <h2>What is in the core</h2>
+            <p class="chapter-intro">One file with no dependencies. It loads as <code>window.HPCore</code> in a page and through <code>require</code> in Node. Each part mirrors a Python module.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Part</th><th>Mirrors</th><th>Track</th><th>Names</th></tr></thead>
+                <tbody>
+                    <tr><td>Exact rationals</td><td><code>fractions.Fraction</code></td><td>B</td><td class="mono">Q: add sub mul div cmp toNumber fromDouble parse</td></tr>
+                    <tr><td>Generators</td><td><code>prng.py</code>, Python&rsquo;s <code>random</code></td><td>&mdash;</td><td class="mono">Rng (xoshiro128**), PyRandom (Mersenne Twister)</td></tr>
+                    <tr><td>Exact geometry</td><td><code>exact.py</code></td><td>B, C</td><td class="mono">X.cayley ghost boost pointAt snap displacement pump</td></tr>
+                    <tr><td>Float geometry</td><td><code>hyperbolic.py</code></td><td>A</td><td class="mono">H.lorentz dist expAt logOrigin lorentzCentroid toKlein</td></tr>
+                    <tr><td>The step</td><td><code>step.py</code></td><td>A, B, C</td><td class="mono">PolyStepH, stepConfig, softmaxWeights, sinkhornWeights</td></tr>
+                    <tr><td>Problems</td><td><code>problems.py</code></td><td>A, B</td><td class="mono">ThreeColouring MaxSat TreeAddress HardThresholdNet</td></tr>
+                    <tr><td>Channels</td><td><code>channels.py</code></td><td>A, B</td><td class="mono">TriChannel, ON, OFF, scheduleFacts, memoryWord (SHA-256)</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="use">
+            <div class="chapter-num">06</div>
+            <h2>Using it</h2>
+<pre class="code">&lt;script src="hyperbolic_core.js"&gt;&lt;/script&gt;
+<span class="c">// or in Node: const HPCore = require('./hyperbolic_core.js')</span>
+const { Rng, ThreeColouring, PolyStepH, TriChannel, objective } = HPCore;
+const prob = new ThreeColouring(60, 4.4, new Rng(1000));
+const solvers = [], states = [];
+for (let j = 0; j &lt; 3; j++) {
+    const s = new PolyStepH(objective(prob), prob.m, 2, { epsilon: 0.5, stepRadius: 0.6, block: 8 }, new Rng(10 + j));
+    states.push(s.initState(prob.initPoints(new Rng(20 + j), 4))); solvers.push(s);
+}
+const tc = new TriChannel(solvers, states, prob, { clutch: 'membrane', mu: 0.3 }).run({ budget: 24000 });
+console.log(tc.memory.at(-1));       <span class="c">// { F, costs, Y, best, hash }</span></pre>
+<pre class="code"><span class="c"># the same parity check, in Node, from the Hyperbolic PolyStep folder</span>
+node tests/parity.cjs                <span class="c"># prints each file's count and the total; -v prints every line</span></pre>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">07</div>
+            <h2>Limits</h2>
+            <div class="callout limit"><span class="label">What the core does not do</span>
+                <ul>
+                    <li><strong>No Haar rotations.</strong> polystep&rsquo;s Haar rotations come from torch&rsquo;s generator and LAPACK, which the browser cannot reproduce. The core uses Cayley rotations from the shared generator, float or exact. The reference offers both.</li>
+                    <li><strong>Sinkhorn agrees only approximately</strong> (within \(10^{-5}\)). Both sides iterate to a threshold, and the softmax solver is the one traced exactly.</li>
+                    <li><strong>B4&rsquo;s data are not traced.</strong> They come from Box&ndash;Muller, whose logarithms and cosines may differ in the last bit. The browser&rsquo;s B4 runs are its own, and benchmark decisions come from the reference.</li>
+                    <li><strong>It is not fast.</strong> Exact arithmetic is BigInt and the search is plain JavaScript, so it suits the sizes the simulation page shows (tens to hundreds of variables), not the reference&rsquo;s largest cells.</li>
+                </ul>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="reference-guide.html">&larr; The Python reference</a>
+                <a class="btn btn-ghost" href="../index.html#library">Back to the library &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 6 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+<script>
+(function () {
+    const $ = id => document.getElementById(id);
+    // ---------------------------------------------------------------- live parity
+    async function parity() {
+        $('parity-sum').textContent = 'Loading traces…';
+        $('parity-files').innerHTML = HPParity.files.map(f => `<div class="pf wait" data-f="${f}">${f}<b>…</b></div>`).join('');
+        try {
+            const traces = {};
+            await Promise.all(HPParity.files.map(async f => {
+                const r = await fetch('../reference/traces/' + f, { cache: 'no-cache' });
+                if (!r.ok) throw new Error(f + ' ' + r.status);
+                traces[f] = await r.json();
+            }));
+            const t0 = performance.now();
+            await new Promise(res => setTimeout(res, 20));
+            const R = HPParity.runParity(HPCore, traces);
+            const ms = performance.now() - t0, by = {};
+            R.lines.forEach(l => { by[l.file] = by[l.file] || [0, 0]; by[l.file][1]++; if (l.ok) by[l.file][0]++; });
+            $('parity-files').innerHTML = HPParity.files.map(f => { const [p, t] = by[f] || [0, 0];
+                return `<div class="pf ${p === t && t ? 'ok' : 'bad'}">${f}<b>${p}/${t}</b></div>`; }).join('');
+            $('parity-lines').innerHTML = R.lines.map(l => `<li class="${l.ok ? '' : 'bad'}">${l.ok ? 'PASS' : 'FAIL'} · ${l.file} · ${l.name}${l.detail ? ' (' + l.detail + ')' : ''}</li>`).join('');
+            const all = R.passed === R.total;
+            $('parity-sum').innerHTML = `<span class="${all ? 'good' : 'bad'}">${R.passed}/${R.total} trace lines match</span> <span class="k">in ${(ms / 1000).toFixed(1)} s, in this browser</span>`;
+            $('stat-parity').innerHTML = `parity: <b>${R.passed}/${R.total}</b> lines match`;
+            document.body.dataset.parity = `${R.passed}/${R.total}`;
+        } catch (e) {
+            $('parity-sum').innerHTML = `<span class="bad">Could not load the traces: ${e.message}</span>`;
+            document.body.dataset.parity = 'error';
+        }
+    }
+    $('b-parity').onclick = parity;
+    window.addEventListener('load', () => setTimeout(parity, 50));
+
+    // ---------------------------------------------------------------- run three channels
+    const COL = ['#ff0055', '#00f2ff', '#ffd700'];
+    function spark(series) {
+        const cv = $('spark'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, Hh = cv.clientHeight;
+        cv.width = W * dpr; cv.height = Hh * dpr;
+        const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
+        const n = series[0].length, mx = Math.max(1, ...series.flat());
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(30, Hh - 18); ctx.lineTo(W - 6, Hh - 18); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.font = '11px Fira Code, monospace'; ctx.fillText(String(mx), 2, 14); ctx.fillText('0', 18, Hh - 20);
+        ctx.fillText('zero points →', W - 110, Hh - 4);
+        series.forEach((s, j) => { ctx.strokeStyle = COL[j]; ctx.lineWidth = 1.8; ctx.beginPath();
+            s.forEach((v, i) => { const x = 30 + (W - 40) * (n > 1 ? i / (n - 1) : 0), y = 10 + (Hh - 30) * (1 - v / mx); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); });
+    }
+    $('b-run').onclick = () => {
+        const C = HPCore, n = +$('in-n').value, seed = +$('in-seed').value || 1000, geo = $('in-geo').value, hyper = geo === 'hyperbolic';
+        const prob = new C.ThreeColouring(n, 4.4, new C.Rng(seed), hyper);
+        const solvers = [], states = [];
+        for (let j = 0; j < 3; j++) {
+            const s = new C.PolyStepH(C.objective(prob), prob.m, 2, { epsilon: 0.5, stepRadius: 0.6, block: 8, geometry: geo }, new C.Rng(10 + j));
+            states.push(s.initState(prob.initPoints(new C.Rng(20 + j), 4))); solvers.push(s);
+        }
+        const series = [[], [], []], t0 = performance.now();
+        const tc = new C.TriChannel(solvers, states, prob, { clutch: $('in-clutch').value, mu: 0.3 })
+            .run({ budget: 400 * n, onZero: (t, costs) => costs.forEach((c, j) => series[j].push(c)) });
+        spark(series);
+        const last = tc.memory[tc.memory.length - 1], best = Math.min(...tc.memory.map(m => Math.min(...m.costs)));
+        $('run-out').innerHTML = `<span class="k">${n} vertices, ${prob.edges.length} edges · ${tc.F} frames · ${tc.evaluations} evaluations · ${(performance.now() - t0).toFixed(0)} ms</span><br>` +
+            `last zero point: A ${last.costs[0]} · B ${last.costs[1]} · C ${last.costs[2]} conflicts · best certified <span class="${best === 0 ? 'good' : ''}">${best}</span>` +
+            `${best === 0 ? ' (a proper colouring)' : ''} · chain ${last.hash}`;
+        document.body.dataset.run = String(best);
+    };
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

@@ -124,4 +124,4 @@ the reference had to make, so that the measured runs are judged against the meth
    - The membrane is not used on B3, since it would mix points of different charts; B3 runs with the clutch on "free".
 3. **polystep on B3.** The library's `PolyStep` has no re-anchoring hook. On B3 it searches the root chart and is limited by float64 beyond distance about 18 (depth 6). It is the secondary baseline; C1 is decided against curvature 0, which is anchored.
 4. **Counting.** polystep's evaluations are counted by wrapping its objective, since its default polytopes differ from the orthoplex. The final scoring of its particles is not counted. It keeps no incumbent; its best final particle is certified.
-5. **The snap rounds halves up** (`floor(x + 1/2)`), as the browser's `Math.round` does, so the two implementations agree on every grid point.
+5. **Halves round up** (`floor(x + 1/2)`), as the browser's `Math.round` does: in the snap, in the exact step length t, and in B1's edge count round(c n / 2). The two implementations then agree on every grid point and every instance.
