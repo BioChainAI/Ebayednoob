@@ -16,7 +16,7 @@
         existing: { name: 'Existing page', color: '#94a3b8' }
     };
     const STATUS = {
-        source: 'source', existing: 'built earlier', done: 'written', design: 'designed, not built', next: 'next to build', planned: 'planned'
+        source: 'source', existing: 'built earlier', done: 'done', built: 'built in the Python reference', design: 'designed, not built', next: 'next to build', planned: 'planned'
     };
     const PAPER = '../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html';
     const STEP = 'explainers/hyperbolic-step.html', CH = 'explainers/channels.html', BENCH = 'explainers/benchmarks.html', BUILD = 'explainers/build-and-verify.html';
@@ -67,29 +67,29 @@
           desc: 'What no result here can show: an encoding of all SAT is equivalent to P = NP; black-box search costs the volume; constant time is not P.',
           refs: '§§5.5–5.9', explainer: BENCH },
 
-        { id: 'channels', col: 2, row: 0.5, kind: 'comp', status: 'design', label: 'Three channels', sub: 'A · B · C on the zero-point clock',
+        { id: 'channels', col: 2, row: 0.5, kind: 'comp', status: 'built', label: 'Three channels', sub: 'A · B · C on the zero-point clock',
           desc: 'Three particle populations on the three 120° branches. Each runs one hyperbolic PolyStep step per joint cycle, carried by one 12-frame packet from its onload to its offload.',
           refs: 'design', explainer: CH },
-        { id: 'memory', col: 2, row: 2, kind: 'comp', status: 'design', label: 'Pairing, membrane, memory', sub: 'zero point · clutch · register',
+        { id: 'memory', col: 2, row: 2, kind: 'comp', status: 'built', label: 'Pairing, membrane, memory', sub: 'zero point · clutch · register',
           desc: 'At each zero point the certified incumbents are compared and the best is written to memory. The clutch rests a stalled channel; the membrane recentres the channels. Each register closes with the pump.',
           refs: 'design', explainer: CH },
-        { id: 'step', col: 2, row: 3.5, kind: 'comp', status: 'design', label: 'Hyperbolic PolyStep step', sub: 'corners · weights · centroid',
+        { id: 'step', col: 2, row: 3.5, kind: 'comp', status: 'built', label: 'Hyperbolic PolyStep step', sub: 'corners · weights · centroid',
           desc: 'polystep’s step on the hyperboloid: geodesic vertices around x, black-box costs, transport weights and the Lorentzian centroid, computed in the Klein model as a convex combination.',
           refs: 'H1–H7', explainer: STEP },
-        { id: 'helixb', col: 2, row: 5, kind: 'comp', status: 'design', label: 'Helix B certifier', sub: 'exact verification',
+        { id: 'helixb', col: 2, row: 5, kind: 'comp', status: 'built', label: 'Helix B certifier', sub: 'exact verification',
           desc: 'Every answer a channel proposes is checked in exact arithmetic: conflicts counted, clauses satisfied, an address verified by right-division, the state confirmed on the hyperboloid.',
           refs: 'Def 5.3 (6)', explainer: CH },
-        { id: 'problems', col: 2, row: 6.5, kind: 'comp', status: 'design', label: 'Problem decoders', sub: '3-colour · MAX-SAT · tree · nets',
+        { id: 'problems', col: 2, row: 6.5, kind: 'comp', status: 'built', label: 'Problem decoders', sub: '3-colour · MAX-SAT · tree · nets',
           desc: 'How a point of hyperbolic space becomes a discrete answer: a colour by nearest branch direction, a truth value by sign, a tree address, a hard-threshold network’s weights.',
           refs: 'B1–B4', explainer: BENCH },
 
         { id: 'prereg', col: 3, row: 0, kind: 'artifact', status: 'done', label: 'Preregistration', sub: 'tasks · budgets · decision rules',
           desc: 'The benchmarks, budgets, metrics and decision rules, fixed before any run, in the registered-report form of the paper’s open problems.',
           refs: 'PREREGISTRATION.md', explainer: BENCH, href: BENCH + '#prereg' },
-        { id: 'ref', col: 3, row: 2, kind: 'artifact', status: 'next', label: 'Python reference', sub: 'reference/ · uses polystep',
-          desc: 'Offline reference: the hyperbolic step built on polystep’s rotations and solvers, the Euclidean baseline from the library itself, exact checks of H1–H7 and seeded traces for the browser port.',
-          refs: 'Phase 1', explainer: BUILD },
-        { id: 'jscore', col: 3, row: 3.5, kind: 'artifact', status: 'planned', label: 'JavaScript core', sub: 'hyperbolic_core.js',
+        { id: 'ref', col: 3, row: 2, kind: 'artifact', status: 'done', label: 'Python reference', sub: 'reference/ · uses polystep',
+          desc: 'Built in Phase 1: the hyperbolic step on polystep’s own solvers, the four problems with exact Helix B, the three channels on the clock, 80 passing tests of H1–H7 and parity with polystep, seeded traces for the browser port, and the benchmark runner.',
+          refs: 'Phase 1 · 80 tests', explainer: 'explainers/reference-guide.html' },
+        { id: 'jscore', col: 3, row: 3.5, kind: 'artifact', status: 'next', label: 'JavaScript core', sub: 'hyperbolic_core.js',
           desc: 'The browser port of the step on the existing exact core, checked line by line against the reference traces.',
           refs: 'Phase 2', explainer: BUILD },
         { id: 'sim', col: 3, row: 5, kind: 'artifact', status: 'planned', label: 'Simulation page', sub: 'three channels, live',
@@ -141,7 +141,7 @@
     }
     function detailHTML(n) {
         const link = target(n), list = arr => arr.length ? arr.map(m => `<a href="#" data-pick="${m.id}">${esc(m.label)}</a>`).join(' · ') : '—';
-        return `<h4><span class="dot" style="background:${KIND[n.kind].color}"></span>${esc(n.label)} <span class="status ${n.status === 'done' ? 's-done' : n.status === 'next' ? 's-next' : n.status === 'existing' || n.status === 'source' ? 's-existing' : 's-planned'}">${STATUS[n.status]}</span></h4>
+        return `<h4><span class="dot" style="background:${KIND[n.kind].color}"></span>${esc(n.label)} <span class="status ${n.status === 'done' || n.status === 'built' ? 's-done' : n.status === 'next' ? 's-next' : n.status === 'existing' || n.status === 'source' ? 's-existing' : 's-planned'}">${STATUS[n.status]}</span></h4>
             <p>${esc(n.desc)}</p>
             <p class="links">${esc(KIND[n.kind].name)} · ${esc(n.refs)}${link ? ` · <a href="${link}">${n.explainer ? 'Read the explainer' : 'Open'} →</a>` : ''}</p>
             <p class="links">Draws on: ${list(ins(n.id))}<br>Feeds: ${list(outs(n.id))}</p>`;
