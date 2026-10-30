@@ -16,8 +16,22 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | 1 · Python reference | `reference/hpstep`: the hyperbolic step on polystep's own solvers, B1–B4 with exact Helix B, three channels on the clock; 80 passing tests (H1–H7, parity with polystep); `traces/`; the benchmark runner; Amendment 1 to the preregistration | done |
 | 2 · JavaScript core | `hyperbolic_core.js` (no dependencies) and `parity.js`: 169/169 trace lines match, in Node (`node tests/parity.cjs`) and live in the browser | done |
 | 3 · Simulation page | `simulation.html`: three channels live on the zero-point clock for B1–B4, written on the browser core (not the Zero-Point template); exact register pump, Helix B, memory chain, on-load self-test (105/105; 169/169 in full); settings by address; the simulation manual | done |
-| 4 · Proofs and results | Full proofs of H1–H7 with live self-tests; the preregistered benchmarks run, with their decisions | next |
-| 5 · Integration | Site bar, cross-links, documentation | planned |
+| 4 · Proofs and results | `explainers/proofs-and-results.html`: full proofs of Lemma S and H1–H7, checked live (`proofs.js`); T1 reduced, still open. The preregistered benchmarks were run under Amendments 2 and 3 (7,740 runs, results in `reference/results/`). C1 refuted, C2 supported, C3 refuted; the B3 control passes | done |
+| 5 · Integration | Site bar, cross-links, documentation | next |
+
+## Version 2 · three dimensions, two structures bound by a coupler
+
+Version 2 moves the search into H³. Two structures of three engines each (six calculations) are bound by a coupler
+that turns the particles' frames, never their positions, with a steer/carry switch. See
+`explainers/decoder-3d.html#v2`.
+
+| Phase | Delivers | Status |
+| --- | --- | --- |
+| A · 3D decoder | `reference/hpstep/decode3d.py`, `decoder3d.js`: anchor decoders exact on floats (D1–D5), the octahedral norm-5 tree in H³ with exact frames, τ = ln 7 (E1–E3), the four problems in H³; 26 tests; trace `reference/traces/decode3d.json` (`run_traces3d.py`), parity 28/28 (`node tests/parity3d.cjs`) | done |
+| B · Frame layer | A rational unit quaternion per particle and factor, transported along each step | next |
+| C · Coupler | The twist ledger, h₁h₂ = 1 exactly, the steer/carry switch | planned |
+| D · Two structures | Two tri-channels in H³ bound through the coupler | planned |
+| E · Preregistered runs | A new preregistration with controls | planned |
 
 ## Files
 
@@ -31,6 +45,8 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | `explainers/reference-guide.html` | Explainer 5: the Python reference, its module map, tests, findings, traces and runner |
 | `explainers/core-reference.html` | Explainer 6: the browser core, with a live parity check and three channels running in the page |
 | `explainers/simulation-manual.html` | Explainer 7: the simulation page's wiring, every control and panel, the exact track, experiments |
+| `explainers/proofs-and-results.html`, `proofs.js` | Explainer 8: proofs of H1–H7 with live checks, T1, the benchmark results and decisions |
+| `explainers/decoder-3d.html`, `decoder3d.js`, `tests/parity3d.cjs` | Explainer 9 and version 2 phase A: the 3D decoder, its browser port and parity |
 | `simulation.html` | The simulation: three channels on the zero-point clock, live (e.g. `simulation.html?prob=B1&size=30&exact=1`) |
 | `hyperbolic_core.js`, `parity.js`, `tests/parity.cjs` | The browser core, the trace replay, and its Node runner |
 | `assets/hp.css` | Shared style |

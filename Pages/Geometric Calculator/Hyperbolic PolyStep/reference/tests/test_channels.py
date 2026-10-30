@@ -87,3 +87,19 @@ def test_batched_membrane_is_the_factor_loop():
         assert np.isfinite(a[0]).all() and np.isfinite(b[0]).all()
         assert np.max(np.abs(a[0] - b[0]) / np.maximum(1, np.abs(b[0]))) < 1e-10
         assert abs(a[1] - b[1]) <= 1e-12 * max(1.0, b[1])
+
+
+def test_membrane_keeps_float_states_on_the_sheet():
+    """Amendment 3: near the horizon, rounding in the membrane's rigid motions used to compound until states left the
+    sheet and turned to NaN (found in B1 at n = 300). Every float state must stay on the sheet over a long run."""
+    from hpstep import hyperbolic as H
+    prob = ThreeColouring(60, 4.4, Rng(3))
+    sols, sts = [], []
+    for j in range(3):
+        sol = PolyStepH(prob, prob.m, prob.d, StepConfig(epsilon=0.03, step_radius=1.0, block=8), Rng(90 + j))
+        sts.append(sol.init_state(prob.init_points(Rng(95 + j), 4, spread=0.69)))
+        sols.append(sol)
+    tc = TriChannel(sols, sts, prob, clutch='membrane', mu=0.6).run(frames=24 * 150)
+    X = np.concatenate([st.X.reshape(-1, 3) for st in tc.states])
+    assert np.isfinite(X).all()
+    assert np.max(np.abs(H.lorentz(X, X) + 1)) < 1e-6

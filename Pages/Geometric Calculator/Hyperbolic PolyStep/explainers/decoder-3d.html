@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 3D Decoder - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 9 of Hyperbolic PolyStep, version 2 phase A: the decoders that turn points of three-dimensional hyperbolic space into answers. Anchor decoders that are exact on floats, the norm-5 tree embedded in H³ with exact frames, the four problems in H³, live 3D views, proofs and checks, and the version 2 design they serve: two structures of three engines bound by a coupler.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <script src="../hyperbolic_core.js"></script>
+    <script src="../decoder3d.js"></script>
+    <style>
+        .proof { border-left: 3px solid #334155; padding: 2px 0 2px 14px; margin: 0.8rem 0; }
+        .proof > p:first-child::before { content: 'Proof. '; font-weight: 700; color: #e2e8f0; }
+        .proof > p:last-child::after { content: ' \220E'; color: var(--muted); }
+        .stmt { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); margin: 0.6rem 0; }
+        .stmt > p:first-child { margin-top: 0; } .stmt > p:last-child { margin-bottom: 0; }
+        .ball { width: 100%; height: auto; display: block; border-radius: 10px; background: #020617; cursor: grab; touch-action: none; }
+        .ball:active { cursor: grabbing; }
+        .checks td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+        .pill { font: 0.74rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .55); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .55); }
+        .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 9 &middot; Version 2, phase A</div>
+    <h1>The 3D Decoder</h1>
+    <p class="lede">Version 2 moves the search into three-dimensional hyperbolic space and binds two memory structures of three engines each through a coupler that turns frames, never positions. The decoder is the interface that makes this possible: it reads where a point is and nothing else, exactly, so no turn of a frame can change an answer.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#anchor-lab">The decoder, live in 3D</a>
+        <a class="btn btn-ghost" href="#v2">Version 2 design</a>
+        <a class="btn btn-ghost" href="#tree">The tree in H³</a>
+        <a class="btn btn-ghost" href="#checks">Live checks</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat" id="stat-checks">live checks: running&hellip;</span>
+        <span class="stat" id="stat-parity">parity: checking&hellip;</span>
+        <span class="stat"><b>4</b> anchor sets &middot; <b>&tau; = ln 7</b> tree</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#v2">2. Version 2 in one picture</a></li>
+            <li><a href="#anchor">3. The anchor decoder</a></li>
+            <li><a href="#anchor-lab">4. Live in 3D</a></li>
+            <li><a href="#props">5. D1&ndash;D5, proved</a></li>
+            <li><a href="#tree">6. The tree in H&sup3;</a></li>
+            <li><a href="#problems">7. The four problems in H&sup3;</a></li>
+            <li><a href="#checks">8. Live checks and parity</a></li>
+            <li><a href="#next">9. What comes next</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#v2">Version 2 in one picture</a></li><li><a href="#anchor">The anchor decoder</a></li>
+            <li><a href="#anchor-lab">Live in 3D</a></li><li><a href="#props">D1&ndash;D5, proved</a></li><li><a href="#tree">The tree in H&sup3;</a></li>
+            <li><a href="#problems">The four problems in H&sup3;</a></li><li><a href="#checks">Live checks and parity</a></li><li><a href="#next">What comes next</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The decoder draws on the exact geometry of version 1 (the ghost map, the Klein chart, the quaternions of the Fifteen Lemmas) and on version 1&rsquo;s problems. It feeds the two-structure system of version 2.</p>
+            <div data-hp-map="focus" data-node="decoder3d"></div>
+        </section>
+
+        <section class="chapter" id="v2">
+            <div class="chapter-num">02</div>
+            <h2>Version 2 in one picture</h2>
+            <p class="chapter-intro">Two structures, each a tri-channel of engines A, B and C, make six calculations. Under each particle there is a frame: its orientation and spin in H&sup3;. A third system, the coupler, owns the frames. It takes the twist one structure accumulates and applies the inverse to the other, both ways, so the pair&rsquo;s net twist stays the identity.</p>
+            <figure><div class="map-wrap"><svg viewBox="0 0 900 360" role="img" aria-label="Version 2: two structures of three engines, a decoder layer under each, and a coupler between them acting on frames only">
+                <defs><marker id="va" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+                <g font-family="Inter, system-ui, sans-serif">
+                    <text x="130" y="22" text-anchor="middle" fill="#64748b" font-size="11" font-family="Fira Code, monospace" letter-spacing="2">STRUCTURE 1</text>
+                    <text x="770" y="22" text-anchor="middle" fill="#64748b" font-size="11" font-family="Fira Code, monospace" letter-spacing="2">STRUCTURE 2</text>
+                    <g transform="translate(20,36)"><rect width="220" height="124" rx="12" fill="rgba(15,23,42,.95)" stroke="#22d3ee"/>
+                        <text x="14" y="24" fill="#f8fafc" font-size="13.5" font-weight="700">Three engines</text>
+                        <g font-size="12" font-weight="600"><rect x="14" y="38" width="56" height="28" rx="7" fill="rgba(255,0,85,.16)" stroke="#ff0055"/><text x="42" y="57" text-anchor="middle" fill="#ff7aa8">A</text>
+                        <rect x="82" y="38" width="56" height="28" rx="7" fill="rgba(0,242,255,.12)" stroke="#00f2ff"/><text x="110" y="57" text-anchor="middle" fill="#67e8f9">B</text>
+                        <rect x="150" y="38" width="56" height="28" rx="7" fill="rgba(255,215,0,.12)" stroke="#ffd700"/><text x="178" y="57" text-anchor="middle" fill="#fde68a">C</text></g>
+                        <text x="14" y="90" fill="#cbd5e1" font-size="11">own 24-frame clock and pump</text><text x="14" y="107" fill="#cbd5e1" font-size="11">own SHA-256 memory chain</text></g>
+                    <g transform="translate(660,36)"><rect width="220" height="124" rx="12" fill="rgba(15,23,42,.95)" stroke="#22d3ee"/>
+                        <text x="14" y="24" fill="#f8fafc" font-size="13.5" font-weight="700">Three engines</text>
+                        <g font-size="12" font-weight="600"><rect x="14" y="38" width="56" height="28" rx="7" fill="rgba(255,0,85,.16)" stroke="#ff0055"/><text x="42" y="57" text-anchor="middle" fill="#ff7aa8">A</text>
+                        <rect x="82" y="38" width="56" height="28" rx="7" fill="rgba(0,242,255,.12)" stroke="#00f2ff"/><text x="110" y="57" text-anchor="middle" fill="#67e8f9">B</text>
+                        <rect x="150" y="38" width="56" height="28" rx="7" fill="rgba(255,215,0,.12)" stroke="#ffd700"/><text x="178" y="57" text-anchor="middle" fill="#fde68a">C</text></g>
+                        <text x="14" y="90" fill="#cbd5e1" font-size="11">own 24-frame clock and pump</text><text x="14" y="107" fill="#cbd5e1" font-size="11">own SHA-256 memory chain</text></g>
+                    <g transform="translate(20,214)"><rect width="220" height="58" rx="12" fill="rgba(6,78,59,.35)" stroke="#34d399"/><text x="14" y="24" fill="#f8fafc" font-size="13" font-weight="700">3D decoder &middot; this page</text><text x="14" y="43" fill="#cbd5e1" font-size="11">positions &rarr; answers, exactly</text></g>
+                    <g transform="translate(660,214)"><rect width="220" height="58" rx="12" fill="rgba(6,78,59,.35)" stroke="#34d399"/><text x="14" y="24" fill="#f8fafc" font-size="13" font-weight="700">3D decoder &middot; this page</text><text x="14" y="43" fill="#cbd5e1" font-size="11">positions &rarr; answers, exactly</text></g>
+                    <g transform="translate(320,70)"><rect width="260" height="168" rx="14" fill="rgba(76,29,149,.28)" stroke="#c084fc" stroke-dasharray="6 4"/>
+                        <text x="130" y="26" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="700">Coupler</text>
+                        <text x="130" y="44" text-anchor="middle" fill="#cbd5e1" font-size="11">frames only &middot; invisible to all six</text>
+                        <g transform="translate(46,58)"><rect width="168" height="30" rx="15" fill="#020617" stroke="#475569"/><rect x="3" y="3" width="80" height="24" rx="12" fill="rgba(192,132,252,.35)" stroke="#c084fc"/>
+                            <text x="43" y="20" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">steer</text><text x="125" y="20" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600">carry</text></g>
+                        <text x="130" y="112" text-anchor="middle" fill="#e9d5ff" font-size="12" font-family="Fira Code, monospace">twist w → w⁻¹</text>
+                        <text x="130" y="132" text-anchor="middle" fill="#e9d5ff" font-size="12" font-family="Fira Code, monospace">h₁ · h₂ = 1, exactly</text>
+                        <text x="130" y="152" text-anchor="middle" fill="#94a3b8" font-size="10.5">checked like the pump, every zero point</text></g>
+                    <g stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#va)">
+                        <path d="M130,160 L130,212"/><path d="M770,160 L770,212"/>
+                        <path d="M240,110 C280,110 290,120 318,124" stroke="#c084fc"/><path d="M582,124 C610,120 620,110 658,110" stroke="#c084fc"/>
+                        <path d="M658,140 C620,150 610,170 582,178" stroke="#c084fc" stroke-dasharray="4 3"/><path d="M318,178 C290,170 280,150 242,140" stroke="#c084fc" stroke-dasharray="4 3"/>
+                    </g>
+                    <text x="450" y="300" text-anchor="middle" fill="#94a3b8" font-size="11.5">Solid: a twist leaves a structure. Dashed: its inverse arrives at the other. The decoders read positions only,</text>
+                    <text x="450" y="318" text-anchor="middle" fill="#94a3b8" font-size="11.5">so no frame change, steered or carried, can change any of the six calculations&rsquo; answers.</text>
+                    <text x="450" y="344" text-anchor="middle" fill="#64748b" font-size="10.5" font-family="Fira Code, monospace">steer: frames choose the next polytope rotation &middot; carry: frames are transported and never fed back</text>
+                </g></svg></div><figcaption>The design settled for version 2: two structures times three engines, and a coupler with a steer/carry switch.</figcaption></figure>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Phase</th><th>Delivers</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>A &middot; 3D decoder</td><td>This page: anchor decoders, the octahedral tree in H&sup3;, the four problems in H&sup3;, live checks, parity</td><td><span class="status s-done">done</span></td></tr>
+                    <tr><td>B &middot; Frame layer</td><td>A frame (rational unit quaternion) per particle and factor, transported along each step; an exact or snapped transport map</td><td><span class="status s-next">next</span></td></tr>
+                    <tr><td>C &middot; Coupler</td><td>The twist ledger with the steer/carry switch, the exact check h&#8321;h&#8322; = 1 at every zero point, and the carry-mode guarantee: the six calculations bit-identical to running without the coupler</td><td><span class="status s-planned">planned</span></td></tr>
+                    <tr><td>D &middot; Two structures</td><td>Two tri-channels in H&sup3;, each with its own clock and memory chain, bound only through the coupler</td><td><span class="status s-planned">planned</span></td></tr>
+                    <tr><td>E &middot; Preregistered runs</td><td>A new preregistration with controls: coupler off, carry only, a deliberately non-inverse transfer, gauge changes on one structure only</td><td><span class="status s-planned">planned</span></td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="anchor">
+            <div class="chapter-num">03</div>
+            <h2>The anchor decoder</h2>
+            <p class="chapter-intro">One primitive decodes everything. Fix a set \(A = \{a_0, \dots, a_{n-1}\}\) of rational directions of equal length. A point \(y\) of H&sup3; decodes to the anchor its spatial part \(\bar y = (y_1, y_2, y_3)\) points nearest:</p>
+            <p>$$\mathrm{dec}_A(y) = \text{the least } k \text{ with } \langle \bar y, a_k\rangle = \max_j \langle \bar y, a_j\rangle .$$</p>
+            <p>Ties go to the lowest index, so the origin decodes to 0. The anchor sets are the rational regular polytopes of three dimensions:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Set</th><th>Anchors</th><th>Answers</th><th>Symmetry group \(G_A\)</th><th>Used for</th></tr></thead>
+                <tbody>
+                    <tr><td>AXES</td><td class="mono">e&#8321;, e&#8322;, e&#8323;</td><td>3</td><td>3 rotations (cyclic)</td><td>B1, 3-colouring</td></tr>
+                    <tr><td>TETRA</td><td class="mono">(1,1,1), (1,&minus;1,&minus;1), (&minus;1,1,&minus;1), (&minus;1,&minus;1,1)</td><td>4</td><td>12 (the tetrahedral group)</td><td>4-colouring</td></tr>
+                    <tr><td>OCTA</td><td class="mono">&plusmn;e&#8321;, &plusmn;e&#8322;, &plusmn;e&#8323;</td><td>6</td><td>24 (the octahedral group)</td><td>B3, the six neighbours of a tree node</td></tr>
+                    <tr><td>CUBE</td><td class="mono">(&plusmn;1, &plusmn;1, &plusmn;1)</td><td>8</td><td>24</td><td>B2, three truth values</td></tr>
+                </tbody>
+            </table></div>
+            <p>CUBE&rsquo;s argmax is just the signs of the three coordinates. Its index is \(4b_1 + 2b_2 + b_3\) with \(b_i = [y_i &gt; 0]\), so a decoded corner <em>is</em> three truth values, and a zero coordinate reads &ldquo;false&rdquo;, as in version 1.</p>
+        </section>
+
+        <section class="chapter" id="anchor-lab">
+            <div class="chapter-num">04</div>
+            <h2>Live in 3D</h2>
+            <p class="chapter-intro">The Poincar&eacute; ball, seen from outside. Drag to turn it. Each dot is a direction coloured by its answer; the rings are the anchors. The white point is a query you can move. Apply a symmetry: the point moves to \(g\cdot y\) and its answer moves to \(\sigma_g(k)\), exactly as D3 says.</p>
+            <div class="lab">
+                <div class="lab-title">The anchor decoder in H&sup3;</div>
+                <div class="lab-row">
+                    <label>anchors <select id="a-set"><option value="axes">AXES (3)</option><option value="tetra">TETRA (4)</option><option value="octa" selected>OCTA (6)</option><option value="cube">CUBE (8)</option></select></label>
+                    <label>azimuth <input type="range" id="a-az" min="-180" max="180" step="1" value="35"></label>
+                    <label>elevation <input type="range" id="a-el" min="-89" max="89" step="1" value="20"></label>
+                    <label>radius <input type="range" id="a-r" min="0" max="0.97" step="0.01" value="0.7"></label>
+                    <button class="chip" id="a-g">Apply a symmetry g</button>
+                    <button class="chip" id="a-reset">Reset view</button>
+                </div>
+                <canvas class="ball" id="cv-anchor" width="900" height="560" aria-label="The direction sphere of the Poincaré ball coloured by decoded answer"></canvas>
+                <div class="out" id="a-out">&nbsp;</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="props">
+            <div class="chapter-num">05</div>
+            <h2>D1&ndash;D5, proved</h2>
+            <h3>D1 &middot; The same answer in every radial chart <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>For \(y\) on the sheet, \(\mathrm{dec}_A\) gives the same answer on the hyperboloid coordinates \(\bar y\), the Poincar&eacute; point \(\bar y/(1+y_0)\) and the Klein point \(\bar y/y_0\).</p></div>
+            <div class="proof"><p>The three vectors are positive multiples of \(\bar y\), since \(y_0 \ge 1\). Scaling every \(\langle \bar y, a_k\rangle\) by the same positive number keeps the maximisers and so the least one.</p></div>
+            <h3>D2 &middot; The float decoder is exact <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>On every finite float input, the float decoder returns the same answer as the exact decoder applied to the rational value of that input.</p></div>
+            <div class="proof"><p>Answer \(k\) beats answer \(j\) when \(\langle \bar y, a_k - a_j\rangle\) is positive, or zero with \(k &lt; j\). For AXES, TETRA and OCTA, every difference \(a_k - a_j\) has at most two nonzero entries, all of the same size. So each test is the sign of \(\pm y_i\) or of \(\pm y_i \pm y_j\). Negation is exact. Under IEEE round-to-nearest, \(\mathrm{fl}(u+v)\) has the sign of \(u+v\): rounding never crosses zero, a nonzero sum never rounds to zero (subnormals keep it), and an exact zero stays zero. CUBE&rsquo;s differences can have three entries, so it is decoded by its signs directly, which is the same argmax with the same tie rule.</p></div>
+            <p>The control shows this is not free: the naive decoder, argmax of float dot products, disagrees with the exact one on boundary cases (live count below).</p>
+            <h3>D3 &middot; Symmetries permute the answers <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>For each rotation \(g\) in \(G_A\), the rotations among the 24 signed permutations that map \(A\) to itself, let \(\sigma_g\) be the permutation with \(g a_k = a_{\sigma_g(k)}\). Then \(\mathrm{dec}_A(g y) = \sigma_g(\mathrm{dec}_A(y))\) whenever the maximum is unique.</p></div>
+            <div class="proof"><p>\(g\) is orthogonal, so \(\langle g\bar y, a_{\sigma_g(k)}\rangle = \langle g\bar y, g a_k\rangle = \langle \bar y, a_k\rangle\). The scores are permuted by \(\sigma_g\), so a unique maximiser \(k\) moves to \(\sigma_g(k)\). At ties the lowest-index rule is not equivariant, which is why the statement excludes them.</p></div>
+            <h3>D4 &middot; Every answer has the same share <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>For any rotation-invariant distribution of directions, such as the uniform one on the sphere or a uniform point of the ball, each answer has probability \(1/|A|\).</p></div>
+            <div class="proof"><p>\(G_A\) acts transitively on \(A\) (checked: every anchor is the image of \(a_0\)). The open region \(R_k = \{\bar y : \langle\bar y, a_k\rangle &gt; \langle \bar y, a_j\rangle\ \forall j \ne k\}\) is carried by \(g\) onto \(R_{\sigma_g(k)}\) (D3). Rotation-invariant measures give all regions the same measure, and the ties lie on finitely many planes, of measure zero.</p></div>
+            <h3>D5 &middot; Global axis rotations leave B1 unchanged <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>In B1 in H&sup3;, applying one rotation of \(G_{\text{AXES}}\) to every vertex&rsquo;s point leaves the number of conflicting edges unchanged, off ties.</p></div>
+            <div class="proof"><p>By D3 every colour \(c_u\) becomes \(\sigma(c_u)\) for the same permutation \(\sigma\). An edge \(uv\) conflicts when \(c_u = c_v\), which holds exactly when \(\sigma(c_u) = \sigma(c_v)\).</p></div>
+            <p>D5 names, exactly, a set of global motions the six calculations cannot see. Together with frame changes, which no decoder reads, these are the moves the coupler is free to make.</p>
+        </section>
+
+        <section class="chapter" id="tree">
+            <div class="chapter-num">06</div>
+            <h2>The tree in H&sup3;</h2>
+            <p class="chapter-intro">Every node of the norm-5 tree has six neighbours, and H&sup3; has exactly six signed axes. So each node sees its parent at \(-e_1\) and its five children at \(+e_1, \pm e_2, \pm e_3\), in its own frame, at hyperbolic distance \(\tau\). The root&rsquo;s six children go along \(\pm e_1, \pm e_2, \pm e_3\) for the letters \(1 \pm 2i, 1 \pm 2j, 1 \pm 2k\).</p>
+            <p>A child&rsquo;s frame is \(M_{\text{child}} = M_{\text{parent}}\, R_u\, B_\tau\). Here \(R_u\) is the signed-permutation rotation taking \(e_1\) to the child&rsquo;s direction \(u\), and \(B_\tau\) is the boost by \(\tau\) along \(e_1\). With \(t = \tanh(\tau/2) = 3/4\):</p>
+            <p>$$\tau = \ln 7,\qquad \cosh\tau = \tfrac{25}{7},\qquad \sinh\tau = \tfrac{24}{7},$$</p>
+            <p>the (7, 24, 25) triple, so every frame is an exact rational Lorentz matrix.</p>
+            <h3>E1 &middot; Exact frames <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>\(R_u\) has integer entries, and \(B_\tau\) has entries 25/7, 24/7, 0 and 1. Both are Lorentz, and products of Lorentz matrices are Lorentz.</p>
+            <h3>E2 &middot; Greedy decoding returns every node <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>Decode by descending from the root: at each node, carry the query into the node&rsquo;s frame and take the child direction with the largest \(\langle \bar y, u\rangle\). That is the OCTA decoder over the allowed children, and, since \(-\langle y, c_u\rangle = \cosh\tau\, y_0 - \sinh\tau\,\langle\bar y, u\rangle\), it is also the nearest child. If \(t &gt; 1/\sqrt 2\), equivalently \(\tau &gt; 2\operatorname{asinh} 1 \approx 1.763\), every node of every depth decodes to its own word, with no ties.</p></div>
+            <div class="proof"><p>Work in Klein coordinates \(\kappa = \bar y / y_0\) of a node&rsquo;s frame. Let \(C_u\) be the open octahedral cell \(\{\langle\kappa,u\rangle &gt; |\kappa_i| \text{ for the other two axes}\}\). Choose \(\delta, \sigma &gt; 0\) with \(\delta + \sigma = \tau\), \(\tanh\delta &gt; 1/\sqrt 2\) and \(\operatorname{sech}\delta \le \tanh\sigma\). This is possible exactly when \(\tau &gt; 2\operatorname{asinh} 1\): take \(\delta\) just above \(\operatorname{asinh} 1\), whose \(\tanh\) is \(1/\sqrt 2\). For \(\tau = \ln 7\), \(\delta = 1\) works.</p>
+                <p>Let \(\Omega = \{\kappa_1 \ge -\tanh\sigma\}\), the side of the plane at distance \(\sigma\) behind the node. The boost maps that plane to the one at distance \(\delta\) ahead, so \(B_\tau\Omega = \{\kappa_1 \ge \tanh\delta\}\).</p>
+                <p>(a) In the ball, \(\kappa_1 \ge \tanh\delta\) forces \(\kappa_2^2 + \kappa_3^2 \le \operatorname{sech}^2\delta &lt; \tanh^2\delta \le \kappa_1^2\). So \(B_\tau\Omega \subset C_{e_1}\), and \(R_u B_\tau \Omega \subset C_u\).</p>
+                <p>(b) For a child direction \(u \ne -e_1\), \(R_uB_\tau\Omega = \{\langle\kappa,u\rangle \ge \tanh\delta\}\) lies in \(\Omega\). For \(u = e_1\) this is clear. For \(u = \pm e_2, \pm e_3\) it holds because \(\kappa_1^2 \le \operatorname{sech}^2\delta \le \tanh^2\sigma\).</p>
+                <p>By induction on depth, a non-root node&rsquo;s subtree, in its own frame, lies in \(\Omega\): the node itself is \(\kappa = 0\), and each child&rsquo;s subtree is \(R_uB_\tau\) of a set in \(\Omega\). So every descendant of child \(u\) lies in the open cell \(C_u\), where \(u\) strictly wins the argmax. The root&rsquo;s six children are the same, with all six directions. Greedy decoding therefore takes the right child at every level, and the query carried into that child&rsquo;s frame is again a point of the child&rsquo;s subtree.</p></div>
+            <p>The condition is sufficient, and the runs show it is not idle. At \(t = 2/3\), just below \(1/\sqrt 2\), 192 of the 18,750 depth-6 nodes decode wrongly; at \(t = 1/2\), many more do. The live check below includes that control.</p>
+            <h3>E3 &middot; Helix B certifies the word <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>The decoded word is certified as in version 1: its quaternion has norm \(5^L\), right-division returns the word, and the word is reduced (paper, Prop 5.12).</p>
+            <div class="lab">
+                <div class="lab-title">The octahedral tree in the Poincar&eacute; ball</div>
+                <div class="lab-row">
+                    <label>depth <select id="t-depth"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
+                    <button class="chip" id="t-target">New target</button>
+                    <button class="chip" id="t-reset">Reset view</button>
+                </div>
+                <canvas class="ball" id="cv-tree" width="900" height="560" aria-label="The norm-5 tree embedded in H³, shown in the Poincaré ball"></canvas>
+                <div class="out" id="t-out">&nbsp;</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="problems">
+            <div class="chapter-num">07</div>
+            <h2>The four problems in H&sup3;</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Problem</th><th>State</th><th>Decoder</th><th>Helix B</th></tr></thead>
+                <tbody>
+                    <tr><td>B1 &middot; 3-colouring</td><td>one point of H&sup3; per vertex</td><td>AXES: the colour is the axis with the largest coordinate</td><td>exact count of monochromatic edges</td></tr>
+                    <tr><td>B2 &middot; MAX-3-SAT</td><td>one point of H&sup3; per block of three variables</td><td>CUBE: the three truth values are the three signs</td><td>exact count of unsatisfied clauses</td></tr>
+                    <tr><td>B3 &middot; tree address</td><td>one point of H&sup3;, held in an anchor node&rsquo;s frame</td><td>OCTA, greedily, down the octahedral tree (E2)</td><td>quaternion norm and right-division (E3)</td></tr>
+                    <tr><td>B4 &middot; hard-threshold net</td><td>an encoder into H&sup3; and 8 prototypes in H&sup3;</td><td>nearest prototype, a hard argmin</td><td>exact training errors</td></tr>
+                </tbody>
+            </table></div>
+            <p>B4&rsquo;s nearest prototype compares four-term sums, so unlike the anchor decoders its float and exact answers can differ at near-ties. Helix B decides in exact arithmetic. As a smoke test, version 1&rsquo;s step and channels already run all of these in H&sup3; (\(d = 3\)) unchanged. That shows the code runs; it is not a benchmark.</p>
+        </section>
+
+        <section class="chapter" id="checks">
+            <div class="chapter-num">08</div>
+            <h2>Live checks and parity</h2>
+            <p class="chapter-intro">Every property above, tested now in this browser by <code>decoder3d.js</code>, on seeded random instances and in exact arithmetic where the claim is exact. Each check also runs a control that must fail.</p>
+            <div class="lab">
+                <div class="lab-title">D1&ndash;D5 and E1&ndash;E3 in this browser</div>
+                <div class="lab-row"><button class="chip" id="b-checks1">Run again</button><button class="chip" id="b-checks5">Run 5&times; as many</button></div>
+                <div class="table-wrap"><table class="checks">
+                    <thead><tr><th>Property</th><th>Trials passed</th><th>Control rejected</th><th>What is measured</th></tr></thead>
+                    <tbody id="check-rows"><tr><td colspan="4">Running&hellip;</td></tr></tbody>
+                </table></div>
+                <div class="out" id="check-out">&nbsp;</div>
+            </div>
+            <div class="lab">
+                <div class="lab-title">Parity with the Python reference</div>
+                <p style="margin:0 0 8px">The reference&rsquo;s trace <code>reference/traces/decode3d.json</code> holds the exact answers for boundary cases, rational points, symmetry groups, tree frames, decodes and both problems&rsquo; Helix B counts. Every line must match.</p>
+                <div class="out" id="parity-out">Loading the trace&hellip;</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="next">
+            <div class="chapter-num">09</div>
+            <h2>What comes next</h2>
+            <div class="callout note"><span class="label">The contract this phase fixes</span>
+                <p>The decoders read positions only. So in the coupler&rsquo;s <em>carry</em> mode, where frames are transported and never fed back, the six calculations must be bit-identical to a run without the coupler. That will be the first test of phase C. In <em>steer</em> mode, frames choose which corners are probed, so paths change. The step&rsquo;s distribution stays the same only if the steered rotations are uniform overall (H4), which the preregistered round will test with a deliberately non-uniform control.</p>
+            </div>
+            <div class="callout limit"><span class="label">Not claimed here</span>
+                <ul>
+                    <li><strong>No search results in H&sup3; yet.</strong> The smoke run shows the code runs, nothing more.</li>
+                    <li><strong>The frame transport is still to build.</strong> Its exactness, whether the transport between two rational points needs a square root, is the main open question of phase B.</li>
+                    <li><strong>Version 1&rsquo;s results do not transfer.</strong> They are about H&sup2; and these budgets; version 2 will be preregistered separately.</li>
+                </ul>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="proofs-and-results.html">&larr; Proofs and results</a>
+                <a class="btn btn-ghost" href="../index.html#v2">Version 2 on the hub &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 9 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id), D = HPDecode3D, C = HPCore;
+    const PAL = ['#ff0055', '#00f2ff', '#ffd700', '#34d399', '#c084fc', '#fb923c', '#60a5fa', '#f472b6'];
+
+    // ---------------------------------------------------------------- a small 3D view of the Poincaré ball
+    function makeView(cv, draw) {
+        const st = { yaw: -0.6, pitch: 0.35, drag: null };
+        const rot = () => { const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw), cp = Math.cos(st.pitch), sp = Math.sin(st.pitch);
+            return p => { const x = cy * p[0] + sy * p[1], y1 = -sy * p[0] + cy * p[1]; return [x, cp * p[2] - sp * y1, sp * p[2] + cp * y1]; }; };
+        const frame = () => {
+            const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 900, H = Math.round(W * 560 / 900);
+            if (cv._w !== W) { cv._w = W; cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px'; }
+            const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+            const R = Math.min(W, H) / 2 - 14, cx = W / 2, cy = H / 2, V = rot();
+            const P = p => { const q = V(p); return [cx + R * q[0], cy - R * q[1], q[2]]; };
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+            draw(ctx, P, { W, H, R, cx, cy });
+        };
+        const pt = e => (e.touches ? e.touches[0] : e);
+        cv.addEventListener('pointerdown', e => { st.drag = [pt(e).clientX, pt(e).clientY, st.yaw, st.pitch]; cv.setPointerCapture(e.pointerId); });
+        cv.addEventListener('pointermove', e => { if (!st.drag) return; st.yaw = st.drag[2] + (pt(e).clientX - st.drag[0]) * 0.01; st.pitch = Math.max(-1.5, Math.min(1.5, st.drag[3] + (pt(e).clientY - st.drag[1]) * 0.01)); frame(); });
+        cv.addEventListener('pointerup', () => { st.drag = null; });
+        window.addEventListener('resize', frame);
+        return { frame, reset: () => { st.yaw = -0.6; st.pitch = 0.35; frame(); } };
+    }
+    const toPoincare = y => [y[1] / (1 + y[0]), y[2] / (1 + y[0]), y[3] / (1 + y[0])];
+    const fib = n => Array.from({ length: n }, (_, i) => { const z = 1 - 2 * (i + 0.5) / n, r = Math.sqrt(1 - z * z), a = i * Math.PI * (3 - Math.sqrt(5)); return [r * Math.cos(a), r * Math.sin(a), z]; });
+
+    // ---------------------------------------------------------------- lab 1: the anchor decoder
+    const SPH = fib(1500);
+    let g = null;                                                     // the applied symmetry, if any
+    const query = () => {
+        const az = +$('a-az').value * Math.PI / 180, el = +$('a-el').value * Math.PI / 180, r = +$('a-r').value;
+        return [r * Math.cos(el) * Math.cos(az), r * Math.cos(el) * Math.sin(az), r * Math.sin(el)];
+    };
+    const viewA = makeView($('cv-anchor'), (ctx, P, s) => {
+        const A = D.ANCHORS[$('a-set').value], items = [];
+        SPH.forEach(v => { const p = P(v.map(x => x * 0.93)); items.push([p[2], () => { ctx.fillStyle = PAL[D.decodeFloat(v, A)] + (p[2] > 0 ? 'dd' : '55'); ctx.beginPath(); ctx.arc(p[0], p[1], p[2] > 0 ? 2.6 : 1.6, 0, 2 * Math.PI); ctx.fill(); }]); });
+        A.forEach((a, k) => { const n = Math.hypot(...a), p = P(a.map(x => x / n * 0.99)); items.push([p[2] + 0.01, () => { ctx.strokeStyle = PAL[k]; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(p[0], p[1], 9, 0, 2 * Math.PI); ctx.stroke(); ctx.fillStyle = '#f8fafc'; ctx.font = '600 11px Fira Code, monospace'; ctx.fillText(String(k), p[0] + 11, p[1] - 8); }]); });
+        const q = query(), pts = [[q, '#ffffff']];
+        if (g) pts.push([D.rotate(g.R, q), '#f5c542']);
+        pts.forEach(([v, col]) => { const p = P(v), o = P([0, 0, 0]); items.push([p[2] + 0.02, () => { ctx.strokeStyle = col + 'aa'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1], 6, 0, 2 * Math.PI); ctx.fill(); }]); });
+        items.sort((a, b) => a[0] - b[0]).forEach(it => it[1]());
+    });
+    function anchorOut() {
+        const A = D.ANCHORS[$('a-set').value], q = query(), y = C.H.fromPoincare(q), k = D.decodeFloat(y, A);
+        const kx = D.decodeExact(y.map(C.Q.from), A);
+        let txt = `<span class="k">query y in the Poincaré ball</span> (${q.map(x => x.toFixed(3)).join(', ')}) · <span class="k">answer</span> <span class="swatch" style="background:${PAL[k]}"></span>${k} · <span class="k">exact decoder</span> ${kx} <span class="${k === kx ? 'good' : 'bad'}">${k === kx ? 'agrees (D2)' : 'DISAGREES'}</span>`;
+        if (g) {
+            const kg = D.decodeFloat(D.rotate(g.R, y), A);
+            txt += `<br><span class="k">g =</span> [${g.R.map(r => r.join(' ')).join(' | ')}] · <span class="k">dec(g·y)</span> = ${kg} · <span class="k">σ_g(${k})</span> = ${g.sigma[k]} <span class="${kg === g.sigma[k] ? 'good' : 'bad'}">${kg === g.sigma[k] ? 'equal (D3)' : 'differ: a tie'}</span>`;
+        }
+        $('a-out').innerHTML = txt;
+    }
+    const redrawA = () => { viewA.frame(); anchorOut(); };
+    ['a-az', 'a-el', 'a-r'].forEach(id => $(id).addEventListener('input', redrawA));
+    $('a-set').onchange = () => { g = null; gi = 0; redrawA(); };
+    let gi = 0;                                                      // cycle through the group's non-identity rotations
+    $('a-g').onclick = () => { const G = D.symmetryGroup(D.ANCHORS[$('a-set').value]).filter(x => !x.sigma.every((v, i) => v === i)); gi = (gi + 1) % G.length; g = G[gi]; redrawA(); };
+    $('a-reset').onclick = () => { g = null; viewA.reset(); anchorOut(); };
+
+    // ---------------------------------------------------------------- lab 2: the tree
+    const emb = new D.TreeEmbedding3D();
+    let target = [0, 2, 4];
+    const allWords = L => { let out = [[]], all = [[]]; for (let i = 0; i < L; i++) { out = out.flatMap(w => C.P.children(w).map(c => [...w, c])); all = all.concat(out); } return all; };
+    const geo = (a, b, s) => { const ch = -C.H.lorentz(a, b), d = Math.acosh(Math.max(1, ch)); if (d < 1e-12) return a; const u = Math.sinh((1 - s) * d) / Math.sinh(d), w = Math.sinh(s * d) / Math.sinh(d); return a.map((x, i) => u * x + w * b[i]); };
+    const viewT = makeView($('cv-tree'), (ctx, P) => {
+        const L = +$('t-depth').value, words = allWords(L), pts = new Map(words.map(w => [w.join(), emb.point(w)])), onPath = w => w.length <= target.length && w.every((x, i) => x === target[i]);
+        const items = [];
+        words.forEach(w => { if (!w.length) return; const a = pts.get(w.slice(0, -1).join()), b = pts.get(w.join()), gold = onPath(w) && target.length <= L;
+            const seg = Array.from({ length: 9 }, (_, i) => P(toPoincare(geo(a, b, i / 8)))), z = (seg[0][2] + seg[8][2]) / 2;
+            items.push([z, () => { ctx.strokeStyle = gold ? '#f5c542' : (z > 0 ? '#64748b' : '#33415588'); ctx.lineWidth = gold ? 2.6 : 1; ctx.beginPath(); seg.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke(); }]); });
+        words.forEach(w => { const p = P(toPoincare(pts.get(w.join()))), col = w.length ? PAL[D.slotDirection(w.slice(0, -1), w[w.length - 1])] : '#ffffff';
+            items.push([p[2] + 0.001, () => { ctx.fillStyle = onPath(w) ? '#f5c542' : col + (p[2] > 0 ? 'ee' : '66'); ctx.beginPath(); ctx.arc(p[0], p[1], Math.max(1.4, 4.2 - w.length), 0, 2 * Math.PI); ctx.fill(); }]); });
+        items.sort((a, b) => a[0] - b[0]).forEach(it => it[1]());
+    });
+    function treeOut() {
+        const L = target.length, y = emb.pointExact(target), dec = emb.decodeExact(y, L), ok = D.certifyWord(dec, L), d = (+$('t-depth').value);
+        $('t-out').innerHTML = `<span class="k">target</span> ${target.join(' ')} <span class="k">(depth ${L}${L > d ? ', deeper than drawn' : ''}) · exact point decodes to</span> ${dec.join(' ')} <span class="${dec.join() === target.join() ? 'good' : 'bad'}">${dec.join() === target.join() ? 'its own word (E2)' : 'WRONG'}</span> · <span class="k">Helix B</span> <span class="${ok ? 'good' : 'bad'}">${ok ? 'certified (E3)' : 'not certified'}</span> · <span class="k">distance from the root</span> ${Math.acosh(emb.point(target)[0]).toFixed(3)} <span class="k">(the path is ${L} × ln 7 = ${(L * Math.log(7)).toFixed(3)}; turns make the straight distance shorter)</span>`;
+    }
+    const rng = new C.Rng(77);
+    $('t-target').onclick = () => { const L = +$('t-depth').value; const w = [rng.below(6)]; while (w.length < L) { const k = C.P.children(w); w.push(k[rng.below(k.length)]); } target = w; viewT.frame(); treeOut(); };
+    $('t-depth').onchange = () => { if (target.length > +$('t-depth').value) $('t-target').click(); else { viewT.frame(); treeOut(); } };
+    $('t-reset').onclick = viewT.reset;
+
+    // ---------------------------------------------------------------- live checks and parity
+    function runChecks(scale) {
+        $('check-out').textContent = 'running…';
+        setTimeout(() => {
+            const t0 = performance.now(), R = D.runChecks3d({ scale });
+            let all = true;
+            $('check-rows').innerHTML = R.map(r => { const ok = r.passed === r.trials, cok = r.control[0] === r.control[1]; all = all && ok && cok;
+                return `<tr><td>${r.id} · ${r.title}</td><td class="num"><span class="pill ${ok ? 'good' : 'bad'}">${r.passed.toLocaleString()} / ${r.trials.toLocaleString()}</span></td><td class="num"><span class="pill ${cok ? 'good' : 'bad'}">${cok ? 'yes' : 'NO'}</span></td><td>${r.detail}</td></tr>`; }).join('');
+            const n = R.reduce((a, r) => a + r.trials, 0);
+            $('check-out').innerHTML = `<span class="${all ? 'good' : 'bad'}">${all ? 'All eight properties hold' : 'A check failed'}</span> on ${n.toLocaleString()} trials, and every control was rejected · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+            $('stat-checks').innerHTML = `live checks: <b>${R.filter(r => r.passed === r.trials && r.control[0] === r.control[1]).length}/8</b> hold`;
+            document.body.dataset.checks3d = String(all);
+        }, 30);
+    }
+    $('b-checks1').onclick = () => runChecks(1);
+    $('b-checks5').onclick = () => runChecks(5);
+    fetch('../reference/traces/decode3d.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).then(T => {
+        const R = D.runParity3d(T), all = R.passed === R.total;
+        $('parity-out').innerHTML = `<span class="${all ? 'good' : 'bad'}">${R.passed}/${R.total} lines match</span><br>` + R.lines.map(l => `<span class="${l.ok ? 'good' : 'bad'}">${l.ok ? '✓' : '✗'}</span> ${l.name}${l.detail ? ` <span class="k">${l.detail}</span>` : ''}`).join('<br>');
+        $('stat-parity').innerHTML = `parity: <b>${R.passed}/${R.total}</b> lines`;
+        document.body.dataset.parity3d = `${R.passed}/${R.total}`;
+    }).catch(e => { $('parity-out').textContent = 'Could not load the trace (' + e.message + ').'; document.body.dataset.parity3d = 'error'; });
+
+    window.addEventListener('load', () => setTimeout(() => { redrawA(); viewT.frame(); treeOut(); runChecks(1); }, 50));
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;decoder-3d.html&quot;,&quot;label&quot;:&quot;The 3D Decoder&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 9: version 2 begins, decoders of H³ live in 3D&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

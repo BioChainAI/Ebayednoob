@@ -2,7 +2,7 @@
 // step obeys H2, the proofs page's live checks hold and its results load, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'simulation.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'simulation.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -45,6 +45,12 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       await pg.waitForFunction(() => document.body.dataset.checks && document.body.dataset.theory && document.body.dataset.results, null, { timeout: 120000 });
       r.proofs = await pg.evaluate(() => [document.body.dataset.checksOk, document.body.dataset.checks, document.body.dataset.theory, document.body.dataset.results]);
       ok = ok && r.proofs[0] === 'true' && +r.proofs[2] < 1e-3 && r.proofs[3] !== 'none';
+    }
+    if (p === 'explainers/decoder-3d.html') {
+      await pg.waitForFunction(() => document.body.dataset.checks3d && document.body.dataset.parity3d, null, { timeout: 120000 });
+      r.decoder3d = await pg.evaluate(() => [document.body.dataset.checks3d, document.body.dataset.parity3d, document.getElementById('a-out').textContent.slice(0, 240), document.getElementById('t-out').textContent.slice(0, 200)]);
+      await pg.click('#a-g'); r.symmetry = await pg.evaluate(() => /equal \(D3\)/.test(document.getElementById('a-out').textContent));
+      ok = ok && r.decoder3d[0] === 'true' && r.decoder3d[1] === '28/28' && /agrees \(D2\)/.test(r.decoder3d[2]) && /its own word/.test(r.decoder3d[3]) && r.symmetry;
     }
     if (p === 'simulation.html') {
       r.opened = await pg.evaluate(() => [document.body.dataset.frame, document.querySelector('#b-play').textContent]);

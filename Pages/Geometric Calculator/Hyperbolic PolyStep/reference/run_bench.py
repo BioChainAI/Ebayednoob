@@ -429,12 +429,13 @@ def decide(bench):
                'B4': ('coarse accuracy', lambda r: r['coarse_accuracy'])}.get(bench)
         if sec:
             name, fn = sec
-            ra = {key(r): fn(r) for r in sub if r['method'] == 'hyper3'}
-            rb = {key(r): fn(r) for r in sub if r['method'] == 'flat3'}
-            pairs = sorted(set(ra) & set(rb))
-            if pairs:
-                out.append({'bench': bench, 'cell': cell, 'claim': 'secondary', 'compare': f'{name}: hyper3 better than flat3 by',
-                            'decisive': False, 'floor': False, **bootstrap_decision([ra[k] - rb[k] for k in pairs])})
+            for other in (['flat3', 'hyper1'] if bench == 'B1' else ['flat3']):   # B1 also: the C3 ablation
+                ra = {key(r): fn(r) for r in sub if r['method'] == 'hyper3'}
+                rb = {key(r): fn(r) for r in sub if r['method'] == other}
+                pairs = sorted(set(ra) & set(rb))
+                if pairs:
+                    out.append({'bench': bench, 'cell': cell, 'claim': 'secondary', 'compare': f'{name}: hyper3 better than {other} by',
+                                'decisive': False, 'floor': False, **bootstrap_decision([ra[k] - rb[k] for k in pairs])})
         if bench in ('B1', 'B2'):                                  # C2 on the hyperbolic three-channel runs
             rhos = [r['c2']['spearman'] for r in sub if r['method'] == 'hyper3' and 'spearman' in r.get('c2', {})
                     and np.isfinite(r['c2']['spearman'])]
