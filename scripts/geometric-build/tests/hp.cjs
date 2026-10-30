@@ -2,7 +2,7 @@
 // step obeys H2, the proofs page's live checks hold and its results load, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'simulation.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'simulation.html', 'simulation-3d.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -51,6 +51,21 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       r.decoder3d = await pg.evaluate(() => [document.body.dataset.checks3d, document.body.dataset.parity3d, document.getElementById('a-out').textContent.slice(0, 240), document.getElementById('t-out').textContent.slice(0, 200)]);
       await pg.click('#a-g'); r.symmetry = await pg.evaluate(() => /equal \(D3\)/.test(document.getElementById('a-out').textContent));
       ok = ok && r.decoder3d[0] === 'true' && r.decoder3d[1] === '28/28' && /agrees \(D2\)/.test(r.decoder3d[2]) && /its own word/.test(r.decoder3d[3]) && r.symmetry;
+    }
+    if (p === 'explainers/coupler-3d.html') {
+      await pg.waitForFunction(() => document.body.dataset.checksTwin, null, { timeout: 180000 });
+      r.twinChecks = await pg.evaluate(() => document.body.dataset.checksTwin);
+      ok = ok && r.twinChecks === 'true';
+    }
+    if (p === 'simulation-3d.html') {
+      await pg.waitForFunction(() => document.body.dataset.selftest, null, { timeout: 120000 });
+      r.sim3d = await pg.evaluate(() => { const o = [document.body.dataset.frame, document.querySelector('#b-play').textContent, document.body.dataset.selftest];
+        HPSim3D.advance(96); HPSim3D.render(); o.push(document.body.dataset.bound); return o; });
+      await pg.goto(BASE + p + '?mode=carry&wrong=1'); await pg.waitForTimeout(300);
+      r.control3d = await pg.evaluate(() => { HPSim3D.advance(48); HPSim3D.render(); return document.body.dataset.bound; });
+      r.scrollW3 = await pg.evaluate(() => document.documentElement.scrollWidth);
+      const [b, n] = r.sim3d[3].split('/').map(Number), [cb] = r.control3d.split('/').map(Number);
+      ok = ok && r.sim3d[0] === '0' && r.sim3d[1] === 'Play' && r.sim3d[2] === '28/28' && b === n && n > 0 && cb < n && r.scrollW3 <= r.innerW;
     }
     if (p === 'simulation.html') {
       r.opened = await pg.evaluate(() => [document.body.dataset.frame, document.querySelector('#b-play').textContent]);

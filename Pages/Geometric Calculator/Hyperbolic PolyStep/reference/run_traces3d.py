@@ -1,4 +1,5 @@
-"""Write the version 2 trace the browser's 3D decoder (decoder3d.js) must reproduce: traces/decode3d.json.
+"""Write the version 2 traces the browser must reproduce: traces/decode3d.json for the 3D decoder (decoder3d.js)
+and traces/twin3d.json for the frames, the coupler and the twin system (twin3d.js).
 
     python run_traces3d.py
 
@@ -96,5 +97,45 @@ def main():
     print('wrote', OUT, os.path.getsize(OUT), 'bytes')
 
 
+def twin_trace():
+    """Exact transport on rational point pairs, then the twin system on the exact track, in carry and steer mode,
+    for one full register: both structures' memory words and pumps, the coupler's words, every frame and state."""
+    from hpstep import PolyStepH, StepConfig, TriChannel
+    from hpstep import frames3d as Fr
+    from hpstep import twin3d as T
+    rng = Rng(4004)
+    pairs = []
+    for _ in range(30):
+        x, y = rational_point(rng, K=1024), rational_point(rng, K=1024)
+        pairs.append({'x': [q(c) for c in x], 'y': [q(c) for c in y], 'twist': [[q(c) for c in row] for row in Fr.twist(x, y, True)],
+                      'quat': [str(c) for c in Fr.twist_quat(x, y, True)]})
+
+    def structure(seed):
+        prob = D.ThreeColouring3D(9, 4.4, Rng(seed))
+        sols, sts = [], []
+        for j in range(3):
+            cfg = StepConfig(epsilon=0.5, step_radius=0.6, block=1, exact=True, rotation='cayley_exact')
+            sol = PolyStepH(prob, prob.m, prob.d, cfg, Rng(seed * 10 + j))
+            sts.append(sol.init_state(prob.init_points(Rng(seed * 10 + 5 + j), 1)))
+            sols.append(sol)
+        return TriChannel(sols, sts, prob, clutch='membrane', mu=0.3, exact_register=True)
+    runs = {}
+    for mode in ('carry', 'steer'):
+        tw = T.TwinSystem(structure(11), structure(12), mode=mode, exact=True).run(720)
+        runs[mode] = {
+            'structures': [{'memory': tc.memory, 'registers': tc.registers, 'evaluations': tc.evaluations,
+                            'states': [[[q(c) for c in y] for y in row] for st in tc.states for row in st.Xq]} for tc in tw.tcs],
+            'coupler': {'memory': [{k: v for k, v in w.items() if k != 'worst'} for w in tw.coupler.memory],
+                        'issued': tw.coupler.issued, 'angle': tw.coupler.angle,
+                        'frames': [[[[str(c) for c in f] for f in row] for ch in side for row in ch] for side in tw.coupler.q]}}
+    return {'pairs': pairs, 'config': {'n': 9, 'c': 4.4, 'seeds': [11, 12], 'frames': 720, 'P': 1, 'block': 1,
+                                       'epsilon': 0.5, 'step_radius': 0.6, 'mu': 0.3, 'clutch': 'membrane'}, 'runs': runs}
+
+
 if __name__ == '__main__':
     main()
+    out = os.path.join(os.path.dirname(OUT), 'twin3d.json')
+    with open(out, 'w') as fh:
+        json.dump({'meta': {'note': 'Version 2 phases B-D: exact. Rationals are "p/q"; quaternions are coprime integers, written as strings (they exceed 2^53).'},
+                   'data': twin_trace()}, fh, indent=1)
+    print('wrote', out, os.path.getsize(out), 'bytes')

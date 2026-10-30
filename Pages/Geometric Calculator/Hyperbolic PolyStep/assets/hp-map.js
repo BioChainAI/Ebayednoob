@@ -103,18 +103,21 @@
         { id: 'anchors3d', v2: true, col: 1, row: 9, kind: 'math', status: 'done', label: 'Anchor decoders in H³', sub: 'argmax ⟨ȳ, a⟩ · axes · tetra · octa · cube',
           desc: 'The one primitive of the 3D decoder: a point decodes to the rational anchor direction it lies nearest. Exact on floats (D2), the same in every radial chart (D1), permuted by the anchor set’s symmetry group (D3), with equal shares for every answer (D4).',
           refs: 'v2 phase A · D1–D5', explainer: 'explainers/decoder-3d.html' },
-        { id: 'frames', v2: true, col: 2, row: 9, kind: 'comp', status: 'next', label: 'Frame layer', sub: 'orientation and spin · SU(2) · transport',
-          desc: 'Each particle carries a frame, a rational unit quaternion (its orientation and spin), transported along its path. The decoders never read it, so frames can change without changing any answer.',
-          refs: 'v2 phase B', explainer: 'explainers/decoder-3d.html#v2' },
-        { id: 'coupler', v2: true, col: 2, row: 10, kind: 'comp', status: 'planned', label: 'Coupler', sub: 'steer | carry switch · h₁ h₂ = 1',
-          desc: 'The third system: it takes the frame twist one structure accumulates and applies its inverse to the other, both ways, so the pair’s net twist is the identity, checked exactly like the pump. A switch selects carry (frames transported, never fed back) or steer (frames set the next polytope rotation).',
-          refs: 'v2 phase C', explainer: 'explainers/decoder-3d.html#v2' },
-        { id: 'twin', v2: true, col: 2, row: 11, kind: 'comp', status: 'planned', label: 'Two structures × three engines', sub: 'six calculations · two memory chains',
-          desc: 'Two tri-channel structures, each with its own clock and memory chain: six calculations in all, bound only through the coupler.',
-          refs: 'v2 phase D', explainer: 'explainers/decoder-3d.html#v2' },
+        { id: 'frames', v2: true, col: 2, row: 9, kind: 'comp', status: 'done', label: 'Frame layer', sub: 'exact transport · twist = area · spin',
+          desc: 'Built in version 2 phase B: each particle’s factor carries a quaternion frame, carried along every move by the transvection, which is rational, so no square root is needed. The twist of a move is the area of the triangle it sweeps against the origin (F1, F2); composing quaternions keeps the spin (S).',
+          refs: 'v2 phase B · frames3d.py', explainer: 'explainers/coupler-3d.html#frames' },
+        { id: 'coupler', v2: true, col: 2, row: 10, kind: 'comp', status: 'done', label: 'Coupler', sub: 'steer | carry switch · h₁ h₂ = 1',
+          desc: 'The third system: it takes the frame twist one structure accumulates and applies its inverse to the other, both ways, so the pair’s net twist is the identity, checked exactly like the pump. A switch selects carry (frames transported, never fed back: bit-identical to no coupler, K2) or steer (frames turn each polytope, K3).',
+          refs: 'v2 phase C · twin3d.py · K1–K3', explainer: 'explainers/coupler-3d.html#coupler' },
+        { id: 'twin', v2: true, col: 2, row: 11, kind: 'comp', status: 'done', label: 'Two structures × three engines', sub: 'six calculations · two memory chains',
+          desc: 'Built in version 2 phase D: two tri-channel structures in H³ on one clock, each on its own instance with its own memory chain, six calculations bound only through the coupler, which keeps a third chain. The browser port matches the reference’s exact twin trace, 21/21 lines.',
+          refs: 'v2 phase D · 21/21 trace lines', explainer: 'explainers/coupler-3d.html#modes' },
         { id: 'decoder3d', v2: true, col: 3, row: 9, kind: 'artifact', status: 'done', label: '3D decoder', sub: 'decode3d.py · decoder3d.js',
           desc: 'Built in version 2 phase A: the anchor decoders, the octahedral norm-5 tree in H³ with exact frames (τ = ln 7), and the four problems in H³ with Helix B. 26 tests; the browser port matches the reference’s trace, 28/28 lines.',
-          refs: 'v2 phase A · 28/28 trace lines', explainer: 'explainers/decoder-3d.html' }
+          refs: 'v2 phase A · 28/28 trace lines', explainer: 'explainers/decoder-3d.html' },
+        { id: 'sim3d', v2: true, col: 3, row: 10.5, kind: 'artifact', status: 'done', label: '3D simulation', sub: 'two structures · steer | carry | off',
+          desc: 'The version 2 page: two structures of three engines in Poincaré balls with their frames, the coupler’s switch, its binding check and twist charts, both answers, three memory chains, the no-mirror control and the exact track.',
+          refs: 'simulation-3d.html', explainer: 'explainers/coupler-3d.html#manual', href: 'simulation-3d.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
@@ -128,7 +131,7 @@
         ['prereg', 'proofs'], ['step', 'proofs'], ['sim', 'proofs'], ['ref', 'proofs'],
         ['klein', 'anchors3d'], ['ghost', 'anchors3d'], ['lemmas', 'anchors3d'], ['problems', 'anchors3d'],
         ['anchors3d', 'decoder3d'], ['helixb', 'decoder3d'], ['rapidity', 'frames'], ['frames', 'coupler'], ['pump', 'coupler'],
-        ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin']
+        ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin'], ['twin', 'sim3d'], ['coupler', 'sim3d'], ['jscore', 'sim3d']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);

@@ -28,10 +28,10 @@ that turns the particles' frames, never their positions, with a steer/carry swit
 | Phase | Delivers | Status |
 | --- | --- | --- |
 | A · 3D decoder | `reference/hpstep/decode3d.py`, `decoder3d.js`: anchor decoders exact on floats (D1–D5), the octahedral norm-5 tree in H³ with exact frames, τ = ln 7 (E1–E3), the four problems in H³; 26 tests; trace `reference/traces/decode3d.json` (`run_traces3d.py`), parity 28/28 (`node tests/parity3d.cjs`) | done |
-| B · Frame layer | A rational unit quaternion per particle and factor, transported along each step | next |
-| C · Coupler | The twist ledger, h₁h₂ = 1 exactly, the steer/carry switch | planned |
-| D · Two structures | Two tri-channels in H³ bound through the coupler | planned |
-| E · Preregistered runs | A new preregistration with controls | planned |
+| B · Frame layer | `reference/hpstep/frames3d.py`: quaternion frames carried exactly by transvections, with no square root; a twist is a triangle's area (F1, F2, S) | done |
+| C · Coupler | `reference/hpstep/twin3d.py`: the mirror law q₁ ← w q₁, q₂ ← q₂ w⁻¹ keeps B = q₂q₁ fixed (K1); the steer/carry/off switch; carry bit-identical to no coupler (K2) | done |
+| D · Two structures | The twin system, two tri-channels in H³ on one clock with three memory chains; `twin3d.js` matches the exact twin trace 21/21 (`node tests/parity-twin.cjs`); `simulation-3d.html` | done |
+| E · Preregistered runs | A new preregistration with controls (off, carry, no mirror) | next |
 
 ## Files
 
@@ -47,6 +47,8 @@ that turns the particles' frames, never their positions, with a steer/carry swit
 | `explainers/simulation-manual.html` | Explainer 7: the simulation page's wiring, every control and panel, the exact track, experiments |
 | `explainers/proofs-and-results.html`, `proofs.js` | Explainer 8: proofs of H1–H7 with live checks, T1, the benchmark results and decisions |
 | `explainers/decoder-3d.html`, `decoder3d.js`, `tests/parity3d.cjs` | Explainer 9 and version 2 phase A: the 3D decoder, its browser port and parity |
+| `explainers/coupler-3d.html`, `twin3d.js`, `tests/parity-twin.cjs` | Explainer 10 and version 2 phases B–D: frames, the coupler, the twin system, and the 3D simulation's manual |
+| `simulation-3d.html` | The 3D simulation: two structures of three engines bound by the coupler (e.g. `simulation-3d.html?mode=carry&wrong=1`) |
 | `simulation.html` | The simulation: three channels on the zero-point clock, live (e.g. `simulation.html?prob=B1&size=30&exact=1`) |
 | `hyperbolic_core.js`, `parity.js`, `tests/parity.cjs` | The browser core, the trace replay, and its Node runner |
 | `assets/hp.css` | Shared style |
