@@ -19,6 +19,20 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | 4 · Proofs and results | `explainers/proofs-and-results.html`: full proofs of Lemma S and H1–H7, checked live (`proofs.js`); T1 reduced, still open. The preregistered benchmarks were run under Amendments 2 and 3 (7,740 runs, results in `reference/results/`). C1 refuted, C2 supported, C3 refuted; the B3 control passes | done |
 | 5 · Integration | Site bar, cross-links, documentation | next |
 
+## Version 2 · three dimensions, two structures bound by a coupler
+
+Version 2 moves the search into H³. Two structures of three engines each (six calculations) are bound by a coupler
+that turns the particles' frames, never their positions, with a steer/carry switch. See
+`explainers/decoder-3d.html#v2`.
+
+| Phase | Delivers | Status |
+| --- | --- | --- |
+| A · 3D decoder | `reference/hpstep/decode3d.py`, `decoder3d.js`: anchor decoders exact on floats (D1–D5), the octahedral norm-5 tree in H³ with exact frames, τ = ln 7 (E1–E3), the four problems in H³; 26 tests; trace `reference/traces/decode3d.json` (`run_traces3d.py`), parity 28/28 (`node tests/parity3d.cjs`) | done |
+| B · Frame layer | A rational unit quaternion per particle and factor, transported along each step | next |
+| C · Coupler | The twist ledger, h₁h₂ = 1 exactly, the steer/carry switch | planned |
+| D · Two structures | Two tri-channels in H³ bound through the coupler | planned |
+| E · Preregistered runs | A new preregistration with controls | planned |
+
 ## Files
 
 | Path | Holds |
@@ -32,6 +46,7 @@ Open [`index.html`](index.html) for the hub. It holds the system map, the explai
 | `explainers/core-reference.html` | Explainer 6: the browser core, with a live parity check and three channels running in the page |
 | `explainers/simulation-manual.html` | Explainer 7: the simulation page's wiring, every control and panel, the exact track, experiments |
 | `explainers/proofs-and-results.html`, `proofs.js` | Explainer 8: proofs of H1–H7 with live checks, T1, the benchmark results and decisions |
+| `explainers/decoder-3d.html`, `decoder3d.js`, `tests/parity3d.cjs` | Explainer 9 and version 2 phase A: the 3D decoder, its browser port and parity |
 | `simulation.html` | The simulation: three channels on the zero-point clock, live (e.g. `simulation.html?prob=B1&size=30&exact=1`) |
 | `hyperbolic_core.js`, `parity.js`, `tests/parity.cjs` | The browser core, the trace replay, and its Node runner |
 | `assets/hp.css` | Shared style |

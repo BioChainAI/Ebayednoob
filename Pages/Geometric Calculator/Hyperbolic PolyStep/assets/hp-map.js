@@ -97,7 +97,24 @@
           refs: 'Phase 3 · simulation.html', explainer: 'explainers/simulation-manual.html', href: 'simulation.html' },
         { id: 'proofs', col: 3, row: 6.5, kind: 'artifact', status: 'done', label: 'Proofs and results', sub: 'H1–H7 · B1–B4',
           desc: 'Built in Phase 4: full proofs of H1–H7 and of Lemma S (the step is polystep’s step in the frame of the particle, shortened), live checks of each property with controls that must fail, the reduction of T1, and the preregistered benchmarks run as registered, with every cell and decision.',
-          refs: 'Phase 4', explainer: 'explainers/proofs-and-results.html' }
+          refs: 'Phase 4', explainer: 'explainers/proofs-and-results.html' },
+
+        // ---- version 2: three dimensions, two memory structures bound by a coupler (v2: true draws the band)
+        { id: 'anchors3d', v2: true, col: 1, row: 9, kind: 'math', status: 'done', label: 'Anchor decoders in H³', sub: 'argmax ⟨ȳ, a⟩ · axes · tetra · octa · cube',
+          desc: 'The one primitive of the 3D decoder: a point decodes to the rational anchor direction it lies nearest. Exact on floats (D2), the same in every radial chart (D1), permuted by the anchor set’s symmetry group (D3), with equal shares for every answer (D4).',
+          refs: 'v2 phase A · D1–D5', explainer: 'explainers/decoder-3d.html' },
+        { id: 'frames', v2: true, col: 2, row: 9, kind: 'comp', status: 'next', label: 'Frame layer', sub: 'orientation and spin · SU(2) · transport',
+          desc: 'Each particle carries a frame, a rational unit quaternion (its orientation and spin), transported along its path. The decoders never read it, so frames can change without changing any answer.',
+          refs: 'v2 phase B', explainer: 'explainers/decoder-3d.html#v2' },
+        { id: 'coupler', v2: true, col: 2, row: 10, kind: 'comp', status: 'planned', label: 'Coupler', sub: 'steer | carry switch · h₁ h₂ = 1',
+          desc: 'The third system: it takes the frame twist one structure accumulates and applies its inverse to the other, both ways, so the pair’s net twist is the identity, checked exactly like the pump. A switch selects carry (frames transported, never fed back) or steer (frames set the next polytope rotation).',
+          refs: 'v2 phase C', explainer: 'explainers/decoder-3d.html#v2' },
+        { id: 'twin', v2: true, col: 2, row: 11, kind: 'comp', status: 'planned', label: 'Two structures × three engines', sub: 'six calculations · two memory chains',
+          desc: 'Two tri-channel structures, each with its own clock and memory chain: six calculations in all, bound only through the coupler.',
+          refs: 'v2 phase D', explainer: 'explainers/decoder-3d.html#v2' },
+        { id: 'decoder3d', v2: true, col: 3, row: 9, kind: 'artifact', status: 'done', label: '3D decoder', sub: 'decode3d.py · decoder3d.js',
+          desc: 'Built in version 2 phase A: the anchor decoders, the octahedral norm-5 tree in H³ with exact frames (τ = ln 7), and the four problems in H³ with Helix B. 26 tests; the browser port matches the reference’s trace, 28/28 lines.',
+          refs: 'v2 phase A · 28/28 trace lines', explainer: 'explainers/decoder-3d.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
@@ -108,7 +125,10 @@
         ['tracks', 'helixb'], ['tracks', 'jscore'], ['limits', 'prereg'],
         ['step', 'channels'], ['channels', 'memory'], ['helixb', 'memory'], ['problems', 'helixb'], ['problems', 'step'], ['problems', 'prereg'],
         ['step', 'ref'], ['ref', 'jscore'], ['jscore', 'sim'], ['channels', 'sim'], ['memory', 'sim'], ['helixb', 'sim'],
-        ['prereg', 'proofs'], ['step', 'proofs'], ['sim', 'proofs'], ['ref', 'proofs']
+        ['prereg', 'proofs'], ['step', 'proofs'], ['sim', 'proofs'], ['ref', 'proofs'],
+        ['klein', 'anchors3d'], ['ghost', 'anchors3d'], ['lemmas', 'anchors3d'], ['problems', 'anchors3d'],
+        ['anchors3d', 'decoder3d'], ['helixb', 'decoder3d'], ['rapidity', 'frames'], ['frames', 'coupler'], ['pump', 'coupler'],
+        ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);
@@ -185,6 +205,11 @@
         let s = `<svg viewBox="0 0 1076 ${height}" role="img" aria-label="System map of Hyperbolic PolyStep">`;
         s += `<defs><marker id="hp-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>`;
         heads.forEach((h, i) => { s += `<text x="${COLX[i] + W / 2}" y="24" text-anchor="middle" fill="#64748b" font-family="Fira Code, monospace" font-size="11" letter-spacing="2">${h.toUpperCase()}</text>`; });
+        const v2 = NODES.filter(n => n.v2);
+        if (v2.length) {
+            const yb = Math.min(...v2.map(n => n.y)) - 18;
+            s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#c084fc" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">VERSION 2 · 3D · TWO STRUCTURES BOUND BY A COUPLER</text>`;
+        }
         EDGES.forEach(([a, b]) => { const A = byId[a], B = byId[b]; s += `<path class="map-edge" data-a="${a}" data-b="${b}" d="${edgePath(A, B)}" stroke="${KIND[A.kind].color}" stroke-opacity="0.55" marker-end="url(#hp-arrow)"/>`; });
         NODES.forEach(n => { s += nodeSVG(n, n.x, n.y); });
         s += '</svg>';
