@@ -3,13 +3,13 @@
 The reference implementation, built in Phase 1. It is the authority for every benchmark decision, and the browser core is checked against its traces. The full guide is [`../explainers/reference-guide.html`](../explainers/reference-guide.html).
 
 ```bash
-python -m pytest -q tests                 # 108 tests (26 of them version 2's 3D decoder)
+python -m pytest -q tests                 # 119 tests (37 of them version 2's: the 3D decoder, frames, the coupler)
 python run_traces.py                      # traces/*.json for the browser core
 python run_bench.py smoke                 # every benchmark and method once, tiny sizes (never evidence)
 python run_bench.py tune --jobs 4         # Phase 4: the preregistered tuning -> settings.json, results/tuning_*.json
 python run_bench.py run B1 --jobs 4       # Phase 4: the measured runs -> results/B1.jsonl (resumes where it stopped)
 python run_bench.py decide                # every decision, summary and the ledger -> results/decisions.json
-python run_traces3d.py                    # version 2: traces/decode3d.json for the browser's 3D decoder
+python run_traces3d.py                    # version 2: traces/decode3d.json and traces/twin3d.json for the browser
 ```
 
 The Phase 4 runs follow `../PREREGISTRATION.md` with its Amendments 1 and 2. `settings.json` and `results/` are

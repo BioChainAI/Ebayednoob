@@ -369,6 +369,7 @@
             if (this.cfg.exact && !this.hyper) throw new Error('exact mode is for the hyperbolic geometry');
             this.flat = new Set(this.cfg.flatFactors);
             this.fixedR = null;
+            this.orient = null;              // version 2 steer mode: orient(idx, R, Rq) -> [R, Rq] turns each polytope by the frames
         }
         initState(X0) {
             const st = { X: X0.map(row => row.map(y => y.slice())), Xq: null, bestCost: null, bestX: null, iteration: 0, evaluations: 0,
@@ -443,7 +444,8 @@
             let rho = cfg.probeRadius === null ? 2 * r : at(cfg.probeRadius, t);
             if (cfg.probeJitter) rho *= 1 + cfg.probeJitter * (2 * this.rng.random() - 1);
             const P = st.X.length, idx = this.blockOf(), b = idx.length, d = this.d, D = b * d;
-            const [R, Rq] = this.rotations(P, D);
+            let [R, Rq] = this.rotations(P, D);
+            if (this.orient) [R, Rq] = this.orient(idx, R, Rq);
             const fr = Array.from({ length: cfg.numProbe }, (_, i) => (i + 1) / (cfg.numProbe + 1));
             const C = [], corners = [], exactCorners = cfg.exact ? [] : null, probesBest = [];
             for (let p = 0; p < P; p++) {

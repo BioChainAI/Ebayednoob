@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperbolic PolyStep 3D Simulation - Ebayednoob</title>
+    <meta name="description" content="Hyperbolic PolyStep version 2, live: two memory structures of three engines each, searching in three-dimensional hyperbolic space on one clock and bound by a coupler that turns their frames. Steer, carry or off; the binding checked exactly at every zero point; three memory chains.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/hp.css">
+    <script src="hyperbolic_core.js"></script>
+    <script src="decoder3d.js"></script>
+    <script src="twin3d.js"></script>
+    <style>
+        body { font-size: 15px; }
+        .sim-head { padding: 28px 20px 14px; max-width: 1400px; margin: 0 auto; }
+        .sim-head h1 { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2.2rem); background: linear-gradient(90deg, #ff0055, #c084fc 45%, #00f2ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .sim-head p { margin: 6px 0 0; color: #cbd5e1; max-width: 1020px; }
+        kbd { font: 0.78rem var(--mono); border: 1px solid #334155; border-radius: 4px; padding: 0 5px; background: #0f172a; }
+        .bar { position: sticky; top: 0; z-index: 20; background: rgba(2, 6, 23, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+        .bar-in { max-width: 1400px; margin: 0 auto; padding: 8px 20px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+        .bar label { font-size: 0.8rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+        .bar label[hidden] { display: none; }
+        .bar select, .bar input[type=number] { background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 7px; padding: 4px 6px; font: 0.82rem var(--mono); }
+        .bar input[type=range] { width: 90px; accent-color: var(--cyan); }
+        .bar .val { font: 0.78rem var(--mono); color: #cbd5e1; min-width: 3em; }
+        .btn-s { font: 600 0.84rem Inter, sans-serif; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; cursor: pointer; }
+        .btn-s:hover { border-color: var(--cyan); }
+        .btn-s.primary { background: linear-gradient(90deg, #9f1239, #6d28d9 50%, #0e7490); border-color: transparent; color: #fff; min-width: 74px; }
+        .seg { display: inline-flex; border: 1px solid #475569; border-radius: 99px; overflow: hidden; }
+        .seg button { font: 600 0.8rem Inter, sans-serif; padding: 5px 12px; background: #020617; color: #94a3b8; border: 0; cursor: pointer; }
+        .seg button.on { background: rgba(192, 132, 252, 0.35); color: #fff; }
+        .grid { max-width: 1400px; margin: 0 auto; padding: 14px 20px 60px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .panel { border: 1px solid var(--line); border-radius: 14px; background: rgba(11, 18, 34, 0.85); padding: 12px 14px; min-width: 0; }
+        .panel.coupler { border-color: rgba(192, 132, 252, 0.55); background: rgba(46, 16, 101, 0.25); }
+        .panel h2 { font-size: 1rem; margin: 0 0 2px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+        .panel h2 .tagp { font: 0.7rem var(--mono); color: var(--fuchsia); letter-spacing: 0.08em; }
+        .panel .sub { font-size: 0.82rem; color: var(--muted); margin: 0 0 8px; }
+        .panel canvas { display: block; width: 100%; height: auto; border-radius: 10px; background: #020617; }
+        canvas.ball { cursor: grab; touch-action: none; }
+        .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px 12px; font: 0.8rem var(--mono); margin-top: 8px; }
+        .kv div span { display: block; color: var(--faint); font-size: 0.72rem; }
+        .words { font: 0.72rem/1.55 var(--mono); color: #cbd5e1; max-height: 150px; overflow: auto; margin-top: 6px; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 8px; background: #020617; }
+        .log { font: 0.74rem/1.55 var(--mono); color: #cbd5e1; max-height: 220px; overflow: auto; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 8px; background: #020617; }
+        .log .good { color: var(--emerald); } .log .bad { color: var(--rose); } .log .warn { color: var(--amber); }
+        .pill { font: 0.72rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .5); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .5); }
+        .meter { height: 8px; border-radius: 99px; background: #1e293b; overflow: hidden; margin-top: 6px; }
+        .meter > div { height: 100%; background: linear-gradient(90deg, #6d28d9, #0e7490); width: 0; }
+        .wide { grid-column: 1 / -1; }
+        .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .three h4 { margin: 0; font-size: 0.8rem; color: var(--muted); }
+        @media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); padding: 12px; } .bar-in { padding: 8px 12px; } .three { grid-template-columns: minmax(0, 1fr); } }
+    </style>
+</head>
+<body data-root="">
+<div class="sim-head">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Version 2 &middot; Simulation</div>
+    <h1>Two Structures, One Coupler</h1>
+    <p>Six calculations in three-dimensional hyperbolic space. Structure 1 and structure 2 each run engines A, B and C on one 24-frame clock, each on its own instance with its own memory chain. Every move turns a particle&rsquo;s frame by a twist. The coupler applies that twist to one structure and its inverse to the other&rsquo;s mirrored frame, both ways, so the binding between paired particles never changes. It checks this exactly at every zero point and keeps a third memory chain. <em>Steer</em> lets the frames turn each polytope; <em>carry</em> only transports them, and the six calculations are then bit for bit what they would be without a coupler. Keys: Space plays or pauses, <kbd>.</kbd> advances a frame, <kbd>z</kbd> jumps to the next zero point. <a href="explainers/coupler-3d.html">Manual and proofs</a> &middot; <a href="explainers/decoder-3d.html">The 3D decoder</a> &middot; <a href="index.html#v2">Hub</a></p>
+</div>
+<div class="bar"><div class="bar-in">
+    <button class="btn-s primary" id="b-play">Play</button>
+    <button class="btn-s" id="b-frame" title="Advance one frame">+1 frame</button>
+    <button class="btn-s" id="b-zero" title="Advance to the next zero point">&rarr; zero point</button>
+    <button class="btn-s" id="b-reset">Reset</button>
+    <label>speed <input id="in-speed" type="range" min="0" max="3" step="0.05" value="1.4"><span class="val" id="v-speed"></span></label>
+    <label>coupler <span class="seg" id="seg-mode"><button data-mode="steer" class="on">steer</button><button data-mode="carry">carry</button><button data-mode="off">off</button></span></label>
+    <label>problem <select id="in-prob"><option value="b1">B1 · 3-colouring in H³</option><option value="b2">B2 · MAX-3-SAT in H³</option></select></label>
+    <label>size <select id="in-size"></select></label>
+    <label>particles <select id="in-P"><option>2</option><option selected>3</option><option>4</option></select></label>
+    <label>&epsilon; <input id="in-eps" type="range" min="-2" max="0.3" step="0.05" value="-0.3"><span class="val" id="v-eps"></span></label>
+    <label>r <input id="in-r" type="range" min="0.1" max="2.5" step="0.05" value="0.6"><span class="val" id="v-r"></span></label>
+    <label>&mu; <input id="in-mu" type="range" min="0" max="0.8" step="0.05" value="0.3"><span class="val" id="v-mu"></span></label>
+    <label>seed <input id="in-seed" type="number" value="11" min="1" max="99999" style="width:5.5rem"></label>
+    <label title="Exact rational states, frames and pump (B1, 9 vertices, one particle, one factor per step: slow)"><input type="checkbox" id="in-exact"> exact track</label>
+    <label title="The control: apply the twist itself, not its inverse, to structure 2. The binding must break."><input type="checkbox" id="in-wrong"> no mirror (control)</label>
+</div></div>
+
+<div class="grid">
+    <section class="panel">
+        <h2>Structure 1 <span class="tagp">ENGINES A · B · C &middot; FRAMES AS THEY ARE</span></h2>
+        <p class="sub" id="s1-sub">The Poincar&eacute; ball of one factor. Dots: each channel&rsquo;s particles; the three short arms at each: its frame. Drag either ball to turn both.</p>
+        <canvas class="ball" id="cv-s1" width="620" height="460" aria-label="Structure 1 in the Poincaré ball"></canvas>
+        <div class="kv" id="s1-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Structure 2 <span class="tagp">ENGINES A · B · C &middot; FRAMES MIRRORED</span></h2>
+        <p class="sub" id="s2-sub">The same factor of structure 2, its own instance. Its frames are kept mirrored, so every twist it receives arrives as an inverse.</p>
+        <canvas class="ball" id="cv-s2" width="620" height="460" aria-label="Structure 2 in the Poincaré ball"></canvas>
+        <div class="kv" id="s2-kv"></div>
+    </section>
+    <section class="panel coupler wide">
+        <h2>Coupler <span class="tagp">THE THIRD SYSTEM &middot; q&#8321; &larr; w q&#8321; &middot; q&#8322; &larr; q&#8322; w&#8315;&sup1; &middot; B = q&#8322; q&#8321; CONSTANT</span></h2>
+        <p class="sub" id="c-sub"></p>
+        <div class="three">
+            <div><h4>Twist issued per zero point (radians)</h4><canvas id="cv-twist" width="420" height="170" aria-label="Twist issued by each structure at each zero point"></canvas></div>
+            <div><h4>Binding of every pair</h4><canvas id="cv-bind" width="420" height="170" aria-label="Binding deviation at each zero point"></canvas></div>
+            <div><h4>The clock</h4><canvas id="cv-clock" width="420" height="170" aria-label="The 24-frame schedule"></canvas><div class="meter" title="frames into the 720-frame register"><div id="reg-meter"></div></div></div>
+        </div>
+        <div class="kv" id="c-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Structure 1 &middot; the answer <span class="tagp">HELIX B</span></h2>
+        <canvas id="cv-a1" width="620" height="300" aria-label="Structure 1's best certified answer"></canvas>
+        <div class="kv" id="a1-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Structure 2 &middot; the answer <span class="tagp">HELIX B</span></h2>
+        <canvas id="cv-a2" width="620" height="300" aria-label="Structure 2's best certified answer"></canvas>
+        <div class="kv" id="a2-kv"></div>
+    </section>
+    <section class="panel wide">
+        <h2>Three memory chains <span class="tagp">STRUCTURE 1 &middot; STRUCTURE 2 &middot; COUPLER</span></h2>
+        <div class="three">
+            <div><h4>Structure 1</h4><div class="words" id="w1"></div></div>
+            <div><h4>Structure 2</h4><div class="words" id="w2"></div></div>
+            <div><h4>Coupler</h4><div class="words" id="wc"></div></div>
+        </div>
+        <div class="kv" id="chain-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Self-test <span class="tagp">PARITY WITH THE REFERENCE</span></h2>
+        <p class="sub">On load: the 3D decoder&rsquo;s trace, replayed through this page. On request: the twin trace, two structures and the coupler for a whole exact register in carry and steer mode, about a minute.</p>
+        <div class="kv" id="test-kv"></div>
+        <p style="margin:10px 0 0"><button class="btn-s" id="b-twintest">Run the twin trace</button></p>
+    </section>
+    <section class="panel">
+        <h2>Log</h2>
+        <div class="log" id="log" aria-live="polite"></div>
+    </section>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const C = HPCore, D = HPDecode3D, Tw = HPTwin3D, $ = id => document.getElementById(id);
+    const CH = ['A', 'B', 'C'], COL = ['#ff0055', '#00f2ff', '#ffd700'], AX = ['#fca5a5', '#86efac', '#93c5fd'];
+    const SIZES = { b1: [[30, 'n = 30'], [60, 'n = 60']], b2: [[30, 'n = 30'], [60, 'n = 60'], [120, 'n = 120']] };
+    let sim = null, playing = false, lastT = 0, acc = 0, mode = 'steer', factor = 0;
+    const view = { yaw: -0.6, pitch: 0.35 };
+
+    const log = (msg, cls = '') => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = (sim ? `F${sim.tw.F} · ` : '') + msg; $('log').prepend(d); };
+
+    // ---------------------------------------------------------------- build
+    function controls() {
+        const exact = $('in-exact').checked && $('in-prob').value === 'b1';
+        return { prob: $('in-prob').value, size: exact ? 9 : +$('in-size').value, P: exact ? 1 : +$('in-P').value, eps: Math.pow(10, +$('in-eps').value),
+            r: +$('in-r').value, mu: +$('in-mu').value, seed: Math.max(1, +$('in-seed').value || 11), exact, wrong: $('in-wrong').checked, mode };
+    }
+    function build() {
+        const s = controls();
+        const opts = { exact: s.exact, n: s.size, Pn: s.P, block: s.exact ? 1 : (s.prob === 'b1' ? 6 : 3), problem: s.prob, epsilon: s.eps, stepRadius: s.r, mu: s.mu };
+        const tc1 = Tw.structure(s.seed, opts), tc2 = Tw.structure(s.seed + 1, opts);
+        const tw = new Tw.TwinSystem(tc1, tc2, s.mode, s.exact);
+        if (tw.coupler && s.wrong) tw.coupler.chirality = 'same';
+        sim = { s, tw, series: { twist: [[], []], bind: [], cost: [[], []] }, prevIssued: [0, 0], prevAngle: [0, 0], broken: false };
+        factor = 0; acc = 0;
+        $('log').innerHTML = '';
+        log(`built two structures (${s.prob === 'b1' ? '3-colouring' : 'MAX-3-SAT'} in H³, n = ${s.size}, seeds ${s.seed} and ${s.seed + 1}), ${s.P} particle${s.P > 1 ? 's' : ''} per channel, coupler ${s.mode}${s.exact ? ', exact track' : ''}${s.wrong && s.mode !== 'off' ? ', NO MIRROR (control)' : ''}`);
+        render();
+    }
+
+    // ---------------------------------------------------------------- run
+    function onZero(tw, w) {
+        const cp = tw.coupler;
+        tw.tcs.forEach((tc, k) => sim.series.cost[k].push(Math.min(...tc.bestCert)));
+        if (cp) {
+            sim.series.twist[0].push(cp.angle[0] - sim.prevAngle[0]); sim.series.twist[1].push(cp.angle[1] - sim.prevAngle[1]);
+            sim.prevAngle = cp.angle.slice();
+            sim.series.bind.push(w.pairs - w.bound);
+            if (w.bound < w.pairs && !sim.broken) { sim.broken = true; log(`binding broken on ${w.pairs - w.bound} of ${w.pairs} pairs: the twist reached structure 2 without its inverse`, 'bad'); }
+        }
+    }
+    function advance(frames) {
+        if (!sim) return;
+        const before = sim.tw.tcs.map(tc => tc.registers.length);
+        sim.tw.run(frames, onZero);
+        sim.tw.tcs.forEach((tc, k) => { for (let i = before[k]; i < tc.registers.length; i++) { const r = tc.registers[i]; log(`structure ${k + 1}: register ${r.F / 720} closed, pump ${r.pump_identity ? 'H = P⁻¹ exactly' : 'FAILED'}`, r.pump_identity ? 'good' : 'bad'); } });
+    }
+    function setPlaying(v) { playing = v; $('b-play').textContent = v ? 'Pause' : 'Play'; lastT = performance.now(); }
+    function tick(t) {
+        if (playing && sim) {
+            const dt = Math.min(0.25, (t - lastT) / 1000); lastT = t;
+            acc += dt * Math.pow(10, +$('in-speed').value);
+            let n = Math.floor(acc); acc -= n;
+            const t0 = performance.now();
+            while (n > 0 && performance.now() - t0 < 30 && playing) { const k = Math.min(n, 24); advance(k); n -= k; }
+            if (n > 0) acc = 0;
+            render();
+        }
+        requestAnimationFrame(tick);
+    }
+
+    // ---------------------------------------------------------------- drawing
+    function canvasCtx(cv) {
+        const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || cv.width, Hh = Math.round(W * cv.height / cv.width);
+        if (cv._w !== W) { cv._w = W; cv._h0 = cv._h0 || cv.height; cv.width = W * dpr; cv.height = Hh * dpr; cv.style.height = Hh + 'px'; }
+        const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, cv.height / dpr);
+        return [ctx, W, cv.height / dpr];
+    }
+    const rotV = p => { const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+        const x = cy * p[0] + sy * p[1], y1 = -sy * p[0] + cy * p[1]; return [x, cp * p[2] - sp * y1, sp * p[2] + cp * y1]; };
+    // a float unit quaternion from an exact one, whose coprime integers can be far beyond 2^53
+    const toFloatQ = q => { if (typeof q[0] !== 'bigint') return q; const bits = Math.max(...q.map(c => (c < 0n ? -c : c).toString(2).length)), sh = BigInt(Math.max(0, bits - 52));
+        return Tw.qnormFloat(q.map(c => Number(c >> sh))); };
+    const toP = y => [y[1] / (1 + y[0]), y[2] / (1 + y[0]), y[3] / (1 + y[0])];
+    function drawBall(cv, k) {
+        const [ctx, W, Hh] = canvasCtx(cv), R0 = Math.min(W, Hh) / 2 - 12, cx = W / 2, cy = Hh / 2;
+        // auto-zoom: both balls share one zoom, so the farthest particle of either sits at about 70% of the radius
+        const far = Math.max(1e-3, ...sim.tw.tcs.flatMap(tc => tc.states.flatMap(st => st.X.map(row => { const y = row[Math.min(factor, row.length - 1)]; return Math.hypot(...toP(y)); }))));
+        const zoom = Math.max(1, Math.min(12, 0.7 / far)), R = R0 * zoom;
+        const P = p => { const q = rotV(p); return [cx + R * q[0], cy - R * q[1], q[2]]; };
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, Hh); ctx.clip();
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.setLineDash(zoom > 1.01 ? [5, 5] : []); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+        [[1, 0, 0], [0, 1, 0], [0, 0, 1]].forEach((e, i) => { const a = P(e.map(x => -x * 0.98)), b = P(e.map(x => x * 0.98)); ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); });
+        const tc = sim.tw.tcs[k], cp = sim.tw.coupler, items = [], i = Math.min(factor, tc.states[0].X[0].length - 1);
+        tc.states.forEach((st, j) => st.X.forEach((row, p) => {
+            const y = row[i], pp = P(toP(y));
+            items.push([pp[2], () => {
+                if (cp) {                                         // the frame: three arms along exp_x(δ R e_k)
+                    const f = cp.frame(k, j, p, i), Rf = Tw.rotOfQuat(toFloatQ(f)), L = C.H.boost(y), dl = 0.35;
+                    for (let a = 0; a < 3; a++) {
+                        const u = [Rf[0][a], Rf[1][a], Rf[2][a]], dz = dl / zoom, q = C.H.matvec(L, [Math.cosh(dz), ...u.map(x => Math.sinh(dz) * x)]), e = P(toP(q));
+                        ctx.strokeStyle = AX[a]; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(pp[0], pp[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+                    }
+                }
+                ctx.fillStyle = COL[j]; ctx.beginPath(); ctx.arc(pp[0], pp[1], pp[2] > 0 ? 4.5 : 3.2, 0, 2 * Math.PI); ctx.fill();
+            }]);
+        }));
+        items.sort((a, b) => a[0] - b[0]).forEach(it => it[1]());
+        ctx.restore();
+        ctx.fillStyle = '#64748b'; ctx.font = '11px Fira Code, monospace'; ctx.fillText(`factor ${i} · ${sim.s.prob === 'b1' ? 'vertex ' + i : 'variables ' + 3 * i + '–' + (3 * i + 2)} · zoom ×${zoom.toFixed(1)}${zoom > 1.01 ? ' (dashed: the ball’s edge)' : ''}`, 10, 16);
+    }
+    function spark(cv, series, cols, label, zeroLine) {
+        const [ctx, W, Hh] = canvasCtx(cv), n = Math.max(...series.map(s => s.length), 1), mx = Math.max(1e-9, ...series.flat());
+        ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(30, Hh - 16); ctx.lineTo(W - 4, Hh - 16); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.font = '10px Fira Code, monospace'; ctx.fillText(mx.toPrecision(3), 2, 12); ctx.fillText('0', 18, Hh - 18); ctx.fillText(label, W - 8 - ctx.measureText(label).width, Hh - 3);
+        series.forEach((s, k) => { ctx.strokeStyle = cols[k]; ctx.lineWidth = 1.6; ctx.beginPath(); s.forEach((v, i) => { const x = 30 + (W - 36) * (n > 1 ? i / (n - 1) : 0), y = 6 + (Hh - 24) * (1 - v / mx); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); });
+        if (zeroLine && series.flat().every(v => v === 0)) { ctx.fillStyle = '#6ee7b7'; ctx.font = '600 12px Inter, sans-serif'; ctx.fillText('every pair bound at every zero point', 40, Hh / 2); }
+    }
+    function drawClock() {
+        const [ctx, W, Hh] = canvasCtx($('cv-clock')), F = sim.tw.F, n = F % 24, cw = (W - 26) / 24;
+        for (let q = 0; q < 24; q++) {
+            ctx.fillStyle = q === n ? '#f5c542' : '#64748b'; ctx.font = '9px Fira Code, monospace'; ctx.textAlign = 'center'; ctx.fillText(String(q), 26 + q * cw + cw / 2, 10);
+            [0, 1, 2].forEach(c => { const d = (q - C.ON[c] + 24) % 24, fly = d <= 12, y = 16 + c * 46;
+                ctx.fillStyle = fly ? COL[c] + (d <= 3 ? 'cc' : '44') : '#0f172a'; ctx.fillRect(26 + q * cw + 1, y, cw - 2, 40);
+                if (d === 12) { ctx.fillStyle = '#020617'; ctx.fillText('▼', 26 + q * cw + cw / 2, y + 25); } });
+            if (q === n) { ctx.strokeStyle = '#f5c542'; ctx.lineWidth = 2; ctx.strokeRect(26 + q * cw, 14, cw, 142); }
+        }
+        ctx.textAlign = 'left'; [0, 1, 2].forEach(c => { ctx.fillStyle = COL[c]; ctx.font = '600 12px Inter, sans-serif'; ctx.fillText(CH[c], 6, 40 + c * 46); });
+        $('reg-meter').style.width = `${(F % 720) / 7.2}%`;
+    }
+    function bestOf(tc) { let bj = 0, bv = Infinity; tc.states.forEach((S, j) => { if (S.bestCost) { const c = Math.min(...S.bestCost); if (c < bv) { bv = c; bj = j; } } });
+        const S = tc.states[bj], p = S.bestCost ? S.bestCost.indexOf(Math.min(...S.bestCost)) : 0; return { j: bj, point: S.bestX ? S.bestX[p] : S.X[0] }; }
+    function drawAnswer(cv, kvId, k) {
+        const [ctx, W, Hh] = canvasCtx(cv), tc = sim.tw.tcs[k], prob = tc.problem, b = bestOf(tc);
+        if (sim.s.prob === 'b1') {
+            const cols = prob.colours(b.point), conf = prob.helixB(b.point), n = prob.n, R = Math.min(W, Hh) / 2 - 18, cx = W / 2, cy = Hh / 2;
+            const pos = i => [cx + R * Math.cos(2 * Math.PI * i / n - Math.PI / 2), cy + R * Math.sin(2 * Math.PI * i / n - Math.PI / 2)];
+            prob.edges.forEach(([u, v]) => { const [a1, b1] = pos(u), [a2, b2] = pos(v), bad = cols[u] === cols[v]; ctx.strokeStyle = bad ? '#fb7185' : '#33415566'; ctx.lineWidth = bad ? 2 : 1; ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); });
+            for (let i = 0; i < n; i++) { const [a, c] = pos(i); ctx.fillStyle = ['#ff0055', '#00f2ff', '#ffd700'][cols[i]]; ctx.beginPath(); ctx.arc(a, c, i === factor ? 7 : 4.5, 0, 2 * Math.PI); ctx.fill(); if (i === factor) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); } }
+            $(kvId).innerHTML = [['conflicts (exact)', conf === 0 ? '<span class="pill good">0: proper</span>' : conf], ['edges', prob.edges.length], ['best channel', CH[b.j]], ['decoder', 'AXES: the largest coordinate']].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+            sim.pos = pos;
+        } else {
+            const t = prob.truth(b.point), un = prob.helixB(b.point), n = prob.n, cols = Math.ceil(Math.sqrt(n * W / Hh)), cell = Math.min((W - 20) / cols, (Hh - 40) / Math.ceil(n / cols));
+            t.forEach((v, i) => { ctx.fillStyle = v ? '#34d399' : '#475569'; ctx.fillRect(10 + (i % cols) * cell, 8 + Math.floor(i / cols) * cell, cell - 1.5, cell - 1.5); if (Math.floor(i / 3) === factor) { ctx.strokeStyle = '#fff'; ctx.strokeRect(10 + (i % cols) * cell, 8 + Math.floor(i / cols) * cell, cell - 1.5, cell - 1.5); } });
+            const frac = 1 - un / prob.lits.length;
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(10, Hh - 20, W - 20, 10); ctx.fillStyle = '#22d3ee'; ctx.fillRect(10, Hh - 20, (W - 20) * frac, 10);
+            $(kvId).innerHTML = [['unsatisfied (exact)', un], ['satisfied', (100 * frac).toFixed(2) + '%'], ['best channel', CH[b.j]], ['decoder', 'CUBE: three signs']].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+        }
+    }
+    function render() {
+        if (!sim) return;
+        const tw = sim.tw, cp = tw.coupler;
+        drawBall($('cv-s1'), 0); drawBall($('cv-s2'), 1);
+        [0, 1].forEach(k => { const tc = tw.tcs[k];
+            $(`s${k + 1}-kv`).innerHTML = [['evaluations', tc.evaluations.toLocaleString()], ['certified per channel', tc.bestCert.map(c => (isFinite(c) ? c : '–')).join(' · ')], ['zero points', tc.memory.length],
+                ['frames past a half turn of spin', cp ? cp.q[k].flat(2).filter(q => q[0] < 0).length : '–']].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join(''); });
+        if (cp) {
+            const [ok, n, worst] = cp.binding();
+            $('c-sub').innerHTML = `Mode <b>${tw.mode}</b>: ${tw.mode === 'steer' ? 'each particle’s polytope is turned by its frame before every step, so the structures steer each other through the coupler.' : 'frames are transported and checked, never fed back: the six calculations are bit for bit what they would be with the coupler off.'}${sim.s.wrong ? ' <b style="color:#fca5a5">Control on: the mirror is removed, so the binding must break.</b>' : ''}`;
+            $('c-kv').innerHTML = [['binding (all pairs)', `<span class="pill ${ok === n ? 'good' : 'bad'}">${ok}/${n} bound${sim.s.exact ? ', exactly' : ''}</span>`], ['largest deviation', sim.s.exact ? (ok === n ? '0 (exact)' : worst.toFixed(4) + ' rad') : worst.toExponential(1)],
+                ['twists issued', `S1 ${cp.issued[0].toLocaleString()} · S2 ${cp.issued[1].toLocaleString()}`], ['total twist', `S1 ${cp.angle[0].toFixed(3)} · S2 ${cp.angle[1].toFixed(3)} rad`],
+                ['register', `${Math.floor(tw.F / 720) + 1} · frame ${tw.F % 720}/720`], ['pumps', tw.tcs.map((tc, k) => `S${k + 1} ${tc.registers.filter(r => r.pump_identity).length}/${tc.registers.length}`).join(' · ')]].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+            spark($('cv-twist'), sim.series.twist, ['#ff7aa8', '#67e8f9'], 'S1 red · S2 cyan', false);
+            spark($('cv-bind'), [sim.series.bind], ['#fca5a5'], 'unbound pairs', true);
+            $('wc').innerHTML = cp.memory.slice(-8).reverse().map(w => `F${w.F} · issued ${w.issued[0]} / ${w.issued[1]} · bound ${w.bound}/${w.pairs} · ${w.hash}`).join('<br>') || 'The coupler writes a word at every zero point.';
+        } else {
+            $('c-sub').innerHTML = 'Mode <b>off</b>: no coupler. The two structures run side by side, unbound, and nobody tracks their frames.';
+            $('c-kv').innerHTML = `<div><span>register</span>${Math.floor(tw.F / 720) + 1} · frame ${tw.F % 720}/720</div>`;
+            spark($('cv-twist'), [[], []], ['#ff7aa8', '#67e8f9'], 'no coupler', false); spark($('cv-bind'), [[]], ['#fca5a5'], 'no coupler', false);
+            $('wc').textContent = 'No coupler, no third chain.';
+        }
+        drawClock();
+        drawAnswer($('cv-a1'), 'a1-kv', 0); drawAnswer($('cv-a2'), 'a2-kv', 1);
+        [0, 1].forEach(k => { $(k ? 'w2' : 'w1').innerHTML = tw.tcs[k].memory.slice(-8).reverse().map(w => `F${w.F} · A ${w.costs[0]} B ${w.costs[1]} C ${w.costs[2]} · best ${CH[w.best]} · ${w.hash}`).join('<br>') || 'Memory words appear at every zero point.'; });
+        const chainOk = mem => mem.every((w, i) => C.memoryWord(w.F, w.costs, w.best, i ? mem[i - 1].hash : '').hash === w.hash);
+        $('chain-kv').innerHTML = [['structure 1 chain', `<span class="pill ${chainOk(tw.tcs[0].memory) ? 'good' : 'bad'}">${chainOk(tw.tcs[0].memory) ? 'intact' : 'BROKEN'}</span>`], ['structure 2 chain', `<span class="pill ${chainOk(tw.tcs[1].memory) ? 'good' : 'bad'}">${chainOk(tw.tcs[1].memory) ? 'intact' : 'BROKEN'}</span>`],
+            ['coupler chain', cp ? `${cp.memory.length} words` : 'off']].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+        document.body.dataset.frame = tw.F;
+        if (cp) { const [ok, n] = cp.binding(); document.body.dataset.bound = `${ok}/${n}`; } else delete document.body.dataset.bound;
+    }
+
+    // ---------------------------------------------------------------- interaction
+    ['cv-s1', 'cv-s2'].forEach(id => { const cv = $(id); let drag = null;
+        cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, view.yaw, view.pitch]; cv.setPointerCapture(e.pointerId); });
+        cv.addEventListener('pointermove', e => { if (!drag) return; view.yaw = drag[2] + (e.clientX - drag[0]) * 0.01; view.pitch = Math.max(-1.5, Math.min(1.5, drag[3] + (e.clientY - drag[1]) * 0.01)); if (sim) { drawBall($('cv-s1'), 0); drawBall($('cv-s2'), 1); } });
+        cv.addEventListener('pointerup', () => { drag = null; }); });
+    ['cv-a1', 'cv-a2'].forEach(id => $(id).addEventListener('click', e => {
+        if (!sim || sim.s.prob !== 'b1' || !sim.pos) return;
+        const b = $(id).getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top; let best = null, bd = 400;
+        for (let i = 0; i < sim.tw.tcs[0].problem.n; i++) { const [a, c] = sim.pos(i), d = (a - x) ** 2 + (c - y) ** 2; if (d < bd) { bd = d; best = i; } }
+        if (best !== null) { factor = best; render(); } }));
+    const labels = () => { $('v-speed').textContent = `${Math.round(Math.pow(10, +$('in-speed').value))} f/s`; $('v-eps').textContent = Math.pow(10, +$('in-eps').value).toFixed(3); $('v-r').textContent = (+$('in-r').value).toFixed(2); $('v-mu').textContent = (+$('in-mu').value).toFixed(2); };
+    const sizes = () => { $('in-size').innerHTML = SIZES[$('in-prob').value].map(([v, l]) => `<option value="${v}">${l}</option>`).join(''); $('in-exact').disabled = $('in-prob').value !== 'b1'; if ($('in-exact').disabled) $('in-exact').checked = false; };
+    $('b-play').onclick = () => setPlaying(!playing);
+    $('b-frame').onclick = () => { setPlaying(false); advance(1); render(); };
+    $('b-zero').onclick = () => { setPlaying(false); advance(24 - (sim.tw.F % 24) || 24); render(); };
+    $('b-reset').onclick = () => { setPlaying(false); build(); };
+    $('seg-mode').querySelectorAll('button').forEach(b => b.onclick = () => { mode = b.dataset.mode; $('seg-mode').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); setPlaying(false); build(); });
+    $('in-prob').onchange = () => { sizes(); setPlaying(false); build(); };
+    ['in-size', 'in-P', 'in-eps', 'in-r', 'in-mu', 'in-seed', 'in-exact', 'in-wrong'].forEach(id => $(id).addEventListener('change', () => { setPlaying(false); labels(); build(); }));
+    ['in-speed', 'in-eps', 'in-r', 'in-mu'].forEach(id => $(id).addEventListener('input', labels));
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(e.target.tagName)) return;
+        if (e.key === ' ') { e.preventDefault(); $('b-play').click(); } else if (e.key === '.') $('b-frame').click(); else if (e.key === 'z') $('b-zero').click();
+    });
+    window.addEventListener('resize', render);
+
+    // ---------------------------------------------------------------- self-test
+    const getJ = u => fetch(u, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : Promise.reject(new Error(u + ' ' + r.status))));
+    const testRows = {};
+    const showTests = () => { $('test-kv').innerHTML = Object.entries(testRows).map(([k, v]) => `<div><span>${k}</span>${v}</div>`).join(''); };
+    function decoderTest() {
+        getJ('reference/traces/decode3d.json').then(T => { const R = D.runParity3d(T), all = R.passed === R.total;
+            testRows['3D decoder trace'] = `<span class="pill ${all ? 'good' : 'bad'}">${R.passed}/${R.total} match</span>`; showTests();
+            document.body.dataset.selftest = `${R.passed}/${R.total}`; log(`self-test: 3D decoder, ${R.passed}/${R.total} trace lines match the reference`, all ? 'good' : 'bad');
+        }).catch(e => { testRows['3D decoder trace'] = `<span class="pill bad">${e.message}</span>`; showTests(); document.body.dataset.selftest = 'error'; });
+    }
+    $('b-twintest').onclick = () => {
+        testRows['twin trace'] = 'running (about a minute)…'; showTests();
+        setTimeout(() => getJ('reference/traces/twin3d.json').then(T => { const t0 = performance.now(), R = Tw.runParityTwin(T), all = R.passed === R.total;
+            testRows['twin trace'] = `<span class="pill ${all ? 'good' : 'bad'}">${R.passed}/${R.total} match</span> <span style="color:var(--faint)">${((performance.now() - t0) / 1000).toFixed(0)} s</span>`; showTests();
+            document.body.dataset.twintest = `${R.passed}/${R.total}`; log(`self-test: twin system, ${R.passed}/${R.total} trace lines match the reference`, all ? 'good' : 'bad');
+        }).catch(e => { testRows['twin trace'] = `<span class="pill bad">${e.message}</span>`; showTests(); }), 40);
+    };
+    window.HPSim3D = { get sim() { return sim; }, advance, build, render, setPlaying, setMode: m => { $('seg-mode').querySelector(`[data-mode=${m}]`).click(); } };
+
+    // settings from the address: ?prob=b2&size=60&mode=carry&P=2&seed=5&exact=1&wrong=1&play=1
+    const q = new URLSearchParams(location.search);
+    if (['b1', 'b2'].includes(q.get('prob'))) $('in-prob').value = q.get('prob');
+    sizes();
+    if (q.get('size') && [...$('in-size').options].some(o => o.value === q.get('size'))) $('in-size').value = q.get('size');
+    if (['2', '3', '4'].includes(q.get('P'))) $('in-P').value = q.get('P');
+    if (q.get('seed') && +q.get('seed') > 0) $('in-seed').value = Math.round(+q.get('seed'));
+    if (q.get('exact') === '1' && !$('in-exact').disabled) $('in-exact').checked = true;
+    if (q.get('wrong') === '1') $('in-wrong').checked = true;
+    if (['steer', 'carry', 'off'].includes(q.get('mode'))) { mode = q.get('mode'); $('seg-mode').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.mode === mode)); }
+    labels(); build(); if (q.get('play') === '1') setPlaying(true);
+    requestAnimationFrame(tick);
+    window.addEventListener('load', () => setTimeout(decoderTest, 60));
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="bottom-right" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-3d.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Two structures of three engines bound by a coupler, in H³&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;explainers/hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/decoder-3d.html&quot;,&quot;label&quot;:&quot;The 3D Decoder&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 9: version 2 begins, decoders of H³ live in 3D&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/coupler-3d.html&quot;,&quot;label&quot;:&quot;Frames and the Coupler&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 10: proofs, live checks, the 3D simulation manual&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

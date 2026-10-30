@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frames and the Coupler - Hyperbolic PolyStep</title>
+    <meta name="description" content="Explainer 10 of Hyperbolic PolyStep, version 2 phases B-D: frames in H³ carried exactly by transvections, the twist of every move (the area of a triangle), spin kept by quaternions, and the coupler that binds two structures of three engines by applying each twist to one and its inverse to the other's mirrored frame. Proofs, live checks, parity, and the manual of the 3D simulation.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <script src="../hyperbolic_core.js"></script>
+    <script src="../decoder3d.js"></script>
+    <script src="../twin3d.js"></script>
+    <style>
+        .proof { border-left: 3px solid #334155; padding: 2px 0 2px 14px; margin: 0.8rem 0; }
+        .proof > p:first-child::before { content: 'Proof. '; font-weight: 700; color: #e2e8f0; }
+        .proof > p:last-child::after { content: ' \220E'; color: var(--muted); }
+        .stmt { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); margin: 0.6rem 0; }
+        .stmt > p:first-child { margin-top: 0; } .stmt > p:last-child { margin-bottom: 0; }
+        .checks td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+        .pill { font: 0.74rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .55); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .55); }
+        .exp { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 12px 0; background: rgba(11, 18, 34, 0.7); }
+        .exp h4 { margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } .exp h4 a { font: 0.78rem var(--mono); }
+        .exp p { margin: 0.35rem 0 0; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic PolyStep &middot; Explainer 10 &middot; Version 2, phases B&ndash;D</div>
+    <h1>Frames and the Coupler</h1>
+    <p class="lede">Every move in H&sup3; turns a particle&rsquo;s frame by a twist, exactly, with no square root. The coupler binds two structures of three engines through those twists. It applies each twist to one structure and its inverse to the other&rsquo;s mirrored frame, both ways, so the binding between every pair of particles never changes. This page proves it, checks it live, and is the manual of <a href="../simulation-3d.html">the 3D simulation</a>.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="../simulation-3d.html">Open the 3D simulation</a>
+        <a class="btn btn-ghost" href="#coupler">The mirror law</a>
+        <a class="btn btn-ghost" href="#checks">Live checks</a>
+        <a class="btn btn-ghost" href="#manual">Manual</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat" id="stat-checks">live checks: running&hellip;</span>
+        <span class="stat"><b>B = q&#8322;q&#8321;</b> conserved exactly</span>
+        <span class="stat">twist angle = <b>triangle area</b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#idea">2. The idea</a></li>
+            <li><a href="#frames">3. Frames and exact transport</a></li>
+            <li><a href="#area">4. A twist is an area</a></li>
+            <li><a href="#spin">5. Spin</a></li>
+            <li><a href="#coupler">6. The coupler: the mirror law</a></li>
+            <li><a href="#modes">7. Carry and steer</a></li>
+            <li><a href="#checks">8. Live checks and parity</a></li>
+            <li><a href="#manual">9. The 3D simulation, manual</a></li>
+            <li><a href="#limits">10. What is not claimed</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#idea">The idea</a></li><li><a href="#frames">Frames and exact transport</a></li><li><a href="#area">A twist is an area</a></li>
+            <li><a href="#spin">Spin</a></li><li><a href="#coupler">The coupler</a></li><li><a href="#modes">Carry and steer</a></li><li><a href="#checks">Live checks and parity</a></li>
+            <li><a href="#manual">Manual</a></li><li><a href="#limits">What is not claimed</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The coupler draws on the frame layer and on version 1&rsquo;s pump, and binds the two structures. Its interface to the calculations is the 3D decoder of <a href="decoder-3d.html">Explainer 9</a>, which reads positions only.</p>
+            <div data-hp-map="focus" data-node="coupler"></div>
+        </section>
+
+        <section class="chapter" id="idea">
+            <div class="chapter-num">02</div>
+            <h2>The idea</h2>
+            <p class="chapter-intro">Six calculations must not be touched, yet their paths should be free to turn. So keep two kinds of state apart: where a particle is (which the calculations read) and how it is oriented (which they never read). The coupler owns the orientations. It takes the torsion one structure builds up and hands the inverse to the other. The two memory structures are thus bound through a third system, and nothing is created or lost: every twist issued is matched by its inverse, exactly.</p>
+            <figure><div class="map-wrap mini"><svg viewBox="0 0 880 250" role="img" aria-label="The mirror law: a twist w issued by either structure is applied as w on the left of structure 1's frame and as w inverse on the right of structure 2's mirrored frame">
+                <defs><marker id="ma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c084fc"/></marker></defs>
+                <g font-family="Inter, system-ui, sans-serif">
+                    <g transform="translate(20,40)"><rect width="230" height="150" rx="12" fill="rgba(15,23,42,.95)" stroke="#22d3ee"/>
+                        <text x="115" y="28" text-anchor="middle" fill="#f8fafc" font-weight="700" font-size="14">Structure 1</text>
+                        <text x="115" y="54" text-anchor="middle" fill="#cbd5e1" font-size="12">frames as they are</text>
+                        <text x="115" y="92" text-anchor="middle" fill="#e9d5ff" font-size="17" font-family="Fira Code, monospace">q₁ ← w · q₁</text>
+                        <text x="115" y="126" text-anchor="middle" fill="#94a3b8" font-size="11">the twist on the left</text></g>
+                    <g transform="translate(630,40)"><rect width="230" height="150" rx="12" fill="rgba(15,23,42,.95)" stroke="#22d3ee"/>
+                        <text x="115" y="28" text-anchor="middle" fill="#f8fafc" font-weight="700" font-size="14">Structure 2</text>
+                        <text x="115" y="54" text-anchor="middle" fill="#cbd5e1" font-size="12">frames mirrored (inverted)</text>
+                        <text x="115" y="92" text-anchor="middle" fill="#e9d5ff" font-size="17" font-family="Fira Code, monospace">q₂ ← q₂ · w⁻¹</text>
+                        <text x="115" y="126" text-anchor="middle" fill="#94a3b8" font-size="11">the inverse on the right</text></g>
+                    <g transform="translate(320,60)"><rect width="240" height="110" rx="14" fill="rgba(76,29,149,.3)" stroke="#c084fc" stroke-dasharray="6 4"/>
+                        <text x="120" y="30" text-anchor="middle" fill="#f8fafc" font-weight="700" font-size="14">Coupler</text>
+                        <text x="120" y="58" text-anchor="middle" fill="#e9d5ff" font-size="15" font-family="Fira Code, monospace">B = q₂ · q₁</text>
+                        <text x="120" y="80" text-anchor="middle" fill="#cbd5e1" font-size="11.5">q₂w⁻¹ · wq₁ = q₂q₁: never changes</text>
+                        <text x="120" y="98" text-anchor="middle" fill="#94a3b8" font-size="10.5">checked exactly at every zero point</text></g>
+                    <g stroke="#c084fc" stroke-width="1.6" fill="none" marker-end="url(#ma)"><path d="M318,100 C290,100 280,110 252,112"/><path d="M562,100 C590,100 600,110 628,112"/></g>
+                    <text x="440" y="226" text-anchor="middle" fill="#94a3b8" font-size="11.5">Whichever structure issues the twist w, both rules apply. Quaternions do not commute, so the mirror is what makes it work both ways.</text>
+                </g></svg></div></figure>
+        </section>
+
+        <section class="chapter" id="frames">
+            <div class="chapter-num">03</div>
+            <h2>Frames and exact transport</h2>
+            <p class="chapter-intro">Each particle&rsquo;s factor carries a frame, a quaternion \(q\), measured against the canonical frame at its point (the boost \(L_x\) from the origin). A particle that has never moved has \(q = 1\). When it moves from \(x\) to \(y\), its frame is carried along the geodesic by the transvection</p>
+            <p>$$T_{xy}(v) = v + \frac{\langle v, x+y\rangle}{1+c}\,(x+y) - 2\langle v, x\rangle\, y,\qquad c = -\langle x, y\rangle = \cosh d(x,y),$$</p>
+            <p>and against the canonical frames the frame turns by the <em>twist</em> \(W = L_y^{-1}\,T_{xy}\,L_x\).</p>
+            <h3>F1 &middot; Transport is exact <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>\(T_{xy}\) is a proper orthochronous Lorentz matrix with \(T_{xy}x = y\), fixing every vector orthogonal to both \(x\) and \(y\). For rational \(x, y\) it is rational. The twist \(W\) fixes the origin, so it is a rotation of the tangent space there, and it too is rational. Its quaternion \((1 + \operatorname{tr} W,\ W_{21}-W_{12},\ W_{02}-W_{20},\ W_{10}-W_{01})\) is rational with a positive first entry. No square root is needed anywhere.</p></div>
+            <div class="proof"><p>Let \(\rho_u(v) = v - 2\frac{\langle v,u\rangle}{\langle u,u\rangle}u\), the Lorentz reflection in the hyperplane orthogonal to \(u\). With \(\langle x,x\rangle = -1\), \(\rho_x(v) = v + 2\langle v,x\rangle x\). With \(s = x + y\), \(\langle s,s\rangle = -2(1+c)\), so \(\rho_s(v) = v + \langle v,s\rangle s/(1+c)\). Expanding,</p>
+                <p>$$\rho_s\rho_x(v) = v + 2\langle v,x\rangle x + \frac{\langle v,s\rangle - 2(1+c)\langle v,x\rangle}{1+c}\,s = v + \frac{\langle v,s\rangle}{1+c}s - 2\langle v,x\rangle y = T_{xy}(v).$$</p>
+                <p>So \(T_{xy}\) is a product of two Lorentz reflections: Lorentz, with determinant 1. \(T_{xy}x = x - x - y + 2y = y\), so it keeps the upper sheet. A vector orthogonal to \(x\) and \(y\) is fixed, so \(T_{xy}\) is the pure boost along the geodesic, which is parallel transport. Every entry is a rational function of \(x\), \(y\) and \(1 + c\). \(L_x\) and \(L_y^{-1} = JL_y^{\top}J\) are rational, and \(W o = L_y^{-1}T_{xy}x = L_y^{-1}y = o\). For a rotation with angle \(\theta\), \(1 + \operatorname{tr}W = 2 + 2\cos\theta\), which is positive below \(\pi\). F2 shows \(\theta &lt; \pi\).</p></div>
+        </section>
+
+        <section class="chapter" id="area">
+            <div class="chapter-num">04</div>
+            <h2>A twist is an area</h2>
+            <h3>F2 &middot; The twist&rsquo;s angle is the area of the triangle (o, x, y) <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>The twist of a move from \(x\) to \(y\) is a rotation about the normal of the plane through \(o\), \(x\) and \(y\). Its angle is that geodesic triangle&rsquo;s area, \(\pi - (\alpha + \beta + \gamma)\), less than \(\pi\).</p></div>
+            <div class="proof"><p>The canonical boost \(L_x\) is itself the transvection \(T_{ox}\). So \(W = T_{yo}T_{xy}T_{ox}\) is parallel transport once around the geodesic triangle \(o \to x \to y \to o\): its holonomy. The triangle lies in a totally geodesic copy of H&sup2;, along which the plane&rsquo;s normal is carried parallel and so fixed. In that plane, of curvature \(-1\), Gauss&ndash;Bonnet makes the holonomy a rotation by the triangle&rsquo;s area, \(\pi - (\alpha+\beta+\gamma) &lt; \pi\).</p></div>
+            <p>So the twist issued by a move is the area the move sweeps against the origin. A particle wandering far out sweeps large triangles and issues large twists. The simulation plots the twist each structure issues per zero point.</p>
+        </section>
+
+        <section class="chapter" id="spin">
+            <div class="chapter-num">05</div>
+            <h2>Spin</h2>
+            <h3>S &middot; Quaternions keep the spin <span class="tag t-PROVEN">PROVEN</span></h3>
+            <p>A rotation matrix cannot tell a turn of \(2\pi\) from a turn of \(4\pi\); a quaternion can. Its sign is the spin, and it returns to itself only after \(4\pi\). Each twist is lifted to the quaternion with positive first entry, its unique lift of angle below \(\pi\). Frames are then composed as quaternions, never as matrices. So the composed quaternion is the lift of the whole path, and \(q\) and \(-q\) record opposite spins of the same rotation. Exact frames are kept as coprime integers up to a positive scale, which changes neither the rotation nor the spin.</p>
+        </section>
+
+        <section class="chapter" id="coupler">
+            <div class="chapter-num">06</div>
+            <h2>The coupler: the mirror law</h2>
+            <p class="chapter-intro">Pair structure 1&rsquo;s channel \(j\), particle \(p\), factor \(i\) with structure 2&rsquo;s same. Structure 1 keeps its frame \(q_1\) as it is. Structure 2 keeps its frame mirrored: \(q_2\) is the inverse of its geometric frame. Whenever either structure issues a twist \(w\) at a paired factor:</p>
+            <p>$$q_1 \leftarrow w\,q_1,\qquad q_2 \leftarrow q_2\,w^{-1}.$$</p>
+            <h3>K1 &middot; The binding never changes <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>For every pair, the binding \(B = q_2q_1\) stays at its starting value, the identity, through every twist either structure issues, in carry and in steer mode. In exact runs this holds exactly; in float runs, to rounding.</p></div>
+            <div class="proof"><p>After a twist, \(B' = (q_2w^{-1})(wq_1) = q_2q_1 = B\) by associativity, whichever structure issued \(w\). In exact arithmetic the inverse of an integer quaternion is its conjugate up to a positive scale, so \(B'\) equals \(B\) as a normalised integer quaternion. The coupler checks this for every pair at every zero point and writes the result into its own memory word.</p></div>
+            <p><strong>Why the mirror.</strong> Quaternions do not commute. Applying \(w^{-1}\) on the <em>same</em> side, \(q_2 \leftarrow w^{-1}q_2\), gives \(B' = w^{-1}q_2\,w\,q_1\), which is \(B\) only when \(w\) commutes with \(q_2\). Applying \(w\) itself to the partner fails too. Keeping one structure&rsquo;s frames mirrored is exactly what makes one rule conserve the binding in both directions. In geometric terms, both structures&rsquo; frames receive every twist, so their <em>relative</em> orientation is what stays bound.</p>
+            <div class="callout note"><span class="label">Torsion, tension and thermodynamics</span>
+                <p>The coupler is a group action. Every update is a bijection, and every twist it issues is matched by its inverse, so it erases no information. That is the precise sense in which the offload &ldquo;does not violate thermodynamics&rdquo;: <em>logical</em> reversibility, with an exact conservation law. It is not a statement about physical energy. Tension, the boosts that move points, is not routed through the coupler: it moves positions, and the calculations see positions.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="modes">
+            <div class="chapter-num">07</div>
+            <h2>Carry and steer</h2>
+            <h3>K2 &middot; Carry mode is invisible <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>With the coupler in carry mode, every position, incumbent, certified cost and memory hash of all six calculations is bit for bit what it would be with the coupler off.</p></div>
+            <div class="proof"><p>In carry mode the coupler reads each structure&rsquo;s states after every frame and writes only its own frames and ledger. It never writes a state, a generator or an objective. The decoders and Helix B read positions only (Explainer 9). So by induction on frames, the six calculations receive the same inputs and draw the same random numbers, and produce the same outputs.</p></div>
+            <h3>K3 &middot; Steering keeps everything exact <span class="tag t-PROVEN">PROVEN</span></h3>
+            <div class="stmt"><p>In steer mode each particle&rsquo;s rotation is turned by its frames before the step: \(R \leftarrow \operatorname{blockdiag}(\operatorname{rot} f_i)\,R\) over the factors of the block. In exact runs the steered rotation is still rational and orthogonal, every state stays an exact point of the sheet, and every register&rsquo;s pump closes with \(H = P^{-1}\).</p></div>
+            <div class="proof"><p>\(\operatorname{rot}(f)\) of an integer quaternion is a rational orthogonal matrix, so the block-diagonal product with an exact rotation is exact and orthogonal. H1 holds for any exact rotation, so corners and states stay on the sheet. H7 is group algebra: it holds for any increments, so the pump closes. K1 does not depend on the mode at all.</p></div>
+            <p><strong>What steering changes.</strong> Paths. Each structure&rsquo;s polytopes now turn with frames that also carry the other structure&rsquo;s twists, so the six calculations influence each other through the coupler alone. With Haar-random \(R\), \(\operatorname{rot}(f)R\) is still Haar-random for any fixed frame, by left invariance. But frames depend on the past, and the browser uses Cayley rotations, which are not Haar. So the search&rsquo;s law does change. Whether that helps is for a preregistered run to decide.</p>
+        </section>
+
+        <section class="chapter" id="checks">
+            <div class="chapter-num">08</div>
+            <h2>Live checks and parity</h2>
+            <div class="lab">
+                <div class="lab-title">F1, F2, S and K1&ndash;K3 in this browser</div>
+                <div class="lab-row"><button class="chip" id="b-checks">Run again</button></div>
+                <div class="table-wrap"><table class="checks">
+                    <thead><tr><th>Property</th><th>Trials passed</th><th>Control rejected</th><th>What is measured</th></tr></thead>
+                    <tbody id="check-rows"><tr><td colspan="4">Running&hellip;</td></tr></tbody>
+                </table></div>
+                <div class="out" id="check-out">&nbsp;</div>
+            </div>
+            <div class="lab">
+                <div class="lab-title">Parity with the Python reference</div>
+                <p style="margin:0 0 8px">The reference&rsquo;s trace <code>reference/traces/twin3d.json</code> holds 30 exact transports, and two structures plus the coupler run for a whole exact register in carry and steer mode. It records every memory word, both pumps, every final state and every frame. The run takes about a minute.</p>
+                <div class="lab-row"><button class="chip" id="b-parity">Run the twin trace</button></div>
+                <div class="out" id="parity-out">Not run yet.</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="manual">
+            <div class="chapter-num">09</div>
+            <h2>The 3D simulation, manual</h2>
+            <p class="chapter-intro"><a href="../simulation-3d.html">The simulation</a> opens paused, on B1 in H&sup3; with 30 vertices, three particles per channel and the coupler steering. Every setting except speed rebuilds the run from frame 0.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Play, +1 frame, &rarr; zero point, Reset</strong></td><td>As in version 1. Keys: Space, <kbd>.</kbd> and <kbd>z</kbd>.</td></tr>
+                    <tr><td><strong>coupler: steer | carry | off</strong></td><td>The switch. <em>Steer</em> turns each polytope by its frames; <em>carry</em> only transports and checks them; <em>off</em> runs the two structures unbound.</td></tr>
+                    <tr><td><strong>problem, size</strong></td><td>B1, 3-colouring in H&sup3; (30 or 60 vertices), or B2, MAX-3-SAT in H&sup3; (30, 60 or 120 variables). Both structures solve the same problem type on their own instances: seed and seed + 1.</td></tr>
+                    <tr><td><strong>particles, &epsilon;, r, &mu;</strong></td><td>Particles per channel, the softmax temperature, the step radius and the membrane&rsquo;s pull.</td></tr>
+                    <tr><td><strong>exact track</strong></td><td>B1 with 9 vertices, one particle and one factor per step: exact states, exact frames, the exact binding check and the register pump. It is slow, as BigInt arithmetic is.</td></tr>
+                    <tr><td><strong>no mirror (control)</strong></td><td>Sends structure 2 the twist itself instead of its inverse. The binding must break, and the log says when it does.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Panel</th><th>What it shows</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Structure 1, structure 2</strong></td><td>The Poincar&eacute; ball of one factor of each structure, with each channel&rsquo;s particles and their frames as three short arms. The view zooms to fit the particles; a dashed circle is the ball&rsquo;s edge. Drag either ball to turn both. Click a vertex in an answer panel to choose the factor shown.</td></tr>
+                    <tr><td><strong>Coupler</strong></td><td>The twist each structure issued per zero point; the number of unbound pairs per zero point (zero while the law holds); the shared clock and register; the binding, the largest deviation, the twists issued, the total twist and both pumps.</td></tr>
+                    <tr><td><strong>The answers</strong></td><td>Each structure&rsquo;s best certified colouring or assignment, decoded by the anchor decoders and counted exactly by Helix B.</td></tr>
+                    <tr><td><strong>Three memory chains</strong></td><td>The latest words of structure 1, structure 2 and the coupler, with both structures&rsquo; chains re-verified on every redraw.</td></tr>
+                    <tr><td><strong>Self-test, log</strong></td><td>The decoder trace on load (28 lines); the twin trace on request (21 lines). Builds, broken bindings and closed registers.</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Experiments</h3>
+            <div class="exp"><h4>1. Carry changes nothing <a href="../simulation-3d.html?mode=carry">carry</a> <a href="../simulation-3d.html?mode=off">off</a></h4>
+                <p>Run both to the same frame and compare the memory words of structure 1. The hashes are identical (K2), although the coupler has transported thousands of twists.</p></div>
+            <div class="exp"><h4>2. Steering binds the paths <a href="../simulation-3d.html?mode=steer">steer</a></h4>
+                <p>Same seeds, steer mode: the hashes now differ from carry&rsquo;s, but every pair stays bound at every zero point (K1).</p></div>
+            <div class="exp"><h4>3. Remove the mirror <a href="../simulation-3d.html?mode=carry&amp;wrong=1">no mirror</a></h4>
+                <p>The coupler sends the twist itself. Within the first zero points the binding breaks on most pairs: the law needs the inverse on the mirrored side.</p></div>
+            <div class="exp"><h4>4. Exactly <a href="../simulation-3d.html?exact=1&amp;mode=steer">exact track</a></h4>
+                <p>Every check is exact: the binding equals the identity as integer quaternions, and at frame 720 both structures&rsquo; registers close with H = P&#8315;&sup1; under steering (K3).</p></div>
+            <div class="exp"><h4>5. Twists grow with reach <a href="../simulation-3d.html?prob=b2&amp;size=60">B2, 60 variables</a></h4>
+                <p>Watch the twist chart: as particles move away from the origin they sweep larger triangles, so each move issues a larger twist (F2).</p></div>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">10</div>
+            <h2>What is not claimed</h2>
+            <div class="callout limit"><span class="label">Limits</span>
+                <ul>
+                    <li><strong>No claim that steering helps the search.</strong> That needs a preregistered round (phase E) with the controls already built: coupler off, carry only, no mirror.</li>
+                    <li><strong>B3 and B4 are not in the twin yet.</strong> B3&rsquo;s anchored charts change coordinates when a particle is re-anchored, and the frame would have to be carried through that change. B4&rsquo;s encoder factors are Euclidean.</li>
+                    <li><strong>Pairing needs equal shapes.</strong> Both structures must have the same channels, particles and factors.</li>
+                    <li><strong>Physics.</strong> &ldquo;Torsion&rdquo; here is frame holonomy, and &ldquo;thermodynamics&rdquo; is logical reversibility. Neither is a physical energy statement.</li>
+                </ul>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="decoder-3d.html">&larr; The 3D decoder</a>
+                <a class="btn btn-ghost" href="../simulation-3d.html">Open the 3D simulation &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic PolyStep &middot; Explainer 10 &middot; <a href="../index.html">Hub</a> &middot; polystep by An T. Le (Apache-2.0)</footer>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id), Tw = HPTwin3D;
+    function runChecks() {
+        $('check-out').textContent = 'running…';
+        setTimeout(() => {
+            const t0 = performance.now(), R = Tw.runChecksTwin();
+            let all = true;
+            $('check-rows').innerHTML = R.map(r => { const ok = r.passed === r.trials, cok = r.control[0] === r.control[1]; all = all && ok && cok;
+                return `<tr><td>${r.id} · ${r.title}</td><td class="num"><span class="pill ${ok ? 'good' : 'bad'}">${r.passed.toLocaleString()} / ${r.trials.toLocaleString()}</span></td><td class="num"><span class="pill ${cok ? 'good' : 'bad'}">${cok ? 'yes' : 'NO'}</span></td><td>${r.detail}</td></tr>`; }).join('');
+            $('check-out').innerHTML = `<span class="${all ? 'good' : 'bad'}">${all ? 'All six hold' : 'A check failed'}</span>, and every control was rejected · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+            $('stat-checks').innerHTML = `live checks: <b>${R.filter(r => r.passed === r.trials && r.control[0] === r.control[1]).length}/${R.length}</b> hold`;
+            document.body.dataset.checksTwin = String(all);
+        }, 30);
+    }
+    $('b-checks').onclick = runChecks;
+    $('b-parity').onclick = () => {
+        $('parity-out').textContent = 'running (about a minute)…';
+        setTimeout(() => fetch('../reference/traces/twin3d.json', { cache: 'no-cache' }).then(r => r.json()).then(T => {
+            const t0 = performance.now(), R = Tw.runParityTwin(T), all = R.passed === R.total;
+            $('parity-out').innerHTML = `<span class="${all ? 'good' : 'bad'}">${R.passed}/${R.total} lines match</span> <span class="k">${((performance.now() - t0) / 1000).toFixed(0)} s</span><br>` + R.lines.map(l => `<span class="${l.ok ? 'good' : 'bad'}">${l.ok ? '✓' : '✗'}</span> ${l.name}${l.detail ? ` <span class="k">${l.detail}</span>` : ''}`).join('<br>');
+            document.body.dataset.parityTwin = `${R.passed}/${R.total}`;
+        }).catch(e => { $('parity-out').textContent = 'Could not load the trace (' + e.message + ').'; }), 40);
+    };
+    window.addEventListener('load', () => setTimeout(runChecks, 60));
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation-3d.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Two structures of three engines bound by a coupler, in H³&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;../../Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;../../index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;decoder-3d.html&quot;,&quot;label&quot;:&quot;The 3D Decoder&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 9: version 2 begins, decoders of H³ live in 3D&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;coupler-3d.html&quot;,&quot;label&quot;:&quot;Frames and the Coupler&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 10: proofs, live checks, the 3D simulation manual&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

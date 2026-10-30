@@ -78,6 +78,7 @@ class PolyStepH:
             raise ValueError('exact mode is for the hyperbolic geometry')
         self.gen = torch.Generator().manual_seed(torch_seed)
         self.fixed_R = None              # tests: (R float (P, D, D), Rq exact list or None) used instead of drawing
+        self.orient = None               # version 2 steer mode: orient(idx, R, Rq) -> (R, Rq) turns each polytope by the frames
 
     # ---------------------------------------------------------------- state
     def init_state(self, X0):
@@ -211,6 +212,8 @@ class PolyStepH:
         b, d = len(idx), self.d
         D = b * d
         R, Rq = self.rotations(P, D)
+        if self.orient is not None:
+            R, Rq = self.orient(idx, R, Rq)
         U = np.concatenate([np.eye(D), -np.eye(D)])                         # (2D, D), polystep's order
         dirs = np.einsum('pij,kj->pki', R, U)                               # (P, 2D, D) unit directions
         fr = np.linspace(0, 1, cfg.num_probe + 2)[1:cfg.num_probe + 1]
