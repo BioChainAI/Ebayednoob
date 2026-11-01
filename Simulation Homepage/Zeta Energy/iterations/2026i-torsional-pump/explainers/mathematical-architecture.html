@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zeta Energy System — Mathematical Architecture, Kinematics & Interaction Mechanics Explorer</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- KaTeX for Mathematical Typesetting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#131c2e',
+              900: '#0f172a',
+              950: '#050811',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #050811;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.84);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.35rem 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
+
+  <!-- STICKY HEADER & NAVIGATION -->
+  <header class="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/25 via-amber-500/20 to-purple-500/25 border border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-500/10">
+            <span class="mono font-bold text-cyan-300 text-sm">Z3³</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">Zeta Energy System — Mathematical Architecture &amp; Interaction Mechanics</h1>
+              <span class="text-[11px] mono uppercase px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Hoard (2026a–i) + 15 Lemmas</span>
+            </div>
+            <p class="text-xs text-slate-400">Interactive companion to the <a href="../simulation.html" target="_top" class="text-cyan-300 underline">2026i Torsional Pump simulation</a> &amp; the <a href="../documents/zeta_energy_system_technical_monograph_hoard_2026i_15_lemmas_edition.pdf" target="_blank" rel="noopener" type="application/pdf" class="text-cyan-300 underline">technical monograph (PDF)</a>.</p>
+            <nav aria-label="2026i companion resources" class="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-xs">
+              <a href="../../../index.html" class="text-cyan-300 underline">Zeta Energy collection</a>
+              <a href="../index.html" class="text-cyan-300 underline">2026i overview</a>
+              <a href="../documents/zeta_energy_system_technical_monograph_hoard_2026i_15_lemmas_edition.tex" download class="text-cyan-300 underline">Download LaTeX source (.tex)</a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- 6 Navigation Tabs -->
+        <nav class="flex flex-wrap gap-1.5" role="tablist">
+          <button onclick="switchTab('tab-arch')" id="btn-tab-arch" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/20">
+            1. Architecture, Metrology &amp; $C_3$ Signal
+          </button>
+          <button onclick="switchTab('tab-pump')" id="btn-tab-pump" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800">
+            2. $(1+i)^k$ Clock &amp; $720\to 72\to 10$ Pump
+          </button>
+          <button onclick="switchTab('tab-kinematics')" id="btn-tab-kinematics" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800">
+            3. Node Kinematics, $\{4,3,5\}$ &amp; Ghost Map
+          </button>
+          <button onclick="switchTab('tab-interactions')" id="btn-tab-interactions" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-900 text-amber-300 hover:bg-slate-800 border border-amber-500/40 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            4. The 7 Interaction Points Lab
+          </button>
+          <button onclick="switchTab('tab-layer5')" id="btn-tab-layer5" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800">
+            5. Layer V, Monoid &amp; 16-MAC Strassen
+          </button>
+          <button onclick="switchTab('tab-trig')" id="btn-tab-trig" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-900 text-emerald-300 hover:bg-slate-800 border border-emerald-500/40">
+            6. 64b Tile &amp; $\sin/\cos/\tan$ Replacements
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: ARCHITECTURE, CUBIT METROLOGY & 30-WHEEL C_3 SIGNAL PROPOSER -->
+    <!-- =================================================================== -->
+    <section id="tab-arch" class="tab-section space-y-8">
+      <!-- Overview Banner -->
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-l-cyan-400 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xs mono uppercase px-2.5 py-1 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Sections 1 &amp; 2 of Monograph • Origin-Centered Cubit Convention</span>
+          <span class="text-xs mono text-slate-400">$C_0 = \lambda/16 = 53.748\text{ cm}$ ($12.5\text{ sim units}$)</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          System Architecture, Acoustic Cubit Metrology &amp; The 30-Wheel $C_3$ Signal Engine
+        </h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          The Zeta Energy System models wave propagation, projective spinor phase locking, and hyperbolic compression across a $3\times 3\times 3$ cubic voxel array of spacing $C_{\text{space}} = 25.0\text{ units}$ (core half-width $C_0 = 12.5\text{ units}$). Every shader and JavaScript function in the <a href="../simulation.html" target="_top" class="mono text-cyan-300 underline">2026i simulation</a> maps directly to a deductive theorem in <strong>Hoard (2026i)</strong> and <strong>The Fifteen Lemmas of the Geometric Engine</strong>.
+        </p>
+      </div>
+
+      <!-- Interactive Codebase Function-to-Theory Mapper (Table 1 of Monograph) -->
+      <div class="glass-card rounded-2xl p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white">1. Interactive Codebase Function-to-Theory Master Map</h3>
+            <p class="text-xs text-slate-400">Click any function or shader from the <a href="../simulation.html" target="_top" class="mono text-cyan-300 underline">2026i simulation</a> to inspect its exact mathematical equation and Fifteen Lemmas foundation</p>
+          </div>
+          <input type="text" id="funcSearch" oninput="renderFuncMap()" placeholder="Filter functions or lemmas..." class="bg-slate-950 text-xs mono text-white px-3 py-2 rounded-lg border border-slate-700 w-60" />
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-5 space-y-1.5 max-h-[420px] overflow-y-auto pr-1" id="func-list-container">
+            <!-- Populated by renderFuncMap() -->
+          </div>
+          <div class="lg:col-span-7 bg-slate-950 rounded-xl p-5 border border-slate-800 space-y-4" id="func-detail-box">
+            <!-- Populated by selectFuncItem() -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Lower vs. Upper Manifold & Acoustic Cubit Metrology Visualizer (Lemmas 4, 5, 10) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] mono uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Lemmas 4, 5, 7 &amp; 10 • Global Nesting Theorem</span>
+              <h3 class="text-base sm:text-lg font-bold text-white mt-1">Lower Manifold Cubes ($K, V, W$) &amp; 5-Tier Upper Manifold ($T_0 \dots T_4$)</h3>
+            </div>
+            <select id="tierInspectSelect" onchange="drawManifoldShellsCanvas()" class="bg-slate-900 text-xs mono text-white px-3 py-1.5 rounded-lg border border-slate-700">
+              <option value="all">Show All 5 Tiers + Separation Gap</option>
+              <option value="0">Tier T₀: R₀=15, r₀=4, W₀=16 (Shell [11,19]C₀)</option>
+              <option value="1">Tier T₁: R₁=35, r₁=6, W₁=14 (Shell [29,41]C₀)</option>
+              <option value="2" selected>Tier T₂ (Mean/Median): R₂=65, r₂=8, W₂=12 (Shell [57,73]C₀)</option>
+              <option value="3">Tier T₃: R₃=105, r₃=10, W₃=10 (Shell [95,115]C₀)</option>
+              <option value="4">Tier T₄: R₄=155, r₄=12, W₄=8 (Shell [143,167]C₀)</option>
+            </select>
+          </div>
+
+          <div class="relative w-full h-72 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+            <canvas id="manifoldShellsCanvas" class="w-full h-full block"></canvas>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 text-xs mono">
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <div class="text-slate-400 text-[10px]">Tier-Winding Law (Lemma 4)</div>
+              <div class="text-amber-300 font-bold text-sm mt-0.5">$r_n + W_n = 20\,C_0 = \frac{5}{4}\lambda$</div>
+              <div class="text-[10px] text-slate-500">Total winding $\sum W_n = W_\Sigma = 60$</div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <div class="text-slate-400 text-[10px]">Strict Separation Gap (Lemma 10)</div>
+              <div class="text-cyan-300 font-bold text-sm mt-0.5">$(11 - 2\sqrt{3})C_0 \approx 7.536\,C_0$</div>
+              <div class="text-[10px] text-slate-500">$4.0504\text{ m}$ ($\mathcal{M}_{\text{upper}} \cap \mathcal{M}_{\text{lower}} = \emptyset$)</div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <div class="text-slate-400 text-[10px]">Harmonic Merge Gate (Lemma 5)</div>
+              <div class="text-emerald-300 font-bold text-sm mt-0.5">$x_F = \frac{4}{3}C_0 = \frac{\lambda}{12}$</div>
+              <div class="text-[10px] text-slate-500">$(0, 2C_0; 4C_0, \frac{4}{3}C_0) = -1$ ($71.66\text{ cm}$)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Live 30-Wheel Signal Proposer, C_3 Split & Weitzenböck Calculator -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <h3 class="text-base font-bold text-white">2. Live 30-Wheel Signal &amp; $C_3$ Fourier Split</h3>
+              <span class="text-[10px] mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Prop. 3.4 &amp; Lemma 4(5)</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Evaluates $Z(t) = \sum_{p \in P_{10}} p^{-1/2}\cos(t\ln p)$ partitioned into quadratic residues $\mathcal{B}_+ = \{1,11,19,29\}$ and non-residues $\mathcal{B}_- = \{7,13,17,23\} \pmod{30}$ ($\chi_{60}^2 = (\cdot/5)$), and computes the $C_3$ Fourier split $(s, |z|^2, E_{\text{bind}})$ and Weitzenböck ratio $\chi = \sqrt{A_R}/S \le 1/\sqrt{3}$:
+            </p>
+
+            <div class="space-y-2 text-xs mono bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+              <div class="flex justify-between">
+                <span>Phase Coordinate $t$:</span>
+                <span id="lbl-sig-t" class="text-cyan-300 font-bold">12.40</span>
+              </div>
+              <input type="range" id="inp-sig-t" min="0" max="50" step="0.2" value="12.4" oninput="updateSignalSplitCalc()" class="w-full accent-cyan-400 cursor-pointer" />
+
+              <div class="flex justify-between pt-1">
+                <span>Wave Amplitude $A = u_{\text{Scale}}$:</span>
+                <span id="lbl-sig-amp" class="text-amber-300 font-bold">0.80</span>
+              </div>
+              <input type="range" id="inp-sig-amp" min="0.1" max="2.0" step="0.05" value="0.80" oninput="updateSignalSplitCalc()" class="w-full accent-amber-400 cursor-pointer" />
+            </div>
+
+            <div id="signal-split-readout" class="space-y-2 text-xs mono">
+              <!-- Populated by updateSignalSplitCalc() -->
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400">
+            <strong class="text-cyan-300">Weitzenböck Identity (Lemma 4 Part 2):</strong> With $S = Q_1+Q_2+Q_3$ and Gram quadrea $A_R = S^2 - 2\sum Q_i^2$, $S^2 - 3A_R = 2\sum_{i<j}(Q_i-Q_j)^2 = 6|z|^2 \ge 0$, so $\chi = \sqrt{A_R}/S \le 1/\sqrt{3}$.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: (1+i)^k SPINOR CLOCK, 720->72->10 PUMP & RATIONAL SLERP/BCH  -->
+    <!-- =================================================================== -->
+    <section id="tab-pump" class="tab-section hidden space-y-8">
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-l-amber-400 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xs mono uppercase px-2.5 py-1 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Sections 3 &amp; 4 of Monograph • Lemmas 7, 11, 12 &amp; 13</span>
+          <span class="text-xs mono text-slate-400">Right-Acting Middle Multiplication $Q^{(10)} = (Q^{(12)})^{-1}$</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">
+          The Projective $(1+i)^k$ Spinor Clock &amp; The $720 \to 72 \to 10$ Torsional Markov Memory-Offload Pump
+        </h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Explore why Niven's theorem forbids a $45^\circ$ spatial step over $\mathbb{Z}^4$ ($\tan^2 22.5^\circ = 3-2\sqrt{2} \notin \mathbb{Q}$) while $(1+i)^k$ realizes the exact 8-step spinor double-cover cycle in 2 signed bits, and step through the $720 \to 72 \to 10$ Torsional Markov Pump with its exact $(8,7,7,7,7,8,7,7,7,7)$ coarse block partition, right-acting inverse cancellation, rational Cayley SLERP replacement, and rational valve kernel $\rho_e = \frac{1}{1+\lambda A_e}$.
+        </p>
+      </div>
+
+      <!-- Interactive 720 -> 72 -> 10 Torsional Pump & Gear Inspector -->
+      <div class="glass-card rounded-2xl p-6 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white">Interactive $720 \to 72 \to 10$ Three-Gear Torsional Pump Simulator</h3>
+            <p class="text-xs text-slate-400">Scrub fine frame $n \in [0, 719]$ to inspect the outer 12-point gear ($q_n^{(12)}$), middle 10-point inverse gear ($\delta_m = \Delta Q_m^{-1}$), and inner 8-point coarse gear ($A_l$)</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="setPumpFrame(180)" class="px-2.5 py-1.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs mono">Jump n=180 (Onload Apex)</button>
+            <button onclick="setPumpFrame(360)" class="px-2.5 py-1.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs mono">Jump n=360 (-1 Sheet Node)</button>
+            <button onclick="setPumpFrame(540)" class="px-2.5 py-1.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs mono">Jump n=540 (Offload Apex)</button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex justify-between text-xs mono text-slate-300">
+            <span>Outer Gear Fine Frame $n \in [0, 719]$:</span>
+            <span id="lbl-pump-n" class="text-amber-400 font-bold">n = 180</span>
+          </div>
+          <input type="range" id="inp-pump-n" min="0" max="719" step="1" value="180" oninput="setPumpFrame(parseInt(this.value))" class="w-full accent-amber-500 cursor-pointer" />
+        </div>
+
+        <!-- Visual Canvas of the 3 Concentric Gears & 10 Coarse Blocks A_0..A_9 -->
+        <div class="relative w-full h-72 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+          <canvas id="pumpGearsCanvas" class="w-full h-full block"></canvas>
+        </div>
+
+        <!-- Live Readout Cards for the 3 Gears + Clock Closures -->
+        <div id="pump-readout-cards" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs mono">
+          <!-- Populated by setPumpFrame() -->
+        </div>
+      </div>
+
+      <!-- Right-Acting Order Proof, Rational Cayley SLERP & Rational Valve Calculator -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white">Lemma 12 &amp; Lemma 9(3): Right-Acting Order &amp; Rational SLERP</h3>
+            <span class="text-xs mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">Zero $\exp/\log$ Drift</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            In the June 2026 Pump paper (§9 &amp; §11), upward reconstruction used transcendental $q^w = \exp(w\log q)$ and holonomy correction used $\epsilon = \log H$. By <strong>Lemma 12 Part 2</strong> and <strong>Lemma 9 Part 3</strong>:
+          </p>
+          <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 text-xs space-y-2">
+            <div><strong>1. Right-Acting Cancellation:</strong> Since $(AB)^{-1} = B^{-1}A^{-1}$, the outer product $Q^{(12)} = \Delta Q_{71}\cdots\Delta Q_0$ is inverted only when the middle gear multiplies in <em>right-acting chronological order</em>:</div>
+            $$Q^{(10)} = \delta_0 \delta_1 \cdots \delta_{71} = (Q^{(12)})^{-1} \implies Q^{(10)}Q^{(12)} = +1$$
+            <div><strong>2. Rational Cayley Upward Lift ($w = 1/10$):</strong> For $\mathbf{u} = \frac{\mathbf{m}}{1+w_0} = \tan(\theta/2)\hat{\mathbf{u}} \in \mathbb{Q}^3$, scaling via $\mathbf{u}_w = w\mathbf{u}\left(1 + \frac{1-w^2}{3}\|\mathbf{u}\|^2\right)^{-1}$ and lifting via $\mathcal{C}_{\text{rat}}(\mathbf{u}_w) = \frac{(1-\|\mathbf{u}_w\|^2, 2\mathbf{u}_w)}{1+\|\mathbf{u}_w\|^2}$ yields exact unit norm $N(\hat{q}) = 1$ in $\mathbb{Q}^4$!</div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-base font-bold text-white">Lemma 7(3c): Live Rational Valve &amp; BCH Drift Simulator</h3>
+              <span class="text-xs mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">Cycle Current $J > 0$</span>
+            </div>
+            <p class="text-xs text-slate-300">
+              Adjust the valve barrier $\lambda A_e > 0$ on the reverse gear edges $(10\to 12, 8\to 10, 12\to 8)$ to compute the exact rational valve factor $\rho_e = \frac{1}{1 + \lambda A_e}$ and stationary cycle current $J = \frac{(1 - \rho_{ba}\rho_{cb}\rho_{ac})\Pi_+}{Z} > 0$:
+            </p>
+            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2 text-xs mono">
+              <div class="flex justify-between">
+                <span>Valve Asymmetry Parameter $\lambda A_e$:</span>
+                <span id="lbl-valve-lam" class="text-amber-300 font-bold">2.0</span>
+              </div>
+              <input type="range" id="inp-valve-lam" min="0" max="10" step="0.5" value="2.0" oninput="updateValveCalc()" class="w-full accent-amber-400 cursor-pointer" />
+            </div>
+            <div id="valve-calc-output" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs mono space-y-1.5">
+              <!-- Populated by updateValveCalc() -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: NODE KINEMATICS, {4,3,5} HONEYCOMB & RATIONAL GHOST TREFOIL  -->
+    <!-- =================================================================== -->
+    <section id="tab-kinematics" class="tab-section hidden space-y-8">
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-l-purple-400 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xs mono uppercase px-2.5 py-1 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">Section 5 of Monograph • Lemma 8 (Steps 1–6) &amp; Propositions 6.1–6.5</span>
+          <span class="text-xs mono text-slate-400">$\{4,3,5\}$ Half-Width $a = \varphi^{-3/2} = 0.485868$ • Trefoil $r_{\max} = 0.2520 < a$</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">
+          12-Node Kinematic Trajectory Calculator, $\{4,3,5\}$ Honeycomb Boosts &amp; Step 6 Ghost Projection
+        </h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Compare the upgraded <strong>2026i Exact Spinor-Hyperbolic Kinematics</strong> in <span class="mono text-purple-300">calculateNodePos(nodeIndex, step)</span> against the legacy 2025 linear interpolation, and explore how Step 6 lifts the rational Weierstrass trefoil $T_s(u)$ into $\mathbb{H}^3$ via the Ghost Map $G(\mathbf{p})$ and projects it into the six face-neighbouring $\{4,3,5\}$ cells via $B_{\pm k}$.
+        </p>
+      </div>
+
+      <!-- Interactive 12-Node Kinematics Visualizer (2026i Exact vs 2025 Legacy) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white">Interactive 12-Node Trajectory Comparison: 2026i Exact vs. 2025 Legacy</h3>
+              <p class="text-xs text-slate-400">Solid Cyan = 2026i Spinor Screw + $\{4,3,5\}$ Klein Cell Lerp | Dashed Rose = Legacy 2025 Linear Breath</p>
+            </div>
+            <select id="kinNodeSelect" onchange="drawKinematicsCanvas()" class="bg-slate-900 text-xs mono text-white px-3 py-1.5 rounded border border-slate-700">
+              <option value="0">Node i=0 (Branch j=0 Red, Edge [C₀, C₀, 0])</option>
+              <option value="4">Node i=4 (Branch j=1 Green, Edge [C₀, 0, C₀])</option>
+              <option value="8">Node i=8 (Branch j=2 Blue, Edge [0, C₀, C₀])</option>
+            </select>
+          </div>
+
+          <div class="relative w-full h-72 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+            <canvas id="kinematicsCanvas" class="w-full h-full block"></canvas>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs mono text-slate-300">
+              <span>Scrub Frame $n \in [0, 720]$ (Note $n=360$ Envelope Node vs $n=180, 540$ Handshake Apices):</span>
+              <span id="lbl-kin-step" class="text-cyan-300 font-bold">n = 180 (k=2 Onload Apex)</span>
+            </div>
+            <input type="range" id="inp-kin-step" min="0" max="720" step="1" value="180" oninput="drawKinematicsCanvas()" class="w-full accent-cyan-400 cursor-pointer" />
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <h4 class="text-sm font-bold text-white mono border-b border-slate-800 pb-2">Exact Equations in <span class="text-cyan-300">calculateNodePos(i, n)</span></h4>
+            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2">
+              <div><strong>1. Macro-Octant &amp; Spread Envelope:</strong></div>
+              $$\Phi(n) = \frac{2\pi n}{720}, \quad \kappa(n) = \frac{n}{90} \in [0,8], \quad s_{\text{env}}(n) = \sin^2\!\left(\frac{\kappa(n)\pi}{4}\right)$$
+              <div><strong>2. Klein Radius Interpolation ($0.2520 \leftrightarrow 0.4859 \leftrightarrow 1.0$):</strong></div>
+              $$r_{\text{Klein}}(n) = 0.2520 + 0.7480\left(0.35 + 0.65 s_{\text{env}}\right)\left(0.65 + 0.35\cos\Phi\right)$$
+              <div><strong>3. Edge-to-Golden-Face Lerp &amp; $720^\circ$ Screw:</strong></div>
+              $$\mathbf{b}_i(n) = r_{\text{Klein}}(n)\left[s_{\text{env}}\mathbf{e}_i + (1-s_{\text{env}})a\,\mathbf{f}_{f(i)}\right]$$
+            </div>
+            <div id="kin-live-numbers" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs mono space-y-1">
+              <!-- Populated by drawKinematicsCanvas() -->
+            </div>
+          </div>
+
+          <div class="bg-purple-950/30 border border-purple-500/30 p-3 rounded-xl text-xs text-slate-300">
+            <strong class="text-purple-300">Step 6 Ghost Collapse (Prop. 7.17):</strong> At $k=6$ (spinor $-i$), the inverse boosts $B_{+k}^{-1}$ pull the three positive ghost tetrahedra from the face-neighbour $\{4,3,5\}$ cells back into the central cell, where $\Delta_1 \cup (-\Delta_1) = \{\pm 1\}^3$ fills all 8 vertices of the core cube.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: THE 7 INTERACTION POINTS & DUAL-SLICE 3x3x3 COLLISION LAB    -->
+    <!-- =================================================================== -->
+    <section id="tab-interactions" class="tab-section hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-l-amber-400 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xs mono uppercase px-2.5 py-1 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Section 6 of Monograph • Complete Catalog of All 7 Interaction Mechanisms</span>
+          <span class="text-xs mono text-slate-400">Dual $3\times 3\times 3$ Cubic Slices A &amp; B + Interactive 3D Voxel Identifier</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">
+          Interactive Dual-Slice $3\times 3\times 3$ Trajectory, 3D Voxel Identifier &amp; 7-Point Interaction Lab
+        </h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Select any two voxels <strong>Slice A</strong> ($\mathbf{v}_A, Z_A$) and <strong>Slice B</strong> ($\mathbf{v}_B, Z_B$) in the $3\times 3\times 3$ cubic lattice (or click directly on voxels in the 3D view below) to inspect how each voxel's $\{4,3,5\}$ hyperbolic boost $B_{\mathbf{v}}$, local Zeta stream phase $t(\mathbf{v}, Z, n)$, and 3D lattice offset transform the 12 node trajectories and all <strong>7 mathematical interaction points</strong>.
+        </p>
+      </div>
+
+      <!-- Unified Dual-Slice Control Console -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="text-xs font-bold text-white mono uppercase flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            <span>Dual-Slice $3\times 3\times 3$ Voxel, Depth &amp; Spinor Phase Controls</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs mono">
+            <span class="text-slate-400">Click 3D Voxel Target:</span>
+            <button onclick="setClickTargetSlice('A')" id="btn-target-sliceA" class="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 font-bold">Select Slice A (Cyan)</button>
+            <button onclick="setClickTargetSlice('B')" id="btn-target-sliceB" class="px-2.5 py-1 rounded bg-slate-800 text-fuchsia-300 border border-fuchsia-500/40 hover:bg-slate-700">Select Slice B (Magenta)</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs mono">
+          <!-- Frame n -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-cyan-300 mb-1">
+              <span>Frame $n$:</span>
+              <span id="lbl-int-n" class="font-bold">180</span>
+            </div>
+            <input type="range" id="inp-int-n" min="0" max="720" step="1" value="180" oninput="updateInteractionLab()" class="w-full accent-cyan-400 cursor-pointer" />
+            <div class="text-[10px] text-slate-500 mt-1">Octant $\kappa = n/90$, $k_A = n\bmod 8$</div>
+          </div>
+
+          <!-- Spinor Offset dk -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-fuchsia-300 mb-1">
+              <span>Spinor Offset $\Delta k$:</span>
+              <span id="lbl-int-dk" class="font-bold">+4 (180°)</span>
+            </div>
+            <input type="range" id="inp-int-dk" min="0" max="7" step="1" value="4" oninput="updateInteractionLab()" class="w-full accent-fuchsia-400 cursor-pointer" />
+            <div class="text-[10px] text-slate-500 mt-1">Shifts Slice B by $90\Delta k + \Delta k$</div>
+          </div>
+
+          <!-- Slice A Voxel -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-cyan-500/30">
+            <span class="text-cyan-300 font-semibold block mb-1">Slice A Voxel $\mathbf{v}_A$:</span>
+            <select id="inp-int-voxA" onchange="updateInteractionLab()" class="w-full bg-slate-900 text-cyan-200 px-2 py-1.5 rounded border border-slate-700">
+              <option value="0,0,0" selected>[0,0,0] Center Core K</option>
+              <option value="1,0,0">[+1,0,0] East Face B₊₁</option>
+              <option value="-1,0,0">[-1,0,0] West Face B₋₁</option>
+              <option value="0,1,0">[0,+1,0] North Face B₊₂</option>
+              <option value="0,-1,0">[0,-1,0] South Face B₋₂</option>
+              <option value="0,0,1">[0,0,+1] Anterior Z+ B₊₃</option>
+              <option value="0,0,-1">[0,0,-1] Posterior Z- B₋₃</option>
+              <option value="1,1,0">[+1,+1,0] NE Edge Neighbor</option>
+              <option value="-1,-1,0">[-1,-1,0] SW Edge Neighbor</option>
+              <option value="1,1,1">[+1,+1,+1] Apex Corner x*</option>
+              <option value="-1,-1,-1">[-1,-1,-1] Anti-Apex Corner</option>
+            </select>
+          </div>
+
+          <!-- Slice A Z-Depth -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-cyan-500/30">
+            <div class="flex justify-between text-cyan-300 mb-1">
+              <span>Slice A Depth $Z_A$:</span>
+              <span id="lbl-int-za" class="font-bold">0.50</span>
+            </div>
+            <input type="range" id="inp-int-za" min="0" max="1" step="0.02" value="0.50" oninput="updateInteractionLab()" class="w-full accent-cyan-400 cursor-pointer" />
+            <div class="text-[10px] text-slate-500 mt-1">Local plane $z_A = (Z_A - 0.5)C_{\text{space}}$</div>
+          </div>
+
+          <!-- Slice B Voxel -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-fuchsia-500/30">
+            <span class="text-fuchsia-300 font-semibold block mb-1">Slice B Voxel $\mathbf{v}_B$:</span>
+            <select id="inp-int-voxB" onchange="updateInteractionLab()" class="w-full bg-slate-900 text-fuchsia-200 px-2 py-1.5 rounded border border-slate-700">
+              <option value="0,0,0">[0,0,0] Center Core K</option>
+              <option value="1,0,0" selected>[+1,0,0] East Face B₊₁</option>
+              <option value="-1,0,0">[-1,0,0] West Face B₋₁</option>
+              <option value="0,1,0">[0,+1,0] North Face B₊₂</option>
+              <option value="0,-1,0">[0,-1,0] South Face B₋₂</option>
+              <option value="0,0,1">[0,0,+1] Anterior Z+ B₊₃</option>
+              <option value="0,0,-1">[0,0,-1] Posterior Z- B₋₃</option>
+              <option value="1,1,0">[+1,+1,0] NE Edge Neighbor</option>
+              <option value="0,1,1">[0,+1,+1] Top-North Edge</option>
+              <option value="1,1,1">[+1,+1,+1] Apex Corner x*</option>
+              <option value="-1,1,-1">[-1,+1,-1] Δ₀ Triad Corner</option>
+            </select>
+          </div>
+
+          <!-- Slice B Z-Depth -->
+          <div class="bg-slate-950 p-3 rounded-xl border border-fuchsia-500/30">
+            <div class="flex justify-between text-fuchsia-300 mb-1">
+              <span>Slice B Depth $Z_B$:</span>
+              <span id="lbl-int-zb" class="font-bold">0.75</span>
+            </div>
+            <input type="range" id="inp-int-zb" min="0" max="1" step="0.02" value="0.75" oninput="updateInteractionLab()" class="w-full accent-fuchsia-400 cursor-pointer" />
+            <div class="text-[10px] text-slate-500 mt-1">Local plane $z_B = (Z_B - 0.5)C_{\text{space}}$</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual Visual Windows: Left = 3D 3x3x3 Voxel & Slice Identifier | Right = 2D Dual-Slice Collision & Null-Cone Visualizer -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- WINDOW 1: 3D 3x3x3 VOXEL & SLICE GRAPHICAL IDENTIFIER -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 space-y-3 border border-cyan-500/30 flex flex-col justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+            <div>
+              <span class="text-[10px] mono uppercase px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">3D Graphical Slice Identifier</span>
+              <h3 class="text-sm sm:text-base font-bold text-white mt-0.5">3D $3\times 3\times 3$ Cubic Lattice &amp; Inter-Voxel Laser Bridges</h3>
+            </div>
+            <div class="flex items-center gap-1 text-[10px] mono">
+              <button onclick="set3DCameraPreset('iso')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">Iso</button>
+              <button onclick="set3DCameraPreset('xy')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">XY</button>
+              <button onclick="set3DCameraPreset('xz')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">XZ</button>
+              <button onclick="set3DCameraPreset('yz')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">YZ</button>
+            </div>
+          </div>
+
+          <div class="relative w-full h-80 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+            <canvas id="voxel3DIdentifierCanvas" class="w-full h-full block cursor-grab active:cursor-grabbing" title="Drag to rotate 3D lattice • Click any voxel center to assign Slice A / Slice B"></canvas>
+            <div class="absolute top-2.5 left-2.5 bg-slate-900/90 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] mono space-y-0.5 pointer-events-none">
+              <div class="text-cyan-300 font-bold" id="hud3d-sliceA">Slice A: [0,0,0] (Z=0.50)</div>
+              <div class="text-fuchsia-300 font-bold" id="hud3d-sliceB">Slice B: [+1,0,0] (Z=0.75)</div>
+              <div class="text-amber-300" id="hud3d-boost">Boost: Face Neighbor (‖Δv‖₁ = 1, cosh ϑ = φ)</div>
+            </div>
+            <div class="absolute bottom-2 right-2.5 bg-slate-900/85 border border-slate-800 rounded px-2 py-0.5 text-[9.5px] mono text-slate-400 pointer-events-none">
+              Drag to Orbit 3D • Click Voxel to Select
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] mono text-slate-400 bg-slate-950 px-3 py-2 rounded-lg border border-slate-800">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span>Slice A Voxel &amp; Plane</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-fuchsia-400 inline-block"></span>Slice B Voxel &amp; Plane</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span>$\{4,3,5\}$ Golden Core &amp; Bridges</span>
+          </div>
+        </div>
+
+        <!-- WINDOW 2: 2D DUAL-SLICE COLLISION & NULL-CONE VISUALIZER -->
+        <div class="lg:col-span-6 glass-card rounded-2xl p-5 space-y-3 border border-amber-500/30 flex flex-col justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+            <div>
+              <span class="text-[10px] mono uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">2D Cross-Section &amp; Null-Cone Map</span>
+              <h3 class="text-sm sm:text-base font-bold text-white mt-0.5">Live Dual-Slice Collision &amp; Null-Cone Visualizer</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="dual2DProjMode" onchange="updateInteractionLab()" class="bg-slate-900 text-[10px] mono text-white px-2 py-1 rounded border border-slate-700">
+                <option value="boosted" selected>Pull-Back Overlay (B_v⁻¹ Boosted)</option>
+                <option value="world">World Lattice Offset View</option>
+              </select>
+              <span id="int-main-badge" class="text-[10px] mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">Active Hotspots</span>
+            </div>
+          </div>
+
+          <div class="relative w-full h-80 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+            <canvas id="dualInteractionCanvas" class="w-full h-full block"></canvas>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] mono text-slate-300 bg-slate-950 px-3 py-2 rounded-lg border border-slate-800">
+            <span id="hud2d-phase-diff" class="text-cyan-300">Phase Δt = +12.50 rad</span>
+            <span id="hud2d-world-dist" class="text-amber-300">3D Voxel Dist = 25.78 units (2.06 C₀)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Grid: Live Telemetry for All 7 Interaction Points -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="seven-interactions-cards">
+        <!-- Populated dynamically by updateInteractionLab() -->
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 5: LAYER V MULTI-ENGINE FABRIC, MONOID COLLAPSE & 16-MAC        -->
+    <!-- =================================================================== -->
+    <section id="tab-layer5" class="tab-section hidden space-y-8">
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-400 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xs mono uppercase px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Sections 8, 9 &amp; 10 of Monograph • Layer V (§7) + Companion Papers</span>
+          <span class="text-xs mono text-slate-400">12+1 Parity Hierarchy • Four-Structure Sandwich $A_j I_j A_j^{-1} E_j = 1$ • 64 Streams</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">
+          Layer V Multi-Engine Memory, Monoid Collapse Graph Traversal &amp; Strassen-Clifford 16-MAC Execution
+        </h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Test the system-level architectures derived in Section 7 of <em>The Fifteen Lemmas</em>, <em>Monoid Collapse and Mass-Node Traversal</em>, and <em>Quaternionic Delta Encoding on Golden Strassen-Clifford Toroids</em>.
+        </p>
+      </div>
+
+      <!-- Interactive 12+1 Engine Parity & Four-Structure Sandwich Simulator -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] mono uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Propositions 7.11 – 7.20 • 12+1 Engine Hierarchy &amp; Sandwich Closure</span>
+              <h3 class="text-base font-bold text-white mt-1">Interactive 13-Engine Cuboctahedral Parity &amp; Four-Structure Sandwich</h3>
+            </div>
+            <select id="erasureScenarioSelect" onchange="updateLayer5Sim()" class="bg-slate-900 text-xs mono text-white px-3 py-1.5 rounded border border-slate-700">
+              <option value="single">Scenario 1: Erase 1 Engine per Group (A₁, B₂, C₃ Lost)</option>
+              <option value="meta13" selected>Scenario 2: Erase Data A₁ AND its Parity Fourth F_A (13th Engine F_* Saves!)</option>
+              <option value="sandwich">Scenario 3: Four-Structure Sandwich A_j I_j A_j⁻¹ E_j = 1 (3-of-8 Erasure Recovery)</option>
+            </select>
+          </div>
+
+          <div id="layer5-sim-display" class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-3 text-xs mono">
+            <!-- Populated by updateLayer5Sim() -->
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Monoid Collapse & 16-MAC Strassen-Clifford Matrix Explorer -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <h3 class="text-base font-bold text-white border-b border-slate-800 pb-2">Strassen-Clifford 16-MAC vs. Zero-Multiply Stepper</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              By Lemma 8 Step 2.1, a quaternion $q_a = w_a + x_a i + y_a j + z_a k$ acts via the scalar-plus-skew-symmetric matrix $Q_a = w_a I_4 + S(x_a,y_a,z_a)$ satisfying $Q_a^T Q_a = N(q_a)I_4$:
+            </p>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs overflow-x-auto">
+              $$Q_a = \begin{pmatrix} w_a & -x_a & -y_a & -z_a \\ x_a & w_a & -z_a & y_a \\ y_a & z_a & w_a & -x_a \\ z_a & -y_a & x_a & w_a \end{pmatrix}$$
+            </div>
+            <div class="space-y-2 text-xs mono">
+              <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex justify-between">
+                <span class="text-slate-400">Naive $4\times 4$ Matrix Product:</span>
+                <span class="text-rose-400 font-bold">64 Multiplications</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex justify-between">
+                <span class="text-slate-400">Golden Clifford Toroid $\Delta q_n$:</span>
+                <span class="text-cyan-300 font-bold">16 MACs (Sub-Cubic DAG)</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/40 flex justify-between">
+                <span class="text-emerald-300">$(1+i)^k$ Clock &amp; $U_{\text{even}}, g_3, g_2$:</span>
+                <span class="text-emerald-400 font-bold">0 Multiplications (Sign Flips!)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300">
+            <strong class="text-amber-300">Monoid Jump-Ahead Theorem (Section 9):</strong> Mapping continuous paths $T_1 \circ \dots \circ T_k$ via $\phi: X \to 2O/\mathbb{R}^\times$ or $\mathbb{Z}/24\mathbb{Z}$ achieves $O(1)$ jump-ahead, while Dijkstra over the 27-stream mass-node graph uses $c_{ij}^{\text{GET}} = \frac{Q_h(i,j)}{M_i(X_b)+M_j(X_b)+\epsilon}$.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 6: 64-BIT EINSTEIN TILE (FORMS 0–15) & TRIG REPLACEMENT LAB     -->
+    <!-- =================================================================== -->
+    <section id="tab-trig" class="tab-section hidden space-y-8">
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-400 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xs mono uppercase px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Sections 7 &amp; 11 of Monograph • Forms 0–15 Codex &amp; Closed-Form Garner CRT</span>
+          <span class="text-xs mono text-slate-400">$(c_{12}, c_{23}, c_{13}) = (441, 665, 739)$ for $(881, 883, 887)$</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">
+          64-Bit Einstein Tile (Forms 0–15), Closed-Form Garner CRT &amp; Master $\sin/\cos/\tan$ Replacement Lab
+        </h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Test the closed-form polynomial Garner CRT reconstruction of <strong>Lemma 9 Part 2</strong> across $(881, 883, 887)$, inspect the 16 payload forms (Forms 0–15, including Codex Shapes 4–15), and verify every algebraic replacement formula from Section 11 of the monograph.
+        </p>
+      </div>
+
+      <!-- Interactive Closed-Form Garner CRT & Codex Form Explorer -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white">Lemma 9 Part 2: Closed-Form Garner CRT Reconstructor</h3>
+            <span class="text-xs mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">Range $M = 690,017,701$</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Enter any cubic state $X \in [0, 690017700]$ to encode its 30-bit Form 2 residue triple $(x_1, x_2, x_3) \bmod (881, 883, 887)$ and reconstruct $X$ in $O(1)$ using the closed-form polynomial inverses $c_{12} = \frac{p+1}{2} = 441$, $c_{23} = \frac{3p+17}{4} = 665$, and $c_{13} = \frac{5p+29}{6} = 739$:
+          </p>
+          <div class="flex items-center gap-3">
+            <input type="number" id="inp-crt-x" value="412895617" min="0" max="690017700" oninput="updateGarnerCrtCalc()" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs mono text-white w-56" />
+            <button onclick="document.getElementById('inp-crt-x').value = Math.floor(Math.random()*690017700); updateGarnerCrtCalc();" class="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs mono">Randomize State X</button>
+          </div>
+          <div id="garner-crt-output" class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-1.5 text-xs mono">
+            <!-- Populated by updateGarnerCrtCalc() -->
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white">Section 6.1: Einstein Tile Forms 0–15 &amp; Codex Shapes</h3>
+            <span class="text-xs mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">Bits [43:40] Form ID</span>
+          </div>
+          <select id="codexFormSelect" onchange="updateCodexInspector()" class="w-full bg-slate-950 text-xs mono text-white px-3 py-2 rounded-lg border border-slate-700">
+            <option value="0">Form 0: Smallest-Three Quantized Unit Quaternion (Lossy, ||g'(v)|| ≤ 1)</option>
+            <option value="1">Form 1: Hurwitz Doubled Integer Core 2Q = (2w,2x,2y,2z) (Exact, N(Q) ≤ 16,129)</option>
+            <option value="2">Form 2: Prime-Triplet CRT (881, 883, 887) (Exact on [0, 690,017,701))</option>
+            <option value="3" selected>Form 3: Zeta 3-Branch Codec (z₁₀, y₁₀, x₁₀) / Exact IEEE-754 Quad-Slice</option>
+            <option value="4">Form 4 (Codex): Voxel Cube V = [-2,2]³ (64 cells, Lemma 5)</option>
+            <option value="5">Form 5 (Codex): Inner Core Cube K = [-1,1]³ (8 cells, Lemma 5)</option>
+            <option value="6">Form 6 (Codex): Stella Octangula Δ₁ ∪ (-Δ₁) (8 vertices, §7.5)</option>
+            <option value="7">Form 7 (Codex): Cuboctahedron D₃ Nearest Neighbours (12 points, §7.1)</option>
+            <option value="8">Form 8 (Codex): Geodesic Icosahedron of Frequency ν (10ν²+2 points, Lemma 8)</option>
+            <option value="9">Form 9 (Codex): Hurwitz Units 2T (24 elements, Lemmas 5 & 13)</option>
+            <option value="10">Form 10 (Codex): Binary Dihedral Group 2D₃ (12 elements, Lemma 8 Prop. 6.3)</option>
+            <option value="11">Form 11 (Codex): Nine-Ray Latitude Circle x(s) (9 points, Lemma 8 Step 1)</option>
+            <option value="12">Form 12 (Codex): Central Cell + Six Ghost Cells of {4,3,5} (7 cells, Prop. 6.4)</option>
+            <option value="13">Form 13 (Codex): Golden Circle Points k/φ mod 1 (F_m points, Lemma 11)</option>
+            <option value="14">Form 14 (Codex): Primorial Wheel Units mod 30 (8 classes, Lemma 4 Part 5)</option>
+            <option value="15">Form 15 (Codex): User-Defined Escape Codex (Attested by 256-bit Merkle Root τ₁)</option>
+          </select>
+          <div id="codex-inspector-output" class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2 text-xs">
+            <!-- Populated by updateCodexInspector() -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Master Compendium Table of Sin/Cos/Tan/Sinh/Cosh/Exp/Log Replacements (Table 5 of Monograph) -->
+      <div class="glass-card rounded-2xl p-6 space-y-4">
+        <div class="border-b border-slate-800 pb-3">
+          <h3 class="text-lg font-bold text-white">Section 11: Master Compendium of $\sin, \cos, \tan, \sinh, \cosh, \tanh, \exp, \log$ Replacements</h3>
+          <p class="text-xs text-slate-400">Complete lookup table of every transcendental replacement formula and hardware optimization in the Zeta Energy System monograph</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 mono uppercase">
+                <th class="py-3 px-3">Legacy Transcendental</th>
+                <th class="py-3 px-3">Subsystem in Zeta Energy System</th>
+                <th class="py-3 px-3 text-emerald-300">Exact Geometric Engine Replacement</th>
+                <th class="py-3 px-3">Governing Lemma / Prop.</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/70 text-slate-300">
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$\cos(k\pi/4), \sin(k\pi/4)$</td>
+                <td class="py-3 px-3">8-step spinor clock &amp; shader envelope $A_k$</td>
+                <td class="py-3 px-3">Projective Gaussian $(1+i)^k/2^{\lfloor k/2\rfloor} = a_k + i b_k \in \{-1,0,1\}^2$; rational spread $s_k = \frac{b_k^2}{a_k^2+b_k^2} \in \{0, \frac{1}{2}, 1\}$.</td>
+                <td class="py-3 px-3 mono">Lemma 13(4); Prop. 2.2, 8.2</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$\cos\theta, \sin\theta, \tan\theta$</td>
+                <td class="py-3 px-3">$S^3$ rotations &amp; Golden Clifford Toroid $q(\theta_1,\theta_2)$</td>
+                <td class="py-3 px-3">Rational Weierstrass/Cayley $u = \tan(\theta/2) \in \mathbb{Q}$: $\cos\theta = \frac{1-u^2}{1+u^2}, \sin\theta = \frac{2u}{1+u^2}, \tan\theta = \frac{2u}{1-u^2}$.</td>
+                <td class="py-3 px-3 mono">Lemma 9(3); Lemma 8 Prop. 6.2</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$\sin t + 2\sin 2t, \dots$</td>
+                <td class="py-3 px-3">Parametric $(2,3)$-trefoil knot $T_s(t)$</td>
+                <td class="py-3 px-3">Rational degree-6 polynomials in $u = \tan(t/2)$ on $[0,\pi/3]$ + 6 integer $D_3$ matrices $g_3, g_2 \in O(3,\mathbb{Z})$.</td>
+                <td class="py-3 px-3 mono">Lemma 8 Step 6 &amp; Prop. 6.1–6.2</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$\cos 40^\circ, \sin 40^\circ$</td>
+                <td class="py-3 px-3">9-phase wheel $\mu_9$ &amp; tetrahedra $\Delta_1, \Delta_2$</td>
+                <td class="py-3 px-3">Cubic field $\mathbb{Q}(c)$ ($c^3-3c+1=0$) circulant $R(\rho_0,\rho_1,\rho_2)$ ($9y^3-9y^2+1=0$); $\bmod\ 881: c \equiv 120, 302, 459$.</td>
+                <td class="py-3 px-3 mono">Lemma 8.2; Prop. 8.3, 8.8</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$\frac{\sin\angle BAD}{\sin\angle CAD}, \|u\|\|v\|\sin\theta$</td>
+                <td class="py-3 px-3">Symmedians, Klein gate $x_F$, &amp; triangle area</td>
+                <td class="py-3 px-3">Symmedian quadrance ratio $Q_3/Q_2$, harmonic bundle $(0,2C_0;4C_0,\frac{4}{3}C_0)=-1$, &amp; 128-bit Gram $A_R = 4(Q_2 Q_3 - \langle u,v\rangle^2)$.</td>
+                <td class="py-3 px-3 mono">Lemma 3; Lemma 5 Parts 1, 3, 6a</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$\cosh d_{\mathbb{H}}, \sinh d_{\mathbb{H}}, \operatorname{artanh}|p|$</td>
+                <td class="py-3 px-3">Hyperbolic projection &amp; non-contact kernel</td>
+                <td class="py-3 px-3">Rational Ghost Map $G(\mathbf{p}) = \left(\frac{1+|\mathbf{p}|^2}{1-|\mathbf{p}|^2}, \frac{2\mathbf{p}}{1-|\mathbf{p}|^2}\right)$ and kernel $Q_h(i,j) = \langle G_i, G_j\rangle_L^2 - 1 = \sinh^2 d_{\mathbb{H}}$.</td>
+                <td class="py-3 px-3 mono">Lemma 8 Prop. 6.2; Thm. 7.8</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$q^w = \exp(w\log q), \log H_4$</td>
+                <td class="py-3 px-3">Torsional Pump upward SLERP &amp; drift</td>
+                <td class="py-3 px-3">Rational Cayley tangent scaling $\mathcal{C}_{\text{rat}}(\mathbf{u}_w)$ &amp; BCH cross-product series $-\log H_4 = \sum\epsilon_a + \sum_{a<b}\epsilon_a\times\epsilon_b$.</td>
+                <td class="py-3 px-3 mono">Lemma 7(3b); Lemma 9(3)</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 mono text-rose-300">$e^{-\beta(V(b)-V(a))}$</td>
+                <td class="py-3 px-3">Markov pump &amp; 64-voxel transition kernel</td>
+                <td class="py-3 px-3">Exact rational valve $\rho_e = \frac{1}{1+\lambda A_e} \in \mathbb{Q}$ and Sparsemax projection on $Q_h$ logits.</td>
+                <td class="py-3 px-3 mono">Lemma 7(3c, 3e); Thm. 7.9</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-4 px-4 sm:px-6 lg:px-8 mt-12">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+      <div>Zeta Energy System Architecture Explorer • Hoard (2026a–i) &amp; The Fifteen Lemmas</div>
+      <div class="mono text-slate-400">30-Wheel Proposer • $(1+i)^k$ Clock • $720\to 72\to 10$ Pump • $\{4,3,5\}$ Honeycomb • 7 Interaction Points</div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC FOR ALL 6 INTERACTIVE TABS                           -->
+  <!-- ===================================================================== -->
+  <script>
+    const PHI = (1 + Math.sqrt(5)) / 2;
+    const KLEIN_A = Math.pow(PHI, -1.5); // 0.48586827
+    const C0_SIM = 12.5;
+
+    const GAUSSIAN_CLOCK = [
+      { k: 0, name: 'Zero Point', re:  1, im:  0, spinor: '+1',         spread: 0.0, spreadStr: '0 (Node)' },
+      { k: 1, name: 'Seed',       re:  1, im:  1, spinor: '(1+i)/√2',   spread: 0.5, spreadStr: '1/2' },
+      { k: 2, name: 'Onload',     re:  0, im:  1, spinor: '+i (Apex)',  spread: 1.0, spreadStr: '1 (Onload)' },
+      { k: 3, name: 'Project',    re: -1, im:  1, spinor: '(-1+i)/√2',  spread: 0.5, spreadStr: '1/2' },
+      { k: 4, name: 'Invert',     re: -1, im:  0, spinor: '-1 (Sheet)', spread: 0.0, spreadStr: '0 (Node)' },
+      { k: 5, name: 'Fold',       re: -1, im: -1, spinor: '(-1-i)/√2',  spread: 0.5, spreadStr: '1/2' },
+      { k: 6, name: 'Offload',    re:  0, im: -1, spinor: '-i (Apex)',  spread: 1.0, spreadStr: '1 (Offload)' },
+      { k: 7, name: 'Index',      re:  1, im: -1, spinor: '(1-i)/√2',   spread: 0.5, spreadStr: '1/2' }
+    ];
+
+    const COARSE_SIZES = [8, 7, 7, 7, 7, 8, 7, 7, 7, 7];
+    const COARSE_STARTS = [0, 8, 15, 22, 29, 36, 44, 51, 58, 65, 72];
+
+    function renderMathSafe(el) {
+      if (window.renderMathInElement && el) {
+        renderMathInElement(el, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ]
+        });
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.className = 'nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800';
+      });
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (tabId === 'tab-interactions') {
+        activeBtn.className = 'nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 flex items-center gap-1.5';
+      } else if (tabId === 'tab-trig') {
+        activeBtn.className = 'nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20';
+      } else {
+        activeBtn.className = 'nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/20';
+      }
+
+      if (tabId === 'tab-arch') drawManifoldShellsCanvas();
+      if (tabId === 'tab-pump') setPumpFrame(parseInt(document.getElementById('inp-pump-n').value || '180'));
+      if (tabId === 'tab-kinematics') drawKinematicsCanvas();
+      if (tabId === 'tab-interactions') updateInteractionLab();
+      if (tabId === 'tab-layer5') updateLayer5Sim();
+      if (tabId === 'tab-trig') {
+        updateGarnerCrtCalc();
+        updateCodexInspector();
+      }
+    }
+
+    // =========================================================================
+    // TAB 1 LOGIC: FUNCTION MAPPER, MANIFOLD SHELLS & C_3 SIGNAL CALCULATOR
+    // =========================================================================
+    const CODE_FUNCTIONS = [
+      {
+        name: 'getZetaPrimeWheel(t) / getZeta(t)',
+        role: '30-Wheel Prime-Weighted Harmonic Carrier',
+        eq: '$$Z(t) = \\sum_{p \\in P_{10}} \\frac{1}{\\sqrt{p}} \\cos(t \\ln p), \\quad P_{10} = \\{1,2,3,5,7,11,13,17,19,23\\}$$',
+        lemma: 'Hoard (2026e) Prop. 3.2; Fifteen Lemmas Lemma 4 Part 5',
+        desc: 'Generates the longitudinal carrier wave across the 9 streams using the 10 generator primes/units of the 30-wheel (which rejects $22/30 = 73.3\\%$ of composites in $O(1)$ and splits mod 30 units by the Legendre symbol $(b/5) = \\chi_{60}^2$).'
+      },
+      {
+        name: 'vertexShaderTube',
+        role: 'C₃ Apex Modulation & Rational Spread Envelope',
+        eq: '$$E_{\\text{scalar}} = u_{\\text{Scale}}(0.65 + 0.35 s_k)\\left(\\frac{p_1+p_2+p_3}{3} + S(t)\\right)$$',
+        lemma: 'Hoard (2026i) Prop. 2.3(3), Prop. 3.4 & Prop. 8.2',
+        desc: 'Displaces tube vertices radially along their normal by the $C_3$ apex scalar invariant $s/3 = (p_1+p_2+p_3)/3$, active Gaussian soliton spikes $S(t)$, and the square-root-free spinor spread $s_k = \\sin^2(k\\pi/4) \\in \\{0, 1/2, 1\\}$.'
+      },
+      {
+        name: 'fragmentShaderTube & fragmentShaderShell',
+        role: '120° Triad Spirals & Handshake Apex Highlight',
+        eq: '$$l_j = \\operatorname{smoothstep}\\!\\left(0.78, 1.0, \\sin\\left(\\phi + \\frac{2\\pi j}{3}\\right)\\right), \\quad j \\in \\{0,1,2\\}$$',
+        lemma: 'Hoard (2026i) Prop. 2.1, Prop. 3.7 & Prop. 7.1',
+        desc: 'Renders the three $120^\\circ$ phase branches and superimposes the 24-frame CRT and 72-block pump grid onto the outer cylindrical shell, glowing golden at the handshake apices $k \\in \\{2, 6\\}$ ($s_k = 1$).'
+      },
+      {
+        name: 'GAUSSIAN_CLOCK[k]',
+        role: 'Exact Projective Spinor Clock in 2 Signed Bits',
+        eq: '$$\\epsilon_k = \\frac{(1+i)^k}{2^{\\lfloor k/2\\rfloor}} = a_k + i b_k \\in \\{-1,0,1\\}^2, \\quad s_k = \\frac{b_k^2}{a_k^2+b_k^2}$$',
+        lemma: 'Fifteen Lemmas Lemma 13 Part 4; Hoard (2026i) Prop. 2.2 & 2.4',
+        desc: 'Bypasses Niven’s bound (no rational unit quaternion has order 8) by running the clock projectively on $(1+i)^k$ and dividing out $\\gcd = 2^{\\lfloor k/2\\rfloor}$, keeping coordinates strictly in $\\{-1,0,1\\}$.'
+      },
+      {
+        name: 'applyWheelRotation40(vec, power)',
+        role: 'Exact 40° Circulant Rotation of the 9-Phase Wheel μ₉',
+        eq: '$$R = \\begin{pmatrix}\\rho_0 & \\rho_1 & \\rho_2 \\\\ \\rho_2 & \\rho_0 & \\rho_1 \\\\ \\rho_1 & \\rho_2 & \\rho_0\\end{pmatrix} \\in \\mathbb{Q}(2\\cos 40^\\circ), \\quad 9y^3 - 9y^2 + 1 = 0$$',
+        lemma: 'Fifteen Lemmas Lemma 8.2; Hoard (2026i) Prop. 3.1 & Prop. 8.3',
+        desc: 'Rotates the $a=0$ cube-vertex tetrahedron $\\Delta_0$ by $40^\\circ$ and $80^\\circ$ about $(1,1,1)$ to generate $\\Delta_1$ and $\\Delta_2$ on the circumsphere $\\|x\\|^2 = 3$, satisfying $R^3 = g_3$ and $R^9 = I$ exactly.'
+      },
+      {
+        name: 'getCoarseGearBlock(m) & updateTelemetryBar(n)',
+        role: '720 → 72 → 10 Torsional Markov Pump & Clock Closures',
+        eq: '$$m = \\lfloor n/10\\rfloor \\in [0,71], \\quad l = \\lfloor 10m/72\\rfloor \\in [0,9], \\quad H = Q^{(8)}Q^{(10)}P = P^{-1}$$',
+        lemma: 'Hoard (2026b); Fifteen Lemmas Lemma 11(4) & Lemma 12',
+        desc: 'Maps fine frame $n$ into the 72 middle inverse aggregates and the 10 coarse blocks of exact sizes $(8,7,7,7,7,8,7,7,7,7)$, tracking the open holonomy $P = q_n q_0^{-1}$ and multi-clock closures ($2|n$ Cs, $3|n$ 40Hz, $5|n$ 432Hz, $120|n$ Master).'
+      },
+      {
+        name: 'ExactTrefoilCurve',
+        role: 'D₃-Symmetric Trefoil Inside {4,3,5} Golden Cell',
+        eq: '$$T_s(t) = (\\sin t + 2\\sin 2t,\\; \\cos t - 2\\cos 2t,\\; -s\\sin 3t), \\quad r_{\\max} = 0.2520 < a = 0.4859$$',
+        lemma: 'Fifteen Lemmas Lemma 8 Step 6 & Prop. 6.1–6.5',
+        desc: 'Embeds the $(2,3)$-trefoil knot inside the central hyperbolic Klein cell $[-a,a]^3$ ($a = \\varphi^{-3/2}$); admits exact rational parameterization via $u = \\tan(t/2)$ and $6:1$ table folding via $D_3 \\subset O(3,\\mathbb{Z})$.'
+      },
+      {
+        name: 'calculateNodePos(nodeIndex, step)',
+        role: '12-Node Spinor-Hyperbolic Screw Kinematics',
+        eq: '$$\\mathbf{b}_i(n) = r_{\\text{Klein}}(n)\\left[s_{\\text{env}}(n)\\mathbf{e}_i + (1 - s_{\\text{env}}(n))a\\,\\mathbf{f}_{f(i)}\\right]$$',
+        lemma: 'Hoard (2026i) Prop. 2.3, Prop. 4.3 & Prop. 4.4',
+        desc: 'Interpolates the 12 nodes between the outer cube edges $\\mathbf{e}_i$, the golden Klein cell faces $a\\mathbf{f}_{f(i)}$, and the trefoil radius $0.2520$ while applying a $90^\\circ$-per-octant ($720^\\circ$ total) spatial screw.'
+      },
+      {
+        name: 'drawSlicer & updateCompressionNodes',
+        role: 'Dual 3×3×3 Cubic Slicer & 7-Point Interaction Detector',
+        eq: '$$\\langle X(\\hat{\\mathbf{x}}_A), X(\\hat{\\mathbf{x}}_B)\\rangle = -\\frac{1}{2}\\|\\hat{\\mathbf{x}}_A - \\hat{\\mathbf{x}}_B\\|^2, \\quad d_{\\text{3D},i} < 6.0 \\approx a C_0$$',
+        lemma: 'Fifteen Lemmas Lemma 8 Step 2; Hoard (2026i) Prop. 3.3',
+        desc: 'Positions Slice A and Slice B across the $3\\times 3\\times 3$ voxel lattice, renders 3D laser bridges, detects 2D/3D trajectory hotspots, evaluates the $\\mathbb{R}^{4,1}$ conformal null-cone inner product, and integrates $3\\times 3$ adjacent flux.'
+      },
+      {
+        name: 'updateQuaternionDisplay & updateCharts',
+        role: '64-Bit Einstein Tile Packing & 4-Track Verification',
+        eq: '$$|z|^2 = (a^2+b^2+c^2) - (ab+bc+ca), \\quad Q_{881} \\equiv (x_{10}^2+y_{10}^2+z_{10}^2) \\pmod{881}$$',
+        lemma: 'Fifteen Lemmas §6.1 & Lemma 9; Hoard (2026i) Def. 8.10',
+        desc: 'Computes the 12 real-time $C_3$ spectrum charts, packs the live state into a 64-bit Einstein Tile word, and cross-checks Track B (Exact), Track A (Float), Track C ($138+29(i+j+k)$), and Track R ($\\bmod\\ 881$).'
+      }
+    ];
+
+    let selectedFuncIdx = 0;
+
+    function renderFuncMap() {
+      const q = (document.getElementById('funcSearch')?.value || '').toLowerCase();
+      const listEl = document.getElementById('func-list-container');
+      if (!listEl) return;
+
+      listEl.innerHTML = CODE_FUNCTIONS.map((fn, idx) => {
+        const match = !q || fn.name.toLowerCase().includes(q) || fn.role.toLowerCase().includes(q) || fn.lemma.toLowerCase().includes(q);
+        if (!match) return '';
+        const active = (idx === selectedFuncIdx);
+        return `
+          <button onclick="selectFuncItem(${idx})" class="w-full text-left p-3 rounded-xl border transition-all ${active ? 'bg-cyan-500/15 border-cyan-400 text-white' : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800'}">
+            <div class="text-xs font-bold mono ${active ? 'text-cyan-300' : 'text-amber-300'}">${fn.name}</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">${fn.role}</div>
+          </button>
+        `;
+      }).join('');
+      selectFuncItem(selectedFuncIdx);
+    }
+
+    function selectFuncItem(idx) {
+      selectedFuncIdx = idx;
+      const fn = CODE_FUNCTIONS[idx];
+      const box = document.getElementById('func-detail-box');
+      if (!box || !fn) return;
+      box.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-[10px] mono uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">${fn.lemma}</span>
+            <h4 class="text-base font-bold text-white mono mt-1">${fn.name}</h4>
+          </div>
+          <span class="text-xs mono text-amber-300">${fn.role}</span>
+        </div>
+        <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-200 overflow-x-auto">
+          ${fn.eq}
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">${fn.desc}</p>
+      `;
+      renderMathSafe(box);
+    }
+
+    function drawManifoldShellsCanvas() {
+      const canvas = document.getElementById('manifoldShellsCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      if (rect.width === 0) return;
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      const W = rect.width, H = rect.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const cx = W * 0.42, cy = H * 0.52;
+      const maxR = Math.min(cx - 24, cy - 22);
+      // Scale so 167 C_0 fits maxR, using non-linear radial compression so inner cube V is clearly visible
+      const rScale = (rCubits) => Math.pow(rCubits / 167, 0.62) * maxR;
+
+      const sel = document.getElementById('tierInspectSelect')?.value || '2';
+      const tiers = [
+        { n: 0, R: 15,  r: 4,  W: 16, min: 11,  max: 19,  col: '#38bdf8' },
+        { n: 1, R: 35,  r: 6,  W: 14, min: 29,  max: 41,  col: '#10b981' },
+        { n: 2, R: 65,  r: 8,  W: 12, min: 57,  max: 73,  col: '#f59e0b' },
+        { n: 3, R: 105, r: 10, W: 10, min: 95,  max: 115, col: '#a855f7' },
+        { n: 4, R: 155, r: 12, W: 8,  min: 143, max: 167, col: '#f43f5e' }
+      ];
+
+      // Draw 5 Disjoint Toroidal Shells A_n = [R_n - r_n, R_n + r_n] C_0
+      for (let i = 4; i >= 0; i--) {
+        const t = tiers[i];
+        const isHi = (sel === 'all' || parseInt(sel) === t.n);
+        const rIn = rScale(t.min);
+        const rOut = rScale(t.max);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, rOut, 0, Math.PI * 2);
+        ctx.arc(cx, cy, rIn, 0, Math.PI * 2, true);
+        ctx.fillStyle = isHi ? t.col + '33' : t.col + '12';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, rOut, 0, Math.PI * 2);
+        ctx.strokeStyle = isHi ? t.col : t.col + '44';
+        ctx.lineWidth = isHi ? 1.8 : 0.8;
+        ctx.stroke();
+      }
+
+      // Draw Separation Gap [2√3 C_0, 11 C_0]
+      const rCubeCorner = rScale(2 * Math.sqrt(3)); // 3.464 C_0
+      const rT0Inner = rScale(11);
+      ctx.beginPath();
+      ctx.arc(cx, cy, rT0Inner, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.55)';
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw Lower Manifold Voxel Cube V = [-2,2]^3 and Core K = [-1,1]^3
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - rCubeCorner, cy - rCubeCorner, rCubeCorner * 2, rCubeCorner * 2);
+
+      // Right-hand Legend & Inspector
+      const lx = W * 0.72;
+      ctx.textAlign = 'left';
+      ctx.font = '700 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText('DISJOINT SHELL HIERARCHY', lx, 28);
+
+      tiers.forEach((t, idx) => {
+        const y = 52 + idx * 36;
+        const isHi = (sel === 'all' || parseInt(sel) === t.n);
+        ctx.fillStyle = isHi ? t.col : '#64748b';
+        ctx.font = isHi ? '700 10.5px "JetBrains Mono", monospace' : '500 10px "JetBrains Mono", monospace';
+        ctx.fillText(`T_${t.n}: [${t.min}, ${t.max}] C₀ (R=${t.R}, r=${t.r})`, lx, y);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 9.5px "JetBrains Mono", monospace';
+        ctx.fillText(`W_${t.n}=${t.W} | r_${t.n}+W_${t.n} = 20 C₀`, lx, y + 13);
+      });
+
+      ctx.fillStyle = '#22d3ee';
+      ctx.font = '700 10px "JetBrains Mono", monospace';
+      ctx.fillText('Lower Cube V: ||x|| ≤ 3.464 C₀', lx, 240);
+      ctx.fillStyle = '#fda4af';
+      ctx.fillText('Gap: 7.536 C₀ = 4.050 m', lx, 255);
+    }
+
+    function getZetaJS(t) {
+      const primes = [1, 2, 3, 5, 7, 11, 13, 17, 19, 23];
+      let sum = 0;
+      for (let p of primes) sum += (1 / Math.sqrt(p)) * Math.cos(t * Math.log(p));
+      return sum;
+    }
+
+    function updateSignalSplitCalc() {
+      const t = parseFloat(document.getElementById('inp-sig-t')?.value || '12.4');
+      const amp = parseFloat(document.getElementById('inp-sig-amp')?.value || '0.8');
+      document.getElementById('lbl-sig-t').textContent = t.toFixed(2);
+      document.getElementById('lbl-sig-amp').textContent = amp.toFixed(2);
+
+      const a = amp * getZetaJS(t);
+      const b = amp * getZetaJS(t + 20.943951);
+      const c = amp * getZetaJS(t + 41.887902);
+
+      const Q1 = a * a + 0.25; // positive shift for triangle side quadrance demo
+      const Q2 = b * b + 0.25;
+      const Q3 = c * c + 0.25;
+
+      const s = a + b + c;
+      const zMagSq = (a * a + b * b + c * c) - (a * b + b * c + c * a);
+      const eBind = 2 * (a * b + b * c + c * a);
+
+      const S = Q1 + Q2 + Q3;
+      const AR = Math.max(0, S * S - 2 * (Q1 * Q1 + Q2 * Q2 + Q3 * Q3));
+      const chi = Math.sqrt(AR) / S;
+
+      const el = document.getElementById('signal-split-readout');
+      if (!el) return;
+      el.innerHTML = `
+        <div class="grid grid-cols-3 gap-2">
+          <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+            <div class="text-[10px] text-slate-400">Branch $a(t)$</div>
+            <div class="text-cyan-300 font-bold">${a.toFixed(4)}</div>
+          </div>
+          <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+            <div class="text-[10px] text-slate-400">Branch $b(t+120^\\circ)$</div>
+            <div class="text-emerald-300 font-bold">${b.toFixed(4)}</div>
+          </div>
+          <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+            <div class="text-[10px] text-slate-400">Branch $c(t+240^\\circ)$</div>
+            <div class="text-rose-300 font-bold">${c.toFixed(4)}</div>
+          </div>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+          <div class="flex justify-between"><span>$C_3$ Apex Scalar Invariant $s = a+b+c$:</span><span class="text-white font-bold">${s.toFixed(4)}</span></div>
+          <div class="flex justify-between"><span>Rotating Plane Norm $|z|^2 = \\sum a^2 - \\sum ab$:</span><span class="text-purple-300 font-bold">${zMagSq.toFixed(4)}</span></div>
+          <div class="flex justify-between"><span>Binding Energy $E_{\\text{bind}} = 2(ab+bc+ca)$:</span><span class="text-amber-300 font-bold">${eBind.toFixed(4)}</span></div>
+          <div class="flex justify-between border-t border-slate-800 pt-1"><span>Weitzenböck Ratio $\\chi = \\sqrt{A_R}/S \\le 0.57735$:</span><span class="text-emerald-400 font-bold">${chi.toFixed(5)}</span></div>
+        </div>
+      `;
+      renderMathSafe(el);
+    }
+
+    // =========================================================================
+    // TAB 2 LOGIC: 720 -> 72 -> 10 PUMP GEARS & RATIONAL VALVE SIMULATOR
+    // =========================================================================
+    function setPumpFrame(n) {
+      n = Math.max(0, Math.min(719, n));
+      document.getElementById('inp-pump-n').value = n;
+      document.getElementById('lbl-pump-n').textContent = `n = ${n} / 719`;
+
+      const k = n % 8;
+      const j = n % 3;
+      const m = Math.floor(n / 10);
+      const l = Math.floor((10 * m) / 72);
+      const st = GAUSSIAN_CLOCK[k];
+
+      const closures = [];
+      if (n % 2 === 0) closures.push('Cs-133');
+      if (n % 3 === 0) closures.push('40Hz');
+      if (n % 5 === 0) closures.push('432Hz');
+      if (n % 24 === 0) closures.push('24f-CRT');
+      if (n % 120 === 0) closures.push('120f-MASTER');
+
+      const cards = document.getElementById('pump-readout-cards');
+      if (cards) {
+        cards.innerHTML = `
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-amber-500/30 space-y-1">
+            <div class="text-amber-400 font-bold">Outer 12-Point Gear ($720$)</div>
+            <div class="text-white text-sm font-bold">Frame $n = ${n}$ (Tooth $a = ${n % 12}$)</div>
+            <div class="text-[11px] text-slate-400">Spinor $q_${k} = ${st.spinor}$ | Spread $s_${k} = ${st.spreadStr}$</div>
+          </div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-cyan-500/30 space-y-1">
+            <div class="text-cyan-400 font-bold">Middle 10-Point Gear ($72$)</div>
+            <div class="text-white text-sm font-bold">Block $m = ${m}$ (Frames $[${m*10}..${m*10+9}]$)</div>
+            <div class="text-[11px] text-slate-400">$\\delta_${m} = \\Delta Q_${m}^{-1} = q_{${m*10-1}} q_{${m*10+9}}^{-1}$ (Right-Acting)</div>
+          </div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-purple-500/30 space-y-1">
+            <div class="text-purple-400 font-bold">Inner 8-Point Gear ($10$)</div>
+            <div class="text-white text-sm font-bold">Coarse Block $A_${l}$ (Size $|A_${l}| = ${COARSE_SIZES[l]}$)</div>
+            <div class="text-[11px] text-slate-400">Covers middle blocks $m \\in [${COARSE_STARTS[l]}..${COARSE_STARTS[l+1]-1}]$</div>
+          </div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-emerald-500/30 space-y-1">
+            <div class="text-emerald-400 font-bold">Holonomy &amp; Clock Closures</div>
+            <div class="text-white text-sm font-bold">${k === 0 ? 'P = +1 (Closed)' : 'P = ' + st.spinor}</div>
+            <div class="text-[11px] text-slate-400">${closures.length ? closures.join(' • ') : 'Odd parity half-step'}</div>
+          </div>
+        `;
+        renderMathSafe(cards);
+      }
+
+      drawPumpGearsCanvas(n, m, l, k);
+    }
+
+    function drawPumpGearsCanvas(n, m, l, k) {
+      const canvas = document.getElementById('pumpGearsCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      if (rect.width === 0) return;
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      const W = rect.width, H = rect.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // Left: 3 Concentric Gears (720 -> 72 -> 10)
+      const cx = W * 0.28, cy = H * 0.52;
+      const R12 = Math.min(W * 0.20, H * 0.39);
+      const R10 = R12 * 0.70;
+      const R8  = R12 * 0.42;
+
+      // Outer 720-frame ring
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const ang12 = (n / 720) * Math.PI * 2 - Math.PI / 2;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R12, -Math.PI / 2, ang12);
+      ctx.stroke();
+
+      // Middle 72-block inverse ring
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R10, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const ang10 = -((m / 72) * Math.PI * 2) - Math.PI / 2; // Inverse rotation
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R10, -Math.PI / 2, ang10, true);
+      ctx.stroke();
+
+      // Inner 10-block coarse ring
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.25)';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R8, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const ang8 = ((l + 0.5) / 10) * Math.PI * 2 - Math.PI / 2;
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.arc(cx + R8 * Math.cos(ang8), cy + R8 * Math.sin(ang8), 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Right: Visual Bar of the 10 Coarse Blocks A_0..A_9 of sizes (8,7,7,7,7,8,7,7,7,7)
+      const bx0 = W * 0.54, bw = W * 0.42;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '700 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('10 COARSE INNER BLOCKS A_l = {m : ⌊10m/72⌋ = l} (SUM = 72)', bx0, 28);
+
+      let curX = bx0;
+      for (let blk = 0; blk < 10; blk++) {
+        const sz = COARSE_SIZES[blk];
+        const segW = (sz / 72) * bw;
+        const isActive = (blk === l);
+
+        ctx.fillStyle = isActive ? 'rgba(168, 85, 247, 0.45)' : 'rgba(30, 41, 59, 0.8)';
+        ctx.strokeStyle = isActive ? '#c084fc' : '#475569';
+        ctx.lineWidth = isActive ? 2 : 1;
+        ctx.fillRect(curX, 46, segW - 3, 52);
+        ctx.strokeRect(curX, 46, segW - 3, 52);
+
+        ctx.fillStyle = isActive ? '#f8fafc' : '#94a3b8';
+        ctx.font = '700 10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`A_${blk}`, curX + (segW - 3) / 2, 68);
+        ctx.font = '500 9px "JetBrains Mono", monospace';
+        ctx.fillText(`sz ${sz}`, curX + (segW - 3) / 2, 84);
+
+        curX += segW;
+      }
+
+      // Telescoping equation diagram below bar
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '600 10.5px "JetBrains Mono", monospace';
+      ctx.fillText(`Active Middle Block m = ${m}: ΔQ_${m} = q_${m*10+9} · q_${Math.max(0, m*10-1)}⁻¹ (9 inner factors cancel!)`, bx0, 134);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText(`Right-Acting Product: Q^(10) = δ_0 · δ_1 ··· δ_71 = (Q^(12))⁻¹ = q_0 · q_719⁻¹`, bx0, 156);
+      ctx.fillStyle = '#10b981';
+      ctx.fillText(`Three-Gear Holonomy: H = Q^(8) · Q^(10) · Q^(12) = (Q^(12))⁻¹ = P⁻¹`, bx0, 178);
+    }
+
+    function updateValveCalc() {
+      const lamA = parseFloat(document.getElementById('inp-valve-lam')?.value || '2.0');
+      document.getElementById('lbl-valve-lam').textContent = lamA.toFixed(1);
+      const rho = 1 / (1 + lamA);
+      const prodRho = Math.pow(rho, 3);
+      const J = (1 - prodRho) / 9;
+
+      const el = document.getElementById('valve-calc-output');
+      if (!el) return;
+      el.innerHTML = `
+        <div class="flex justify-between"><span>Reverse Edge Multiplier $\\rho_e = \\frac{1}{1+\\lambda A_e}$:</span><span class="text-cyan-300 font-bold">${rho.toFixed(4)}</span></div>
+        <div class="flex justify-between"><span>Reverse Cycle Product $\\rho_{ba}\\rho_{cb}\\rho_{ac}$:</span><span class="text-purple-300 font-bold">${prodRho.toFixed(5)}</span></div>
+        <div class="flex justify-between border-t border-slate-800 pt-1">
+          <span>Net Stationary Pump Current $J_{12,10}=J_{10,8}=J_{8,12}$:</span>
+          <span class="${J > 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${J > 0 ? '+' + J.toFixed(5) + ' (ACTIVE PUMP)' : '0.00000 (Reversible Equilibrium)'}</span>
+        </div>
+      `;
+      renderMathSafe(el);
+    }
+
+    // =========================================================================
+    // TAB 3 LOGIC: 12-NODE KINEMATICS (2026i EXACT VS 2025 LEGACY)
+    // =========================================================================
+    const EDGE_POS_SIM = [
+      [12.5, 12.5, 0], [12.5, -12.5, 0], [-12.5, 12.5, 0], [-12.5, -12.5, 0],
+      [12.5, 0, 12.5], [12.5, 0, -12.5], [-12.5, 0, 12.5], [-12.5, 0, -12.5],
+      [0, 12.5, 12.5], [0, 12.5, -12.5], [0, -12.5, 12.5], [0, -12.5, -12.5]
+    ];
+    const FACE_POS_SIM = [
+      [0, 0, 12.5], [0, 0, -12.5],
+      [12.5, 0, 0], [-12.5, 0, 0],
+      [0, 12.5, 0], [0, -12.5, 0]
+    ];
+
+    function calcNode2026(i, step) {
+      const fIdx = (i < 4) ? (i % 2) : (i < 8 ? 2 + (i % 2) : 4 + (i % 2));
+      const macroAngle = (step / 720.0) * Math.PI * 2.0;
+      const kFloat = step / 90.0;
+      const spreadEnv = Math.pow(Math.sin(kFloat * Math.PI / 4.0), 2);
+      const kleinRadius = 0.2520 + (1.0 - 0.2520) * (0.35 + 0.65 * spreadEnv) * (0.65 + 0.35 * Math.cos(macroAngle));
+
+      const e = EDGE_POS_SIM[i];
+      const g = FACE_POS_SIM[fIdx].map(v => v * KLEIN_A);
+      const bx = kleinRadius * (spreadEnv * e[0] + (1 - spreadEnv) * g[0]);
+      const by = kleinRadius * (spreadEnv * e[1] + (1 - spreadEnv) * g[1]);
+      const bz = kleinRadius * (spreadEnv * e[2] + (1 - spreadEnv) * g[2]);
+
+      const branchIdx = Math.floor(i / 4);
+      const spatialAngle = kFloat * (Math.PI / 2.0) + (branchIdx * 2.0 * Math.PI / 3.0) * 0.15;
+      return {
+        x: bx * Math.cos(spatialAngle) - by * Math.sin(spatialAngle),
+        y: bx * Math.sin(spatialAngle) + by * Math.cos(spatialAngle),
+        z: bz * Math.cos(macroAngle * 0.5),
+        spreadEnv,
+        kleinRadius
+      };
+    }
+
+    function calcNode2025(i, step) {
+      const fIdx = (i < 4) ? (i % 2) : (i < 8 ? 2 + (i % 2) : 4 + (i % 2));
+      let t = 0, phase = 0;
+      if (step <= 360) {
+        if (step < 90) { phase = 0; t = step / 90.0; }
+        else if (step < 180) { phase = 1; t = (step - 90.0) / 90.0; }
+        else if (step < 270) { phase = 2; t = (step - 180.0) / 90.0; }
+        else { phase = 3; t = (step - 270.0) / 90.0; }
+      } else {
+        if (step < 450) { phase = 3; t = 1.0 - (step - 360.0) / 90.0; }
+        else if (step < 540) { phase = 2; t = 1.0 - (step - 450.0) / 90.0; }
+        else if (step < 630) { phase = 1; t = 1.0 - (step - 540.0) / 90.0; }
+        else { phase = 0; t = 1.0 - (step - 630.0) / 90.0; }
+      }
+      const e = EDGE_POS_SIM[i];
+      const f = FACE_POS_SIM[fIdx];
+      const g = f.map(v => v * KLEIN_A);
+      const inn = f.map(v => v * 0.2520);
+      let s = e, trg = f;
+      if (phase === 1) { s = f; trg = g; }
+      else if (phase === 2) { s = g; trg = inn; }
+      else if (phase === 3) { s = inn; trg = [0, 0, 0]; }
+
+      const px = s[0] + (trg[0] - s[0]) * t;
+      const py = s[1] + (trg[1] - s[1]) * t;
+      const pz = s[2] + (trg[2] - s[2]) * t;
+      const tw = t * (Math.PI / 2) * (phase + 1);
+      return {
+        x: px * Math.cos(tw) - py * Math.sin(tw),
+        y: px * Math.sin(tw) + py * Math.cos(tw),
+        z: pz
+      };
+    }
+
+    function drawKinematicsCanvas() {
+      const canvas = document.getElementById('kinematicsCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      if (rect.width === 0) return;
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      const W = rect.width, H = rect.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const nodeIdx = parseInt(document.getElementById('kinNodeSelect')?.value || '0');
+      const curStep = parseInt(document.getElementById('inp-kin-step')?.value || '180');
+      document.getElementById('lbl-kin-step').textContent = `n = ${curStep} (k = ${curStep % 8}, Macro κ = ${(curStep / 90).toFixed(2)})`;
+
+      const cx = W * 0.5, cy = H * 0.52;
+      const scale = Math.min(W, H) / 32.0;
+
+      // Draw Core Cube [-12.5, 12.5] and Golden Klein Cell [-a*12.5, a*12.5]
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.25)';
+      ctx.strokeRect(cx - 12.5 * scale, cy - 12.5 * scale, 25 * scale, 25 * scale);
+
+      const goldHalf = 12.5 * KLEIN_A * scale;
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(cx - goldHalf, cy - goldHalf, goldHalf * 2, goldHalf * 2);
+      ctx.setLineDash([]);
+
+      // Draw Legacy 2025 Trajectory (Dashed Rose)
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.45)';
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      for (let s = 0; s <= 720; s += 3) {
+        const p = calcNode2025(nodeIdx, s);
+        if (s === 0) ctx.moveTo(cx + p.x * scale, cy + p.y * scale);
+        else ctx.lineTo(cx + p.x * scale, cy + p.y * scale);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw 2026i Exact Spinor-Hyperbolic Trajectory (Solid Cyan)
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      for (let s = 0; s <= 720; s += 2) {
+        const p = calcNode2026(nodeIdx, s);
+        if (s === 0) ctx.moveTo(cx + p.x * scale, cy + p.y * scale);
+        else ctx.lineTo(cx + p.x * scale, cy + p.y * scale);
+      }
+      ctx.stroke();
+
+      // Current Markers
+      const cur26 = calcNode2026(nodeIdx, curStep);
+      const cur25 = calcNode2025(nodeIdx, curStep);
+
+      ctx.beginPath();
+      ctx.arc(cx + cur25.x * scale, cy + cur25.y * scale, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx + cur26.x * scale, cy + cur26.y * scale, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#22d3ee';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      const liveEl = document.getElementById('kin-live-numbers');
+      if (liveEl) {
+        liveEl.innerHTML = `
+          <div class="text-cyan-300 font-bold">2026i Exact Pos: (${cur26.x.toFixed(2)}, ${cur26.y.toFixed(2)}, ${cur26.z.toFixed(2)})</div>
+          <div class="text-rose-300">2025 Legacy Pos: (${cur25.x.toFixed(2)}, ${cur25.y.toFixed(2)}, ${cur25.z.toFixed(2)})</div>
+          <div class="text-amber-300">Klein Scale $r_{\\text{Klein}}(n) = ${cur26.kleinRadius.toFixed(4)}$ | Spread $s_{\\text{env}} = ${cur26.spreadEnv.toFixed(3)}$</div>
+        `;
+        renderMathSafe(liveEl);
+      }
+    }
+
+    // =========================================================================
+    // TAB 4 LOGIC: THE 7 INTERACTION POINTS, VOXEL-BOOSTED KINEMATICS & 3D VIEW
+    // =========================================================================
+    let cam3DYaw = 0.68;
+    let cam3DPitch = 0.48;
+    let isDragging3D = false;
+    let dragStartX = 0, dragStartY = 0;
+    let clickTargetSlice = 'A';
+    let projectedVoxelCenters3D = [];
+
+    function setClickTargetSlice(which) {
+      clickTargetSlice = which;
+      const btnA = document.getElementById('btn-target-sliceA');
+      const btnB = document.getElementById('btn-target-sliceB');
+      if (!btnA || !btnB) return;
+      if (which === 'A') {
+        btnA.className = 'px-2.5 py-1 rounded bg-cyan-500 text-slate-950 font-bold';
+        btnB.className = 'px-2.5 py-1 rounded bg-slate-800 text-fuchsia-300 border border-fuchsia-500/40 hover:bg-slate-700';
+      } else {
+        btnA.className = 'px-2.5 py-1 rounded bg-slate-800 text-cyan-300 border border-cyan-500/40 hover:bg-slate-700';
+        btnB.className = 'px-2.5 py-1 rounded bg-fuchsia-500 text-slate-950 font-bold';
+      }
+    }
+
+    function set3DCameraPreset(preset) {
+      if (preset === 'iso') { cam3DYaw = 0.68; cam3DPitch = 0.48; }
+      else if (preset === 'xy') { cam3DYaw = 0.0; cam3DPitch = 0.02; }
+      else if (preset === 'xz') { cam3DYaw = 0.0; cam3DPitch = 1.45; }
+      else if (preset === 'yz') { cam3DYaw = 1.57; cam3DPitch = 0.02; }
+      updateInteractionLab();
+    }
+
+    // Compute voxel-dependent node position incorporating:
+    // 1. Voxel stream phase t(v, Z, n) = 50*Z - 8*(n/50) + 12*vx + 18*vy + 25*vz
+    // 2. {4,3,5} Hyperbolic Honeycomb cell boost B_v (Lemma 8 Prop. 6.4: cosh ϑ = φ, tanh(ϑ/2) = a = φ^(-3/2))
+    // 3. Slice Z-depth shear & radial modulation
+    function calcVoxelSliceNode(i, step, vox, zDepth) {
+      const base = calcNode2026(i, step);
+      const branchIdx = Math.floor(i / 4);
+      const tPhase = 50.0 * zDepth - 8.0 * (step / 50.0) + 12.0 * vox[0] + 18.0 * vox[1] + 25.0 * vox[2];
+      const zetaMod = getZetaJS(tPhase + branchIdx * 20.943951);
+
+      // Voxel L1 Manhattan norm ||v||_1 in {0, 1, 2, 3} determines {4,3,5} cell boost depth
+      const l1 = Math.abs(vox[0]) + Math.abs(vox[1]) + Math.abs(vox[2]);
+      // Depth-dependent twist angle inside the voxel tube
+      const depthTwist = (zDepth - 0.5) * 0.85 + 0.14 * (vox[0] - vox[1] + 0.5 * vox[2]);
+      const radialGain = 1.0 + 0.065 * zetaMod;
+
+      let x = base.x * radialGain;
+      let y = base.y * radialGain;
+      let z = base.z * (0.75 + 0.25 * Math.cos((zDepth - 0.5) * Math.PI));
+
+      // Apply depth rotation in XY
+      const rx = x * Math.cos(depthTwist) - y * Math.sin(depthTwist);
+      const ry = x * Math.sin(depthTwist) + y * Math.cos(depthTwist);
+      x = rx;
+      y = ry;
+
+      // Apply {4,3,5} Klein projective cell boost distortion along voxel direction vox
+      if (l1 > 0) {
+        const vLen = Math.hypot(vox[0], vox[1], vox[2]);
+        const ux = vox[0] / vLen, uy = vox[1] / vLen, uz = vox[2] / vLen;
+        const proj = x * ux + y * uy + z * uz;
+        // Hyperbolic Lorentz contraction factor 1/cosh(ϑ) = 1/φ^l1 and golden face shift
+        const invCosh = Math.pow(1 / PHI, 0.35 * l1);
+        const shift = 1.85 * KLEIN_A * l1 * Math.sin((step / 720.0) * Math.PI * 2 + zDepth * Math.PI);
+        x += ux * (proj * (invCosh - 1) + shift);
+        y += uy * (proj * (invCosh - 1) + shift);
+        z += uz * (proj * (invCosh - 1) + shift * 0.5);
+      }
+
+      // World position inside the 3x3x3 lattice (C_space = 25.0 units)
+      const C_SPACE = 25.0;
+      const worldX = vox[0] * C_SPACE + x;
+      const worldY = vox[1] * C_SPACE + y;
+      const worldZ = vox[2] * C_SPACE + (zDepth - 0.5) * C_SPACE + z * 0.35;
+
+      return {
+        x, y, z,
+        worldX, worldY, worldZ,
+        zetaMod,
+        tPhase
+      };
+    }
+
+    function project3DPoint(wx, wy, wz, cx, cy, scale) {
+      // Rotate around Y by cam3DYaw, then around X by cam3DPitch
+      const cosY = Math.cos(cam3DYaw), sinY = Math.sin(cam3DYaw);
+      const cosP = Math.cos(cam3DPitch), sinP = Math.sin(cam3DPitch);
+
+      const x1 = wx * cosY + wz * sinY;
+      const z1 = -wx * sinY + wz * cosY;
+      const y2 = wy * cosP - z1 * sinP;
+      const z2 = wy * sinP + z1 * cosP;
+
+      const fov = 190 / (190 + z2 * 0.85);
+      return {
+        sx: cx + x1 * scale * fov,
+        sy: cy - y2 * scale * fov,
+        depth: z2
+      };
+    }
+
+    function draw3DVoxelIdentifierCanvas(voxA, voxB, zA, zB, posA, posB) {
+      const canvas = document.getElementById('voxel3DIdentifierCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      if (rect.width === 0) return;
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      const W = rect.width, H = rect.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const cx = W * 0.5, cy = H * 0.53;
+      const scale = Math.min(W, H) / 96.0;
+      const C_SPACE = 25.0;
+      const half = C_SPACE * 0.5;
+
+      projectedVoxelCenters3D = [];
+
+      // Helper to draw a wireframe box centered at (bx, by, bz) with half-size hs
+      function drawWireBox(bx, by, bz, hs, strokeCol, lineW, fillCol = null) {
+        const verts = [
+          [bx - hs, by - hs, bz - hs], [bx + hs, by - hs, bz - hs],
+          [bx + hs, by + hs, bz - hs], [bx - hs, by + hs, bz - hs],
+          [bx - hs, by - hs, bz + hs], [bx + hs, by - hs, bz + hs],
+          [bx + hs, by + hs, bz + hs], [bx - hs, by + hs, bz + hs]
+        ].map(v => project3DPoint(v[0], v[1], v[2], cx, cy, scale));
+
+        const edges = [
+          [0,1],[1,2],[2,3],[3,0],
+          [4,5],[5,6],[6,7],[7,4],
+          [0,4],[1,5],[2,6],[3,7]
+        ];
+
+        if (fillCol) {
+          ctx.fillStyle = fillCol;
+          ctx.beginPath();
+          ctx.moveTo(verts[0].sx, verts[0].sy);
+          ctx.lineTo(verts[1].sx, verts[1].sy);
+          ctx.lineTo(verts[2].sx, verts[2].sy);
+          ctx.lineTo(verts[3].sx, verts[3].sy);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = lineW;
+        ctx.beginPath();
+        edges.forEach(([a, b]) => {
+          ctx.moveTo(verts[a].sx, verts[a].sy);
+          ctx.lineTo(verts[b].sx, verts[b].sy);
+        });
+        ctx.stroke();
+      }
+
+      // 1. Draw all 27 voxels of the 3x3x3 grid sorted back-to-front
+      const voxelList = [];
+      for (let vx = -1; vx <= 1; vx++) {
+        for (let vy = -1; vy <= 1; vy++) {
+          for (let vz = -1; vz <= 1; vz++) {
+            const pCenter = project3DPoint(vx * C_SPACE, vy * C_SPACE, vz * C_SPACE, cx, cy, scale);
+            voxelList.push({ vx, vy, vz, pCenter });
+            projectedVoxelCenters3D.push({ vx, vy, vz, sx: pCenter.sx, sy: pCenter.sy, depth: pCenter.depth });
+          }
+        }
+      }
+      voxelList.sort((a, b) => b.pCenter.depth - a.pCenter.depth);
+
+      voxelList.forEach(({ vx, vy, vz, pCenter }) => {
+        const isA = (vx === voxA[0] && vy === voxA[1] && vz === voxA[2]);
+        const isB = (vx === voxB[0] && vy === voxB[1] && vz === voxB[2]);
+        const isCenter = (vx === 0 && vy === 0 && vz === 0);
+
+        if (isA && isB) {
+          drawWireBox(vx * C_SPACE, vy * C_SPACE, vz * C_SPACE, half, '#10b981', 2.2, 'rgba(16, 185, 129, 0.12)');
+        } else if (isA) {
+          drawWireBox(vx * C_SPACE, vy * C_SPACE, vz * C_SPACE, half, '#22d3ee', 2.2, 'rgba(34, 211, 238, 0.12)');
+        } else if (isB) {
+          drawWireBox(vx * C_SPACE, vy * C_SPACE, vz * C_SPACE, half, '#e879f9', 2.2, 'rgba(232, 121, 249, 0.12)');
+        } else if (isCenter) {
+          drawWireBox(vx * C_SPACE, vy * C_SPACE, vz * C_SPACE, half, 'rgba(56, 189, 248, 0.45)', 1.2);
+          // Inner Golden {4,3,5} Klein Cell [-a, a]^3 inside [0,0,0]
+          drawWireBox(0, 0, 0, half * KLEIN_A, 'rgba(245, 158, 11, 0.75)', 1.3);
+        } else {
+          drawWireBox(vx * C_SPACE, vy * C_SPACE, vz * C_SPACE, half, 'rgba(71, 85, 105, 0.22)', 0.7);
+        }
+
+        // Small clickable center dot for each voxel
+        ctx.beginPath();
+        ctx.arc(pCenter.sx, pCenter.sy, (isA || isB) ? 3.5 : 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = isA ? '#22d3ee' : (isB ? '#e879f9' : 'rgba(148, 163, 184, 0.35)');
+        ctx.fill();
+      });
+
+      // Helper to draw a 2D Slice Plane inside a voxel at Z-depth zVal
+      function drawSlicePlane3D(vox, zVal, strokeCol, fillCol, label) {
+        const bx = vox[0] * C_SPACE;
+        const by = vox[1] * C_SPACE;
+        const pz = vox[2] * C_SPACE + (zVal - 0.5) * C_SPACE;
+        const corners = [
+          [bx - half, by - half, pz],
+          [bx + half, by - half, pz],
+          [bx + half, by + half, pz],
+          [bx - half, by + half, pz]
+        ].map(v => project3DPoint(v[0], v[1], v[2], cx, cy, scale));
+
+        ctx.fillStyle = fillCol;
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(corners[0].sx, corners[0].sy);
+        ctx.lineTo(corners[1].sx, corners[1].sy);
+        ctx.lineTo(corners[2].sx, corners[2].sy);
+        ctx.lineTo(corners[3].sx, corners[3].sy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = strokeCol;
+        ctx.font = '700 9.5px "JetBrains Mono", monospace';
+        ctx.fillText(label, corners[2].sx + 4, corners[2].sy);
+      }
+
+      drawSlicePlane3D(voxA, zA, '#22d3ee', 'rgba(34, 211, 238, 0.20)', `A[${voxA.join(',')}]`);
+      drawSlicePlane3D(voxB, zB, '#e879f9', 'rgba(232, 121, 249, 0.20)', `B[${voxB.join(',')}]`);
+
+      // 3. Draw the 12 3D Inter-Slice Laser Bridges & Nodes
+      for (let i = 0; i < 12; i++) {
+        const pA3 = project3DPoint(posA[i].worldX, posA[i].worldY, posA[i].worldZ, cx, cy, scale);
+        const pB3 = project3DPoint(posB[i].worldX, posB[i].worldY, posB[i].worldZ, cx, cy, scale);
+        const cellDist = Math.hypot(posA[i].x - posB[i].x, posA[i].y - posB[i].y, posA[i].z - posB[i].z);
+
+        ctx.beginPath();
+        ctx.moveTo(pA3.sx, pA3.sy);
+        ctx.lineTo(pB3.sx, pB3.sy);
+        ctx.strokeStyle = cellDist < 6.0 ? 'rgba(250, 204, 21, 0.85)' : 'rgba(148, 163, 184, 0.32)';
+        ctx.lineWidth = cellDist < 6.0 ? 1.6 : 0.8;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(pA3.sx, pA3.sy, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = '#22d3ee';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(pB3.sx, pB3.sy, 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#e879f9';
+        ctx.fill();
+      }
+    }
+
+    function init3DVoxelCanvasListeners() {
+      const c = document.getElementById('voxel3DIdentifierCanvas');
+      if (!c || c.dataset.bound) return;
+      c.dataset.bound = 'true';
+
+      let moved = false;
+      c.addEventListener('mousedown', (e) => {
+        isDragging3D = true;
+        moved = false;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging3D) return;
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+        cam3DYaw += dx * 0.01;
+        cam3DPitch = Math.max(-1.45, Math.min(1.45, cam3DPitch + dy * 0.01));
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        updateInteractionLab();
+      });
+      window.addEventListener('mouseup', () => {
+        isDragging3D = false;
+      });
+
+      // Click a voxel center in 3D to select it for Slice A or Slice B
+      c.addEventListener('click', (e) => {
+        if (moved || !projectedVoxelCenters3D.length) return;
+        const rect = c.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        let best = null, bestDist = 26;
+        projectedVoxelCenters3D.forEach(v => {
+          const d = Math.hypot(v.sx - mx, v.sy - my);
+          if (d < bestDist) { bestDist = d; best = v; }
+        });
+        if (best) {
+          const valStr = `${best.vx},${best.vy},${best.vz}`;
+          const selId = clickTargetSlice === 'A' ? 'inp-int-voxA' : 'inp-int-voxB';
+          const selEl = document.getElementById(selId);
+          if (selEl) {
+            // Add option dynamically if not already in dropdown
+            if (!Array.from(selEl.options).some(o => o.value === valStr)) {
+              const opt = document.createElement('option');
+              opt.value = valStr;
+              opt.textContent = `[${best.vx},${best.vy},${best.vz}] Selected Voxel`;
+              selEl.appendChild(opt);
+            }
+            selEl.value = valStr;
+            updateInteractionLab();
+          }
+        }
+      });
+    }
+
+    function updateInteractionLab() {
+      init3DVoxelCanvasListeners();
+
+      const n = parseInt(document.getElementById('inp-int-n')?.value || '180');
+      const dk = parseInt(document.getElementById('inp-int-dk')?.value || '4');
+      const zA = parseFloat(document.getElementById('inp-int-za')?.value || '0.50');
+      const zB = parseFloat(document.getElementById('inp-int-zb')?.value || '0.75');
+      const projMode = document.getElementById('dual2DProjMode')?.value || 'boosted';
+
+      document.getElementById('lbl-int-n').textContent = n;
+      document.getElementById('lbl-int-dk').textContent = `+${dk} (${dk * 45}°)`;
+      document.getElementById('lbl-int-za').textContent = zA.toFixed(2);
+      document.getElementById('lbl-int-zb').textContent = zB.toFixed(2);
+
+      const nB = (n + dk * 90 + dk) % 721;
+      const kA = n % 8;
+      const kB = nB % 8;
+      const stA = GAUSSIAN_CLOCK[kA];
+      const stB = GAUSSIAN_CLOCK[kB];
+
+      const voxA = (document.getElementById('inp-int-voxA')?.value || '0,0,0').split(',').map(Number);
+      const voxB = (document.getElementById('inp-int-voxB')?.value || '1,0,0').split(',').map(Number);
+
+      // Update 3D HUD badges
+      const dvManhattan = Math.abs(voxB[0] - voxA[0]) + Math.abs(voxB[1] - voxA[1]) + Math.abs(voxB[2] - voxA[2]);
+      const neighborTypes = ['Co-Located Voxel (‖Δv‖₁=0)', 'Face-Neighbor Boost (‖Δv‖₁=1, cosh ϑ = φ)', 'Edge-Neighbor Boost (‖Δv‖₁=2)', 'Corner-Neighbor Boost (‖Δv‖₁=3)'];
+      document.getElementById('hud3d-sliceA').textContent = `Slice A: [${voxA.join(',')}] (Z_A=${zA.toFixed(2)}, k_A=${kA})`;
+      document.getElementById('hud3d-sliceB').textContent = `Slice B: [${voxB.join(',')}] (Z_B=${zB.toFixed(2)}, k_B=${kB})`;
+      document.getElementById('hud3d-boost').textContent = neighborTypes[Math.min(3, dvManhattan)] || `Lattice Offset ‖Δv‖₁ = ${dvManhattan}`;
+
+      // Compute all 12 voxel-boosted node positions for Slice A and Slice B
+      const posA = [], posB = [];
+      let bridgesActive = 0;
+      let hotspots2D = 0;
+      let sumCellSqDist = 0;
+      let sumWorldSqDist = 0;
+
+      for (let i = 0; i < 12; i++) {
+        const pA = calcVoxelSliceNode(i, n, voxA, zA);
+        const pB = calcVoxelSliceNode(i, nB, voxB, zB);
+        posA.push(pA);
+        posB.push(pB);
+
+        const dCell2 = (pA.x - pB.x) ** 2 + (pA.y - pB.y) ** 2 + (pA.z - pB.z) ** 2;
+        const dWorld2 = (pA.worldX - pB.worldX) ** 2 + (pA.worldY - pB.worldY) ** 2 + (pA.worldZ - pB.worldZ) ** 2;
+        const dCell = Math.sqrt(dCell2);
+
+        sumCellSqDist += dCell2;
+        sumWorldSqDist += dWorld2;
+        if (dCell < 6.0) bridgesActive++;
+        if (dCell2 < 20.0) hotspots2D++;
+      }
+
+      const meanCellSq = sumCellSqDist / 12.0;
+      const meanWorldSq = sumWorldSqDist / 12.0;
+      // Conformal Null-Cone Inner Product <X_A, X_B> = -1/2 ||x_A - x_B||^2 / C_0^2
+      const nullConeCell = -0.5 * (meanCellSq / (C0_SIM * C0_SIM));
+      const nullConeWorld = -0.5 * (meanWorldSq / (C0_SIM * C0_SIM));
+
+      // Compute Hyperbolic Ghost Quadrance Q_h(A, B) = <G(p_A), G(p_B)>_L^2 - 1 incorporating {4,3,5} voxel boost!
+      const pNormA = [posA[0].x / 20, posA[0].y / 20, posA[0].z / 20];
+      const pNormB = [posB[0].x / 20, posB[0].y / 20, posB[0].z / 20];
+      const aSq = Math.min(0.92, pNormA[0]**2 + pNormA[1]**2 + pNormA[2]**2);
+      const bSq = Math.min(0.92, pNormB[0]**2 + pNormB[1]**2 + pNormB[2]**2);
+      const dotAB = pNormA[0]*pNormB[0] + pNormA[1]*pNormB[1] + pNormA[2]*pNormB[2];
+      // Base Lorentz inner product in central cell + {4,3,5} inter-voxel boost factor φ^(dvManhattan)
+      const baseLorentz = ((1 + aSq) * (1 + bSq) - 4 * dotAB) / ((1 - aSq) * (1 - bSq));
+      const boostFactor = Math.pow(PHI, 0.5 * dvManhattan) * Math.cosh((zB - zA) * 0.530638);
+      const boostedLorentz = baseLorentz * boostFactor;
+      const Qh = Math.max(0, boostedLorentz * boostedLorentz - 1);
+
+      // Adjacent 3x3 Flux around Slice A & Slice B
+      const tA = posA[0].tPhase;
+      const tB = posB[0].tPhase;
+      let adjFlux = 0;
+      for (let gx = -1; gx <= 1; gx++) {
+        for (let gy = -1; gy <= 1; gy++) {
+          if (gx !== 0 || gy !== 0) {
+            adjFlux += 0.5 * (Math.abs(0.8 * getZetaJS(tA + gx * 14 + gy * 21)) + Math.abs(0.8 * getZetaJS(tB + gx * 14 + gy * 21)));
+          }
+        }
+      }
+      const monoidCost = Qh / (adjFlux + 1.0);
+
+      // Update 2D bottom status strip
+      document.getElementById('hud2d-phase-diff').textContent = `Stream Phase Δt = ${(tB - tA).toFixed(2)} rad`;
+      document.getElementById('hud2d-world-dist').textContent = `Mean 3D Dist = ${Math.sqrt(meanWorldSq).toFixed(2)}u (${(Math.sqrt(meanWorldSq)/C0_SIM).toFixed(2)} C₀)`;
+
+      // 1. Render 3D Voxel Identifier Canvas
+      draw3DVoxelIdentifierCanvas(voxA, voxB, zA, zB, posA, posB);
+
+      // 2. Render 2D Dual-Slice Collision & Null-Cone Canvas
+      const canvas = document.getElementById('dualInteractionCanvas');
+      if (canvas) {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        if (rect.width > 0) {
+          canvas.width = rect.width * window.devicePixelRatio;
+          canvas.height = rect.height * window.devicePixelRatio;
+          const ctx = canvas.getContext('2d');
+          ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+          const W = rect.width, H = rect.height;
+          ctx.clearRect(0, 0, W, H);
+
+          const cx = W / 2, cy = H / 2;
+          const scale = (projMode === 'world' && dvManhattan > 0) ? Math.min(W, H) / 68.0 : Math.min(W, H) / 31.0;
+
+          const offAx = projMode === 'world' ? voxA[0] * 18.0 * scale : 0;
+          const offAy = projMode === 'world' ? -voxA[1] * 18.0 * scale : 0;
+          const offBx = projMode === 'world' ? voxB[0] * 18.0 * scale : 0;
+          const offBy = projMode === 'world' ? -voxB[1] * 18.0 * scale : 0;
+
+          // Draw Slice A Core Cube & Golden Klein Cell
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+          ctx.lineWidth = 1.3;
+          ctx.strokeRect(cx + offAx - 12.5 * scale, cy + offAy - 12.5 * scale, 25 * scale, 25 * scale);
+
+          if (projMode === 'world' && (offAx !== offBx || offAy !== offBy)) {
+            ctx.strokeStyle = 'rgba(232, 121, 249, 0.35)';
+            ctx.strokeRect(cx + offBx - 12.5 * scale, cy + offBy - 12.5 * scale, 25 * scale, 25 * scale);
+          }
+
+          const gHalf = 12.5 * KLEIN_A * scale;
+          ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+          ctx.setLineDash([4, 3]);
+          ctx.strokeRect(cx + offAx - gHalf, cy + offAy - gHalf, gHalf * 2, gHalf * 2);
+          ctx.setLineDash([]);
+
+          for (let i = 0; i < 12; i++) {
+            const ax = cx + offAx + posA[i].x * scale;
+            const ay = cy + offAy + posA[i].y * scale;
+            const bx = cx + offBx + posB[i].x * scale;
+            const by = cy + offBy + posB[i].y * scale;
+            const dCell = Math.hypot(posA[i].x - posB[i].x, posA[i].y - posB[i].y, posA[i].z - posB[i].z);
+
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            ctx.strokeStyle = dCell < 6.0 ? 'rgba(250, 204, 21, 0.85)' : 'rgba(148, 163, 184, 0.25)';
+            ctx.lineWidth = dCell < 6.0 ? 1.8 : 0.9;
+            ctx.stroke();
+
+            if (dCell < 4.5) {
+              ctx.beginPath();
+              ctx.arc((ax + bx) / 2, (ay + by) / 2, (5.5 - dCell) * 2.6, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(250, 204, 21, 0.22)';
+              ctx.fill();
+              ctx.strokeStyle = '#facc15';
+              ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.arc(ax, ay, 4.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#22d3ee';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(bx, by, 3.8, 0, Math.PI * 2);
+            ctx.fillStyle = '#e879f9';
+            ctx.fill();
+          }
+
+          // Top-left overlay label inside 2D canvas
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '600 10px "JetBrains Mono", monospace';
+          ctx.textAlign = 'left';
+          ctx.fillText(
+            projMode === 'boosted'
+              ? `Pull-Back B_v⁻¹ Overlay: A[${voxA.join(',')}] (Z=${zA.toFixed(2)}) vs B[${voxB.join(',')}] (Z=${zB.toFixed(2)})`
+              : `World Offset Projection: A[${voxA.join(',')}] vs B[${voxB.join(',')}] (‖Δv‖₁=${dvManhattan})`,
+            10, 16
+          );
+        }
+      }
+
+      document.getElementById('int-main-badge').textContent = `${hotspots2D}/12 Hotspots | ${bridgesActive}/12 Bridges`;
+
+      const diffK = ((kB - kA) % 8 + 8) % 8;
+      let spinState = `Phase Offset Δk = ${diffK} (${diffK * 45}°)`;
+      if ((kA === 2 && kB === 6) || (kA === 6 && kB === 2)) spinState = 'APEX HANDSHAKE (±i, s_A=s_B=1)';
+      else if (diffK === 4) spinState = 'DOUBLE-COVER SHEET LOCK (q_B = -q_A)';
+      else if (diffK === 0) spinState = 'PHASE SYNCHRONIZED (q_B = +q_A)';
+
+      const cardsEl = document.getElementById('seven-interactions-cards');
+      if (cardsEl) {
+        cardsEl.innerHTML = `
+          <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-amber-400 text-xs space-y-1">
+            <div class="flex justify-between mono"><span class="text-amber-300 font-bold">1. Spinor Double-Cover &amp; ±i Handshake</span><span class="text-white font-bold">k_A=${kA}, k_B=${kB}</span></div>
+            <div class="text-slate-300">${spinState} — Spread $s_{k_A}=${stA.spread}, s_{k_B}=${stB.spread}$ (Prop. 2.3 &amp; Thm. 7.5).</div>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-cyan-400 text-xs space-y-1">
+            <div class="flex justify-between mono"><span class="text-cyan-300 font-bold">2. 3D Inter-Slice Laser Bridges</span><span class="text-emerald-300 font-bold">${bridgesActive} / 12 Resonant</span></div>
+            <div class="text-slate-300">Switches to golden-emerald when boosted cell distance $d_{\\text{cell},i} < 6.0\\text{u} \\approx a C_0 = 6.073\\text{u}$ ($\\{4,3,5\\}$ face boundary).</div>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-rose-400 text-xs space-y-1">
+            <div class="flex justify-between mono"><span class="text-rose-300 font-bold">3. 2D Trajectory Collision Hotspots</span><span class="text-amber-300 font-bold">${hotspots2D} / 12 Collisions</span></div>
+            <div class="text-slate-300">Triggers hotspot counter at $d_i^2 < 20.0\\text{u}^2$ and draws pulsing golden ring at $d_i < 4.5\\text{u}$ under $B_{\\mathbf{v}}^{-1}$ pull-back.</div>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-purple-400 text-xs space-y-1">
+            <div class="flex justify-between mono"><span class="text-purple-300 font-bold">4. Conformal Null-Cone $\\langle X_A, X_B\\rangle \\in \\mathbb{R}^{4,1}$</span><span class="text-white font-bold">Cell: ${nullConeCell.toFixed(3)} | World: ${nullConeWorld.toFixed(2)}</span></div>
+            <div class="text-slate-300">Exact linear metric $\\langle X(\\hat{\\mathbf{x}}_A), X(\\hat{\\mathbf{x}}_B)\\rangle = -\\frac{1}{2}\\|\\hat{\\mathbf{x}}_A - \\hat{\\mathbf{x}}_B\\|^2$ for pulled-back &amp; world-separated slices.</div>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-emerald-400 text-xs space-y-1">
+            <div class="flex justify-between mono"><span class="text-emerald-300 font-bold">5 &amp; 6. Adjacent $3\\times 3$ Flux &amp; $C_3$ Transfer</span><span class="text-emerald-300 font-bold">$E_{\\text{adj}} = ${adjFlux.toFixed(3)}$</span></div>
+            <div class="text-slate-300">Integrates the 8 surrounding streams at $t_A=${tA.toFixed(1)}, t_B=${tB.toFixed(1)}$ and locks $C_3$ branch $j = ${n % 3}$.</div>
+          </div>
+          <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-indigo-400 text-xs space-y-1">
+            <div class="flex justify-between mono"><span class="text-indigo-300 font-bold">7. Ghost Kernel $Q_h$ &amp; Monoid Cost $c_{ij}^{\\text{GET}}$</span><span class="text-cyan-300 font-bold">$Q_h = ${Qh.toFixed(3)}, c_{ij} = ${monoidCost.toFixed(4)}$</span></div>
+            <div class="text-slate-300">Includes $\\{4,3,5\\}$ boost $\\varphi^{\\Vert\\Delta\\mathbf{v}\\Vert_1}$ across voxels $\\mathbf{v}_A=[${voxA.join(',')}], \\mathbf{v}_B=[${voxB.join(',')}]$ (Thm. 7.7, 7.8).</div>
+          </div>
+        `;
+        renderMathSafe(cardsEl);
+      }
+    }
+
+    // =========================================================================
+    // TAB 5 LOGIC: LAYER V 12+1 PARITY & FOUR-STRUCTURE SANDWICH SIMULATOR
+    // =========================================================================
+    function updateLayer5Sim() {
+      const mode = document.getElementById('erasureScenarioSelect')?.value || 'meta13';
+      const el = document.getElementById('layer5-sim-display');
+      if (!el) return;
+
+      if (mode === 'single') {
+        el.innerHTML = `
+          <div class="text-emerald-300 font-bold">Scenario 1: Twelve-Engine Cuboctahedral Shell — 1 Loss Per Planar Group (Prop. 7.11)</div>
+          <div class="text-slate-300">Each planar group of 4 closes via $A_1 A_2 A_3 F_A = 1 \\implies F_A = (A_1 A_2 A_3)^{-1}$:</div>
+          <div class="grid grid-cols-3 gap-2 pt-1">
+            <div class="p-2.5 rounded bg-slate-900 border border-emerald-500/40">
+              <div class="text-amber-300 font-bold">Group A (XY Plane)</div>
+              <div>$A_1 = \\text{[ERASED]}, A_2 = i, A_3 = j, F_A = -k$</div>
+              <div class="text-emerald-400 mt-1">Recovered $A_1 = (A_2 A_3 F_A)^{-1} = +1$</div>
+            </div>
+            <div class="p-2.5 rounded bg-slate-900 border border-emerald-500/40">
+              <div class="text-cyan-300 font-bold">Group B (YZ Plane)</div>
+              <div>$B_1 = h, B_2 = \\text{[ERASED]}, B_3 = k, F_B = -i$</div>
+              <div class="text-emerald-400 mt-1">Recovered $B_2 = B_1^{-1} F_B^{-1} B_3^{-1}$</div>
+            </div>
+            <div class="p-2.5 rounded bg-slate-900 border border-emerald-500/40">
+              <div class="text-purple-300 font-bold">Group C (ZX Plane)</div>
+              <div>$C_1 = 1, C_2 = -j, C_3 = \\text{[ERASED]}, F_C = j$</div>
+              <div class="text-emerald-400 mt-1">Recovered $C_3 = C_2^{-1} C_1^{-1} F_C^{-1} = +1$</div>
+            </div>
+          </div>
+        `;
+      } else if (mode === 'meta13') {
+        el.innerHTML = `
+          <div class="text-amber-300 font-bold">Scenario 2: Double Loss in Group A ($A_1$ AND its Parity Fourth $F_A$ Lost) — Saved by 13th Engine $F_*$!</div>
+          <div class="text-slate-300">Normally 2 losses in the same group leave a 1-parameter family $X, X^{-1}T$ (Lemma 7 Part 3d). With the central $[0,0,0]$ cube acting as the <strong>13th Meta-Parity Engine</strong> $F_* = (F_A F_B F_C)^{-1}$ (Prop. 7.11):</div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-amber-500/40 space-y-1.5">
+            <div><strong>Step 1 (Rebuild $F_A$ from $F_B, F_C, F_*$):</strong> $F_A = (F_B F_C F_*)^{-1}$ reconstructed bit-exactly in $O(1)$!</div>
+            <div><strong>Step 2 (Rebuild Data Engine $A_1$ from $A_2, A_3, F_A$):</strong> $A_1 = (A_2 A_3 F_A)^{-1}$ reconstructed bit-exactly in $O(1)$!</div>
+            <div class="text-emerald-400 font-bold">Result: 100% Bit-Exact Recovery of Simultaneous Data + Parity Erasure!</div>
+          </div>
+        `;
+      } else {
+        el.innerHTML = `
+          <div class="text-cyan-300 font-bold">Scenario 3: The Four-Structure Sandwich $(I, A, \\bar{A}, E)$ &amp; 64 Streams (Theorems 7.18 – 7.20)</div>
+          <div class="text-slate-300">Placing balancers $A$ and $\\bar{A} = A^{-1}$ on either side of Input $I$ fixes the Emergent structure $E_j = A_j I_j^{-1} A_j^{-1}$:</div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-cyan-500/40 space-y-1.5">
+            <div>• <strong>Angle Conservation (Thm. 7.18):</strong> $\\operatorname{Re}(E_j) = \\operatorname{Re}(I_j)$ (checked by the interior $w$-projection stream).</div>
+            <div>• <strong>Automatic Emergent Closure (Prop. 7.20):</strong> $I_1 I_2 I_3 I_4 = 1 \\implies E_4 E_3 E_2 E_1 = A(I_1 I_2 I_3 I_4)^{-1}A^{-1} = 1$.</div>
+            <div class="text-emerald-400 font-bold">• Erasure Peeling Power: Recovers 100% of 3-of-8 losses and 64 of the 70 possible 4-of-8 losses!</div>
+          </div>
+        `;
+      }
+      renderMathSafe(el);
+    }
+
+    // =========================================================================
+    // TAB 6 LOGIC: CLOSED-FORM GARNER CRT & CODEX FORMS 0–15 INSPECTOR
+    // =========================================================================
+    function updateGarnerCrtCalc() {
+      const X = Math.max(0, Math.min(690017700, parseInt(document.getElementById('inp-crt-x')?.value || '0')));
+      const p1 = 881, p2 = 883, p3 = 887;
+      // Closed-form polynomial inverses from Lemma 9 Part 2:
+      const c12 = (p1 + 1) / 2;       // 441
+      const c23 = (3 * p1 + 17) / 4;  // 665 (since 881 ≡ 1 mod 4)
+      const c13 = (5 * p1 + 29) / 6;  // 739 (since 881 ≡ 5 mod 6)
+
+      const x1 = X % p1;
+      const x2 = X % p2;
+      const x3 = X % p3;
+
+      const u1 = x1;
+      const u2 = (((x2 - u1) % p2 + p2) % p2 * c12) % p2;
+      const term = (((x3 - u1) % p3 + p3) % p3 * c13) % p3;
+      const u3 = (((term - u2) % p3 + p3) % p3 * c23) % p3;
+      const recX = u1 + u2 * p1 + u3 * p1 * p2;
+
+      const el = document.getElementById('garner-crt-output');
+      if (!el) return;
+      el.innerHTML = `
+        <div class="flex justify-between"><span>30-Bit Residues $(x_1, x_2, x_3) \\bmod (881, 883, 887)$:</span><span class="text-amber-300 font-bold">(${x1}, ${x2}, ${x3})</span></div>
+        <div class="flex justify-between"><span>Closed-Form Inverses $(c_{12}, c_{23}, c_{13})$:</span><span class="text-cyan-300 font-bold">(${c12}, ${c23}, ${c13})</span></div>
+        <div class="flex justify-between"><span>Mixed-Radix Digits $(u_1, u_2, u_3)$:</span><span class="text-purple-300 font-bold">(${u1}, ${u2}, ${u3})</span></div>
+        <div class="flex justify-between border-t border-slate-800 pt-1">
+          <span>Reconstructed $X = u_1 + u_2 p + u_3 p(p+2)$:</span>
+          <span class="text-emerald-400 font-bold">${recX.toLocaleString()} [EXACT O(1) MATCH]</span>
+        </div>
+      `;
+      renderMathSafe(el);
+    }
+
+    const CODEX_DESCRIPTIONS = [
+      { title: 'Form 0 — Smallest-Three Quantized Unit Quaternion', body: 'Stores 2-bit index of largest component + three 10-bit quantized components in $[-1/\\sqrt{2}, 1/\\sqrt{2}]$ with reconstruction derivative $\\|g\'(v)\\| \\le 1$ (Lossy, bounded error; Lemma 13 Part 1).' },
+      { title: 'Form 1 — Hurwitz Doubled Integer Core $2Q = (2w,2x,2y,2z)$', body: 'Stores gcd-reduced, sign-normalized integer/half-integer Hurwitz quaternion in $[-127,127]^4$ ($N(Q) \\le 16,129$). Certified in 1 read of the 2,017-byte prime bitmap; $(1+i)^k$ never overflows (Lemma 13 Parts 2–4).' },
+      { title: 'Form 2 — Prime-Triplet CRT $(881, 883, 887)$', body: 'Stores three 10-bit residues $(x_1,x_2,x_3)$ decoded in $O(1)$ with zero lookup tables via closed-form polynomial Garner inverses $(441, 665, 739)$ over $[0, 690,017,701)$ (Lemma 9 Part 2).' },
+      { title: 'Form 3 — Exact IEEE-754 Quad-Slice / Zeta 3-Branch Codec', body: 'In the Fifteen Lemmas protocol, stores an exact IEEE-754 binary32 component of a 4D quad-slice; in the Zeta Open Problem 1 codec, packs three 10-bit signed branch coordinates $(z_{10}, y_{10}, x_{10})$ + 2-bit $B_j = g_3^j$ mode.' },
+      { title: 'Form 4 (Codex) — Centered Voxel Cube $V = [-2, 2]^3$ (64 Cells)', body: 'Indexes all $4\\times 4\\times 4 = 64$ voxel centers with 16-bit point index and two 8-bit sub-cell refinement coordinates (Lemma 5).' },
+      { title: 'Form 5 (Codex) — Centered Inner Core $K = [-1, 1]^3$ (8 Cells)', body: 'Indexes the $2\\times 2\\times 2 = 8$ core voxel centers at $(\\pm 1/2, \\pm 1/2, \\pm 1/2)C_0$ (Lemma 5).' },
+      { title: 'Form 6 (Codex) — Stella Octangula $\\Delta_1 \\cup (-\\Delta_1)$ (8 Vertices)', body: 'Indexes the $0^\\circ$ regular tetrahedron $\\Delta_1$ and its point-reflected dual $-\\Delta_1$, which together exhaust the 8 cube vertices $\\{\\pm 1\\}^3$; carries collapsed ghost disagreement $D$ in the sub-region byte (§7.5).' },
+      { title: 'Form 7 (Codex) — Cuboctahedron $D_3$ Nearest Neighbours (12 Points)', body: 'Indexes the 12 kissing vectors $(\\pm 1, \\pm 1, 0)$ of the face-centered cubic lattice $D_3$, forming the 12-engine parity shell (§7.1, Prop. 7.13).' },
+      { title: 'Form 8 (Codex) — Geodesic Icosahedron of Frequency $\\nu$ ($10\\nu^2+2$ Points)', body: 'Indexes the vertex figure of the $\\{4,3,5\\}$ hyperbolic honeycomb (where 20 cubes meet at each vertex) at subdivision frequency $\\nu$ held in Bits $[35:32]$ (Lemma 8 Prop. 6.4).' },
+      { title: 'Form 9 (Codex) — The 24 Hurwitz Units $\\mathcal{H}_1 = 2T$', body: 'Indexes the 24 unit quaternions $\\{\\pm 1, \\pm i, \\pm j, \\pm k, (\\pm 1\\pm i\\pm j\\pm k)/2\\}$, including the order-6 inter-tier spinor $h = (1-i+j+k)/2$ (Lemmas 4, 5, 13).' },
+      { title: 'Form 10 (Codex) — Binary Dihedral Group $2D_3$ (12 Elements)', body: 'Indexes the spinor double-cover preimage in $SU(2) \\subset SL(2,\\mathbb{C})$ of the trefoil knot’s 6-element dihedral symmetry group $D_3$ (Lemma 8 Prop. 6.3).' },
+      { title: 'Form 11 (Codex) — Nine-Ray Latitude Circle $x(s)$ ($9$ Points)', body: 'Indexes the 9 peripheral ray endpoints $s \\in \\mathbb{Z}/9\\mathbb{Z}$ spaced by $40^\\circ$ on the circumsphere $\\|x\\|^2 = 3$ of Cube 1 (Lemma 8 Step 1 &amp; 8.2).' },
+      { title: 'Form 12 (Codex) — Central Cell &amp; Six Ghost Cells of $\\{4,3,5\\}$ ($7$ Cells)', body: 'Indexes the central hyperbolic cube $[-a,a]^3$ ($0$) and its six face-neighbour ghost cells $B_{\\pm 1}, B_{\\pm 2}, B_{\\pm 3}$ ($1..6$) with golden rapidity $\\cosh\\vartheta = \\varphi$ (Lemma 8 Prop. 6.4).' },
+      { title: 'Form 13 (Codex) — Golden Circle Subdivision $k/\\varphi \\bmod 1$ ($F_m$ Points)', body: 'Indexes the $N = F_m$ golden subdivision points on $S^1$, which partition the circle into at most 2 gap lengths in exact ratio $\\varphi : 1$ by the Steinhaus–Sós theorem (Lemma 11 Part 3).' },
+      { title: 'Form 14 (Codex) — Primorial 30-Wheel Units ($8$ Classes)', body: 'Indexes $\\{1, 7, 11, 13, 17, 19, 23, 29\\} \\pmod{30}$ partitioned into $\\mathcal{B}_+$ and $\\mathcal{B}_-$ by $(b/5) = \\chi_{60}^2$ (Lemma 4 Part 5).' },
+      { title: 'Form 15 (Codex) — User-Defined Escape Codex', body: 'Names an external application-specific codex table attested by the 256-bit bottom-up recursive Merkle root $\\tau_1(G)$ (Lemma 15 Part 3).' }
+    ];
+
+    function updateCodexInspector() {
+      const idx = parseInt(document.getElementById('codexFormSelect')?.value || '3');
+      const item = CODEX_DESCRIPTIONS[idx];
+      const el = document.getElementById('codex-inspector-output');
+      if (!el || !item) return;
+      el.innerHTML = `
+        <div class="font-bold text-cyan-300 mono">${item.title}</div>
+        <div class="text-slate-300 leading-relaxed">${item.body}</div>
+      `;
+      renderMathSafe(el);
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+      renderMathSafe(document.body);
+      renderFuncMap();
+      drawManifoldShellsCanvas();
+      updateSignalSplitCalc();
+      setPumpFrame(180);
+      updateValveCalc();
+      drawKinematicsCanvas();
+      updateInteractionLab();
+      updateLayer5Sim();
+      updateGarnerCrtCalc();
+      updateCodexInspector();
+    });
+
+    window.addEventListener('resize', () => {
+      drawManifoldShellsCanvas();
+      setPumpFrame(parseInt(document.getElementById('inp-pump-n')?.value || '180'));
+      drawKinematicsCanvas();
+      updateInteractionLab();
+    });
+  </script>
+</body>
+</html>
