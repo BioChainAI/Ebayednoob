@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeta Energy System — Hoard (2026i) Geometric Engine & Torsional Markov Pump</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- KaTeX for Exact Mathematical Formula Rendering in HUD & Panels -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- =================================================================== -->
+    <!-- UPGRADED GLSL SHADERS: C_3 FOURIER SPLIT + SPINOR SPREAD s_k + ZETA -->
+    <!-- =================================================================== -->
+    <script type="x-shader/x-vertex" id="vertexShaderTube">
+        uniform float uTime;
+        uniform float uScale;
+        uniform float uLobeOffset;
+        uniform float uSpread;       // Exact rational spread s_k = sin^2(k*pi/4) in {0, 0.5, 1}
+        uniform float uGoldenBoost;  // {4,3,5} Golden cell half-width a = phi^(-3/2) = 0.485868
+        uniform float uSpikes[10];
+        varying float vScalarEnergy;
+        varying vec2 vUv;
+        varying vec3 vPhaseEnergies;
+        varying float vSpread;
+
+        #define PI 3.14159265359
+
+        // 30-Wheel Prime-Weighted Dirichlet/Zeta Proposer (Hoard 2026e/i)
+        float getZetaPrimeWheel(float t) {
+            float sum = 0.0;
+            // Unit classes modulo 30: 1, 7, 11, 13, 17, 19, 23, 29 (8 classes, 73.3% composite rejection)
+            float primes[10];
+            primes[0] = 1.0;  primes[1] = 2.0;  primes[2] = 3.0;  primes[3] = 5.0;  primes[4] = 7.0;
+            primes[5] = 11.0; primes[6] = 13.0; primes[7] = 17.0; primes[8] = 19.0; primes[9] = 23.0;
+            for(int i = 0; i < 10; i++) {
+                float p = primes[i];
+                sum += (1.0 / sqrt(p)) * cos(t * log(p));
+            }
+            return sum;
+        }
+
+        void main() {
+            vUv = uv;
+            vSpread = uSpread;
+            float t = (uv.x * 50.0) - (uTime * 8.0);
+            // Exact 120-degree (2*pi/3) C_3 branch phase offsets (Proposition 2.1 & 3.4)
+            float branchPhase = uLobeOffset * (2.0 * PI / 3.0) * 15.915494;
+            float baseT = t + branchPhase;
+
+            float p1 = getZetaPrimeWheel(baseT);
+            float p2 = getZetaPrimeWheel(baseT + 20.94395); // +120 deg carrier shift
+            float p3 = getZetaPrimeWheel(baseT + 41.88790); // +240 deg carrier shift
+
+            float spikeSum = 0.0;
+            for(int i = 0; i < 10; i++) {
+                float delta = t - uSpikes[i];
+                spikeSum += 4.0 * exp(-delta * delta * 0.2);
+            }
+
+            // Proposition 3.4 C_3 Apex Invariant s = (p1 + p2 + p3)/3 modulated by Spinor Envelope A_k = sqrt(s_k)
+            float envelopeGain = 0.65 + 0.35 * uSpread;
+            float scalar = ((p1 + p2 + p3) / 3.0 + spikeSum) * envelopeGain;
+            vScalarEnergy = scalar * uScale;
+            vPhaseEnergies = vec3(p1, p2, p3);
+
+            vec3 pos = position;
+            float expansion = 1.0 + (vScalarEnergy * 0.22 * (1.0 + uGoldenBoost * 0.4));
+            pos += normal * (expansion - 1.0) * 0.5;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentShaderTube">
+        uniform float uTime;
+        uniform float uOpacityMod;
+        varying float vScalarEnergy;
+        varying vec3 vPhaseEnergies;
+        varying vec2 vUv;
+        varying float vSpread;
+        #define PI 3.14159265359
+
+        void main() {
+            float angle = vUv.y * 2.0 * PI;
+            float spiral = vUv.x * 30.0 - uTime * 5.0;
+            // Three 120-degree C_3 triads (Proposition 2.1)
+            float l1 = smoothstep(0.78, 1.0, sin(angle + spiral));
+            float l2 = smoothstep(0.78, 1.0, sin(angle + spiral + 2.0 * PI / 3.0));
+            float l3 = smoothstep(0.78, 1.0, sin(angle + spiral + 4.0 * PI / 3.0));
+
+            vec3 internalColor = vec3(0.0);
+            internalColor += vec3(1.0, 0.25, 0.2) * l1 * (0.5 + 0.5 * vPhaseEnergies.x);
+            internalColor += vec3(0.15, 0.95, 0.45) * l2 * (0.5 + 0.5 * vPhaseEnergies.y);
+            internalColor += vec3(0.25, 0.55, 1.0) * l3 * (0.5 + 0.5 * vPhaseEnergies.z);
+
+            float scalarIntensity = smoothstep(-1.0, 3.0, vScalarEnergy);
+            // Highlight handshake apices (k=2 Onload, k=6 Offload where vSpread == 1.0)
+            vec3 apexGlow = mix(vec3(0.0, 0.12, 0.24), vec3(0.95, 0.72, 0.2), vSpread * 0.45);
+            vec3 shellColor = mix(apexGlow, vec3(0.45, 0.85, 1.0), scalarIntensity);
+
+            vec3 finalColor = internalColor + shellColor * 0.45;
+            float alpha = (0.55 + 0.15 * vSpread) * uOpacityMod;
+            alpha += (l1 + l2 + l3) * 0.2;
+            gl_FragColor = vec4(finalColor, alpha);
+        }
+    </script>
+
+    <!-- SHELL SHADERS -->
+    <script type="x-shader/x-vertex" id="vertexShaderShell">
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    </script>
+    <script type="x-shader/x-fragment" id="fragmentShaderShell">
+        uniform float uTime;
+        uniform float uScale;
+        uniform float uRotation;
+        uniform float uSpread;
+        uniform float uSpikes[10];
+        uniform float uOpacityMod;
+        varying vec2 vUv;
+        #define PI 3.14159265359
+
+        float getZetaReal_F(float t) {
+            float sum = 0.0;
+            for(float n = 1.0; n <= 10.0; n++) sum += (1.0 / sqrt(n)) * cos(t * log(n));
+            return sum;
+        }
+        void main() {
+            float angle = vUv.x * PI * 2.0;
+            float t = (vUv.y * 50.0) - (uTime * 8.0);
+            float combinedEnergy = 0.0;
+            for(int i = 0; i < 3; i++) {
+                float lobeAngle = (float(i) / 3.0) * PI * 2.0;
+                float currentAngle = lobeAngle + uRotation;
+                float diff = abs(mod(angle - currentAngle + PI, PI * 2.0) - PI);
+                float beam = exp(-diff * diff * 5.0);
+                float zeta = getZetaReal_F(t + (float(i) * 20.94395));
+                float spike = 0.0;
+                for(int k = 0; k < 10; k++) {
+                    float d = t - uSpikes[k];
+                    spike += 4.0 * exp(-d * d * 0.2);
+                }
+                combinedEnergy += smoothstep(0.5, 3.0, (zeta + spike) * uScale) * beam;
+            }
+            vec3 color = vec3(0.0, 0.02, 0.05);
+            vec3 patCol = mix(vec3(0.35, 0.7, 1.0), vec3(1.0, 0.8, 0.3), uSpread * 0.6);
+            if(combinedEnergy > 0.8) patCol = vec3(1.0, 1.0, 0.85);
+            color += patCol * combinedEnergy;
+            // 24-Frame Joint CRT Grid + 10-Block Pump Grid
+            float grid = smoothstep(0.98, 1.0, sin(vUv.x * 24.0 * PI)) + smoothstep(0.98, 1.0, sin(vUv.y * 72.0));
+            color += vec3(0.14, 0.2, 0.28) * grid;
+            gl_FragColor = vec4(color, (0.18 + combinedEnergy * 0.78) * uOpacityMod);
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #05070c; color: #e2e8f0; font-family: 'Segoe UI', system-ui, monospace; }
+        #info { position: absolute; top: 14px; left: 14px; pointer-events: none; z-index: 10; max-height: calc(100vh - 110px); overflow-y: auto; }
+        h1 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; text-shadow: 0 0 12px rgba(0, 255, 255, 0.45); }
+        .controls {
+            pointer-events: auto; margin-top: 10px;
+            background: rgba(8, 13, 23, 0.88); padding: 14px;
+            border-radius: 10px; backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.25); width: 295px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.65);
+        }
+        button.action-btn {
+            background: rgba(6, 182, 212, 0.12); border: 1px solid rgba(34, 211, 238, 0.6);
+            color: #67e8f9; padding: 7px 10px; border-radius: 6px; cursor: pointer;
+            font-size: 0.72rem; font-weight: 600; width: 100%; margin-top: 7px;
+            transition: all 0.18s; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        button.action-btn:hover { background: #22d3ee; color: #05070c; }
+        .param-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        label { font-size: 10.5px; text-transform: uppercase; color: #7dd3fc; font-weight: 600; }
+        input[type=range] { width: 100%; accent-color: #22d3ee; cursor: pointer; }
+
+        /* Upgraded Sequencer & 720->72->10 Torsional Pump Bar */
+        #sequencer-bar {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            width: min(920px, 95vw); background: rgba(8, 13, 23, 0.94);
+            border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px;
+            padding: 10px 16px; display: flex; flex-direction: column; gap: 8px;
+            z-index: 30; backdrop-filter: blur(14px);
+            box-shadow: 0 0 28px rgba(0, 255, 255, 0.12);
+        }
+        .seq-top-row { display: flex; gap: 12px; align-items: center; }
+        .seq-btn {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 1px solid #334155; background: #0f172a; color: #22d3ee;
+            font-weight: bold; cursor: pointer; display: grid; place-items: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .seq-btn:hover { background: #22d3ee; color: #05070c; box-shadow: 0 0 10px #22d3ee; }
+        .seq-slider-container { flex: 1; position: relative; }
+        .seq-slider { width: 100%; accent-color: #f59e0b; cursor: pointer; }
+        .pump-telemetry-row {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+            border-top: 1px solid rgba(51, 65, 85, 0.6); padding-top: 6px;
+            font-family: 'Consolas', monospace; font-size: 10.5px;
+        }
+        .pump-pill {
+            background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 6px; padding: 4px 7px; display: flex; flex-direction: column;
+        }
+        .pump-pill-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; }
+        .pump-pill-val { font-size: 11px; font-weight: 700; color: #f8fafc; margin-top: 1px; }
+
+        /* Floating Panels */
+        .panel {
+            position: absolute; background: rgba(8, 13, 23, 0.95);
+            border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 10px;
+            backdrop-filter: blur(16px); display: none; flex-direction: column;
+            z-index: 20; box-shadow: -10px 0 35px rgba(0,0,0,0.85);
+        }
+        .panel.active { display: flex; }
+        .panel-header {
+            padding: 9px 14px; border-bottom: 1px solid #1e293b;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: move; user-select: none; flex-shrink: 0;
+        }
+        .close-btn { background: transparent; border: none; color: #64748b; font-size: 20px; cursor: pointer; line-height: 1; }
+        .close-btn:hover { color: #fff; }
+        #spectrum-panel { top: 14px; right: 14px; width: 520px; height: 76vh; overflow-y: auto; overflow-x: hidden; }
+        #slicer-panel {
+            top: 14px; right: 548px; width: 375px; height: 540px;
+            resize: both; overflow: hidden; min-width: 320px; min-height: 390px;
+        }
+
+        .quat-section { padding: 12px 14px; background: #060911; border-bottom: 1px solid #1e293b; }
+        .quat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+        .quat-cell { text-align: center; background: #0f172a; padding: 6px; border-radius: 6px; border: 1px solid #1e293b; }
+        .quat-label { font-size: 9.5px; color: #94a3b8; font-weight: bold; display: block; }
+        .quat-val { font-family: monospace; font-size: 12px; color: #22d3ee; margin: 3px 0; display: block; font-weight: 700; }
+        .quat-bar-bg { width: 100%; height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden; }
+        .quat-bar-fill { height: 100%; background: #22d3ee; width: 0%; transition: width 0.1s; }
+
+        .chart-grid { padding: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1; }
+        .chart-box { background: #04070d; border: 1px solid #1e293b; border-radius: 6px; height: 108px; position: relative; padding-top: 14px; }
+        .chart-title { position: absolute; top: 3px; left: 6px; font-size: 9px; color: #94a3b8; text-transform: uppercase; font-family: monospace; }
+
+        #slicerCanvasContainer { flex: 1; background: #04070d; overflow: hidden; display: grid; place-items: center; position: relative; }
+        #slicerCanvas { width: 100%; height: 100%; display: block; }
+        .slicer-controls { padding: 11px 14px; background: rgba(6, 9, 17, 0.9); border-top: 1px solid #1e293b; flex-shrink: 0; }
+        .slicer-toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 6px; }
+        .slicer-toggle { font-size: 10.5px; color: #93c5fd; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- LEFT HUD & ARCHITECTURAL CONTROLS -->
+<div id="info">
+    <div class="flex items-center gap-2">
+        <h1>Zeta Energy &amp; Geometric Engine</h1>
+        <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">Hoard (2026i)</span>
+    </div>
+    <p class="text-[11px] text-cyan-300/80 mb-1 font-mono">
+        $1+i$ Spinor Clock • $720 \to 72 \to 10$ Pump • $\{4,3,5\}$ Honeycomb • $\mathbb{R}^{4,1}$ Null Cone
+    </p>
+
+    <div class="controls">
+        <!-- Mathematical Kinematics Mode Selector -->
+        <div class="mb-2.5 pb-2 border-b border-slate-800">
+            <label class="block mb-1 text-amber-300">Kinematics &amp; Topology Engine Mode</label>
+            <select id="engineModeSelect" class="w-full bg-slate-900 text-xs font-mono text-white px-2.5 py-1.5 rounded border border-cyan-500/40">
+                <option value="exact2026" selected>2026i Exact: (1+i)ᵏ Clock + {4,3,5} Golden Boost</option>
+                <option value="legacy2025">Legacy 2025: 8-Phase Linear Cubic Breath</option>
+            </select>
+        </div>
+
+        <div class="param-row">
+            <label>Wave Amplitude ($u_{\text{scale}}$)</label>
+            <span id="ampVal" class="text-xs font-mono text-cyan-300">0.8</span>
+        </div>
+        <input type="range" id="ampSlider" min="0" max="2" step="0.1" value="0.8">
+
+        <div class="param-row" style="margin-top:8px;">
+            <label>Golden Rapidity Boost ($\cosh\vartheta = \varphi$)</label>
+            <span id="boostVal" class="text-xs font-mono text-amber-300">1.00× (a=0.486)</span>
+        </div>
+        <input type="range" id="boostSlider" min="0" max="2" step="0.05" value="1.0">
+
+        <div class="param-row" style="margin-top:8px;">
+            <label>Spin Ratio ($720 = 90 \times 8$ Cycles)</label>
+            <span id="spinValDisplay" class="text-xs font-mono text-emerald-300">1.0 (90×8 / 30×24)</span>
+        </div>
+        <input type="range" id="spinSlider" min="0.1" max="3" step="0.1" value="1.0">
+
+        <!-- 3D Geometric Overlays -->
+        <div class="mt-2.5 pt-2 border-t border-slate-800 grid grid-cols-2 gap-1.5 text-[10.5px] text-slate-300 font-mono">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkGoldenCell" checked> <span>$\{4,3,5\}$ Klein Cell</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkTetraWheel" checked> <span>$\mu_9$ Tetrahedra $\Delta_a$</span>
+            </label>
+        </div>
+
+        <button class="action-btn" id="injectBtn">Inject Soliton Spike (Center)</button>
+        <div class="grid grid-cols-2 gap-2">
+            <button class="action-btn !border-amber-400 !text-amber-300 hover:!bg-amber-400 hover:!text-black" id="toggleSpectrum">Spectrum &amp; 64b Tile</button>
+            <button class="action-btn !border-blue-400 !text-blue-300 hover:!bg-blue-400 hover:!text-black" id="toggleSlicer">2D Null-Cone Slicer</button>
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM SEQUENCER & 720 -> 72 -> 10 TORSIONAL MARKOV PUMP BAR -->
+<div id="sequencer-bar">
+    <div class="seq-top-row">
+        <button class="seq-btn" id="seq-prev" title="Previous Frame">‹</button>
+        <button class="seq-btn" id="seq-play" title="Play / Pause 720-Frame Pump">►</button>
+        <button class="seq-btn" id="seq-next" title="Next Frame">›</button>
+        <div class="seq-slider-container">
+            <input type="range" id="seq-slider" class="seq-slider" min="0" max="720" value="0" step="1">
+        </div>
+        <div class="text-right font-mono min-w-[115px]">
+            <span class="text-[9.5px] text-slate-400 uppercase block">Fine Frame $n \in [0,720]$</span>
+            <span class="text-sm font-bold text-amber-400" id="seq-val">n = 0 / 720</span>
+        </div>
+    </div>
+
+    <!-- Real-time 2026i Mathematical Telemetry Strip -->
+    <div class="pump-telemetry-row">
+        <div class="pump-pill">
+            <span class="pump-pill-label">Spinor Clock $k = n \bmod 8$</span>
+            <span class="pump-pill-val text-amber-300" id="tele-clock">k=0 | q=+1 (1+0i)</span>
+        </div>
+        <div class="pump-pill">
+            <span class="pump-pill-label">Spread $s_k = \sin^2(k\pi/4)$</span>
+            <span class="pump-pill-val text-emerald-300" id="tele-spread">s_0 = 0 (Node)</span>
+        </div>
+        <div class="pump-pill">
+            <span class="pump-pill-label">CRT Schedule $(k, j = n \bmod 3)$</span>
+            <span class="pump-pill-val text-cyan-300" id="tele-crt">n≡0 (mod 24) | j=0 (0°)</span>
+        </div>
+        <div class="pump-pill">
+            <span class="pump-pill-label">$720 \to 72 \to 10$ Pump Gears</span>
+            <span class="pump-pill-val text-purple-300" id="tele-gears">m=0/71 | l=0/9 (sz 8)</span>
+        </div>
+        <div class="pump-pill">
+            <span class="pump-pill-label">Open Holonomy $P = q_n q_0^{-1}$</span>
+            <span class="pump-pill-val text-blue-300" id="tele-holonomy">P = +1 (H = P⁻¹ = +1)</span>
+        </div>
+        <div class="pump-pill">
+            <span class="pump-pill-label">Clock Window Closures</span>
+            <span class="pump-pill-val text-rose-300" id="tele-closures">Cs • 40Hz • 432Hz • 120f</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2D SLICER PANEL (UPGRADED WITH ZERO-POINT CLOSURE, {4,3,5} CELL & PUMP RINGS) -->
+<div id="slicer-panel" class="panel active">
+    <div class="panel-header">
+        <div>
+            <h2 class="text-xs font-bold text-cyan-400 uppercase tracking-wider">2D Conformal &amp; $\{4,3,5\}$ Klein Slicer</h2>
+            <p class="text-[9.5px] text-slate-400 font-mono">Zero-Point Closure State • $\mu_9$ Tetrahedra • $720 \to 72 \to 10$ Gears</p>
+        </div>
+        <button class="close-btn" id="closeSlicer">×</button>
+    </div>
+    <div id="slicerCanvasContainer">
+        <canvas id="slicerCanvas"></canvas>
+    </div>
+    <div class="slicer-controls">
+        <div class="param-row">
+            <label>Slice $Z$-Depth &amp; Complex Rapidity $\lambda = \vartheta + i\theta$</label>
+            <span id="sliceDepthVal" class="text-xs font-mono text-cyan-300">0.50</span>
+        </div>
+        <input type="range" id="sliceDepth" min="0" max="1" step="0.01" value="0.5">
+
+        <div class="slicer-toggle-grid">
+            <label class="slicer-toggle">
+                <input type="checkbox" id="toggleTrefoil" checked> <span>$D_3$ Trefoil ($r \le 0.252$)</span>
+            </label>
+            <label class="slicer-toggle">
+                <input type="checkbox" id="toggleVortex"> <span>3D Vortex Screw Paths</span>
+            </label>
+            <label class="slicer-toggle">
+                <input type="checkbox" id="toggleTrace"> <span>Full 720-Step Trace (2D)</span>
+            </label>
+            <label class="slicer-toggle">
+                <input type="checkbox" id="toggleNodeTrails" checked> <span>Spinor Vertex Trails</span>
+            </label>
+            <label class="slicer-toggle">
+                <input type="checkbox" id="toggleConnectors" checked> <span>$C_3$ Branch Connectors</span>
+            </label>
+            <label class="slicer-toggle">
+                <input type="checkbox" id="togglePumpRings" checked> <span>$720 \to 72 \to 10$ Gears</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- SPECTRUM, 64-BIT EINSTEIN TILE & 4-TRACK VERIFICATION PANEL -->
+<div id="spectrum-panel" class="panel">
+    <div class="panel-header">
+        <div>
+            <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Center Stream $[0,0,0]$ • 64-Bit Einstein Tile &amp; $C_3$ Split</h2>
+            <p class="text-[9.5px] text-slate-400 font-mono">Exact Track B • Float Track A • Cayley Track C • $\bmod\ 881\cdot 883\cdot 887$ Track R</p>
+        </div>
+        <button class="close-btn" id="closeSpectrum">×</button>
+    </div>
+
+    <!-- Quaternion, Tier Spinor h, and 64-Bit Einstein Tile Readout -->
+    <div class="quat-section space-y-2.5">
+        <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono text-slate-400 uppercase font-bold">Quaternion State &amp; Order-6 Tier Spinor $h = \frac{1-i+j+k}{2}$</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" id="tile-hex-badge">Tile: 0x4A80230000000000</span>
+        </div>
+        <div class="quat-grid">
+            <div class="quat-cell">
+                <span class="quat-label">$W$ (Apex $s/3$)</span>
+                <span class="quat-val" id="q-w">0.00</span>
+                <div class="quat-bar-bg"><div class="quat-bar-fill" id="bar-w" style="background:#f8fafc"></div></div>
+            </div>
+            <div class="quat-cell">
+                <span class="quat-label">$i$ (Branch $j=0$)</span>
+                <span class="quat-val" id="q-x">0.00</span>
+                <div class="quat-bar-bg"><div class="quat-bar-fill" id="bar-x" style="background:#38bdf8"></div></div>
+            </div>
+            <div class="quat-cell">
+                <span class="quat-label">$j$ (Branch $j=1$)</span>
+                <span class="quat-val" id="q-y">0.00</span>
+                <div class="quat-bar-bg"><div class="quat-bar-fill" id="bar-y" style="background:#10b981"></div></div>
+            </div>
+            <div class="quat-cell">
+                <span class="quat-label">$k$ (Branch $j=2$)</span>
+                <span class="quat-val" id="q-z">0.00</span>
+                <div class="quat-bar-bg"><div class="quat-bar-fill" id="bar-z" style="background:#f43f5e"></div></div>
+            </div>
+        </div>
+
+        <!-- 4 Parallel Trigonometric Tracks Live Strip (Section 8.10) -->
+        <div class="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-slate-950 p-2 rounded border border-slate-800">
+            <div><span class="text-emerald-400 font-bold">Track B (Exact):</span> <span id="trk-b" class="text-slate-200">(1+i)^0 = 1 | R^9 = I</span></div>
+            <div><span class="text-cyan-400 font-bold">Track A (Readout):</span> <span id="trk-a" class="text-slate-200">θ=0.0°, ϑ=0.5306</span></div>
+            <div><span class="text-amber-400 font-bold">Track C (Cayley):</span> <span id="trk-c" class="text-slate-200">138+29(i+j+k) N=21567</span></div>
+            <div><span class="text-purple-400 font-bold">Track R (Mod 881):</span> <span id="trk-r" class="text-slate-200">i↦387, √5↦228, c↦120</span></div>
+        </div>
+    </div>
+
+    <!-- 12 Real-Time Algebraic & C_3 Fourier Split Charts -->
+    <div class="chart-grid">
+        <div class="chart-box"><span class="chart-title">Branch $j=0$ ($a$)</span><canvas id="c1"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Branch $j=1$ ($b$)</span><canvas id="c2"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Branch $j=2$ ($c$)</span><canvas id="c3"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Quadrance $Q_0 = a^2$</span><canvas id="c4"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Quadrance $Q_1 = b^2$</span><canvas id="c5"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Quadrance $Q_2 = c^2$</span><canvas id="c6"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Cross $2ab$</span><canvas id="c7"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Cross $2bc$</span><canvas id="c8"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Cross $2ca$</span><canvas id="c9"></canvas></div>
+        <div class="chart-box"><span class="chart-title">$C_3$ Apex $s = a+b+c$</span><canvas id="c10"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Rotating Plane $|z|^2$</span><canvas id="c11"></canvas></div>
+        <div class="chart-box"><span class="chart-title">Spread $s_k$ &amp; Binding</span><canvas id="c12"></canvas></div>
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // 1. EXACT MATHEMATICAL CONSTANTS & ALGEBRAIC TABLES (HOARD 2026i)
+    // =========================================================================
+    const PHI = (1 + Math.sqrt(5)) / 2;                   // Golden ratio φ = 1.6180339887
+    const SQRT_PHI = Math.sqrt(PHI);                      // sinh(ϑ) = √φ = 1.2720196495
+    const KLEIN_A = Math.pow(PHI, -1.5);                  // {4,3,5} Klein cell half-width a = φ^(-3/2) = 0.48586827
+    const CELL_INRADIUS = Math.atanh(KLEIN_A);            // r_in = ϑ/2 = 0.53063753
+
+    // Proposition 2.2 & 8.2: Exact Projective Gaussian Clock (1+i)^k with gcd reduction
+    const GAUSSIAN_CLOCK = [
+        { k: 0, name: 'Zero Point', re:  1, im:  0, spinor: '+1',         spread: 0.0, spreadStr: '0 (Node)' },
+        { k: 1, name: 'Seed',       re:  1, im:  1, spinor: '(1+i)/√2',   spread: 0.5, spreadStr: '1/2' },
+        { k: 2, name: 'Onload',     re:  0, im:  1, spinor: '+i (Apex)',  spread: 1.0, spreadStr: '1 (Onload)' },
+        { k: 3, name: 'Project',    re: -1, im:  1, spinor: '(-1+i)/√2',  spread: 0.5, spreadStr: '1/2' },
+        { k: 4, name: 'Invert',     re: -1, im:  0, spinor: '-1 (Sheet)', spread: 0.0, spreadStr: '0 (Node)' },
+        { k: 5, name: 'Fold',       re: -1, im: -1, spinor: '(-1-i)/√2',  spread: 0.5, spreadStr: '1/2' },
+        { k: 6, name: 'Offload',    re:  0, im: -1, spinor: '-i (Apex)',  spread: 1.0, spreadStr: '1 (Offload)' },
+        { k: 7, name: 'Index',      re:  1, im: -1, spinor: '(1-i)/√2',   spread: 0.5, spreadStr: '1/2' }
+    ];
+
+    // Proposition 8.3: Exact 40° Rotation Circulant over Q(2 cos 40°), roots of 9y^3 - 9y^2 + 1 = 0
+    const C_40 = 2 * Math.cos(40 * Math.PI / 180);
+    const RHO_0 = (1 + C_40) / 3;
+    const RHO_1 = (3 - C_40 - C_40 * C_40) / 3;
+    const RHO_2 = (C_40 * C_40 - 1) / 3;
+
+    function applyWheelRotation40(vec, power) {
+        let v = vec.clone();
+        const steps = ((power % 9) + 9) % 9;
+        for (let s = 0; s < steps; s++) {
+            const x = RHO_0 * v.x + RHO_1 * v.y + RHO_2 * v.z;
+            const y = RHO_2 * v.x + RHO_0 * v.y + RHO_1 * v.z;
+            const z = RHO_1 * v.x + RHO_2 * v.y + RHO_0 * v.z;
+            v.set(x, y, z);
+        }
+        return v;
+    }
+
+    // Proposition 3.9: 720 -> 72 -> 10 Torsional Markov Pump Partition Sizes (8,7,7,7,7,8,7,7,7,7)
+    function getCoarseGearBlock(m) {
+        return Math.min(9, Math.floor((10 * m) / 72));
+    }
+    const COARSE_BLOCK_SIZES = [8, 7, 7, 7, 7, 8, 7, 7, 7, 7];
+
+    // =========================================================================
+    // 2. THREE.JS SCENE & GEOMETRIES
+    // =========================================================================
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x05070c, 0.014);
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(38, 36, 76);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x05070c);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    const STRIP_LENGTH = 60;
+    const SHELL_RADIUS = 8;
+    const STREAM_SPACING = 25;
+    const HALF_CUBE = STREAM_SPACING / 2.0; // Core Cube K = [-1, 1]^3 scaled by C_0 = 12.5
+
+    class StrandCurve extends THREE.Curve {
+        constructor(scale = 1) { super(); this.scale = scale; }
+        getPoint(t, optionalTarget = new THREE.Vector3()) {
+            const z = (t - 0.5) * STRIP_LENGTH;
+            return optionalTarget.set(2.0, 0, z);
+        }
+    }
+    const path = new StrandCurve(1);
+    const tubeGeo = new THREE.TubeGeometry(path, 150, 0.6, 24, false);
+    const shellGeo = new THREE.CylinderGeometry(SHELL_RADIUS, SHELL_RADIUS, STRIP_LENGTH, 48, 10, true);
+    shellGeo.rotateX(Math.PI / 2);
+
+    const pGeo = new THREE.BufferGeometry();
+    const pCount = 800;
+    const pPos = new Float32Array(pCount * 3);
+    const pData = new Float32Array(pCount * 2);
+    for (let i = 0; i < pCount; i++) {
+        pData[i * 2] = Math.random();
+        pData[i * 2 + 1] = Math.floor(Math.random() * 3);
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    const pMat = new THREE.PointsMaterial({ color: 0x88ccff, size: 0.12, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+
+    // --- 9 ZETA STREAMS ---
+    const streams = [];
+    function createZetaStream(x, y, z, isCenter) {
+        const group = new THREE.Group();
+        group.position.set(x, y, z);
+
+        const initSpikes = new Float32Array(10).fill(-9999.0);
+        const uniforms = {
+            uTime: { value: 0 },
+            uScale: { value: 0.8 },
+            uLobeOffset: { value: 0 },
+            uSpread: { value: 0.0 },
+            uGoldenBoost: { value: 1.0 },
+            uSpikes: { value: initSpikes },
+            uRotation: { value: 0 },
+            uOpacityMod: { value: isCenter ? 1.0 : 0.28 }
+        };
+
+        const lobesGroup = new THREE.Group();
+        group.add(lobesGroup);
+
+        for (let i = 0; i < 3; i++) {
+            const mat = new THREE.ShaderMaterial({
+                vertexShader: document.getElementById('vertexShaderTube').textContent,
+                fragmentShader: document.getElementById('fragmentShaderTube').textContent,
+                uniforms: THREE.UniformsUtils.clone(uniforms),
+                side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            mat.uniforms.uLobeOffset.value = i;
+            const mesh = new THREE.Mesh(tubeGeo, mat);
+
+            const pivot = new THREE.Group();
+            pivot.add(mesh);
+            pivot.rotation.z = (i / 3) * Math.PI * 2;
+            lobesGroup.add(pivot);
+        }
+
+        const shellMat = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('vertexShaderShell').textContent,
+            fragmentShader: document.getElementById('fragmentShaderShell').textContent,
+            uniforms: THREE.UniformsUtils.clone(uniforms),
+            transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const outerShell = new THREE.Mesh(shellGeo, shellMat);
+        group.add(outerShell);
+
+        const particleSystem = new THREE.Points(pGeo, pMat.clone());
+        lobesGroup.add(particleSystem);
+
+        return { group, uniforms, lobesGroup, particleSystem, isCenter };
+    }
+
+    for (let x = -1; x <= 1; x++) {
+        for (let y = -1; y <= 1; y++) {
+            const isCenter = (x === 0 && y === 0);
+            const stream = createZetaStream(x * STREAM_SPACING, y * STREAM_SPACING, 0, isCenter);
+            streams.push(stream);
+            scene.add(stream.group);
+        }
+    }
+    const centerStream = streams.find(s => s.isCenter);
+
+    // --- 3x3x3 CUBIC RESONANCE GRID + {4,3,5} GOLDEN KLEIN CELL ---
+    const cubeSize = STREAM_SPACING;
+    const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+    const cubeEdges = new THREE.EdgesGeometry(cubeGeo);
+    const matStandard = new THREE.LineBasicMaterial({ color: 0x334455, transparent: true, opacity: 0.12 });
+    const matCenter = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.75, depthTest: false });
+    const gridGroup = new THREE.Group();
+    scene.add(gridGroup);
+
+    // Golden {4,3,5} Klein Cell [-a, a]^3 inside Core Cube K = [-1, 1]^3 (Proposition 4.3: a = φ^(-3/2) = 0.485868)
+    const goldenCellGroup = new THREE.Group();
+    scene.add(goldenCellGroup);
+
+    for (let x = -1; x <= 1; x++) {
+        for (let y = -1; y <= 1; y++) {
+            for (let z = -1; z <= 1; z++) {
+                const isCenter = (x === 0 && y === 0 && z === 0);
+                const mat = isCenter ? matCenter : matStandard;
+                const box = new THREE.LineSegments(cubeEdges, mat);
+                box.position.set(x * cubeSize, y * cubeSize, z * cubeSize);
+                gridGroup.add(box);
+
+                if (isCenter) {
+                    const goldenBox = new THREE.LineSegments(
+                        cubeEdges,
+                        new THREE.LineBasicMaterial({ color: 0xf59e0b, opacity: 0.85, transparent: true })
+                    );
+                    // Exact Klein half-width ratio a = φ^(-3/2) = 0.48586827
+                    goldenBox.scale.set(KLEIN_A, KLEIN_A, KLEIN_A);
+                    goldenCellGroup.add(goldenBox);
+                }
+            }
+        }
+    }
+
+    // --- SLICER HELPER, CORRECTED 9-PHASE TETRAHEDRA Δ_a & EXACT D_3 TREFOIL ---
+    const sliceHelperGeo = new THREE.PlaneGeometry(18, 18);
+    const sliceHelperMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+    const sliceHelper = new THREE.Mesh(sliceHelperGeo, sliceHelperMat);
+    const sliceGrid = new THREE.GridHelper(18, 12, 0x00ffff, 0x003344);
+    sliceGrid.rotateX(Math.PI / 2);
+    sliceHelper.add(sliceGrid);
+    centerStream.group.add(sliceHelper);
+    sliceHelper.visible = true; // Active by default with 2D Slicer panel open
+
+    // Moving Slice Box
+    const sliceBoxGeo = new THREE.BoxGeometry(STREAM_SPACING, STREAM_SPACING, STREAM_SPACING);
+    const sliceBoxMat = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.45 });
+    const sliceBox = new THREE.LineSegments(new THREE.EdgesGeometry(sliceBoxGeo), sliceBoxMat);
+    sliceHelper.add(sliceBox);
+
+    // Proposition 3.1 (Corrected Frame): Three Regular Tetrahedra Δ_0, Δ_1, Δ_2 of the 9-Phase Wheel μ_9
+    // In K = [-1,1]^3 scaled by HALF_CUBE, apex x* = (1,1,1), base triad a=0 is (1,-1,-1), (-1,1,-1), (-1,-1,1)
+    const tetraWheelGroup = new THREE.Group();
+    sliceHelper.add(tetraWheelGroup);
+
+    const baseV0 = new THREE.Vector3( 1, -1, -1).multiplyScalar(HALF_CUBE);
+    const baseV1 = new THREE.Vector3(-1,  1, -1).multiplyScalar(HALF_CUBE);
+    const baseV2 = new THREE.Vector3(-1, -1,  1).multiplyScalar(HALF_CUBE);
+    const apexV  = new THREE.Vector3( 1,  1,  1).multiplyScalar(HALF_CUBE);
+
+    const tetraColors = [0xf59e0b, 0x38bdf8, 0xa855f7];
+    for (let a = 0; a < 3; a++) {
+        const v0 = applyWheelRotation40(baseV0, a);
+        const v1 = applyWheelRotation40(baseV1, a);
+        const v2 = applyWheelRotation40(baseV2, a);
+
+        const tetPts = [
+            v0, v1, v1, v2, v2, v0,
+            v0, apexV, v1, apexV, v2, apexV
+        ];
+        const tetGeo = new THREE.BufferGeometry().setFromPoints(tetPts);
+        const tetMat = new THREE.LineBasicMaterial({
+            color: tetraColors[a],
+            transparent: true,
+            opacity: a === 0 ? 0.75 : 0.35
+        });
+        tetraWheelGroup.add(new THREE.LineSegments(tetGeo, tetMat));
+    }
+
+    // 12 Compression / Spinor Nodes
+    const nodeGroup = new THREE.Group();
+    sliceHelper.add(nodeGroup);
+    const nodeGeo = new THREE.SphereGeometry(0.35, 16, 16);
+    const nodes = [];
+    for (let i = 0; i < 12; i++) {
+        let color = 0xff3333;
+        if (i >= 4 && i < 8) color = 0x10b981;
+        if (i >= 8) color = 0x38bdf8;
+        const mat = new THREE.MeshBasicMaterial({ color });
+        const n = new THREE.Mesh(nodeGeo, mat);
+        nodes.push(n);
+        nodeGroup.add(n);
+    }
+
+    // 3D Vortex Trails (720 Steps, Colored by 8-Step Spinor State)
+    const vortexGroup = new THREE.Group();
+    sliceHelper.add(vortexGroup);
+    const trailLines = [];
+    const TRAIL_MAX_STEPS = 720;
+    for (let i = 0; i < 12; i++) {
+        const geom = new THREE.BufferGeometry();
+        const positions = new Float32Array((TRAIL_MAX_STEPS + 1) * 3);
+        const colors = new Float32Array((TRAIL_MAX_STEPS + 1) * 3);
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geom.setDrawRange(0, 0);
+        const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.65 });
+        const line = new THREE.Line(geom, mat);
+        vortexGroup.add(line);
+        trailLines.push(line);
+    }
+
+    // Proposition 3.11 & Section 4.3: Exact Parametric Trefoil T(t) = (sin t + 2 sin 2t, cos t - 2 cos 2t, -sin 3t)
+    // Scaled by 1/12 inside the {4,3,5} cell (largest Klein radius 0.2520 < a = 0.4859)
+    class ExactTrefoilCurve extends THREE.Curve {
+        constructor(radiusScale) { super(); this.radiusScale = radiusScale; }
+        getPoint(u, optionalTarget = new THREE.Vector3()) {
+            const t = u * Math.PI * 2;
+            const x = (Math.sin(t) + 2 * Math.sin(2 * t)) * this.radiusScale;
+            const y = (Math.cos(t) - 2 * Math.cos(2 * t)) * this.radiusScale;
+            const z = (-Math.sin(3 * t)) * this.radiusScale;
+            return optionalTarget.set(x, y, z);
+        }
+    }
+    // Scale (1/12) * HALF_CUBE so it sits inside the Golden Klein Cell [-a, a]^3
+    const trefoilScale = (HALF_CUBE / 12.0) * 3.2;
+    const exactTrefoilGeo = new THREE.TubeGeometry(new ExactTrefoilCurve(trefoilScale), 180, 0.28, 12, true);
+    const knotMat = new THREE.MeshBasicMaterial({ color: 0xe879f9, wireframe: true, transparent: true, opacity: 0.55 });
+    const trefoilKnot = new THREE.Mesh(exactTrefoilGeo, knotMat);
+    sliceHelper.add(trefoilKnot);
+
+    // =========================================================================
+    // 3. KINEMATICS: 2026i EXACT SPINOR SCREW + GOLDEN BOOST VS LEGACY 2025
+    // =========================================================================
+    const COMPRESSION_SIZE = HALF_CUBE;
+    const edgePos = [
+        [COMPRESSION_SIZE, COMPRESSION_SIZE, 0], [COMPRESSION_SIZE, -COMPRESSION_SIZE, 0], [-COMPRESSION_SIZE, COMPRESSION_SIZE, 0], [-COMPRESSION_SIZE, -COMPRESSION_SIZE, 0],
+        [COMPRESSION_SIZE, 0, COMPRESSION_SIZE], [COMPRESSION_SIZE, 0, -COMPRESSION_SIZE], [-COMPRESSION_SIZE, 0, COMPRESSION_SIZE], [-COMPRESSION_SIZE, 0, -COMPRESSION_SIZE],
+        [0, COMPRESSION_SIZE, COMPRESSION_SIZE], [0, COMPRESSION_SIZE, -COMPRESSION_SIZE], [0, -COMPRESSION_SIZE, COMPRESSION_SIZE], [0, -COMPRESSION_SIZE, -COMPRESSION_SIZE]
+    ].map(p => new THREE.Vector3(p[0], p[1], p[2]));
+
+    const facePos = [
+        [0, 0, COMPRESSION_SIZE], [0, 0, -COMPRESSION_SIZE],
+        [COMPRESSION_SIZE, 0, 0], [-COMPRESSION_SIZE, 0, 0],
+        [0, COMPRESSION_SIZE, 0], [0, -COMPRESSION_SIZE, 0]
+    ].map(p => new THREE.Vector3(p[0], p[1], p[2]));
+
+    // Golden Klein Cell Face Centers [±a, 0, 0], [0, ±a, 0], [0, 0, ±a]
+    const goldenFacePos = facePos.map(p => p.clone().multiplyScalar(KLEIN_A));
+
+    // Trefoil / Inradius Shell Centers (r_in = 0.530638 / 2)
+    const innerOrbitPos = facePos.map(p => p.clone().multiplyScalar(0.2520));
+    const centerPos = new THREE.Vector3(0, 0, 0);
+
+    function getEngineMode() {
+        const el = document.getElementById('engineModeSelect');
+        return el ? el.value : 'exact2026';
+    }
+
+    function calculateNodePos(nodeIndex, step) {
+        const mode = getEngineMode();
+        let fIdx = (nodeIndex < 4) ? (nodeIndex % 2) : (nodeIndex < 8 ? 2 + (nodeIndex % 2) : 4 + (nodeIndex % 2));
+
+        if (mode === 'legacy2025') {
+            // Original 2025 8-Phase Linear Interpolation
+            let t = 0, phase = 0;
+            if (step <= 360) {
+                if (step < 90) { phase = 0; t = step / 90.0; }
+                else if (step < 180) { phase = 1; t = (step - 90.0) / 90.0; }
+                else if (step < 270) { phase = 2; t = (step - 180.0) / 90.0; }
+                else { phase = 3; t = (step - 270.0) / 90.0; }
+            } else {
+                if (step < 450) { phase = 3; t = 1.0 - (step - 360.0) / 90.0; }
+                else if (step < 540) { phase = 2; t = 1.0 - (step - 450.0) / 90.0; }
+                else if (step < 630) { phase = 1; t = 1.0 - (step - 540.0) / 90.0; }
+                else { phase = 0; t = 1.0 - (step - 630.0) / 90.0; }
+            }
+            let start = new THREE.Vector3(), target = new THREE.Vector3();
+            if (phase === 0) { start.copy(edgePos[nodeIndex]); target.copy(facePos[fIdx]); }
+            else if (phase === 1) { start.copy(facePos[fIdx]); target.copy(goldenFacePos[fIdx]); }
+            else if (phase === 2) { start.copy(goldenFacePos[fIdx]); target.copy(innerOrbitPos[fIdx]); }
+            else { start.copy(innerOrbitPos[fIdx]); target.copy(centerPos); }
+
+            const pos = new THREE.Vector3().lerpVectors(start, target, t);
+            const twistAngle = t * (Math.PI / 2) * (phase + 1);
+            return new THREE.Vector3(
+                pos.x * Math.cos(twistAngle) - pos.y * Math.sin(twistAngle),
+                pos.x * Math.sin(twistAngle) + pos.y * Math.cos(twistAngle),
+                pos.z
+            );
+        }
+
+        // 2026i EXACT KINEMATICS (Hoard 2026i Propositions 2.3, 3.7, 4.3, 4.4):
+        // Macro-envelope across the 720-frame gear + micro 8-step spinor screw + 24-frame CRT branch phase
+        const macroAngle = (step / 720.0) * Math.PI * 2.0; // Full 720-frame outer gear
+        const kFloat = (step / 90.0);                      // 8 macro-stages across 720 frames (90 frames/stage)
+        // Transverse envelope A(step) = |sin(kFloat * pi/4)| peaks at k=2 (step 180) and k=6 (step 540), nodes at 0, 360, 720
+        const spreadEnv = Math.pow(Math.sin(kFloat * Math.PI / 4.0), 2);
+        // Hyperbolic Klein radius transitions smoothly between Core Cube (1.0), Golden Cell a = φ^(-3/2) = 0.4859, and Trefoil radius 0.2520
+        const kleinRadius = 0.2520 + (1.0 - 0.2520) * (0.35 + 0.65 * spreadEnv) * (0.65 + 0.35 * Math.cos(macroAngle));
+
+        const base = edgePos[nodeIndex].clone().lerp(goldenFacePos[fIdx], 1.0 - spreadEnv).multiplyScalar(kleinRadius);
+        // Spatial rotation: 90 degrees per macro-stage (720 degrees across 8 stages) + branch triad offset
+        const branchIdx = Math.floor(nodeIndex / 4); // 0, 1, 2
+        const spatialAngle = kFloat * (Math.PI / 2.0) + (branchIdx * 2.0 * Math.PI / 3.0) * 0.15;
+
+        const x = base.x * Math.cos(spatialAngle) - base.y * Math.sin(spatialAngle);
+        const y = base.x * Math.sin(spatialAngle) + base.y * Math.cos(spatialAngle);
+        const z = base.z * Math.cos(macroAngle * 0.5);
+        return new THREE.Vector3(x, y, z);
+    }
+
+    // 8-Step Spinor Stage Colors
+    const STEP_COLORS = [
+        new THREE.Color(0xf8fafc), // k=0: Zero Point (+1)
+        new THREE.Color(0xf59e0b), // k=1: Seed ((1+i)/√2)
+        new THREE.Color(0x10b981), // k=2: Onload Handshake (+i, Spread=1)
+        new THREE.Color(0x06b6d4), // k=3: Project ({4,3,5} Boost)
+        new THREE.Color(0xef4444), // k=4: Invert (-1 Spinor Sheet, Node)
+        new THREE.Color(0xa855f7), // k=5: Fold (D_3 Inverse)
+        new THREE.Color(0x3b82f6), // k=6: Offload Handshake (-i, Spread=1)
+        new THREE.Color(0xeab308)  // k=7: Index (D_3 Table Lookup)
+    ];
+
+    function getStepColor(step) {
+        const idx = Math.min(Math.floor(step / 90.0), 7);
+        return STEP_COLORS[idx];
+    }
+
+    const vortexPaths = [];
+    function generateVortexPaths() {
+        for (let i = 0; i < 12; i++) {
+            vortexPaths[i] = [];
+            const posAttr = trailLines[i].geometry.attributes.position;
+            const colAttr = trailLines[i].geometry.attributes.color;
+            for (let s = 0; s <= 720; s++) {
+                const p = calculateNodePos(i, s);
+                vortexPaths[i].push(p);
+                posAttr.setXYZ(s, p.x, p.y, p.z);
+                const c = getStepColor(s);
+                colAttr.setXYZ(s, c.r, c.g, c.b);
+            }
+            posAttr.needsUpdate = true;
+            colAttr.needsUpdate = true;
+        }
+    }
+    generateVortexPaths();
+
+    document.getElementById('engineModeSelect').addEventListener('change', () => {
+        generateVortexPaths();
+        updateCompressionNodes(sequencerState.step);
+    });
+
+    const traceHistory = Array(12).fill().map(() => []);
+    const isTraceEnabled = () => document.getElementById('toggleTrace').checked;
+    const isVortexEnabled = () => document.getElementById('toggleVortex').checked;
+    const isNodeTrailsEnabled = () => document.getElementById('toggleNodeTrails').checked;
+    const isTrefoilEnabled = () => document.getElementById('toggleTrefoil').checked;
+    const isConnectorsEnabled = () => document.getElementById('toggleConnectors').checked;
+    const isPumpRingsEnabled = () => document.getElementById('togglePumpRings').checked;
+
+    // =========================================================================
+    // 4. SEQUENCER & 720 -> 72 -> 10 TORSIONAL MARKOV PUMP TELEMETRY
+    // =========================================================================
+    let sequencerState = { step: 0, isPlaying: true, maxSteps: 720 };
+    const slider = document.getElementById('seq-slider');
+    const valDisplay = document.getElementById('seq-val');
+    const playBtn = document.getElementById('seq-play');
+
+    function updateTelemetryBar(n) {
+        const k = n % 8;
+        const j = n % 3;
+        const n24 = n % 24;
+        const st = GAUSSIAN_CLOCK[k];
+
+        // 1. Spinor Clock k = n mod 8
+        document.getElementById('tele-clock').textContent = `k=${k} (${st.name}) | q=${st.spinor}`;
+
+        // 2. Rational Spread s_k = sin^2(k*pi/4)
+        const spreadEl = document.getElementById('tele-spread');
+        spreadEl.textContent = `s_${k} = ${st.spreadStr} | ${k * 90}°`;
+        spreadEl.className = 'pump-pill-val ' + (st.spread === 1.0 ? 'text-emerald-400' : (st.spread === 0.0 ? 'text-rose-400' : 'text-amber-300'));
+
+        // 3. Joint 24-Frame CRT Schedule (Prop. 3.7 & 7.1)
+        let hsAction = 'Transit';
+        if (k === 2) hsAction = `ONLOAD Br j=${j}`;
+        else if (k === 6) hsAction = `OFFLOAD Br j=${j}`;
+        document.getElementById('tele-crt').textContent = `f=${n24}/23 | j=${j} (${j*120}°) ${hsAction}`;
+
+        // 4. 720 -> 72 -> 10 Pump Gears (Prop. 3.9)
+        const m = Math.min(71, Math.floor(n / 10));
+        const l = getCoarseGearBlock(m);
+        document.getElementById('tele-gears').textContent = `720:${n} → 72:${m} → 10:${l} (sz ${COARSE_BLOCK_SIZES[l]})`;
+
+        // 5. Open Holonomy P = q_n q_0^-1 vs Cyclic Holonomy (Prop. 3.9 & 3.13)
+        const holEl = document.getElementById('tele-holonomy');
+        if (k === 0) {
+            holEl.textContent = `P = +1 | Zero-Point Closed`;
+            holEl.className = 'pump-pill-val text-emerald-400';
+        } else if (k === 4) {
+            holEl.textContent = `P = -1 | Negative Spinor Sheet`;
+            holEl.className = 'pump-pill-val text-rose-400';
+        } else {
+            holEl.textContent = `P = ${st.spinor} | Open Residual`;
+            holEl.className = 'pump-pill-val text-blue-300';
+        }
+
+        // 6. Clock Window Closures (Prop. 3.8 & Table 11)
+        const closures = [];
+        if (n % 2 === 0) closures.push('Cs');
+        if (n % 3 === 0) closures.push('40Hz');
+        if (n % 5 === 0) closures.push('432Hz');
+        if (n % 24 === 0) closures.push('24f');
+        if (n % 120 === 0) closures.push('120f-MASTER');
+        document.getElementById('tele-closures').textContent = closures.length ? closures.join(' • ') : 'Parity Half-Step';
+    }
+
+    function updateSequencerUI() {
+        slider.value = sequencerState.step;
+        valDisplay.innerText = `n = ${sequencerState.step} / 720`;
+        playBtn.innerText = sequencerState.isPlaying ? '❚❚' : '►';
+        updateTelemetryBar(sequencerState.step);
+    }
+
+    document.getElementById('seq-prev').addEventListener('click', () => {
+        sequencerState.step = (sequencerState.step - 1 + 721) % 721;
+        sequencerState.isPlaying = false;
+        updateSequencerUI();
+    });
+    document.getElementById('seq-next').addEventListener('click', () => {
+        sequencerState.step = (sequencerState.step + 1) % 721;
+        sequencerState.isPlaying = false;
+        updateSequencerUI();
+    });
+    playBtn.addEventListener('click', () => {
+        sequencerState.isPlaying = !sequencerState.isPlaying;
+        updateSequencerUI();
+    });
+    slider.addEventListener('input', (e) => {
+        sequencerState.step = parseInt(e.target.value);
+        sequencerState.isPlaying = false;
+        updateSequencerUI();
+    });
+
+    // Control Sliders
+    const spinSlider = document.getElementById('spinSlider');
+    const spinValDisplay = document.getElementById('spinValDisplay');
+    spinSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        spinValDisplay.innerText = `${val.toFixed(1)} (${(90 * val).toFixed(0)}×8 cycles)`;
+    });
+
+    const ampSlider = document.getElementById('ampSlider');
+    const ampVal = document.getElementById('ampVal');
+    ampSlider.addEventListener('input', (e) => { ampVal.innerText = e.target.value; });
+
+    const boostSlider = document.getElementById('boostSlider');
+    const boostVal = document.getElementById('boostVal');
+    boostSlider.addEventListener('input', (e) => {
+        const b = parseFloat(e.target.value);
+        boostVal.innerText = `${b.toFixed(2)}× (r_in=${(CELL_INRADIUS * b).toFixed(3)})`;
+    });
+
+    function updateCompressionNodes(step) {
+        nodes.forEach((node, i) => {
+            const pos = calculateNodePos(i, step);
+            node.position.copy(pos);
+            const dist = pos.length();
+            node.scale.setScalar(0.22 + dist * 0.045);
+        });
+
+        // Scale Slice Box between Golden Klein Cell half-width a = 0.4859 and Core Cube 1.0
+        const k = step % 8;
+        const spread = GAUSSIAN_CLOCK[k].spread;
+        const boxScale = KLEIN_A + (1.0 - KLEIN_A) * (0.5 + 0.5 * Math.cos((step / 720.0) * Math.PI * 2.0));
+        sliceBox.scale.set(boxScale, boxScale, boxScale);
+
+        const showTrails = isVortexEnabled();
+        vortexGroup.visible = showTrails;
+        if (showTrails) {
+            trailLines.forEach(line => {
+                line.geometry.setDrawRange(0, step + 1);
+            });
+        }
+
+        trefoilKnot.visible = isTrefoilEnabled();
+        goldenCellGroup.visible = document.getElementById('chkGoldenCell').checked;
+        tetraWheelGroup.visible = document.getElementById('chkTetraWheel').checked;
+
+        if (isTraceEnabled()) {
+            nodes.forEach((node, i) => {
+                traceHistory[i][step] = { x: node.position.x, y: node.position.y };
+            });
+        }
+    }
+
+    // =========================================================================
+    // 5. SPECTRUM CHARTS, C_3 FOURIER SPLIT & 64-BIT EINSTEIN TILE HUD
+    // =========================================================================
+    let activeSpikes = [];
+    let isSpectrumOpen = false;
+    let isSlicerOpen = true;
+    document.getElementById('toggleSlicer').style.display = 'none';
+
+    function getZeta(t) {
+        let sum = 0.0;
+        const primes = [1, 2, 3, 5, 7, 11, 13, 17, 19, 23];
+        for (let i = 0; i < 10; i++) {
+            const p = primes[i];
+            sum += (1.0 / Math.sqrt(p)) * Math.cos(t * Math.log(p));
+        }
+        return sum;
+    }
+
+    const chartConfig = {
+        type: 'line',
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: false,
+            elements: { point: { radius: 0 }, line: { borderWidth: 1.2 } },
+            scales: {
+                x: { display: false },
+                y: { display: true, grid: { color: '#1e293b' }, ticks: { display: true, color: '#64748b', font: { size: 8 } } }
+            },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
+    };
+
+    const charts = [];
+    const chartIds = ['c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12'];
+    const colors = ['#38bdf8','#10b981','#f43f5e','#38bdf8','#10b981','#f43f5e','#f59e0b','#f59e0b','#f59e0b','#f8fafc','#a855f7','#22d3ee'];
+    const fills  = [false,false,false,true,true,true,false,false,false,false,true,true];
+
+    chartIds.forEach((id, idx) => {
+        const ctx = document.getElementById(id).getContext('2d');
+        const cfg = JSON.parse(JSON.stringify(chartConfig));
+        let bg = colors[idx];
+        if (fills[idx]) {
+            const grad = ctx.createLinearGradient(0, 0, 0, 108);
+            grad.addColorStop(0, colors[idx] + '77');
+            grad.addColorStop(1, colors[idx] + '00');
+            bg = grad;
+        }
+        charts.push(new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ data: [], borderColor: colors[idx], backgroundColor: bg, fill: fills[idx], tension: 0.35 }] },
+            options: cfg.options
+        }));
+    });
+
+    function updateCharts(time, amp) {
+        if (!isSpectrumOpen) return;
+        const tStart = -(time * 8.0);
+        const tEnd = 50.0 - (time * 8.0);
+        const steps = 40;
+        const labels = [], d_a=[], d_b=[], d_c=[], d_a2=[], d_b2=[], d_c2=[], d_2ab=[], d_2bc=[], d_2ca=[], d_sum=[], d_zmag=[], d_bind=[];
+
+        for (let i = 0; i <= steps; i++) {
+            const pct = i / steps;
+            const t = tStart + pct * (tEnd - tStart);
+            labels.push('');
+            // Exact 120-degree branch signals (a, b, c)
+            const a = getZeta(t) * amp;
+            const b = getZeta(t + 20.94395) * amp;
+            const c = getZeta(t + 41.88790) * amp;
+            d_a.push(a); d_b.push(b); d_c.push(c);
+            d_a2.push(a * a); d_b2.push(b * b); d_c2.push(c * c);
+            d_2ab.push(2 * a * b); d_2bc.push(2 * b * c); d_2ca.push(2 * c * a);
+
+            // Proposition 3.4 C_3 Fourier Split:
+            // Fixed Apex Scalar s = a + b + c
+            // Rotating Plane z = a + ω b + ω^2 c => |z|^2 = a^2 + b^2 + c^2 - ab - bc - ca
+            const s = a + b + c;
+            const zMagSq = (a * a + b * b + c * c) - (a * b + b * c + c * a);
+            const bind = 2 * (a * b + b * c + c * a);
+            d_sum.push(s);
+            d_zmag.push(zMagSq);
+            d_bind.push(bind);
+        }
+        const all = [d_a, d_b, d_c, d_a2, d_b2, d_c2, d_2ab, d_2bc, d_2ca, d_sum, d_zmag, d_bind];
+        charts.forEach((ch, i) => {
+            ch.data.labels = labels;
+            ch.data.datasets[0].data = all[i];
+            ch.update('none');
+        });
+    }
+
+    // Panel & Button Listeners
+    const elQw = document.getElementById('q-w');
+    const elQx = document.getElementById('q-x');
+    const elQy = document.getElementById('q-y');
+    const elQz = document.getElementById('q-z');
+    const barW = document.getElementById('bar-w');
+    const barX = document.getElementById('bar-x');
+    const barY = document.getElementById('bar-y');
+    const barZ = document.getElementById('bar-z');
+
+    document.getElementById('toggleSpectrum').addEventListener('click', () => {
+        const p = document.getElementById('spectrum-panel');
+        isSpectrumOpen = true;
+        p.classList.add('active');
+        document.getElementById('toggleSpectrum').style.display = 'none';
+        initDraggable(p);
+    });
+    document.getElementById('closeSpectrum').addEventListener('click', () => {
+        const p = document.getElementById('spectrum-panel');
+        isSpectrumOpen = false;
+        p.classList.remove('active');
+        document.getElementById('toggleSpectrum').style.display = 'block';
+    });
+    document.getElementById('toggleSlicer').addEventListener('click', () => {
+        const p = document.getElementById('slicer-panel');
+        isSlicerOpen = true;
+        p.classList.add('active');
+        document.getElementById('toggleSlicer').style.display = 'none';
+        sliceHelper.visible = true;
+        initDraggable(p);
+    });
+    document.getElementById('closeSlicer').addEventListener('click', () => {
+        const p = document.getElementById('slicer-panel');
+        isSlicerOpen = false;
+        p.classList.remove('active');
+        document.getElementById('toggleSlicer').style.display = 'block';
+        sliceHelper.visible = false;
+    });
+    document.getElementById('injectBtn').addEventListener('click', () => {
+        activeSpikes.push(-(sequencerState.step / 50.0) * 8.0 - 5.0);
+    });
+
+    initDraggable(document.getElementById('slicer-panel'));
+
+    function updateSpikes(targetUniforms) {
+        const arr = new Float32Array(10).fill(-9999.0);
+        for (let i = 0; i < Math.min(activeSpikes.length, 10); i++) {
+            arr[i] = activeSpikes[activeSpikes.length - 1 - i];
+        }
+        targetUniforms.uSpikes.value = arr;
+    }
+
+    function pack10Bit(v) {
+        const c = Math.max(-511, Math.min(511, Math.round(v * 120)));
+        return c < 0 ? (1024 + c) : c;
+    }
+
+    function updateQuaternionDisplay(rotation, amp, time, step) {
+        if (!isSpectrumOpen) return;
+        const t = -(time * 8.0);
+        const a = getZeta(t) * amp;
+        const b = getZeta(t + 20.94395) * amp;
+        const c = getZeta(t + 41.88790) * amp;
+        const apexMean = (a + b + c) / 3.0;
+
+        // Apply Order-6 Tier Spinor h = (1 - i + j + k)/2 & Projective Clock q_k
+        const k = step % 8;
+        const j = step % 3;
+        const qState = new THREE.Quaternion(a - apexMean, b - apexMean, c - apexMean, apexMean);
+        const qRot = new THREE.Quaternion();
+        qRot.setFromAxisAngle(new THREE.Vector3(1, 1, 1).normalize(), rotation);
+        const qFinal = qState.clone().multiply(qRot);
+
+        elQw.innerText = qFinal.w.toFixed(2);
+        elQx.innerText = qFinal.x.toFixed(2);
+        elQy.innerText = qFinal.y.toFixed(2);
+        elQz.innerText = qFinal.z.toFixed(2);
+
+        const mapPct = (n) => Math.min(100, Math.max(0, ((n + 2) / 4) * 100));
+        barW.style.width = mapPct(qFinal.w) + '%';
+        barX.style.width = mapPct(qFinal.x) + '%';
+        barY.style.width = mapPct(qFinal.y) + '%';
+        barZ.style.width = mapPct(qFinal.z) + '%';
+
+        // Construct live 64-bit Einstein Tile Word (Form 3 Branch Codec)
+        const x10 = pack10Bit(a), y10 = pack10Bit(b), z10 = pack10Bit(c);
+        const lower32 = ((j & 3) << 30) | ((z10 & 0x3FF) << 20) | ((y10 & 0x3FF) << 10) | (x10 & 0x3FF);
+        const upper32 = (0x1 << 30) | ((j & 3) << 27) | ((k & 7) << 24) | (0xAE << 16) | (0x23 << 8) | (pack10Bit(apexMean) & 0xFF);
+        const hexStr = '0x' + (upper32 >>> 0).toString(16).toUpperCase().padStart(8, '0') + (lower32 >>> 0).toString(16).toUpperCase().padStart(8, '0');
+        document.getElementById('tile-hex-badge').textContent = `Tile: ${hexStr}`;
+
+        // Update 4 Parallel Tracks Strip
+        const st = GAUSSIAN_CLOCK[k];
+        document.getElementById('trk-b').textContent = `(1+i)^${k} → (${st.re},${st.im}) | s_${k}=${st.spreadStr}`;
+        document.getElementById('trk-a').textContent = `θ=${k * 45}°, 2θ=${k * 90}°, r_in=${CELL_INRADIUS.toFixed(4)}`;
+        document.getElementById('trk-c').textContent = `138+29(i+j+k) ||x||²=3.000000`;
+        const mod881Residue = ((x10 * x10 + y10 * y10 + z10 * z10) % 881);
+        document.getElementById('trk-r').textContent = `Q ≡ ${mod881Residue} (mod 881) | CRT Valid`;
+    }
+
+    function initDraggable(el) {
+        if (el.dataset.draggable) return;
+        el.dataset.draggable = "true";
+        const h = el.querySelector('.panel-header');
+        let drag = false, sx, sy, il, it;
+        h.addEventListener('mousedown', (e) => {
+            drag = true; sx = e.clientX; sy = e.clientY;
+            const r = el.getBoundingClientRect();
+            el.style.left = r.left + 'px'; el.style.top = r.top + 'px';
+            el.style.right = 'auto'; el.style.bottom = 'auto';
+            il = r.left; it = r.top;
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (drag) {
+                el.style.left = (il + e.clientX - sx) + 'px';
+                el.style.top = (it + e.clientY - sy) + 'px';
+            }
+        });
+        window.addEventListener('mouseup', () => drag = false);
+    }
+
+    // =========================================================================
+    // 6. 2D CONFORMAL & {4,3,5} KLEIN SLICER RENDERER
+    // =========================================================================
+    const slicerCanvas = document.getElementById('slicerCanvas');
+    const slicerCtx = slicerCanvas.getContext('2d');
+    const slicerContainer = document.getElementById('slicerCanvasContainer');
+    slicerCanvas.width = 375;
+    slicerCanvas.height = 360;
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+                slicerCanvas.width = entry.contentRect.width;
+                slicerCanvas.height = entry.contentRect.height;
+            }
+        }
+    });
+    resizeObserver.observe(slicerContainer);
+
+    function drawSlicer(rotation, amp, time, step) {
+        if (!isSlicerOpen) return;
+
+        const w = slicerCanvas.width;
+        const h = slicerCanvas.height;
+        if (w === 0 || h === 0) return;
+
+        slicerCtx.fillStyle = '#04070d';
+        slicerCtx.fillRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const minDim = Math.min(w, h);
+        const scale = minDim / 31.0;
+
+        const k = step % 8;
+        const jBranch = step % 3;
+        const st = GAUSSIAN_CLOCK[k];
+
+        const sv = parseFloat(document.getElementById('sliceDepth').value);
+        document.getElementById('sliceDepthVal').innerText = `z=${sv.toFixed(2)} | λ = ${(CELL_INRADIUS * 2 * sv).toFixed(2)} + i(${k}π/4)`;
+        sliceHelper.position.z = (sv - 0.5) * STRIP_LENGTH;
+        const t = (sv * 50.0) - (time * 8.0);
+
+        slicerCtx.save();
+        slicerCtx.translate(cx, cy);
+
+        // 1. ZERO-POINT CLOSURE STATE & CONFORMAL NULL-CONE ORIGIN (Replaces Legacy "Black Hole")
+        const zpRadius = 16 * (minDim / 320);
+        const grad = slicerCtx.createRadialGradient(0, 0, zpRadius * 0.2, 0, 0, zpRadius * 2.4);
+        if (k === 0) {
+            grad.addColorStop(0, 'rgba(16, 185, 129, 0.55)');
+            grad.addColorStop(0.5, 'rgba(6, 182, 212, 0.18)');
+        } else if (k === 2 || k === 6) {
+            grad.addColorStop(0, 'rgba(245, 158, 11, 0.55)');
+            grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.15)');
+        } else {
+            grad.addColorStop(0, 'rgba(56, 189, 248, 0.28)');
+            grad.addColorStop(0.5, 'rgba(30, 58, 138, 0.15)');
+        }
+        grad.addColorStop(1, 'transparent');
+        slicerCtx.fillStyle = grad;
+        slicerCtx.beginPath();
+        slicerCtx.arc(0, 0, zpRadius * 2.4, 0, Math.PI * 2);
+        slicerCtx.fill();
+
+        // 2. CORE CUBE K = [-1, 1]^3 BOUNDARY (Cyan) & GOLDEN {4,3,5} CELL [-a, a]^3 (Amber, a = 0.4859)
+        const coreHalf = HALF_CUBE * scale;
+        slicerCtx.strokeStyle = 'rgba(34, 211, 238, 0.32)';
+        slicerCtx.lineWidth = 1.2;
+        slicerCtx.strokeRect(-coreHalf, -coreHalf, coreHalf * 2, coreHalf * 2);
+
+        const goldenHalf = HALF_CUBE * KLEIN_A * scale;
+        slicerCtx.strokeStyle = 'rgba(245, 158, 11, 0.55)';
+        slicerCtx.setLineDash([4, 3]);
+        slicerCtx.strokeRect(-goldenHalf, -goldenHalf, goldenHalf * 2, goldenHalf * 2);
+        slicerCtx.setLineDash([]);
+
+        // 3. 720 -> 72 -> 10 TORSIONAL MARKOV PUMP CONCENTRIC RINGS (Proposition 3.9)
+        if (isPumpRingsEnabled()) {
+            const rOuter = coreHalf * 1.08;
+            const rMid   = coreHalf * 1.02;
+            const rInner = goldenHalf * 0.52;
+
+            // Outer 720-frame progress arc
+            slicerCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+            slicerCtx.lineWidth = 2;
+            slicerCtx.beginPath();
+            slicerCtx.arc(0, 0, rOuter, -Math.PI / 2, -Math.PI / 2 + (step / 720.0) * Math.PI * 2);
+            slicerCtx.stroke();
+
+            // Middle 72-aggregate ticks
+            const mActive = Math.floor(step / 10);
+            for (let m = 0; m < 72; m++) {
+                const ang = -Math.PI / 2 + (m / 72.0) * Math.PI * 2;
+                slicerCtx.strokeStyle = (m <= mActive) ? 'rgba(245, 158, 11, 0.65)' : 'rgba(71, 85, 105, 0.25)';
+                slicerCtx.lineWidth = (m === mActive) ? 2.2 : 1;
+                slicerCtx.beginPath();
+                slicerCtx.moveTo((rMid - 3) * Math.cos(ang), (rMid - 3) * Math.sin(ang));
+                slicerCtx.lineTo((rMid + 3) * Math.cos(ang), (rMid + 3) * Math.sin(ang));
+                slicerCtx.stroke();
+            }
+
+            // Inner 10-block partition ring (sizes 8,7,7,7,7,8,7,7,7,7)
+            const lActive = getCoarseGearBlock(mActive);
+            for (let l = 0; l < 10; l++) {
+                const a0 = -Math.PI / 2 + (l / 10.0) * Math.PI * 2 + 0.03;
+                const a1 = -Math.PI / 2 + ((l + 1) / 10.0) * Math.PI * 2 - 0.03;
+                slicerCtx.strokeStyle = (l === lActive) ? '#a855f7' : 'rgba(168, 85, 247, 0.25)';
+                slicerCtx.lineWidth = (l === lActive) ? 3 : 1.5;
+                slicerCtx.beginPath();
+                slicerCtx.arc(0, 0, rInner, a0, a1);
+                slicerCtx.stroke();
+            }
+        }
+
+        // 4. VORTEX PATHS (Full 720-Step Projection)
+        if (isVortexEnabled()) {
+            slicerCtx.lineWidth = 1;
+            for (let i = 0; i < 12; i++) {
+                slicerCtx.beginPath();
+                if (i < 4) slicerCtx.strokeStyle = 'rgba(239, 68, 68, 0.14)';
+                else if (i < 8) slicerCtx.strokeStyle = 'rgba(16, 185, 129, 0.14)';
+                else slicerCtx.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+                for (let s = 0; s < vortexPaths[i].length; s++) {
+                    const pt = vortexPaths[i][s];
+                    if (s === 0) slicerCtx.moveTo(pt.x * scale, pt.y * scale);
+                    else slicerCtx.lineTo(pt.x * scale, pt.y * scale);
+                }
+                slicerCtx.stroke();
+            }
+        }
+
+        // 5. FULL TRACE HISTORY
+        if (isTraceEnabled()) {
+            slicerCtx.lineWidth = 1.2;
+            for (let i = 0; i < 12; i++) {
+                slicerCtx.beginPath();
+                slicerCtx.strokeStyle = i < 4 ? 'rgba(239,68,68,0.5)' : (i < 8 ? 'rgba(16,185,129,0.5)' : 'rgba(56,189,248,0.5)');
+                let started = false;
+                for (let s = 0; s <= step; s += 4) {
+                    if (traceHistory[i][s]) {
+                        const pt = traceHistory[i][s];
+                        if (!started) { slicerCtx.moveTo(pt.x * scale, pt.y * scale); started = true; }
+                        else slicerCtx.lineTo(pt.x * scale, pt.y * scale);
+                    }
+                }
+                slicerCtx.stroke();
+            }
+        }
+
+        // 6. SHORT FADING SPINOR VERTEX TRAILS
+        if (isNodeTrailsEnabled()) {
+            slicerCtx.lineWidth = 2;
+            const trailLength = 36;
+            for (let i = 0; i < 12; i++) {
+                const rgb = i < 4 ? '239,68,68' : (i < 8 ? '16,185,129' : '56,189,248');
+                for (let dk = 0; dk < trailLength; dk += 2) {
+                    let s1 = (step - dk + 721) % 721;
+                    let s2 = (step - dk - 2 + 721) % 721;
+                    const p1 = calculateNodePos(i, s1);
+                    const p2 = calculateNodePos(i, s2);
+                    slicerCtx.beginPath();
+                    slicerCtx.moveTo(p1.x * scale, p1.y * scale);
+                    slicerCtx.lineTo(p2.x * scale, p2.y * scale);
+                    slicerCtx.strokeStyle = `rgba(${rgb}, ${1.0 - dk / trailLength})`;
+                    slicerCtx.stroke();
+                }
+            }
+        }
+
+        // 7. C_3 BRANCH CONNECTORS
+        if (isConnectorsEnabled()) {
+            for (let i = 0; i < 12; i++) {
+                const lobeIdx = Math.floor(i / 4);
+                const lobeAng = (lobeIdx / 3) * Math.PI * 2 + rotation;
+                const lr = 9.5 * scale;
+                const lx = lr * Math.cos(lobeAng);
+                const ly = lr * Math.sin(lobeAng);
+                const nx = nodes[i].position.x * scale;
+                const ny = nodes[i].position.y * scale;
+                slicerCtx.beginPath();
+                slicerCtx.moveTo(nx, ny);
+                slicerCtx.lineTo(lx, ly);
+                slicerCtx.strokeStyle = (lobeIdx === jBranch) ? 'rgba(245, 158, 11, 0.35)' : 'rgba(255, 255, 255, 0.12)';
+                slicerCtx.lineWidth = (lobeIdx === jBranch) ? 1.4 : 0.8;
+                slicerCtx.stroke();
+            }
+        }
+
+        // 8. CURRENT 12 NODES
+        nodes.forEach((node, i) => {
+            const nx = node.position.x * scale;
+            const ny = node.position.y * scale;
+            slicerCtx.beginPath();
+            slicerCtx.arc(nx, ny, 3.5, 0, Math.PI * 2);
+            slicerCtx.fillStyle = i < 4 ? '#ef4444' : (i < 8 ? '#10b981' : '#38bdf8');
+            slicerCtx.fill();
+        });
+
+        // 9. THREE 120° C_3 LOBES & HANDSHAKE ENVELOPE
+        slicerCtx.rotate(rotation);
+        for (let i = 0; i < 3; i++) {
+            const ang = (i / 3) * Math.PI * 2;
+            let e = getZeta(t + i * 20.94395) * amp;
+            for (let s = 0; s < activeSpikes.length; s++) {
+                if (Math.abs(t - activeSpikes[s]) < 4.0) e += 4.0 * Math.exp(-Math.pow(t - activeSpikes[s], 2) * 0.2);
+            }
+            const r = 0.65 * (1.0 + e * 0.28) * scale;
+            const px = 2.0 * scale * Math.cos(ang);
+            const py = 2.0 * scale * Math.sin(ang);
+            const tanX = -py, tanY = px;
+
+            slicerCtx.beginPath();
+            slicerCtx.moveTo(px, py);
+            slicerCtx.bezierCurveTo(px + tanX * 0.5, py + tanY * 0.5, tanX * 0.3, tanY * 0.3, 0, 0);
+            slicerCtx.strokeStyle = 'rgba(34, 211, 238, 0.28)';
+            slicerCtx.lineWidth = 1.1;
+            slicerCtx.stroke();
+
+            slicerCtx.beginPath();
+            slicerCtx.arc(px, py, Math.max(1.5, r), 0, Math.PI * 2);
+            slicerCtx.fillStyle = (i === jBranch && st.spread === 1.0) ? '#f59e0b' : (e > 0.6 ? '#22d3ee' : '#1e3a8a');
+            slicerCtx.fill();
+            slicerCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+            slicerCtx.stroke();
+        }
+        slicerCtx.restore();
+
+        // Top-left Slicer HUD overlay
+        slicerCtx.fillStyle = '#94a3b8';
+        slicerCtx.font = '10px monospace';
+        slicerCtx.fillText(`Core K=[-1,1]³ (Cyan) | {4,3,5} Cell a=0.486 (Amber)`, 10, 16);
+        slicerCtx.fillStyle = st.spread === 1.0 ? '#34d399' : '#fbbf24';
+        slicerCtx.fillText(`Step k=${k} (${st.name}) | Spread s_k=${st.spreadStr} | Br j=${jBranch}`, 10, 30);
+    }
+
+    // =========================================================================
+    // 7. MASTER ANIMATION LOOP
+    // =========================================================================
+    function animate() {
+        requestAnimationFrame(animate);
+        if (sequencerState.isPlaying) {
+            sequencerState.step = (sequencerState.step + 1) % 721;
+            updateSequencerUI();
+        }
+        const step = sequencerState.step;
+        const stepTime = step / 50.0;
+
+        const amp = parseFloat(ampSlider.value || '0.8');
+        const spinRatio = parseFloat(spinSlider.value || '1.0');
+        const goldenBoost = parseFloat(boostSlider.value || '1.0');
+
+        const k = step % 8;
+        const currentSpread = GAUSSIAN_CLOCK[k].spread;
+        const rotation = (step / 720.0) * Math.PI * 4.0 * spinRatio;
+
+        updateCompressionNodes(step);
+
+        // Scale Trefoil by Golden Boost and rotate
+        const scalePhase = (step / 720.0) * Math.PI * 8.0;
+        const scaleVal = (1.0 + 0.18 * Math.cos(scalePhase)) * (0.85 + 0.15 * goldenBoost);
+        trefoilKnot.scale.set(scaleVal, scaleVal, scaleVal);
+        trefoilKnot.rotation.z = rotation;
+
+        streams.forEach(stream => {
+            stream.lobesGroup.rotation.z = rotation;
+            stream.group.traverse(obj => {
+                if (obj.material && obj.material.uniforms) {
+                    obj.material.uniforms.uTime.value = stepTime;
+                    obj.material.uniforms.uScale.value = amp;
+                    obj.material.uniforms.uRotation.value = rotation;
+                    if (obj.material.uniforms.uSpread !== undefined) {
+                        obj.material.uniforms.uSpread.value = currentSpread;
+                    }
+                    if (obj.material.uniforms.uGoldenBoost !== undefined) {
+                        obj.material.uniforms.uGoldenBoost.value = goldenBoost * KLEIN_A;
+                    }
+                    if (stream.isCenter) updateSpikes(obj.material.uniforms);
+                }
+            });
+        });
+
+        // Update Particle Stream along 120° C_3 Lobes
+        const pPosArr = pGeo.attributes.position.array;
+        for (let i = 0; i < pCount; i++) {
+            const life = (i / pCount + stepTime * 0.1) % 1.0;
+            const lobe = pData[i * 2 + 1];
+            const z = (life - 0.5) * STRIP_LENGTH;
+            const t = (life * 50.0) - (stepTime * 8.0);
+            let h = getZeta(t + (lobe * 20.94395)) * amp;
+            for (let s = 0; s < activeSpikes.length; s++) {
+                if (Math.abs(t - activeSpikes[s]) < 4.0) h += 4.0 * Math.exp(-Math.pow(t - activeSpikes[s], 2) * 0.2);
+            }
+            const ang = (lobe / 3) * Math.PI * 2;
+            const r = 2.0 + h * 0.5;
+            pPosArr[i * 3] = r * Math.cos(ang);
+            pPosArr[i * 3 + 1] = r * Math.sin(ang);
+            pPosArr[i * 3 + 2] = z;
+        }
+        pGeo.attributes.position.needsUpdate = true;
+        if (activeSpikes.length > 20) activeSpikes.shift();
+
+        updateCharts(stepTime, amp);
+        updateQuaternionDisplay(rotation, amp, stepTime, step);
+        drawSlicer(rotation, amp, stepTime, step);
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    window.addEventListener('load', () => {
+        if (window.renderMathInElement) {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false }
+                ]
+            });
+        }
+    });
+
+    updateSequencerUI();
+    animate();
+</script>
+</body>
+</html>
