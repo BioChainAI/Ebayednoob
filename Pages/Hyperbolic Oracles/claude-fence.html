@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 0.7 Claude Fence - Ebayednoob</title>
+    <meta name="description" content="The 0.7 Claude fence, live: Tukey's fence moved into hyperbolic space. Points of H² or H³ are fenced on the mass of the ball about a Fréchet-median centre, with exact verdicts in the plane, certified verdicts in space, and a four-point guard at ln 2.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/hp.css">
+    <script src="hyperbolic_core.js"></script>
+    <script src="decoder3d.js"></script>
+    <script src="fence.js"></script>
+    <style>
+        body { font-size: 15px; }
+        .sim-head { padding: 28px 20px 14px; max-width: 1400px; margin: 0 auto; }
+        .sim-head h1 { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2.2rem); background: linear-gradient(90deg, #fbbf24, #fb7185 45%, #c084fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .sim-head p { margin: 6px 0 0; color: #cbd5e1; max-width: 1040px; }
+        .bar { position: sticky; top: 0; z-index: 20; background: rgba(2, 6, 23, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+        .bar-in { max-width: 1400px; margin: 0 auto; padding: 8px 20px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+        .bar label { font-size: 0.8rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+        .bar label[hidden] { display: none; }
+        .bar select, .bar input[type=number] { background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 7px; padding: 4px 6px; font: 0.82rem var(--mono); }
+        .bar input[type=range] { width: 86px; accent-color: var(--amber); }
+        .bar .val { font: 0.78rem var(--mono); color: #cbd5e1; min-width: 2.6em; }
+        .btn-s { font: 600 0.84rem Inter, sans-serif; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; cursor: pointer; }
+        .btn-s:hover { border-color: var(--amber); }
+        .btn-s.primary { background: linear-gradient(90deg, #a16207, #be123c 55%, #6d28d9); border-color: transparent; color: #fff; }
+        .seg { display: inline-flex; border: 1px solid #475569; border-radius: 99px; overflow: hidden; }
+        .seg button { font: 600 0.8rem Inter, sans-serif; padding: 5px 12px; background: #020617; color: #94a3b8; border: 0; cursor: pointer; }
+        .seg button.on { background: rgba(251, 191, 36, 0.3); color: #fff; }
+        .grid { max-width: 1400px; margin: 0 auto; padding: 14px 20px 60px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .panel { border: 1px solid var(--line); border-radius: 14px; background: rgba(11, 18, 34, 0.85); padding: 12px 14px; min-width: 0; }
+        .panel.seven { border-color: rgba(251, 191, 36, 0.5); background: rgba(69, 26, 3, 0.22); }
+        .panel h2 { font-size: 1rem; margin: 0 0 2px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+        .panel h2 .tagp { font: 0.7rem var(--mono); color: var(--amber); letter-spacing: 0.08em; }
+        .panel .sub { font-size: 0.82rem; color: var(--muted); margin: 0 0 8px; }
+        .panel canvas { display: block; width: 100%; height: auto; border-radius: 10px; background: #020617; }
+        canvas.view { cursor: grab; touch-action: none; }
+        .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 12px; font: 0.8rem var(--mono); margin-top: 8px; }
+        .kv div span { display: block; color: var(--faint); font-size: 0.72rem; }
+        .log { font: 0.74rem/1.55 var(--mono); color: #cbd5e1; max-height: 220px; overflow: auto; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 8px; background: #020617; }
+        .log .good { color: var(--emerald); } .log .bad { color: var(--rose); } .log .warn { color: var(--amber); }
+        .pill { font: 0.72rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .5); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .5); } .pill.warn { color: #fde68a; border-color: rgba(251, 191, 36, .5); }
+        .wide { grid-column: 1 / -1; }
+        .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 0.74rem var(--mono); color: #cbd5e1; margin-top: 6px; }
+        .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+        .gauge { height: 14px; border-radius: 99px; background: #1e293b; position: relative; margin: 10px 0 4px; }
+        .gauge > div { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 99px; background: linear-gradient(90deg, #a16207, #fbbf24); }
+        .gauge > b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #fb7185; }
+        .big { font: 600 1.5rem var(--mono); color: var(--amber); }
+        table.t { width: 100%; border-collapse: collapse; font: 0.76rem var(--mono); }
+        table.t th, table.t td { text-align: left; padding: 3px 6px; border-bottom: 1px solid #1e293b; }
+        table.t th { color: var(--faint); font-weight: 500; }
+        .scroll { max-height: 260px; overflow: auto; border: 1px solid #1e293b; border-radius: 8px; }
+        .checks td:first-child { white-space: nowrap; }
+        @media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); padding: 12px; } .bar-in { padding: 8px 12px; } }
+    </style>
+</head>
+<body data-root="">
+<div class="sim-head">
+    <div class="eyebrow">Hyperbolic Oracles &middot; The 0.7 Claude Fence &middot; Simulation</div>
+    <h1>The 0.7 Claude Fence</h1>
+    <p>Tukey&rsquo;s fence moved into hyperbolic space. Each point is measured by the <em>mass</em> it reaches, the volume of the ball about a robust centre out to it. Tukey&rsquo;s own fences, Q3 + 1.5&nbsp;IQR and Q3 + 3&nbsp;IQR, are then applied to that mass. On a cloud spread the way a hierarchy spreads, the fence lands on the <em>doubling sphere</em> of the upper quartile. In the hyperbolic plane that sphere sits less than ln&nbsp;2&nbsp;=&nbsp;0.693&hellip; beyond the quartile, and approaches that gap as the cloud grows. That is the 0.7. In the plane every verdict is decided exactly; in H&sup3; every verdict carries a certificate. <a href="explainers/fence-tracer.html">The tracer explainer</a> follows one run stage by stage and proves the lemmas, and <a href="claude-fence-3d.html">the fence in 3D</a> shows H&sup3; as nested shells.</p>
+</div>
+<div class="bar"><div class="bar-in">
+    <button class="btn-s primary" id="b-run">Fence it</button>
+    <button class="btn-s" id="b-seed" title="A new seed">New cloud</button>
+    <label>space <span class="seg" id="seg-dim"><button data-dim="2" class="on">H&sup2;</button><button data-dim="3">H&sup3;</button></span></label>
+    <label>cloud <select id="in-kind"><option value="ball">uniform ball (hierarchy)</option><option value="gauss">wrapped normal</option><option value="tree">norm-5 tree (H&sup3;)</option></select></label>
+    <label id="l-N">points <select id="in-N"><option>40</option><option selected>120</option><option>200</option><option>300</option></select></label>
+    <label id="l-R">R <input id="in-R" type="range" min="0.4" max="9" step="0.1" value="5"><span class="val" id="v-R"></span></label>
+    <label id="l-sig" hidden>&sigma; <input id="in-sig" type="range" min="0.05" max="2.5" step="0.05" value="1"><span class="val" id="v-sig"></span></label>
+    <label id="l-L" hidden>depth <select id="in-L"><option>1</option><option selected>2</option><option>3</option></select></label>
+    <label>planted <input id="in-k" type="number" value="8" min="0" max="60" style="width:4rem"></label>
+    <label id="l-f">at mass &times; <input id="in-f" type="range" min="1.1" max="8" step="0.05" value="2"><span class="val" id="v-f"></span></label>
+    <label id="l-deep" hidden>levels deeper <select id="in-deep"><option selected>1</option><option>2</option><option>3</option></select></label>
+    <label>as <select id="in-mode"><option value="shell">scattered shell</option><option value="cluster">one far cluster</option><option value="deep">deeper nodes (tree)</option></select></label>
+    <label>seed <input id="in-seed" type="number" value="7" min="0" max="99999" style="width:5rem"></label>
+    <label>centre <select id="in-centre"><option value="median">Fr&eacute;chet median</option><option value="medoid">medoid (control)</option></select></label>
+    <label>view <span class="seg" id="seg-view"><button data-view="log" class="on">distance</button><button data-view="poincare">Poincar&eacute;</button></span></label>
+    <label title="Tukey's 1.5 on the distance itself, from the same centre"><input type="checkbox" id="in-dt" checked> distance-Tukey</label>
+</div></div>
+
+<div class="grid">
+    <section class="panel">
+        <h2>The cloud <span class="tagp">CENTRED ON THE FENCE&rsquo;S CENTRE</span></h2>
+        <p class="sub" id="view-sub">Seen from the centre: each point at its hyperbolic distance, in its direction. The circles are the fence&rsquo;s spheres. Click a point to read it; in H&sup3; drag to turn.</p>
+        <canvas class="view" id="cv-view" width="640" height="560" aria-label="The cloud and the fence spheres"></canvas>
+        <div class="legend"><span><i style="background:#38bdf8"></i>inside</span><span><i style="background:#fbbf24"></i>outside (past 1.5 IQR)</span><span><i style="background:#fb7185"></i>far out (past 3 IQR)</span><span><i style="background:none;border:1.5px solid #fff"></i>planted</span><span><i style="background:#e879f9"></i>centre</span><span style="color:#67e8f9">- - distance-Tukey fence</span></div>
+        <div class="kv" id="pt-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Tukey&rsquo;s box, twice <span class="tagp">THE SAME QUARTILE POINTS &middot; TWO COORDINATES</span></h2>
+        <p class="sub">Top: the mass coordinate, in units of the upper quartile&rsquo;s mass, where the Claude fence acts. Bottom: hyperbolic distance, where distance-Tukey acts. The quartiles pick the same points in both (CF1); only the fences differ.</p>
+        <canvas id="cv-box" width="640" height="300" aria-label="Box plots in the mass and distance coordinates"></canvas>
+        <div class="kv" id="box-kv"></div>
+    </section>
+    <section class="panel seven">
+        <h2>The 0.7 <span class="tagp">THE FENCE&rsquo;S GAP BEYOND Q3 &middot; ln 2 / (n &minus; 1)</span></h2>
+        <p class="sub" id="seven-sub"></p>
+        <div class="big" id="seven-big"></div>
+        <div class="gauge" title="gap as a share of the doubling bound"><div id="seven-bar"></div><b id="seven-mark" style="left:100%"></b></div>
+        <div class="kv" id="seven-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Verdicts <span class="tagp">CLAUDE FENCE &middot; DISTANCE-TUKEY &middot; TRUTH</span></h2>
+        <div class="kv" id="ver-kv"></div>
+        <div class="scroll" style="margin-top:8px"><table class="t" id="ver-table"></table></div>
+    </section>
+    <section class="panel">
+        <h2>Certificates <span class="tagp">EXACT IN H&sup2; &middot; CERTIFIED IN H&sup3;</span></h2>
+        <p class="sub">In the plane a verdict is two comparisons of rationals: 2b &gt; 5b&#8323; &minus; 3b&#8321; and b &gt; 4b&#8323; &minus; 3b&#8321;. In space the mass sinh&nbsp;2d &minus; 2d is evaluated in fixed point with a proved error bound, doubling the bits until the sign is certain. A point inside the upper quartile needs no arithmetic at all: its order decides it.</p>
+        <div class="kv" id="cert-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>The guard <span class="tagp">FOUR POINTS &middot; ln 2</span></h2>
+        <p class="sub">No four points of hyperbolic space have a four-point defect above ln&nbsp;2. Corrupt some of the cloud&rsquo;s distances: any quadruple that now beats ln&nbsp;2 proves one of its six distances wrong, and the pairs in the most such quadruples are the suspects.</p>
+        <div class="bar-in" style="padding:0 0 6px">
+            <label>corrupt <input id="in-ck" type="number" value="2" min="0" max="8" style="width:3.6rem"> distances by + <input id="in-cd" type="range" min="0.2" max="4" step="0.1" value="2.5"><span class="val" id="v-cd"></span></label>
+            <button class="btn-s" id="b-guard">Guard</button>
+        </div>
+        <canvas id="cv-guard" width="640" height="170" aria-label="Four-point defects against ln 2"></canvas>
+        <div class="kv" id="guard-kv"></div>
+    </section>
+    <section class="panel">
+        <h2>Self-test <span class="tagp">PARITY WITH THE REFERENCE &middot; CF1&ndash;CF9</span></h2>
+        <p class="sub">On load: the Python reference&rsquo;s fence trace, replayed through this page bit for bit. On request: the nine lemmas checked live, each with a control that must fail.</p>
+        <div class="kv" id="test-kv"></div>
+        <p style="margin:10px 0 6px"><button class="btn-s" id="b-checks">Run CF1&ndash;CF9</button></p>
+        <table class="t checks" id="checks"></table>
+    </section>
+    <section class="panel wide">
+        <h2>Log</h2>
+        <div class="log" id="log" aria-live="polite"></div>
+    </section>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const Fz = HPFence, C = HPCore, $ = id => document.getElementById(id);
+    const COL = ['#38bdf8', '#fbbf24', '#fb7185'], VERD = ['inside', 'outside', 'far out'];
+    const st = { dim: 2, view: 'log', yaw: -0.5, pitch: 0.4, res: null, pts: null, lab: null, fl: null, cfg: null, pick: null, proj: [] };
+    const log = (msg, cls = '') => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = msg; $('log').prepend(d); };
+    const fmt = (v, k = 4) => (Number.isFinite(v) ? (Math.abs(v) >= 1e5 || (Math.abs(v) < 1e-3 && v !== 0) ? v.toExponential(k - 1) : v.toFixed(k)) : String(v));
+
+    // ---------------------------------------------------------------- controls
+    function syncControls() {
+        const kind = $('in-kind').value;
+        if (kind === 'tree' && st.dim !== 3) setDim(3, false);
+        $('l-N').hidden = kind === 'tree'; $('l-R').hidden = kind !== 'ball'; $('l-sig').hidden = kind !== 'gauss'; $('l-L').hidden = kind !== 'tree';
+        const mode = $('in-mode');
+        if (kind === 'tree' && mode.value !== 'deep') mode.value = 'deep';
+        if (kind !== 'tree' && mode.value === 'deep') mode.value = 'shell';
+        $('l-f').hidden = mode.value === 'deep'; $('l-deep').hidden = mode.value !== 'deep';
+        $('v-R').textContent = (+$('in-R').value).toFixed(1); $('v-sig').textContent = (+$('in-sig').value).toFixed(2);
+        $('v-f').textContent = (+$('in-f').value).toFixed(2); $('v-cd').textContent = (+$('in-cd').value).toFixed(1);
+    }
+    function setDim(d, rerun = true) {
+        st.dim = d; document.querySelectorAll('#seg-dim button').forEach(b => b.classList.toggle('on', +b.dataset.dim === d));
+        if (d === 2 && $('in-kind').value === 'tree') $('in-kind').value = 'ball';
+        syncControls(); if (rerun) run();
+    }
+    function config() {
+        const kind = $('in-kind').value, mode = $('in-mode').value, k = Math.max(0, Math.min(60, +$('in-k').value || 0));
+        const cfg = { dim: st.dim, kind, N: +$('in-N').value, R: kind === 'gauss' ? 3 * +$('in-sig').value : +$('in-R').value, sigma: +$('in-sig').value, L: +$('in-L').value,
+            seed: Math.max(0, +$('in-seed').value || 0), out: k ? (mode === 'deep' ? { k, mode, depth: +$('in-deep').value } : { k, f: +$('in-f').value, mode }) : { k: 0 } };
+        return cfg;
+    }
+
+    // ---------------------------------------------------------------- run
+    function run() {
+        syncControls();
+        const cfg = config(), t0 = performance.now();
+        let pts, lab;
+        try { [pts, lab] = Fz.generate(cfg); } catch (e) { log('could not build the cloud: ' + e.message, 'bad'); return; }
+        const t1 = performance.now(), res = Fz.fence(pts, cfg.dim, { centre: $('in-centre').value }), t2 = performance.now();
+        const cen = Fz.centrePoint(res), fl = pts.map(Fz.toFloat), rec = Fz.recentre(cen, fl);
+        Object.assign(st, { res, pts, lab, fl, rec, cen, cfg, pick: null, guard: null });
+        const flagged = res.verdict.filter(v => v > 0).length, far = res.verdict.filter(v => v === 2).length;
+        const planted = lab.filter(l => l).length, caught = res.verdict.filter((v, i) => v && lab[i]).length, falseF = res.verdict.filter((v, i) => v && !lab[i]).length;
+        log(`${cfg.kind === 'tree' ? 'norm-5 tree to depth ' + cfg.L : cfg.kind === 'ball' ? 'uniform ball, R = ' + cfg.R.toFixed(1) : 'wrapped normal, σ = ' + cfg.sigma.toFixed(2)} in H${cfg.dim === 2 ? '²' : '³'}: ${pts.length} points (${planted} planted), generated in ${(t1 - t0).toFixed(0)} ms, fenced in ${(t2 - t1).toFixed(0)} ms. ${flagged} flagged (${far} far out); planted caught ${caught}/${planted}; inliers flagged ${falseF}.`, falseF ? 'warn' : 'good');
+        document.body.dataset.flagged = String(flagged); document.body.dataset.caught = String(caught); document.body.dataset.falseflags = String(falseF);
+        document.body.dataset.gap = String(res.gap); document.body.dataset.ratio = String(res.ratio);
+        render();
+        guard(false);
+    }
+
+    // ---------------------------------------------------------------- drawing
+    function canvasCtx(cv) {
+        const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || cv.width;
+        if (!cv._ar) cv._ar = cv.height / cv.width;
+        const Hh = Math.round(W * cv._ar);
+        if (cv._w !== W || cv._dpr !== dpr) { cv._w = W; cv._dpr = dpr; cv.width = W * dpr; cv.height = Hh * dpr; cv.style.height = Hh + 'px'; }
+        const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
+        return [ctx, W, Hh];
+    }
+    const rot = p => {
+        if (p.length === 2) return [p[0], p[1], 0];
+        const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw), cp = Math.cos(st.pitch), sp = Math.sin(st.pitch);
+        const x = cy * p[0] + sy * p[1], y1 = -sy * p[0] + cy * p[1];
+        return [x, cp * p[2] - sp * y1, sp * p[2] + cp * y1];
+    };
+    // the drawing radius of hyperbolic distance d: linear (log map) or the Poincaré radius tanh(d/2)
+    function radiusMap(maxD) {
+        if (st.view === 'poincare') return d => Math.tanh(d / 2);
+        return d => d / maxD;
+    }
+    function drawView() {
+        const [ctx, W, Hh] = canvasCtx($('cv-view')), r = st.res, cx = W / 2, cy = Hh / 2, R0 = Math.min(W, Hh) / 2 - 16;
+        const maxD = Math.max(r.rG, r.tukeyD.G, ...r.dist) * 1.04, map = radiusMap(maxD);
+        const circle = (d, col, dash, lw, label, ang = -0.8) => {
+            const rr = R0 * map(d);
+            ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+            if (label) {
+                ctx.font = '10px Fira Code, monospace'; const tw = ctx.measureText(label).width, x = cx + rr * Math.cos(ang), y = cy + rr * Math.sin(ang);
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.8)'; ctx.fillRect(x + (Math.cos(ang) < 0 ? -tw - 6 : 3), y - 9, tw + 4, 12);
+                ctx.fillStyle = col; ctx.fillText(label, x + (Math.cos(ang) < 0 ? -tw - 4 : 5), y);
+            }
+        };
+        if (st.view === 'poincare') circle(60, '#334155', [], 1.2, '');
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.06)'; ctx.beginPath(); ctx.arc(cx, cy, R0 * map(r.d3), 0, 2 * Math.PI); ctx.arc(cx, cy, R0 * map(r.d1), 0, 2 * Math.PI, true); ctx.fill();
+        circle(r.d1, '#3b6b9a', [3, 3], 1, 'Q1', -2.4); circle(r.d3, '#38bdf8', [3, 3], 1.2, 'Q3', -2.0);
+        circle(r.rF, '#fbbf24', [], 2, 'outside fence', -0.55); circle(r.rG, '#fb7185', [], 1.6, 'far-out fence', 0.45);
+        if ($('in-dt').checked) circle(r.tukeyD.F, '#67e8f9', [7, 5], 1.3, 'distance-Tukey', 2.5);
+        st.proj = [];
+        const items = [];
+        st.rec.forEach((y, i) => {
+            const sp = y.slice(1), n = Math.hypot(...sp), u = n > 0 ? sp.map(t => t / n) : sp.map(() => 0), rr = map(r.dist[i]);
+            const q = rot(u.map(t => t * rr)), px = cx + R0 * q[0], py = cy - R0 * q[1];
+            st.proj.push([px, py, i]); items.push([q[2], px, py, i]);
+        });
+        items.sort((a, b) => a[0] - b[0]).forEach(([z, px, py, i]) => {
+            const v = r.verdict[i], sz = (v ? 4.2 : 3) * (st.dim === 3 ? (z > 0 ? 1.1 : 0.8) : 1);
+            ctx.fillStyle = COL[v]; ctx.globalAlpha = st.dim === 3 && z < 0 ? 0.65 : 1; ctx.beginPath(); ctx.arc(px, py, sz, 0, 2 * Math.PI); ctx.fill(); ctx.globalAlpha = 1;
+            if (st.lab[i]) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(px, py, sz + 2.6, 0, 2 * Math.PI); ctx.stroke(); }
+            if (st.pick === i) { ctx.strokeStyle = '#e879f9'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, sz + 6, 0, 2 * Math.PI); ctx.stroke(); }
+        });
+        ctx.fillStyle = '#e879f9'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill();
+        ctx.fillStyle = '#64748b'; ctx.font = '11px Fira Code, monospace';
+        ctx.fillText(st.view === 'poincare' ? 'Poincaré ' + (st.dim === 2 ? 'disk' : 'ball') + ' about the centre' : `radius = hyperbolic distance (edge = ${maxD.toFixed(2)})`, 10, Hh - 8);
+        $('view-sub').textContent = st.view === 'poincare'
+            ? 'The true picture: the Poincaré model moved so the centre sits at its middle. Broad clouds crowd the rim, where the fence spheres pile up; switch to distance to see them apart.'
+            : 'Seen from the centre: each point at its hyperbolic distance, in its direction. The circles are the fence’s spheres. Click a point to read it; in H³ drag to turn.';
+    }
+    function drawBox() {
+        const [ctx, W, Hh] = canvasCtx($('cv-box')), r = st.res, L = 40, Rr = W - 16, half = Hh / 2;
+        const strip = (y0, vals, q, fF, fG, unit, title, extra) => {
+            const mx = Math.max(fG * 1.12, Math.min(Math.max(...vals) * 1.03, fG * 2.2)), X = v => L + (Rr - L) * Math.min(v, mx) / mx;
+            ctx.fillStyle = '#94a3b8'; ctx.font = '600 11px Inter, sans-serif'; ctx.fillText(title, 8, y0 + 14);
+            const yb = y0 + 46;
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, yb + 40); ctx.lineTo(Rr, yb + 40); ctx.stroke();
+            ctx.fillStyle = '#64748b'; ctx.font = '10px Fira Code, monospace';
+            for (let k = 0; k <= 5; k++) { const v = mx * k / 5; ctx.fillText(v.toFixed(v < 10 ? 2 : 1) + unit, X(v) - 10, yb + 52); }
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.18)'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.4;
+            ctx.fillRect(X(q[0]), yb - 14, X(q[2]) - X(q[0]), 28); ctx.strokeRect(X(q[0]), yb - 14, X(q[2]) - X(q[0]), 28);
+            ctx.beginPath(); ctx.moveTo(X(q[1]), yb - 14); ctx.lineTo(X(q[1]), yb + 14); ctx.stroke();
+            const inside = vals.filter(v => v <= fF), wmax = Math.max(...inside);
+            ctx.beginPath(); ctx.moveTo(X(q[2]), yb); ctx.lineTo(X(wmax), yb); ctx.moveTo(X(wmax), yb - 7); ctx.lineTo(X(wmax), yb + 7); ctx.stroke();
+            const line = (v, col, lab, dash = [], row = 0) => { ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(X(v), y0 + 20); ctx.lineTo(X(v), yb + 36); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col; ctx.font = '10px Fira Code, monospace'; const tw = ctx.measureText(lab).width, right = X(v) + 3 + tw > Rr; ctx.fillText(lab, right ? X(v) - tw - 3 : X(v) + 3, y0 + 28 + 12 * row); };
+            line(fF, '#fbbf24', 'Q3+1.5 IQR'); line(fG, '#fb7185', 'Q3+3 IQR');
+            if (extra) extra(X, line);
+            vals.forEach((v, i) => {
+                const jit = ((i * 2654435761) % 997) / 997 - 0.5, vv = Math.min(v, mx);
+                ctx.fillStyle = COL[st.res.verdict[i]]; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(X(vv), yb + 22 + 10 * jit, st.lab[i] ? 3 : 2, 0, 2 * Math.PI); ctx.fill(); ctx.globalAlpha = 1;
+                if (v > mx) { ctx.fillStyle = '#fb7185'; ctx.fillText('›', Rr - 4, yb + 26); }
+            });
+        };
+        const m3 = r.m3, mv = r.mass.map(v => v / m3);
+        strip(0, mv, [r.m1 / m3, r.m2 / m3, 1], r.mF / m3, r.mG / m3, '', 'mass ÷ mass of Q3   (the Claude fence)');
+        strip(half, r.dist, [r.d1, r.d2, r.d3], r.tukeyD.F, r.tukeyD.G, '', 'hyperbolic distance   (distance-Tukey)', (X, line) => line(r.rF, '#fde68a', 'Claude fence', [4, 3], 1));
+        $('box-kv').innerHTML = [['Q1, median, Q3 (mass)', `${fmt(r.m1 / m3, 3)}, ${fmt(r.m2 / m3, 3)}, 1`], ['fences (mass)', `${fmt(r.mF / m3, 3)}× · ${fmt(r.mG / m3, 3)}×`],
+            ['Q1, median, Q3 (distance)', `${fmt(r.d1, 3)}, ${fmt(r.d2, 3)}, ${fmt(r.d3, 3)}`], ['distance-Tukey fences', `${fmt(r.tukeyD.F, 3)} · ${fmt(r.tukeyD.G, 3)}`],
+            ['Claude fences as radii', `${fmt(r.rF, 3)} · ${fmt(r.rG, 3)}`]].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+    }
+    function drawSeven() {
+        const r = st.res, n = st.dim, bound = Math.LN2 / (n - 1), boundG = Math.log(3) / (n - 1);
+        $('seven-big').textContent = `${fmt(r.gap, 4)}  ${r.gap < Math.log(Math.max(1, r.ratio)) / (n - 1) + 1e-12 ? '<' : '≥'}  ln ${fmt(r.ratio, 3)}${n === 3 ? ' / 2' : ''} = ${fmt(Math.log(Math.max(1, r.ratio)) / (n - 1), 4)}`;
+        $('seven-bar').style.width = `${Math.min(100, 100 * r.gap / bound)}%`;
+        $('seven-sub').innerHTML = `The outside fence is the sphere holding <b>${fmt(r.ratio, 3)}×</b> the mass of the upper-quartile ball. On a uniform cloud that factor is exactly 2 (CF3), and the fence lies within ${n === 2 ? 'ln 2 = 0.6931…' : 'ln 2 / 2 = 0.3466…'} of Q3, approaching it as the cloud grows (CF5). The bar runs to ${n === 2 ? 'ln 2' : 'ln 2 / 2'}. In general the gap is below ln(factor) / (n − 1).`;
+        $('seven-kv').innerHTML = [['gap rF − Q3', fmt(r.gap, 6)], [n === 2 ? 'ln 2' : 'ln 2 / 2', fmt(bound, 6)], ['mass factor mF / m3', fmt(r.ratio, 4)],
+            ['far-out gap rG − Q3', fmt(r.gapG, 4)], [n === 2 ? 'ln 3 (factor 3)' : 'ln 3 / 2', fmt(boundG, 4)], ['distance-Tukey gap', fmt(r.tukeyD.F - r.d3, 4)]].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+    }
+    function drawVerdicts() {
+        const r = st.res, lab = st.lab, N = r.N, planted = lab.filter(l => l).length;
+        const cnt = (v, f) => v.filter((x, i) => x > 0 && f(i)).length;
+        const ok = (a, b) => (b ? `${a}/${b}` : '–');
+        $('ver-kv').innerHTML = [['points', N], ['flagged (Claude)', `${r.verdict.filter(v => v).length} · far ${r.verdict.filter(v => v === 2).length}`],
+            ['planted caught', ok(cnt(r.verdict, i => lab[i]), planted)], ['inliers flagged', `${cnt(r.verdict, i => !lab[i])} of ${N - planted}`],
+            ['distance-Tukey caught', ok(cnt(r.tukeyD.verdict, i => lab[i]), planted)], ['distance-Tukey false', `${cnt(r.tukeyD.verdict, i => !lab[i])}`],
+            ['float track agrees', same(r.verdict, r.verdictFloat) ? '<span class="pill good">every verdict</span>' : '<span class="pill bad">no</span>']].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+        const rows = r.order.slice().reverse().filter(i => r.verdict[i] || lab[i] || r.tukeyD.verdict[i]).slice(0, 80);
+        $('ver-table').innerHTML = '<tr><th>#</th><th>distance</th><th>mass ÷ m3</th><th>Claude</th><th>dist-Tukey</th><th>planted</th><th>certificate</th></tr>' +
+            (rows.length ? rows.map(i => `<tr data-i="${i}"><td>${i}</td><td>${fmt(r.dist[i], 4)}</td><td>${fmt(r.mass[i] / r.m3, 3)}</td><td style="color:${COL[r.verdict[i]]}">${VERD[r.verdict[i]]}</td><td style="color:${COL[r.tukeyD.verdict[i]]}">${VERD[r.tukeyD.verdict[i]]}</td><td>${lab[i] ? 'yes' : ''}</td><td>${r.cert[i]}</td></tr>`).join('')
+                : '<tr><td colspan="7">nothing flagged and nothing planted</td></tr>');
+        $('ver-table').querySelectorAll('tr[data-i]').forEach(tr => tr.addEventListener('click', () => { st.pick = +tr.dataset.i; drawView(); showPoint(); }));
+    }
+    function drawCerts() {
+        const r = st.res, c = {}; r.cert.forEach(x => { c[x] = (c[x] || 0) + 1; });
+        const bits = Object.keys(c).filter(k => k.startsWith('bits:')).map(k => +k.slice(5));
+        $('cert-kv').innerHTML = [['decided by order', c.order || 0], [st.dim === 2 ? 'exact rationals' : 'certified bits', st.dim === 2 ? (c.exact || 0) : bits.length ? `${bits.reduce((s, b) => s + c['bits:' + b], 0)} (max ${Math.max(...bits)} bits)` : 0],
+            ['unresolved', c.unresolved ? `<span class="pill bad">${c.unresolved}</span>` : '<span class="pill good">0</span>'], ['centre', `${$('in-centre').value === 'medoid' ? 'medoid (data point ' + r.medoid + ')' : 'Fréchet median, ' + r.steps + ' Weiszfeld steps'}`],
+            ['exact centre S', `${Math.max(...r.S.map(s => (s < 0n ? -s : s).toString(2).length))}-bit integers`], ['medoid offset', fmt(Math.acosh(Math.max(1, -(-st.cen[0] * st.fl[r.medoid][0] + st.cen.slice(1).reduce((s, t, k) => s + t * st.fl[r.medoid][k + 1], 0)))), 4)]].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+    }
+    function showPoint() {
+        const r = st.res, i = st.pick;
+        if (i === null) { $('pt-kv').innerHTML = ''; return; }
+        const b = r.b[i], digits = b.n.toString().length;
+        $('pt-kv').innerHTML = [['point', `#${i}${st.lab[i] ? ' (planted)' : ''}`], ['distance from centre', fmt(r.dist[i], 6)], ['mass ÷ m3', fmt(r.mass[i] / r.m3, 5)], ['verdict', `<span style="color:${COL[r.verdict[i]]}">${VERD[r.verdict[i]]}</span>`],
+            ['certificate', r.cert[i]], ['rank by radius', `${r.order.indexOf(i) + 1} of ${r.N}`], ['exact radius b', `${digits}-digit numerator`]].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+    }
+    function render() { if (!st.res) return; drawView(); drawBox(); drawSeven(); drawVerdicts(); drawCerts(); showPoint(); }
+    function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+    // ---------------------------------------------------------------- guard
+    function guard(announce = true) {
+        if (!st.pts) return;
+        const pts = st.pts.slice(0, 120), D = Fz.distanceMatrix(pts), k = Math.max(0, Math.min(8, +$('in-ck').value || 0)), delta = +$('in-cd').value;
+        const [E, pairs] = k ? Fz.corrupt(D, k, delta, (st.cfg.seed || 0) + 1) : [D, []];
+        const exhaustive = pts.length <= 34, g = Fz.guardCheck(E, exhaustive ? {} : { sample: 30000, seed: 9 });
+        // defects of a sample, for the histogram
+        const rng = new C.Rng(5), hist = new Array(40).fill(0), top = Math.max(1.6, g.worst * 1.05);
+        for (let t = 0; t < 6000; t++) { const q = rng.sample(pts.length, 4); const v = Fz.defect(E, ...q); hist[Math.min(39, Math.floor(40 * v / top))]++; }
+        const [ctx, W, Hh] = canvasCtx($('cv-guard')), mx = Math.max(...hist), bw = (W - 40) / 40;
+        hist.forEach((h, j) => { const x = 30 + j * bw, hh = (Hh - 34) * Math.sqrt(h / mx); ctx.fillStyle = j * top / 40 >= Math.LN2 ? '#fb7185' : '#38bdf8'; ctx.fillRect(x, Hh - 20 - hh, bw - 1, hh); });
+        const xl = 30 + (W - 40) * Math.LN2 / top; ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xl, 6); ctx.lineTo(xl, Hh - 18); ctx.stroke();
+        ctx.fillStyle = '#fbbf24'; ctx.font = '10px Fira Code, monospace'; ctx.fillText('ln 2', xl + 4, 14);
+        ctx.fillStyle = '#64748b'; ctx.fillText('0', 26, Hh - 6); ctx.fillText(top.toFixed(2), W - 34, Hh - 6); ctx.fillText('four-point defect of 6,000 random quadruples (√ count)', 40, Hh - 6);
+        const sus = g.top.map(([p, c]) => `${p[0]}–${p[1]} (${c})`).join(', ');
+        const hit = pairs.length ? pairs.filter(p => g.top.slice(0, pairs.length + 1).some(([q]) => q[0] === p[0] && q[1] === p[1])).length : 0;
+        st.guard = { g, pairs };
+        $('guard-kv').innerHTML = [['quadruples checked', exhaustive ? `all, ${pts.length} points` : `30,000 sampled of ${pts.length} points`], ['largest defect', `${fmt(g.worst, 6)} ${g.worst > Math.LN2 + 1e-9 ? '<span class="pill bad">> ln 2</span>' : '<span class="pill good">≤ ln 2</span>'}`],
+            ['above ln 2', g.bad], ['corrupted pairs', pairs.length ? pairs.map(p => p.join('–')).join(', ') : 'none'], ['top suspects', sus || '–'],
+            ['corrupted among suspects', pairs.length ? `${hit}/${pairs.length}` : '–']].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+        document.body.dataset.guardbad = String(g.bad); document.body.dataset.guardhit = String(hit);
+        if (announce) log(`guard: ${g.bad} quadruple${g.bad === 1 ? '' : 's'} above ln 2${pairs.length ? `; ${hit} of ${pairs.length} corrupted distances among the top suspects` : ''}`, g.bad && !pairs.length ? 'bad' : 'good');
+    }
+
+    // ---------------------------------------------------------------- self-test
+    async function selftest() {
+        try {
+            const T = await (await fetch('reference/traces/fence.json')).json(), t0 = performance.now(), R = Fz.runParityFence(T);
+            $('test-kv').innerHTML = [['fence trace', `<span class="pill ${R.passed === R.total ? 'good' : 'bad'}">${R.passed}/${R.total}</span>`], ['time', `${((performance.now() - t0) / 1000).toFixed(1)} s`]].map(([a, v]) => `<div><span>${a}</span>${v}</div>`).join('');
+            R.lines.filter(l => !l.ok).forEach(l => log('parity: ' + l.name + ' ' + l.detail, 'bad'));
+            log(`self-test: ${R.passed}/${R.total} lines of the reference trace reproduced`, R.passed === R.total ? 'good' : 'bad');
+            document.body.dataset.selftest = `${R.passed}/${R.total}`;
+        } catch (e) { $('test-kv').innerHTML = `<div><span>fence trace</span><span class="pill warn">not loaded</span></div>`; log('self-test: could not load the trace (' + e.message + ')', 'warn'); document.body.dataset.selftest = 'unavailable'; }
+    }
+    function checks() {
+        $('b-checks').disabled = true; $('b-checks').textContent = 'running…';
+        setTimeout(() => {
+            const t0 = performance.now(), out = Fz.runChecksFence();
+            const rows = out.map(c => { const ok = c.passed === c.trials && c.control[0] === c.control[1]; return `<tr><td><span class="pill ${ok ? 'good' : 'bad'}">${c.id}</span></td><td>${c.title}<br><span style="color:#64748b">${c.detail}</span></td><td>${c.passed}/${c.trials}<br>control ${c.control[0] === c.control[1] ? 'fails as it must' : 'DID NOT FAIL'}</td></tr>`; });
+            $('checks').innerHTML = rows.join('');
+            const good = out.filter(c => c.passed === c.trials && c.control[0] === c.control[1]).length;
+            log(`live checks: ${good}/${out.length} lemmas hold, every control fails (${((performance.now() - t0) / 1000).toFixed(1)} s)`, good === out.length ? 'good' : 'bad');
+            document.body.dataset.checks = `${good}/${out.length}`;
+            $('b-checks').disabled = false; $('b-checks').textContent = 'Run CF1–CF9';
+        }, 20);
+    }
+
+    // ---------------------------------------------------------------- wiring
+    $('b-run').addEventListener('click', run);
+    $('b-seed').addEventListener('click', () => { $('in-seed').value = String(1 + Math.floor(Math.random() * 99998)); run(); });
+    $('b-guard').addEventListener('click', () => guard(true));
+    $('b-checks').addEventListener('click', checks);
+    document.querySelectorAll('#seg-dim button').forEach(b => b.addEventListener('click', () => setDim(+b.dataset.dim)));
+    document.querySelectorAll('#seg-view button').forEach(b => b.addEventListener('click', () => { st.view = b.dataset.view; document.querySelectorAll('#seg-view button').forEach(x => x.classList.toggle('on', x === b)); render(); }));
+    ['in-kind', 'in-N', 'in-L', 'in-deep', 'in-mode', 'in-centre', 'in-seed', 'in-k'].forEach(id => $(id).addEventListener('change', run));
+    ['in-R', 'in-sig', 'in-f'].forEach(id => { $(id).addEventListener('input', syncControls); $(id).addEventListener('change', run); });
+    $('in-cd').addEventListener('input', syncControls); $('in-cd').addEventListener('change', () => guard(true)); $('in-ck').addEventListener('change', () => guard(true));
+    $('in-dt').addEventListener('change', render);
+    const cv = $('cv-view');
+    let drag = null;
+    cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, moved: false }; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointermove', e => { if (!drag || st.dim !== 3) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true; st.yaw += dx * 0.01; st.pitch = Math.max(-1.5, Math.min(1.5, st.pitch + dy * 0.01)); drag.x = e.clientX; drag.y = e.clientY; drawView(); });
+    cv.addEventListener('pointerup', e => {
+        if (drag && !drag.moved) {
+            const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+            let best = null, bd = 144; for (const [px, py, i] of st.proj) { const d = (px - x) ** 2 + (py - y) ** 2; if (d < bd) { bd = d; best = i; } }
+            st.pick = best; drawView(); showPoint();
+        }
+        drag = null;
+    });
+    window.addEventListener('resize', render);
+    document.addEventListener('keydown', e => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if (e.key === 'Enter' || e.key === 'f') run(); else if (e.key === 'n') $('b-seed').click(); else if (e.key === '2') setDim(2); else if (e.key === '3') setDim(3);
+        else if (e.key === 'v') { st.view = st.view === 'log' ? 'poincare' : 'log'; document.querySelectorAll('#seg-view button').forEach(x => x.classList.toggle('on', x.dataset.view === st.view)); render(); }
+    });
+
+    // URL parameters: dim, kind, N, R, sigma, L, deep, k, f, mode, seed, centre, view, dt, ck, cd, checks
+    const qp = new URLSearchParams(location.search), setv = (id, v) => { if (v !== null) $(id).value = v; };
+    setv('in-kind', qp.get('kind')); setv('in-N', qp.get('N')); setv('in-R', qp.get('R')); setv('in-sig', qp.get('sigma')); setv('in-L', qp.get('L')); setv('in-deep', qp.get('deep'));
+    setv('in-k', qp.get('k')); setv('in-f', qp.get('f')); setv('in-mode', qp.get('mode')); setv('in-seed', qp.get('seed')); setv('in-centre', qp.get('centre'));
+    setv('in-ck', qp.get('ck')); setv('in-cd', qp.get('cd'));
+    if (qp.get('dt') === '0') $('in-dt').checked = false;
+    if (qp.get('view') === 'poincare') { st.view = 'poincare'; document.querySelectorAll('#seg-view button').forEach(x => x.classList.toggle('on', x.dataset.view === 'poincare')); }
+    setDim(qp.get('dim') === '3' || qp.get('kind') === 'tree' ? 3 : 2, false);
+    run();
+    selftest();
+    if (qp.get('checks') === '1') checks();
+    window.HPFenceSim = { run, guard, checks, setDim, state: () => st };
+    document.body.dataset.ready = '1';
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="bottom-right" data-menus="[{&quot;label&quot;:&quot;Oracles&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-3d.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Two structures of three engines bound by a coupler, in H³&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Tukey's fence for hyperbolic space, exact in H², certified in H³&quot;,&quot;section&quot;:&quot;Claude Fence&quot;},{&quot;href&quot;:&quot;claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³: shells, sky map, PolyStep 3D particles&quot;,&quot;section&quot;:&quot;Claude Fence&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;explainers/hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/decoder-3d.html&quot;,&quot;label&quot;:&quot;The 3D Decoder&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 9: version 2 begins, decoders of H³ live in 3D&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/coupler-3d.html&quot;,&quot;label&quot;:&quot;Frames and the Coupler&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 10: proofs, live checks, the 3D simulation manual&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;explainers/fence-tracer.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence Tracer&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 11: the fence stage by stage, CF1–CF9, results&quot;,&quot;section&quot;:&quot;Claude Fence&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator, engine v10&quot;,&quot;section&quot;:&quot;Geometric Calculator&quot;},{&quot;href&quot;:&quot;../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The clock the three channels ride&quot;,&quot;section&quot;:&quot;Geometric Calculator&quot;},{&quot;href&quot;:&quot;../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;The zero-point paper: the exact geometry behind the oracles&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

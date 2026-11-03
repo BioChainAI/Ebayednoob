@@ -1,8 +1,8 @@
 // Hyperbolic PolyStep: hub, explainers and simulation render, charts draw every node and edge, links resolve, the lab's
 // step obeys H2, the proofs page's live checks hold and its results load, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
-const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'explainers/fence-tracer.html', 'simulation.html', 'simulation-3d.html', 'claude-fence.html'];
+const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Hyperbolic%20Oracles/';
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'explainers/fence-tracer.html', 'simulation.html', 'simulation-3d.html', 'claude-fence.html', 'claude-fence-3d.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -75,6 +75,18 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       r.scrollWF = await pg.evaluate(() => document.documentElement.scrollWidth);
       ok = ok && r.fencePage[0] === '101/101' && r.fencePage[1] === '8' && r.fencePage[2] === '0' && r.fencePage[3] < Math.LN2 && r.fencePage[3] > 0.6 && r.fencePage[4] === '2'
         && r.fence3[0] === '10' && r.fence3[1] === '0' && r.fence3[2] < Math.LN2 / 2 && r.fenceGauss > 5 && r.scrollWF <= r.innerW;
+    }
+    if (p === 'claude-fence-3d.html') {
+      await pg.waitForFunction(() => document.body.dataset.selftest && document.body.dataset.ready, null, { timeout: 120000 });
+      r.f3 = await pg.evaluate(() => [document.body.dataset.selftest, document.body.dataset.caught, document.body.dataset.falseflags, +document.body.dataset.gap, document.body.dataset.guardhit, HPFence3D.state().proj.length]);
+      await pg.goto(BASE + p + '?kind=polystep&F=48&cp=carry&spin=0&cut=half'); await pg.waitForFunction(() => document.body.dataset.ready, null, { timeout: 120000 });
+      const carry = await pg.evaluate(() => HPFence3D.state().res.dist.join());
+      await pg.goto(BASE + p + '?kind=polystep&F=48&cp=off&spin=0'); await pg.waitForFunction(() => document.body.dataset.ready, null, { timeout: 120000 });
+      r.f3poly = await pg.evaluate(() => [document.body.dataset.points, HPFence3D.state().res.cert.every(c => c === 'order' || c.startsWith('bits:'))]);
+      r.f3k2 = carry === await pg.evaluate(() => HPFence3D.state().res.dist.join());
+      r.scrollW3f = await pg.evaluate(() => document.documentElement.scrollWidth);
+      ok = ok && r.f3[0] === '101/101' && r.f3[1] === '8' && r.f3[2] === '0' && r.f3[3] < Math.LN2 / 2 && r.f3[3] > 0.25 && r.f3[4] === '2' && r.f3[5] > 100
+        && r.f3poly[0] === '270' && r.f3poly[1] && r.f3k2 && r.scrollW3f <= r.innerW;
     }
     if (p === 'simulation-3d.html') {
       await pg.waitForFunction(() => document.body.dataset.selftest, null, { timeout: 120000 });
