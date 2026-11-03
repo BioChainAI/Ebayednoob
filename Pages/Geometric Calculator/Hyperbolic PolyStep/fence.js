@@ -265,18 +265,21 @@
         const [c0, sums] = medoid(ip);
         let lam, steps;
         if (centre === 'medoid') { lam = ip.map((_, i) => (i === c0 ? 1 : 0)); steps = 0; } else [lam, steps] = frechetMedian(gram(ip));
-        const S = combine(ip, lam), sigma = lneg(S, S), sq = new Q(sigma);
+        const S = combine(ip, lam), sigma = lneg(S, S);
         const b = radial(S, ip);
-        const w = b.map(bi => bi.mul(bi).sub(sq).div(sq));
+        // w_i = sinh^2 d_i = (b_i^2 - sigma)/sigma and A2_i = a_i^2 = b_i^2/sigma, left unreduced: every use of them
+        // (floors of quotients, comparisons, correctly rounded floats) depends on the ratio alone, and reducing
+        // numbers of tens of thousands of bits would cost far more than the fence itself
+        const w = b.map(bi => ({ n: bi.n * bi.n - sigma * bi.d * bi.d, d: sigma * bi.d * bi.d }));
         const order = Array.from({ length: N }, (_, i) => i).sort((i, j) => b[i].cmp(b[j]) || i - j);
         const [i1, i2, i3] = quartileIndices(N), j1 = order[i1], j2 = order[i2], j3 = order[i3];
-        const b1 = b[j1], b3 = b[j3], A2 = b.map(bi => bi.mul(bi).div(sq));
-        const verdict = new Array(N).fill(0), cert = new Array(N).fill('');
+        const b1 = b[j1], b3 = b[j3], A2 = b.map(bi => ({ n: bi.n * bi.n, d: sigma * bi.d * bi.d }));
+        const verdict = new Array(N).fill(0), cert = new Array(N).fill(''), F2 = dim === 2 && !b1.eq(b3) ? h2Fences(b1, b3) : null;
         for (let i = 0; i < N; i++) {
             if (b[i].cmp(b3) <= 0) { verdict[i] = 0; cert[i] = 'order'; }
             else if (b1.eq(b3)) { verdict[i] = 2; cert[i] = 'order'; }
             else if (dim === 2) {
-                verdict[i] = decideH2(b[i], b1, b3); cert[i] = 'exact';
+                verdict[i] = decideH2(b[i], b1, b3, F2); cert[i] = 'exact';
             } else {
                 const [s1, p1] = certifySign([2, 3, -5], [A2[i], A2[j1], A2[j3]]);
                 if (s1 <= 0) { verdict[i] = 0; cert[i] = s1 ? `bits:${p1}` : 'unresolved'; continue; }
@@ -285,7 +288,7 @@
                 cert[i] = s2 ? `bits:${Math.max(p1, p2)}` : 'unresolved';
             }
         }
-        const wf = w.map(v => v.toNumber());
+        const wf = w.map(v => ratio(v.n, v.d));
         const am1f = wf.map(v => v / (Math.sqrt(1 + v) + 1));
         const mf = am1f.map(v => massOfAm1(v, dim));
         const m1 = mf[j1], m2 = mf[j2], m3 = mf[j3], mF = m3 + 1.5 * (m3 - m1), mG = m3 + 3 * (m3 - m1);
@@ -400,7 +403,11 @@
         let an = -acc[0] * acc[0]; for (let k = 1; k < acc.length; k++) an += acc[k] * acc[k];
         return Math.sqrt(Math.abs(an)) / tot;
     }
-    const decideH2 = (b, b1, b3) => (b.cmp(new Q(4n).mul(b3).sub(new Q(3n).mul(b1))) > 0 ? 2 : Q.TWO.mul(b).cmp(new Q(5n).mul(b3).sub(new Q(3n).mul(b1))) > 0 ? 1 : 0);
+    const decideH2 = (b, b1, b3, F2 = null) => {
+        const [G, M] = F2 || h2Fences(b1, b3);
+        return b.cmp(G) > 0 ? 2 : Q.TWO.mul(b).cmp(M) > 0 ? 1 : 0;
+    };
+    const h2Fences = (b1, b3) => [new Q(4n).mul(b3).sub(new Q(3n).mul(b1)), new Q(5n).mul(b3).sub(new Q(3n).mul(b1))];   // far: b > 4 b3 - 3 b1; outside: 2b > 5 b3 - 3 b1
     const decideH2Float = (b, b1, b3) => { const m = b.toNumber() - 1, m1 = b1.toNumber() - 1, m3 = b3.toNumber() - 1; return m > m3 + 3 * (m3 - m1) ? 2 : m > m3 + 1.5 * (m3 - m1) ? 1 : 0; };
     const doublingGap = (Q3, dim, f = 2) => distanceOfMass(f * massOfDistance(Q3, dim), dim) - Q3;
     function populationRadii(R, dim) { const mR = massOfDistance(R, dim); return [0.25, 0.5, 0.75].map(p => distanceOfMass(p * mR, dim)); }
@@ -428,7 +435,7 @@
             const parts = [
                 ['medoid and its sums', r.medoid === rec.medoid && r.sums.every((v, i) => fl(v, rec.sums[i]))],
                 ['median weights', r.steps === rec.steps && r.lam.every((v, i) => fl(v, rec.lam[i]))],
-                ['exact centre S and radii w', sha(r.S.map(String).join('|')) === rec.S_hash && sha(r.w.map(qs).join('|')) === rec.w_hash],
+                ['exact centre S and radii w', sha(r.S.map(String).join('|')) === rec.S_hash && sha(r.w.map(v => qs(new Q(v.n, v.d))).join('|')) === rec.w_hash],
                 ['order and quartiles', same(r.order, rec.order) && same(r.q, rec.q)],
                 ['verdicts and certificates', same(r.verdict, rec.verdict) && same(r.cert, rec.cert) && same(r.verdictFloat, rec.verdict_float)],
                 ['mass and distance floats', r.mass.every((v, i) => fl(v, rec.mass[i])) && r.dist.every((v, i) => fl(v, rec.dist[i]))],
@@ -475,7 +482,7 @@
             let t = 0, p = 0;
             for (let i = 0; i < n(3); i++) for (const dim of [2, 3]) {
                 const [pts] = small(dim, 'ball', 30, rng.below(1e6)), r = fence(pts, dim);
-                for (const coord of [r.dist, r.mass, r.w.map(v => v.toNumber())]) {
+                for (const coord of [r.dist, r.mass, r.w.map(v => ratio(v.n, v.d))]) {
                     const o = coord.map((_, i) => i).sort((a, b) => coord[a] - coord[b] || a - b); t++;
                     if (same(r.idx.map(i => o[i]), r.q)) p++;
                 }
