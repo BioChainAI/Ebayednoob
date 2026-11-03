@@ -2,7 +2,7 @@
 // step obeys H2, the proofs page's live checks hold and its results load, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Hyperbolic%20Oracles/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'explainers/fence-tracer.html', 'simulation.html', 'simulation-3d.html', 'claude-fence.html', 'claude-fence-3d.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'explainers/fence-tracer.html', 'explainers/rational-replacements.html', 'simulation.html', 'simulation-3d.html', 'claude-fence.html', 'claude-fence-3d.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -75,6 +75,13 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       r.scrollWF = await pg.evaluate(() => document.documentElement.scrollWidth);
       ok = ok && r.fencePage[0] === '101/101' && r.fencePage[1] === '8' && r.fencePage[2] === '0' && r.fencePage[3] < Math.LN2 && r.fencePage[3] > 0.6 && r.fencePage[4] === '2'
         && r.fence3[0] === '10' && r.fence3[1] === '0' && r.fence3[2] < Math.LN2 / 2 && r.fenceGauss > 5 && r.scrollWF <= r.innerW;
+    }
+    if (p === 'explainers/rational-replacements.html') {
+      await pg.waitForFunction(() => document.body.dataset.checksTrig && document.body.dataset.parityTrig && document.body.dataset.audit, null, { timeout: 120000 });
+      r.trig = await pg.evaluate(() => [document.body.dataset.checksTrig, document.body.dataset.parityTrig, +document.body.dataset.audit, document.body.dataset.slopes,
+        /sin² \+ cos² = 1 \(exact\)/.test(document.getElementById('k-out').textContent), /true/.test(document.getElementById('r-out').textContent), /−1/.test(document.getElementById('sym-out').textContent)]);
+      const [s3, s2] = r.trig[3].split(',').map(Number);
+      ok = ok && r.trig[0] === 'true' && r.trig[1] === '40/40' && r.trig[2] > 600 && Math.abs(s3 - 3) < 0.2 && Math.abs(s2 - 2) < 0.2 && r.trig[4] && r.trig[5] && r.trig[6];
     }
     if (p === 'claude-fence-3d.html') {
       await pg.waitForFunction(() => document.body.dataset.selftest && document.body.dataset.ready, null, { timeout: 120000 });

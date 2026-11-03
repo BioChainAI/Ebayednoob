@@ -54,6 +54,18 @@ A four-point guard at ln 2 (CF9) catches corrupted distances. See `explainers/fe
 | Page and tracer | `claude-fence.html` (e.g. `claude-fence.html?dim=3&R=4&k=10&f=2`) and Explainer 11 | done |
 | 3D | `claude-fence-3d.html`: nested shells in H³, cut views, sky map, mass onion, guard, and the PolyStep 3D particle cloud as a live dataset (e.g. `claude-fence-3d.html?kind=polystep&F=240`); its manual is Explainer 11, chapter 11 | done |
 
+## Rational replacements · the sin, cos and tan audit
+
+Section 12.1 of the operator specification gives rational replacements for sin, cos, tan and 3D rotation (eqs. 85–88).
+All of them hold exactly except the drift sum, which is second order, and only in the order R(ε₁)R(ε₂)R(ε₃).
+`rational_trig.js` and `reference/hpstep/rational_trig.py` implement them, with the exact Gibbs composition.
+`scripts/trig-audit/` classifies every transcendental call in both systems, and `scripts/trig-audit/CHANGELOG.md`
+logs what changed:
+- the calculator keypad's sin and cos, which were 3-term Taylor polynomials, now use the half-angle kernel, and `tan` is new;
+- the exact Cayley map uses its closed form, with identical rationals, 2–3× faster.
+
+See Explainer 12.
+
 ## Files
 
 | Path | Holds |
@@ -71,6 +83,7 @@ A four-point guard at ln 2 (CF9) catches corrupted distances. See `explainers/fe
 | `explainers/coupler-3d.html`, `twin3d.js`, `tests/parity-twin.cjs` | Explainer 10 and version 2 phases B–D: frames, the coupler, the twin system, and the 3D simulation's manual |
 | `explainers/fence-tracer.html`, `fence.js`, `tests/parity-fence.cjs` | Explainer 11: the 0.7 Claude fence traced stage by stage, CF1–CF9, the guard, results and the fence page's manual |
 | `claude-fence.html` | The fence page: clouds in H² and H³ with planted outliers, fenced live with exact or certified verdicts |
+| `explainers/rational-replacements.html`, `rational_trig.js` | Explainer 12: eqs. 85–88 of the operator specification verified exactly and live, the sin/cos/tan audit of both systems (`scripts/trig-audit/`), and the change log |
 | `claude-fence-3d.html` | The fence in 3D: H³ clouds inside their fence shells, the sky map, the mass onion, and the PolyStep 3D particle cloud |
 | `simulation-3d.html` | The 3D simulation: two structures of three engines bound by the coupler (e.g. `simulation-3d.html?mode=carry&wrong=1`) |
 | `simulation.html` | The simulation: three channels on the zero-point clock, live (e.g. `simulation.html?prob=B1&size=30&exact=1`) |
