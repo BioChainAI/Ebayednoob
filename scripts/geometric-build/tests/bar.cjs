@@ -14,7 +14,7 @@ const SP = process.env.SP, K = SP + '/node_modules/katex/dist/', BASE = 'http://
     await pg.goto(url); await pg.waitForTimeout(1500);
     return { pg, errs };
   };
-  const pages = ['index.html', 'manual.html', 'tracer.html', 'numogram.html', 'Galactic%20Lensing/galactic_lensing_hierarchy.html', 'Galactic%20Lensing/tri_engine_soliton.html', 'Galactic%20Lensing/galactic_companion.html', 'Galactic%20Lensing/tri_engine_manual.html', 'Galactic%20Lensing/tri_engine_convergence.html', 'Zero%20Point%20Calculations/zero_point_tri_engine.html', 'Hyperbolic%20PolyStep/index.html', 'Hyperbolic%20PolyStep/explainers/hyperbolic-step.html'];
+  const pages = ['index.html', 'manual.html', 'tracer.html', 'numogram.html', 'Galactic%20Lensing/galactic_lensing_hierarchy.html', 'Galactic%20Lensing/tri_engine_soliton.html', 'Galactic%20Lensing/galactic_companion.html', 'Galactic%20Lensing/tri_engine_manual.html', 'Galactic%20Lensing/tri_engine_convergence.html', 'Zero%20Point%20Calculations/zero_point_tri_engine.html', '../Hyperbolic%20Oracles/index.html', '../Hyperbolic%20Oracles/explainers/hyperbolic-step.html'];
   for (const p of pages) {
     const { pg, errs } = await open(BASE + p);
     const r = await pg.evaluate(async () => {

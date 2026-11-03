@@ -18,7 +18,7 @@
     const STATUS = {
         source: 'source', existing: 'built earlier', done: 'done', built: 'built in the Python reference', design: 'designed, not built', next: 'next to build', planned: 'planned'
     };
-    const PAPER = '../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html';
+    const PAPER = '../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html';
     const STEP = 'explainers/hyperbolic-step.html', CH = 'explainers/channels.html', BENCH = 'explainers/benchmarks.html', BUILD = 'explainers/build-and-verify.html';
 
     // col: 0 sources, 1 mathematics, 2 components, 3 pages and code. row: position in the column.
@@ -28,16 +28,16 @@
           refs: '§§2–5, 8', href: PAPER },
         { id: 'lemmas', col: 0, row: 1.5, kind: 'source', status: 'source', label: 'Fifteen Lemmas', sub: 'exact arithmetic · TQF · parity',
           desc: 'The lemma set behind the engine: exact rational quaternions, the TQF and Weitzenböck lock, parity groups and the Merkle chain. The certifier and the memory reuse them.',
-          refs: 'Lemmas 4–15', href: '../Galactic%20Lensing/galactic_companion.html' },
+          refs: 'Lemmas 4–15', href: '../Geometric%20Calculator/Galactic%20Lensing/galactic_companion.html' },
         { id: 'polystep', col: 0, row: 3.5, kind: 'source', status: 'source', label: 'polystep 1.1.1', sub: 'Le, TMLR 2026 · Apache-2.0',
           desc: 'Gradient-free training by optimal transport: rotate a polytope around each particle, score its vertices, weight them by softmax or Sinkhorn and move to the weighted barycentre. Its paper proves convergence under stated conditions (its theory mode: a power-decay step radius, a flat ε, probe jitter); its default heuristics are outside that theorem and are judged empirically.',
           refs: 'solver.py, geometry.py, solvers/', href: 'https://github.com/anindex/polystep' },
         { id: 'zp', col: 0, row: 6, kind: 'existing', status: 'existing', label: 'Zero-Point Tri-Engine', sub: 'the schedule, running',
           desc: 'The existing page that runs three engines on the 24-frame joint schedule inside the 720-frame register. The simulation page is generated from its template.',
-          refs: 'page4 template', href: '../Zero%20Point%20Calculations/zero_point_tri_engine.html' },
+          refs: 'page4 template', href: '../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html' },
         { id: 'conv', col: 0, row: 7.5, kind: 'existing', status: 'existing', label: 'Tri-Engine Convergence', sub: 'pairing · clutch · memory',
           desc: 'The existing calculator whose pairing, timing clutch, orthogonal membrane and outer/inner-manifold memory the channels reuse.',
-          refs: 'page3 template', href: '../Galactic%20Lensing/tri_engine_convergence.html' },
+          refs: 'page3 template', href: '../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html' },
 
         { id: 'clock', col: 1, row: 0, kind: 'math', status: 'source', label: 'Eight-step clock', sub: '24-frame joint schedule',
           desc: 'k = F mod 8, branch j = F mod 3, joint frame n = F mod 24. Branches onload at n = 18, 10, 2 and offload twelve frames later.',
@@ -134,7 +134,10 @@
           refs: 'reference/hpstep/fence.py · fence.js', explainer: 'explainers/fence-tracer.html#checks' },
         { id: 'fencepage', fence: true, col: 3, row: 13, kind: 'artifact', status: 'done', label: 'Fence page and tracer', sub: 'claude-fence.html · Explainer 11',
           desc: 'The live fence: clouds in H² and H³ with planted outliers, the cloud seen from the centre with its fence spheres, Tukey’s box in both coordinates, the 0.7 gauge, certificates, the guard and the self-test. Explainer 11 traces one run stage by stage.',
-          refs: 'claude-fence.html', explainer: 'explainers/fence-tracer.html', href: 'claude-fence.html' }
+          refs: 'claude-fence.html', explainer: 'explainers/fence-tracer.html', href: 'claude-fence.html' },
+        { id: 'fence3d', fence: true, col: 3, row: 14, kind: 'artifact', status: 'done', label: 'The fence in 3D', sub: 'claude-fence-3d.html · shells · sky map',
+          desc: 'The fence in H³ as nested shells you can turn, zoom and cut: the quartile shells and both fences, the sky map of where each point lies from the centre, the mass onion against the uniform expectation, certificates, and the guard. One dataset is the live particle cloud of Hyperbolic PolyStep 3D, fenced after it has searched.',
+          refs: 'claude-fence-3d.html', explainer: 'explainers/fence-tracer.html#three', href: 'claude-fence-3d.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
@@ -150,7 +153,7 @@
         ['anchors3d', 'decoder3d'], ['helixb', 'decoder3d'], ['rapidity', 'frames'], ['frames', 'coupler'], ['pump', 'coupler'],
         ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin'], ['twin', 'sim3d'], ['coupler', 'sim3d'], ['jscore', 'sim3d'],
         ['ghost', 'fencecore'], ['fencelemmas', 'fencecore'], ['fencelemmas', 'guard'], ['fencecore', 'fencecode'], ['guard', 'fencecode'],
-        ['decoder3d', 'fencecode'], ['jscore', 'fencecode'], ['fencecode', 'fencepage']
+        ['decoder3d', 'fencecode'], ['jscore', 'fencecode'], ['fencecode', 'fencepage'], ['fencecode', 'fence3d'], ['twin', 'fence3d']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);
@@ -235,7 +238,7 @@
         const fz = NODES.filter(n => n.fence);
         if (fz.length) {
             const yb = Math.min(...fz.map(n => n.y)) - 18;
-            s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#fbbf24" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">THE 0.7 CLAUDE FENCE · TUKEY'S FENCE FOR HYPERBOLIC SPACE</text>`;
+            s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#fbbf24" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">THE 0.7 CLAUDE FENCE · TUKEY'S FENCE FOR HYPERBOLIC SPACE · H² AND H³</text>`;
         }
         EDGES.forEach(([a, b]) => { const A = byId[a], B = byId[b]; s += `<path class="map-edge" data-a="${a}" data-b="${b}" d="${edgePath(A, B)}" stroke="${KIND[A.kind].color}" stroke-opacity="0.55" marker-end="url(#hp-arrow)"/>`; });
         NODES.forEach(n => { s += nodeSVG(n, n.x, n.y); });
