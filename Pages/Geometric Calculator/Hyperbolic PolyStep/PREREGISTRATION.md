@@ -188,3 +188,31 @@ changes. These items fix procedures the preregistration left open, and correct o
 2. `hyper3` is retuned on B1, B2 and B4 by Amendment 2's procedure: the same 24 candidates, the same tuning instances.
 3. `hyper3`'s measured runs on B1, B2 and B4 are rerun with the same seeds. No other method's runs are rerun.
 4. The decisions and the ledger come from the corrected runs. A claim whose status changes is reported with both statuses.
+
+## Part F · The 0.7 Claude fence · preregistered 2026-11-03, before any measured run
+
+The fence (`reference/hpstep/fence.py`, explainer 11) is Tukey's fence moved into the hyperbolic mass coordinate: the volume of the ball about the robust centre that reaches each point. Its lemmas CF1–CF9 are proved in `explainers/fence-tracer.html` and checked by `reference/tests/test_fence.py` and live in the browser. The runs below test what the lemmas do not settle: how the fence behaves on finite samples, against the baseline anyone would try first.
+
+**Methods.**
+- **Claude fence**: the reference `fence()` exactly as traced. Fréchet-median centre; exact verdicts in H², certified verdicts in H³. A point counts as flagged when it is outside or far out (verdict ≥ 1).
+- **Distance-Tukey (DT)**: Tukey's 1.5 on the hyperbolic distance from the same centre, with the same order-statistic quartiles. It is computed in the same call.
+
+**Datasets** (the shared generator; seeds 0–59 in every cell; N = 200 inliers):
+- **Uniform balls**: `ball` with H² at R ∈ {1, 4, 8} and H³ at R ∈ {1, 3, 5}. These give six cells.
+- **Planted outliers**: the same six cells plus 10 `shell` points at mass f · V(R), with f ∈ {1.75, 2, 3}.
+- **Wrapped normals**: `gauss` with H² and H³ at σ ∈ {0.5, 1, 2}. These give six cells with no planted points.
+
+**Metrics**, as cell means over the 60 seeds:
+- the false-flag rate, the share of inliers flagged;
+- the detection rate, the share of planted points flagged.
+
+**Claims and predictions.** The predictions come from the population formulas of CF3 and CF7, not from runs.
+- **CF-A (no false flags on hierarchy-shaped clouds).** On uniform balls, the Claude fence's false-flag rate is at most 0.70% in every cell. 0.70% is the share Tukey's fence flags on Gaussian data.
+  - *Prediction:* about 0%. The fence sits at about 1.5 V(R), beyond every inlier.
+- **CF-B (power where distance-Tukey is blind).** At f = 2, in the four broad cells (H² R = 4, 8; H³ R = 3, 5), the Claude fence detects at least 90% of planted points and DT detects at most 10%.
+  - *Prediction:* about 100% against about 0%. With 10 planted points among 210, the Claude fence sits near 1.58 V(R) and DT near 3.5–4.1 V(R).
+- **CF-C (a preregistered weakness).** On wrapped normals, the Claude fence flags more than 2% of inliers in every cell, and more than DT does in every cell.
+  - *Prediction:* 5–17% against about 1%. A Gaussian cloud is not uniform in mass, and its mass has a long upper tail.
+  - The fence is built for clouds spread as hierarchies spread. We expect, and will report, that it over-flags Gaussian clouds.
+
+**Decision.** A claim is **supported** if its inequality holds in every listed cell, **refuted** if it fails in a majority of them, and **mixed** otherwise, with the cells listed. The other cells and the other f values are reported but decide nothing. Results go to `reference/results/fence.jsonl` (one record per run) and `reference/results/fence_decisions.json`.
