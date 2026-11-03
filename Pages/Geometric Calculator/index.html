@@ -351,13 +351,13 @@
 
                 <!-- Scientific Keypad -->
                 <div id="keypad-sci" class="grid grid-cols-5 gap-1.5 flex-1 hidden">
-                    <button class="btn-calc text-[10px]" onclick="appendToExpression('sin(')">sin</button>
-                    <button class="btn-calc text-[10px]" onclick="appendToExpression('cos(')">cos</button>
+                    <button class="btn-calc text-[10px]" onclick="appendToExpression('sin(')" title="sin by the rational half-angle substitution (eq. 85)">sin</button>
+                    <button class="btn-calc text-[10px]" onclick="appendToExpression('cos(')" title="cos by the rational half-angle substitution (eq. 85)">cos</button>
+                    <button class="btn-calc text-[10px]" onclick="appendToExpression('tan(')" title="tan = sin / cos, both rational (eq. 85)">tan</button>
                     <button class="btn-calc text-[10px]" onclick="appendToExpression('sqrt(')">&radic;</button>
-                    <button class="btn-calc text-[10px]" onclick="appendToExpression('(')">(</button>
-                    <button class="btn-calc text-[10px]" onclick="appendToExpression(')')">)</button>
-
                     <button class="btn-calc text-[10px]" onclick="appendToExpression('^')">^</button>
+
+                    <button class="btn-calc text-[10px]" onclick="appendToExpression('(')">(</button>
                     <button class="btn-calc" onclick="appendToExpression('7')">7</button>
                     <button class="btn-calc" onclick="appendToExpression('8')">8</button>
                     <button class="btn-calc" onclick="appendToExpression('9')">9</button>
@@ -375,10 +375,11 @@
                     <button class="btn-calc" onclick="appendToExpression('3')">3</button>
                     <button class="btn-calc" onclick="appendToExpression('-')">-</button>
 
-                    <button onclick="handleCalculate()" class="col-span-2 bg-cyan-600/25 hover:bg-cyan-500/35 text-cyan-200 border border-cyan-500/50 rounded-lg text-[10px] font-mono-code font-bold tracking-wider transition-all">RESOLVE (=)</button>
+                    <button class="btn-calc text-[10px]" onclick="appendToExpression(')')">)</button>
                     <button class="btn-calc" onclick="appendToExpression('0')">0</button>
                     <button class="btn-calc" onclick="appendToExpression('.')">.</button>
                     <button class="btn-calc" onclick="appendToExpression('+')">+</button>
+                    <button onclick="handleCalculate()" class="bg-cyan-600/25 hover:bg-cyan-500/35 text-cyan-200 border border-cyan-500/50 rounded-lg text-[10px] font-mono-code font-bold tracking-wider transition-all">RESOLVE (=)</button>
                 </div>
             </div>
 
@@ -1709,30 +1710,48 @@
                 const scaledVal = (a.n * scale) / a.d;
                 return RationalMath.simplify({ n: bigIntSqrt(scaledVal), d: scaleRoot });
             },
-            sin: (a) => {
-                let t1 = a;
-                let t2 = RationalMath.div(RationalMath.pow(a, { n: 3n, d: 1n }), { n: 6n, d: 1n });
-                let t3 = RationalMath.div(RationalMath.pow(a, { n: 5n, d: 1n }), { n: 120n, d: 1n });
-                return RationalMath.add(RationalMath.sub(t1, t2), t3);
+            // sin, cos and tan by the rational half-angle substitution (operator specification, eq. 85). The angle
+            // is reduced modulo 2 pi with a 64-digit pi, t = tan(r/4) is found in fixed point to 10^-60 and kept
+            // as the rational T/10^60, and then
+            //     cos(r/2) = (1 - t^2)/(1 + t^2),  sin(r/2) = 2t/(1 + t^2),
+            //     cos r = cos^2(r/2) - sin^2(r/2),  sin r = 2 sin(r/2) cos(r/2),  tan r = sin r / cos r,
+            // all exact rational arithmetic. The point (cos r, sin r) lies exactly on the unit circle, and is within
+            // about 10^-58 of the true values. (Until 2026-11-03 these were 3-term Taylor polynomials, which drift off
+            // the circle: sin(pi) came out as 0.524.)
+            trig: (a) => {
+                const P = RationalMath.PI, S = 10n ** 70n;
+                const num = a.n * P.d, den = a.d * P.n * 2n;           // a / (2 pi)
+                const fdiv = (x, y) => (x >= 0n ? x / y : -((-x + y - 1n) / y));
+                const k = fdiv(2n * num + den, 2n * den);              // nearest whole number of turns
+                const r = RationalMath.sub(a, { n: 2n * k * P.n, d: P.d });
+                const x = (r.n * S) / (4n * r.d);                      // r/4 in fixed point, |r/4| <= pi/4
+                let sn = 0n, cs = 0n, term = S, j = 0n;                // series for sin and cos of x at scale 10^70
+                while (term !== 0n) {
+                    if (j % 2n === 0n) cs += (j / 2n) % 2n === 0n ? term : -term; else sn += ((j - 1n) / 2n) % 2n === 0n ? term : -term;
+                    j += 1n; term = (term * x) / (S * j);
+                }
+                const T = (sn * S) / cs, t = RationalMath.simplify({ n: fdiv(T + 5n * 10n ** 9n, 10n ** 10n), d: 10n ** 60n });
+                const t2 = RationalMath.mul(t, t), one = { n: 1n, d: 1n }, den2 = RationalMath.add(one, t2);
+                const c2 = RationalMath.div(RationalMath.sub(one, t2), den2), s2 = RationalMath.div(RationalMath.mul({ n: 2n, d: 1n }, t), den2);
+                return { cos: RationalMath.sub(RationalMath.mul(c2, c2), RationalMath.mul(s2, s2)), sin: RationalMath.mul({ n: 2n, d: 1n }, RationalMath.mul(s2, c2)), t };
             },
-            cos: (a) => {
-                let t1 = { n: 1n, d: 1n };
-                let t2 = RationalMath.div(RationalMath.pow(a, { n: 2n, d: 1n }), { n: 2n, d: 1n });
-                let t3 = RationalMath.div(RationalMath.pow(a, { n: 4n, d: 1n }), { n: 24n, d: 1n });
-                return RationalMath.add(RationalMath.sub(t1, t2), t3);
-            }
+            sin: (a) => RationalMath.trig(a).sin,
+            cos: (a) => RationalMath.trig(a).cos,
+            tan: (a) => { const v = RationalMath.trig(a); return RationalMath.div(v.sin, v.cos); },
+            // pi to 64 digits, for the reduction and for the keypad's pi (it was 21 digits)
+            PI: { n: 3141592653589793238462643383279502884197169399375105820974944592n, d: 1000000000000000000000000000000000000000000000000000000000000000n }
         };
 
         function calculateExactRational(expr) {
             try {
-                const tokens = expr.match(/(sqrt|sin|cos|pi|\d+\.\d+|\d+|[\+\-\*\/\^\(\)])/gi);
+                const tokens = expr.match(/(sqrt|sin|cos|tan|pi|\d+\.\d+|\d+|[\+\-\*\/\^\(\)])/gi);
                 if (!tokens) return "0";
                 const precedence = { '+': 1, '-': 1, '*': 2, '/': 2, '^': 3 };
                 const isOp = (t) => ['+', '-', '*', '/', '^'].includes(t);
                 let outputQueue = [], operatorStack = [];
                 for (let t of tokens) {
-                    if (t === 'pi') outputQueue.push({ n: 314159265358979323846n, d: 100000000000000000000n });
-                    else if (['sqrt', 'sin', 'cos'].includes(t)) operatorStack.push(t);
+                    if (t === 'pi') outputQueue.push(RationalMath.PI);
+                    else if (['sqrt', 'sin', 'cos', 'tan'].includes(t)) operatorStack.push(t);
                     else if (!isNaN(t[0])) outputQueue.push(toFraction(t));
                     else if (isOp(t)) {
                         while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !== '(' &&
@@ -1745,7 +1764,7 @@
                     else if (t === ')') {
                         while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !== '(') outputQueue.push(operatorStack.pop());
                         if (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] === '(') operatorStack.pop();
-                        if (operatorStack.length > 0 && ['sqrt', 'sin', 'cos'].includes(operatorStack[operatorStack.length - 1])) outputQueue.push(operatorStack.pop());
+                        if (operatorStack.length > 0 && ['sqrt', 'sin', 'cos', 'tan'].includes(operatorStack[operatorStack.length - 1])) outputQueue.push(operatorStack.pop());
                     }
                 }
                 while (operatorStack.length > 0) outputQueue.push(operatorStack.pop());
@@ -1762,6 +1781,7 @@
                     } else if (t === 'sqrt') evalStack.push(RationalMath.sqrt(evalStack.pop()));
                     else if (t === 'sin') evalStack.push(RationalMath.sin(evalStack.pop()));
                     else if (t === 'cos') evalStack.push(RationalMath.cos(evalStack.pop()));
+                    else if (t === 'tan') evalStack.push(RationalMath.tan(evalStack.pop()));
                 }
                 if (evalStack.length !== 1) return "0";
                 return fractionToString(evalStack[0].n, evalStack[0].d);
@@ -3294,7 +3314,7 @@
         };
     </script>
 <!-- page-chrome:start -->
-<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Oracles&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Hyperbolic PolyStep and the 0.7 Claude fence, now their own system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;}]}]" data-compact="true"></script>
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Simulations&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Geometric Engine v10&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;numogram.html&quot;,&quot;label&quot;:&quot;Engine Numogram&quot;,&quot;icon&quot;:&quot;numogram&quot;,&quot;note&quot;:&quot;Engine and Numogram on one clock&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/galactic_lensing_hierarchy.html&quot;,&quot;label&quot;:&quot;Part 1 · Lensing Hierarchy&quot;,&quot;icon&quot;:&quot;lensing&quot;,&quot;note&quot;:&quot;Systems I–III around Sgr A* and the emergent fourth&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Part 2 · Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three active engines and the soliton crystal&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Oracles&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Hyperbolic PolyStep and the 0.7 Claude fence, now their own system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]},{&quot;label&quot;:&quot;Calculations&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Three exact calculations on one clock, held in memory&quot;,&quot;section&quot;:&quot;Multi-engine&quot;},{&quot;href&quot;:&quot;Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The eight-step cycle at frame resolution inside the 720-frame register&quot;,&quot;section&quot;:&quot;Zero Point&quot;},{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Engine v10 terminal&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The engine's own exact calculator (Terminal tab)&quot;,&quot;section&quot;:&quot;Single engine&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;manual.html&quot;,&quot;label&quot;:&quot;Engine Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Every control of engine v10, with labs&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;tracer.html&quot;,&quot;label&quot;:&quot;Calculation Tracer&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Trace mechanics, rational trig and the bypasses&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/galactic_companion.html&quot;,&quot;label&quot;:&quot;Lensing Companion Guide&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;From one engine to the triple quad, Parts 1 and 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;Galactic%20Lensing/tri_engine_manual.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Operating manual for Part 2&quot;,&quot;section&quot;:&quot;Galactic Lensing&quot;},{&quot;href&quot;:&quot;../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Interactive monograph: conditional P = NP, the 64-bit tile, the pump&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../../Fractal%20Processing/Fractal%20Processing%20Learning%20Hub.html&quot;,&quot;label&quot;:&quot;Fractal Processing Hub&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Tutorials on recursive and weave-based architectures&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/explainers/rational-replacements.html&quot;,&quot;label&quot;:&quot;Rational Replacements&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Explainer 12: eqs. 85–88 verified, the sin/cos/tan audit and change log&quot;,&quot;section&quot;:&quot;Geometric Engine&quot;}]}]" data-compact="true"></script>
 <!-- page-chrome:end -->
 </body>
 </html>

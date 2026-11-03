@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rational Replacements: the sin, cos and tan Audit - Hyperbolic Oracles</title>
+    <meta name="description" content="Explainer 12: the rational replacements for sin, cos, tan and 3D rotation in section 12.1 of the operator specification (eqs. 85-88), verified exactly and live; an audit of every transcendental call in Hyperbolic Oracles and the Geometric Calculator; and the log of what was changed: the calculator keypad's sin, cos and tan, and the closed-form Cayley map.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="../assets/hp.css">
+    <script src="../assets/hp-map.js"></script>
+    <script src="../hyperbolic_core.js"></script>
+    <script src="../rational_trig.js"></script>
+    <style>
+        .proof { border-left: 3px solid #334155; padding: 2px 0 2px 14px; margin: 0.8rem 0; }
+        .proof > p:first-child::before { content: 'Proof. '; font-weight: 700; color: #e2e8f0; }
+        .proof > p:last-child::after { content: ' \220E'; color: var(--muted); }
+        .stmt { border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 12px; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); margin: 0.6rem 0; }
+        .stmt > p:first-child { margin-top: 0; } .stmt > p:last-child { margin-bottom: 0; }
+        .stmt b.id { font-family: var(--mono); color: var(--emerald); }
+        td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+        .pill { font: 0.74rem var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+        .pill.good { color: #6ee7b7; border-color: rgba(52, 211, 153, .55); } .pill.bad { color: #fca5a5; border-color: rgba(248, 113, 113, .55); } .pill.warn { color: #fde68a; border-color: rgba(251, 191, 36, .55); }
+        .lab-row input[type=text], .lab-row select { background: #020617; color: #e2e8f0; border: 1px solid #334155; border-radius: 7px; padding: 4px 8px; font: 0.82rem var(--mono); }
+        .mono-out { font: 0.78rem/1.6 var(--mono); color: #cbd5e1; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px; background: #020617; overflow-x: auto; word-break: break-all; }
+        .mono-out .k { color: var(--faint); } .mono-out .g { color: var(--emerald); } .mono-out .b { color: var(--rose); } .mono-out .a { color: var(--amber); }
+        .scroll { max-height: 420px; overflow: auto; }
+        #audit-rows td:nth-child(4) { max-width: 300px; word-break: break-all; }
+        #audit-rows td:nth-child(5) { min-width: 220px; }
+        canvas { width: 100%; height: auto; display: block; background: #020617; border-radius: 10px; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Oracles &middot; Explainer 12 &middot; Rational Replacements</div>
+    <h1>Rational Replacements: the sin, cos and tan Audit</h1>
+    <p class="lede">Section 12.1 of the operator specification lists four algebraic replacements for direct implementation. A rotation, a sine ratio and a hyperbolic distance can each be computed with no sin, cos, tan or square root, from rationals alone. This page verifies each equation exactly and live, and audits every transcendental call in Hyperbolic Oracles and the Geometric Calculator against them. It also logs what changed: the calculator keypad&rsquo;s sin and cos were 3-term Taylor polynomials, and the exact Cayley map now uses its closed form.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#verdict">The verdict</a>
+        <a class="btn btn-ghost" href="#audit">The audit</a>
+        <a class="btn btn-ghost" href="#changes">What changed</a>
+        <a class="btn btn-ghost" href="#checks">Live checks</a>
+        <a class="btn btn-ghost" href="../../Geometric%20Calculator/index.html">The calculator</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat" id="stat-checks">live checks: running&hellip;</span>
+        <span class="stat" id="stat-audit">audit: loading&hellip;</span>
+        <span class="stat"><b>6</b> changes logged</span>
+        <span class="stat">eq. 85, 86, 87, 88a <b>exact</b> &middot; 88b <b>second order</b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#verdict">2. The verdict</a></li>
+            <li><a href="#eq85">3. Eq. 85: sin, cos, tan</a></li>
+            <li><a href="#eq86">4. Eq. 86: rotations</a></li>
+            <li><a href="#eq87">5. Eq. 87: sine ratios</a></li>
+            <li><a href="#eq88">6. Eq. 88: the ghost kernel and drift</a></li>
+            <li><a href="#audit">7. The audit</a></li>
+            <li><a href="#changes">8. What changed</a></li>
+            <li><a href="#checks">9. Live checks and parity</a></li>
+            <li><a href="#kept">10. What was kept, and why</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#verdict">The verdict</a></li><li><a href="#eq85">Eq. 85</a></li><li><a href="#eq86">Eq. 86</a></li>
+            <li><a href="#eq87">Eq. 87</a></li><li><a href="#eq88">Eq. 88</a></li><li><a href="#audit">The audit</a></li><li><a href="#changes">What changed</a></li>
+            <li><a href="#checks">Live checks</a></li><li><a href="#kept">What was kept</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The replacements are a shared kernel. The ghost map and the exact core feed it, and it feeds the PolyStep exact track (through the Cayley map), the 0.7 Claude fence (through the ghost kernel) and the Geometric Calculator&rsquo;s keypad.</p>
+            <div data-hp-map="focus" data-node="rtrig"></div>
+        </section>
+
+        <section class="chapter" id="verdict">
+            <div class="chapter-num">02</div>
+            <h2>The verdict</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Eq.</th><th>Replacement</th><th>Verdict</th><th>In place in the code?</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">85</td><td>\(\cos\theta, \sin^2\theta, \tan^2\theta\) from \(Q = \tan^2(\theta/2)\)</td><td><span class="pill good">exact</span></td><td>In Hyperbolic PolyStep (step lengths as \(t = \tanh(r/2)\)) and the engines (Gibbs vectors). <b>Not in the calculator keypad, until now:</b> its sin and cos were 3-term Taylor polynomials (T1&ndash;T3).</td></tr>
+                    <tr><td class="mono">86</td><td>\(\mathrm{Rot}(\mathbf u)\mathbf x\) without square roots</td><td><span class="pill good">exact</span></td><td>In place since Phase 1, as the Cayley map \((I - A)(I + A)^{-1}\), which is \(\mathrm{Rot}(-\mathbf u)\). Now in its closed form, without the matrix inverse (T4).</td></tr>
+                    <tr><td class="mono">87</td><td>Symmedian foot and Apollonius point</td><td><span class="pill good">exact</span></td><td>No code computes sine ratios of triangles; the kernel now provides it (T5).</td></tr>
+                    <tr><td class="mono">88a</td><td>\(Q_h = \sinh^2 d\) from Poincar&eacute; points</td><td><span class="pill good">exact</span></td><td>In place: the 0.7 Claude fence decides with \(w = \sinh^2 d\) exactly.</td></tr>
+                    <tr><td class="mono">88b</td><td>\(\varepsilon_{\text{net}} = \sum \varepsilon_i + \sum_{i&lt;j} \varepsilon_i \times \varepsilon_j\)</td><td><span class="pill warn">second order</span></td><td>True to \(O(\varepsilon^3)\) for Gibbs vectors composed as \(R(\varepsilon_1)R(\varepsilon_2)R(\varepsilon_3)\) only. The exact rule \(R(a)R(b) = R\big(\tfrac{a + b + a\times b}{1 - a\cdot b}\big)\) replaces it (T5); the coupler composes exact quaternions already.</td></tr>
+                </tbody></table></div>
+        </section>
+
+        <section class="chapter" id="eq85">
+            <div class="chapter-num">03</div>
+            <h2>Eq. 85: sin, cos and tan from a quadrance</h2>
+            <div class="stmt"><p><b class="id">85</b> &nbsp;For \(\mathbf u = \tan(\theta/2)\hat{\mathbf u} \in \mathbb Q^3\) with \(Q = \|\mathbf u\|^2\): \(\displaystyle \cos\theta = \frac{1 - Q}{1 + Q},\ \ \sin^2\theta = \frac{4Q}{(1+Q)^2},\ \ \tan^2\theta = \frac{4Q}{(1-Q)^2}.\)</p></div>
+            <div class="proof"><p>With \(t = \tan(\theta/2)\), \(Q = t^2\). Then \(\cos\theta = \cos^2\tfrac\theta2 - \sin^2\tfrac\theta2 = \frac{1 - t^2}{1 + t^2}\) and \(\sin\theta = \frac{2t}{1+t^2}\). Squaring and dividing gives the other two. \(\tan^2\) has its pole at \(Q = 1\), \(\theta = \pi/2\). The point \(\big(\frac{1-t^2}{1+t^2}, \frac{2t}{1+t^2}\big)\) is rational and lies exactly on the unit circle.</p></div>
+            <p><b>The keypad.</b> A rational angle \(a\) has no rational sine (Niven), so the calculator must approximate somewhere. The old keypad approximated the functions themselves, with \(a - a^3/6 + a^5/120\) and \(1 - a^2/2 + a^4/24\). The new one approximates only the <em>parameter</em>. It reduces \(a\) modulo \(2\pi\) (64-digit \(\pi\)), finds \(t = \tan(r/4)\) to \(10^{-60}\), keeps it as a rational, and from there uses eq. 85 and the double angle exactly. The answer is an exact point on the circle, and every printed digit is right.</p>
+            <div class="lab">
+                <div class="lab-title">The keypad, before and after</div>
+                <div class="lab-row"><label>angle (radians, a decimal) <input type="text" id="k-a" value="1" style="width:9rem"></label><button class="chip" id="k-go">Compare</button>
+                    <span class="k" style="font:0.78rem var(--mono);color:var(--faint)">try 3.14159265358979, 10, 0.5, 100</span></div>
+                <div class="mono-out" id="k-out"></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="eq86">
+            <div class="chapter-num">04</div>
+            <h2>Eq. 86: rotations without square roots</h2>
+            <div class="stmt"><p><b class="id">86</b> &nbsp;\(\displaystyle \mathrm{Rot}(\mathbf u)\mathbf x = \mathbf x + \frac{2}{1 + Q}\big(\mathbf u \times \mathbf x + \mathbf u \times (\mathbf u \times \mathbf x)\big)\) is the rotation by \(\theta\) about \(\hat{\mathbf u}\), and is rational for rational \(\mathbf u\) and \(\mathbf x\).</p></div>
+            <div class="proof"><p>Rodrigues: \(R = I + \sin\theta\,K + (1 - \cos\theta)K^2\) with \(K = [\hat{\mathbf u}]_\times\). With \(\mathbf u = t\hat{\mathbf u}\), \(\sin\theta\,K = \frac{2t}{1+t^2}K = \frac{2}{1+Q}[\mathbf u]_\times\) and \((1 - \cos\theta)K^2 = \frac{2t^2}{1+t^2}K^2 = \frac{2}{1+Q}[\mathbf u]_\times^2\). <b>The Cayley map is the same rotation.</b> For a skew \(A\) in two or three dimensions, \(A^3 = -QA\), where \(Q\) is the sum of the squared entries above the diagonal. With \(k = \frac{2}{1+Q}\): \((I + A)\big(I + k(A^2 - A)\big) = I + A + k(A^3 - A) = I + A - k(1 + Q)A = I - A\). Since \(I + A\) and \(I - A\) commute, \((I - A)(I + A)^{-1} = I + \frac{2(A^2 - A)}{1 + Q}\), with no inverse. The live check R2 confirms it against the inverse, Fraction for Fraction. With \(A = [\mathbf u]_\times\) this is \(\mathrm{Rot}(-\mathbf u)\). So every Cayley rotation in Hyperbolic PolyStep since Phase 1 was eq. 86; only its evaluation changed.</p></div>
+            <div class="lab">
+                <div class="lab-title">An exact rotation</div>
+                <div class="lab-row"><label>u = <input type="text" id="r-u" value="1/2, 1/3, -1/5" style="width:11rem"></label><label>x = <input type="text" id="r-x" value="1, 0, 0" style="width:8rem"></label><button class="chip" id="r-go">Rotate</button></div>
+                <div class="mono-out" id="r-out"></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="eq87">
+            <div class="chapter-num">05</div>
+            <h2>Eq. 87: sine ratios without sines</h2>
+            <div class="stmt"><p><b class="id">87</b> &nbsp;For a vertex \(A\) over the base \(B = 0\), \(C = 2C_0\), with \(Q_3 = \|A - B\|^2\) and \(Q_2 = \|A - C\|^2\): the internal symmedian foot is \(x_F = \frac{Q_3}{Q_2 + Q_3}2C_0\), the external Apollonius point is \(x_E = \frac{Q_3}{Q_3 - Q_2}2C_0\), and \((0, 2C_0; x_E, x_F) = -1\).</p></div>
+            <div class="proof"><p>The symmedian from \(A\) is the median reflected in the angle bisector. By the ratio lemma it divides \(BC\) as \(BF/FC = (AB/AC)^2\cdot\frac{\sin}{\sin}\) of the reflected angles, which cancel, leaving \(Q_3/Q_2\). So \(x_F = \frac{Q_3}{Q_2+Q_3}\cdot 2C_0\). The external division in the same ratio gives \(x_E\). Internal and external division in one ratio are harmonic: \(\frac{x_E - 0}{x_E - 2C_0} \Big/ \frac{x_F - 0}{x_F - 2C_0} = \frac{-Q_3/Q_2}{Q_3/Q_2} = -1\). An isosceles triangle (\(Q_2 = Q_3\)) has its Apollonius point at infinity.</p></div>
+            <figure><canvas id="sym-cv" width="880" height="260" aria-label="A triangle, its symmedian foot and its Apollonius point"></canvas><figcaption style="color:var(--muted);font-size:0.85rem">Drawn from the exact values. Drag on the canvas to move A; the readout shows the ratio and the cross-ratio as fractions.</figcaption></figure>
+            <div class="mono-out" id="sym-out"></div>
+        </section>
+
+        <section class="chapter" id="eq88">
+            <div class="chapter-num">06</div>
+            <h2>Eq. 88: the ghost kernel, and the drift sum</h2>
+            <div class="stmt"><p><b class="id">88a</b> &nbsp;For \(\mathbf p, \mathbf r\) in the Poincar&eacute; ball, \(\displaystyle Q_h(\mathbf p, \mathbf r) = \Big(\frac{(1+|\mathbf p|^2)(1+|\mathbf r|^2) - 4\mathbf p\cdot\mathbf r}{(1-|\mathbf p|^2)(1-|\mathbf r|^2)}\Big)^2 - 1 = \sinh^2 d(\mathbf p, \mathbf r).\)</p></div>
+            <div class="proof"><p>The ghost map lifts \(\mathbf p\) to \(G(\mathbf p) = \big(1 + |\mathbf p|^2, 2\mathbf p\big)/(1 - |\mathbf p|^2)\) on the hyperboloid. Then \(-\langle G(\mathbf p), G(\mathbf r)\rangle = \frac{(1+|\mathbf p|^2)(1+|\mathbf r|^2) - 4\mathbf p\cdot\mathbf r}{(1-|\mathbf p|^2)(1-|\mathbf r|^2)} = \cosh d\), and \(\cosh^2 - 1 = \sinh^2\). The 0.7 Claude fence decides with this quantity. Computed from its centre as \(w_i = (b_i^2 - \sigma)/\sigma\), it is exact, and arcosh is never needed for a verdict.</p></div>
+            <div class="stmt"><p><b class="id">88b</b> &nbsp;\(\varepsilon_{\text{net}} = \varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_1\times\varepsilon_2 + \varepsilon_1\times\varepsilon_3 + \varepsilon_2\times\varepsilon_3\) is the Gibbs vector of \(R(\varepsilon_1)R(\varepsilon_2)R(\varepsilon_3)\) to second order. It is <b>not</b> exact, and it holds in that order only.</p></div>
+            <div class="proof"><p>Gibbs vectors compose exactly by \(R(a)R(b) = R(c)\), \(c = \frac{a + b + a\times b}{1 - a\cdot b}\). This is checked against the product of the matrices of eq. 86, Fraction for Fraction. Expanding, \(c = a + b + a\times b + O(3)\). Composing a third, \(R(c)R(e_3)\) adds \(e_3 + (e_1 + e_2)\times e_3\). That gives the stated sum with error \(O(\varepsilon^3)\). In the opposite order \(R(\varepsilon_3)R(\varepsilon_2)R(\varepsilon_1)\) every cross product changes sign, so the stated sum is off by \(2\sum_{i&lt;j}\varepsilon_i\times\varepsilon_j = O(\varepsilon^2)\). If the \(\varepsilon_i\) are rotation vectors (angle &times; axis) rather than tangent half-angle vectors, BCH gives a cross coefficient of \(\tfrac12\), not 1.</p></div>
+            <figure><canvas id="drift-cv" width="880" height="300" aria-label="Error of the drift sum against the exact composition"></canvas><figcaption style="color:var(--muted);font-size:0.85rem">Error of the stated sum against the exact composition, as three random drifts shrink (log&ndash;log). In the stated order (green) the slope is 3. In the reversed order (rose) it is 2. The exact composition has no error at all.</figcaption></figure>
+        </section>
+
+        <section class="chapter" id="audit">
+            <div class="chapter-num">07</div>
+            <h2>The audit</h2>
+            <p class="chapter-intro">Every call of sin, cos, tan, their inverses, the hyperbolic functions, exp and log in both systems, found by <code>scripts/trig-audit/audit.py</code> and classified by role. The full ledger, with file and line for every call, is <a href="../../../scripts/trig-audit/audit.json">audit.json</a>. The change log is <a href="../../../scripts/trig-audit/CHANGELOG.md">CHANGELOG.md</a>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Category</th><th>Meaning</th><th>Hyperbolic Oracles</th><th>Geometric Calculator</th></tr></thead>
+                <tbody id="audit-summary"><tr><td colspan="4">Loading&hellip;</td></tr></tbody></table></div>
+            <div class="lab">
+                <div class="lab-title">Every call that is not drawing</div>
+                <div class="lab-row"><label>category <select id="a-cat"><option value="input">input</option><option value="labelled">labelled</option><option value="float">float</option><option value="intrinsic">intrinsic</option><option value="model">model</option><option value="check">check</option><option value="display">display</option></select></label><span id="a-count" class="k" style="font:0.78rem var(--mono);color:var(--faint)"></span></div>
+                <div class="table-wrap scroll"><table><thead><tr><th>System</th><th>File : line</th><th>Call</th><th>Code</th><th>Note</th></tr></thead><tbody id="audit-rows"></tbody></table></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="changes">
+            <div class="chapter-num">08</div>
+            <h2>What changed</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>#</th><th>Where</th><th>Before</th><th>After</th></tr></thead>
+                <tbody id="change-rows"><tr><td colspan="4">Loading&hellip;</td></tr></tbody></table></div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Keypad expression</th><th>Before (3-term Taylor)</th><th>After (eq. 85)</th><th>True value</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">sin(1)</td><td class="num">0.841666666666&hellip;</td><td class="num">0.841470984807896506652502321630&hellip;</td><td class="num">0.841470984807896506652502321630&hellip;</td></tr>
+                    <tr><td class="mono">sin(pi)</td><td class="num">0.524044&hellip;</td><td class="num">0</td><td class="num">0</td></tr>
+                    <tr><td class="mono">cos(pi)</td><td class="num">0.123910&hellip;</td><td class="num">&minus;1</td><td class="num">&minus;1</td></tr>
+                    <tr><td class="mono">sin(10)</td><td class="num">676.666666&hellip;</td><td class="num">&minus;0.544021110889369813404747661851&hellip;</td><td class="num">&minus;0.544021110889369813404747661851&hellip;</td></tr>
+                    <tr><td class="mono">sin(1)^2+cos(1)^2</td><td class="num">1.0018055555&hellip;</td><td class="num">1</td><td class="num">1</td></tr>
+                    <tr><td class="mono">tan(1)</td><td class="num">(no tan)</td><td class="num">1.557407724654902230506974807458&hellip;</td><td class="num">1.557407724654902230506974807458&hellip;</td></tr>
+                </tbody></table></div>
+            <p>The Cayley map&rsquo;s closed form returns the same rationals as the inverse, so every trace of the exact track regenerated byte for byte (169, 28, 21 and 101 lines) and all parity still holds. Measured per call: in the browser 11.1 &rarr; 5.6&nbsp;&micro;s (2D) and 24.9 &rarr; 8.8&nbsp;&micro;s (3D); in Python 46.8 &rarr; 29.8&nbsp;&micro;s and 113.9 &rarr; 77.8&nbsp;&micro;s.</p>
+        </section>
+
+        <section class="chapter" id="checks">
+            <div class="chapter-num">09</div>
+            <h2>Live checks and parity</h2>
+            <div class="lab">
+                <div class="lab-title">R1&ndash;R6 in this browser</div>
+                <div class="lab-row"><button class="chip" id="b-checks">Run again</button></div>
+                <div class="table-wrap"><table class="checks">
+                    <thead><tr><th>Check</th><th>Trials passed</th><th>Control rejected</th><th>What is measured</th></tr></thead>
+                    <tbody id="check-rows"><tr><td colspan="4">Running&hellip;</td></tr></tbody>
+                </table></div>
+                <div class="out" id="check-out">&nbsp;</div>
+            </div>
+            <div class="lab">
+                <div class="lab-title">Parity with the Python reference</div>
+                <p style="margin:0 0 8px"><code>reference/traces/rational_trig.json</code> holds the keypad kernel on 16 angles, eight rotations, eight compositions and eight ghost quadrances, all as exact fractions from <code>rational_trig.py</code>. The browser must reproduce every one.</p>
+                <div class="out" id="parity-out">Running&hellip;</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="kept">
+            <div class="chapter-num">10</div>
+            <h2>What was kept, and why</h2>
+            <ul>
+                <li><b>Inputs converted once (input).</b> A configured step radius, or a measured rotation in degrees, is real. It is turned into a rational exactly once: the step&rsquo;s \(t = \tanh(r/2)\), or the engines&rsquo; Gibbs vector \(u = v/(1 + w)\) in <code>exactLeg</code>. Everything after that is eq. 85 or 86.</li>
+                <li><b>Terminals marked approximate (labelled).</b> The Zero-Point and Convergence terminals return floats for sin and cos and say so. They could adopt the keypad&rsquo;s kernel; nothing in them depends on it.</li>
+                <li><b>The float search track (float).</b> Hyperbolic PolyStep&rsquo;s track A uses cosh, sinh and arcosh. Its bits are fixed by the reference traces and by 7,740 preregistered runs, so it is not rewritten. Logged as a candidate for a re-registered round: the horizon test \(\operatorname{arcosh} x_0 &gt; R\) as \(x_0 &gt; \cosh R\), with no arcosh per point.</li>
+                <li><b>Intrinsically transcendental (intrinsic).</b> Softmax and Sinkhorn weights, random normals, the cosine schedule and the fence&rsquo;s portable exp/log kernels have no rational form, and none is wanted.</li>
+                <li><b>The engines&rsquo; float model (model)</b> of the toroidal dynamics, and <b>drawing (display):</b> screen coordinates and animation never feed back into exact arithmetic.</li>
+            </ul>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Oracles &middot; Explainer 12 &middot; <a href="../index.html">Hub</a> &middot; <a href="../../Geometric%20Calculator/tracer.html">Calculation Tracer</a></footer>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id), T = HPTrig, C = HPCore, Q = C.Q;
+    const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+    const fq = v => { const n = v.n < 0n ? '−' + (-v.n) : String(v.n); return v.d === 1n ? n : `${n}/${v.d}`; };   // a rational as people write it
+    const digits = (f, n = 40) => { const neg = f.n < 0n, a = neg ? -f.n : f.n, ip = a / f.d; let r = a % f.d, s = (neg ? '−' : '') + ip + '.'; for (let i = 0; i < n; i++) { r *= 10n; s += (r / f.d).toString(); r %= f.d; } return s + '…'; };
+    const parseQ = s => { s = s.trim(); if (s.includes('/')) { const [a, b] = s.split('/'); return new Q(BigInt(a.trim()), BigInt(b.trim())); } if (/^-?\d+(\.\d+)?$/.test(s)) { const [i, d = ''] = s.split('.'); return new Q(BigInt(i + d), 10n ** BigInt(d.length)); } throw new Error('not a number: ' + s); };
+
+    // ---- eq. 85 lab
+    function keypad() {
+        try {
+            const a = parseQ($('k-a').value), x = a.toNumber(), k = T.keypadTrig(a), [s3, c3] = T.taylor3(x);
+            const circ = k.sin.mul(k.sin).add(k.cos.mul(k.cos));
+            $('k-out').innerHTML = `<span class="k">angle</span> ${esc($('k-a').value)} <span class="k">= ${a.toString()}</span><br>` +
+                `<span class="k">before (a − a³/6 + a⁵/120):</span> sin ${s3.toPrecision(12)}, cos ${c3.toPrecision(12)}, sin² + cos² = <span class="${Math.abs(s3 * s3 + c3 * c3 - 1) > 1e-9 ? 'b' : 'g'}">${(s3 * s3 + c3 * c3).toPrecision(12)}</span><br>` +
+                `<span class="k">after (eq. 85):</span> t = tan(r/4) = ${digits(k.t, 24)}<br>&nbsp;&nbsp;sin = ${digits(k.sin)}<br>&nbsp;&nbsp;cos = ${digits(k.cos)}<br>&nbsp;&nbsp;sin² + cos² = <span class="g">${fq(circ)}</span> (exact)<br>` +
+                `<span class="k">Math.sin, Math.cos:</span> ${Math.sin(x)}, ${Math.cos(x)}`;
+        } catch (e) { $('k-out').textContent = e.message; }
+    }
+    $('k-go').onclick = keypad; $('k-a').addEventListener('change', keypad);
+
+    // ---- eq. 86 lab
+    function rotLab() {
+        try {
+            const u = $('r-u').value.split(',').map(parseQ), x = $('r-x').value.split(',').map(parseQ);
+            if (u.length !== 3 || x.length !== 3) throw new Error('give three components each');
+            const y = T.rot(u, x), M = T.rotMatrix(u), I = C.X.matmul(C.X.transpose(M), M), ok = I.every((r, i) => r.every((v, j) => v.eq(i === j ? Q.ONE : Q.ZERO)));
+            const Qu = u.reduce((s, v) => s.add(v.mul(v)), Q.ZERO), h = T.halfAngle(Qu), ang = Math.acos(h.cos.toNumber()) * 180 / Math.PI;
+            const cay = C.X.cayley(T.skew(u.map(v => v.neg()))), same = cay.every((r, i) => r.every((v, j) => v.eq(M[i][j])));
+            $('r-out').innerHTML = `<span class="k">Q = |u|² =</span> ${fq(Qu)} &nbsp; <span class="k">cos θ = (1 − Q)/(1 + Q) =</span> ${fq(h.cos)} <span class="k">(θ ≈ ${ang.toFixed(4)}°)</span><br>` +
+                `<span class="k">Rot(u) x =</span> (${y.map(fq).join(', ')})<br><span class="k">Rot(u) =</span> ${M.map(r => '[' + r.map(fq).join(', ') + ']').join(' ')}<br>` +
+                `<span class="k">Rᵀ R = I exactly:</span> <span class="${ok ? 'g' : 'b'}">${ok}</span> &nbsp; <span class="k">equals the Cayley map of [−u]×:</span> <span class="${same ? 'g' : 'b'}">${same}</span> &nbsp; <span class="k">|Rot(u)x|² = |x|²:</span> ${y.reduce((s, v) => s.add(v.mul(v)), Q.ZERO).eq(x.reduce((s, v) => s.add(v.mul(v)), Q.ZERO))}`;
+        } catch (e) { $('r-out').textContent = e.message; }
+    }
+    $('r-go').onclick = rotLab;
+
+    // ---- eq. 87 figure
+    const sym = { A: [new Q(5n, 2n), new Q(2n)], C0: new Q(3n) };
+    function symDraw() {
+        const cv = $('sym-cv'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 880, H = Math.round(W * 260 / 880);
+        cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px'; const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const s = T.symmedian(sym.A, sym.C0), xs = [0, 2 * sym.C0.toNumber(), s.xF.toNumber(), s.xE ? s.xE.toNumber() : NaN, sym.A[0].toNumber()].filter(Number.isFinite);
+        const lo = Math.min(...xs) - 1, hi = Math.max(...xs) + 1, sc = (W - 40) / (hi - lo), X = x => 20 + (x - lo) * sc, Y = y => H - 40 - y * sc;
+        ctx.strokeStyle = '#334155'; ctx.beginPath(); ctx.moveTo(10, Y(0)); ctx.lineTo(W - 10, Y(0)); ctx.stroke();
+        const A = [sym.A[0].toNumber(), sym.A[1].toNumber()], B = [0, 0], Cc = [2 * sym.C0.toNumber(), 0];
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(B[0]), Y(B[1])); ctx.lineTo(X(A[0]), Y(A[1])); ctx.lineTo(X(Cc[0]), Y(Cc[1])); ctx.closePath(); ctx.stroke();
+        ctx.strokeStyle = '#34d399'; ctx.beginPath(); ctx.moveTo(X(A[0]), Y(A[1])); ctx.lineTo(X(s.xF.toNumber()), Y(0)); ctx.stroke();
+        if (s.xE) { ctx.strokeStyle = '#fbbf24'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(X(A[0]), Y(A[1])); ctx.lineTo(X(s.xE.toNumber()), Y(0)); ctx.stroke(); ctx.setLineDash([]); }
+        const dot = (x, y, c, l) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(X(x), Y(y), 4.5, 0, 2 * Math.PI); ctx.fill(); ctx.font = '12px Fira Code, monospace'; ctx.fillText(l, X(x) + 6, Y(y) - 6); };
+        dot(0, 0, '#e2e8f0', 'B'); dot(Cc[0], 0, '#e2e8f0', 'C'); dot(A[0], A[1], '#38bdf8', 'A'); dot(s.xF.toNumber(), 0, '#34d399', 'F'); if (s.xE) dot(s.xE.toNumber(), 0, '#fbbf24', 'E');
+        const cr = s.xE ? T.crossRatio(Q.ZERO, Q.TWO.mul(sym.C0), s.xE, s.xF) : null;
+        $('sym-out').innerHTML = `<span class="k">A =</span> (${sym.A.map(fq).join(', ')}) <span class="k">Q₃ = |AB|² =</span> ${fq(s.Q3)} <span class="k">Q₂ = |AC|² =</span> ${fq(s.Q2)}<br><span class="k">x_F =</span> ${fq(s.xF)} <span class="k">x_E =</span> ${s.xE ? fq(s.xE) : '∞ (isosceles)'}<br>` +
+            `<span class="k">BF : FC =</span> ${fq(s.xF.div(Q.TWO.mul(sym.C0).sub(s.xF)))} <span class="k">= Q₃ : Q₂ =</span> ${fq(s.Q3.div(s.Q2))} &nbsp; <span class="k">(B, C; E, F) =</span> <span class="g">${cr ? fq(cr) : '—'}</span>`;
+    }
+    { const cv = $('sym-cv'); let down = false;
+        const move = e => { const r = cv.getBoundingClientRect(), W = r.width, H = r.height, s = T.symmedian(sym.A, sym.C0);
+            const xs = [0, 2 * sym.C0.toNumber(), s.xF.toNumber(), s.xE ? s.xE.toNumber() : NaN, sym.A[0].toNumber()].filter(Number.isFinite), lo = Math.min(...xs) - 1, hi = Math.max(...xs) + 1, sc = (W - 40) / (hi - lo);
+            const x = lo + (e.clientX - r.left - 20) / sc, y = (H - 40 - (e.clientY - r.top)) / sc;
+            if (y > 0.2) { sym.A = [new Q(BigInt(Math.round(x * 4)), 4n), new Q(BigInt(Math.round(y * 4)), 4n)]; symDraw(); } };
+        cv.addEventListener('pointerdown', e => { down = true; cv.setPointerCapture(e.pointerId); move(e); }); cv.addEventListener('pointermove', e => { if (down) move(e); }); cv.addEventListener('pointerup', () => { down = false; }); }
+
+    // ---- eq. 88 drift chart
+    function driftChart() {
+        const cv = $('drift-cv'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 880, H = Math.round(W * 300 / 880);
+        cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px'; const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const rng = new C.Rng(88), rq = () => new Q(BigInt(rng.randint(-5, 5)), BigInt(rng.randint(1, 5))), base = [0, 1, 2].map(() => [rq(), rq(), rq()]);
+        const pts = [];
+        for (let k = 0; k <= 12; k++) {
+            const e = new Q(1n, BigInt(Math.round(10 * Math.pow(10, k / 4)))), es = base.map(b => b.map(v => v.mul(e)));
+            const exact = T.compose(T.compose(es[0], es[1]), es[2]), ds = T.driftSum(...es), cr = (a, b) => [a[1].mul(b[2]).sub(a[2].mul(b[1])), a[2].mul(b[0]).sub(a[0].mul(b[2])), a[0].mul(b[1]).sub(a[1].mul(b[0]))];
+            const rev = [0, 1, 2].map(i => es[0][i].add(es[1][i]).add(es[2][i]).add(cr(es[1], es[0])[i]).add(cr(es[2], es[0])[i]).add(cr(es[2], es[1])[i]));
+            const err = v => Math.max(...v.map((x, i) => Math.abs(x.sub(exact[i]).toNumber())));
+            pts.push([e.toNumber(), err(ds), err(rev)]);
+        }
+        const lx = v => Math.log10(v), xs = pts.map(p => lx(p[0])), ys = pts.flatMap(p => [lx(p[1]), lx(p[2])]);
+        const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys) - 0.5, y1 = Math.max(...ys) + 0.5, L = 60, B = H - 34;
+        const X = v => L + (W - L - 16) * (v - x0) / (x1 - x0), Y = v => 12 + (B - 12) * (1 - (v - y0) / (y1 - y0));
+        ctx.strokeStyle = '#334155'; ctx.beginPath(); ctx.moveTo(L, 12); ctx.lineTo(L, B); ctx.lineTo(W - 10, B); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.font = '11px Fira Code, monospace';
+        for (let v = Math.ceil(x0); v <= x1; v++) ctx.fillText('1e' + v, X(v) - 12, B + 16);
+        for (let v = Math.ceil(y0); v <= y1; v += 2) ctx.fillText('1e' + v, 8, Y(v) + 4);
+        ctx.fillText('drift size ε (scale)', W / 2 - 50, H - 4);
+        [[1, '#34d399', 'stated order: slope 3'], [2, '#fb7185', 'reversed order: slope 2']].forEach(([k, c, lab], i) => {
+            ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath(); pts.forEach((p, j) => { const x = X(lx(p[0])), y = Y(lx(p[k])); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+            ctx.fillStyle = c; ctx.fillText(lab, L + 12, 26 + 16 * i);
+        });
+        const slope = k => (lx(pts[0][k]) - lx(pts[pts.length - 1][k])) / (lx(pts[0][0]) - lx(pts[pts.length - 1][0]));
+        document.body.dataset.slopes = `${slope(1).toFixed(2)},${slope(2).toFixed(2)}`;
+    }
+
+    // ---- the audit
+    const CAT = { input: 'a real input converted once to a rational, exact from then on', labelled: 'a terminal float marked approximate', float: 'the float search track, fixed by traces and preregistered runs',
+        intrinsic: 'exp / log / random normals / schedules: no rational form', model: 'the engines\' float model of the toroidal dynamics', check: 'a test, live check or parity line', display: 'drawing, animation and readouts' };
+    let AUD = null;
+    function auditRows() {
+        if (!AUD) return;
+        const cat = $('a-cat').value, rows = AUD.rows.filter(r => r.category === cat);
+        $('a-count').textContent = `${rows.length} calls`;
+        $('audit-rows').innerHTML = rows.slice(0, 400).map(r => `<tr><td>${r.system === 'Hyperbolic Oracles' ? 'Oracles' : 'Calculator'}</td><td class="mono">${esc(r.file)}:${r.line}</td><td class="mono">${r.fn}</td><td class="mono" style="font-size:0.72rem">${esc(r.code.slice(0, 110))}</td><td style="font-size:0.8rem">${esc(r.note)}</td></tr>`).join('');
+    }
+    fetch('../../../scripts/trig-audit/audit.json').then(r => r.json()).then(A => {
+        AUD = A;
+        const sys = ['Hyperbolic Oracles', 'Geometric Calculator'], cats = ['input', 'labelled', 'float', 'intrinsic', 'model', 'check', 'display'];
+        const cnt = (s, c) => (A.summary.find(x => x.system === s && x.category === c) || { count: 0 }).count;
+        $('audit-summary').innerHTML = cats.map(c => `<tr><td class="mono">${c}</td><td>${CAT[c]}</td><td class="num">${cnt(sys[0], c)}</td><td class="num">${cnt(sys[1], c)}</td></tr>`).join('') +
+            `<tr><td class="mono">unclassified</td><td>left over by the rules</td><td class="num">${cnt(sys[0], 'unclassified')}</td><td class="num">${cnt(sys[1], 'unclassified')}</td></tr>`;
+        $('change-rows').innerHTML = A.changes.map(c => `<tr><td class="mono">${c.id}</td><td>${esc(c.system)}: <code>${esc(c.file)}</code> &middot; ${esc(c.what)}</td><td style="font-size:0.85rem">${esc(c.before)}</td><td style="font-size:0.85rem">${esc(c.after)}</td></tr>`).join('');
+        $('stat-audit').innerHTML = `audit: <b>${A.rows.length}</b> calls classified`;
+        document.body.dataset.audit = String(A.rows.length);
+        auditRows();
+    }).catch(e => { $('audit-summary').innerHTML = `<tr><td colspan="4">Could not load the ledger (${esc(e.message)}); it is scripts/trig-audit/audit.json in the repository.</td></tr>`; document.body.dataset.audit = 'unavailable'; });
+    $('a-cat').addEventListener('change', auditRows);
+
+    // ---- checks and parity
+    function runChecks() {
+        $('check-out').textContent = 'running…';
+        setTimeout(() => {
+            const t0 = performance.now(), R = T.runChecksTrig(); let all = true;
+            $('check-rows').innerHTML = R.map(r => { const ok = r.passed === r.trials, cok = r.control[0] === r.control[1]; all = all && ok && cok;
+                return `<tr><td>${r.id} · ${r.title}</td><td class="num"><span class="pill ${ok ? 'good' : 'bad'}">${r.passed} / ${r.trials}</span></td><td class="num"><span class="pill ${cok ? 'good' : 'bad'}">${cok ? 'yes' : 'NO'}</span></td><td>${r.detail}</td></tr>`; }).join('');
+            $('check-out').innerHTML = `<span class="${all ? 'good' : 'bad'}">${all ? 'All six hold' : 'A check failed'}</span>, and every control was rejected · ${((performance.now() - t0) / 1000).toFixed(2)} s`;
+            $('stat-checks').innerHTML = `live checks: <b>${R.filter(r => r.passed === r.trials && r.control[0] === r.control[1]).length}/${R.length}</b> hold`;
+            document.body.dataset.checksTrig = String(all);
+        }, 30);
+    }
+    function parity() {
+        fetch('../reference/traces/rational_trig.json').then(r => r.json()).then(tr => {
+            const s = v => v.toString(); let ok = 0, n = 0;
+            for (const k of tr.keypad) { const r = T.keypadTrig(Q.parse(k.a)); n++; if (s(r.sin) === k.sin && s(r.cos) === k.cos && s(r.t) === k.t) ok++; }
+            for (const r of tr.rot) { n++; if (JSON.stringify(T.rotMatrix(r.u.map(Q.parse)).map(x => x.map(s))) === JSON.stringify(r.M)) ok++; }
+            for (const r of tr.compose) { n++; if (JSON.stringify(T.compose(r.a.map(Q.parse), r.b.map(Q.parse)).map(s)) === JSON.stringify(r.g)) ok++; }
+            for (const r of tr.ghost) { n++; if (s(T.ghostQuadrance(r.p.map(Q.parse), r.r.map(Q.parse))) === r.Qh) ok++; }
+            $('parity-out').innerHTML = `<span class="${ok === n ? 'good' : 'bad'}">${ok}/${n} values reproduced exactly</span>`;
+            document.body.dataset.parityTrig = `${ok}/${n}`;
+        }).catch(e => { $('parity-out').textContent = 'Could not load the trace (' + e.message + ').'; document.body.dataset.parityTrig = 'unavailable'; });
+    }
+    $('b-checks').onclick = runChecks;
+    keypad(); rotLab(); symDraw(); driftChart();
+    window.addEventListener('resize', () => { symDraw(); driftChart(); });
+    window.addEventListener('load', () => { setTimeout(runChecks, 60); setTimeout(parity, 200); });
+    window.HPRational = { keypad, rotLab, symDraw, driftChart };
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Oracles&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Gradient-free training and a three-channel solver in hyperbolic space&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep Simulation&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Three channels on the zero-point clock, live, with exact certificates&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../simulation-3d.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Two structures of three engines bound by a coupler, in H³&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;../claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Tukey's fence for hyperbolic space, exact in H², certified in H³&quot;,&quot;section&quot;:&quot;Claude Fence&quot;},{&quot;href&quot;:&quot;../claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³: shells, sky map, PolyStep 3D particles&quot;,&quot;section&quot;:&quot;Claude Fence&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;hyperbolic-step.html&quot;,&quot;label&quot;:&quot;The Hyperbolic Step&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 1: the step, live diagram, H1–H7&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;channels.html&quot;,&quot;label&quot;:&quot;Three Channels on the Clock&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 2: packets, schedule, pairing, pump&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;Problems and Benchmarks&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 3: decoders, preregistration, boundary&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;build-and-verify.html&quot;,&quot;label&quot;:&quot;Build and Verification&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 4: pipeline, tracks, test plan&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;reference-guide.html&quot;,&quot;label&quot;:&quot;The Python Reference&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 5: modules, 80 tests, findings, traces&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;core-reference.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 6: live parity check, 169/169 lines&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;simulation-manual.html&quot;,&quot;label&quot;:&quot;Simulation Manual&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 7: every control and panel, with experiments&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;proofs-and-results.html&quot;,&quot;label&quot;:&quot;Proofs and Results&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 8: H1–H7 proved and checked live, benchmark decisions&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;decoder-3d.html&quot;,&quot;label&quot;:&quot;The 3D Decoder&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 9: version 2 begins, decoders of H³ live in 3D&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;coupler-3d.html&quot;,&quot;label&quot;:&quot;Frames and the Coupler&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 10: proofs, live checks, the 3D simulation manual&quot;,&quot;section&quot;:&quot;Hyperbolic PolyStep&quot;},{&quot;href&quot;:&quot;fence-tracer.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence Tracer&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Explainer 11: the fence stage by stage, CF1–CF9, results&quot;,&quot;section&quot;:&quot;Claude Fence&quot;},{&quot;href&quot;:&quot;rational-replacements.html&quot;,&quot;label&quot;:&quot;Rational Replacements&quot;,&quot;icon&quot;:&quot;trace&quot;,&quot;note&quot;:&quot;Explainer 12: eqs. 85–88 verified, the sin/cos/tan audit and change log&quot;,&quot;section&quot;:&quot;Shared kernels&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The five-tier toroidal calculator, engine v10&quot;,&quot;section&quot;:&quot;Geometric Calculator&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;The clock the three channels ride&quot;,&quot;section&quot;:&quot;Geometric Calculator&quot;},{&quot;href&quot;:&quot;../../../Fractal%20Processing/Geometric%20Engine%20of%20Time/Geometric%20Engine%20of%20Time%20Interactive%20Explainer.html&quot;,&quot;label&quot;:&quot;Geometric Engine of Time Explainer&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;The zero-point paper: the exact geometry behind the oracles&quot;,&quot;section&quot;:&quot;Fractal Processing&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

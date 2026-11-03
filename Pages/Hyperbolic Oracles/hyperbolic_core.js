@@ -208,7 +208,19 @@
         for (let i = 0; i < d; i++) for (let j = i + 1; j < d; j++) { const a = rng.rational(K); A[i][j] = a; A[j][i] = a.neg(); }
         return A;
     };
+    // The Cayley map. In two and three dimensions it is the closed rational rotation (eq. 86, Euler-Rodrigues in the
+    // tangent half-angle vector): R = I + 2 (A^2 - A)/(1 + Q), Q the sum of the squared entries above the diagonal.
+    // No inverse is needed, and a rational matrix is unique, so it returns exactly what the inverse returns.
     X.cayley = A => {
+        const n = A.length;
+        if (n <= 3) {
+            let Qs = Q.ZERO; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) Qs = Qs.add(A[i][j].mul(A[i][j]));
+            const A2 = X.matmul(A, A), k = Q.TWO.div(Q.ONE.add(Qs));
+            return A.map((row, i) => row.map((a, j) => (i === j ? Q.ONE : Q.ZERO).add(k.mul(A2[i][j].sub(a)))));
+        }
+        return X.cayleyInverse(A);
+    };
+    X.cayleyInverse = A => {
         const n = A.length, I = X.eye(n);
         const minus = I.map((row, i) => row.map((x, j) => x.sub(A[i][j]))), plus = I.map((row, i) => row.map((x, j) => x.add(A[i][j])));
         return X.matmul(minus, X.inverse(plus));

@@ -64,7 +64,24 @@ def random_skew(rng, d, K=4):
 
 
 def cayley(A):
-    """R = (I - A)(I + A)^-1: exactly orthogonal with det +1 for any rational skew A."""
+    """R = (I - A)(I + A)^-1: exactly orthogonal with det +1 for any rational skew A.
+
+    In two and three dimensions this is the closed form of the rational rotation (eq. 86 of the operator
+    specification, the Euler-Rodrigues formula in the tangent half-angle vector): with Q the sum of the squared
+    entries above the diagonal, R = I + 2 (A^2 - A) / (1 + Q). It needs no matrix inverse, and because a rational
+    matrix is unique it returns exactly the same Fractions as the inverse (checked in tests/test_rational_trig.py).
+    Larger dimensions use the inverse."""
+    n = len(A)
+    if n <= 3:
+        Q = sum((A[i][j] * A[i][j] for i in range(n) for j in range(i + 1, n)), ZERO)
+        A2 = matmul(A, A)
+        k = 2 / (1 + Q)
+        return [[(ONE if i == j else ZERO) + k * (A2[i][j] - A[i][j]) for j in range(n)] for i in range(n)]
+    return cayley_inverse(A)
+
+
+def cayley_inverse(A):
+    """The Cayley map by the matrix inverse, in any dimension (the definition the closed form is checked against)."""
     n = len(A)
     I = eye(n)
     minus = [[I[i][j] - A[i][j] for j in range(n)] for i in range(n)]
