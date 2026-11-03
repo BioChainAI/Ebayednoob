@@ -33,6 +33,21 @@ that turns the particles' frames, never their positions, with a steer/carry swit
 | D · Two structures | The twin system, two tri-channels in H³ on one clock with three memory chains; `twin3d.js` matches the exact twin trace 21/21 (`node tests/parity-twin.cjs`); `simulation-3d.html` | done |
 | E · Preregistered runs | A new preregistration with controls (off, carry, no mirror) | next |
 
+## The 0.7 Claude fence · Tukey's fence for hyperbolic space
+
+An outlier rule built on the project's exact geometry. Each point is measured by the mass of the ball, about a
+Fréchet-median centre, that reaches it. Tukey's fences, 1.5 and 3 IQR, are applied to that mass. On a cloud
+shaped like a hierarchy, the fence lies on the doubling sphere of the upper quartile. In H² that sphere is within
+ln 2 = 0.693… of the quartile (CF5), which gives the name its 0.7. Verdicts are exact in H² and certified in H³.
+A four-point guard at ln 2 (CF9) catches corrupted distances. See `explainers/fence-tracer.html`.
+
+| Part | Delivers | Status |
+| --- | --- | --- |
+| Reference | `reference/hpstep/fence.py`: lemmas CF1–CF9 tested with controls (18 tests); trace `reference/traces/fence.json` (`run_traces_fence.py`) | done |
+| Browser port | `fence.js` on portable floats, parity 101/101 (`node tests/parity-fence.cjs --checks`) | done |
+| Preregistered runs | `PREREGISTRATION.md` Part F, `reference/run_fence_bench.py`, 1,800 runs. CF-A and CF-B supported, and CF-C (the expected weakness on Gaussian clouds) supported | done |
+| Page and tracer | `claude-fence.html` (e.g. `claude-fence.html?dim=3&R=4&k=10&f=2`) and Explainer 11 | done |
+
 ## Files
 
 | Path | Holds |
@@ -48,6 +63,8 @@ that turns the particles' frames, never their positions, with a steer/carry swit
 | `explainers/proofs-and-results.html`, `proofs.js` | Explainer 8: proofs of H1–H7 with live checks, T1, the benchmark results and decisions |
 | `explainers/decoder-3d.html`, `decoder3d.js`, `tests/parity3d.cjs` | Explainer 9 and version 2 phase A: the 3D decoder, its browser port and parity |
 | `explainers/coupler-3d.html`, `twin3d.js`, `tests/parity-twin.cjs` | Explainer 10 and version 2 phases B–D: frames, the coupler, the twin system, and the 3D simulation's manual |
+| `explainers/fence-tracer.html`, `fence.js`, `tests/parity-fence.cjs` | Explainer 11: the 0.7 Claude fence traced stage by stage, CF1–CF9, the guard, results and the fence page's manual |
+| `claude-fence.html` | The fence page: clouds in H² and H³ with planted outliers, fenced live with exact or certified verdicts |
 | `simulation-3d.html` | The 3D simulation: two structures of three engines bound by the coupler (e.g. `simulation-3d.html?mode=carry&wrong=1`) |
 | `simulation.html` | The simulation: three channels on the zero-point clock, live (e.g. `simulation.html?prob=B1&size=30&exact=1`) |
 | `hyperbolic_core.js`, `parity.js`, `tests/parity.cjs` | The browser core, the trace replay, and its Node runner |

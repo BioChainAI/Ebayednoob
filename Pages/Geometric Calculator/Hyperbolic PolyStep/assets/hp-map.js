@@ -117,7 +117,24 @@
           refs: 'v2 phase A · 28/28 trace lines', explainer: 'explainers/decoder-3d.html' },
         { id: 'sim3d', v2: true, col: 3, row: 10.5, kind: 'artifact', status: 'done', label: '3D simulation', sub: 'two structures · steer | carry | off',
           desc: 'The version 2 page: two structures of three engines in Poincaré balls with their frames, the coupler’s switch, its binding check and twist charts, both answers, three memory chains, the no-mirror control and the exact track.',
-          refs: 'simulation-3d.html', explainer: 'explainers/coupler-3d.html#manual', href: 'simulation-3d.html' }
+          refs: 'simulation-3d.html', explainer: 'explainers/coupler-3d.html#manual', href: 'simulation-3d.html' },
+
+        // ---- the 0.7 Claude fence: Tukey's fence for hyperbolic space (fence: true draws its band)
+        { id: 'fencelemmas', fence: true, col: 1, row: 12.5, kind: 'math', status: 'done', label: 'Fence lemmas CF1–CF9', sub: 'mass coordinate · doubling sphere · ln 2',
+          desc: 'The nine lemmas the fence is derived from: quartiles are order statistics (CF1), exact invariance (CF2), a uniform ball puts Tukey’s fence on the doubling sphere (CF3), exact and certified verdicts (CF4), the doubling gap below ln f/(n − 1), so ln 2 = 0.693… in H² (CF5), the flat limit (CF6), why Tukey on distance saturates (CF7), the median centre (CF8) and the four-point bound ln 2 (CF9).',
+          refs: 'proved and checked live', explainer: 'explainers/fence-tracer.html#lemmas' },
+        { id: 'fencecore', fence: true, col: 2, row: 12, kind: 'comp', status: 'done', label: 'The 0.7 Claude fence', sub: 'median centre · mass · Tukey 1.5 / 3',
+          desc: 'Tukey’s fence in the mass coordinate: a Fréchet-median centre computed from the Gram matrix alone, exact radii, order-statistic quartiles, Tukey’s 1.5 and 3 on the volume each point reaches. Exact verdicts in H², certified in H³. Preregistered claims CF-A and CF-B are supported, and so is CF-C, the expected weakness on Gaussian clouds.',
+          refs: 'fence.py · 1,800 preregistered runs', explainer: 'explainers/fence-tracer.html#trace' },
+        { id: 'guard', fence: true, col: 2, row: 13, kind: 'comp', status: 'done', label: 'Four-point guard', sub: 'defect ≤ ln 2 · blame the pair',
+          desc: 'No four points of H^n have a four-point defect above ln 2 (CF9), sharp at the ideal square. For data given as distances, a quadruple above ln 2 proves one of its six distances wrong; the pairs in the most such quadruples are the suspects.',
+          refs: 'CF9', explainer: 'explainers/fence-tracer.html#guard' },
+        { id: 'fencecode', fence: true, col: 3, row: 12, kind: 'artifact', status: 'done', label: 'fence.py · fence.js', sub: 'portable floats · 101/101 trace lines',
+          desc: 'The reference and its browser port. Every float on the traced path uses portable kernels (+, −, ×, ÷, √ and fixed loops), so the port reproduces the reference bit for bit: 101/101 trace lines. 18 Python tests, each lemma with a control.',
+          refs: 'reference/hpstep/fence.py · fence.js', explainer: 'explainers/fence-tracer.html#checks' },
+        { id: 'fencepage', fence: true, col: 3, row: 13, kind: 'artifact', status: 'done', label: 'Fence page and tracer', sub: 'claude-fence.html · Explainer 11',
+          desc: 'The live fence: clouds in H² and H³ with planted outliers, the cloud seen from the centre with its fence spheres, Tukey’s box in both coordinates, the 0.7 gauge, certificates, the guard and the self-test. Explainer 11 traces one run stage by stage.',
+          refs: 'claude-fence.html', explainer: 'explainers/fence-tracer.html', href: 'claude-fence.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
@@ -131,7 +148,9 @@
         ['prereg', 'proofs'], ['step', 'proofs'], ['sim', 'proofs'], ['ref', 'proofs'],
         ['klein', 'anchors3d'], ['ghost', 'anchors3d'], ['lemmas', 'anchors3d'], ['problems', 'anchors3d'],
         ['anchors3d', 'decoder3d'], ['helixb', 'decoder3d'], ['rapidity', 'frames'], ['frames', 'coupler'], ['pump', 'coupler'],
-        ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin'], ['twin', 'sim3d'], ['coupler', 'sim3d'], ['jscore', 'sim3d']
+        ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin'], ['twin', 'sim3d'], ['coupler', 'sim3d'], ['jscore', 'sim3d'],
+        ['ghost', 'fencecore'], ['fencelemmas', 'fencecore'], ['fencelemmas', 'guard'], ['fencecore', 'fencecode'], ['guard', 'fencecode'],
+        ['decoder3d', 'fencecode'], ['jscore', 'fencecode'], ['fencecode', 'fencepage']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);
@@ -212,6 +231,11 @@
         if (v2.length) {
             const yb = Math.min(...v2.map(n => n.y)) - 18;
             s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#c084fc" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">VERSION 2 · 3D · TWO STRUCTURES BOUND BY A COUPLER</text>`;
+        }
+        const fz = NODES.filter(n => n.fence);
+        if (fz.length) {
+            const yb = Math.min(...fz.map(n => n.y)) - 18;
+            s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#fbbf24" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">THE 0.7 CLAUDE FENCE · TUKEY'S FENCE FOR HYPERBOLIC SPACE</text>`;
         }
         EDGES.forEach(([a, b]) => { const A = byId[a], B = byId[b]; s += `<path class="map-edge" data-a="${a}" data-b="${b}" d="${edgePath(A, B)}" stroke="${KIND[A.kind].color}" stroke-opacity="0.55" marker-end="url(#hp-arrow)"/>`; });
         NODES.forEach(n => { s += nodeSVG(n, n.x, n.y); });

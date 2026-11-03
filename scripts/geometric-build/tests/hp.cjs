@@ -2,7 +2,7 @@
 // step obeys H2, the proofs page's live checks hold and its results load, the simulation opens paused, passes its self-test and closes an exact register with the pump.
 const { chromium } = require('playwright');
 const SP = process.env.SP, BASE = 'http://localhost:8766/Pages/Geometric%20Calculator/Hyperbolic%20PolyStep/';
-const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'simulation.html', 'simulation-3d.html'];
+const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/channels.html', 'explainers/benchmarks.html', 'explainers/build-and-verify.html', 'explainers/reference-guide.html', 'explainers/core-reference.html', 'explainers/simulation-manual.html', 'explainers/proofs-and-results.html', 'explainers/decoder-3d.html', 'explainers/coupler-3d.html', 'explainers/fence-tracer.html', 'simulation.html', 'simulation-3d.html', 'claude-fence.html'];
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   let fail = 0;
@@ -56,6 +56,25 @@ const PAGES = ['index.html', 'explainers/hyperbolic-step.html', 'explainers/chan
       await pg.waitForFunction(() => document.body.dataset.checksTwin, null, { timeout: 180000 });
       r.twinChecks = await pg.evaluate(() => document.body.dataset.checksTwin);
       ok = ok && r.twinChecks === 'true';
+    }
+    if (p === 'explainers/fence-tracer.html') {
+      await pg.waitForFunction(() => document.body.dataset.checksFence && document.body.dataset.parityFence, null, { timeout: 180000 });
+      r.fence = await pg.evaluate(() => { const o = [document.body.dataset.checksFence, document.body.dataset.parityFence];
+        for (let i = 0; i < 8; i++) { HPFenceTracer.show(i); o.push(document.getElementById('t-out').textContent.length > 80); }
+        HPFenceTracer.show(5); o.push(/≤ ln/.test(document.getElementById('t-out').textContent)); HPFenceTracer.show(7); o.push(/heads the list|among the suspects/.test(document.getElementById('t-out').textContent));
+        o.push(document.querySelectorAll('#gap-plot path').length, document.querySelectorAll('#algo-chart rect').length); return o; });
+      ok = ok && r.fence[0] === 'true' && r.fence[1] === '101/101' && r.fence.slice(2, 12).every(Boolean) && r.fence[12] >= 3 && r.fence[13] >= 14;
+    }
+    if (p === 'claude-fence.html') {
+      await pg.waitForFunction(() => document.body.dataset.selftest && document.body.dataset.ready, null, { timeout: 120000 });
+      r.fencePage = await pg.evaluate(() => [document.body.dataset.selftest, document.body.dataset.caught, document.body.dataset.falseflags, +document.body.dataset.gap, document.body.dataset.guardhit]);
+      await pg.goto(BASE + p + '?dim=3&R=3.5&N=200&k=10&f=2'); await pg.waitForFunction(() => document.body.dataset.ready, null, { timeout: 60000 });
+      r.fence3 = await pg.evaluate(() => [document.body.dataset.caught, document.body.dataset.falseflags, +document.body.dataset.gap]);
+      await pg.goto(BASE + p + '?kind=gauss&sigma=1.5&k=0'); await pg.waitForFunction(() => document.body.dataset.ready, null, { timeout: 60000 });
+      r.fenceGauss = await pg.evaluate(() => +document.body.dataset.falseflags);
+      r.scrollWF = await pg.evaluate(() => document.documentElement.scrollWidth);
+      ok = ok && r.fencePage[0] === '101/101' && r.fencePage[1] === '8' && r.fencePage[2] === '0' && r.fencePage[3] < Math.LN2 && r.fencePage[3] > 0.6 && r.fencePage[4] === '2'
+        && r.fence3[0] === '10' && r.fence3[1] === '0' && r.fence3[2] < Math.LN2 / 2 && r.fenceGauss > 5 && r.scrollWF <= r.innerW;
     }
     if (p === 'simulation-3d.html') {
       await pg.waitForFunction(() => document.body.dataset.selftest, null, { timeout: 120000 });
