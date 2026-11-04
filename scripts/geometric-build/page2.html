@@ -198,43 +198,7 @@ const CLASS_HEX = [0xff0055, 0x00f2ff, 0xffd700], CLASS_CSS = ['#ff0055', '#00f2
 // =====================================================================
 // Layer B for three engines: exact frames, nodes and the cross-engine TQF
 // =====================================================================
-// Exact integer maps (all orthogonal with integer entries, so they act on ℚ³ without rounding)
-const ROT_X = (v, neg) => [v[0], neg(v[2]), v[1]];   // Rot_x(π/2): (x, y, z) ↦ (x, −z, y)   (even tiers, Lemma 4)
-const ROT_Y = (v, neg) => [v[2], v[1], neg(v[0])];   // Rot_y(π/2): (x, y, z) ↦ (z, y, −x)   (odd tiers, Lemma 4)
-const C3 = v => [v[2], v[0], v[1]];                  // σ: 120° about (1, 1, 1), x ↦ y ↦ z ↦ x
-const c3pow = (v, s) => { for (let i = 0; i < s; i++) v = C3(v); return v; };
-const NEG_F = f => f.neg(), NEG_N = x => -x;
-const frameOf = (n, v, neg) => (n % 2 === 0 ? ROT_X(v, neg) : ROT_Y(v, neg));
-const SIG_F = [new Fraction(1n, 2n), new Fraction(1n, 20n), new Fraction(2n, 1n)];   // σ per class, exactly the SIGMA of Part 1
-// Tension turns the outer tiers (T4, T3) about local y; Torsion turns the inner tiers (T2–T0) the other way about local z
-function modRot(p, n) {
-    const a = n >= 3 ? state.tension * D2R : -state.torsion * D2R, c = Math.cos(a), s = Math.sin(a);
-    return n >= 3 ? [c * p[0] + s * p[2], p[1], -s * p[0] + c * p[2]] : [c * p[0] - s * p[1], s * p[0] + c * p[1], p[2]];
-}
-// Node on tier n = 4 − S at θ_k = 2πk/30 with φ = W_n θ_k χ_k + 2πc/3 + Δφ (spec §2A); χ_k = (−1)^k
-function torusPoint(R, r, n, k, c, dphi) {
-    const th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = TIERS_SPEC[n].W * th * chi + 2 * Math.PI * c / 3 + dphi;
-    return modRot([(R + r * Math.cos(ph)) * Math.cos(th), (R + r * Math.cos(ph)) * Math.sin(th), r * Math.sin(ph)], n);
-}
-function exactNode(s, c, k, S, dphi) {
-    const n = 4 - S, T = TIERS_SPEC[n];
-    const P = torusPoint(T.R, T.r, n, k, c, dphi).map(x => RAT(x));          // Layer A → B at 2⁻²⁴, in cubits
-    return c3pow(frameOf(n, P, NEG_F), s);                                    // then exact frame and exact σˢ
-}
-const vsub = (a, b) => a.map((x, i) => x.sub(b[i])), vadd = (a, b) => a.map((x, i) => x.add(b[i]));
-const vdot = (a, b) => a.reduce((acc, x, i) => acc.add(x.mul(b[i])), Fraction.ZERO);
-const F3 = new Fraction(3n), F4 = new Fraction(4n);
-const fbits = f => Math.max((f.n < 0n ? -f.n : f.n).toString(2).length, f.d.toString(2).length);
-function tqf(P) {
-    const u = vsub(P[1], P[0]), v = vsub(P[2], P[0]), w = vsub(P[2], P[1]);
-    const Q1 = vdot(u, u), Q2 = vdot(w, w), Q3 = vdot(v, v), S = Q1.add(Q2).add(Q3), S2 = S.mul(S);
-    const poly = S2.sub(Fraction.TWO.mul(Q1.mul(Q1).add(Q2.mul(Q2)).add(Q3.mul(Q3))));
-    const uv = vdot(u, v), gram = F4.mul(Q1.mul(Q3).sub(uv.mul(uv)));
-    const lock = !S.isZero() && F3.mul(poly).eq(S2);
-    const chi = S.isZero() ? 0 : Math.sqrt(Math.max(0, poly.toNumber())) / S.toNumber();
-    return { Q: [Q1, Q2, Q3], S, poly, gram, same: poly.eq(gram), nonneg: !(poly.n < 0n), weitz: fracLe(F3.mul(poly), S2), lock, chi,
-             qScale: 0.65 + 0.45 * chi, P4star: vsub(vadd(P[1], P[2]), P[0]), bits: Math.max(...[Q1, Q2, Q3, poly].map(fbits)) };
-}
+/*__ORB:exact__*/
 // Per-system data-minus-model in units of σ drives each node's phase offset [DEFINITION]. It is taken as Layer B sees it
 // (both rationalized at 2⁻²⁴), so a float difference below that grid never gives one engine a phase the others lack.
 const sysResid = (ch, s, c) => RAT(ch.data[s][c]).sub(RAT(ch.model[s][c])).toNumber() / SIGMA[c];

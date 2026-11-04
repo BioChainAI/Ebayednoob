@@ -135,7 +135,8 @@ def twin_trace():
 if __name__ == '__main__':
     main()
     out = os.path.join(os.path.dirname(OUT), 'twin3d.json')
+    data = twin_trace()          # computed before the file is opened, so a failure (no torch, say) leaves the old trace intact
     with open(out, 'w') as fh:
         json.dump({'meta': {'note': 'Version 2 phases B-D: exact. Rationals are "p/q"; quaternions are coprime integers, written as strings (they exceed 2^53).'},
-                   'data': twin_trace()}, fh, indent=1)
+                   'data': data}, fh, indent=1)
     print('wrote', out, os.path.getsize(out), 'bytes')

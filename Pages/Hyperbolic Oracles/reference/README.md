@@ -25,6 +25,12 @@ pip install --index-url https://download.pytorch.org/whl/cpu torch   # CPU build
 pip install -r requirements.txt
 ```
 
+Only the step needs torch and polystep. `hpstep/__init__.py` loads `step.py` the first time `PolyStepH`,
+`StepConfig` or `StepState` is used, so the exact modules (`prng`, `exact`, `hyperbolic`, `problems`, `channels`,
+`decode3d`, `frames3d`, `twin3d`, `fence`) import with numpy alone: `test_prng.py`, `test_problems.py`,
+`test_fence.py` and `run_traces_fence.py` run without torch, and other systems import these modules in place
+(`Pages/Engram Minds Eye`).
+
 polystep 1.1.1 needs Python 3.11 or later and PyTorch 2.8 or later. The reference imports polystep for:
 
 - its orthoplex and rotations;

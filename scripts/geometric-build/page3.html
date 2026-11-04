@@ -224,11 +224,7 @@ const STAGE_NAMES = ['T4 · ingest and anchor', 'T3 · compile', 'T2 · evaluate
 // The calculator: exact rational expressions, with the non-rational functions marked
 // =====================================================================
 const APPROX_K = 48, MAX_BITS = 8192;
-const flen = f => Math.max(absB(f.n).toString(2).length, f.d.toString(2).length);
-function toNum(f) {   // a Fraction as a double, also when its numerator or denominator is beyond 2^1024
-    const sh = Math.max(0, flen(f) - 1000);
-    return sh ? Number(f.n >> BigInt(sh)) / Number(f.d >> BigInt(sh)) : Number(f.n) / Number(f.d);
-}
+/*__ORB:tonum__*/
 const decFrac = s => { const [i, f = ''] = s.split('.'); return new Fraction(BigInt((i || '0') + f), 10n ** BigInt(f.length)); };
 const isqrtB = n => { if (n < 2n) return n; let x = n, y = (x + 1n) >> 1n; while (y < x) { x = y; y = (x + n / x) >> 1n; } return x; };
 function approx(x, what) {
@@ -368,7 +364,7 @@ const jobs = [0, 1, 2].map(s => ({ s, st: 'idle', prog: null, gate: 0, p0: null,
 const TAU0 = new Fraction(2n, 75n);
 const eng = [0, 1, 2].map(() => ({ E: 0, on: false }));
 const engagedFor = J => state.clutch !== 'hold' || J.st === 'running';
-const fracPart = f => new Fraction(((f.n % f.d) + f.d) % f.d, f.d);                 // a turn count modulo one turn, exactly
+/*__ORB:fracpart__*/
 const carriedTurns = (s, pulses) => TAU0.mul(new Fraction(BigInt(SPIN[s] * pulses)));
 const fmtTurns = f => `${fmtShort(f, 12)} turn${f.eq(Fraction.ONE) ? '' : 's'} (${fmt(toNum(fracPart(f)) * 360, 4)}°)`;
 const pulsesTo = (p, r) => ((r - (p % 60)) + 60) % 60 || 60;                         // pulses until p ≡ r (mod 60)
@@ -435,36 +431,9 @@ function membraneOnload(p) {
 // Convergence: the triple quad, the gauge and the automatic quadrance-out
 // =====================================================================
 let memory = [], wordCount = 0, latest = null, memErased = new Set(), lastRendered = '';
-const gaugeExact = (a, b, c) => {
-    const s = a.add(b).add(c), X = a.sub(b.add(c).div(Fraction.TWO)), Yc = b.sub(c);
-    const a2 = s.add(Fraction.TWO.mul(X)).div(F3), b2 = s.sub(a2).add(Yc).div(Fraction.TWO), c2 = s.sub(a2).sub(Yc).div(Fraction.TWO);
-    return { s, X, Yc, recovered: a2.eq(a) && b2.eq(b) && c2.eq(c) };
-};
-// Δφ from each result's deviation from the mean [DEFINITION]: equal results give equal phases, hence an exact lock
-// Part 2's exactNode with the node carried round its tier by `turns` (only the fractional turn moves it)
-function exactNodeSpin(s, k, S, dphi, turns) {
-    const n = 4 - S, T = TIERS_SPEC[n], th = 2 * Math.PI * k / 30, chi = k % 2 === 0 ? 1 : -1, ph = T.W * th * chi + dphi;
-    const a = th + 2 * Math.PI * toNum(fracPart(turns));
-    const P = modRot([(T.R + T.r * Math.cos(ph)) * Math.cos(a), (T.R + T.r * Math.cos(ph)) * Math.sin(a), T.r * Math.sin(ph)], n).map(x => RAT(x));
-    return c3pow(frameOf(n, P, NEG_F), s);
-}
-const ZERO3 = [Fraction.ZERO, Fraction.ZERO, Fraction.ZERO];
-function readout(vals, turns = ZERO3) {
-    const Y = vals[0].add(vals[1]).add(vals[2]), m = Y.div(F3), den = Math.abs(toNum(m)) + 1;
-    const dphi = vals.map(x => state.kappa * (Math.PI / 6) * Math.tanh(toNum(x.sub(m)) / den));
-    const nodes = [0, 1, 2].map(s => exactNodeSpin(s, 29, 4, dphi[s], turns[s]));   // T0, node 29, carried by each engine's spin
-    const T = tqf(nodes);
-    return { dphi, nodes, T, Q4: vdot(T.P4star, T.P4star) };
-}
-const cellTile = (w, j, v) => {
-    f32.setFloat32(0, toNum(v));
-    const slot = 4 * (w.addr % 3) + j;
-    return { word: packTile({ step: w.step, wheel: wheelSector(w.k), struct: j, gate: w.addr % 64, mux: muxIndex(w.step, w.k, slot), form: 3, slot, scale: 0, core: f32.getUint32(0) }),
-             exact: fracOfDouble(f32.getFloat32(0)).eq(v) };
-};
-const leavesOf = w => w.cells.map((v, j) => concatBytes(wordBytes(cellTile(w, j, v).word), utf8(v.toString())));
-const chainOf = w => merkleChain(leavesOf(w)).map(t => (t ? toHex(t) : ''));
-const parityOk = w => w.cells[0].add(w.cells[1]).add(w.cells[2]).eq(w.cells[3]);
+/*__ORB:gauge__*/
+/*__ORB:readout__*/
+/*__ORB:memory__*/
 function converge(p) {
     const vals = jobs.map(J => J.prog.value);
     const cells = [...vals.map(v => v.f), vals[0].f.add(vals[1].f).add(vals[2].f)];
@@ -495,10 +464,7 @@ function refreshReadout() { if (latest) Object.assign(latest, readout(latest.cel
 // =====================================================================
 // Memory: erase, alter, locate and repair
 // =====================================================================
-function rebuild(w, j) {   // the cell j of word w from the other three
-    const c = w.cells;
-    return j === 3 ? c[0].add(c[1]).add(c[2]) : [0, 1, 2].filter(i => i !== j).reduce((acc, i) => acc.sub(c[i]), c[3]);
-}
+/*__ORB:rebuild__*/
 function alterOne() {
     if (!memory.length) { $('#mem-act').textContent = 'Nothing in memory yet: converge a word first.'; return; }
     const r = Math.random(), w = memory[Math.floor(r * memory.length)], j = Math.floor(Math.random() * 4);
@@ -508,12 +474,7 @@ function alterOne() {
     log(`[M] address ${w.addr}: cell ${STRUCT3[j]} altered by 2^-24 -> parity ${parityOk(w) ? 'still holds' : 'FAILS (detected)'}`, 'fail');
     renderAll(true);
 }
-function locate(w) {   // Lemma 15: the deepest layer of the chain that differs is the altered leaf
-    const now = chainOf(w);
-    let deepest = 0;
-    for (let d = 1; d <= 4; d++) if (now[d] !== w.tau0[d]) deepest = d;
-    return deepest ? deepest - 1 : null;
-}
+/*__ORB:locate__*/
 function repairAll() {
     const bad = memory.filter(w => !parityOk(w) || locate(w) !== null);
     if (!bad.length) { $('#mem-act').textContent = 'Every word passes parity and matches its chain: nothing to repair.'; return; }

@@ -1,8 +1,10 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phase 0 (scaffold) done: the hub, two explainers, the preregistration of E1–E9, the golden corpus
-pinned from Owl Academy, and four feasibility spikes (36/36 checks pass). Phase 1, the shared cores, is next.
-No engram code exists yet, and no claim is decided.**
+**Status: Phases 0 and 1 done. Phase 0 (scaffold): the hub, the preregistration of E1–E9, the golden corpus
+pinned from Owl Academy, and four feasibility spikes (36/36 checks pass). Phase 1 (shared cores): the orbital
+pages' exact code moved into one module, `scripts/geometric-build/orbital_core.js`, which the build writes back so
+the four pages stay byte-identical, and Hyperbolic PolyStep's exact modules now import without torch. Phase 2, the
+Python reference, is next. No engram code exists yet, and no claim is decided.**
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -69,7 +71,7 @@ None of the three is exact, and they share no module.
 
 | Need | Already built here | Where |
 | --- | --- | --- |
-| Exact arithmetic | Rationals on BigInt (`Fraction`, `Q`); tracks A (float), B (exact), C (snap to 2⁻ᵏ), R (residues) | `scripts/geometric-build/core.js`, `Hyperbolic Oracles/hyperbolic_core.js` |
+| Exact arithmetic | Rationals on BigInt (`Fraction`, `Q`); tracks A (float), B (exact), C (snap to 2⁻ᵏ), R (residues) | `scripts/geometric-build/orbital_core.js` (was `core.js`), `Hyperbolic Oracles/hyperbolic_core.js` |
 | A per-calculation pipeline | Five tiers T4 → T0 (R = 5n² + 15n + 15, r = 2n + 4, W = 16 − 2n), the 30-node clock, 150 pulses per calculation, TQF between the manifolds | engine v10; `TIERS_SPEC` in the build templates |
 | A wire format | The 64-bit Einstein tile: halo (step, wheel, structure), gate, ctrl (mux, Form, slot, Fibonacci scale), 32-bit core. Form 1 carries a Hurwitz quaternion with an honest loss flag; Form 4 reads the 64 bits as a 4 × 4 × 4 voxel cube | engine v10 ENGRAM tab; `packTile`/`decodeTile`, `hurwitzEncode` in `page.html` |
 | A clock | The 8-step zero-point cycle, the 24-frame joint cycle, onload at frames 18/10/2 and offload at 6/22/14, three branches | `gen4.py`, `TriChannel` |
@@ -85,11 +87,12 @@ Both repositories already use the same three scales. Owl Academy's Ontological C
 720 → 72 → 10, and so is this repository's register pump. The 72- and 720-section exports and the
 720-frame breath pump therefore line up with the zero-point register without any rescaling.
 
-**One infrastructure fact shapes the plan.** The orbital machinery has no module of its own. The tiles and
-Merkle chain live in the Part 1 template (`page.html`), the tiers and TQF in Part 2 (`page2.html`), the gauge
-and repair in the Convergence template (`page3.html`) and the pump in `gen4.py`. `build.py` inlines them
+**One infrastructure fact shaped the plan.** The orbital machinery had no module of its own. The tiles and
+Merkle chain lived in the Part 1 template (`page.html`), the tiers and TQF in Part 2 (`page2.html`), the gauge
+and repair in the Convergence template (`page3.html`) and the pump in `gen4.py`, and `build.py` inlined them
 into the four pages. Hyperbolic PolyStep, by contrast, has UMD cores (`hyperbolic_core.js`, `decoder3d.js`,
-`twin3d.js`, `fence.js`). Engine v10 (`index.html`) is an uploaded export and stays untouched.
+`twin3d.js`, `fence.js`). Phase 1 gave the orbital code the same shape: `scripts/geometric-build/orbital_core.js`
+(see Explainer 3). Engine v10 (`index.html`) is an uploaded export and stays untouched.
 
 ## 3. Findings
 
@@ -179,8 +182,8 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | Phase | Delivers | Status |
 | --- | --- | --- |
 | 0 · Scaffold | This plan; the hub `index.html` with its system map, claims ledger and decisions; explainers 1 (the architecture, with a live lab) and 2 (the evidence and the claims); `PREREGISTRATION.md` with claims E1–E9 and their decision rules, fixed before any code; the golden corpus `reference/golden/engram_v1.json`; the reference skeleton; the site bar | done |
-| 1 · Shared cores | `scripts/geometric-build/orbital_core.js`, a UMD module holding the exact core, tiles, Merkle chain, tiers, TQF, gauge, repair and pump, which `build.py` inlines back so the four pages and this system share one copy (the existing browser tests `all`, `conv`, `clutch`, `zp`, `zp2`, `zp3` must pass unchanged); a lazy `hpstep/__init__.py`, with PolyStep's 80 tests still green | next |
-| 2 · Python reference | `reference/engram/`: `ttmpt.py`, `packet.py`, `address.py`, `memory.py`, `gauge.py`, `register.py`. Tests and traces | planned |
+| 1 · Shared cores | `scripts/geometric-build/orbital_core.js`: 15 segments (the exact core, tiers, the Fifteen-Lemma layer with tiles and the Merkle chain, tier frames and the TQF, the gauge, readout, memory repair, the pump), written back into the four orbital pages by `build.py`, which stay byte-identical (`tests/rebuild-identical.sh`); its Node test passes 18/18 (`tests/orbital-core.cjs`, Part 1's verification included) and the browser tests pass; a lazy `hpstep/__init__.py`: PolyStep's suite passes 137/137 before and after, its traces regenerate byte-identical, and its exact modules import without torch (30 tests run with numpy alone). Explainer 3 (`explainers/shared-cores.html`) | done |
+| 2 · Python reference | `reference/engram/`: `ttmpt.py`, `packet.py`, `address.py`, `memory.py`, `gauge.py`, `register.py`. Tests and traces | next |
 | 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence`), `tests/parity-engram.cjs`, and a live parity check in a page | planned |
 | 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge and lock, register closure, exports (v1 byte-compatible, and v2) | planned |
 | 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and coupler chain, the soliton crystal at the core, fence shells with the screen and guard, the breath pump, `LATTICE-SEED/1` import | planned |
@@ -213,7 +216,7 @@ Fixed design inputs of the preregistration: changing one is an amendment.
 - **D1 · Location.** Its own system, `Pages/Engram Minds Eye/`, with its own menus, loading shared cores by
   relative path. Not taken: a module inside `Pages/Hyperbolic Oracles/`.
 - **D2 · Orbital core.** `orbital_core.js` is extracted from the build templates and `build.py` inlines it into
-  the four orbital pages. Not taken: reading functions from the templates by name, as Spike C does.
+  the four orbital pages. Not taken: reading functions from the templates by name, as Spike C did in Phase 0.
 - **D3 · Wire format.** An engram travels as two Einstein tiles of **Form 5**, an ID unused elsewhere in the
   repository (0–4, 6 and 12 are taken), defined here as an engram/1 half: tile h = 0 holds cells 32–63, tile
   h = 1 cells 0–31, slot = 4h + structure, structure α = 0, β = 1, γ = 2, Y = 3. Form 3 is not used because it
@@ -243,6 +246,7 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `index.html` | The hub: system map, explainer library, roadmap, claims ledger, decisions |
 | `explainers/architecture.html` | Explainer 1: the five systems, the eight layers, one word followed through them, and a live lab |
 | `explainers/evidence.html` | Explainer 2: the spikes with their outputs, the golden corpus, the nine claims and their decision rules |
+| `explainers/shared-cores.html` | Explainer 3: Phase 1, the orbital core moved into one module, how the byte-identity was proved, the module live, PolyStep without torch |
 | `assets/em.css`, `assets/em-map.js` | Shared style; the system map data and its chart renderer (Hyperbolic Oracles' renderer, renamed) |
 | `PREREGISTRATION.md` | Claims E1–E9, fixed design inputs D1–D7, instances, controls and decision rules |
 | `reference/README.md`, `reference/requirements.txt` | The skeleton of the Python reference (Phase 2) |

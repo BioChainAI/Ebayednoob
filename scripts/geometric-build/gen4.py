@@ -1,8 +1,12 @@
 # Builds page4.html (Zero-Point Tri-Engine template) from page3.html (Tri-Engine Convergence template).
 # Shared blocks stay placeholders, so build.py fills both pages from the same Part 1 / Part 2 sources.
-import os
+# The orbital-core segments of page3.html are expanded first, so the patches below see the full text; the two
+# segments this file inserts itself (pump, fracpart) stay placeholders for build.py.
+import os, sys
 D = os.path.dirname(os.path.abspath(__file__)) + '/'
-s = open(D + 'page3.html').read()
+sys.path.insert(0, D)
+from orbital_segments import expand
+s = expand(open(D + 'page3.html').read())
 BAR = '// =====================================================================\n'
 
 def rep(a, b, n=1):
@@ -178,14 +182,7 @@ function advanceTracks(F) {
 }
 // The pump (Proposition 3.9) on each engine's own outer gear: frame increments of 0 or 1 frame (engaged or not), held as residues mod 720
 const reg = { bits: [0, 1, 2].map(() => new Uint8Array(720)), last: null, count: 0 };
-function pumpOf(d) {
-    const engaged = d.reduce((a, x) => a + x, 0), P = engaged % 720, sum = a => a.reduce((t, x) => (t + x) % 720, 0);
-    const dQ = Array.from({ length: 72 }, (_, m) => d.subarray(10 * m, 10 * m + 10).reduce((a, x) => a + x, 0));   // ΔQ_m: ten-frame blocks
-    const delta = dQ.map(x => (720 - x) % 720);                                                                 // δ_m = ΔQ_m⁻¹
-    const Q10 = sum(delta), Q8 = sum(Array.from({ length: 10 }, (_, l) => sum(delta.filter((_, m) => Math.floor(10 * m / 72) === l))));
-    const H = (Q8 + Q10 + P) % 720, inv = (720 - P) % 720;
-    return { engaged, P, Q10, Q8, H, closed: P === 0, identity: Q10 === inv && Q8 === inv && H === inv };
-}
+/*__ORB:pump__*/
 function closeRegister(F) {
     const res = reg.bits.map(pumpOf);
     reg.last = { F, n: F / 720, res }; reg.count++;
@@ -202,7 +199,7 @@ const jobs = [0, 1, 2].map(s => ({ s, st: 'idle', prog: null, gate: 0, F0: null,
 const TAUF = new Fraction(1n, 450n);
 const eng = [0, 1, 2].map(() => ({ E: 0, on: false }));
 const engagedFor = J => state.clutch !== 'hold' || J.st === 'running';
-const fracPart = f => new Fraction(((f.n % f.d) + f.d) % f.d, f.d);                 // a turn count modulo one turn, exactly
+/*__ORB:fracpart__*/
 const carriedTurns = (s, frames) => TAUF.mul(new Fraction(BigInt(SPIN[s] * frames)));
 const fmtTurns = f => `${fmtShort(f, 12)} turn${f.eq(Fraction.ONE) ? '' : 's'} (${fmt(toNum(fracPart(f)) * 360, 4)}°)`;
 const framesTo = (F, r, m) => ((r - (F % m)) % m + m) % m || m;                     // frames from F to the next F' ≡ r (mod m), strictly later

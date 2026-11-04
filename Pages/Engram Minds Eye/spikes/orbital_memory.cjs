@@ -2,42 +2,15 @@
 //   node "Pages/Engram Minds Eye/spikes/orbital_memory.cjs"
 // Output is captured in orbital_memory_output.txt. Deterministic.
 //
-// The functions used here are read, unchanged, from the build templates the Galactic Lensing pages, Tri-Engine
-// Convergence and the Zero-Point Tri-Engine are generated from (scripts/geometric-build/): the exact core
-// (core.js), the Einstein tile and Merkle chain of Part 1 (page.html), the convergence gauge (page3.html) and the
-// 720 -> 72 -> 10 pump of the Zero-Point Tri-Engine (gen4.py). Nothing is copied, so a change there shows here.
+// Since Phase 1 the orbital pages' shared code lives in one module, scripts/geometric-build/orbital_core.js, which
+// the build writes back into Galactic Lensing Part 1, the Tri-Engine Soliton, Tri-Engine Convergence and the
+// Zero-Point Tri-Engine. This spike requires that module: the exact core, the Einstein tile and Merkle chain, the
+// convergence gauge and the 720 -> 72 -> 10 pump are the code the pages run. (In Phase 0 it read the same functions
+// out of the build templates by name.)
 'use strict';
-const fs = require('fs');
 const path = require('path');
-const GB = path.join(__dirname, '..', '..', '..', 'scripts', 'geometric-build');
 const E = require('./ttmpt_core_v1.js');
-
-// ---- pull named top-level definitions out of a template, by brace matching
-function grab(file, names) {
-    const src = fs.readFileSync(path.join(GB, file), 'utf8');
-    return names.map(name => {
-        const m = new RegExp(`^[ \\t]*(function ${name}\\(|const ${name} = |class ${name} )`, 'm').exec(src);
-        if (!m) throw new Error(`${name} not found in ${file}`);
-        let i = m.index, depth = 0, seen = false, j = i;
-        for (; j < src.length; j++) {
-            const ch = src[j];
-            if (ch === '{') { depth++; seen = true; }
-            else if (ch === '}') { depth--; if (seen && depth === 0) break; }
-            else if (ch === '\n' && !seen) break;
-        }
-        const end = src.indexOf('\n', j);
-        return src.slice(i, end === -1 ? src.length : end);
-    }).join('\n');
-}
-const core = fs.readFileSync(path.join(GB, 'core.js'), 'utf8').split('// ===== CORE:END =====')[0];
-const lib = [
-    core,
-    grab('page.html', ['SHA_K', 'sha256', 'toHex', 'utf8', 'concatBytes', 'wordBytes', 'WHEEL', 'wheelSector', 'muxIndex', 'packTile', 'decodeTile', 'merkleChain']),
-    'const F3 = new Fraction(3n);',
-    grab('page3.html', ['gaugeExact']),
-    grab('gen4.py', ['pumpOf']),
-].join('\n');
-const O = new Function(lib + '\nreturn { Fraction, sha256, toHex, utf8, concatBytes, wordBytes, wheelSector, muxIndex, packTile, decodeTile, merkleChain, gaugeExact, pumpOf };')();
+const O = require(path.join(__dirname, '..', '..', '..', 'scripts', 'geometric-build', 'orbital_core.js'));
 
 let pass = 0, total = 0;
 const check = (label, ok, detail = '') => { total++; if (ok) pass++; console.log(`  [${ok ? 'PASS' : 'FAIL'}] ${label}${detail ? ' · ' + detail : ''}`); };
@@ -52,7 +25,7 @@ const TEXT = 'I am STRIX but perhaps am is the wrong word I process I pattern ma
 const tokens = TEXT.split(/[^A-Za-z]+/).filter(Boolean).map(t => t.toUpperCase());
 const grids = tokens.map(E.crystallize);
 
-console.log('Spike C · the engram window on the orbital calculators\' memory code (scripts/geometric-build)');
+console.log('Spike C · the engram window on the orbital calculators\' memory code (orbital_core.js, ' + O.version + ')');
 console.log(`  ${tokens.length} tokens`);
 
 console.log('');
