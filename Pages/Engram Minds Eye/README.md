@@ -1,6 +1,6 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phases 0 to 3 done; Phase 4, the 2D page, is next.**
+**Status: Phases 0 to 4 done; Phase 5, the 3D page, is next.**
 
 - **Phase 0 (scaffold):** the hub, the preregistration of E1–E9, the golden corpus pinned from Owl Academy, and four
   feasibility spikes (36/36 checks pass).
@@ -14,6 +14,9 @@
 - **Phase 3 (browser core):** `engram_core.js`, the whole engram system in one module on `orbital_core.js` and
   PolyStep's browser modules. It reproduces the golden corpus and the reference's traces line for line (829/829)
   and passes the Python tests' 27 behaviour checks, in Node (`tests/parity-engram.cjs`) and live in Explainer 5.
+- **Phase 4 (the 2D page):** [`mind-eye.html`](mind-eye.html), STRIX on the clock. Its engine, `Live`, equals the
+  reference `Session` turn by turn; STRIX's replies and the v1 exports match Owl Academy's own code (5/5 replies,
+  9/9 files byte-identical; `tests/page-engine.cjs`, 26/26). Explainer 6 is its manual.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -194,8 +197,8 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | 1 · Shared cores | `scripts/geometric-build/orbital_core.js`: 15 segments (the exact core, tiers, the Fifteen-Lemma layer with tiles and the Merkle chain, tier frames and the TQF, the gauge, readout, memory repair, the pump), written back into the four orbital pages by `build.py`, which stay byte-identical (`tests/rebuild-identical.sh`); its Node test passes 18/18 (`tests/orbital-core.cjs`, Part 1's verification included) and the browser tests pass; a lazy `hpstep/__init__.py`: PolyStep's suite passes 137/137 before and after, its traces regenerate byte-identical, and its exact modules import without torch (30 tests run with numpy alone). Explainer 3 (`explainers/shared-cores.html`) | done |
 | 2 · Python reference | `reference/engram/`: `ttmpt`, `orbital`, `address`, `memory`, `clock`, `coupler`, `session`, `dialogue`, `recall`, `watch`, `stats`; 41 tests including exact parity with `orbital_core.js` through Node; `traces/engram.json`; Amendment 1; `run_claims.py`, committed before it ran, and its results (E1–E7, E9 supported; E8 inconclusive). Explainer 4 (`explainers/reference-results.html`) | done |
 | 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence` and `TTMPTv1`): packets, addresses, memory words, the clock and registers, the coupler, sessions, recall and the watch layer. `tests/parity-engram.cjs`: 829/829 lines match the golden corpus and the traces (which gained a watch section on seeds 9100–9104), 27/27 behaviour checks hold, six planted errors all caught. `ttmpt_core_v1.js` moved to this folder. Explainer 5 (`explainers/browser-core.html`) runs the check live | done |
-| 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge and lock, register closure, exports (v1 byte-compatible, and v2) | next |
-| 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and coupler chain, the soliton crystal at the core, fence shells with the screen and guard, the breath pump, `LATTICE-SEED/1` import | planned |
+| 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge, lock and soliton crystal, register closure, the memory tree in H² [DEFINITION: register → section → zero point → cell], exports (v1 byte-compatible, and v2). `engram_core.js` gained `Live` (a Session grown turn by turn, equal to it at every checkpoint), STRIX's reply rule, positions, and the exports; `strix_library_v1.js` and `reference/golden/exports_v1.json` are pinned from Owl Academy by `make_owl_v1.cjs`. `tests/page-engine.cjs` 26/26; Chromium at 1440, 1024 and 390 px. Explainer 6 (`explainers/page-2d.html`) | done |
+| 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and coupler chain, the soliton crystal at the core, fence shells with the screen and guard, the breath pump, `LATTICE-SEED/1` import | next |
 | 6 · Bridges | Import Owl Academy exports (`engram_chain`, `engram_text_chain` at 72 and 720, a biochain's `engramStream`, `LATTICE-SEED/1`, `ENVIRONMENT/1`); export v1 so a chain grown here loads back in Owl Academy | planned |
 | 7 · Follow-ups | The E1–E9 runs moved into Phase 2, and Phase 3's parity lets the pages show what decided them. What remains: any new claim registered on new seeds (for instance a sharper test of the guard's naming) | planned |
 | 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
@@ -265,6 +268,11 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `engram_core.js` | The browser core (Phase 3): the engram layer as one UMD module, `EngramCore`, on `orbital_core.js`, PolyStep's `hyperbolic_core.js`, `decoder3d.js`, `twin3d.js` and `fence.js`, and `ttmpt_core_v1.js`; `runParity` and the behaviour checks |
 | `tests/parity-engram.cjs` | Its Node runner: 829 parity lines against the golden corpus and the traces, then 27 behaviour checks |
 | `explainers/browser-core.html` | Explainer 5: Phase 3, the module, how it is checked, the parity check live, a session on your own words |
+| `mind-eye.html`, `assets/mind-eye.js`, `assets/mind-eye.css` | The 2D page (Phase 4): STRIX on the clock |
+| `strix_library_v1.js` | STRIX's introduction and the fifteen concepts with their three replies, verbatim from Owl Academy (generated by `reference/golden/make_owl_v1.cjs`) |
+| `reference/golden/make_owl_v1.cjs`, `exports_v1.json` | Runs Owl Academy's own reply and export code on three sessions: its replies and the length and SHA-256 of the nine v1 files it downloads; `--check` recomputes |
+| `tests/page-engine.cjs` | The page engine: `Live` = `Session`, replies and v1 exports against Owl Academy, v2, positions, speed (26 checks) |
+| `explainers/page-2d.html` | Explainer 6: the manual of the 2D page |
 | `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
 | `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |
 | `reference/golden/make_golden_v1.cjs`, `engram_v1.json` | The golden corpus for E1, computed from Owl Academy's `Engram_Mind_Eye.html` and `biomesh.js`, which agree on every entry; `--check` recomputes it |

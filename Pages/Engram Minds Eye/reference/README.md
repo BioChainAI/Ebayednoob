@@ -21,6 +21,7 @@ and the golden session for unregistered stand-ins.
 | Path | Holds |
 | --- | --- |
 | `golden/make_golden_v1.cjs`, `golden/engram_v1.json` | The E1 target, computed from Owl Academy's files (Phase 0) |
+| `golden/make_owl_v1.cjs`, `golden/exports_v1.json` | STRIX's library (written to `../strix_library_v1.js`) and the byte form of Owl Academy's v1 exports, from its own code (Phase 4) |
 | `engram/ttmpt.py` | engram/1: Mulberry32, the letter grids, XOR crystallization, Hamming distance, chiral key, J, both tokenizers, biomesh.js's engram stream, the 128-bit packet chain |
 | `engram/orbital.py` | The orbital pages' code, ported line by line from `scripts/geometric-build/orbital_core.js`: tiers, the 2⁻²⁴ rationalization, tiles, the Merkle chain, frames, TQF, the gauge, the readout, the pump, the clock's constants |
 | `engram/address.py` | The 28-letter norm-5 address, the chain word and quaternion, unfolding by right division (hpstep.problems in place) |

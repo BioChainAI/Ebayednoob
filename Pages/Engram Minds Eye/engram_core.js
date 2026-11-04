@@ -135,12 +135,12 @@ function chainWord(values) {
 }
 const chainQuaternion = values => C.P.wordQuaternion(chainWord(values));
 const qnorm = q => q.reduce((s, c) => s + c * c, 0n);
-function unfold(q, K) {                        // right division back into K 64-bit values, in order (null if not a chain)
-    const word = C.P.rightDivide(q, L * K);
+function unfold(q, K, prefix = []) {           // right division back into K 64-bit values, in order (null if not a chain);
+    const word = C.P.rightDivide(q, L * K);       // prefix: the chain before them, for a piece of a longer chain (E4)
     if (!word || word.length !== L * K) return null;
     const out = [];
     for (let k = 0; k < K; k++) {
-        const v = decode(word.slice(k * L, (k + 1) * L), k ? [word[k * L - 1]] : []);
+        const v = decode(word.slice(k * L, (k + 1) * L), k ? [word[k * L - 1]] : prefix);
         if (v === null) return null;
         out.push(v);
     }
@@ -416,6 +416,230 @@ function e8Instance(i, deltas = [0.5, 1.0, 1.5, 3.0], pts = depth2Points()) {
     }) };
 }
 
+// ================================================================== the page engine (Phase 4)
+// Live is a Session that grows one turn at a time, for the pages. Everything it shows equals what Session computes
+// on the same turns (tests/page-engine.cjs checks it turn by turn); it only avoids recomputing.
+//  * A zero point is final once no future token can latch at or before it: F < the next token's offload frame.
+//    Final words, links and coupler checks are kept; the few after them are recomputed on each turn.
+//  * A complete register can no longer change, so its products, telescoping, unfolding and pumps are kept.
+//  * The coupler normalizes with qnormPow5: every quaternion it holds has a norm that is a power of 5, so the gcd of
+//    its components is a power of 5 and dividing out the 5s gives exactly qnormExact's coprime representative.
+//    It avoids a Euclid gcd on numbers that grow by about ten digits a packet.
+function qnormPow5(q) {
+    if (q.every(c => c === 0n)) return [1n, 0n, 0n, 0n];
+    while (q.every(c => c % 5n === 0n)) q = q.map(c => c / 5n);
+    return q;
+}
+function bindingPow5(q2, q1) {
+    const P = T3.qmul(q2, q1);
+    if (P[1] === 0n && P[2] === 0n && P[3] === 0n) return [P[0] > 0n ? 1n : -1n, 0n, 0n, 0n];
+    return qnormPow5(P);
+}
+const offOf = t => 24 * Math.floor(t / 3) + SLOT_FRAMES[t % 3] + 12;
+const STRUCT_OF_OFF = { 6: 0, 14: 1, 22: 2 };           // latch order inside the 24 frames before a zero point
+
+// The memory tree in H^2 [DEFINITION]: register -> section (five zero points, 120 frames) -> zero point (its memory
+// word) -> the word's three cells. A packet latches in the 24 frames before zero point m = ceil(off / 24), as cell
+// alpha, beta or gamma of that word; in register r = floor((m - 1) / 30) the zero point is q = (m - 1) mod 30, in
+// section s = floor(q / 5), place c = q mod 5. On the norm-5 tree: s at the root (six), c then the cell among the
+// five children. So 6 x 5 zero points per register (its 30 memory words) and 3 of 5 leaves under each.
+function positionOf(off) {
+    const m = Math.ceil(off / 24), r = Math.floor((m - 1) / 30), q = (m - 1) - 30 * r, s = Math.floor(q / 5), c = q % 5, j = STRUCT_OF_OFF[off % 24];
+    const l2 = C.P.children([s])[c], l3 = C.P.children([s, l2])[j];
+    return { zeroPoint: 24 * m, r, q, s, c, j, word: [s, l2, l3] };
+}
+
+// STRIX's reply (Engram_Mind_Eye.html selectResponse): the concept nearest the whole human text, first on ties;
+// reply 0, 1 or 2 by the torsion J of gamma, the window after the human tokens were logged.
+function strixReply(lib, text, gamma) {
+    const u = crystallize(text), distances = {};
+    let best = 0, bd = Infinity;
+    lib.concepts.forEach((c, i) => { const d = hamming(u, crystallize(c.name)); distances[c.name] = d; if (d < bd) { bd = d; best = i; } });
+    const J = computeJ(gamma), index = J > 0.1 ? 0 : J < -0.1 ? 2 : 1;
+    return { concept: lib.concepts[best].name, index, J, distance: bd, distances, response: lib.concepts[best].responses[index] };
+}
+
+class Live {
+    constructor({ coupler = 'carry' } = {}) {
+        if (coupler !== null && coupler !== 'carry' && coupler !== 'same') throw new Error('coupler is null, carry or same');
+        this.chain = new PacketChain();
+        this.turns = [];
+        this.values = []; this.quats = []; this.addresses = []; this.sched = []; this.gauges = [];
+        this.chainQ = ONE_Q;
+        this.mirror = coupler !== 'same';
+        const q0 = coupler === null ? null : [ONE_Q, ONE_Q];
+        this.B0 = q0 && bindingPow5(ONE_Q, ONE_Q);
+        this.fin = { zi: 24, li: 0, words: [], log: [], prev: '', q: q0, base: 0 };
+        this.words = []; this.couplerLog = []; this.couplerQ = q0;
+        this.done = new Map();
+    }
+    get last() { return this.sched.length ? this.sched[this.sched.length - 1].off : 0; }
+    addTokens(source, tokens) {
+        const first = this.chain.packets.length;
+        for (const tok of tokens) {
+            const p = this.chain.logPacket(tok, source), t = p.index;
+            const seg = encode(p.seed64, this.addresses.length ? this.addresses[t - 1] : []);
+            const q = C.P.wordQuaternion(seg);
+            this.values.push(p.seed64); this.addresses.push(seg); this.quats.push(q);
+            this.chainQ = T3.qmul(this.chainQ, q);
+            const cyc = Math.floor(t / 3), i = t % 3, on = 24 * cyc + SLOT_FRAMES[i];
+            this.sched.push({ token: t, channel: SLOT_CHANNELS[i], on, off: on + 12 });
+            this.gauges.push(O.gaugeExact(...p.tri.map(x => new Fr(BigInt(x)))));
+        }
+        this.turns.push({ source, tokens: tokens.slice(), first, count: tokens.length });
+        this._advance();
+        return this.chain.packets.slice(first);
+    }
+    addTurn(source, text) { const out = this.addTokens(source, tokenize(text)); this.turns[this.turns.length - 1].text = text; return out; }
+    respond(lib, text) {                       // a human turn, then STRIX's reply by retrieval
+        const human = this.addTurn('human', text), reply = strixReply(lib, text, this.chain.gamma);
+        const strix = this.addTurn('strix', reply.response);
+        return { human, reply, strix };
+    }
+    _twist(q, t) {
+        const w = this.quats[t];
+        return [qnormPow5(T3.qmul(w, q[0])), qnormPow5(T3.qmul(q[1], this.mirror ? T3.qconj(w) : w))];
+    }
+    _step(st, F) {                             // the latches up to F, then the word written at the zero point F
+        while (st.li < this.sched.length && this.sched[st.li].off <= F) { if (st.q) st.q = this._twist(st.q, st.li); st.li++; }
+        if (st.li < 3 || this.sched.length < 3) return;
+        const tk = [st.li - 3, st.li - 2, st.li - 1], [a, b, c] = tk.map(t => this.values[t]);
+        const w = new Word(a, b, c, (st.base + st.words.length) % 30, F), root = w.root();
+        st.prev = memoryLink(F, w.addr, root, st.prev);
+        st.words.push({ F, addr: w.addr, tokens: tk, cells: w.cells.slice(), root, tiles: [0, 1, 2, 3].map(j => w.tiles(j)), link: st.prev, word: w });
+        if (st.q) { const B = bindingPow5(st.q[1], st.q[0]); st.log.push({ F, B, ok: qeq(B, this.B0) }); }
+    }
+    _advance() {
+        const n = this.sched.length, st = this.fin, offNext = offOf(n);
+        while (st.zi < offNext) { this._step(st, st.zi); st.zi += 24; }
+        const tail = { zi: st.zi, li: st.li, words: [], log: [], prev: st.prev, q: st.q, base: st.words.length };
+        if (n >= 3) for (let F = tail.zi; F <= this.last + 24; F += 24) this._step(tail, F);
+        while (tail.li < n) { if (tail.q) tail.q = this._twist(tail.q, tail.li); tail.li++; }
+        this.words = st.words.concat(tail.words);
+        this.couplerLog = st.log.concat(tail.log);
+        this.couplerQ = tail.q;
+        this.final = { words: st.words.length, frame: st.zi - 24 };
+    }
+    get bChecks() { return this.couplerLog.map(e => e.ok); }
+    registers() {                              // as clock.registers; complete ones are kept, with their checks
+        const n = this.sched.length, last = this.last, out = [];
+        for (let t = 0; t < n;) {
+            const r = place(this.sched[t].off)[0];
+            let u = t;
+            while (u < n && place(this.sched[u].off)[0] === r) u++;
+            const complete = 720 * (r + 1) <= last;
+            let R = complete ? this.done.get(r) : null;
+            if (!R) {
+                R = { r, packets: [], blocks: Array.from({ length: 72 }, () => []), first: t, count: u - t };
+                for (let k = t; k < u; k++) { R.packets.push([k, this.quats[k]]); R.blocks[place(this.sched[k].off)[1]].push(this.quats[k]); }
+                const blocks = R.blocks.map(qprod);
+                Object.assign(R, { complete, blockQ: blocks, groupQ: Array.from({ length: 10 }, (_, l) => qprod(blocks.filter((_, m) => groupOf(m) === l))),
+                    packetQ: qprod(R.packets.map(p => p[1])) });
+                if (complete) {
+                    const back = unfold(R.packetQ, R.count, t ? this.addresses[t - 1] : []);
+                    Object.assign(R, { telescopes: telescopes(R), unfolds: !!back && back.every((v, i) => v === this.values[t + i]),
+                        pumpFree: engagement(this.sched, r, 'free'), pumpHold: engagement(this.sched, r, 'hold') });
+                    this.done.set(r, R);
+                }
+            }
+            out.push(R);
+            t = u;
+        }
+        return out;
+    }
+    windowBefore(t) {                          // alpha, beta, gamma as packet t found them
+        const g = k => (k >= 0 ? this.chain.packets[k].grid : crystallize(WINDOW_SEEDS[3 + k]));
+        return [g(t - 3), g(t - 2), g(t - 1)];
+    }
+    wordOf(t) {                                // the word written at the zero point packet t latches before (tokens 0, 1: none)
+        const F = positionOf(this.sched[t].off).zeroPoint, k = (F - 48) / 24, w = this.words[k];
+        return w && w.F === F ? w : null;
+    }
+    isProvisional(w) { return this.words.indexOf(w) >= this.final.words; }   // a word after the last final zero point
+    outputs() {
+        const regs = this.registers();
+        return {
+            packets: this.chain.packets.map(p => [p.header, hex64(p.seed64), p.footer]),
+            words: this.words.map(w => [w.F, w.addr, w.cells.map(hex64), w.root, w.link]),
+            gauges: this.gauges.map(g => [String(g.s), String(g.X), String(g.Yc)]),
+            registers: regs.map(R => [R.r, R.packetQ.map(String), R.blockQ.map(q => q.map(String)), R.groupQ.map(q => q.map(String))]),
+        };
+    }
+}
+
+// ---- exports. v1: byte for byte what Engram_Mind_Eye.html downloads (exportChain, exportSegmented), checked against
+// reference/golden/exports_v1.json. v2: everything this system adds, exact.
+const MANIFOLD_DEFAULT = { n: 8, k: 3, t: 2 };
+const anchorOf = m => 'D' + m.n + 'K' + m.k + 'T' + m.t;
+const rootLetter = token => ((token || '').replace(/[^A-Za-z]/g, '')[0] || 'D');
+const crystalKey = (grid, root) => 'O1::' + root + '::' + hex64(packGrid64(grid));
+function exportV1Chain(packets, parity) {
+    const data = packets.map(p => ({
+        system_header: { chiral_key: chiralKey(p.token), seed_state: p.grid.map(b => (b ? 1 : 0)),
+            topology_constants: { major_R: 35.0, minor_R: 12.0, total_frames: 720, node_count: 72 } },
+        packet_meta: { index: p.index, source: p.source, token: p.token, codex_parity_hex: p.header, triangulation_hex: p.footer,
+            triangulation: { alpha_hamming: p.tri[0] & 0xff, beta_hamming: p.tri[1] & 0xff, gamma_hamming: p.tri[2] & 0xff,
+                nearest_concept_index: p.concept === 255 ? null : p.concept } },
+    }));
+    return { name: `engram_chain_N${packets.length}_P${hex32(parity)}.json`, text: JSON.stringify(data, null, 2) };
+}
+function exportV1Crystal(packets, sections, { manifold = MANIFOLD_DEFAULT, generatedAt = new Date().toISOString() } = {}) {
+    const N = packets.length;
+    if (N === 0) return null;
+    const slots = Array.from({ length: sections }, () => ({ seedGrid: null, tokens: [], token_count: 0, source_mix: { human: 0, strix: 0 } }));
+    for (let i = 0; i < N; i++) {
+        const slot = slots[Math.floor(i * sections / N)], g = packets[i].grid;
+        slot.seedGrid = slot.seedGrid ? slot.seedGrid.map((b, k) => b ^ g[k]) : g.slice();
+        slot.tokens.push(packets[i].token); slot.token_count++;
+        if (packets[i].source === 'human') slot.source_mix.human++; else slot.source_mix.strix++;
+    }
+    let prev = new Array(64).fill(0);
+    for (const slot of slots) { if (slot.seedGrid === null) slot.seedGrid = prev.slice(); prev = slot.seedGrid; }
+    let master = crystallize(anchorOf(manifold));
+    for (const p of packets) master = master.map((b, i) => b ^ p.grid[i]);
+    const masterRoot = rootLetter(packets[0].token), masterKey = crystalKey(master, masterRoot);
+    const data = {
+        format: 'engram_text_chain', version: 1, sections, generated_at: generatedAt,
+        manifold: { n: manifold.n, k: manifold.k, t: manifold.t, anchor: anchorOf(manifold) },
+        master_crystal: { seed_state: master.map(b => (b ? 1 : 0)), chiral_key: masterKey },
+        system_header: { chiral_key: masterKey, seed_state: master.map(b => (b ? 1 : 0)),
+            topology_constants: { major_R: 35.0, minor_R: 12.0, total_frames: 720, node_count: sections } },
+        quaternion_chain: slots.map((slot, n_id) => ({
+            n_id, t_param: n_id / sections, seed_state: slot.seedGrid.map(b => (b ? 1 : 0)),
+            chiral_key: crystalKey(slot.seedGrid, slot.tokens.length ? rootLetter(slot.tokens[0]) : masterRoot),
+            token_count: slot.token_count, tokens: slot.tokens, source_mix: slot.source_mix, collisions: [] })),
+    };
+    return { name: `engram_crystal_S${sections}_N${N}.json`, text: JSON.stringify(data, null, 2) };
+}
+function exportV2(live, { generatedAt = new Date().toISOString(), manifold = MANIFOLD_DEFAULT } = {}) {
+    const P = live.chain.packets, regs = live.registers(), L2 = s => s.map(String);
+    const data = {
+        format: 'engram_mind_eye', version: 2, key: 'engram/1', generated_at: generatedAt,
+        note: 'Engram Mind\'s Eye (Ebayednoob). Quaternions and fractions are decimal strings; 64-bit words are 16 hex digits; an address is 28 letters, each 0-5 for 1+2i, 1-2i, 1+2j, 1-2j, 1+2k, 1-2k.',
+        manifold: { n: manifold.n, k: manifold.k, t: manifold.t, anchor: anchorOf(manifold) },
+        turns: live.turns.map(t => ({ source: t.source, text: t.text === undefined ? null : t.text, tokens: t.tokens })),
+        window_start: WINDOW_SEEDS, codex_root: hex32(CODEX_ROOT), final_parity: hex32(live.chain.parity),
+        clock: { slot_frames: SLOT_FRAMES, slot_channels: SLOT_CHANNELS, onload: ON, offload: OFF, membrane_turn: membraneTurn().toString(), setting: 'free-run + membrane' },
+        packets: P.map((p, t) => ({ index: t, token: p.token, source: p.source, header: p.header, seed64: hex64(p.seed64), footer: p.footer,
+            tri: p.tri, concept: p.concept === 255 ? null : CONCEPT_NAMES[p.concept], chiral_key: chiralKey(p.token),
+            address: live.addresses[t].join(''), quaternion: L2(live.quats[t]), channel: live.sched[t].channel, on: live.sched[t].on, off: live.sched[t].off,
+            gauge: { s: String(live.gauges[t].s), X: String(live.gauges[t].X), Y: String(live.gauges[t].Yc) } })),
+        chain: { letters: 28 * P.length, norm: `5^${28 * P.length}`, quaternion: L2(live.chainQ) },
+        words: live.words.map(w => ({ F: w.F, addr: w.addr, tokens: w.tokens, cells: w.word.cells.map(hex64), root: w.root,
+            intact: w.word.chain()[1] === w.word.tau0[1], tiles: w.tiles.map(tt => tt.map(O.hexWord)), link: w.link })),
+        registers: regs.map(R => {
+            const blocks = {};
+            R.blockQ.forEach((q, m) => { if (!qeq(q, ONE_Q)) blocks[String(m)] = L2(q); });
+            const out = { r: R.r, complete: R.complete, first: R.first, count: R.count, packet_q: L2(R.packetQ), group_q: R.groupQ.map(L2), block_q: blocks };
+            if (R.complete) Object.assign(out, { telescopes: R.telescopes, unfolds: R.unfolds, pump_free: R.pumpFree, pump_hold: R.pumpHold });
+            return out;
+        }),
+        coupler: live.couplerQ ? { law: live.mirror ? 'mirror' : 'same', zero_points: live.couplerLog.length, held: live.couplerLog.filter(e => e.ok).length,
+            q: live.couplerQ.map(L2) } : null,
+    };
+    return { name: `engram_mind_eye_v2_N${P.length}_P${hex32(live.chain.parity)}.json`, text: JSON.stringify(data, null, 1) };
+}
+
 // ================================================================== parity with the reference
 // Each check is one line: { section, label, ok, detail }. The sections can be run one at a time (a page yields
 // between them); runParity runs them all.
@@ -673,7 +897,7 @@ function runParity(golden, trace) {
 }
 
 return {
-    version: 'engram-browser-1',
+    version: 'engram-browser-2',
     // engram/1
     crystallize, hamming, chiralKey, computeJ, hexLsb, jNum, packGrid64, gridOf, hex64, hex32, fold32, rotl32,
     tokenize, tokenizeBiomesh, engramStream, CONCEPT_NAMES, WINDOW_SEEDS, CODEX_ROOT, PacketChain,
@@ -687,6 +911,8 @@ return {
     Coupler, Session, store, goldenSession, synthetic, LETTERS, key, distance, nearest, hit, parityVariants, letterCount, substitutions, shuffled,
     // watch
     e7Instance, depth2Points, e8Instance,
+    // the page engine (Phase 4)
+    qnormPow5, bindingPow5, offOf, positionOf, strixReply, Live, MANIFOLD_DEFAULT, anchorOf, exportV1Chain, exportV1Crystal, exportV2,
     // parity
     paritySections, behaviourSections, runParity,
 };
