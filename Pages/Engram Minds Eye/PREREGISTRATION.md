@@ -240,3 +240,93 @@ reported (expected: 0 entries differ), so the record shows why it was replaced.
   others. The shuffled control store permutes the keys with Rng(7).
 - *Hold setting (reported only).* A channel is engaged on the frames after an onload through its offload. In
   register 0 no flight is under way at frame 1, so its first channel shows 354 rather than 360.
+
+### Amendment 2 · 2026-11-04, Phase 7: two follow-up claims, E10 and E11, registered before any code for them
+
+E1–E9 were decided in Phase 2 and their record stands; nothing below changes them. Two new claims are registered
+here, on instances no earlier run has used, before any code that tests them exists. The common rules above apply,
+except where a claim says otherwise. Each claim's runner is committed before its decisive run, and is exercised
+first only on unregistered seeds (a dry run, seeds moved up by 3000), as in Phase 2.
+
+#### E10 · A sharper guard
+
+**Why.** E8 found that the guard (Hyperbolic PolyStep's `guard_check`) blamed the corrupted pair 0.96 of the time
+at +1.5, short of the 0.99 its rule asked for, so E8 is inconclusive. More instances cannot settle that under E8's
+rule: any rate between 0.90 and 0.99 is inconclusive however many instances there are. A sharper question can.
+The guard counts, for every quadruple above ln 2, all six pairs of the quadruple, and breaks ties by pair index.
+
+**Proposition.** Let D be a distance matrix in which no quadruple's defect exceeds ln 2 + 10⁻⁹, and E the same
+matrix with one pair (a, b) increased by δ > 0. Then every quadruple of E above ln 2 + 10⁻⁹ contains a and b,
+and its largest matching sum is the one that contains the pair (a, b).
+
+*Proof.* Only quadruples containing both a and b change, and in each of them only one of the three matching sums
+changes: the one containing (a, b), which grows by δ. If that sum was already the largest, the defect grows and
+the largest matching is the same. If it becomes the largest, the largest matching is the one with (a, b). If it
+stays below the largest, the largest is unchanged and the second largest can only grow, so the defect does not
+grow. D has no quadruple above the bound, so a quadruple of E above it is in one of the first two cases. ∎ (The
+argument holds for the floating-point defects the guard computes: adding δ changes only the sums that contain
+E[a][b], and the subtraction is monotone.)
+
+**Consequences.** (1) The guard's count for (a, b) is the number of quadruples above ln 2, the most any pair
+can have, so the guard can miss only by a tie, with another pair in every such quadruple and earlier in index
+order, or when no quadruple exceeds ln 2. (2) The **matching guard** blames, in each quadruple above ln 2, only
+the two pairs of its largest matching sum. It gives (a, b) the same count, and any other pair (c, d) at most 1,
+since (c, d) is the partner of (a, b) only in the quadruple {a, b, c, d}. So it names (a, b), alone at the top,
+whenever two or more quadruples exceed ln 2.
+
+**Instances.**
+- *Set A, E8's setting.* 200 matrices, i = 0 … 199: 24 memories drawn without replacement from the 37 points of
+  the depth-2 tree with hpstep `Rng(5000 + i).sample`, one pair raised by δ ∈ {0.5, 1.0, 1.5, 3.0} with
+  `fence.corrupt(D, 1, δ, 6000 + i)`.
+- *Set B, the 3D page's guard.* The matrix of all 37 points of the depth-2 tree (the register, its 6 sections and
+  its 30 zero points), 200 corruptions, i = 0 … 199, with `fence.corrupt(D, 1, δ, 7000 + i)`, δ as above.
+
+**Exact parts** (all-or-nothing, over every corrupted matrix of both sets at every δ):
+- *E10a.* Every quadruple above ln 2 + 10⁻⁹ has the corrupted pair in its largest matching (the proposition).
+- *E10c.* Every instance in which the guard's first-ranked pair is not the corrupted pair is a tie at the top count,
+  or has no quadruple above ln 2 (consequence 1).
+- *E10d.* Every instance with two or more quadruples above ln 2 has the corrupted pair alone at the top of the
+  matching guard (consequence 2).
+- *Control.* The *smallest-matching guard*, which blames the two pairs of each quadruple's smallest matching sum,
+  must fail E10d on at least one instance; otherwise the exact test is void.
+
+**Statistical part, E10b.** The matching guard *names* the corrupted pair when that pair is alone at the top
+(a tie counts as a miss). For δ ∈ {1.5, 3.0} in both sets: **supported** if the rate is at least 0.99 in every
+cell, with the lower end of its interval at least 0.95; **refuted** if any is below 0.90; otherwise
+**inconclusive**. δ ∈ {0.5, 1.0} are reported. The guard's own rate on the same instances is reported beside it,
+counted both as E8 counted it (first-ranked) and alone at the top.
+
+**Predictions.** E10a, E10c and E10d hold, since they follow from the proposition. E10b is supported. At δ = 0.5 the
+matching guard names the pair about as often as two or more quadruples exceed ln 2.
+
+**If refuted.** The watch layer keeps the guard as it is. **Authority.** The Python reference, as for E1–E9; the
+browser core must reproduce its traces before the matching guard is shown in a page.
+
+#### E11 · The way back to Owl Academy
+
+**Why.** In Phase 6 a session exported here was checked against Owl Academy's own code on two conversations. This
+claim tests it on 50 drawn ones, with a control.
+
+**Instances.** 50 conversations, i = 0 … 49, drawn from hpstep `Rng(5500 + i)`: STRIX's introduction, then
+h = 1 + below(5) human turns, each of n = 3 + below(10) tokens of the dialogue store (each below(477)), joined by
+single spaces, in that order of draws; STRIX answers each by retrieval. The continuation is one more human turn,
+drawn the same way from `Rng(6500 + i)`.
+
+**Authority.** Owl Academy's own code in `Library/Experimental_Systems/Engram_Mind_Eye.html` (`tokenize`,
+`logPacket`, `selectResponse`, the state `saveEngram` writes, `restoreEngram`, and the greeting the page types
+when it restores), run by Node from an Owl-Academy checkout, against the browser core (`engram_core.js`). The
+Python reference has no bridge, so for this claim alone the decision is between those two.
+
+**Test** (exact, all-or-nothing, for every conversation):
+- *(a)* The session exported here (`exportOwlSession`) is byte for byte the session Owl Academy's page saves after
+  the same conversation.
+- *(b)* After Owl Academy's `restoreEngram` of the exported bytes, its greeting and the continuation turn, its new
+  packets (token, source, header, body, footer), its reply and its final codex parity equal this system's
+  continuation of its own import of the same bytes.
+- *(c)* The session Owl Academy then saves is byte for byte this system's export after the continuation.
+
+**Control.** The same export with `codexParity` replaced by the parity before the last packet: Owl Academy's
+continuation of it must differ from this system's continuation of the true export in at least one conversation;
+otherwise the test is void.
+
+**If refuted.** The page marks the way back as broken, with the counterexample.
