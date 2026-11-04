@@ -78,29 +78,29 @@
           desc: 'The fence lies within ln 2 of the upper quartile on hierarchy-shaped clouds; no four points of H^n have a defect above ln 2, so a larger defect proves a distance wrong.',
           refs: 'CF5, CF9 · Spike D', explainer: ARCH + '#watch' },
 
-        { id: 'L0', col: 2, row: 0, kind: 'comp', status: 'design', label: 'L0 · Key', sub: 'engram/1, frozen',
-          desc: 'The TTMPT core, verbatim, pinned by the golden corpus so chains, seeds and exports move between the repositories.',
+        { id: 'L0', col: 2, row: 0, kind: 'comp', status: 'done', label: 'L0 · Key', sub: 'engram/1, frozen',
+          desc: 'The TTMPT core, verbatim, pinned by the golden corpus so chains, seeds and exports move between the repositories. Built: ttmpt_core_v1.js, Owl Academy’s code verbatim, and reference/engram/ttmpt.py; the golden corpus pins it (E1 supported).',
           refs: 'D4 · E1', explainer: ARCH + '#key' },
-        { id: 'L1', col: 2, row: 1, kind: 'comp', status: 'design', label: 'L1 · Pipeline', sub: 'one token, T4 → T0',
-          desc: 'Each token as one calculation of engine v10: ingest (crystallize), align (triangulate against the window), superpose (fold into Y and the chain quaternion), prune (keep the word reduced), latch (tiles, leaf, memory word).',
+        { id: 'L1', col: 2, row: 1, kind: 'comp', status: 'done', label: 'L1 · Pipeline', sub: 'one token, T4 → T0',
+          desc: 'Each token as one calculation of engine v10: ingest (crystallize), align (triangulate against the window), superpose (fold into Y and the chain quaternion), prune (keep the word reduced), latch (tiles, leaf, memory word). Built: the browser core’s Live session runs each word through the five tiers, shown on the 2D page’s tiers panel (Phases 3 and 4).',
           refs: 'design', explainer: ARCH + '#pipeline' },
-        { id: 'L2', col: 2, row: 2, kind: 'comp', status: 'design', label: 'L2 · Packet', sub: 'address · two tiles',
-          desc: 'The 128-bit packet kept for compatibility, an exact 28-letter address, and on the wire two Einstein tiles with the structure field set to α, β, γ or Y.',
+        { id: 'L2', col: 2, row: 2, kind: 'comp', status: 'done', label: 'L2 · Packet', sub: 'address · two tiles',
+          desc: 'The 128-bit packet kept for compatibility, an exact 28-letter address, and on the wire two Einstein tiles with the structure field set to α, β, γ or Y. Built: reference/engram/address.py and ttmpt.py, the browser core’s packet chain and address (E2 supported); the bridges carry the 128-bit packets both ways.',
           refs: 'D3 · E2', explainer: ARCH + '#packet' },
-        { id: 'L3', col: 2, row: 3, kind: 'comp', status: 'design', label: 'L3 · Window and memory', sub: 'three channels · 30 addresses',
-          desc: 'α, β, γ on Engines I–III of the zero-point clock; at each zero point a triple-quad word over GF(2) at one of 30 addresses, with Merkle locate and repair and a SHA-256 memory word.',
+        { id: 'L3', col: 2, row: 3, kind: 'comp', status: 'done', label: 'L3 · Window and memory', sub: 'three channels · 30 addresses',
+          desc: 'α, β, γ on Engines I–III of the zero-point clock; at each zero point a triple-quad word over GF(2) at one of 30 addresses, with Merkle locate and repair and a SHA-256 memory word. Built: reference/engram/memory.py and clock.py, mirrored in engram_core.js; the 2D page’s clock and memory panels (E3 supported).',
           refs: 'E3', explainer: ARCH + '#memory' },
-        { id: 'L4', col: 2, row: 4, kind: 'comp', status: 'design', label: 'L4 · Resonance', sub: 'gauge · lock · soliton',
-          desc: 'Each packet’s three distances to the window through the gauge; the lock; the soliton crystal at the core as the memory’s health.',
+        { id: 'L4', col: 2, row: 4, kind: 'comp', status: 'done', label: 'L4 · Resonance', sub: 'gauge · lock · soliton',
+          desc: 'Each packet’s three distances to the window through the gauge; the lock; the soliton crystal at the core as the memory’s health. Built: the gauge and readout of orbital_core.js, used unchanged; the 2D page’s resonance panel and the crystal at the 3D page’s core (E6 supported).',
           refs: 'E6', explainer: ARCH + '#resonance' },
-        { id: 'L5', col: 2, row: 5, kind: 'comp', status: 'design', label: 'L5 · Register', sub: '720 → 72 → 10 slots',
-          desc: 'Every 720 frames a register closes in the free-run + membrane setting; its slots at three scales hold exact chain quaternions.',
+        { id: 'L5', col: 2, row: 5, kind: 'comp', status: 'done', label: 'L5 · Register', sub: '720 → 72 → 10 slots',
+          desc: 'Every 720 frames a register closes in the free-run + membrane setting; its slots at three scales hold exact chain quaternions. Built: reference/engram/clock.py and the browser core’s registers; the 2D page’s register panel (E4 supported).',
           refs: 'D5 · E4', explainer: ARCH + '#register' },
-        { id: 'L6', col: 2, row: 6, kind: 'comp', status: 'design', label: 'L6 · Geometry', sub: 'H² and H³ · frames · twin',
-          desc: 'The memory’s structure tree laid out in H² and H³, a frame per packet from its quaternion, and the human and STRIX streams as the twin system bound by the coupler.',
+        { id: 'L6', col: 2, row: 6, kind: 'comp', status: 'done', label: 'L6 · Geometry', sub: 'H² and H³ · frames · twin',
+          desc: 'The memory’s structure tree laid out in H² and H³, a frame per packet from its quaternion, and the human and STRIX streams as the twin system bound by the coupler. Built: reference/engram/coupler.py and the browser core’s coupler; the memory tree in H² on the 2D page and in H³ on the 3D page, with the twin system (E5 supported).',
           refs: 'E5', explainer: ARCH + '#geometry' },
-        { id: 'L7', col: 2, row: 7, kind: 'comp', status: 'design', label: 'L7 · Watch', sub: 'fence screen · exact check · guard',
-          desc: 'The fence screens the H³ layout at each register close and an exact address comparison settles every flag; the guard checks the stored float distances.',
+        { id: 'L7', col: 2, row: 7, kind: 'comp', status: 'done', label: 'L7 · Watch', sub: 'fence screen · exact check · guard',
+          desc: 'The fence screens the H³ layout at each register close and an exact address comparison settles every flag; the guard checks the stored float distances. Built: reference/engram/watch.py and guard.py, the browser core’s watch layer and the 3D page’s watch panel (E7 supported; E8 and E10 inconclusive).',
           refs: 'E7, E8', explainer: ARCH + '#watch' },
 
         { id: 'prereg', col: 3, row: 0, kind: 'artifact', status: 'done', label: 'Preregistration', sub: 'E1–E9 · decision rules',
@@ -129,7 +129,10 @@
           refs: 'Phase 5 · tests/page3d-engine.cjs', explainer: 'explainers/page-3d.html', href: 'mind-eye-3d.html' },
         { id: 'bridges', col: 3, row: 8, kind: 'artifact', status: 'done', label: 'Bridges', sub: 'Phase 6 · Owl Academy in and out',
           desc: 'Built in Phase 6: a session grown here exports as Owl Academy’s Engram Mind Eye saves it, so that page restores it and continues exactly (checked against its own saveEngram, restoreEngram and reply code). Owl Academy’s saved sessions, v1 chain and crystal exports, biochains (text recreated with its own decoder), engram streams, lattice seeds and environments come in, each verified by recomputing it; biomesh.js’s codec is pinned verbatim (tests/bridges.cjs, 34/34).',
-          refs: 'Phase 6 · tests/bridges.cjs', explainer: 'explainers/bridges.html', href: 'mind-eye.html#p-bridge' }
+          refs: 'Phase 6 · tests/bridges.cjs', explainer: 'explainers/bridges.html', href: 'mind-eye.html#p-bridge' },
+        { id: 'site', col: 3, row: 9, kind: 'artifact', status: 'done', label: 'Integration', sub: 'Phase 8 · menus · catalog · cross-links',
+          desc: 'Built in Phase 8: the system reached from the rest of the site, through its card in the site catalog, the Hyperbolic Oracles and Geometric Calculator menus, and the Hyperbolic Oracles hub, whose map shows it among the systems built on those cores. tests/links.cjs checks every link and way in (31 checks, three of them controls). tests/all.cjs runs every Node check of the system and of the cores it loads in one command, 15 of 15.',
+          refs: 'Phase 8 · tests/links.cjs · tests/all.cjs', explainer: 'explainers/integration.html' }
     ];
     const EDGES = [
         ['owlEye', 'keym'], ['owlEye', 'L3'], ['owlEye', 'golden'], ['owlEye', 'bridges'], ['owlCodec', 'L5'], ['owl3d', 'L6'], ['owl3d', 'bridges'],
@@ -141,7 +144,8 @@
         ['L0', 'L1'], ['L1', 'L2'], ['L2', 'L3'], ['L3', 'L4'], ['L3', 'L5'], ['L2', 'L6'], ['L6', 'L7'],
         ['L0', 'golden'], ['golden', 'prereg'], ['spikes', 'prereg'], ['golden', 'ref'], ['prereg', 'ref'], ['ocore', 'ref'],
         ['ref', 'jscore'], ['jscore', 'page2d'], ['jscore', 'page3d'], ['L1', 'page2d'], ['L3', 'page2d'], ['L4', 'page2d'], ['L5', 'page2d'],
-        ['L4', 'page3d'], ['L6', 'page3d'], ['L7', 'page3d'], ['L2', 'bridges']
+        ['L4', 'page3d'], ['L6', 'page3d'], ['L7', 'page3d'], ['L2', 'bridges'],
+        ['page2d', 'site'], ['page3d', 'site'], ['bridges', 'site'], ['engine', 'site'], ['hps', 'site']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);

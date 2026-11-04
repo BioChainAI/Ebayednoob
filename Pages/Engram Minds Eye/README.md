@@ -1,6 +1,6 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phases 0 to 7 done; Phase 8, integration, is next.**
+**Status: Phases 0 to 8 done.** Check everything with `node "Pages/Engram Minds Eye/tests/all.cjs"`.
 
 - **Phase 0 (scaffold):** the hub, the preregistration of E1–E9, the golden corpus pinned from Owl Academy, and four
   feasibility spikes (36/36 checks pass).
@@ -27,6 +27,11 @@
   inconclusive**, its exact parts supported; the matching guard names the corrupted pair exactly when two or more
   quadruples exceed ln 2 (0.965 at +1.5 in E8's setting), so E8's shortfall is a shortage of witnesses. **E11, the
   way back to Owl Academy: supported**, 50/50. Explainer 9.
+- **Phase 8 (integration):** the system reached from the rest of the site: a card in `pages.html`, the hub in the
+  Hyperbolic Oracles (*Elsewhere*) and Geometric Calculator (*Simulations*) menus, a note and a map node on the
+  Hyperbolic Oracles hub, and the names Engram uses from each core recorded in that folder's README. `tests/links.cjs`
+  checks every link and way in (31/31, with three controls); `tests/all.cjs` runs every Node check of this system and
+  of the cores it loads, then the site bar and the pins (15/15). Explainer 10.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -211,7 +216,7 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³ (the 2D page's position words on PolyStep's octahedral tree), a frame per packet from its exact quaternion, the twin system with the binding as a third chain and its control, the soliton crystal at the core, the fence on every closing register with each flag settled exactly, misplacement and the guard on demand, the breath pump timed by the register, `LATTICE-SEED/1` import (`lattice_seed_v1.js` and `reference/golden/lattice_seed_v1.json` pinned from Owl Academy's Biomesh page by `make_lattice_v1.cjs`). `engram_core.js` gained the 3D engine. `tests/page3d-engine.cjs` 19/19; Chromium at 1440, 1024 and 390 px. Explainer 7 (`explainers/page-3d.html`) | done |
 | 6 · Bridges | Out: `exportOwlSession`, byte for byte what the Engram Mind Eye's `saveEngram` writes, with a console loader, so that page restores and continues the session exactly (its continuation and next save checked). In: the saved session, `engram_chain`, `engram_text_chain` at 72 and 720 (speakers marked unknown where the file does not have them), biochain records (verified as `verifyIntegrity` does, text recreated by Owl Academy's decoder), engram streams by their grids, `ENVIRONMENT/1` (3D page: hash, boundary seed, codex gate, pump driving the breath, frontier), and v2. `biochain_v1.js` and `reference/golden/bridges_v1.json` pinned by `make_bridges_v1.cjs`. The pages' session store keeps every turn (v2). `tests/bridges.cjs` 34/34; Chromium at 1440 and 390 px. Explainer 8 (`explainers/bridges.html`) | done |
 | 7 · Follow-ups | Amendment 2 (commit `57d6d57`) registered E10 and E11 before any code; the runners (`engram/guard.py`, `run_followups.py`, `run_e11.cjs`, `golden/owl_eye.cjs`) were committed (`f193a29`) after dry runs only; then decided. E10 inconclusive (exact parts supported; naming 0.965 [0.94, 0.99] at +1.5 in E8's setting, equal to the share with two or more witnesses); E11 supported (50/50, control 50/50). The matching guard is in `engram_core.js` with 20 trace lines (849/849) and on the 3D page. Explainer 9 (`explainers/follow-ups.html`) | done |
-| 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | next |
+| 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus; a card in `pages.html`; `tests/links.cjs` and `tests/all.cjs`. Explainer 10 (`explainers/integration.html`) | done |
 
 Claims, registered in [`PREREGISTRATION.md`](PREREGISTRATION.md) on 2026-11-04 with their instances, controls
 and decision rules, amended once before any decisive run (Amendment 1), and decided by the Phase 2 reference
@@ -303,6 +308,9 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `explainers/bridges.html` | Explainer 8: the bridges, in and out |
 | `reference/run_followups.py`, `reference/run_e11.cjs`, `reference/results/followups.*`, `e11.json` | The follow-up claims of Amendment 2 and their record |
 | `explainers/follow-ups.html` | Explainer 9: E10 and E11, how they were registered and decided |
+| `tests/links.cjs` | Every relative link and anchor in the folder's pages and on the map, every site-bar menu file, and the ways in from the rest of the site (31 checks, three of them controls) |
+| `tests/all.cjs` | Every Node check in one command: the five cores Engram loads, its own suites, the site bar, and the four pins (skipped, not passed, without an Owl-Academy checkout) |
+| `explainers/integration.html` | Explainer 10: the ways in, what the system stands on, one command, and what to do when something upstream changes |
 | `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
 | `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |
 | `reference/golden/make_golden_v1.cjs`, `engram_v1.json` | The golden corpus for E1, computed from Owl Academy's `Engram_Mind_Eye.html` and `biomesh.js`, which agree on every entry; `--check` recomputes it |
@@ -312,5 +320,6 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `spikes/orbital_memory.cjs`, `…_output.txt` | Spike C: the window on the orbital calculators' tiles, Merkle chain, gauge and pump |
 | `spikes/fence_memory.cjs`, `…_output.txt` | Spike D: the 0.7 Claude fence and the ln 2 guard on a memory tree in H³ |
 
-Run any spike with `node "Pages/Engram Minds Eye/spikes/<name>.cjs"`, and the browser core's parity with
-`node "Pages/Engram Minds Eye/tests/parity-engram.cjs" --quiet`. They need Node 18 or later and nothing else.
+Run any spike with `node "Pages/Engram Minds Eye/spikes/<name>.cjs"`, the browser core's parity with
+`node "Pages/Engram Minds Eye/tests/parity-engram.cjs" --quiet`, and every check with
+`node "Pages/Engram Minds Eye/tests/all.cjs"`. They need Node 18 or later and nothing else.
