@@ -56,11 +56,11 @@ console.log('Spike C · the engram window on the orbital calculators\' memory co
 console.log(`  ${tokens.length} tokens`);
 
 console.log('');
-console.log('1. Einstein tiles carry an engram: two tiles, struct = alpha / beta / gamma / Y (Systems I-III and residual R)');
+console.log('1. Einstein tiles carry an engram: two Form 5 tiles (an engram/1 half each), struct = alpha / beta / gamma / Y');
 function engramTiles(grid, struct, F) {
     const v = big(grid), step = (F % 8) + 1, k = F % 30;
     return [v >> 32n, v & 0xffffffffn].map((half, h) => O.packTile({ step, wheel: O.wheelSector(k), struct, gate: F % 64,
-        mux: O.muxIndex(step, k, 4 * h + struct), form: 3, slot: 4 * h + struct, scale: 0, core: Number(half) }));
+        mux: O.muxIndex(step, k, 4 * h + struct), form: 5, slot: 4 * h + struct, scale: 0, core: Number(half) }));
 }
 let tileOk = 0;
 grids.forEach((g, i) => {
@@ -124,15 +124,18 @@ console.log(`  lock (all three distances equal): ${locks}/${n} packets · neares
 console.log('');
 console.log('4. The register: the Zero-Point Tri-Engine pump on an engram channel (gen4.py)');
 const ON = [18, 10, 2], OFF = [6, 22, 14];
+// The clutch settings use the Zero-Point Tri-Engine's own names (engagedFor in zero_point_tri_engine.html):
+//   hold  an engine is engaged only while its job runs; here, while a packet is in flight (onload to offload)
+//   free  free-run, every engine engaged on every frame (the membrane setting engages the same way)
 function duty(j, mode) {                       // engaged frames of channel j over one 720-frame register
     const d = new Uint8Array(720);
     for (let f = 1; f <= 720; f++) {
         const t = ((f % 24) - ON[j] + 24) % 24;
-        d[f - 1] = mode === 'carry' ? (t < 12 ? 1 : 0) : 1;   // carry: from onload to offload; hold: engaged all register
+        d[f - 1] = mode === 'hold' ? (t < 12 ? 1 : 0) : 1;
     }
     return d;
 }
-for (const mode of ['carry', 'hold']) {
+for (const mode of ['hold', 'free']) {
     const res = [0, 1, 2].map(j => O.pumpOf(duty(j, mode)));
     check(`${mode}: the pump identity H = Q8 Q10 P = P^-1 holds on all three channels`, res.every(r => r.identity),
         res.map(r => (r.closed ? 'closed' : `residual P = ${r.P}/720, compensator H = ${r.H}/720`)).join(' · '));
