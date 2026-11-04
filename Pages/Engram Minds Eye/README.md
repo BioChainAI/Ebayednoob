@@ -1,6 +1,6 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phases 0 to 5 done; Phase 6, the bridges, is next.**
+**Status: Phases 0 to 6 done; Phase 7, the follow-ups, is next.**
 
 - **Phase 0 (scaffold):** the hub, the preregistration of E1–E9, the golden corpus pinned from Owl Academy, and four
   feasibility spikes (36/36 checks pass).
@@ -20,6 +20,9 @@
 - **Phase 5 (the 3D page):** [`mind-eye-3d.html`](mind-eye-3d.html), the same dialogue's memory as a tree in H³ with a
   frame per word, the twin system, the crystal, the fence with its exact check on every closing register, the guard,
   the breath, and LATTICE-SEED/1 import pinned from Owl Academy's code (`tests/page3d-engine.cjs`, 19/19). Explainer 7.
+- **Phase 6 (bridges):** a session grown here exports as Owl Academy's Engram Mind Eye saves it, and that page
+  restores and continues it exactly; Owl Academy's sessions, chains, crystals, biochains, engram streams and
+  environments come in, each verified against Owl Academy's own code (`tests/bridges.cjs`, 34/34). Explainer 8.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -202,8 +205,8 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence` and `TTMPTv1`): packets, addresses, memory words, the clock and registers, the coupler, sessions, recall and the watch layer. `tests/parity-engram.cjs`: 829/829 lines match the golden corpus and the traces (which gained a watch section on seeds 9100–9104), 27/27 behaviour checks hold, six planted errors all caught. `ttmpt_core_v1.js` moved to this folder. Explainer 5 (`explainers/browser-core.html`) runs the check live | done |
 | 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge, lock and soliton crystal, register closure, the memory tree in H² [DEFINITION: register → section → zero point → cell], exports (v1 byte-compatible, and v2). `engram_core.js` gained `Live` (a Session grown turn by turn, equal to it at every checkpoint), STRIX's reply rule, positions, and the exports; `strix_library_v1.js` and `reference/golden/exports_v1.json` are pinned from Owl Academy by `make_owl_v1.cjs`. `tests/page-engine.cjs` 26/26; Chromium at 1440, 1024 and 390 px. Explainer 6 (`explainers/page-2d.html`) | done |
 | 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³ (the 2D page's position words on PolyStep's octahedral tree), a frame per packet from its exact quaternion, the twin system with the binding as a third chain and its control, the soliton crystal at the core, the fence on every closing register with each flag settled exactly, misplacement and the guard on demand, the breath pump timed by the register, `LATTICE-SEED/1` import (`lattice_seed_v1.js` and `reference/golden/lattice_seed_v1.json` pinned from Owl Academy's Biomesh page by `make_lattice_v1.cjs`). `engram_core.js` gained the 3D engine. `tests/page3d-engine.cjs` 19/19; Chromium at 1440, 1024 and 390 px. Explainer 7 (`explainers/page-3d.html`) | done |
-| 6 · Bridges | Import Owl Academy exports (`engram_chain`, `engram_text_chain` at 72 and 720, a biochain's `engramStream`, `ENVIRONMENT/1`; `LATTICE-SEED/1` already imports); export v1 so a chain grown here loads back in Owl Academy (byte-compatible since Phase 4) | next |
-| 7 · Follow-ups | The E1–E9 runs moved into Phase 2, and Phase 3's parity lets the pages show what decided them. What remains: any new claim registered on new seeds (for instance a sharper test of the guard's naming) | planned |
+| 6 · Bridges | Out: `exportOwlSession`, byte for byte what the Engram Mind Eye's `saveEngram` writes, with a console loader, so that page restores and continues the session exactly (its continuation and next save checked). In: the saved session, `engram_chain`, `engram_text_chain` at 72 and 720 (speakers marked unknown where the file does not have them), biochain records (verified as `verifyIntegrity` does, text recreated by Owl Academy's decoder), engram streams by their grids, `ENVIRONMENT/1` (3D page: hash, boundary seed, codex gate, pump driving the breath, frontier), and v2. `biochain_v1.js` and `reference/golden/bridges_v1.json` pinned by `make_bridges_v1.cjs`. The pages' session store keeps every turn (v2). `tests/bridges.cjs` 34/34; Chromium at 1440 and 390 px. Explainer 8 (`explainers/bridges.html`) | done |
+| 7 · Follow-ups | The E1–E9 runs moved into Phase 2, and Phase 3's parity lets the pages show what decided them. What remains: any new claim registered on new seeds (for instance a sharper test of the guard's naming) | next |
 | 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
 
 Claims, registered in [`PREREGISTRATION.md`](PREREGISTRATION.md) on 2026-11-04 with their instances, controls
@@ -281,6 +284,10 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `reference/golden/make_lattice_v1.cjs`, `lattice_seed_v1.json` | Copies the codec from Owl Academy's Biomesh Mind's Eye 3D and records its verdicts on three seeds; `--check` recomputes |
 | `tests/page3d-engine.cjs` | The 3D engine: layout, the watch layer, frames and the twin system, the breath, LATTICE-SEED/1 against Owl Academy (19 checks) |
 | `explainers/page-3d.html` | Explainer 7: the manual of the 3D page |
+| `biochain_v1.js` | `biomesh.js`'s synchronous biochain code, verbatim: the SHD-CCP stream codec, the lossless rank coder, the chiral weave, the token engram layer, the codex parser (generated by `reference/golden/make_bridges_v1.cjs`) |
+| `reference/golden/make_bridges_v1.cjs`, `bridges_v1.json` | Runs Owl Academy's session save, restore and greeting, `growBiochain` and `verifyIntegrity`, and the environment builder and hash on fixed inputs; `--check` recomputes |
+| `tests/bridges.cjs` | The bridges against Owl Academy's code (34 checks) |
+| `explainers/bridges.html` | Explainer 8: the bridges, in and out |
 | `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
 | `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |
 | `reference/golden/make_golden_v1.cjs`, `engram_v1.json` | The golden corpus for E1, computed from Owl Academy's `Engram_Mind_Eye.html` and `biomesh.js`, which agree on every entry; `--check` recomputes it |

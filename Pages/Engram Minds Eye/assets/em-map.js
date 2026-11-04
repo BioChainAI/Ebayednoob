@@ -127,9 +127,9 @@
         { id: 'page3d', col: 3, row: 7, kind: 'artifact', status: 'done', label: 'The 3D page', sub: 'Phase 5 · mind-eye-3d.html',
           desc: 'Built in Phase 5: the dialogue’s memory as a tree in H³ (register → section → zero point → cell, on PolyStep’s octahedral tree), each word with the frame of its exact quaternion, you and STRIX as the twin system with the binding as a third chain, the soliton crystal at the core, the 0.7 Claude fence on every closing register with each flag settled exactly, the ln 2 guard, the register’s breath, and LATTICE-SEED/1 import pinned from Owl Academy’s code (tests/page3d-engine.cjs, 19/19).',
           refs: 'Phase 5 · tests/page3d-engine.cjs', explainer: 'explainers/page-3d.html', href: 'mind-eye-3d.html' },
-        { id: 'bridges', col: 3, row: 8, kind: 'artifact', status: 'next', label: 'Bridges', sub: 'Phase 6 · Owl Academy in and out',
-          desc: 'Import and export of Owl Academy chains, 72/720 exports, biochain engram streams, lattice seeds and environments, with v1 exports byte-compatible.',
-          refs: 'Phase 6' }
+        { id: 'bridges', col: 3, row: 8, kind: 'artifact', status: 'done', label: 'Bridges', sub: 'Phase 6 · Owl Academy in and out',
+          desc: 'Built in Phase 6: a session grown here exports as Owl Academy’s Engram Mind Eye saves it, so that page restores it and continues exactly (checked against its own saveEngram, restoreEngram and reply code). Owl Academy’s saved sessions, v1 chain and crystal exports, biochains (text recreated with its own decoder), engram streams, lattice seeds and environments come in, each verified by recomputing it; biomesh.js’s codec is pinned verbatim (tests/bridges.cjs, 34/34).',
+          refs: 'Phase 6 · tests/bridges.cjs', explainer: 'explainers/bridges.html', href: 'mind-eye.html#p-bridge' }
     ];
     const EDGES = [
         ['owlEye', 'keym'], ['owlEye', 'L3'], ['owlEye', 'golden'], ['owlEye', 'bridges'], ['owlCodec', 'L5'], ['owl3d', 'L6'], ['owl3d', 'bridges'],

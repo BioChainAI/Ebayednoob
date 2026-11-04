@@ -8,29 +8,37 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 if (!EC || !LIB || !LS || !C || !T3 || !Fz) { document.querySelector('.board').innerHTML = '<section class="panel">One of the page&rsquo;s modules did not load.</section>'; return; }
 const KEY = 'engram-minds-eye/session/1';
-const SRC = { human: '#f8fafc', strix: '#e879f9' }, AX = ['#fca5a5', '#86efac', '#93c5fd'], CELL = ['α', 'β', 'γ'], GEN = ['i', 'I', 'j', 'J', 'k', 'K'];
+const SRC = { human: '#f8fafc', strix: '#e879f9', biochain: '#2dd4bf', stream: '#fbbf24', unknown: '#94a3b8' }, AX = ['#fca5a5', '#86efac', '#93c5fd'], CELL = ['α', 'β', 'γ'], GEN = ['i', 'I', 'j', 'J', 'k', 'K'];
 const MT = EC.membraneTurn(), TURNS = [MT, MT, MT], ARM = 0.6;
 
-let live, humans = [], replies = [], regs = [], control = null, tfMirror = null, tfSame = null;
+let live, replies = [], regs = [], control = null, tfMirror = null, tfSame = null;
 const st = { F: 0, target: 0, playing: true, speed: 48, replayFrom: 0, reg: 0, regFollow: true, sel: null, mode: 'dialogue', seed: null, seedPage: 0,
     yaw: 0.6, pitch: 0.35, zoom: 1, dirty: true, watch: new Map(), moved: new Map(), guard: new Map(), guardSeed: 9100, moveSeed: 9100, proj: [] };
 const frames = new Map();
 
 // ------------------------------------------------------------------ the session (shared with the 2D page)
-function loadSaved() { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && Array.isArray(s.humans) ? s.humans.filter(x => typeof x === 'string') : []; } catch (e) { return []; } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify({ version: 1, humans })); $('save-note').textContent = 'Kept in this browser only, and shared with the 2D page.'; } catch (e) { $('save-note').textContent = 'This browser is not keeping the dialogue (storage unavailable).'; } }
+const colorOf = s => SRC[s] || '#94a3b8', who = s => (s === 'human' ? 'you' : s === 'strix' ? 'STRIX' : s);
+const turnText = tu => (typeof tu.text === 'string' ? tu.text : (tu.tokens || tu.labels || []).join(' '));
+function loadSaved() {                         // v2 keeps every turn (imports included); v1 kept your words
+    try {
+        const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if (s && s.version === 2 && Array.isArray(s.turns) && s.turns.length) return { turns: s.turns };
+        if (s && Array.isArray(s.humans)) return { humans: s.humans.filter(x => typeof x === 'string') };
+    } catch (e) { /* storage unavailable or unreadable */ }
+    return { humans: [] };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ version: 2, turns: EC.turnsOf(live) })); $('save-note').textContent = 'Kept in this browser only, and shared with the 2D page.'; } catch (e) { $('save-note').textContent = 'This browser is not keeping the dialogue (storage unavailable).'; } }
 const endFrame = () => Math.max(live.words.length ? live.words[live.words.length - 1].F : 0, live.last);
 function start(saved) {
-    live = new EC.Live(); humans = []; replies = [null];
-    live.addTurn('strix', LIB.intro);
-    for (const h of saved) { const r = live.respond(LIB, h); humans.push(h); replies.push(null, r.reply); }
+    if (saved.turns) { const r = EC.replayTurns(LIB, saved.turns); live = r.live; replies = r.replies; }
+    else { live = new EC.Live(); replies = [null]; live.addTurn('strix', LIB.intro); for (const h of saved.humans) { const r = live.respond(LIB, h); replies.push(null, r.reply); } }
     afterTurn(); st.F = st.target = endFrame();
     renderMessages(); onFrame(true);
 }
 function send(text) {
     text = text.trim(); if (!text) return;
     const before = live.chain.packets.length, r = live.respond(LIB, text);
-    humans.push(text); replies.push(null, r.reply); save();
+    replies.push(null, r.reply); save();
     afterTurn(); st.replayFrom = Math.max(0, live.sched[before].on - 1); st.target = endFrame(); st.playing = true; $('b-play').textContent = 'Pause';
     if (st.mode !== 'dialogue') setMode('dialogue');
     st.regFollow = true; renderMessages(); onFrame(true);
@@ -80,7 +88,7 @@ function tick(ts) {
     if (moving) st.F = Math.min(st.target, st.F + st.speed * dt);
     if (Math.floor(st.F) !== lastInt) onFrame(false);
     if ($('v-spin').checked && !dragging) { st.yaw += dt * 0.12; st.dirty = true; }
-    if (st.dirty || moving) { drawView(); drawTwin(); st.dirty = false; }
+    if (st.dirty || moving || (st.mode === 'seed' && st.env && $('v-breath').checked)) { drawView(); drawTwin(); st.dirty = false; }
     requestAnimationFrame(tick);
 }
 function onFrame(force) {
@@ -109,7 +117,9 @@ const geodesic = (a, b, n) => {                                  // points along
 };
 function camera(w, h) {
     const watch = st.watch.get(viewKey()), shells = $('v-shells').checked && watch, c = shells ? watch.centre : null;
-    const b = st.mode === 'dialogue' && $('v-breath').checked ? EC.breathOf(st.F) : 1, phase = st.mode === 'dialogue' ? ((Math.max(1, st.F) - 1) % 720) / 720 : 0;
+    const envBreath = st.mode === 'seed' && st.env && $('v-breath').checked, envF = envBreath ? 1 + Math.floor(performance.now() / 1000 * 48) % st.env.pump.frames : 0;
+    const b = st.mode === 'dialogue' && $('v-breath').checked ? EC.breathOf(st.F) : envBreath ? EC.breathOf(envF, st.env.pump.breath, st.env.pump.frames) : 1;
+    const phase = st.mode === 'dialogue' ? ((Math.max(1, st.F) - 1) % 720) / 720 : envBreath ? (envF - 1) / st.env.pump.frames : 0;
     const tors = $('v-breath').checked ? +$('v-tors').value : 0, ball = $('v-mode').value === 'ball';
     const nodes = nodesNow(), moved = movedNow();
     const ptOf = n => EC.point3(moved.has(n.key) ? n.word.concat(moved.get(n.key)) : n.word);
@@ -118,7 +128,7 @@ function camera(w, h) {
     for (const n of nodes) maxD = Math.max(maxD, Math.acosh(Math.max(1, rec(ptOf(n))[0])));
     for (const n of EC.LAYOUT) if (n.depth === 3) { maxD = Math.max(maxD, Math.acosh(Math.max(1, rec(EC.point3(n.word))[0]))); break; }
     if (shells) maxD = Math.max(maxD, watch.shells.rG);
-    maxD *= 1.04 * (st.mode === 'dialogue' && $('v-breath').checked ? 1.5 : 1);
+    maxD *= 1.04 * ($('v-breath').checked ? (st.mode === 'dialogue' ? 1.5 : envBreath ? 1 + st.env.pump.breath : 1) : 1);
     const R0 = (Math.min(w, h) / 2 - 16) * st.zoom, cx = w / 2, cy = h / 2;
     const map = d => (ball ? Math.tanh(d * b / 2) : d * b / maxD);
     const P = y => {                                           // hyperboloid point -> [screen x, screen y, depth, scale]
@@ -204,13 +214,14 @@ function drawView() {
         else if (n.depth === 1) { col = '#475569'; rad = 3.5; }
         else if (n.depth === 2) { const wd = wordAtNode(n); col = st.mode === 'seed' ? '#334155' : wd ? '#f5c542' : null; rad = 4.2; }
         else if (st.mode === 'seed') { const sn = st.seed.nodes[n.k]; col = sn.parityOk ? (sn.raw ? '#2dd4bf' : '#a78bfa') : '#fb7185'; rad = 4; }
-        else { col = SRC[live.chain.packets[n.t].source]; rad = 4; }
+        else { col = colorOf(live.chain.packets[n.t].source); rad = 4; }
         rad *= s;
         ctx.beginPath(); ctx.arc(x, yy, rad, 0, 2 * Math.PI);
         if (col) { ctx.fillStyle = col; ctx.fill(); } else { ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1; ctx.stroke(); }
         const f = flagged.get(n.key);
         if (f) { ctx.strokeStyle = f.misplaced ? '#fb7185' : '#fbbf24'; ctx.lineWidth = 1.6; ctx.setLineDash(f.cleared ? [2, 2] : []); ctx.beginPath(); ctx.arc(x, yy, rad + 4, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]); }
         if (n.depth === 1) { ctx.fillStyle = '#94a3b8'; ctx.font = '10px "Fira Code", monospace'; ctx.fillText(`s${n.s}`, x + 6, yy - 6); }
+        if (st.mode === 'seed' && st.env && n.depth === 3 && st.env.frontier.includes(st.seed.nodes[n.k].i)) { ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, yy, rad + 3, 0, 2 * Math.PI); ctx.stroke(); }
         if (isSelected(n)) { ctx.strokeStyle = '#e879f9'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yy, rad + 7, 0, 2 * Math.PI); ctx.stroke(); }
         ctx.globalAlpha = 1;
         st.proj.push([x, yy, n]);
@@ -270,8 +281,8 @@ function renderTwinRead() {
     const log = ($('t-same').checked && control ? control : live).couplerLog, shown = log.slice(-96);
     $('bind').innerHTML = shown.map(e => `<i class="${e.F > st.F ? 'later' : e.ok ? '' : 'no'}" title="zero point ${e.F}: ${e.ok ? 'B unchanged' : 'B moved'}"></i>`).join('');
     const seen = log.filter(e => e.F <= st.F), held = seen.filter(e => e.ok).length, k = latchedCount(st.F) - 1;
-    const who = k >= 0 ? (live.chain.packets[k].source === 'human' ? 'you' : 'STRIX') : '—';
-    $('twin-read').innerHTML = `<span>binding held <b class="${held === seen.length ? 'good' : 'bad'}">${held}/${seen.length}</b></span><span>twists <b>${k + 1}</b></span><span>last issued by <b>${who}</b></span>` +
+    const last = k >= 0 ? who(live.chain.packets[k].source) : '—';
+    $('twin-read').innerHTML = `<span>binding held <b class="${held === seen.length ? 'good' : 'bad'}">${held}/${seen.length}</b></span><span>twists <b>${k + 1}</b></span><span>last issued by <b>${esc(last)}</b></span>` +
         `<span>law <b>${$('t-same').checked ? 'q₂ ← q₂ w (control)' : 'q₁ ← w q₁, q₂ ← q₂ w̄'}</b></span>`;
 }
 
@@ -317,7 +328,7 @@ function renderSel() {
         const ang = 2 * Math.acos(Math.min(1, Math.abs(qf[0]))) * 180 / Math.PI, ax = qf.slice(1), na = Math.hypot(...ax) || 1;
         const R = T3.rotOfQuat(q), I = new C.Q(1n), Z = new C.Q(0n), orth = [0, 1, 2].every(a => [0, 1, 2].every(b => R.reduce((acc, row) => acc.add(row[a].mul(row[b])), Z).eq(a === b ? I : Z)));
         const f = watch && watch.flags.find(x => x.key === `${pos.s},${pos.c},${pos.j}` && pos.r === st.reg), g = live.gauges[t];
-        out.innerHTML = kv([['word', `#${t} ${esc(p.token)} · <span class="src-${p.source}">${p.source === 'human' ? 'you' : 'STRIX'}</span>`],
+        out.innerHTML = kv([['word', `#${t} ${esc(p.token)} · <span style="color:${colorOf(p.source)}">${esc(who(p.source))}</span>`],
             ['position', `register ${pos.r} · section ${pos.s} · zero point ${pos.c} (frame ${pos.zeroPoint}) · cell ${CELL[pos.j]}`],
             ['memory word', w ? `@${w.addr} at frame ${w.F}` : 'none: the first two packets latch before a zero point holds three'],
             ['frame', `turned ${ang.toFixed(2)}° about (${ax.map(x => (x / na).toFixed(3)).join(', ')})`],
@@ -357,7 +368,8 @@ function renderWatch() {
 function renderMessages() {
     $('msgs').innerHTML = live.turns.map((tu, i) => {
         const rep = replies[i];
-        return `<div class="msg ${tu.source}" data-first="${tu.first}" data-count="${tu.count}"><div class="who">${tu.source === 'human' ? 'you' : 'STRIX'}</div><div class="txt">${esc(tu.text)}</div><div class="meta">${rep ? `${rep.concept.toLowerCase()} · reply ${rep.index + 1} of 3 · ` : ''}${tu.count} words · #${tu.first}–#${tu.first + tu.count - 1}</div></div>`;
+        const txt = turnText(tu), short = txt.length > 400 ? txt.slice(0, 400) + ' …' : txt;
+        return `<div class="msg ${tu.source}" data-first="${tu.first}" data-count="${tu.count}"><div class="who" style="color:${colorOf(tu.source)}">${esc(who(tu.source))}</div><div class="txt">${esc(short)}</div><div class="meta">${rep ? `${rep.concept.toLowerCase()} · reply ${rep.index + 1} of 3 · ` : ''}${tu.count} words · #${tu.first}–#${tu.first + tu.count - 1}</div></div>`;
     }).join('');
     $('msgs').scrollTop = $('msgs').scrollHeight;
 }
@@ -377,16 +389,24 @@ function sampleSeed() {
     return JSON.stringify(s);
 }
 function loadSeed() {
-    const out = $('seed-out'), line = (ok, text) => `<div><span class="${ok ? 'good' : 'bad'}">${ok ? 'PASS' : ok === null ? 'NOTE' : 'FAIL'}</span> ${text}</div>`;
-    let imp;
-    try { imp = EC.importLatticeSeed(LS, $('seed-text').value.trim()); } catch (e) { out.innerHTML = line(false, esc(e.message)); return; }
-    out.innerHTML = [
+    const out = $('seed-out'), line = (ok, text) => `<div><span class="${ok ? 'good' : ok === null ? 'help' : 'bad'}">${ok ? 'PASS' : ok === null ? 'NOTE' : 'FAIL'}</span> ${text}</div>`;
+    let imp, env = null;
+    try {
+        const text = $('seed-text').value.trim(), o = JSON.parse(text);
+        if (o && o.kind === 'ENVIRONMENT/1') { env = EC.importEnvironment(LS, window.BiochainV1, o); imp = env.seed; }
+        else imp = EC.importLatticeSeed(LS, o);
+    } catch (e) { out.innerHTML = line(false, esc(e.message)); return; }
+    const envLines = env ? [`<div class="help" style="margin:2px 0 4px">an ENVIRONMENT/1: its boundary seed below, its pump driving the breath</div>`,
+        ...env.checks.map(c => line(c.ok, esc(c.label) + (c.detail ? ` <span class="help">· ${esc(c.detail)}</span>` : '')))] : [];
+    out.innerHTML = [...envLines,
         imp.hashOk === null ? line(null, `no hash stored; recomputed ${imp.recomputed}`) : line(imp.hashOk, `hash ${imp.hashOk ? `${imp.recomputed} matches, as Owl Academy computes it` : `${imp.recomputed} ≠ stored ${esc(imp.seed.hash)}: the seed was changed after it was hashed`}`),
         line(!imp.parityBad, `${imp.nodes.length} words, ${imp.parityBad ? `${imp.parityBad} with broken parity` : 'every parity valid'}${imp.nodes.some(n => n.raw) ? `, ${imp.nodes.filter(n => n.raw).length} data crystal(s)` : ''}`),
         ...imp.chains.map((c, i) => line(c.unfolds && !c.missing, `chain #${i}: ${c.length} words → one exact quaternion of ${c.letters} letters (norm 5^${c.letters}) that ${c.unfolds ? 'unfolds back into them, in order' : 'does not unfold'}${c.missing ? `; ${c.missing} missing node(s)` : ''}`)),
         line(null, `each word is a 28-letter address and its frame; placed in the tree in index order, 90 to a page`),
     ].join('');
-    st.seed = imp; st.seedPage = 0; frames.clear(); setMode('seed');
+    st.seed = imp; st.seedPage = 0; st.env = env ? { pump: env.pump, frontier: env.frontier } : null; frames.clear();
+    if (env) { $('v-tors').value = Math.min(6, env.pump.torsion); $('v-breath').checked = true; }
+    setMode('seed');
 }
 
 // ------------------------------------------------------------------ wiring

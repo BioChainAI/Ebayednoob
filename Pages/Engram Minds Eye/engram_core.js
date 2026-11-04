@@ -87,8 +87,9 @@ class PacketChain {
         this.parity = CODEX_ROOT;
         this.packets = [];
     }
-    logPacket(token, source) {
-        const grid = crystallize(token), seed64 = packGrid64(grid), prev = this.parity;
+    logPacket(token, source) { return this.logGrid(crystallize(token), source, token); }
+    logGrid(grid, source, token) {             // a packet whose grid is known without its token (a biochain's engram stream)
+        const seed64 = packGrid64(grid), prev = this.parity;
         const next = (fold32(seed64) ^ rotl32(prev, 1)) >>> 0;
         const da = hamming(grid, this.alpha), db = hamming(grid, this.beta), dg = hamming(grid, this.gamma);
         let idx = 0xFF, best = Infinity;
@@ -474,10 +475,15 @@ class Live {
         this.done = new Map();
     }
     get last() { return this.sched.length ? this.sched[this.sched.length - 1].off : 0; }
-    addTokens(source, tokens) {
+    addTokens(source, tokens) { return this._add(source, tokens.map(tok => () => this.chain.logPacket(tok, source)), { tokens: tokens.slice() }); }
+    addGrids(source, grids, labels = []) {     // packets known by their grids only: labels stand in for the tokens
+        const L2 = grids.map((g, k) => (labels[k] === undefined ? '?' : labels[k]));
+        return this._add(source, grids.map((g, k) => () => this.chain.logGrid(g, source, L2[k])), { grids: grids.map(g => hexLsb(g).toUpperCase()), labels: L2 });
+    }
+    _add(source, makers, fields) {
         const first = this.chain.packets.length;
-        for (const tok of tokens) {
-            const p = this.chain.logPacket(tok, source), t = p.index;
+        for (const make of makers) {
+            const p = make(), t = p.index;
             const seg = encode(p.seed64, this.addresses.length ? this.addresses[t - 1] : []);
             const q = C.P.wordQuaternion(seg);
             this.values.push(p.seed64); this.addresses.push(seg); this.quats.push(q);
@@ -486,7 +492,7 @@ class Live {
             this.sched.push({ token: t, channel: SLOT_CHANNELS[i], on, off: on + 12 });
             this.gauges.push(O.gaugeExact(...p.tri.map(x => new Fr(BigInt(x)))));
         }
-        this.turns.push({ source, tokens: tokens.slice(), first, count: tokens.length });
+        this.turns.push(Object.assign({ source, first, count: makers.length }, fields));
         this._advance();
         return this.chain.packets.slice(first);
     }
@@ -617,7 +623,7 @@ function exportV2(live, { generatedAt = new Date().toISOString(), manifold = MAN
         format: 'engram_mind_eye', version: 2, key: 'engram/1', generated_at: generatedAt,
         note: 'Engram Mind\'s Eye (Ebayednoob). Quaternions and fractions are decimal strings; 64-bit words are 16 hex digits; an address is 28 letters, each 0-5 for 1+2i, 1-2i, 1+2j, 1-2j, 1+2k, 1-2k.',
         manifold: { n: manifold.n, k: manifold.k, t: manifold.t, anchor: anchorOf(manifold) },
-        turns: live.turns.map(t => ({ source: t.source, text: t.text === undefined ? null : t.text, tokens: t.tokens })),
+        turns: live.turns.map(t => ({ source: t.source, text: t.text === undefined ? null : t.text, tokens: t.tokens, grids: t.grids, labels: t.labels })),
         window_start: WINDOW_SEEDS, codex_root: hex32(CODEX_ROOT), final_parity: hex32(live.chain.parity),
         clock: { slot_frames: SLOT_FRAMES, slot_channels: SLOT_CHANNELS, onload: ON, offload: OFF, membrane_turn: membraneTurn().toString(), setting: 'free-run + membrane' },
         packets: P.map((p, t) => ({ index: t, token: p.token, source: p.source, header: p.header, seed64: hex64(p.seed64), footer: p.footer,
@@ -722,12 +728,12 @@ function twinFrames(live, mirror = true) {
     });
 }
 // The breath of Owl Academy's Synchronization Pump, timed by the register: 1 + sin(pi t) amp over its 720 frames.
-const breathOf = (F, amp = 0.5) => 1 + Math.sin(Math.PI * (((Math.max(1, F) - 1) % 720) / 720)) * amp;
+const breathOf = (F, amp = 0.5, cycle = 720) => 1 + Math.sin(Math.PI * (((Math.max(1, F) - 1) % cycle) / cycle)) * amp;
 
 // ---- LATTICE-SEED/1 import (lattice_seed_v1.js, Owl Academy's codec and hash, verbatim)
 function importLatticeSeed(LS, input) {
     const s = typeof input === 'string' ? JSON.parse(input) : input;
-    if (s && s.kind === 'ENVIRONMENT/1') throw new Error('an ENVIRONMENT/1 object: environments come in Phase 6; paste its boundary seed');
+    if (s && s.kind === 'ENVIRONMENT/1') throw new Error('an ENVIRONMENT/1 object: read it with importEnvironment, which checks its boundary seed with this');
     if (!s || s.v !== 1 || !Array.isArray(s.nodes)) throw new Error('not a LATTICE-SEED/1 object (v 1 with nodes)');
     const recomputed = LS.collectHashOf(s), hashOk = s.hash ? recomputed === s.hash : null;
     const nodes = s.nodes.slice().sort((a, b) => a.i - b.i).map((n, k) => {
@@ -751,6 +757,274 @@ function seedNodes(imp, page) {
     const cells = new Map();
     imp.nodes.forEach(n => { const p = seedPosition(n.k); if (p.page === page) cells.set(p.key, n.k); });
     return LAYOUT.filter(n => n.depth < 3 || cells.has(n.key)).map(n => (n.depth === 3 ? Object.assign({ k: cells.get(n.key) }, n) : Object.assign({}, n)));
+}
+
+// ================================================================== the bridges (Phase 6)
+// Owl Academy in and out. Each importer checks what it reads by recomputing it, and returns
+//   { kind, label, checks: [{ ok, label, detail }], verified, turns, ... }
+// where turns ({ source, text } | { source, tokens } | { source, grids, labels }) rebuild the session with Live.
+// Pinned against Owl Academy's own code by reference/golden/bridges_v1.json (tests/bridges.cjs).
+const check = (ok, label, detail = '') => ({ ok: ok === null ? null : !!ok, label, detail });
+const sha256Hex = str => O.toHex(O.sha256(O.utf8(String(str))));           // seal-crypto.js: SHA-256 over UTF-8, hex
+function gridFromHex(hex) {                    // the inverse of hexLsb: byte i holds cells 8i..8i+7, cell 8i + b at bit b
+    const g = new Array(64);
+    for (let i = 0; i < 8; i++) { const byte = parseInt(hex.slice(2 * i, 2 * i + 2), 16); for (let b = 0; b < 8; b++) g[8 * i + b] = (byte >> b) & 1; }
+    return g;
+}
+function runsOf(items) {                       // consecutive items of one source become one turn
+    const out = [];
+    for (const [source, token] of items) {
+        if (!out.length || out[out.length - 1].source !== source) out.push({ source, tokens: [] });
+        out[out.length - 1].tokens.push(token);
+    }
+    return out;
+}
+function liveOf(turns, coupler = 'carry') {
+    const L2 = new Live({ coupler });
+    for (const t of turns) {
+        if (t.grids) L2.addGrids(t.source, t.grids.map(gridFromHex), t.labels);
+        else if (typeof t.text === 'string') L2.addTurn(t.source, t.text);
+        else L2.addTokens(t.source, t.tokens);
+    }
+    return L2;
+}
+// A stored session replayed: a STRIX turn that is the library's reply to the human turn before it is replayed as
+// that reply, so the page can say which concept and J chose it. replies[i] is that reply for turn i, or null.
+function replayTurns(lib, turns, coupler = 'carry') {
+    const live = new Live({ coupler }), replies = [];
+    for (let i = 0; i < turns.length; i++) {
+        const t = turns[i], nx = turns[i + 1];
+        if (lib && t.source === 'human' && typeof t.text === 'string' && nx && nx.source === 'strix' && typeof nx.text === 'string') {
+            live.addTurn('human', t.text); replies.push(null);
+            const r = strixReply(lib, t.text, live.chain.gamma);
+            live.addTurn('strix', nx.text); replies.push(r.response === nx.text ? r : null);
+            i++; continue;
+        }
+        if (t.grids) live.addGrids(t.source, t.grids.map(gridFromHex), t.labels);
+        else if (typeof t.text === 'string') live.addTurn(t.source, t.text);
+        else live.addTokens(t.source, t.tokens);
+        replies.push(null);
+    }
+    return { live, replies };
+}
+const turnsOf = live => live.turns.map(t => (t.grids ? { source: t.source, grids: t.grids, labels: t.labels } : typeof t.text === 'string' ? { source: t.source, text: t.text } : { source: t.source, tokens: t.tokens }));
+
+// ---- out: the session as Owl Academy's Engram Mind Eye saves it (saveEngram), so it restores there
+function exportOwlSession(live, { manifold = MANIFOLD_DEFAULT } = {}) {
+    const state = {
+        manifold: { n: manifold.n, k: manifold.k, t: manifold.t },
+        codexParity: live.chain.parity,
+        biochain: [],
+        packets: live.chain.packets.map(p => ({
+            index: p.index, token: p.token, source: p.source,
+            seed64: hex64(p.seed64), header: p.header, footer: p.footer,
+            parityOk: true, gridArray: p.grid.map(b => (b ? 1 : 0)),
+            triAlpha: p.tri[0] & 0xff, triBeta: p.tri[1] & 0xff, triGamma: p.tri[2] & 0xff,
+            triConceptIdx: p.concept & 0xff, chiralKeyStr: chiralKey(p.token),
+            tri: { a: p.tri[0], b: p.tri[1], g: p.tri[2], conceptIdx: p.concept },
+        })),
+        conversation: live.turns.map(t => ({ role: t.source, text: typeof t.text === 'string' ? t.text : (t.tokens || t.labels).join(' ') })),
+    };
+    return { name: 'engram_mind_eye_v1.json', text: JSON.stringify(state) };
+}
+// The greeting Owl Academy's page types when it restores a session (no epochs are ever grown there)
+const owlGreeting = (packetCount, epochCount = 0) => `The engram persists. ${packetCount} tokens crystallized across ${epochCount} epoch${epochCount !== 1 ? 's' : ''}. We continue.`;
+
+// ---- what an import is
+function detectImport(text) {
+    const t = String(text || '').trim();
+    if (!t) throw new Error('nothing to import');
+    if (/^[0-9A-Fa-f\s]+$/.test(t) && t.replace(/\s+/g, '').length % 16 === 0) return { kind: 'engram_stream', obj: t.replace(/\s+/g, '') };
+    let o;
+    try { o = JSON.parse(t); } catch (e) { throw new Error('not JSON and not an engram stream: ' + e.message); }
+    if (Array.isArray(o) && o.length && o[0] && o[0].packet_meta && o[0].system_header) return { kind: 'engram_chain', obj: o };
+    if (o && o.format === 'engram_text_chain') return { kind: 'engram_text_chain', obj: o };
+    if (o && o.format === 'engram_mind_eye' && o.version === 2) return { kind: 'engram_mind_eye_v2', obj: o };
+    if (o && Array.isArray(o.packets) && 'codexParity' in o) return { kind: 'owl_session', obj: o };
+    if (o && o.kind === 'ENVIRONMENT/1') return { kind: 'environment', obj: o };
+    if (o && o.v === 1 && Array.isArray(o.nodes)) return { kind: 'lattice_seed', obj: o };
+    if (o && typeof o.stream === 'string' && (o.chainId || o.leafHashes)) return { kind: 'biochain', obj: o };
+    if (o && typeof o.engramStream === 'string') return { kind: 'engram_stream', obj: o };
+    throw new Error('not a format these bridges read');
+}
+function compareChain(live, entries, label) {  // the first packet that differs, if any
+    for (let k = 0; k < Math.max(live.chain.packets.length, entries.length); k++) {
+        const p = live.chain.packets[k], e = entries[k];
+        if (!p || !e) return check(false, label, `${live.chain.packets.length} packets rebuilt, ${entries.length} in the file`);
+        const bad = e(p);
+        if (bad) return check(false, label, `packet ${k} (${p.token}): ${bad}`);
+    }
+    return check(true, label, `${entries.length} packets`);
+}
+
+// ---- in: Owl Academy's saved session (localStorage engram_mind_eye_v1)
+function importOwlSession(o) {
+    const checks = [], P = o.packets;
+    const same = q => p => {
+        const t = q.tri || {};
+        return p.token !== q.token ? 'token' : p.source !== q.source ? 'source' : hex64(p.seed64) !== q.seed64 ? 'body' : p.header !== q.header ? 'header' : p.footer !== q.footer ? 'footer' :
+            (q.gridArray && q.gridArray.join('') !== p.grid.join('')) ? 'grid' : (t.a !== p.tri[0] || t.b !== p.tri[1] || t.g !== p.tri[2]) ? 'triangulation' :
+            (q.chiralKeyStr !== undefined && q.chiralKeyStr !== chiralKey(p.token)) ? 'chiral key' : '';
+    };
+    let turns = (o.conversation || []).filter(c => c && typeof c.text === 'string').map(c => ({ source: c.role, text: c.text }));
+    let live = liveOf(turns), c = compareChain(live, P.map(same), 'the conversation rebuilds every packet: token, body, header, footer, grid, triangulation, chiral key');
+    if (!c.ok) {
+        checks.push(check(null, 'the conversation does not rebuild the packets', c.detail + '; rebuilding from the packets\' own tokens instead'));
+        turns = runsOf(P.map(q => [q.source, q.token]));
+        live = liveOf(turns);
+        c = compareChain(live, P.map(same), 'the packets\' tokens rebuild every packet');
+    }
+    checks.push(c);
+    checks.push(check((live.chain.parity >>> 0) === (o.codexParity >>> 0), 'the final codex parity matches', hex32(o.codexParity >>> 0)));
+    if (o.manifold) checks.push(check(null, 'manifold', `N ${o.manifold.n} · K ${o.manifold.k} · T ${o.manifold.t}`));
+    return { kind: 'owl_session', label: 'an Engram Mind Eye session (engram_mind_eye_v1)', checks, verified: checks.every(x => x.ok !== false), turns, manifold: o.manifold || null };
+}
+// ---- in: a v1 chain export (exportChain)
+function importV1Chain(arr, text) {
+    const turns = runsOf(arr.map(e => [e.packet_meta.source, e.packet_meta.token])), live = liveOf(turns), checks = [];
+    checks.push(compareChain(live, arr.map(e => p => {
+        const m = e.packet_meta, t = m.triangulation;
+        return m.codex_parity_hex !== p.header ? 'header' : m.triangulation_hex !== p.footer ? 'footer' : e.system_header.seed_state.join('') !== p.grid.join('') ? 'seed state' :
+            e.system_header.chiral_key !== chiralKey(p.token) ? 'chiral key' : (t.alpha_hamming !== p.tri[0] || t.beta_hamming !== p.tri[1] || t.gamma_hamming !== p.tri[2]) ? 'triangulation' :
+            t.nearest_concept_index !== (p.concept === 255 ? null : p.concept) ? 'concept' : '';
+    }), 'every packet rebuilt from its token: header, footer, seed state, chiral key, triangulation'));
+    if (typeof text === 'string') checks.push(check(exportV1Chain(live.chain.packets, live.chain.parity).text === text.trim() ? true : null, 'exported again, byte for byte the same file', 'as Owl Academy writes it'));
+    return { kind: 'engram_chain', label: 'a v1 chain export (engram_chain)', checks, verified: checks.every(x => x.ok !== false), turns };
+}
+// ---- in: a v1 text crystal (exportSegmented, 72 or 720 sections)
+function importV1Crystal(o, text) {
+    const slots = o.quaternion_chain || [], items = [];
+    let unknown = 0;
+    for (const s of slots) {
+        const mix = s.source_mix || {}, src = mix.human === s.token_count ? 'human' : mix.strix === s.token_count ? 'strix' : 'unknown';
+        if (src === 'unknown') unknown += s.token_count;
+        for (const tok of s.tokens) items.push([src, tok]);
+    }
+    const turns = runsOf(items), live = liveOf(turns), checks = [];
+    checks.push(check(slots.length === o.sections && slots.every((s, i) => s.n_id === i && s.token_count === s.tokens.length), `${o.sections} sections, ${items.length} tokens`, 'in order'));
+    const again = exportV1Crystal(live.chain.packets, o.sections, { manifold: o.manifold, generatedAt: o.generated_at });
+    const d = JSON.parse(again.text);
+    d.quaternion_chain.forEach((s, i) => { s.source_mix = slots[i].source_mix; });
+    const rebuilt = JSON.stringify(d, null, 2), exact = typeof text === 'string' && rebuilt === text.trim();
+    checks.push(check(typeof text === 'string' ? exact : JSON.stringify(d) === JSON.stringify(o), 'every slot\'s crystal and chiral key, the master crystal on its manifold anchor, rebuilt from the tokens',
+        exact ? 'byte for byte the same file' : 'field for field'));
+    checks.push(check(unknown ? null : true, unknown ? `${unknown} of ${items.length} tokens share a section with the other speaker: who said them is not in the file` : 'every token\'s speaker is in the file', unknown ? 'marked unknown; their packets do not depend on it' : ''));
+    return { kind: 'engram_text_chain', label: `a v1 text crystal in ${o.sections} sections (engram_text_chain)`, checks, verified: checks.every(x => x.ok !== false), turns, manifold: o.manifold };
+}
+// ---- in: a biochain record (biomesh.js growBiochain), checked as verifyIntegrity checks it
+function verifyBiochain(BC, chain) {
+    const reasons = [];
+    try {
+        let frames;
+        if (typeof chain.stream === 'string') frames = BC.parseBiochainStream(chain.stream);
+        else if (Array.isArray(chain.streams)) frames = chain.streams.map((residual, i) => ({ residual, chunkLen: chain.chunkLens[i], parityOk: true }));
+        else throw new Error('no stream data on record');
+        const out = [];
+        for (let i = 0; i < frames.length; i++) {
+            if (frames[i].parityOk === false) { reasons.push(`packet ${i} parity failed`); return { ok: false, reasons }; }
+            out.push(BC.decodeChunk(frames[i].residual, frames[i].chunkLen));
+        }
+        const leaves = [];
+        for (let i = 0; i < out.length; i++) {
+            const h = sha256Hex(i + '|' + sha256Hex(String.fromCharCode(...out[i])));
+            if (chain.leafHashes && h !== chain.leafHashes[i]) { reasons.push(`leaf ${i} mismatch`); return { ok: false, reasons }; }
+            leaves.push(h);
+        }
+        let root = leaves.slice();
+        if (!root.length) root = [sha256Hex('empty')];
+        while (root.length > 1) {
+            if (root.length & 1) root.push(root[root.length - 1]);
+            const next = [];
+            for (let i = 0; i < root.length; i += 2) next.push(sha256Hex(root[i] + root[i + 1]));
+            root = next;
+        }
+        if (chain.merkleRoot && root[0] !== chain.merkleRoot) { reasons.push('merkle root mismatch'); return { ok: false, reasons }; }
+        let wf = [1, 0, 0, 0];
+        for (const c of out) wf = BC.qn(BC.qmul(BC.crystalQuat(c), wf));
+        if (BC.quatHex(wf) !== chain.weaveChiral) { reasons.push('chiral weave mismatch'); return { ok: false, reasons }; }
+        const text = new TextDecoder().decode(new Uint8Array(out.flat()));
+        let engNote = '';
+        if (typeof chain.engramStream === 'string') {
+            const eng = BC.engramStreamFromText(text);
+            if (eng.stream !== chain.engramStream) { reasons.push('engram stream mismatch'); return { ok: false, reasons }; }
+            engNote = ` + ${eng.count} token engrams`;
+        }
+        reasons.push(`recreated ${out.reduce((a, c) => a + c.length, 0)} B · parity + leaves + merkle + chiral weave${engNote} verified`);
+        return { ok: true, reasons, text };
+    } catch (e) {
+        return { ok: false, reasons: ['decode failure: ' + e.message] };
+    }
+}
+function importBiochain(BC, rec) {
+    const v = verifyBiochain(BC, rec), checks = [check(v.ok, 'Owl Academy\'s verifyIntegrity steps: frame parity, leaves, Merkle root, chiral weave, engram layer', v.reasons.join('; '))];
+    if (!v.ok) return { kind: 'biochain', label: `a biochain (${rec.chainId || 'no id'})`, checks, verified: false, turns: [] };
+    const tokens = BC.tokenizeEngrams(v.text), mine = engramStream(v.text);
+    checks.push(check(typeof rec.engramStream !== 'string' || (mine.stream === rec.engramStream && mine.count === rec.engramCount && mine.meanJ === rec.engramMeanJ),
+        'this system\'s engram stream of the recreated text equals the record\'s', `${mine.count} tokens, mean J ${mine.meanJ}`));
+    return { kind: 'biochain', label: `a biochain (${rec.chainId || 'no id'}), ${v.text.length} characters recreated`, checks, verified: checks.every(x => x.ok !== false), turns: [{ source: 'biochain', tokens }], text: v.text };
+}
+// ---- in: an engram stream on its own (16 hex digits a token, biomesh.js engramStreamFromText)
+function importEngramStream(o, store = []) {
+    const s = typeof o === 'string' ? o : o.engramStream, checks = [];
+    if (!/^[0-9A-Fa-f]*$/.test(s) || s.length % 16) throw new Error('an engram stream is 16 hex digits a packet');
+    const grids = [];
+    for (let i = 0; i < s.length; i += 16) grids.push(gridFromHex(s.slice(i, i + 16)));
+    const meanJ = grids.length ? +(grids.reduce((a, g) => a + computeJ(g), 0) / grids.length).toFixed(4) : 0;
+    if (typeof o === 'object') {
+        if (o.engramCount !== undefined) checks.push(check(o.engramCount === grids.length, 'the count matches', `${grids.length} packets`));
+        if (o.engramMeanJ !== undefined) checks.push(check(o.engramMeanJ === meanJ, 'the mean torsion J matches', String(meanJ)));
+    }
+    const keys = new Map();
+    for (const t of store) { const k = hexLsb(crystallize(t)); if (!keys.has(k)) keys.set(k, t); }
+    const labels = grids.map(g => keys.get(hexLsb(g)) || '·');
+    const named = labels.filter(l => l !== '·').length;
+    checks.push(check(null, 'the tokens themselves are not in a stream', `${named} of ${grids.length} keys equal a stored word's, and are labelled with it (engram/1 keeps only letter parity)`));
+    return { kind: 'engram_stream', label: `an engram stream of ${grids.length} packets`, checks, verified: checks.every(x => x.ok !== false), turns: [{ source: 'stream', grids: grids.map(g => hexLsb(g).toUpperCase()), labels }] };
+}
+// ---- in: this system's own v2 export
+function importV2(o) {
+    const turns = (o.turns || []).map(t => (t.grids ? { source: t.source, grids: t.grids, labels: t.labels } : typeof t.text === 'string' ? { source: t.source, text: t.text } : { source: t.source, tokens: t.tokens }));
+    const live = liveOf(turns), checks = [];
+    checks.push(compareChain(live, (o.packets || []).map(q => p => (q.header !== p.header ? 'header' : q.footer !== p.footer ? 'footer' : q.seed64 !== hex64(p.seed64) ? 'body' : q.address !== live.addresses[p.index].join('') ? 'address' : '')), 'every packet and address rebuilt'));
+    const W = o.words || [];
+    checks.push(check(W.length === live.words.length && W.every((w, i) => w.root === live.words[i].root && w.link === live.words[i].link), 'every memory word\'s Merkle root and link rebuilt', `${W.length} words${W.some(w => w.intact === false) ? `; ${W.filter(w => w.intact === false).length} were damaged when exported` : ''}`));
+    checks.push(check(o.chain && live.chainQ.map(String).join() === o.chain.quaternion.join(), 'the chain quaternion rebuilt', o.chain ? o.chain.norm : ''));
+    return { kind: 'engram_mind_eye_v2', label: 'an Engram Mind\'s Eye v2 export', checks, verified: checks.every(x => x.ok !== false), turns, manifold: o.manifold };
+}
+// ---- in: ENVIRONMENT/1 (Biomesh Mind's Eye 3D): a boundary seed, a codex, pump settings and a frontier
+function importEnvironment(LS, BC, o) {
+    const checks = [];
+    const recomputed = '0x' + LS.fold32(JSON.stringify({ b: o.boundary && o.boundary.hash, c: o.codex, p: o.pump, f: o.frontier })).toString(16).padStart(8, '0');
+    checks.push(check(o.hash ? recomputed === o.hash : null, o.hash ? (recomputed === o.hash ? `hash ${recomputed} matches, as Owl Academy computes it` : `hash ${recomputed} ≠ stored ${o.hash}: changed after it was hashed`) : `no hash stored; recomputed ${recomputed}`));
+    const seed = importLatticeSeed(LS, o.boundary);
+    checks.push(check(seed.hashOk !== false && !seed.parityBad && seed.chains.every(c => c.unfolds), 'the boundary seed: hash, parities and chains', `${seed.nodes.length} nodes, ${seed.chains.length} chain(s)`));
+    let codex = null;
+    if (typeof o.codex === 'string') {
+        try { const p = BC.parseCodexStream(o.codex); codex = { ok: true, order: p.order, chunk: p.chunk, entries: p.entries.length }; checks.push(check(true, 'the codex passes Owl Academy\'s ABI gate', `GEAR order ${p.order}, ${p.entries.length} PRIME entries, HALT`)); }
+        catch (e) { codex = { ok: false, error: e.message }; checks.push(check(false, 'the codex fails Owl Academy\'s ABI gate', e.message)); }
+    } else checks.push(check(null, 'no codex attached'));
+    const pump = Object.assign({ frames: 720, breath: 0.5, torsion: 3, reach: 12, backprop: true }, o.pump || {});
+    const ids = new Set(seed.nodes.map(n => n.i)), frontier = (o.frontier || []).slice();
+    checks.push(check(null, 'pump and frontier', `${pump.frames} frames, breath ${pump.breath}, torsion ${pump.torsion}; ${frontier.length} frontier index(es), ${frontier.filter(i => ids.has(i)).length} on programmed nodes`));
+    return { kind: 'environment', label: 'an ENVIRONMENT/1 object', checks, verified: checks.every(x => x.ok !== false), recomputed, hashOk: o.hash ? recomputed === o.hash : null, seed, codex, pump, frontier };
+}
+// One entry point: what it is, and the import.
+function importAny(text, { LS = null, BC = null, store = [] } = {}) {
+    const { kind, obj } = detectImport(text);
+    if (kind === 'owl_session') return importOwlSession(obj);
+    if (kind === 'engram_chain') return importV1Chain(obj, text);
+    if (kind === 'engram_text_chain') return importV1Crystal(obj, text);
+    if (kind === 'engram_mind_eye_v2') return importV2(obj);
+    if (kind === 'engram_stream') return importEngramStream(obj, store);
+    if (kind === 'biochain') { if (!BC) throw new Error('biochain_v1.js is needed for a biochain'); return importBiochain(BC, obj); }
+    if (kind === 'environment') { if (!LS || !BC) throw new Error('lattice_seed_v1.js and biochain_v1.js are needed for an environment'); return importEnvironment(LS, BC, obj); }
+    if (kind === 'lattice_seed') {
+        if (!LS) throw new Error('lattice_seed_v1.js is needed for a lattice seed');
+        const imp = importLatticeSeed(LS, obj);
+        return { kind, label: 'a LATTICE-SEED/1', seed: imp, verified: imp.hashOk !== false && !imp.parityBad,
+            checks: [check(imp.hashOk, imp.hashOk === null ? 'no hash stored' : imp.hashOk ? 'the hash matches' : 'the hash does not match'), check(!imp.parityBad, `${imp.parityBad} broken parities`)] };
+    }
+    throw new Error('unknown format');
 }
 
 // ================================================================== parity with the reference
@@ -1010,7 +1284,7 @@ function runParity(golden, trace) {
 }
 
 return {
-    version: 'engram-browser-3',
+    version: 'engram-browser-4',
     // engram/1
     crystallize, hamming, chiralKey, computeJ, hexLsb, jNum, packGrid64, gridOf, hex64, hex32, fold32, rotl32,
     tokenize, tokenizeBiomesh, engramStream, CONCEPT_NAMES, WINDOW_SEEDS, CODEX_ROOT, PacketChain,
@@ -1028,6 +1302,9 @@ return {
     qnormPow5, bindingPow5, offOf, positionOf, strixReply, Live, MANIFOLD_DEFAULT, anchorOf, exportV1Chain, exportV1Crystal, exportV2,
     // the 3D engine (Phase 5)
     LAYOUT, point3, point3Exact, memoryNodes, misplace, watchMemory, guardMemory, floatQ, frameOf, twinFrames, breathOf, importLatticeSeed, seedPosition, seedNodes,
+    // the bridges (Phase 6)
+    gridFromHex, liveOf, turnsOf, replayTurns, exportOwlSession, owlGreeting, detectImport, importOwlSession, importV1Chain, importV1Crystal, verifyBiochain, importBiochain,
+    importEngramStream, importV2, importEnvironment, importAny,
     // parity
     paritySections, behaviourSections, runParity,
 };

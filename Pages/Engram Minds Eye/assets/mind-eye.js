@@ -12,13 +12,15 @@ if (!EC || !LIB || !O || !C) {
 const CH = ['α', 'β', 'γ'], ENG = ['I', 'II', 'III'], CHCOL = ['#ff0055', '#00f2ff', '#ffd700'];
 const TCOL = ['#60a5fa', '#c084fc', '#34d399', '#fbbf24', '#fb7185'];                  // T0 .. T4
 const TNAME = ['T0 · Latch', 'T1 · Prune', 'T2 · Superpose', 'T3 · Align', 'T4 · Ingest'];
-const SRC = { human: '#f8fafc', strix: '#e879f9' };
+const SRC = { human: '#f8fafc', strix: '#e879f9', biochain: '#2dd4bf', stream: '#fbbf24', unknown: '#94a3b8' };
+const colorOf = s => SRC[s] || '#94a3b8', who = s => (s === 'human' ? 'you' : s === 'strix' ? 'STRIX' : s);
+const turnText = tu => (typeof tu.text === 'string' ? tu.text : (tu.tokens || tu.labels || []).join(' '));
 const GEN = ['i', 'I', 'j', 'J', 'k', 'K'];                                           // 1 + 2i, 1 − 2i, 1 + 2j, 1 − 2j, 1 + 2k, 1 − 2k
 const CELLCOL = ['var(--wa)', 'var(--wb)', 'var(--wg)', 'var(--wy)'], CELLNAME = ['α', 'β', 'γ', 'Y'];
 const KEY = 'engram-minds-eye/session/1';
 const MT = EC.membraneTurn(), TURNS = [MT, MT, MT];
 
-let live, regs = [], humans = [], replies = [];
+let live, regs = [], replies = [];
 const view = { F: 0, target: 0, playing: true, speed: 48, sel: 0, follow: true, word: null, wordFollow: true, reg: null, regFollow: true, replayFrom: 0 };
 const readouts = new Map();
 
@@ -27,15 +29,22 @@ function endFrame() {
     const w = live.words.length ? live.words[live.words.length - 1].F : 0;
     return Math.max(w, live.last);
 }
-function loadSaved() { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && Array.isArray(s.humans) ? s.humans.filter(x => typeof x === 'string') : []; } catch (e) { return []; } }
+function loadSaved() {                         // v2 keeps every turn; v1 kept your words, from which STRIX's replies follow
+    try {
+        const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if (s && s.version === 2 && Array.isArray(s.turns) && s.turns.length) return { turns: s.turns };
+        if (s && Array.isArray(s.humans)) return { humans: s.humans.filter(x => typeof x === 'string') };
+    } catch (e) { /* storage unavailable or unreadable */ }
+    return { humans: [] };
+}
 function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, humans })); $('save-note').textContent = 'Kept in this browser only.'; }
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 2, turns: EC.turnsOf(live) })); $('save-note').textContent = 'Kept in this browser only.'; }
     catch (e) { $('save-note').textContent = 'This browser is not keeping the dialogue (storage unavailable).'; }
 }
 function start(saved) {
-    live = new EC.Live(); humans = []; replies = [null]; readouts.clear();
-    live.addTurn('strix', LIB.intro);
-    for (const h of saved) { const r = live.respond(LIB, h); humans.push(h); replies.push(null, r.reply); }
+    readouts.clear();
+    if (saved.turns) { const r = EC.replayTurns(LIB, saved.turns); live = r.live; replies = r.replies; }
+    else { live = new EC.Live(); replies = [null]; live.addTurn('strix', LIB.intro); for (const h of saved.humans) { const r = live.respond(LIB, h); replies.push(null, r.reply); } }
     regs = live.registers();
     view.F = view.target = endFrame(); view.replayFrom = 0;
     Object.assign(view, { follow: true, wordFollow: true, regFollow: true, word: null, reg: null });
@@ -46,7 +55,7 @@ function send(text) {
     text = text.trim();
     if (!text) return;
     const before = live.chain.packets.length, r = live.respond(LIB, text);
-    humans.push(text); replies.push(null, r.reply); save();
+    replies.push(null, r.reply); save();
     regs = live.registers();
     view.replayFrom = Math.max(0, live.sched[before].on - 1);
     view.target = endFrame(); view.playing = true;
@@ -156,7 +165,7 @@ function drawClock() {
             const q = (F - s.on) / 12, r = Re * (1 - 0.86 * q), a = -Math.PI / 2 + EC.SPIN[s.channel] * q * 1.5 * Math.PI;
             x = ex + r * Math.cos(a); y = ey + r * Math.sin(a); tier = 4 - Math.min(4, Math.floor(q * 5));
         }
-        ctx.fillStyle = SRC[p.source]; ctx.shadowColor = st === 'latched' ? '#f5c542' : SRC[p.source]; ctx.shadowBlur = st === 'latched' ? 14 : 6;
+        ctx.fillStyle = colorOf(p.source); ctx.shadowColor = st === 'latched' ? '#f5c542' : colorOf(p.source); ctx.shadowBlur = st === 'latched' ? 14 : 6;
         ctx.beginPath(); ctx.arc(x, y, st === 'latched' ? 6 : 5, 0, 2 * Math.PI); ctx.fill(); ctx.shadowBlur = 0;
         if (t === view.sel) { ctx.strokeStyle = '#f5c542'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9, 0, 2 * Math.PI); ctx.stroke(); }
         ctx.fillStyle = '#e2e8f0';
@@ -197,7 +206,7 @@ function renderTiers() {
     const s = live.sched[t], st = stateOf(t, view.F), win = live.windowBefore(t), names = [t - 3, t - 2, t - 1].map(k => (k >= 0 ? P[k].token : EC.WINDOW_SEEDS[3 + k]));
     const prev = t ? parseInt(P[t - 1].header, 16) : EC.CODEX_ROOT, w = live.wordOf(t), pos = EC.positionOf(s.off), [r, m, l] = EC.place(s.off);
     const conc = p.concept === 255 ? null : EC.CONCEPT_NAMES[p.concept], q = live.quats[t];
-    $('t-name').innerHTML = `#${t} ${esc(p.token)} <span class="src-${p.source}" style="font-weight:400">· ${p.source === 'human' ? 'you' : 'STRIX'} · ${st}</span>`;
+    $('t-name').innerHTML = `#${t} ${esc(p.token)} <span style="font-weight:400;color:${colorOf(p.source)}">· ${esc(who(p.source))} · ${st}</span>`;
     const tier = (n, body) => `<div class="tier" style="--c:${TCOL[n]}"><div class="tn">${TNAME[n].split(' · ')[0]}<span>${TNAME[n].split(' · ')[1]}</span></div><div class="tb">${body}</div></div>`;
     const bar = (k, d) => `<span style="color:${CHCOL[k]}">${CH[k]} ${esc(names[k])}</span><span class="bar" style="--c:${CHCOL[k]}"><i style="width:${(100 * d / 64).toFixed(1)}%"></i></span><span>${d}</span>`;
     $('tiers').innerHTML = [
@@ -390,7 +399,7 @@ function drawMap() {
         const t = leaf.get(key);
         if (t === undefined) continue;
         const on = live.sched[t].off <= F;
-        ctx.fillStyle = on ? SRC[live.chain.packets[t].source] : '#1e293b';
+        ctx.fillStyle = on ? colorOf(live.chain.packets[t].source) : '#1e293b';
         ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 2 * Math.PI); ctx.fill();
         if (t === view.sel) { ctx.strokeStyle = '#f5c542'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x, y, 6, 0, 2 * Math.PI); ctx.stroke(); }
         mapHits.push([x, y, t]);
@@ -404,8 +413,9 @@ function drawMap() {
 function renderMessages() {
     $('msgs').innerHTML = live.turns.map((tu, i) => {
         const rep = replies[i], last = tu.first + tu.count - 1;
-        const meta = (rep ? `${rep.concept.toLowerCase()} · J ${rep.J} · reply ${rep.index + 1} of 3 · ` : i === 0 ? 'introduction · ' : '') + (tu.count ? `${tu.count} words · #${tu.first}–#${last}` : 'no words');
-        return `<div class="msg ${tu.source}" data-first="${tu.first}" data-count="${tu.count}" tabindex="0"><div class="who">${tu.source === 'human' ? 'you' : 'STRIX'}</div><div class="txt">${esc(tu.text)}</div><div class="meta">${meta}</div></div>`;
+        const meta = (rep ? `${rep.concept.toLowerCase()} · J ${rep.J} · reply ${rep.index + 1} of 3 · ` : i === 0 && tu.text === LIB.intro ? 'introduction · ' : tu.grids ? 'engram stream, grids only · ' : '') + (tu.count ? `${tu.count} words · #${tu.first}–#${last}` : 'no words');
+        const txt = turnText(tu), short = txt.length > 700 ? txt.slice(0, 700) + ' …' : txt;
+        return `<div class="msg ${tu.source}" data-first="${tu.first}" data-count="${tu.count}" tabindex="0"><div class="who" style="color:${colorOf(tu.source)}">${esc(who(tu.source))}</div><div class="txt">${esc(short)}</div><div class="meta">${meta}</div></div>`;
     }).join('');
     $('msgs').scrollTop = $('msgs').scrollHeight;
     markSelection();
@@ -414,7 +424,7 @@ function renderLedger() {
     const P = live.chain.packets, from = Math.max(0, P.length - 240), rows = [];
     for (let t = P.length - 1; t >= from; t--) {
         const p = P[t], s = live.sched[t], w = live.wordOf(t), c = p.concept === 255 ? '—' : EC.CONCEPT_NAMES[p.concept].toLowerCase();
-        rows.push(`<tr data-t="${t}"><td>${t}</td><td>${esc(p.token)}</td><td class="src-${p.source}">${p.source === 'human' ? 'you' : 'STRIX'}</td><td style="color:${CHCOL[s.channel]}">${ENG[s.channel]} ${CH[s.channel]}</td><td>${s.on} → ${s.off}</td><td>${p.header}</td><td>${EC.hex64(p.seed64)}</td><td>${p.footer}</td><td>${c}</td><td>${w ? `@${w.addr} · ${w.F}` : '—'}</td></tr>`);
+        rows.push(`<tr data-t="${t}"><td>${t}</td><td>${esc(p.token)}</td><td style="color:${colorOf(p.source)}">${esc(who(p.source))}</td><td style="color:${CHCOL[s.channel]}">${ENG[s.channel]} ${CH[s.channel]}</td><td>${s.on} → ${s.off}</td><td>${p.header}</td><td>${EC.hex64(p.seed64)}</td><td>${p.footer}</td><td>${c}</td><td>${w ? `@${w.addr} · ${w.F}` : '—'}</td></tr>`);
     }
     if (from > 0) rows.push(`<tr><td colspan="10" class="help">and ${from} earlier packets (all are in the exports)</td></tr>`);
     $('ledger').innerHTML = rows.join('');
@@ -443,6 +453,7 @@ function doExport(kind) {
     let e;
     if (kind === 'chain') e = EC.exportV1Chain(live.chain.packets, live.chain.parity);
     else if (kind === 'v2') e = EC.exportV2(live, { manifold: manifold() });
+    else if (kind === 'owl') { e = EC.exportOwlSession(live, { manifold: manifold() }); lastOwl = e.text; $('b-snippet').textContent = loader(e.text, 160); }
     else e = EC.exportV1Crystal(live.chain.packets, kind, { manifold: manifold() });
     if (!e) return;
     download(e.name, e.text);
@@ -454,12 +465,16 @@ async function selfCheck() {
     out.innerHTML = ''; $('b-check').disabled = true;
     try {
         line(EC.hexLsb(EC.crystallize('GEODESIC')) === '5c896a4801c9c24c', 'engram/1 key: GEODESIC → 5c896a4801c9c24c, as in Owl Academy'); await tick();
-        const n = live.chain.packets.length, withCoupler = n <= 300, S = new EC.Session(live.turns.map(t => [t.source, t.tokens]), withCoupler ? 'carry' : null);
-        const j = x => JSON.stringify(x, (k, v) => (typeof v === 'bigint' ? String(v) : v));
-        // the reference twin computes the words as written; compare against the record, not any alterations made here
-        const rec = live.outputs(); rec.words = live.words.map(w => [w.F, w.addr, (w.word.orig || w.word.cells).map(EC.hex64), w.root, w.link]);
-        const same = j(rec) === j(S.outputs()) && (!withCoupler || j(live.couplerLog.map(e => [e.F, e.B, e.ok])) === j(S.coupler.log.map(e => [e.F, e.B, e.ok])));
-        line(same, 'this page\'s Live session = the reference Session on the same turns', `${n} packets, ${live.words.length} words, ${regs.length} registers${withCoupler ? ', coupler included' : ', coupler compared only up to 300 packets'}`); await tick();
+        const n = live.chain.packets.length, withCoupler = n <= 300;
+        if (live.turns.some(t => t.grids)) { line(true, 'Live = Session is not compared: an engram stream has no tokens for the reference Session', 'the bridges tests compare it by its grids instead'); }
+        else {
+            const S = new EC.Session(live.turns.map(t => [t.source, t.tokens]), withCoupler ? 'carry' : null);
+            const j = x => JSON.stringify(x, (k, v) => (typeof v === 'bigint' ? String(v) : v));
+            // the reference twin computes the words as written; compare against the record, not any alterations made here
+            const rec = live.outputs(); rec.words = live.words.map(w => [w.F, w.addr, (w.word.orig || w.word.cells).map(EC.hex64), w.root, w.link]);
+            const same = j(rec) === j(S.outputs()) && (!withCoupler || j(live.couplerLog.map(e => [e.F, e.B, e.ok])) === j(S.coupler.log.map(e => [e.F, e.B, e.ok])));
+            line(same, 'this page\'s Live session = the reference Session on the same turns', `${n} packets, ${live.words.length} words, ${regs.length} registers${withCoupler ? ', coupler included' : ', coupler compared only up to 300 packets'}`); await tick();
+        }
         line(live.couplerLog.every(e => e.ok), 'the binding B = q₂q₁ held at every zero point', `${live.couplerLog.length} zero points`);
         const bad = damaged(Infinity);
         line(true, bad.length ? `memory: ${bad.length} word(s) you damaged are flagged by their Merkle roots` : 'memory: every word\'s Merkle root matches its record', `${live.words.length} words`);
@@ -478,7 +493,7 @@ async function selfCheck() {
 // ------------------------------------------------------------------ wiring
 $('composer').addEventListener('submit', e => { e.preventDefault(); const v = $('say').value; $('say').value = ''; send(v); });
 $('say').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composer').requestSubmit(); } });
-$('b-new').addEventListener('click', () => { if (humans.length && !confirm('Start a new session? The dialogue kept in this browser will be cleared.')) return; try { localStorage.removeItem(KEY); } catch (e) { /* storage unavailable */ } start([]); });
+$('b-new').addEventListener('click', () => { if (live.turns.length > 1 && !confirm('Start a new session? The dialogue kept in this browser will be cleared.')) return; try { localStorage.removeItem(KEY); } catch (e) { /* storage unavailable */ } start({ humans: [] }); });
 $('b-play').addEventListener('click', () => { view.playing = !view.playing; $('b-play').textContent = view.playing ? 'Pause' : 'Play'; });
 $('b-end').addEventListener('click', () => { view.F = view.target; onFrame(true); });
 $('b-replay').addEventListener('click', () => { view.F = view.replayFrom; view.playing = true; $('b-play').textContent = 'Pause'; Object.assign(view, { follow: true, wordFollow: true, regFollow: true }); $('t-follow').checked = true; onFrame(true); });
@@ -522,6 +537,37 @@ $('x-chain').addEventListener('click', () => doExport('chain'));
 $('x-72').addEventListener('click', () => doExport(72));
 $('x-720').addEventListener('click', () => doExport(720));
 $('x-v2').addEventListener('click', () => doExport('v2'));
+$('x-owl').addEventListener('click', () => doExport('owl'));
+
+// ------------------------------------------------------------------ Owl Academy, in and out
+let pending = null, lastOwl = null;
+const loader = (text, cut) => `localStorage.setItem('engram_mind_eye_v1', JSON.stringify(${cut && text.length > cut ? text.slice(0, cut) + ' … ' : text})); location.reload();`;
+const STORE = [...new Set(EC.tokenize(LIB.intro + ' ' + LIB.concepts.flatMap(c => c.responses).join(' ')))];
+function readImport() {
+    const out = $('b-out'), line = (ok, label, detail) => `<div><span class="${ok === true ? 'good' : ok === false ? 'bad' : 'help'}">${ok === true ? 'PASS' : ok === false ? 'FAIL' : 'NOTE'}</span> ${esc(label)}${detail ? ` <span class="help">· ${esc(detail)}</span>` : ''}</div>`;
+    pending = null; $('b-load').disabled = true;
+    let r;
+    try { r = EC.importAny($('b-text').value, { LS: window.LatticeSeedV1, BC: window.BiochainV1, store: STORE }); }
+    catch (e) { out.innerHTML = line(false, e.message); return; }
+    out.innerHTML = `<div class="help" style="margin:2px 0 4px">${esc(r.label)}</div>` + r.checks.map(c => line(c.ok, c.label, c.detail)).join('');
+    if (r.turns && r.turns.length) { pending = r; $('b-load').disabled = false; $('b-load').textContent = r.verified ? 'Load as this session' : 'Load it anyway'; }
+    else if (r.kind === 'lattice_seed' || r.kind === 'environment') out.insertAdjacentHTML('beforeend', line(null, 'lattice seeds and environments are shown on the 3D page: paste it in its LATTICE-SEED/1 panel'));
+}
+$('b-read').addEventListener('click', readImport);
+$('b-file').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; $('b-text').value = await f.text(); e.target.value = ''; readImport(); });
+$('b-load').addEventListener('click', () => {
+    if (!pending) return;
+    if (live.turns.length > 1 && !confirm('Replace the dialogue kept in this browser with the import?')) return;
+    if (pending.manifold) { $('mf-n').value = pending.manifold.n; $('mf-k').value = pending.manifold.k; $('mf-t').value = pending.manifold.t; }
+    start({ turns: pending.turns }); save();
+    $('b-out').insertAdjacentHTML('beforeend', `<div><span class="good">LOADED</span> ${live.chain.packets.length} packets, ${live.words.length} memory words, ${regs.length} register(s)</div>`);
+    pending = null; $('b-load').disabled = true;
+});
+$('b-copy').addEventListener('click', async () => {
+    const text = lastOwl || EC.exportOwlSession(live, { manifold: manifold() }).text, snippet = loader(text);
+    try { await navigator.clipboard.writeText(snippet); $('b-copied').textContent = `copied (${(snippet.length / 1024).toFixed(0)} KB)`; }
+    catch (e) { $('b-snippet').textContent = snippet; $('b-copied').textContent = 'the clipboard is blocked here: the whole loader is in the box above, select and copy it'; }
+});
 $('b-check').addEventListener('click', selfCheck);
 let rz = null;
 window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { clockDirty = true; renderRes(); drawMap(); }, 120); });

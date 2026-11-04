@@ -22,6 +22,7 @@ and the golden session for unregistered stand-ins.
 | --- | --- |
 | `golden/make_golden_v1.cjs`, `golden/engram_v1.json` | The E1 target, computed from Owl Academy's files (Phase 0) |
 | `golden/make_owl_v1.cjs`, `golden/exports_v1.json` | STRIX's library (written to `../strix_library_v1.js`) and the byte form of Owl Academy's v1 exports, from its own code (Phase 4) |
+| `golden/make_bridges_v1.cjs`, `golden/bridges_v1.json` | The bridges (Phase 6): the Engram Mind Eye's saved session and its continuation, biochains and their verdicts, environments and their hashes, from Owl Academy's code; also writes `../biochain_v1.js` |
 | `golden/make_lattice_v1.cjs`, `golden/lattice_seed_v1.json` | LATTICE-SEED/1's codec and hash (written to `../lattice_seed_v1.js`) and their verdicts on three seeds, from Owl Academy's Biomesh page (Phase 5) |
 | `engram/ttmpt.py` | engram/1: Mulberry32, the letter grids, XOR crystallization, Hamming distance, chiral key, J, both tokenizers, biomesh.js's engram stream, the 128-bit packet chain |
 | `engram/orbital.py` | The orbital pages' code, ported line by line from `scripts/geometric-build/orbital_core.js`: tiers, the 2⁻²⁴ rationalization, tiles, the Merkle chain, frames, TQF, the gauge, the readout, the pump, the clock's constants |
