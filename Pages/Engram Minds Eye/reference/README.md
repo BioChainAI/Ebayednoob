@@ -7,7 +7,7 @@ The reference decides every claim in `../PREREGISTRATION.md` (with Amendment 1).
 ```bash
 pip install -r requirements.txt                 # numpy and pytest; torch is not needed
 python3 -m pytest -q tests                      # 41 tests, a few seconds (Node is used for the parity tests)
-python3 run_traces.py                           # traces/engram.json, for the browser core (Phase 3)
+python3 run_traces.py                           # traces/engram.json, which the browser core reproduces (Phase 3)
 python3 run_claims.py --dry                     # exercise the runner on unregistered seeds; writes nothing
 python3 run_claims.py                           # decide E1-E9: results/claims.json and results/claims.md
 ```
@@ -33,7 +33,7 @@ and the golden session for unregistered stand-ins.
 | `engram/watch.py` | The fence screen with the exact address check (E7) and the ln 2 guard (E8) (hpstep.fence and decode3d in place) |
 | `engram/stats.py` | The bootstrap of the Hyperbolic PolyStep preregistration |
 | `tests/` | One test file per module, each claim's mechanics with its control; `test_orbital_parity.py` checks `orbital.py` against `orbital_core.js` through Node (`js_orbital.cjs`) |
-| `run_traces.py`, `traces/engram.json` | Exact values for the browser core to reproduce |
+| `run_traces.py`, `traces/engram.json` | Exact values the browser core reproduces line for line (`../tests/parity-engram.cjs`, Phase 3): addresses, the schedule, memory words, gauges and readouts, a complete register, the coupler, the watch layer, recall |
 | `run_claims.py`, `results/` | The decisive runs and their record |
 
 ## Dependencies

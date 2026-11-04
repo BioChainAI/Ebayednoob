@@ -9,7 +9,7 @@
 // out of the build templates by name.)
 'use strict';
 const path = require('path');
-const E = require('./ttmpt_core_v1.js');
+const E = require('../ttmpt_core_v1.js');
 const O = require(path.join(__dirname, '..', '..', '..', 'scripts', 'geometric-build', 'orbital_core.js'));
 
 let pass = 0, total = 0;

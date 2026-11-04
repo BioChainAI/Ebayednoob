@@ -8,7 +8,7 @@ const HO = path.join(__dirname, '..', '..', 'Hyperbolic Oracles');
 const C = require(path.join(HO, 'hyperbolic_core.js'));
 const D = require(path.join(HO, 'decoder3d.js'));
 const T = require(path.join(HO, 'twin3d.js'));
-const E = require('./ttmpt_core_v1.js');
+const E = require('../ttmpt_core_v1.js');
 const { P, Q } = C;
 
 let pass = 0, total = 0;

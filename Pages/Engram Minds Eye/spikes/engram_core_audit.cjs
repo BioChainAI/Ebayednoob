@@ -2,7 +2,7 @@
 //   node "Pages/Engram Minds Eye/spikes/engram_core_audit.cjs"
 // Output is captured in engram_core_audit_output.txt. Deterministic: no random input.
 'use strict';
-const E = require('./ttmpt_core_v1.js');
+const E = require('../ttmpt_core_v1.js');
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const hex = g => { let s = ''; for (let i = 0; i < 8; i++) { let b = 0; for (let k = 0; k < 8; k++) b |= (g[i * 8 + k] << k); s += b.toString(16).padStart(2, '0'); } return s; };

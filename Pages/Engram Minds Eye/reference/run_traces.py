@@ -4,8 +4,8 @@
     python3 run_traces.py
 
 Quaternions and fractions are strings (they exceed 2^53); 64-bit words are 16 hex digits. The trace uses the
-golden session and synthetic dialogue 9000 (outside the registered instances), so a parity run never touches what
-run_claims.py decides.
+golden session and synthetic dialogue 9000 (outside the registered instances), and the watch layer's E7 and E8
+instances on seeds 9100-9104, so a parity run never touches what run_claims.py decides.
 """
 import json
 import os
@@ -15,7 +15,7 @@ from fractions import Fraction
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import engram  # noqa: E402,F401
-from engram import address as A, clock as C, dialogue as Dg, orbital as O, recall as RC, ttmpt as T  # noqa: E402
+from engram import address as A, clock as C, dialogue as Dg, orbital as O, recall as RC, ttmpt as T, watch as W  # noqa: E402
 from engram.session import Session  # noqa: E402
 
 qs = lambda q: [str(c) for c in q]          # noqa: E731
@@ -60,6 +60,17 @@ def main():
             near, dmin = RC.nearest(RC.key(v), keys)
             rec.append({'store_index': i, 'query': v, 'key': h64(RC.key(v)), 'nearest': near, 'distance': dmin, 'hit': RC.hit(RC.key(v), keys, i)})
     trace['recall'] = rec
+    # The watch layer on unregistered seeds (E7's registered seeds are 1000-1049, its dry runs 9000-9049; E8's
+    # instances are i = 0-49, so Rng(1000 + i) and corrupt seed 2000 + i stay clear of i = 9100-9104).
+    pts2 = W.depth2_points()
+    e8 = []
+    for i in range(9100, 9105):
+        r = W.e8_instance(i, pts=pts2)
+        e8.append({'i': i, 'clean_worst': r['clean_worst'], 'clean_bad': r['clean_bad'],
+                   'blame': [{'delta': dl, 'pair': list(b['pair']), 'top': list(b['top']) if b['top'] else None, 'bad': b['bad'], 'hit': b['hit']}
+                             for dl, b in r['blame'].items()]})
+    trace['watch'] = {'e7': [W.e7_instance(L, k, d, s) for L, k, d, s in ((2, 5, 1, 9100), (2, 10, 2, 9101), (3, 5, 1, 9102), (3, 10, 2, 9103))],
+                      'e8': e8}
     os.makedirs(os.path.join(HERE, 'traces'), exist_ok=True)
     path = os.path.join(HERE, 'traces', 'engram.json')
     with open(path, 'w') as f:

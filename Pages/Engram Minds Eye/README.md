@@ -1,6 +1,6 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phases 0, 1 and 2 done; Phase 3, the browser core, is next.**
+**Status: Phases 0 to 3 done; Phase 4, the 2D page, is next.**
 
 - **Phase 0 (scaffold):** the hub, the preregistration of E1–E9, the golden corpus pinned from Owl Academy, and four
   feasibility spikes (36/36 checks pass).
@@ -11,6 +11,9 @@
   for the browser core, Amendment 1, and the runner, committed before it ran. **Decisions: E1–E7 and E9 supported;
   E8 inconclusive** (the guard's ln 2 bound exact; naming the corrupted pair right 96 times in 100 at +1.5, where the
   rule asked for 99). See Explainer 4 and `reference/results/`.
+- **Phase 3 (browser core):** `engram_core.js`, the whole engram system in one module on `orbital_core.js` and
+  PolyStep's browser modules. It reproduces the golden corpus and the reference's traces line for line (829/829)
+  and passes the Python tests' 27 behaviour checks, in Node (`tests/parity-engram.cjs`) and live in Explainer 5.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -33,7 +36,7 @@ which is a different page about cymatics and the Enochian grid.
 
 1. **Freeze the engram key.** The TTMPT core (Mulberry32, the 8×8 grids, XOR crystallization, Hamming
    distance, chiral key, torsion J) is copied verbatim and pinned with golden vectors, so chains, seeds and
-   exports still move between the two repositories. `spikes/ttmpt_core_v1.js` reproduces Owl Academy's vectors.
+   exports still move between the two repositories. `ttmpt_core_v1.js` reproduces Owl Academy's vectors.
 2. **Run each token through the five tiers.** On the one-engine calculator a calculation passes ingestion,
    alignment, superposition, pruning and latch. A token does the same: it is crystallized, triangulated
    against the window, folded into the window parity and the chain quaternion, reduced, and written.
@@ -165,7 +168,7 @@ name and changes nothing):
 
 | Layer | Owl Academy piece | Standalone replacement | Reuses |
 | --- | --- | --- | --- |
-| L0 Key | TTMPT core | Unchanged: `engram/1`, pinned by golden vectors | `spikes/ttmpt_core_v1.js` |
+| L0 Key | TTMPT core | Unchanged: `engram/1`, pinned by golden vectors | `ttmpt_core_v1.js` |
 | L1 Pipeline | `logPacket` | One calculation per token on the five tiers: **T4** ingest (crystallize) · **T3** align (triangulate against α, β, γ) · **T2** superpose (fold into Y and into the chain quaternion) · **T1** prune (keep the chain word reduced and the quaternion coprime) · **T0** latch (tiles, Merkle leaf, memory word) | engine v10's tier laws and 30-node clock (`TIERS_SPEC`) |
 | L2 Packet | 128-bit packet, `quat32` | The 128-bit packet kept for compatibility, plus an exact address (a 28-letter norm-5 word). On the wire, two Einstein tiles of Form 5, defined here as an engram/1 half (structure = α, β, γ or Y); Form 1 when only the compact, lossy direction is kept | `packTile`, `hurwitzEncode`, `P.wordQuaternion`, `P.rightDivide` |
 | L3 Window and memory | α/β/γ window, codex parity | Three channels on the zero-point clock. At the zero point they pair into a triple-quad word over GF(2) at one of 30 addresses. The Merkle chain locates one altered cell and the parity rebuilds it. A SHA-256 memory word is chained at every zero point | `gen4.py` schedule, `merkleChain`, `rebuild`, `locate`, `memoryWord` |
@@ -190,11 +193,11 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | 0 · Scaffold | This plan; the hub `index.html` with its system map, claims ledger and decisions; explainers 1 (the architecture, with a live lab) and 2 (the evidence and the claims); `PREREGISTRATION.md` with claims E1–E9 and their decision rules, fixed before any code; the golden corpus `reference/golden/engram_v1.json`; the reference skeleton; the site bar | done |
 | 1 · Shared cores | `scripts/geometric-build/orbital_core.js`: 15 segments (the exact core, tiers, the Fifteen-Lemma layer with tiles and the Merkle chain, tier frames and the TQF, the gauge, readout, memory repair, the pump), written back into the four orbital pages by `build.py`, which stay byte-identical (`tests/rebuild-identical.sh`); its Node test passes 18/18 (`tests/orbital-core.cjs`, Part 1's verification included) and the browser tests pass; a lazy `hpstep/__init__.py`: PolyStep's suite passes 137/137 before and after, its traces regenerate byte-identical, and its exact modules import without torch (30 tests run with numpy alone). Explainer 3 (`explainers/shared-cores.html`) | done |
 | 2 · Python reference | `reference/engram/`: `ttmpt`, `orbital`, `address`, `memory`, `clock`, `coupler`, `session`, `dialogue`, `recall`, `watch`, `stats`; 41 tests including exact parity with `orbital_core.js` through Node; `traces/engram.json`; Amendment 1; `run_claims.py`, committed before it ran, and its results (E1–E7, E9 supported; E8 inconclusive). Explainer 4 (`explainers/reference-results.html`) | done |
-| 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence`), `tests/parity-engram.cjs`, and a live parity check in a page | next |
-| 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge and lock, register closure, exports (v1 byte-compatible, and v2) | planned |
+| 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence` and `TTMPTv1`): packets, addresses, memory words, the clock and registers, the coupler, sessions, recall and the watch layer. `tests/parity-engram.cjs`: 829/829 lines match the golden corpus and the traces (which gained a watch section on seeds 9100–9104), 27/27 behaviour checks hold, six planted errors all caught. `ttmpt_core_v1.js` moved to this folder. Explainer 5 (`explainers/browser-core.html`) runs the check live | done |
+| 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge and lock, register closure, exports (v1 byte-compatible, and v2) | next |
 | 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and coupler chain, the soliton crystal at the core, fence shells with the screen and guard, the breath pump, `LATTICE-SEED/1` import | planned |
 | 6 · Bridges | Import Owl Academy exports (`engram_chain`, `engram_text_chain` at 72 and 720, a biochain's `engramStream`, `LATTICE-SEED/1`, `ENVIRONMENT/1`); export v1 so a chain grown here loads back in Owl Academy | planned |
-| 7 · Follow-ups | The E1–E9 runs moved into Phase 2. What remains: the decisions shown in the browser after Phase 3's parity, and any new claim registered on new seeds (for instance a sharper test of the guard's naming) | planned |
+| 7 · Follow-ups | The E1–E9 runs moved into Phase 2, and Phase 3's parity lets the pages show what decided them. What remains: any new claim registered on new seeds (for instance a sharper test of the guard's naming) | planned |
 | 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
 
 Claims, registered in [`PREREGISTRATION.md`](PREREGISTRATION.md) on 2026-11-04 with their instances, controls
@@ -258,14 +261,18 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `PREREGISTRATION.md` | Claims E1–E9, fixed design inputs D1–D7, instances, controls and decision rules |
 | `explainers/reference-results.html` | Explainer 4: Phase 2, the reference, how it was checked, Amendment 1, and the decisions |
 | `reference/engram/`, `reference/tests/` | The Python reference (12 modules) and its 41 tests |
-| `reference/run_traces.py`, `reference/traces/engram.json` | Exact values the browser core must reproduce (Phase 3) |
+| `reference/run_traces.py`, `reference/traces/engram.json` | Exact values the browser core reproduces line for line (Phase 3), the watch layer included |
+| `engram_core.js` | The browser core (Phase 3): the engram layer as one UMD module, `EngramCore`, on `orbital_core.js`, PolyStep's `hyperbolic_core.js`, `decoder3d.js`, `twin3d.js` and `fence.js`, and `ttmpt_core_v1.js`; `runParity` and the behaviour checks |
+| `tests/parity-engram.cjs` | Its Node runner: 829 parity lines against the golden corpus and the traces, then 27 behaviour checks |
+| `explainers/browser-core.html` | Explainer 5: Phase 3, the module, how it is checked, the parity check live, a session on your own words |
 | `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
 | `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |
 | `reference/golden/make_golden_v1.cjs`, `engram_v1.json` | The golden corpus for E1, computed from Owl Academy's `Engram_Mind_Eye.html` and `biomesh.js`, which agree on every entry; `--check` recomputes it |
-| `spikes/ttmpt_core_v1.js` | The TTMPT core, verbatim from Owl Academy (`Engram_Mind_Eye.html`, lines 599–657, commit 9082520), as a UMD module |
+| `ttmpt_core_v1.js` | The TTMPT core, verbatim from Owl Academy (`Engram_Mind_Eye.html`, lines 599–657, commit 9082520), as a UMD module; moved here from `spikes/` in Phase 3 |
 | `spikes/engram_core_audit.cjs`, `…_output.txt` | Spike A: the engram key, measured |
 | `spikes/quaternion_address.cjs`, `…_output.txt` | Spike B: engrams as exact quaternion addresses, on the PolyStep cores |
 | `spikes/orbital_memory.cjs`, `…_output.txt` | Spike C: the window on the orbital calculators' tiles, Merkle chain, gauge and pump |
 | `spikes/fence_memory.cjs`, `…_output.txt` | Spike D: the 0.7 Claude fence and the ln 2 guard on a memory tree in H³ |
 
-Run any spike with `node "Pages/Engram Minds Eye/spikes/<name>.cjs"`. They need Node 18 or later and nothing else.
+Run any spike with `node "Pages/Engram Minds Eye/spikes/<name>.cjs"`, and the browser core's parity with
+`node "Pages/Engram Minds Eye/tests/parity-engram.cjs" --quiet`. They need Node 18 or later and nothing else.
