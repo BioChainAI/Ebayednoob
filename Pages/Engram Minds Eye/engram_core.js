@@ -706,10 +706,33 @@ function guardMemory(nodes, corrupt = null) {
     const out = { ix, clean: { worst: clean.worst, bad: clean.bad } };
     if (corrupt) {
         const [E, pairs] = Fz.corrupt(D, 1, corrupt.delta, corrupt.seed), g = Fz.guardCheck(E), top = g.top.length ? g.top[0][0] : null;
-        Object.assign(out, { pair: pairs[0], top, bad: g.bad, hit: !!top && top[0] === pairs[0][0] && top[1] === pairs[0][1], keys: pairs[0].map(k => nodes[ix[k]].key), topKeys: top && top.map(k => nodes[ix[k]].key) });
+        const m = guardsOf(E), named = aloneOf(m.matching);
+        Object.assign(out, { pair: pairs[0], top, bad: g.bad, hit: !!top && top[0] === pairs[0][0] && top[1] === pairs[0][1], keys: pairs[0].map(k => nodes[ix[k]].key), topKeys: top && top.map(k => nodes[ix[k]].key),
+            matching: { named: named && named.map(k => nodes[ix[k]].key), hit: !!named && named[0] === pairs[0][0] && named[1] === pairs[0][1], top: m.matching.slice(0, 2).map(([p, n]) => [p.map(k => nodes[ix[k]].key), n]) } });
     }
     return out;
 }
+// The sharper guard of E10 (reference/engram/guard.py): every quadruple above ln 2 counts all six of its pairs (the
+// guard of fence.js), or only the two pairs of its largest matching sum (the matching guard), or of its smallest
+// (the control). Same floating-point operations as fence.js's defect.
+function guardsOf(D, tol = 1e-9) {
+    const N = D.length, orig = new Map(), mat = new Map(), small = new Map(), bump = (m, a, b) => { const k = a * N + b; m.set(k, (m.get(k) || 0) + 1); };
+    let bad = 0, worst = -1;
+    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) for (let k = j + 1; k < N; k++) for (let l = k + 1; l < N; l++) {
+        const v = Fz.defect(D, i, j, k, l);
+        if (v > worst) worst = v;
+        if (v <= Fz.LN2 + tol) continue;
+        bad++;
+        for (const [a, b] of [[i, j], [i, k], [i, l], [j, k], [j, l], [k, l]]) bump(orig, a, b);
+        const m = [[i, j, k, l, D[i][j] + D[k][l]], [i, k, j, l, D[i][k] + D[j][l]], [i, l, j, k, D[i][l] + D[j][k]]];
+        let mx = 0, mn = 0;
+        for (let t = 1; t < 3; t++) { if (m[t][4] > m[mx][4]) mx = t; if (m[t][4] < m[mn][4]) mn = t; }
+        bump(mat, m[mx][0], m[mx][1]); bump(mat, m[mx][2], m[mx][3]); bump(small, m[mn][0], m[mn][1]); bump(small, m[mn][2], m[mn][3]);
+    }
+    const top = c => [...c.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0]).slice(0, 6).map(([k, n]) => [[Math.floor(k / N), k % N], n]);
+    return { bad, worst, original: top(orig), matching: top(mat), smallest: top(small) };
+}
+const aloneOf = top => (top.length && (top.length === 1 || top[0][1] > top[1][1]) ? top[0][0] : null);
 // Frames: a float unit quaternion from an exact one whose coprime integers may be far beyond 2^53, and its rotation.
 function floatQ(q) {
     const bits = Math.max(...q.map(c => (c < 0n ? -c : c).toString(2).length)), sh = BigInt(Math.max(0, bits - 52));
@@ -1161,6 +1184,19 @@ function paritySections(golden, trace) {
             }
             return out;
         } },
+        { name: 'Traces: the sharper guard (E10)', run() {
+            const out = [], w = trace.watch;
+            if (!w || !w.e10) return [line('watch', 'E10 section in the trace', false, 'missing: regenerate with run_traces.py')];
+            const pts = depth2Points(), whole = Fz.distanceMatrix(pts);
+            for (const t of w.e10) {
+                const D = t.set === 'A' ? Fz.distanceMatrix(new C.Rng(t.i).sample(pts.length, 24).map(j => pts[j])) : whole;
+                const [E, pairs] = Fz.corrupt(D, 1, t.delta, t.i + (t.set === 'A' ? 1000 : 2000)), g = guardsOf(E);
+                const ok = same(pairs[0], t.pair) && g.bad === t.bad && same(g.original.slice(0, 3), t.original) && same(g.matching.slice(0, 3), t.matching) && same(g.smallest.slice(0, 3), t.smallest);
+                const nm = aloneOf(g.matching);
+                out.push(line('watch', `E10 set ${t.set}, instance ${t.i}, +${t.delta}`, ok, `${g.bad} quadruples above ln 2; the matching guard ${nm ? (nm[0] === t.pair[0] && nm[1] === t.pair[1] ? 'names the pair' : 'names another pair') : 'names no pair alone'}`));
+            }
+            return out;
+        } },
         { name: 'Traces: recall', run() {
             const S = store(golden), keys = S.map(key);
             return trace.recall.map(r => {
@@ -1284,7 +1320,7 @@ function runParity(golden, trace) {
 }
 
 return {
-    version: 'engram-browser-4',
+    version: 'engram-browser-5',
     // engram/1
     crystallize, hamming, chiralKey, computeJ, hexLsb, jNum, packGrid64, gridOf, hex64, hex32, fold32, rotl32,
     tokenize, tokenizeBiomesh, engramStream, CONCEPT_NAMES, WINDOW_SEEDS, CODEX_ROOT, PacketChain,
@@ -1301,7 +1337,7 @@ return {
     // the page engine (Phase 4)
     qnormPow5, bindingPow5, offOf, positionOf, strixReply, Live, MANIFOLD_DEFAULT, anchorOf, exportV1Chain, exportV1Crystal, exportV2,
     // the 3D engine (Phase 5)
-    LAYOUT, point3, point3Exact, memoryNodes, misplace, watchMemory, guardMemory, floatQ, frameOf, twinFrames, breathOf, importLatticeSeed, seedPosition, seedNodes,
+    LAYOUT, point3, point3Exact, memoryNodes, misplace, watchMemory, guardMemory, guardsOf, aloneOf, floatQ, frameOf, twinFrames, breathOf, importLatticeSeed, seedPosition, seedNodes,
     // the bridges (Phase 6)
     gridFromHex, liveOf, turnsOf, replayTurns, exportOwlSession, owlGreeting, detectImport, importOwlSession, importV1Chain, importV1Crystal, verifyBiochain, importBiochain,
     importEngramStream, importV2, importEnvironment, importAny,

@@ -1,6 +1,6 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phases 0 to 6 done; Phase 7, the follow-ups, is next.**
+**Status: Phases 0 to 7 done; Phase 8, integration, is next.**
 
 - **Phase 0 (scaffold):** the hub, the preregistration of E1–E9, the golden corpus pinned from Owl Academy, and four
   feasibility spikes (36/36 checks pass).
@@ -23,6 +23,10 @@
 - **Phase 6 (bridges):** a session grown here exports as Owl Academy's Engram Mind Eye saves it, and that page
   restores and continues it exactly; Owl Academy's sessions, chains, crystals, biochains, engram streams and
   environments come in, each verified against Owl Academy's own code (`tests/bridges.cjs`, 34/34). Explainer 8.
+- **Phase 7 (follow-ups):** Amendment 2 registered E10 and E11 before any code for them. **E10, a sharper guard:
+  inconclusive**, its exact parts supported; the matching guard names the corrupted pair exactly when two or more
+  quadruples exceed ln 2 (0.965 at +1.5 in E8's setting), so E8's shortfall is a shortage of witnesses. **E11, the
+  way back to Owl Academy: supported**, 50/50. Explainer 9.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -206,8 +210,8 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge, lock and soliton crystal, register closure, the memory tree in H² [DEFINITION: register → section → zero point → cell], exports (v1 byte-compatible, and v2). `engram_core.js` gained `Live` (a Session grown turn by turn, equal to it at every checkpoint), STRIX's reply rule, positions, and the exports; `strix_library_v1.js` and `reference/golden/exports_v1.json` are pinned from Owl Academy by `make_owl_v1.cjs`. `tests/page-engine.cjs` 26/26; Chromium at 1440, 1024 and 390 px. Explainer 6 (`explainers/page-2d.html`) | done |
 | 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³ (the 2D page's position words on PolyStep's octahedral tree), a frame per packet from its exact quaternion, the twin system with the binding as a third chain and its control, the soliton crystal at the core, the fence on every closing register with each flag settled exactly, misplacement and the guard on demand, the breath pump timed by the register, `LATTICE-SEED/1` import (`lattice_seed_v1.js` and `reference/golden/lattice_seed_v1.json` pinned from Owl Academy's Biomesh page by `make_lattice_v1.cjs`). `engram_core.js` gained the 3D engine. `tests/page3d-engine.cjs` 19/19; Chromium at 1440, 1024 and 390 px. Explainer 7 (`explainers/page-3d.html`) | done |
 | 6 · Bridges | Out: `exportOwlSession`, byte for byte what the Engram Mind Eye's `saveEngram` writes, with a console loader, so that page restores and continues the session exactly (its continuation and next save checked). In: the saved session, `engram_chain`, `engram_text_chain` at 72 and 720 (speakers marked unknown where the file does not have them), biochain records (verified as `verifyIntegrity` does, text recreated by Owl Academy's decoder), engram streams by their grids, `ENVIRONMENT/1` (3D page: hash, boundary seed, codex gate, pump driving the breath, frontier), and v2. `biochain_v1.js` and `reference/golden/bridges_v1.json` pinned by `make_bridges_v1.cjs`. The pages' session store keeps every turn (v2). `tests/bridges.cjs` 34/34; Chromium at 1440 and 390 px. Explainer 8 (`explainers/bridges.html`) | done |
-| 7 · Follow-ups | The E1–E9 runs moved into Phase 2, and Phase 3's parity lets the pages show what decided them. What remains: any new claim registered on new seeds (for instance a sharper test of the guard's naming) | next |
-| 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
+| 7 · Follow-ups | Amendment 2 (commit `57d6d57`) registered E10 and E11 before any code; the runners (`engram/guard.py`, `run_followups.py`, `run_e11.cjs`, `golden/owl_eye.cjs`) were committed (`f193a29`) after dry runs only; then decided. E10 inconclusive (exact parts supported; naming 0.965 [0.94, 0.99] at +1.5 in E8's setting, equal to the share with two or more witnesses); E11 supported (50/50, control 50/50). The matching guard is in `engram_core.js` with 20 trace lines (849/849) and on the 3D page. Explainer 9 (`explainers/follow-ups.html`) | done |
+| 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | next |
 
 Claims, registered in [`PREREGISTRATION.md`](PREREGISTRATION.md) on 2026-11-04 with their instances, controls
 and decision rules, amended once before any decisive run (Amendment 1), and decided by the Phase 2 reference
@@ -227,6 +231,15 @@ and decision rules, amended once before any decisive run (Amendment 1), and deci
 - **E8** (inconclusive): the ln 2 guard blames a single corrupted stored distance on its own pair.
 - **E9** (supported): Hamming recall is exact for variants that keep every letter count's parity, and at chance for
   one-letter substitutions (an equivalence test within ±0.05, predicted in advance).
+
+Two follow-ups, registered in Amendment 2 before any code for them and decided in Phase 7
+(`reference/results/followups.json`, `reference/results/e11.json`):
+
+- **E10** (inconclusive; its exact parts supported): a sharper guard. Every quadruple above ln 2 holds the corrupted
+  pair in its largest matching, so the matching guard names it whenever two or more quadruples exceed ln 2; it names
+  it 0.965 of the time at +1.5 in E8's setting, short of 0.99, exactly the share with two or more witnesses.
+- **E11** (supported): a session exported here is byte for byte what Owl Academy saves, and Owl Academy restores and
+  continues it exactly, on 50 drawn conversations.
 
 ## 6. Decisions (adopted 2026-11-04)
 
@@ -267,12 +280,12 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `explainers/evidence.html` | Explainer 2: the spikes with their outputs, the golden corpus, the nine claims and their decision rules |
 | `explainers/shared-cores.html` | Explainer 3: Phase 1, the orbital core moved into one module, how the byte-identity was proved, the module live, PolyStep without torch |
 | `assets/em.css`, `assets/em-map.js` | Shared style; the system map data and its chart renderer (Hyperbolic Oracles' renderer, renamed) |
-| `PREREGISTRATION.md` | Claims E1–E9, fixed design inputs D1–D7, instances, controls and decision rules |
+| `PREREGISTRATION.md` | Claims E1–E9, fixed design inputs D1–D7, instances, controls and decision rules; Amendment 1; Amendment 2 with E10 and E11 |
 | `explainers/reference-results.html` | Explainer 4: Phase 2, the reference, how it was checked, Amendment 1, and the decisions |
 | `reference/engram/`, `reference/tests/` | The Python reference (12 modules) and its 41 tests |
 | `reference/run_traces.py`, `reference/traces/engram.json` | Exact values the browser core reproduces line for line (Phase 3), the watch layer included |
 | `engram_core.js` | The browser core (Phase 3): the engram layer as one UMD module, `EngramCore`, on `orbital_core.js`, PolyStep's `hyperbolic_core.js`, `decoder3d.js`, `twin3d.js` and `fence.js`, and `ttmpt_core_v1.js`; `runParity` and the behaviour checks |
-| `tests/parity-engram.cjs` | Its Node runner: 829 parity lines against the golden corpus and the traces, then 27 behaviour checks |
+| `tests/parity-engram.cjs` | Its Node runner: 849 parity lines (829 at Phase 3, 20 more for E10's guards in Phase 7) against the golden corpus and the traces, then 27 behaviour checks |
 | `explainers/browser-core.html` | Explainer 5: Phase 3, the module, how it is checked, the parity check live, a session on your own words |
 | `mind-eye.html`, `assets/mind-eye.js`, `assets/mind-eye.css` | The 2D page (Phase 4): STRIX on the clock |
 | `strix_library_v1.js` | STRIX's introduction and the fifteen concepts with their three replies, verbatim from Owl Academy (generated by `reference/golden/make_owl_v1.cjs`) |
@@ -288,6 +301,8 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `reference/golden/make_bridges_v1.cjs`, `bridges_v1.json` | Runs Owl Academy's session save, restore and greeting, `growBiochain` and `verifyIntegrity`, and the environment builder and hash on fixed inputs; `--check` recomputes |
 | `tests/bridges.cjs` | The bridges against Owl Academy's code (34 checks) |
 | `explainers/bridges.html` | Explainer 8: the bridges, in and out |
+| `reference/run_followups.py`, `reference/run_e11.cjs`, `reference/results/followups.*`, `e11.json` | The follow-up claims of Amendment 2 and their record |
+| `explainers/follow-ups.html` | Explainer 9: E10 and E11, how they were registered and decided |
 | `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
 | `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |
 | `reference/golden/make_golden_v1.cjs`, `engram_v1.json` | The golden corpus for E1, computed from Owl Academy's `Engram_Mind_Eye.html` and `biomesh.js`, which agree on every entry; `--check` recomputes it |

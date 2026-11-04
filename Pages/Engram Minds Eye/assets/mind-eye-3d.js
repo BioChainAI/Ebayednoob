@@ -362,7 +362,9 @@ function renderWatch() {
     else {
         const name = k => (k === 'r' ? 'the register' : k.includes(',') ? `zero point ${k}` : `section ${k}`);
         $('g-read').innerHTML = `<span>clean: worst defect <b>${g.clean.worst.toFixed(4)}</b> ${g.clean.bad ? '<b class="bad">above ln 2</b>' : '&lt; ln 2 = 0.6931 <b class="good">✓</b>'}</span>` +
-            (g.keys ? `<span>+${g.delta} on d(${name(g.keys[0])}, ${name(g.keys[1])}): <b>${g.bad}</b> quadruples above ln 2; the guard blames <b class="${g.hit ? 'good' : 'bad'}">${g.hit ? 'that pair' : `${name(g.topKeys[0])} – ${name(g.topKeys[1])}`}</b></span>` : '');
+            (g.keys ? `<span>+${g.delta} on d(${name(g.keys[0])}, ${name(g.keys[1])}): <b>${g.bad}</b> quadruple${g.bad === 1 ? '' : 's'} above ln 2</span>` +
+                `<span>the guard (all six pairs) blames <b class="${g.hit ? 'good' : 'bad'}">${g.hit ? 'that pair' : g.topKeys ? `${name(g.topKeys[0])} – ${name(g.topKeys[1])}` : 'nothing'}</b></span>` +
+                `<span>the matching guard (E10) ${g.matching.hit ? '<b class="good">names that pair</b>' : g.matching.named ? `names <b class="bad">${name(g.matching.named[0])} – ${name(g.matching.named[1])}</b>` : g.bad === 1 ? '<b>splits between two pairs</b>: one quadruple is one witness' : '<b>has no witness</b>'}</span>` : '');
     }
 }
 function renderMessages() {

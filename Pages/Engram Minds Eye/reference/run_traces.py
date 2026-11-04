@@ -5,7 +5,8 @@
 
 Quaternions and fractions are strings (they exceed 2^53); 64-bit words are 16 hex digits. The trace uses the
 golden session and synthetic dialogue 9000 (outside the registered instances), and the watch layer's E7 and E8
-instances on seeds 9100-9104, so a parity run never touches what run_claims.py decides.
+instances on seeds 9100-9104 (with E10's guards on matrices of the same seeds), so a parity run never touches what
+run_claims.py or run_followups.py decides.
 """
 import json
 import os
@@ -15,7 +16,9 @@ from fractions import Fraction
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import engram  # noqa: E402,F401
-from engram import address as A, clock as C, dialogue as Dg, orbital as O, recall as RC, ttmpt as T, watch as W  # noqa: E402
+from engram import address as A, clock as C, dialogue as Dg, guard as Gd, orbital as O, recall as RC, ttmpt as T, watch as W  # noqa: E402
+from hpstep import fence as Fz  # noqa: E402
+from hpstep.prng import Rng  # noqa: E402
 from engram.session import Session  # noqa: E402
 
 qs = lambda q: [str(c) for c in q]          # noqa: E731
@@ -69,8 +72,18 @@ def main():
         e8.append({'i': i, 'clean_worst': r['clean_worst'], 'clean_bad': r['clean_bad'],
                    'blame': [{'delta': dl, 'pair': list(b['pair']), 'top': list(b['top']) if b['top'] else None, 'bad': b['bad'], 'hit': b['hit']}
                              for dl, b in r['blame'].items()]})
+    # E10's three guards (Amendment 2) on seeds 9100-9104, outside its registered instances (5000-7199)
+    e10 = []
+    for i in range(9100, 9105):
+        for name, D, seed in (('A', Fz.distance_matrix([pts2[j] for j in Rng(i).sample(len(pts2), 24)]), i + 1000), ('B', Fz.distance_matrix(pts2), i + 2000)):
+            for delta in (0.5, 1.5):
+                E, pairs = Fz.corrupt(D, 1, delta, seed)
+                g = Gd.guards(E)
+                e10.append({'set': name, 'i': i, 'delta': delta, 'pair': list(pairs[0]), 'bad': g['bad'],
+                            'original': [[list(p), n] for p, n in g['original'][:3]], 'matching': [[list(p), n] for p, n in g['matching'][:3]],
+                            'smallest': [[list(p), n] for p, n in g['smallest'][:3]]})
     trace['watch'] = {'e7': [W.e7_instance(L, k, d, s) for L, k, d, s in ((2, 5, 1, 9100), (2, 10, 2, 9101), (3, 5, 1, 9102), (3, 10, 2, 9103))],
-                      'e8': e8}
+                      'e8': e8, 'e10': e10}
     os.makedirs(os.path.join(HERE, 'traces'), exist_ok=True)
     path = os.path.join(HERE, 'traces', 'engram.json')
     with open(path, 'w') as f:
