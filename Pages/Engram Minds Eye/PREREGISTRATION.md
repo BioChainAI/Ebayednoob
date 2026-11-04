@@ -196,4 +196,47 @@ whose key is nearest in Hamming distance. When t stored tokens tie at the minimu
 
 ## Amendments
 
-None yet.
+### Amendment 1 · 2026-11-04, Phase 2, before any decisive run
+
+Written while the reference was being built and its unit tests run, and before `run_claims.py` ran on any of
+the instances above. No result of a claim was known when it was written.
+
+**1. E1's control was void and is replaced.** The registered control, a per-character seed multiplier of 37 in
+place of 31, cannot fail: `crystallize` seeds each letter on its own, `seed = 0 · 31 + code`, so the multiplier
+only ever multiplies zero and every grid is unchanged (the unit test shows 0 entries differ). Under the common
+rules the test was therefore void. The replacement control changes the key's generator: **Mulberry32's increment
+0x6D2B79F7 in place of 0x6D2B79F5**, which must differ on at least one entry. The void control is still run and
+reported (expected: 0 entries differ), so the record shows why it was replaced.
+
+**2. Definitions the preregistration left open, fixed in the reference** (marked [DEFINITION] in its code):
+
+- *Slots.* Tokens fill the onload slots in time order: joint frames 2, 10, 18 of each cycle carry the next three
+  tokens, on channels 2, 1, 0. The order of tokens is then the order of onloads and of offloads, so a register's
+  product of address quaternions is a contiguous piece of the chain's word.
+- *Zero-point words.* The word written at a zero point is the last three packets latched by then, oldest first
+  (α, β, γ, as in Owl Academy's window), at address (count mod 30). Frames are numbered from 1; register r holds
+  frames 720r + 1 … 720(r + 1); a register is complete when the run passes its last frame.
+- *Addresses on the clock.* Every packet's address is encoded after the whole chain before it, in token order.
+- *Tile headers and leaves.* A word's tiles carry the step (F mod 8, 0 read as 8) and node (F mod 30) of the frame
+  it is written at, gate = address mod 64, and the mux index from step, node and slot, as `cellTile` does in
+  Tri-Engine Convergence. A leaf is the two tile words followed by the cell's 16 hex digits. Outside the clock
+  (E3's consecutive windows) window i is written as if at frame 24(i + 1), address i mod 30.
+- *Memory links.* ENGRAM-MEM/1 | frame | address | Merkle root | previous link, SHA-256, 16 hex digits.
+- *Membrane turn.* The common turn on the three landing nodes is s/3 of the turns the three latched packets carry
+  from their offloads to the zero point in free-run: 13/675 of a turn.
+- *E2 chains.* Of the n chains of a length, those with even index (0, 2, …) are random and the others are
+  dialogue chains, so K = 720 has 3 random and 2 dialogue chains. A random chain's packets are drawn from
+  Rng(1000 + i) for chain i, each as two 32-bit outputs, high first. Dialogue chain j of length K starts at store
+  token (j·K) mod 477 and wraps round.
+- *E3 draws.* A random window takes its three cells from Rng(1000 + i) the same way. Double alteration i of a set
+  draws from Rng(2000 + i): the window, two distinct cells, a bit, and (for i ≥ 50) a second, different bit; the
+  first 50 use the same bit in both cells.
+- *E6 random triples.* Rng(1000 + i), three draws below 65.
+- *E7 ancestors.* A misplaced memory's word is recovered with `decode_exact` and confirmed by exact equality with
+  its point; its recorded address is that word's first L letters.
+- *E9 variants.* Lowercase; the characters reversed; '7' appended; the token's first letter (its first character if
+  it has none) inserted twice after its first character; '-' inserted after its first character. A substitution
+  draws, from Rng(1000 + i) for store token i, a position among the token's letters, then a new letter among the 25
+  others. The shuffled control store permutes the keys with Rng(7).
+- *Hold setting (reported only).* A channel is engaged on the frames after an onload through its offload. In
+  register 0 no flight is under way at frame 1, so its first channel shows 354 rather than 360.
