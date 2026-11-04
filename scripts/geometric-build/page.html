@@ -307,14 +307,7 @@ table.lemmas th { text-align: left; }
 // =====================================================================
 // Engine v10 structures (kept exactly)
 // =====================================================================
-const TIERS_SPEC = [
-    { n: 0, W: 16, R: 15,  r: 4,  freq: 96, rotAxis: 'Z' },
-    { n: 1, W: 14, R: 35,  r: 6,  freq: 84, rotAxis: 'X' },
-    { n: 2, W: 12, R: 65,  r: 8,  freq: 72, rotAxis: 'Z' },
-    { n: 3, W: 10, R: 105, r: 10, freq: 60, rotAxis: 'X' },
-    { n: 4, W: 8,  R: 155, r: 12, freq: 48, rotAxis: 'Z' }
-];
-const TOTAL_NODES = 30, TOTAL_CALC_PULSES = 150;
+/*__ORB:tiers__*/
 const tensionAngleDeg = 180, torsionAngleDeg = 150, holonomyDrift = 0.0;
 const currentClutchState = { eta: 1.0 };
 function getTierOrientationQuat(tierId) {
@@ -410,7 +403,7 @@ function tierRadius(system, n) { const { rIn, rOut } = system; return rIn * Math
 const CLASSES = ['astrometry', 'timing', 'velocity'];
 const UNITS = ['µas', '×10⁻¹⁸ s⁻¹', 'km/s'];
 const SIGMA = [0.5, 0.05, 2.0];           // 1σ per class [DEFINITION]
-const K_RAT = 24;                         // declared rationalization precision 2^-24
+/*__ORB:krat__*/
 const R_INFL = PHYS.GM / (100e3) ** 2 / PHYS.pc;
 PULSARS.forEach((p, i) => {
     p.r = projPc(p);
@@ -491,10 +484,7 @@ function computeChannels(pi, tObs, epoch) {
 // =====================================================================
 // Layer B: exact rational engine
 // =====================================================================
-const RAT = x => Fraction.fromFloat(x, K_RAT);
-const fracAbs = f => (f.n < 0n ? f.neg() : f);
-const fracLe = (a, b) => a.n * b.d <= b.n * a.d;
-const bits = f => Math.max(f.n < 0n ? (-f.n).toString(2).length : f.n.toString(2).length, f.d.toString(2).length);
+/*__ORB:layerb__*/
 function layerB(ch) {
     return CLASSES.map((cls, c) => {
         const Ys = [0, 1, 2].map(s => RAT(ch.model[s][c]));
@@ -524,7 +514,7 @@ function exactLeg(q, k) {          // inverse Cayley u = v/(1 + w), rationalized
     return cayleyMap(u[0], u[1], u[2]);
 }
 const ICRS_TO_GAL = [[-0.0548755604, -0.8734370902, -0.4838350155], [0.4941094279, -0.4448296300, 0.7469822445], [-0.8676661490, -0.1980763734, 0.4559837762]];
-const D2R = Math.PI / 180;
+/*__ORB:d2r__*/
 function legAngle(q) { const v = Math.hypot(q[1].toNumber(), q[2].toNumber(), q[3].toNumber()); return 2 * Math.atan2(v, Math.abs(q[0].toNumber())); }
 const qbits = q => Math.max(...q.map(f => f.d.toString(2).length));
 function buildLegs(pi, epoch) {
@@ -566,146 +556,7 @@ function computeFrameClosure(pi, epoch) {
     return { legs: L, open, openExact, openAngle, openStatus, cycExact: qeq(cyc, Q_ONE), tol, inv: { reEq, closes, quadEq: quad(v).eq(quad(vr)), reI: I[0], reE: E[0] } };
 }
 const p_pa = pi => PULSARS[pi].pa;
-const f32 = new DataView(new ArrayBuffer(4));
-
-// =====================================================================
-// Fifteen-Lemma layer: §6.1 packets, Lemma 15 Merkle chain, Lemma 8 cycle,
-// Proposition 7.11 erasure, and the live compliance checks of Panel D
-// =====================================================================
-const qnorm = q => q.reduce((s, x) => s.add(x.mul(x)), Fraction.ZERO);
-// Exact value of a double as a fraction (for the Form 3 exactness flag)
-function fracOfDouble(x) {
-    if (x === 0) return Fraction.ZERO;
-    const dv = new DataView(new ArrayBuffer(8)); dv.setFloat64(0, x);
-    const hi = dv.getUint32(0), lo = dv.getUint32(4), e = (hi >>> 20) & 0x7ff;
-    let m = (BigInt(hi & 0xfffff) << 32n) | BigInt(lo), E;
-    if (e === 0) E = -1074; else { m |= 1n << 52n; E = e - 1075; }
-    if (hi >>> 31) m = -m;
-    return E >= 0 ? new Fraction(m << BigInt(E), 1n) : new Fraction(m, 1n << BigInt(-E));
-}
-
-// ---------- SHA-256 (FIPS 180-4), synchronous so the chain is recomputed every update ----------
-const SHA_K = Uint32Array.from([0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2]);
-function sha256(msg) {
-    const l = msg.length, nb = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(nb);
-    m.set(msg); m[l] = 0x80;
-    const dv = new DataView(m.buffer);
-    dv.setUint32(nb - 4, (l * 8) >>> 0); dv.setUint32(nb - 8, Math.floor(l / 0x20000000));
-    const H = Uint32Array.from([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]), w = new Uint32Array(64);
-    const rot = (x, n) => (x >>> n) | (x << (32 - n));
-    for (let o = 0; o < nb; o += 64) {
-        for (let i = 0; i < 16; i++) w[i] = dv.getUint32(o + 4 * i);
-        for (let i = 16; i < 64; i++) { const a = w[i - 15], b = w[i - 2]; w[i] = (w[i - 16] + (rot(a, 7) ^ rot(a, 18) ^ (a >>> 3)) + w[i - 7] + (rot(b, 17) ^ rot(b, 19) ^ (b >>> 10))) >>> 0; }
-        let [a, b, c, d, e, f, g, h] = H;
-        for (let i = 0; i < 64; i++) {
-            const t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + SHA_K[i] + w[i]) >>> 0;
-            const t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
-            h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
-        }
-        H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
-    }
-    const out = new Uint8Array(32), odv = new DataView(out.buffer);
-    H.forEach((v, i) => odv.setUint32(4 * i, v));
-    return out;
-}
-const toHex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
-const utf8 = s => new TextEncoder().encode(s);
-const concatBytes = (a, b) => { const r = new Uint8Array(a.length + b.length); r.set(a); r.set(b, a.length); return r; };
-const wordBytes = w => Uint8Array.from({ length: 8 }, (_, i) => Number((w >> BigInt(56 - 8 * i)) & 0xffn));
-
-// ---------- 64-bit Einstein Tile, monograph §6.1 Tables 4–5 with the stream use of spec §5.3 ----------
-const WHEEL = [1, 7, 11, 13, 17, 19, 23, 29];                 // (ℤ/30ℤ)×, Lemma 4 Part 5
-const B_PLUS = WHEEL.filter(u => u % 5 === 1 || u % 5 === 4); // quadratic residues mod 5: {1, 11, 19, 29}
-// Wheel field [60:58]: the unit u_i with u_i ≤ k < u_(i+1) on the 30-node wheel (node 0 belongs to 29) [DEFINITION]
-const wheelSector = k => { let u = 7; WHEEL.forEach((w, i) => { if (w <= k) u = i; }); return u; };
-// Step-multiplexed index [47:44] (Table 4): circle phase s ∈ ℤ/9 at steps 1–2, half-cube l at step 3,
-// ghost index 0 (central cell) at step 6, otherwise one of the 12 coordinates of aff(3) (here the stream slot)
-const muxIndex = (step, k, slot) => (step <= 2 ? k % 9 : step === 3 ? k % 16 : step === 6 ? 0 : slot % 12);
-const STRUCT_NAMES = ['System I', 'System II', 'System III', 'residual R'];
-function packTile(f) {
-    return (BigInt(f.step - 1) << 61n) | (BigInt(f.wheel) << 58n) | (BigInt(f.struct) << 56n) | (BigInt(f.gate) << 48n) |
-           (BigInt(f.mux) << 44n) | (BigInt(f.form) << 40n) | (BigInt(f.slot) << 36n) | (BigInt(f.scale) << 32n) | BigInt(f.core >>> 0);
-}
-function decodeTile(w) {
-    const g = (hi, lo) => Number((w >> BigInt(lo)) & ((1n << BigInt(hi - lo + 1)) - 1n));
-    return { step: g(63, 61) + 1, wheel: g(60, 58), struct: g(57, 56), halo: g(63, 56), gate: g(55, 48), comp: g(55, 54), slice: g(53, 48),
-             mux: g(47, 44), form: g(43, 40), slot: g(39, 36), scale: g(35, 32), core: g(31, 0) };
-}
-const hexWord = w => '0x' + w.toString(16).toUpperCase().padStart(16, '0');
-// Twelve streams per update: stream slot 4·class + structure, structure 0–2 = Y_I..Y_III, 3 = Y_R (spec §5.3)
-function makePackets(ck, B) {
-    const out = [];
-    for (let c = 0; c < 3; c++) for (let s = 0; s < 4; s++) {
-        const rat = s < 3 ? B[c].Ys[s] : B[c].YR, v = rat.toNumber(), slot = 4 * c + s;
-        f32.setFloat32(0, v);
-        const core = f32.getUint32(0), exact = fracOfDouble(f32.getFloat32(0)).eq(rat);
-        const word = packTile({ step: ck.piCycleStepK, wheel: wheelSector(ck.k), struct: s, gate: (0 << 6) | (ck.epoch % 64),
-                                mux: muxIndex(ck.piCycleStepK, ck.k, slot), form: 3, slot, scale: 0, core });
-        out.push({ kind: 'data', key: `d:${slot}`, c, s, slot, rat, word, exact });
-    }
-    return out;
-}
-// ---------- Frame-leg packets (spec §5.3: "12–15: the four quaternion components of a frame leg") ----------
-// Stream ID for leg ℓ = (structure bits ℓ, slot 12–15), the same pattern as the data streams (structure s, slot 4c + s)
-// [DEFINITION]. Form 3: one binary32 component per packet, component also in gate bits 55–54. Form 1: the whole leg in one packet.
-const LEG_NAMES = ['H1 ICRS → Galactic', 'H2 Galactic → Sgr A*', 'H3 Sgr A* → pulsar', 'H4 pulsar → observer'];
-const GATE_HOLONOMY = 0b11;   // geometric gate (Forms 0–2): locus 0, C9 offset 0, harmonic flag 11 = holonomy H
-// Form 1 (Table 5): 2Q gcd-reduced and sign-normalized (first non-zero coordinate positive). Core word [DEFINITION of byte order]:
-// bits 31–24 = loss flag (bit 31) + 2w (bits 30–24), bits 23–16 = x, 15–8 = y, 7–0 = z, signed bytes in [−127, 127].
-function hurwitzEncode(q) {
-    const L = q.reduce((l, f) => l / gcdB(l, f.d) * f.d, 1n);
-    let v = q.map(f => 2n * f.n * (L / f.d));
-    const g = v.reduce((a, x) => gcdB(a, x), 0n) || 1n;
-    v = v.map(x => x / g);
-    if ((v.find(x => x !== 0n) || 0n) < 0n) v = v.map(x => -x);
-    const bitsNeeded = Math.max(...v.map(x => absB(x).toString(2).length));
-    let b, loss = false;
-    if (v[0] <= 127n && v.slice(1).every(x => absB(x) <= 127n)) b = v.map(Number);
-    else {   // renormalize to the nearest representable direction on the 7-bit grid and set the loss flag
-        loss = true;
-        let f = q.map(x => x.toNumber()); if ((f.find(x => x !== 0) || 0) < 0) f = f.map(x => -x);
-        const m = Math.max(...f.map(Math.abs)); b = f.map(x => Math.round(x * 127 / m));
-    }
-    const byte = x => (x < 0 ? 256 + x : x) & 0xff;
-    const core = (((loss ? 0x80 : 0) | (b[0] & 0x7f)) << 24 | byte(b[1]) << 16 | byte(b[2]) << 8 | byte(b[3])) >>> 0;
-    return { b, loss, core, bitsNeeded, err: hurwitzAngleError(q, b) };
-}
-function hurwitzDecode(core) {
-    const sb = x => (x > 127 ? x - 256 : x);
-    return { loss: !!(core >>> 31), b: [(core >>> 24) & 0x7f, sb((core >>> 16) & 0xff), sb((core >>> 8) & 0xff), sb(core & 0xff)] };
-}
-// Rotation-angle difference between the exact leg and the decoded direction: 4·asin(|q̂ − b̂|/2) with matched signs
-function hurwitzAngleError(q, b) {
-    const f = q.map(x => x.toNumber()), nb = Math.hypot(...b);
-    if (!nb) return Math.PI;
-    let bh = b.map(x => x / nb); const dot = f.reduce((s, x, i) => s + x * bh[i], 0); if (dot < 0) bh = bh.map(x => -x);
-    return 4 * Math.asin(Math.min(1, Math.hypot(...f.map((x, i) => x - bh[i])) / 2));
-}
-function makeFramePackets(ck, legs, mode) {
-    const out = [], step = ck.piCycleStepK, wheel = wheelSector(ck.k);
-    legs.forEach((q, l) => {
-        if (mode === 'f3') q.forEach((comp, j) => {
-            f32.setFloat32(0, comp.toNumber());
-            const core = f32.getUint32(0), exact = fracOfDouble(f32.getFloat32(0)).eq(comp);
-            const word = packTile({ step, wheel, struct: l, gate: (j << 6) | (ck.epoch % 64), mux: muxIndex(step, ck.k, 12 + j), form: 3, slot: 12 + j, scale: 0, core });
-            out.push({ kind: 'f3', key: `f:${l}:${j}`, leg: l, j, rat: comp, word, exact, leafText: comp.toString() });
-        });
-        else {
-            const h = hurwitzEncode(q);
-            const word = packTile({ step, wheel, struct: l, gate: GATE_HOLONOMY, mux: muxIndex(step, ck.k, 12 + l), form: 1, slot: 12 + l, scale: 0, core: h.core });
-            out.push({ kind: 'f1', key: `f:${l}:q`, leg: l, q, h, word, exact: !h.loss, leafText: q.map(String).join(',') });
-        }
-    });
-    return out;
-}
-// Lemma 15 Part 3: τN = H(GN), τd = H(Gd ‖ τd+1); leaf Gd = tile word ‖ the exact value it stands for
-const leafBytes = p => concatBytes(wordBytes(p.word), utf8(p.leafText !== undefined ? p.leafText : p.rat.toString()));
-function merkleChain(leaves) {
-    const N = leaves.length, tau = new Array(N + 1);
-    tau[N] = sha256(leaves[N - 1]);
-    for (let d = N - 1; d >= 1; d--) tau[d] = sha256(concatBytes(leaves[d - 1], tau[d + 1]));
-    return tau;
-}
+/*__ORB:lemma__*/
 
 // ---------- Lemma 8: the 8-step cycle and its gcd-reduced spinors (1 + i)^k ----------
 const STEP_THETA = ['π/4', 'π/2', '3π/4', 'π', '5π/4', '3π/2', '7π/4', '2π'];

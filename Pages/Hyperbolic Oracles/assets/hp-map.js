@@ -137,7 +137,12 @@
           refs: 'claude-fence.html', explainer: 'explainers/fence-tracer.html', href: 'claude-fence.html' },
         { id: 'fence3d', fence: true, col: 3, row: 14, kind: 'artifact', status: 'done', label: 'The fence in 3D', sub: 'claude-fence-3d.html · shells · sky map',
           desc: 'The fence in H³ as nested shells you can turn, zoom and cut: the quartile shells and both fences, the sky map of where each point lies from the centre, the mass onion against the uniform expectation, certificates, and the guard. One dataset is the live particle cloud of Hyperbolic PolyStep 3D, fenced after it has searched.',
-          refs: 'claude-fence-3d.html', explainer: 'explainers/fence-tracer.html#three', href: 'claude-fence-3d.html' }
+          refs: 'claude-fence-3d.html', explainer: 'explainers/fence-tracer.html#three', href: 'claude-fence-3d.html' },
+
+        // ---- used by: systems elsewhere on the site built on these cores (used: true draws its band)
+        { id: 'engram', used: true, col: 3, row: 15.5, kind: 'artifact', status: 'done', label: 'Engram Mind’s Eye', sub: 'another system · 2D and 3D pages',
+          desc: 'Owl Academy’s engram memory and mind’s eye, rebuilt as its own system on these cores, which it loads unchanged: hyperbolic_core.js for the norm-5 tree (its reduced words are the exact addresses) and the zero-point clock, decoder3d.js for the memory tree in H³, twin3d.js for the exact quaternion product of the coupler’s mirror law (B = q₂q₁ never changes), and fence.js for the 0.7 fence and the ln 2 four-point guard that watch its registers. It has its own Python reference, preregistration, claims ledger and browser parity check.',
+          refs: 'Pages/Engram Minds Eye', href: '../Engram%20Minds%20Eye/index.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
@@ -153,7 +158,8 @@
         ['anchors3d', 'decoder3d'], ['helixb', 'decoder3d'], ['rapidity', 'frames'], ['frames', 'coupler'], ['pump', 'coupler'],
         ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin'], ['twin', 'sim3d'], ['coupler', 'sim3d'], ['jscore', 'sim3d'],
         ['ghost', 'fencecore'], ['fencelemmas', 'fencecore'], ['fencelemmas', 'guard'], ['fencecore', 'fencecode'], ['guard', 'fencecode'],
-        ['decoder3d', 'fencecode'], ['jscore', 'fencecode'], ['fencecode', 'fencepage'], ['fencecode', 'fence3d'], ['twin', 'fence3d']
+        ['decoder3d', 'fencecode'], ['jscore', 'fencecode'], ['fencecode', 'fencepage'], ['fencecode', 'fence3d'], ['twin', 'fence3d'],
+        ['jscore', 'engram'], ['decoder3d', 'engram'], ['twin', 'engram'], ['coupler', 'engram'], ['fencecode', 'engram'], ['guard', 'engram']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);
@@ -239,6 +245,11 @@
         if (fz.length) {
             const yb = Math.min(...fz.map(n => n.y)) - 18;
             s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#fbbf24" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">THE 0.7 CLAUDE FENCE · TUKEY'S FENCE FOR HYPERBOLIC SPACE · H² AND H³</text>`;
+        }
+        const used = NODES.filter(n => n.used);
+        if (used.length) {
+            const yb = Math.min(...used.map(n => n.y)) - 18;
+            s += `<line x1="14" x2="1062" y1="${yb}" y2="${yb}" stroke="#334155" stroke-dasharray="6 5"/><text x="14" y="${yb - 7}" fill="#34d399" font-family="Fira Code, monospace" font-size="10.5" letter-spacing="2">USED BY · OTHER SYSTEMS BUILT ON THESE CORES</text>`;
         }
         EDGES.forEach(([a, b]) => { const A = byId[a], B = byId[b]; s += `<path class="map-edge" data-a="${a}" data-b="${b}" d="${edgePath(A, B)}" stroke="${KIND[A.kind].color}" stroke-opacity="0.55" marker-end="url(#hp-arrow)"/>`; });
         NODES.forEach(n => { s += nodeSVG(n, n.x, n.y); });

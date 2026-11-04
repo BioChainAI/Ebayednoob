@@ -54,6 +54,28 @@ A four-point guard at ln 2 (CF9) catches corrupted distances. See `explainers/fe
 | Page and tracer | `claude-fence.html` (e.g. `claude-fence.html?dim=3&R=4&k=10&f=2`) and Explainer 11 | done |
 | 3D | `claude-fence-3d.html`: nested shells in H³, cut views, sky map, mass onion, guard, and the PolyStep 3D particle cloud as a live dataset (e.g. `claude-fence-3d.html?kind=polystep&F=240`); its manual is Explainer 11, chapter 11 | done |
 
+## Used by
+
+[Engram Mind's Eye](../Engram%20Minds%20Eye/README.md) (`Pages/Engram Minds Eye/`) loads four of this folder's
+browser files unchanged, by relative path, in Node and in its pages. It is on the system map as *Engram Mind's Eye*,
+under "Used by".
+
+| File | What Engram uses |
+| --- | --- |
+| `hyperbolic_core.js` | `P.children`, `P.wordQuaternion`, `P.rightDivide`, `P.isReduced`, `P.INV` (the norm-5 tree: its reduced words are Engram's addresses); `Rng`; `ON`, `OFF` (the clock, checked against Engram's own) |
+| `decoder3d.js` | `TreeEmbedding3D` (the memory tree in H³) |
+| `twin3d.js` | `qmul`, `qconj`, `qnormExact`, `qnormFloat`, `rotOfQuat` (the coupler's mirror law and the frames) |
+| `fence.js` | `fence`, `guardCheck`, `defect`, `distanceMatrix`, `centrePoint`, `generate`, `corrupt`, `treeWords`, `LN2` (the watch layer) |
+
+A change to any of these names or to their results must keep Engram's checks green as well as this folder's:
+
+```
+node "Pages/Engram Minds Eye/tests/parity-engram.cjs"
+node "Pages/Engram Minds Eye/tests/page-engine.cjs"
+node "Pages/Engram Minds Eye/tests/page3d-engine.cjs"
+node "Pages/Engram Minds Eye/tests/bridges.cjs"
+```
+
 ## Files
 
 | Path | Holds |

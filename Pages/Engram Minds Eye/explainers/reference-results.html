@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Reference and the Results - Engram Mind's Eye</title>
+    <meta name="description" content="Explainer 4 of Engram Mind's Eye: Phase 2. The Python reference that decides the preregistered claims, how it was checked, Amendment 1, and the decisions: eight of nine claims supported, the guard's blame inconclusive.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/em.css">
+    <script src="../assets/em-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Engram Mind&rsquo;s Eye &middot; Explainer 4 &middot; Phase 2</div>
+    <h1>The Reference and the Results</h1>
+    <p class="lede">The Python reference rebuilds the engram system on exact arithmetic and decides the nine preregistered claims. Eight are supported. The ninth, whether the guard names the right corrupted distance, is inconclusive: right 96 times in 100 at the registered threshold, where the rule asked for 99.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#decisions">The decisions</a>
+        <a class="btn btn-ghost" href="#amendment">Amendment 1</a>
+        <a class="btn btn-ghost" href="#meaning">What they mean</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#built">2. What was built</a></li>
+            <li><a href="#checked">3. How it was checked</a></li>
+            <li><a href="#amendment">4. Amendment 1</a></li>
+            <li><a href="#decisions">5. The decisions</a></li>
+            <li><a href="#details">6. Claim by claim</a></li>
+            <li><a href="#meaning">7. What they mean</a></li>
+            <li><a href="#run">8. Running it yourself</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#built">What was built</a></li><li><a href="#checked">How it was checked</a></li>
+            <li><a href="#amendment">Amendment 1</a></li><li><a href="#decisions">The decisions</a></li><li><a href="#details">Claim by claim</a></li>
+            <li><a href="#meaning">What they mean</a></li><li><a href="#run">Running it yourself</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The reference takes the golden corpus, the preregistration and the shared cores, and feeds the browser core of Phase 3, which must reproduce its traces.</p>
+            <div data-em-map="focus" data-node="ref"></div>
+        </section>
+
+        <section class="chapter" id="built">
+            <div class="chapter-num">02</div>
+            <h2>What was built</h2>
+            <p class="chapter-intro">Twelve modules in <code>reference/engram/</code>, pure Python with numpy. Hyperbolic PolyStep&rsquo;s exact modules are imported in place, without torch, and the orbital code is ported line by line from <code>orbital_core.js</code>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Module</th><th>Holds</th><th>Layer</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">ttmpt</td><td>engram/1 from Owl Academy&rsquo;s page: Mulberry32, the letter grids, XOR crystallization, chiral key, J, both tokenizers, the engram stream, the 128-bit packet chain</td><td>L0</td></tr>
+                    <tr><td class="mono">orbital</td><td>Tiles, the Merkle chain, the 2&#8315;&sup2;&#8308; rationalization, frames, TQF, the gauge, the readout and the pump, from <code>orbital_core.js</code></td><td>shared</td></tr>
+                    <tr><td class="mono">address</td><td>The 28-letter norm-5 address, the chain word and quaternion, unfolding by right division</td><td>L2</td></tr>
+                    <tr><td class="mono">memory</td><td>The GF(2) triple-quad word, its Form 5 tiles and leaves, the Merkle chain, parity, locate, rebuild and repair</td><td>L3</td></tr>
+                    <tr><td class="mono">clock</td><td>The zero-point clock, zero-point words, registers with 72 blocks and 10 groups, the compensator, the engagement pump, the membrane turn</td><td>L3, L5</td></tr>
+                    <tr><td class="mono">coupler</td><td>The mirror law between the human and STRIX streams</td><td>L6</td></tr>
+                    <tr><td class="mono">session, dialogue</td><td>A dialogue run end to end; the store, the golden session and the synthetic dialogues</td><td>all</td></tr>
+                    <tr><td class="mono">recall, watch, stats</td><td>Hamming recall and its variants; the fence screen, the exact address check and the guard; the bootstrap</td><td>L7, E9</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="checked">
+            <div class="chapter-num">03</div>
+            <h2>How it was checked</h2>
+            <ul>
+                <li><strong>41 unit tests</strong>, one file per module, each claim&rsquo;s mechanics with its control.</li>
+                <li><strong>Parity with the pages&rsquo; own code.</strong> <code>test_orbital_parity.py</code> runs <code>orbital_core.js</code> through Node and compares: 300 tiles, every wheel sector and mux index, Merkle chains, the 2&#8315;&sup2;&#8308; rounding including its ties, <code>toNum</code> beyond 2&sup1;&#8304;&sup2;&#8308;, 300 gauges, every landing node of 129 readouts, and the pump. All exact.</li>
+                <li><strong>A dry run.</strong> <code>run_claims.py --dry</code> moves every seed up by 8000, shrinks every set and swaps the store and the golden session for stand-ins, so the runner was exercised without touching a registered instance. It found one crash (an empty token, which the registered store cannot hold) before the decisive run.</li>
+                <li><strong>The runner was committed before it ran</strong> on the registered instances (commit <code>735b91c</code>); the results are a separate commit (<code>ab04cbe</code>).</li>
+            </ul>
+            <div class="callout note"><span class="label">A disclosure</span>
+                <p>While the modules were being debugged, a few unit tests briefly used registered instances to check mechanics: synthetic dialogues 1000&ndash;1004, two E7 seeds and one E8 instance. Nothing was tuned on them, and the tests were moved to seeds of 9000 and above before the runner was written. E1&rsquo;s unit test compares the same fields as the claim; for a port whose job is to match Owl Academy bit for bit, that comparison is how the port was made correct.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="amendment">
+            <div class="chapter-num">04</div>
+            <h2>Amendment 1</h2>
+            <p class="chapter-intro">Written in Phase 2, before any decisive run, and added to the end of <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>.</p>
+            <p><strong>E1&rsquo;s control was void.</strong> The registered control, a per-character seed multiplier of 37 in place of 31, cannot fail: the page seeds each letter on its own, so the multiplier only ever multiplies zero. A control that cannot fail proves nothing, and the common rules make such a test void. It was replaced by a change to Mulberry32&rsquo;s increment, which changes 527 of 536 entries. The void control still runs, and still changes 0.</p>
+            <p><strong>Definitions the preregistration left open</strong> were fixed and listed: slots filled first in, first out; the word at a zero point is the last three latched packets, oldest first; tile headers and leaves; the memory links; the membrane turn, 13/675 of a turn; how chains, windows, triples, variants and substitutions are drawn; how a misplaced memory&rsquo;s recorded address is read.</p>
+        </section>
+
+        <section class="chapter" id="decisions">
+            <div class="chapter-num">05</div>
+            <h2>The decisions</h2>
+            <p class="chapter-intro">Rendered from <code>reference/results/claims.json</code>, the runner&rsquo;s own record. Run on 2026-11-04 with Python 3.13 and numpy 2.5, in about three minutes.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>#</th><th>Decision</th><th>Cases</th><th>Failures</th><th>Controls</th></tr></thead>
+                <tbody id="dec-rows">
+                    <tr><td colspan="5">Loading <code>results/claims.json</code>&hellip; If it does not load, the commit message of <code>ab04cbe</code> and <a href="../reference/results/claims.md">claims.md</a> hold the same record.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="details">
+            <div class="chapter-num">06</div>
+            <h2>Claim by claim</h2>
+            <h3>E1 &middot; Compatibility</h3>
+            <p>All 536 entries, both tokenizers on all three sentences, the engram stream and all 69 packets of the fresh session match Owl Academy. Rechecked against the Owl-Academy checkout at run time: still matching.</p>
+            <h3>E2 &middot; The chain quaternion</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">Packets</th><th class="num">Chains</th><th class="num">Bits per component</th><th class="num">Bits per packet</th><th class="num">Seconds per chain</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">1</td><td class="num">20</td><td class="num">33</td><td class="num">128&ndash;132</td><td class="num">&lt; 0.001</td></tr>
+                    <tr><td class="num">10</td><td class="num">20</td><td class="num">325</td><td class="num">130</td><td class="num">0.003</td></tr>
+                    <tr><td class="num">72</td><td class="num">20</td><td class="num">2,341</td><td class="num">130</td><td class="num">0.04</td></tr>
+                    <tr><td class="num">720</td><td class="num">5</td><td class="num">23,405</td><td class="num">130</td><td class="num">2.5</td></tr>
+                </tbody>
+            </table></div>
+            <p>A packet of 64 bits costs 130 bits in the chain quaternion, about 2&times;, at every length. Every chain unfolds exactly; a backtracking packet breaks recovery in 80 of 80 chains, and swapping two packets changes the quaternion in 65 of 65.</p>
+            <h3>E3 &middot; The triple-quad memory</h3>
+            <p>5,639 windows (67 from the golden session, 4,572 from the dialogues, 1,000 random): every one of 1,443,584 single-bit alterations failed the parity, was located by the chain, rebuilt, and left the root as recorded. All 600 double alterations were detected and refused. Parity alone was fooled by all 150 same-position doubles, which is why the chain is part of the word.</p>
+            <h3>E4 &middot; The register</h3>
+            <p>40 complete registers: packet, block and group products equal, the compensator exact, and every register closed in free-run. Both controls broke the equality in 40 of 40. Every register&rsquo;s product also unfolds back to its packets, which the claim did not require. In the hold setting (reported only) each channel leaves 360/720 of a turn, 354 on the first channel of register 0.</p>
+            <h3>E5 &middot; The coupler</h3>
+            <p>At all 1,554 zero points of 21 runs the binding was unchanged; with the coupler carrying, every output matched the run without it; the same-chirality control changed the binding in 21 of 21 runs.</p>
+            <h3>E6 &middot; The gauge and the lock</h3>
+            <p>All 274,625 triples recovered exactly, with X = Y = 0 exactly when the three were equal; 9,746 readouts locked exactly when their triple was equal. 31 of 4,681 real footer triples locked, which is how often a new word sits at the same distance from all three cells of the window. The wrong gauge failed on 270,400 triples.</p>
+            <h3>E7 &middot; The fence on misplaced memories</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">Depth</th><th class="num">Too deep by</th><th class="num">Detection, k = 5</th><th class="num">Detection, k = 10</th><th class="num">False flags</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">2</td><td class="num">1</td><td class="num">0.85 [0.80, 0.90]</td><td class="num">0.85 [0.81, 0.88]</td><td class="num">0</td></tr>
+                    <tr><td class="num">2</td><td class="num">2</td><td class="num">1.00 [1.00, 1.00]</td><td class="num">1.00 [1.00, 1.00]</td><td class="num">0</td></tr>
+                    <tr><td class="num">3</td><td class="num">1</td><td class="num">0.83 [0.78, 0.88]</td><td class="num">0.83 [0.80, 0.86]</td><td class="num">3.21%</td></tr>
+                    <tr><td class="num">3</td><td class="num">2</td><td class="num">1.00 [1.00, 1.00]</td><td class="num">1.00 [1.00, 1.00]</td><td class="num">3.21%</td></tr>
+                </tbody>
+            </table></div>
+            <p>The exact address check settled all 3,958 flags correctly. The false flags at depth 3 are 6 of 187 memories, the six straightest leaves the preregistration predicted.</p>
+            <h3>E8 &middot; The guard</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">Distance raised by</th><th class="num">Blamed on the right pair</th><th class="num">Interval</th><th class="num">Quads above ln 2 (median)</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">0.5</td><td class="num">0.42</td><td class="num">[0.28, 0.56]</td><td class="num">1</td></tr>
+                    <tr><td class="num">1.0</td><td class="num">0.92</td><td class="num">[0.84, 0.98]</td><td class="num">26</td></tr>
+                    <tr><td class="num">1.5</td><td class="num">0.96</td><td class="num">[0.90, 1.00]</td><td class="num">95</td></tr>
+                    <tr><td class="num">3.0</td><td class="num">1.00</td><td class="num">[1.00, 1.00]</td><td class="num">204</td></tr>
+                </tbody>
+            </table></div>
+            <p>No clean matrix broke the bound (the worst defect was 0.6923, below ln&nbsp;2 = 0.6931). Blame was right every time at +3.0 but 48 of 50 at +1.5: above the 0.90 that would refute, below the 0.99 that would support. The dry run, on three unregistered instances, had already hinted at this; the rule was left as registered.</p>
+            <h3>E9 &middot; Hamming recall</h3>
+            <p>Every parity-keeping variant of every stored word has its exact key (2,385 queries). For 2,210 one-letter substitutions, recall@1 was 0.0002 from the engram store and 0.0007 from the shuffled store: a difference of &minus;0.0005, interval [&minus;0.0017, 0.0004], inside &plusmn;0.05. Recall from a misspelling is at chance, as predicted, and chance here is about 1 in 477.</p>
+        </section>
+
+        <section class="chapter" id="meaning">
+            <div class="chapter-num">07</div>
+            <h2>What they mean for the system</h2>
+            <ul>
+                <li><strong>The exact bookkeeping holds.</strong> Addresses, chains, memory words, registers, the coupler&rsquo;s binding and the gauge behave exactly as designed on every registered case, so Phases 3 to 5 can build on them.</li>
+                <li><strong>The chain quaternion is a lossless store at about twice the size.</strong> It earns its place as the register&rsquo;s exact record. It is not compression.</li>
+                <li><strong>The memory word needs its chain.</strong> Parity alone misses a matched pair of flips every time; with the chain, nothing in 1.4 million alterations slipped through.</li>
+                <li><strong>The fence screens and the exact check decides, as designed.</strong> Two levels too deep is always caught; one level too deep about 84% of the time; the depth-3 false flags are exactly the predicted straight leaves.</li>
+                <li><strong>The guard proves, but naming is not settled.</strong> The ln&nbsp;2 bound held exactly. Naming the corrupted pair is reliable at +3.0 and right 96 times in 100 at +1.5. The 3D page will show the guard&rsquo;s top pair as a suspect, with these rates, not as a verdict. A stronger test would be a new claim on new seeds, not a re-run of this one.</li>
+                <li><strong>Recall is what the key allows.</strong> Exact for anything with the same letter-count parities, chance for a single misspelling. Better recall needs engram/2.</li>
+            </ul>
+        </section>
+
+        <section class="chapter" id="run">
+            <div class="chapter-num">08</div>
+            <h2>Running it yourself</h2>
+            <div class="out">cd "Pages/Engram Minds Eye/reference"<br>pip install -r requirements.txt<br>python3 -m pytest -q tests<br>python3 run_claims.py --dry<br>python3 run_claims.py</div>
+            <p>Torch is not needed. Node is used by the parity tests and by E1&rsquo;s check against an Owl-Academy checkout next to this one; neither decides anything.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="shared-cores.html">&larr; The shared cores</a>
+                <a class="btn btn-ghost" href="../index.html">Back to the hub &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Engram Mind&rsquo;s Eye &middot; Explainer 4 &middot; <a href="../index.html">Hub</a></footer>
+<script>
+(async function () {
+    const body = document.getElementById('dec-rows');
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const tag = d => ({ supported: 't-SUPPORTED', refuted: 't-REFUTED', inconclusive: 't-MIXED', void: 't-OPEN' }[d] || 't-OPEN');
+    try {
+        const r = await (await fetch('../reference/results/claims.json')).json();
+        body.innerHTML = Object.entries(r.claims).map(([k, c]) => {
+            const parts = c.parts ? '<br><span style="color:var(--muted);font-size:0.85em">' + Object.entries(c.parts).map(([p, v]) => esc(p) + ': ' + esc(v)).join('<br>') + '</span>' : '';
+            const ctrl = Object.entries(c.control || {}).map(([p, v]) => esc(p) + ': <b>' + esc(v) + '</b>').join('<br>') || '&mdash;';
+            return `<tr><td class="mono">${k}</td><td><span class="tag ${tag(c.decision)}">${esc(c.decision.toUpperCase())}</span>${parts}</td><td class="num">${c.cases.toLocaleString('en')}</td><td class="num">${c.failures}</td><td style="font-size:0.86em">${ctrl}</td></tr>`;
+        }).join('');
+    } catch (e) { /* the fallback row stays */ }
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye hub&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;System map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye.html&quot;,&quot;label&quot;:&quot;Mind's Eye 2D: STRIX on the clock&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Talk with STRIX; every word on the five tiers, the clock, exact memory&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye-3d.html&quot;,&quot;label&quot;:&quot;Mind's Eye 3D: the memory in H³&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;The memory tree in H³, frames, the twin system, the fence and the guard&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;The Architecture&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 1: five systems, eight layers, a live lab&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;The Evidence and the Claims&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 2: spikes, golden corpus, E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;shared-cores.html&quot;,&quot;label&quot;:&quot;The Shared Cores&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 3: orbital_core.js, byte-identical pages, PolyStep without torch&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;reference-results.html&quot;,&quot;label&quot;:&quot;The Reference and the Results&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 4: Phase 2, the decisions on E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 5: engram_core.js, 849 parity lines, live in the page&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 6: every panel and control of mind-eye.html&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 7: every panel of mind-eye-3d.html, LATTICE-SEED/1&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 8: Owl Academy in and out, checked against its own code&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;follow-ups.html&quot;,&quot;label&quot;:&quot;The Follow-ups&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 9: E10 and E11, registered before any code, decided&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;integration.html&quot;,&quot;label&quot;:&quot;Integration and Upkeep&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 10: the ways in, the shared cores, one command for every check&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;One engine, five tiers: the pipeline for one word&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;Three engines: the clock the window rides&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;The triple quad, memory and the gauge&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Cross-engine TQF and the soliton crystal&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Exact addresses, H² and H³, the twin system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The watch layer's screen and guard&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

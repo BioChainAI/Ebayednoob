@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Evidence and the Claims - Engram Mind's Eye</title>
+    <meta name="description" content="Explainer 2 of Engram Mind's Eye: the four feasibility spikes with their captured outputs, the golden corpus pinned from Owl Academy's files, and the nine preregistered claims with their tests, controls and decision rules.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/em.css">
+    <script src="../assets/em-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Engram Mind&rsquo;s Eye &middot; Explainer 2</div>
+    <h1>The Evidence and the Claims</h1>
+    <p class="lede">Before any engram code was written, four short scripts ran the two repositories&rsquo; own code to see whether the design could work, a golden corpus was taken from Owl Academy&rsquo;s files, and nine claims were fixed with the rules that will decide them. This page sets out all three and keeps them apart.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#prereg">The nine claims</a>
+        <a class="btn btn-ghost" href="#golden">The golden corpus</a>
+        <a class="btn btn-ghost" href="architecture.html">The architecture</a>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#rules">2. What the spikes can decide</a></li>
+            <li class="part">Spikes</li>
+            <li><a href="#spike-a">3. A &middot; The key</a></li>
+            <li><a href="#spike-b">4. B &middot; Quaternion addresses</a></li>
+            <li><a href="#spike-c">5. C &middot; The orbital memory code</a></li>
+            <li><a href="#spike-d">6. D &middot; The fence on a memory tree</a></li>
+            <li class="part">Fixed in advance</li>
+            <li><a href="#golden">7. The golden corpus</a></li>
+            <li><a href="#prereg">8. The nine claims</a></li>
+            <li><a href="#run">9. Running it yourself</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#rules">What the spikes can decide</a></li><li><a href="#spike-a">Spike A</a></li>
+            <li><a href="#spike-b">Spike B</a></li><li><a href="#spike-c">Spike C</a></li><li><a href="#spike-d">Spike D</a></li>
+            <li><a href="#golden">The golden corpus</a></li><li><a href="#prereg">The nine claims</a></li><li><a href="#run">Running it yourself</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The spikes and the golden corpus feed the preregistration, and the preregistration feeds the Python reference that will decide every claim.</p>
+            <div data-em-map="focus" data-node="prereg"></div>
+            <div class="grid-2">
+                <div data-em-map="focus" data-node="golden"></div>
+                <div data-em-map="focus" data-node="spikes"></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="rules">
+            <div class="chapter-num">02</div>
+            <h2>What the spikes can decide</h2>
+            <p class="chapter-intro">Nothing in the ledger. The spikes are feasibility checks: they ran on the existing code to find out whether the design could work and what would break it, and several of the design&rsquo;s choices come straight from what they found.</p>
+            <ul>
+                <li>They use the repositories&rsquo; code <strong>unchanged</strong>: Owl Academy&rsquo;s engram core copied verbatim, PolyStep&rsquo;s browser cores and the fence loaded as they are, and the orbital pages&rsquo; code read from their build templates (since Phase 1, required from the shared module <code>orbital_core.js</code>).</li>
+                <li>Their outputs are committed beside them, and every run is deterministic, so anyone gets the same lines.</li>
+                <li>They ran <strong>before</strong> the preregistration was written. A claim tested on the same cases that inspired it would be circular, so each claim is decided later, by the Python reference, on the instances the preregistration fixes.</li>
+            </ul>
+            <div class="callout note"><span class="label">What the spikes changed</span>
+                <p>Spike A showed what the key really is, which is why the Scope section and claim E9 exist. Spike B&rsquo;s depth limit is why position and frame are kept apart. Spike C&rsquo;s same-bit case is why the Merkle chain is required, and its clutch measurement chose the free-run setting. Spike D&rsquo;s straight leaves are why the fence only screens and an exact check decides.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="spike-a">
+            <div class="chapter-num">03</div>
+            <h2>Spike A &middot; The key</h2>
+            <p class="chapter-intro"><code>spikes/engram_core_audit.cjs</code>: what engram/1 is, measured on the verbatim core. 15 of 15 checks pass.</p>
+            <ul>
+                <li>The copy reproduces Owl Academy&rsquo;s vectors: <code>GEODESIC &rarr; 5c896a4801c9c24c</code>, <code>chiralKey(STRIX) = O1::S::48d835dfdfc5484e</code>.</li>
+                <li>The 26 letter grids have rank 26 over GF(2): at most 2&sup2;&#8310; keys occur, and two words share a key exactly when every letter count has the same parity.</li>
+                <li>Distances between distinct words look random: mean 32.4 of 64 over 190 pairs, from 20 to 44.</li>
+                <li>The window works as a triple quad over GF(2): any one of &alpha;, &beta;, &gamma; is rebuilt from the other two and Y.</li>
+            </ul>
+            <pre class="spike" data-src="../spikes/engram_core_audit_output.txt">Loading the captured output&hellip;</pre>
+        </section>
+
+        <section class="chapter" id="spike-b">
+            <div class="chapter-num">04</div>
+            <h2>Spike B &middot; Quaternion addresses</h2>
+            <p class="chapter-intro"><code>spikes/quaternion_address.cjs</code>: engrams as exact addresses in PolyStep&rsquo;s norm-5 tree, on its browser cores. 8 of 8 checks pass.</p>
+            <ul>
+                <li>2000 of 2000 random 64-bit words round-trip through one integer quaternion of norm 5&sup2;&#8312;, components of at most 33 bits.</li>
+                <li>A chain of 40 packets is one quaternion that unfolds in order, 40 of 40. It is exact, not compressed: 5,204 bits for 2,560.</li>
+                <li>Float placement in H&sup3; decodes to depth 12 (50/50) and fails from depth 14 (36/50 at 14, 9/50 at 16, 0/50 at 18).</li>
+                <li>The packet quaternion is an exact rotation, and the coupler&rsquo;s mirror law keeps B = q&#8322;q&#8321; on it.</li>
+            </ul>
+            <pre class="spike" data-src="../spikes/quaternion_address_output.txt">Loading the captured output&hellip;</pre>
+        </section>
+
+        <section class="chapter" id="spike-c">
+            <div class="chapter-num">05</div>
+            <h2>Spike C &middot; The orbital memory code</h2>
+            <p class="chapter-intro"><code>spikes/orbital_memory.cjs</code>: the window on the tiles, Merkle chain, gauge and pump of the orbital pages. In Phase 0 it read them by name from the build templates; since Phase 1 it requires <code>scripts/geometric-build/orbital_core.js</code>, with the same results. 9 of 9 checks pass.</p>
+            <ul>
+                <li>All 60 words of a sample dialogue travel as two Form 5 tiles and decode with their header fields intact.</li>
+                <li>On 58 windows a flipped bit is detected by the parity, located by the Part 1 Merkle chain and rebuilt by XOR, with the root matching again: 58 of 58 for each step.</li>
+                <li>Two altered cells are caught by the chain; the same bit flipped in two cells passes the parity and is caught only by the chain.</li>
+                <li>The convergence gauge recovers the three footer distances exactly, 57 of 57; one packet in 57 locked.</li>
+                <li>The pump identity holds on every channel. In the hold setting a register leaves P = 360/720; in free-run it closes.</li>
+            </ul>
+            <pre class="spike" data-src="../spikes/orbital_memory_output.txt">Loading the captured output&hellip;</pre>
+        </section>
+
+        <section class="chapter" id="spike-d">
+            <div class="chapter-num">06</div>
+            <h2>Spike D &middot; The fence on a memory tree</h2>
+            <p class="chapter-intro"><code>spikes/fence_memory.cjs</code>: the 0.7 Claude fence and its ln&nbsp;2 guard on the norm-5 tree in H&sup3;, using <code>fence.js</code> as it is. 4 of 4 checks pass.</p>
+            <ul>
+                <li>Memories placed two levels too deep are always flagged, 5 of 5 in every run; one level too deep, 4 of 5 and 5 of 5.</li>
+                <li>At depth 3 the fence also flags the six straightest leaves, 6 of 187 memories in their proper place, because it measures distance from the centre and straight paths reach farther.</li>
+                <li>Comparing each flagged memory&rsquo;s exact point with the exact point of its recorded address clears those six and confirms every misplaced memory.</li>
+                <li>The guard passes clean distances (worst defect 0.6923, below ln&nbsp;2 = 0.6931) and blames a corrupted distance on its own pair.</li>
+            </ul>
+            <pre class="spike" data-src="../spikes/fence_memory_output.txt">Loading the captured output&hellip;</pre>
+        </section>
+
+        <section class="chapter" id="golden">
+            <div class="chapter-num">07</div>
+            <h2>The golden corpus</h2>
+            <p class="chapter-intro"><code>reference/golden/engram_v1.json</code> is the target claim E1 must hit. It was written by <code>make_golden_v1.cjs</code> from two files of the Owl-Academy repository, read unchanged: the reference page <code>Engram_Mind_Eye.html</code> and the second implementation, <code>scripts/biomesh.js</code>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Part</th><th>Contents</th></tr></thead>
+                <tbody>
+                    <tr><td>Letters</td><td>All 26</td></tr>
+                    <tr><td>Concepts</td><td>The 15 names in STRIX&rsquo;s concept library</td></tr>
+                    <tr><td>Window</td><td>The 3 seeds the page starts with: MIND, EYE, STRIX</td></tr>
+                    <tr><td>Dialogue</td><td>477 distinct words of the STRIX introduction and the concept library&rsquo;s responses</td></tr>
+                    <tr><td>Edge cases</td><td>15, among them the empty string, numbers, mixed case, an apostrophe, a hyphen, an anagram pair and a 28-letter word</td></tr>
+                    <tr><td>Tokenizers</td><td>3 sentences split by both of Owl Academy&rsquo;s tokenizers</td></tr>
+                    <tr><td>Packet chain</td><td>The 69 packets of a fresh session: the introduction logged as STRIX, then one human question, with every header, body, footer and the final parity</td></tr>
+                </tbody>
+            </table></div>
+            <p>Every entry is computed by both Owl Academy implementations, and the script refuses to write if they disagree. They agree on all 536. The file records the Owl-Academy commit (<code>9638040</code>) and the SHA-256 of both source files, and the preregistration records the SHA-256 of the corpus itself.</p>
+            <div class="callout deep"><span class="label">Two things pinning found</span>
+                <p><strong>Two tokenizers.</strong> The Mind Eye page splits on anything that is not a letter or digit, so <code>don&rsquo;t</code> becomes <code>DON</code> and <code>T</code>; <code>biomesh.js</code> keeps it as one token. A sentence gives different packet counts in the two, so the corpus keeps both.</p>
+                <p><strong>Two hex spellings.</strong> The chiral key prints the grid byte by byte, least significant bit first (<code>5c896a48&hellip;</code> for GEODESIC). The packet body prints the same 64 bits as one number, most significant first (<code>4CC2C901&hellip;</code>). Both are pinned, so neither can be confused for the other later.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="prereg">
+            <div class="chapter-num">08</div>
+            <h2>The nine claims</h2>
+            <p class="chapter-intro">Registered on 2026-11-04 in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>. An exact claim is supported only if every case passes, and refuted by any single failure. Every exact test has a control, a broken variant that must fail, or the test is void.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>#</th><th>Test</th><th>Control that must fail</th><th>Decision</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">E1</td><td>Every field of the 536 entries, both tokenizations, the engram stream and the 69-packet chain</td><td>Registered: seed multiplier 37 in place of 31, found void (it can never fail). Amendment 1: Mulberry32&rsquo;s increment 0x6D2B79F7</td><td>Exact</td></tr>
+                    <tr><td class="mono">E2</td><td>Chains of 1, 2, 10 and 72 packets (20 each) and 720 packets (5): norm 5^(28K), every packet recovered in order</td><td>A backtracking packet; two packets swapped</td><td>Exact</td></tr>
+                    <tr><td class="mono">E3</td><td>Every single-bit flip of every cell of every window: detected, located, rebuilt, root restored. 200 double alterations: detected, repair refused</td><td>Parity alone misses a same-position double alteration</td><td>Exact</td></tr>
+                    <tr><td class="mono">E4</td><td>Every complete register of 20 synthetic dialogues: packet, block and group products equal; free-run + membrane closes every register</td><td>Two blocks swapped; one packet replaced</td><td>Exact</td></tr>
+                    <tr><td class="mono">E5</td><td>The golden session and 20 dialogues: B unchanged at every zero point; carry bit-identical to no coupler</td><td>The same-chirality coupler</td><td>Exact</td></tr>
+                    <tr><td class="mono">E6</td><td>All 274,625 distance triples through the gauge; the lock on the dialogues, 65 equal triples and 5,000 random ones</td><td>A gauge with Y = b + c</td><td>Exact</td></tr>
+                    <tr><td class="mono">E7</td><td>Memory trees of depth 2 and 3 with 5 or 10 memories placed 1 or 2 levels too deep, 50 instances per cell</td><td>&mdash;</td><td>Settlement exact; detection at depth +2 &ge; 0.99 with the interval&rsquo;s low end &ge; 0.95</td></tr>
+                    <tr><td class="mono">E8</td><td>50 matrices of 24 memories, one distance raised by 0.5 to 3.0</td><td>&mdash;</td><td>Clean bound exact; blame at +1.5 and +3.0 in &ge; 99% with the low end &ge; 0.95</td></tr>
+                    <tr><td class="mono">E9</td><td>a: five parity-keeping variants of each stored word. b: five one-letter substitutions, against a shuffled-key store</td><td>&mdash;</td><td>a exact; b supported if the difference&rsquo;s interval lies within &plusmn;0.05</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout limit"><span class="label">A prediction made against the system</span>
+                <p>E9b predicts that recall from a one-letter misspelling is no better than chance. Substituting one letter XORs two letter grids into the key and moves it about 32 bits, as far as an unrelated word. If the runs show otherwise, the claim is refuted and the Scope section is rewritten.</p>
+            </div>
+            <div class="callout plain"><span class="label">Decided in Phase 2</span>
+                <p>The reference ran every claim on 2026-11-04, its runner committed beforehand. E1&ndash;E7 and E9 are supported. E8 is inconclusive: the ln&nbsp;2 bound held exactly, but the guard named the corrupted pair 96 times in 100 at +1.5, short of the registered 99. The prediction above held: misspelling recall was at chance. Every number is in <a href="reference-results.html">Explainer 4</a>.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="run">
+            <div class="chapter-num">09</div>
+            <h2>Running it yourself</h2>
+            <p class="chapter-intro">Everything here runs with Node 18 or later and nothing else, from the repository root.</p>
+            <div class="out">node "Pages/Engram Minds Eye/spikes/engram_core_audit.cjs"<br>node "Pages/Engram Minds Eye/spikes/quaternion_address.cjs"<br>node "Pages/Engram Minds Eye/spikes/orbital_memory.cjs"<br>node "Pages/Engram Minds Eye/spikes/fence_memory.cjs"<br>node "Pages/Engram Minds Eye/reference/golden/make_golden_v1.cjs" ../Owl-Academy --check</div>
+            <p>The last line needs an Owl-Academy checkout beside this one. It recomputes the corpus from Owl Academy&rsquo;s files and says whether the committed file still matches, so a change on that side is seen.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="architecture.html">&larr; The architecture</a>
+                <a class="btn btn-ghost" href="../index.html">Back to the hub &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Engram Mind&rsquo;s Eye &middot; Explainer 2 &middot; <a href="../index.html">Hub</a></footer>
+<script>
+document.querySelectorAll('pre.spike[data-src]').forEach(pre => {
+    const src = pre.dataset.src;
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    fetch(src).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }).then(t => {
+        pre.innerHTML = esc(t).replace(/\[PASS\]/g, '<span class="pass">[PASS]</span>').replace(/\[FAIL\]/g, '<span class="fail">[FAIL]</span>');
+    }).catch(() => { pre.innerHTML = `The captured output could not be loaded here. <a href="${src}">Open it directly</a>.`; });
+});
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye hub&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;System map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye.html&quot;,&quot;label&quot;:&quot;Mind's Eye 2D: STRIX on the clock&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Talk with STRIX; every word on the five tiers, the clock, exact memory&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye-3d.html&quot;,&quot;label&quot;:&quot;Mind's Eye 3D: the memory in H³&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;The memory tree in H³, frames, the twin system, the fence and the guard&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;The Architecture&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 1: five systems, eight layers, a live lab&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;The Evidence and the Claims&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 2: spikes, golden corpus, E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;shared-cores.html&quot;,&quot;label&quot;:&quot;The Shared Cores&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 3: orbital_core.js, byte-identical pages, PolyStep without torch&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;reference-results.html&quot;,&quot;label&quot;:&quot;The Reference and the Results&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 4: Phase 2, the decisions on E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 5: engram_core.js, 849 parity lines, live in the page&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 6: every panel and control of mind-eye.html&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 7: every panel of mind-eye-3d.html, LATTICE-SEED/1&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 8: Owl Academy in and out, checked against its own code&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;follow-ups.html&quot;,&quot;label&quot;:&quot;The Follow-ups&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 9: E10 and E11, registered before any code, decided&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;integration.html&quot;,&quot;label&quot;:&quot;Integration and Upkeep&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 10: the ways in, the shared cores, one command for every check&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;One engine, five tiers: the pipeline for one word&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;Three engines: the clock the window rides&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;The triple quad, memory and the gauge&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Cross-engine TQF and the soliton crystal&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Exact addresses, H² and H³, the twin system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The watch layer's screen and guard&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

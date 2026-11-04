@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Shared Cores - Engram Mind's Eye</title>
+    <meta name="description" content="Explainer 3 of Engram Mind's Eye: Phase 1. The orbital pages' shared code moved out of four build templates into one module, orbital_core.js, which the build writes back so the pages stay byte for byte the same; and the PolyStep reference made to import its exact modules without torch.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/em.css">
+    <script src="../assets/em-map.js"></script>
+    <script src="../../../scripts/geometric-build/orbital_core.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Engram Mind&rsquo;s Eye &middot; Explainer 3 &middot; Phase 1</div>
+    <h1>The Shared Cores</h1>
+    <p class="lede">Before anything could be built on the orbital calculators, their exact code had to exist somewhere other than inside the pages. Phase 1 moved it into one module that the pages are still built from, byte for byte, and made Hyperbolic PolyStep&rsquo;s exact modules importable without torch.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#live">Run the module here</a>
+        <a class="btn btn-ghost" href="#proof">How we know nothing changed</a>
+        <a class="btn btn-ghost" href="../index.html#map">System map</a>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#why">2. Why a module</a></li>
+            <li><a href="#moved">3. What moved</a></li>
+            <li><a href="#build">4. How the build works now</a></li>
+            <li><a href="#proof">5. How we know nothing changed</a></li>
+            <li><a href="#use">6. Using it</a></li>
+            <li><a href="#live">7. The module, live</a></li>
+            <li><a href="#hpstep">8. PolyStep without torch</a></li>
+            <li><a href="#also">9. Smaller changes</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#why">Why a module</a></li><li><a href="#moved">What moved</a></li>
+            <li><a href="#build">How the build works now</a></li><li><a href="#proof">How we know nothing changed</a></li><li><a href="#use">Using it</a></li>
+            <li><a href="#live">The module, live</a></li><li><a href="#hpstep">PolyStep without torch</a></li><li><a href="#also">Smaller changes</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The shared cores take the tier laws, the triple quad, the gauge and the pump from the orbital calculators and feed the Python reference of Phase 2.</p>
+            <div data-em-map="focus" data-node="ocore"></div>
+        </section>
+
+        <section class="chapter" id="why">
+            <div class="chapter-num">02</div>
+            <h2>Why a module</h2>
+            <p class="chapter-intro">The four orbital pages, Galactic Lensing Part 1, the Tri-Engine Soliton, Tri-Engine Convergence and the Zero-Point Tri-Engine, are generated from templates in <code>scripts/geometric-build/</code>. Their exact code lived inside those templates: the tiles and the Merkle chain in Part 1&rsquo;s, the tier frames and the TQF in Part 2&rsquo;s, the gauge and memory repair in the Convergence template, and the pump inside <code>gen4.py</code>.</p>
+            <p>That was fine for the pages, which the build stitches together. It left nothing another system could load. In Phase 0, Spike C had to cut functions out of the templates by name, which breaks the moment one is renamed. Decision D2 chose the other way: move the code into one module and have the build write it back.</p>
+        </section>
+
+        <section class="chapter" id="moved">
+            <div class="chapter-num">03</div>
+            <h2>What moved</h2>
+            <p class="chapter-intro">Fifteen segments, each cut verbatim from where it was. <code>orbital_core.js</code> exports 89 names from them, plus <code>state</code>, <code>SEGMENTS</code> and <code>version</code>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Segment</th><th>From</th><th>Holds</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">core</td><td>core.js (removed)</td><td>Rationals, quaternions, the Cayley map, Python&rsquo;s Mersenne Twister, Part 1&rsquo;s physics and the line-by-line port of <code>verify_galactic_hierarchy.py</code></td></tr>
+                    <tr><td class="mono">tiers</td><td>page.html</td><td>Engine v10&rsquo;s five tiers: R, r, W and frequency; 30 nodes, 150 pulses</td></tr>
+                    <tr><td class="mono">krat, layerb, d2r</td><td>page.html</td><td>The rationalization grid 2&#8315;&sup2;&#8308; and Layer B&rsquo;s helpers</td></tr>
+                    <tr><td class="mono">lemma</td><td>page.html</td><td>SHA-256, the 64-bit Einstein tile, data and frame-leg packets, Hurwitz Form 1, the Lemma 15 Merkle chain</td></tr>
+                    <tr><td class="mono">exact</td><td>page2.html</td><td>Exact tier frames, the 120&deg; turn, tier nodes, the Triple-Quad Formula</td></tr>
+                    <tr><td class="mono">tonum, fracpart</td><td>page3.html (fracpart also in gen4.py)</td><td>A fraction as a double beyond 2&sup1;&#8304;&sup2;&#8308;; a turn count modulo one turn</td></tr>
+                    <tr><td class="mono">gauge</td><td>page3.html</td><td>The Proposition 7.14 gauge</td></tr>
+                    <tr><td class="mono">readout</td><td>page3.html</td><td>The landing nodes and their TQF: the lock</td></tr>
+                    <tr><td class="mono">memory, rebuild, locate</td><td>page3.html</td><td>A memory word&rsquo;s tiles, leaves, chain and parity; rebuilding a cell; locating an altered one</td></tr>
+                    <tr><td class="mono">pump</td><td>gen4.py</td><td>The 720 &rarr; 72 &rarr; 10 pump of one engine&rsquo;s register</td></tr>
+                </tbody>
+            </table></div>
+            <p>The same text of <code>fracPart</code> sat in both the Convergence template and <code>gen4.py</code>; both now point at the one segment.</p>
+        </section>
+
+        <section class="chapter" id="build">
+            <div class="chapter-num">04</div>
+            <h2>How the build works now</h2>
+            <p class="chapter-intro">A segment runs from <code>// @orbital-begin name</code> to <code>// @orbital-end name</code> in the module. Where it used to be, the template now holds <code>/*__ORB:name__*/</code>.</p>
+            <figure>
+                <svg viewBox="0 0 900 170" role="img" aria-label="The build: templates and orbital_core.js expanded, then built into four pages">
+                    <defs><marker id="b-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+                    <g font-family="Inter, system-ui, sans-serif" font-size="12.5">
+                        <g transform="translate(10,20)"><rect width="190" height="56" rx="10" fill="rgba(15,23,42,.95)" stroke="#94a3b8"/><text x="12" y="22" fill="#f8fafc" font-weight="600">templates</text><text x="12" y="40" fill="#94a3b8" font-size="10" font-family="Fira Code, monospace">page*.html, gen4.py</text></g>
+                        <g transform="translate(10,96)"><rect width="190" height="56" rx="10" fill="rgba(8,47,73,.45)" stroke="#22d3ee"/><text x="12" y="22" fill="#f8fafc" font-weight="600">orbital_core.js</text><text x="12" y="40" fill="#a5f3fc" font-size="10" font-family="Fira Code, monospace">15 segments · UMD</text></g>
+                        <g transform="translate(250,58)"><rect width="190" height="56" rx="10" fill="rgba(15,23,42,.95)" stroke="#c084fc"/><text x="12" y="22" fill="#f8fafc" font-weight="600">expand</text><text x="12" y="40" fill="#94a3b8" font-size="10" font-family="Fira Code, monospace">orbital_segments.py</text></g>
+                        <g transform="translate(490,58)"><rect width="190" height="56" rx="10" fill="rgba(15,23,42,.95)" stroke="#c084fc"/><text x="12" y="22" fill="#f8fafc" font-weight="600">build.py, gen4.py</text><text x="12" y="40" fill="#94a3b8" font-size="10" font-family="Fira Code, monospace">splice, patch, write</text></g>
+                        <g transform="translate(730,20)"><rect width="160" height="56" rx="10" fill="rgba(6,78,59,.4)" stroke="#34d399"/><text x="12" y="22" fill="#f8fafc" font-weight="600">four pages</text><text x="12" y="40" fill="#6ee7b7" font-size="10" font-family="Fira Code, monospace">byte-identical</text></g>
+                        <g transform="translate(730,96)"><rect width="160" height="56" rx="10" fill="rgba(6,78,59,.4)" stroke="#34d399"/><text x="12" y="22" fill="#f8fafc" font-weight="600">other systems</text><text x="12" y="40" fill="#6ee7b7" font-size="10" font-family="Fira Code, monospace">require / script</text></g>
+                        <g stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#b-arrow)">
+                            <path d="M200,48 C226,48 226,80 248,80"/><path d="M200,124 C226,124 226,92 248,92"/><line x1="440" y1="86" x2="488" y2="86"/>
+                            <path d="M680,80 C706,80 706,48 728,48"/><path d="M200,140 C460,170 680,150 728,128"/>
+                        </g>
+                    </g>
+                </svg>
+                <figcaption>The templates and the module are expanded first, so <code>build.py</code> and <code>gen4.py</code> see exactly the text they saw before. The module is loaded directly by other systems.</figcaption>
+            </figure>
+            <ul>
+                <li><strong>Expand first.</strong> <code>orbital_segments.py</code> writes every segment back into every template before <code>build.py</code> splices or <code>gen4.py</code> patches, so their string searches find what they always found.</li>
+                <li><strong>One patch remains.</strong> <code>gen4.py</code> still edits the <code>readout</code> segment for the Zero-Point page, giving the readout its pairing node k. The module keeps the Convergence version, with node 29.</li>
+                <li><strong>Nothing else outside the segments.</strong> The module adds only its wrapper, the export list and a neutral <code>state</code>: in the pages <code>state</code> is each page&rsquo;s live controls; in the module it is tension 0, torsion 0 and coupling &kappa; = 1, the settings claim E6 specifies.</li>
+            </ul>
+        </section>
+
+        <section class="chapter" id="proof">
+            <div class="chapter-num">05</div>
+            <h2>How we know nothing changed</h2>
+            <p class="chapter-intro">The goal was a refactor the pages cannot notice, and the strongest way to show that is the bytes themselves.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Check</th><th>Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Expanding each new template gives back the old one</td><td>Exact, for <code>page.html</code>, <code>page2.html</code>, <code>page3.html</code> and <code>gen4.py</code></td></tr>
+                    <tr><td>Rebuild and reinstall the site bar (<code>tests/rebuild-identical.sh</code>)</td><td>All four built pages byte-identical to the committed ones</td></tr>
+                    <tr><td>Mutation: one comment changed inside the <code>lemma</code> segment</td><td>All four pages changed by one line; restored, all four identical again. The build really reads the module</td></tr>
+                    <tr><td>The module in Node (<code>tests/orbital-core.cjs</code>)</td><td>18/18, including Part 1&rsquo;s verification reproducing <code>ref_output.txt</code> 66/66 lines outside the browser</td></tr>
+                    <tr><td>Part 1 and Part 2 in Chromium (<code>all.cjs</code>, <code>exp.cjs</code>)</td><td>19/19 PASS, 66/66 lines match; Part 2 LOCKED; no page errors at 1440 and 390 px</td></tr>
+                    <tr><td>Tri-Engine Convergence (<code>conv.cjs</code>, <code>clutch.cjs</code>)</td><td>Self-test 13/13; presets, memory repair and the three clutch settings as expected; no failed lemma rows</td></tr>
+                    <tr><td>Zero-Point Tri-Engine (<code>zp.cjs</code>, <code>zp2.cjs</code>, <code>zp3.cjs</code>)</td><td>Self-test 18/18; pairing at n = 0; registers close; opens paused</td></tr>
+                    <tr><td>Site bar and manuals (<code>bar.cjs</code>, <code>man.cjs</code>), engine v10 TQF (<code>tqf.cjs</code>)</td><td>As expected; no errors</td></tr>
+                    <tr><td>Engine v10 index (<code>idx.cjs</code>)</td><td>Not run: it also needs Three&rsquo;s OrbitControls from a CDN this sandbox cannot reach. Engine v10 is not built from these templates and was not touched</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">How the browser tests ran here</span>
+                <p>They need local copies of Three.js r158 and r128 and of KaTeX, which the CDNs serve. The CDNs are blocked in this sandbox, so the same releases came from the npm registry (<code>three@0.158.0</code>, <code>three@0.128.0</code>, <code>katex@0.16.9</code>). The build README now lists all of them.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="use">
+            <div class="chapter-num">06</div>
+            <h2>Using it</h2>
+            <p class="chapter-intro">The module is UMD: a global in a browser, <code>require()</code> in Node. There is no build step and no dependency.</p>
+            <div class="out">&lt;script src="../../../scripts/geometric-build/orbital_core.js"&gt;&lt;/script&gt;<br>const { Fraction, packTile, merkleChain, gaugeExact, readout, pumpOf } = window.OrbitalCore;<br><br>// Node<br>const O = require('./scripts/geometric-build/orbital_core.js');<br>O.state.kappa = 0.5;   // read the pages' functions under other settings</div>
+            <p>Changing shared code now means editing the text between a segment&rsquo;s two markers and rebuilding: every page that uses it changes, and so does every system that loads the module. <code>tests/rebuild-identical.sh</code> then says which pages moved.</p>
+        </section>
+
+        <section class="chapter" id="live">
+            <div class="chapter-num">07</div>
+            <h2>The module, live</h2>
+            <p class="chapter-intro">This page loads <code>orbital_core.js</code> from the build folder and runs a few of its checks in your browser.</p>
+            <div class="lab">
+                <div class="lab-title">Lab &middot; orbital_core.js in this page</div>
+                <div class="out" id="live-out">Loading&hellip;</div>
+            </div>
+        </section>
+
+        <section class="chapter" id="hpstep">
+            <div class="chapter-num">08</div>
+            <h2>PolyStep without torch</h2>
+            <p class="chapter-intro">The engram reference will use Hyperbolic PolyStep&rsquo;s exact modules in place: the generator, the exact rationals, the 3D decoder and its tree, frames, the coupler and the fence. Until now, importing any of them imported torch, because the package&rsquo;s <code>__init__.py</code> loaded the step.</p>
+            <p>Decision D7 made the step load lazily (PEP 562): <code>PolyStepH</code>, <code>StepConfig</code> and <code>StepState</code> import torch and polystep the first time they are used, and nothing else does. Every name the package exported before is still there, and <code>hpstep.step</code> still resolves. The suite ran in a fresh environment with torch 2.15 and polystep 1.1.1 from PyPI, and in a second one with numpy and pytest only.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Check</th><th>Result</th></tr></thead>
+                <tbody id="hpstep-rows">
+                    <tr><td>PolyStep&rsquo;s full test suite with torch and polystep 1.1.1, before the change</td><td>137 passed</td></tr>
+                    <tr><td>The same suite after the change</td><td>137 passed. The 3D decoder, twin-system and fence traces regenerate byte-identical to the committed ones, so the browser ports&rsquo; parity checks are unaffected</td></tr>
+                    <tr><td>Without torch, before the change</td><td>Nothing imports: <code>from hpstep import fence</code> raises <code>ModuleNotFoundError: torch</code></td></tr>
+                    <tr><td>Without torch, after the change</td><td>Every exact module imports, and torch is never loaded; <code>PolyStepH</code> asks for torch only when it is used. <code>test_prng.py</code>, <code>test_problems.py</code> and <code>test_fence.py</code>: 30 passed. The fence trace regenerates byte-identical</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="also">
+            <div class="chapter-num">09</div>
+            <h2>Smaller changes</h2>
+            <ul>
+                <li><code>scripts/geometric-build/core.js</code> is gone; its text is the module&rsquo;s <code>core</code> segment. The build README and the Hyperbolic Oracles build explainer name the module instead.</li>
+                <li>Spike C now requires the module rather than cutting functions out of the templates. Its nine checks give the same results; only its title line changed.</li>
+                <li><code>tests/idx.cjs</code> read Three.js r128 from a folder of an earlier session; it now reads it from <code>$SP</code>, like the other tests.</li>
+                <li>PolyStep&rsquo;s <code>run_traces3d.py</code> opened <code>twin3d.json</code> for writing before computing the trace, so a run that failed (now possible without torch, which the twin half needs) left the file empty. It now computes first, and the trace it writes is unchanged.</li>
+            </ul>
+            <div class="pager">
+                <a class="btn btn-ghost" href="evidence.html">&larr; The evidence and the claims</a>
+                <a class="btn btn-ghost" href="../index.html">Back to the hub &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Engram Mind&rsquo;s Eye &middot; Explainer 3 &middot; <a href="../index.html">Hub</a></footer>
+<script>
+(async function () {
+    'use strict';
+    const out = document.getElementById('live-out'), O = window.OrbitalCore;
+    if (!O) { out.innerHTML = '<span class="bad">orbital_core.js did not load from ../../../scripts/geometric-build/.</span>'; return; }
+    const lines = [], ok = (label, good, detail) => lines.push(`<span class="${good ? 'good' : 'bad'}">${good ? 'PASS' : 'FAIL'}</span> ${label}${detail ? ` <span class="k">· ${detail}</span>` : ''}`);
+    const F = n => new O.Fraction(BigInt(n));
+    lines.push(`<span class="k">${O.version} · ${O.SEGMENTS.length} segments · ${Object.keys(O).length} exports</span>`);
+    const v = O.runVerification();
+    try {
+        const ref = (await (await fetch('../../../scripts/geometric-build/ref_output.txt')).text()).replace(/\n$/, '').split('\n');
+        const same = v.filter((l, i) => l === ref[i]).length;
+        ok('Part 1 verification against ref_output.txt', same === ref.length && v.length === ref.length, `${same}/${ref.length} lines`);
+    } catch (e) { ok('Part 1 verification ran', /All checks passed/.test(v[v.length - 1]), `${v.length} lines; the reference file could not be fetched here`); }
+    ok('sha256("abc")', O.toHex(O.sha256(O.utf8('abc'))).startsWith('ba7816bf'));
+    const t = O.packTile({ step: 3, wheel: 1, struct: 2, gate: 5, mux: 4, form: 5, slot: 6, scale: 0, core: 0xC0FFEE }), d = O.decodeTile(t);
+    ok('an Einstein tile round-trips', d.struct === 2 && d.form === 5 && d.core === 0xC0FFEE, O.hexWord(t));
+    const G = O.gaugeExact(F(30), F(29), F(0));
+    ok('the gauge of (30, 29, 0) recovers it', G.recovered, `s = ${G.s}, X = ${G.X}, Y = ${G.Yc}`);
+    const L = O.readout([F(5), F(5), F(5)]), U = O.readout([F(1), F(2), F(3)]);
+    ok('equal values lock; unequal do not', L.T.lock && !U.T.lock, `χ = ${L.T.chi.toFixed(6)} and ${U.T.chi.toFixed(6)}`);
+    const P = O.pumpOf(new Uint8Array(720).fill(1));
+    ok('a fully engaged register closes, with H = P⁻¹', P.closed && P.identity);
+    out.innerHTML = lines.join('<br>');
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye hub&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;System map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye.html&quot;,&quot;label&quot;:&quot;Mind's Eye 2D: STRIX on the clock&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Talk with STRIX; every word on the five tiers, the clock, exact memory&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye-3d.html&quot;,&quot;label&quot;:&quot;Mind's Eye 3D: the memory in H³&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;The memory tree in H³, frames, the twin system, the fence and the guard&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;The Architecture&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 1: five systems, eight layers, a live lab&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;The Evidence and the Claims&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 2: spikes, golden corpus, E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;shared-cores.html&quot;,&quot;label&quot;:&quot;The Shared Cores&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 3: orbital_core.js, byte-identical pages, PolyStep without torch&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;reference-results.html&quot;,&quot;label&quot;:&quot;The Reference and the Results&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 4: Phase 2, the decisions on E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 5: engram_core.js, 849 parity lines, live in the page&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 6: every panel and control of mind-eye.html&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 7: every panel of mind-eye-3d.html, LATTICE-SEED/1&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 8: Owl Academy in and out, checked against its own code&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;follow-ups.html&quot;,&quot;label&quot;:&quot;The Follow-ups&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 9: E10 and E11, registered before any code, decided&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;integration.html&quot;,&quot;label&quot;:&quot;Integration and Upkeep&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 10: the ways in, the shared cores, one command for every check&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;One engine, five tiers: the pipeline for one word&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;Three engines: the clock the window rides&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;The triple quad, memory and the gauge&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Cross-engine TQF and the soliton crystal&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Exact addresses, H² and H³, the twin system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The watch layer's screen and guard&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

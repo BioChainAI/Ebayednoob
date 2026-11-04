@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Browser Core - Engram Mind's Eye</title>
+    <meta name="description" content="Explainer 5 of Engram Mind's Eye: Phase 3. engram_core.js runs the whole engram system in a page on the shared cores, and reproduces the golden corpus and the Python reference's traces line for line: 849 of 849 lines, checked live in this page.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/em.css">
+    <script src="../assets/em-map.js"></script>
+    <script src="../../../scripts/geometric-build/orbital_core.js"></script>
+    <script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+    <script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+    <script src="../../Hyperbolic%20Oracles/twin3d.js"></script>
+    <script src="../../Hyperbolic%20Oracles/fence.js"></script>
+    <script src="../ttmpt_core_v1.js"></script>
+    <script src="../engram_core.js"></script>
+    <style>
+        .psum { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+        .psec { border: 1px solid #1e293b; border-radius: 10px; background: #020617; margin: 6px 0; }
+        .psec > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 8px 12px; font: 0.84rem var(--mono); }
+        .psec > summary::-webkit-details-marker { display: none; }
+        .psec > summary::before { content: '\25B8'; color: var(--faint); }
+        .psec[open] > summary::before { content: '\25BE'; }
+        .psec .nm { color: var(--text); flex: 1 1 220px; min-width: 0; }
+        .psec .ct { color: var(--muted); }
+        .psec .st.ok { color: var(--emerald); } .psec .st.no { color: var(--rose); } .psec .st.wait { color: var(--faint); }
+        .plines { font: 0.78rem var(--mono); padding: 4px 12px 10px 30px; max-height: 340px; overflow-y: auto; overflow-wrap: anywhere; }
+        .plines div { padding: 1px 0; color: #cbd5e1; }
+        .plines .k { color: var(--muted); }
+        .plines .good { color: var(--emerald); } .plines .bad { color: var(--rose); }
+        .grp { font: 600 0.74rem var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); margin: 14px 0 4px; }
+        .lab textarea, .lab input[type="text"] { width: 100%; box-sizing: border-box; background: #020617; color: var(--text); border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; font: 0.86rem var(--mono); }
+        .lab textarea { min-height: 84px; resize: vertical; }
+        .lab label.blk { display: block; font-size: 0.85rem; color: var(--muted); margin: 8px 0 4px; }
+        .cellhex { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; font: 0.82rem var(--mono); }
+        .cellhex .n { color: var(--muted); }
+        table.mono td { font-family: var(--mono); font-size: 0.8rem; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Engram Mind&rsquo;s Eye &middot; Explainer 5 &middot; Phase 3</div>
+    <h1>The Browser Core</h1>
+    <p class="lede">The Python reference decided the claims. Phase 3 puts the same system in the browser: one module, <code>engram_core.js</code>, built on the code the orbital pages and Hyperbolic PolyStep already ship. It reproduces the golden corpus and the reference&rsquo;s exact traces line for line, and this page checks that live.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#live">Run the parity check here</a>
+        <a class="btn btn-ghost" href="#session">Run a session</a>
+        <a class="btn btn-ghost" href="../index.html#map">System map</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat"><b>849/849</b> parity lines</span>
+        <span class="stat"><b>27/27</b> behaviour checks</span>
+        <span class="stat"><b>6/6</b> planted errors caught</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#module">2. One module on the shared cores</a></li>
+            <li><a href="#checked">3. How it is checked</a></li>
+            <li><a href="#live">4. Parity, live</a></li>
+            <li><a href="#session">5. A session in your browser</a></li>
+            <li><a href="#use">6. Using it</a></li>
+            <li><a href="#also">7. Smaller changes</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#module">One module on the shared cores</a></li><li><a href="#checked">How it is checked</a></li>
+            <li><a href="#live">Parity, live</a></li><li><a href="#session">A session in your browser</a></li><li><a href="#use">Using it</a></li><li><a href="#also">Smaller changes</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The browser core takes the Python reference&rsquo;s logic and the shared cores&rsquo; code, and is what the 2D and 3D pages will run on.</p>
+            <div data-em-map="focus" data-node="jscore"></div>
+        </section>
+
+        <section class="chapter" id="module">
+            <div class="chapter-num">02</div>
+            <h2>One module on the shared cores</h2>
+            <p class="chapter-intro"><code>engram_core.js</code> is UMD: a global <code>EngramCore</code> in a page, <code>require()</code> in Node. It re-implements nothing that already exists. It loads five modules and adds only the engram layer.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>It loads</th><th>From</th><th>For</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">orbital_core.js</td><td>scripts/geometric-build (Phase 1)</td><td>Exact fractions, the Einstein tile, SHA-256 and the Lemma 15 Merkle chain, the gauge, the readout and its lock, the pump</td></tr>
+                    <tr><td class="mono">hyperbolic_core.js</td><td>Hyperbolic PolyStep</td><td>The norm-5 tree (generators, children, word quaternion, right division) and the seeded generator</td></tr>
+                    <tr><td class="mono">decoder3d.js, twin3d.js</td><td>Hyperbolic PolyStep</td><td>The tree laid out in H&sup3; with exact decoding; the exact quaternion product and <code>qnormExact</code> of the mirror law</td></tr>
+                    <tr><td class="mono">fence.js</td><td>Hyperbolic PolyStep</td><td>The 0.7 Claude fence, its ln 2 guard, the distance matrix and the corruption of one distance</td></tr>
+                    <tr><td class="mono">ttmpt_core_v1.js</td><td>this folder (verbatim from Owl Academy)</td><td>engram/1: Mulberry32, the letter grids, XOR crystallization, Hamming distance, chiral key, torsion J</td></tr>
+                </tbody>
+            </table></div>
+            <p>What it adds is a line-by-line twin of the reference&rsquo;s modules, in the same order of operations, so that every exact value and every float comes out the same:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Python reference</th><th>In <code>engram_core.js</code></th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">ttmpt.py</td><td>Both tokenizers, biomesh.js&rsquo;s engram stream, the 128-bit packet chain (<code>PacketChain</code>)</td></tr>
+                    <tr><td class="mono">address.py</td><td>The 28-letter address, the chain word and quaternion, unfolding by right division</td></tr>
+                    <tr><td class="mono">memory.py</td><td>The triple-quad word with its Form 5 tiles, Merkle chain, locate, rebuild and repair; memory links</td></tr>
+                    <tr><td class="mono">clock.py</td><td>The schedule, zero points, the membrane turn, registers with 72 blocks and 10 groups, telescoping, engagement</td></tr>
+                    <tr><td class="mono">coupler.py, session.py</td><td><code>Coupler</code> (the mirror law and its control) and <code>Session</code>, a dialogue end to end with <code>outputs()</code></td></tr>
+                    <tr><td class="mono">dialogue.py, recall.py</td><td>The dialogue store and synthetic dialogues; Hamming recall, the parity-keeping variants and the substitutions</td></tr>
+                    <tr><td class="mono">watch.py</td><td>E7&rsquo;s fence screen settled by the exact address check, and E8&rsquo;s guard</td></tr>
+                </tbody>
+            </table></div>
+            <p>The orbital ports in <code>orbital.py</code> have no twin here: in the browser the original, <code>orbital_core.js</code>, is used directly. Neither does <code>stats.py</code>, the bootstrap, which only the claims runner needs.</p>
+        </section>
+
+        <section class="chapter" id="checked">
+            <div class="chapter-num">03</div>
+            <h2>How it is checked</h2>
+            <p class="chapter-intro">Two files fix what the module must produce, and it is compared with them one case at a time.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Target</th><th>Lines</th><th>What a line is</th></tr></thead>
+                <tbody>
+                    <tr><td><code>reference/golden/engram_v1.json</code> (claim E1)</td><td>613</td><td>Each of the 536 entries computed by Owl Academy&rsquo;s own page and by <code>biomesh.js</code> (hex, 64-bit seed, chiral key, J, bit count); the two tokenizers on three texts; the engram stream; each of the 69 packets of the golden chain; the final codex parity. The same 613 cases E1 decided in Python</td></tr>
+                    <tr><td><code>reference/traces/engram.json</code></td><td>236</td><td>The Python reference&rsquo;s exact values: 12 addresses, the chain word and quaternion and its unfolding; the schedule; all 23 memory words of the golden session (cells, tiles, Merkle root, link); 30 gauges with their readout nodes and lock; a complete register of dialogue 9000 (its packet, block and group products, telescoping, the pumps); the coupler at every zero point; the watch layer on four E7 and five E8 instances; the three guards of E10 on 20 corrupted matrices (added in Phase 7); 40 recall queries</td></tr>
+                </tbody>
+            </table></div>
+            <p>Quaternions and fractions are compared as exact strings, some of them hundreds of digits long; 64-bit words as hex; floats with <code>===</code>. The traces use only unregistered seeds (dialogue 9000, the watch layer on 9100&ndash;9104), so checking them never touches what the claims runner decided.</p>
+            <p>On top of the parity lines, the module runs the 27 checks of the Python tests on itself with the same seeds: every single-bit flip located and repaired, double alterations refused, the controls of the address, the registers and the coupler breaking what they should, free-run closing every register, the lock exactly when the three distances are equal, the fence&rsquo;s flags all settled, and recall&rsquo;s variants and substitutions. One check uses different seeds from its Python twin: the substitutions, which Python draws from E9b&rsquo;s registered seeds 1000 + i and the browser from 9000 + i.</p>
+            <div class="callout note"><span class="label">Does the check catch anything?</span>
+                <p>Six errors were planted in copies of the two files: one 64-bit seed of the corpus, one packet&rsquo;s footer, one Merkle root, one group product, the coupler&rsquo;s final quaternion and one recall hit. The check failed on exactly those six lines and passed the other 823.</p>
+            </div>
+            <div class="out">node "Pages/Engram Minds Eye/tests/parity-engram.cjs" --quiet<br><span class="k">Parity: 849/849 lines match the reference</span><br><span class="k">Behaviour: 27/27 checks of the Python tests hold  (about 3.5 s in all)</span></div>
+        </section>
+
+        <section class="chapter" id="live">
+            <div class="chapter-num">04</div>
+            <h2>Parity, live</h2>
+            <p class="chapter-intro">This page loads the module and the two target files and runs every line in your browser. Open a section to read its lines.</p>
+            <div class="lab">
+                <div class="lab-title">Lab &middot; engram_core.js against the reference</div>
+                <div class="psum" id="p-sum"><span class="stat">Loading&hellip;</span></div>
+                <div class="lab-row">
+                    <button class="chip" type="button" id="p-run" disabled>Run again</button>
+                    <label><input type="checkbox" id="p-fails"> failures only</label>
+                </div>
+                <div id="p-load" hidden>
+                    <p class="note">The target files could not be fetched, which happens when the page is opened straight from disk. Serve the folder (for example <code>python3 -m http.server</code> at the repository root), or pick the two files here:</p>
+                    <div class="lab-row">
+                        <label>engram_v1.json <input type="file" id="f-golden" accept=".json,application/json"></label>
+                        <label>engram.json <input type="file" id="f-trace" accept=".json,application/json"></label>
+                    </div>
+                </div>
+                <div id="p-out"></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="session">
+            <div class="chapter-num">05</div>
+            <h2>A session in your browser</h2>
+            <p class="chapter-intro">The same code, on your words. Each token becomes a packet in the chain; the window rides the zero-point clock; a memory word is written at each zero point; the coupler binds the two streams.</p>
+            <div class="lab">
+                <div class="lab-title">Lab &middot; one dialogue, end to end</div>
+                <label class="blk" for="s-strix">STRIX says</label>
+                <textarea id="s-strix" spellcheck="false"></textarea>
+                <label class="blk" for="s-human">You say</label>
+                <input type="text" id="s-human" spellcheck="false">
+                <div class="lab-row"><button class="chip" type="button" id="s-run">Run the session</button><button class="chip" type="button" id="s-reset">The golden session</button></div>
+                <div class="psum" id="s-sum"></div>
+                <div class="table-wrap"><table class="mono">
+                    <thead><tr><th>#</th><th>Token</th><th>From</th><th>Header</th><th>Body (seed64)</th><th>Footer</th><th>Nearest concept</th></tr></thead>
+                    <tbody id="s-packets"></tbody>
+                </table></div>
+                <div class="grp">The last memory word</div>
+                <div class="out" id="s-word"></div>
+                <div class="lab-row">
+                    <button class="chip" type="button" id="s-flip">Flip one bit of one cell, then repair</button>
+                    <button class="chip" type="button" id="s-two">Alter two cells, then repair</button>
+                </div>
+                <div class="out" id="s-repair"><span class="k">Alter the word to see Lemma 15 locate the cell and the parity rebuild it.</span></div>
+                <div class="grp">Recall</div>
+                <label class="blk" for="s-query">Ask the store (the 477 tokens of the golden corpus) for its nearest key</label>
+                <input type="text" id="s-query" value="Geodesic" spellcheck="false">
+                <div class="out" id="s-recall"></div>
+            </div>
+        </section>
+
+        <section class="chapter" id="use">
+            <div class="chapter-num">06</div>
+            <h2>Using it</h2>
+            <p class="chapter-intro">There is no build step. A page loads six scripts in order; Node needs one <code>require</code>.</p>
+            <div class="out">&lt;script src="scripts/geometric-build/orbital_core.js"&gt;&lt;/script&gt;<br>&lt;script src="Pages/Hyperbolic Oracles/hyperbolic_core.js"&gt;&lt;/script&gt;<br>&lt;script src="Pages/Hyperbolic Oracles/decoder3d.js"&gt;&lt;/script&gt;<br>&lt;script src="Pages/Hyperbolic Oracles/twin3d.js"&gt;&lt;/script&gt;<br>&lt;script src="Pages/Hyperbolic Oracles/fence.js"&gt;&lt;/script&gt;<br>&lt;script src="Pages/Engram Minds Eye/ttmpt_core_v1.js"&gt;&lt;/script&gt;<br>&lt;script src="Pages/Engram Minds Eye/engram_core.js"&gt;&lt;/script&gt;<br><br>const EC = window.EngramCore;<br>const run = new EC.Session([['strix', EC.tokenize('I am STRIX')], ['human', EC.tokenize('Show me a geodesic')]], 'carry');<br>run.chain.packets;   <span class="k">// header, seed64, footer, triangulation of every token</span><br>run.words;           <span class="k">// the memory words written at the zero points, with roots and links</span><br>run.registers;       <span class="k">// 720-frame registers with block and group products</span><br>run.coupler.log;     <span class="k">// the binding at every zero point</span><br><br><span class="k">// Node</span><br>const EC = require('./Pages/Engram Minds Eye/engram_core.js');</div>
+            <p>The pages of Phases 4 and 5 will be built on this, so what they show is what the reference computed.</p>
+        </section>
+
+        <section class="chapter" id="also">
+            <div class="chapter-num">07</div>
+            <h2>Smaller changes</h2>
+            <ul>
+                <li><code>ttmpt_core_v1.js</code> moved from <code>spikes/</code> to the system&rsquo;s folder, where the browser core and the pages load it. Its text is unchanged; the spikes and the architecture lab now load it from there, and the four spikes give the same output as before.</li>
+                <li>The traces gained a <code>watch</code> section: four E7 instances and five E8 instances on seeds 9100&ndash;9104, so the browser&rsquo;s fence and guard are checked too. Every other section of the file is unchanged, and the reference&rsquo;s 41 tests still pass.</li>
+                <li><code>run_traces.py</code> says which seeds the watch section uses, and why they stay clear of the registered ones.</li>
+            </ul>
+            <div class="pager">
+                <a class="btn btn-ghost" href="reference-results.html">&larr; The reference and the results</a>
+                <a class="btn btn-ghost" href="page-2d.html">The 2D page manual &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Engram Mind&rsquo;s Eye &middot; Explainer 5 &middot; <a href="../index.html">Hub</a></footer>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id), EC = window.EngramCore;
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const tick = () => new Promise(r => setTimeout(r, 0));
+    if (!EC) { $('p-sum').innerHTML = '<span class="stat">engram_core.js or one of its five modules did not load.</span>'; return; }
+    let golden = null, trace = null, running = false;
+
+    // ---------------------------------------------------------------- parity, live
+    async function runParity() {
+        if (running || !golden || !trace) return;
+        running = true; $('p-run').disabled = true;
+        const groups = [['Parity with the golden corpus and the traces', EC.paritySections(golden, trace)], ['Behaviour: the checks of the Python tests', EC.behaviourSections(golden)]];
+        const out = $('p-out'); out.innerHTML = '';
+        const rows = [];
+        for (const [title, secs] of groups) {
+            out.insertAdjacentHTML('beforeend', `<div class="grp">${esc(title)}</div>`);
+            for (const s of secs) {
+                const d = document.createElement('details'); d.className = 'psec';
+                d.innerHTML = `<summary><span class="nm">${esc(s.name)}</span><span class="ct">&hellip;</span><span class="st wait">waiting</span></summary><div class="plines"></div>`;
+                out.appendChild(d); rows.push({ s, d, group: title });
+            }
+        }
+        const totals = { parity: [0, 0], behaviour: [0, 0] }, t0 = performance.now();
+        for (const r of rows) {
+            await tick();
+            const t = performance.now();
+            let lines;
+            try { lines = r.s.run(); } catch (e) { lines = [{ section: 'error', label: r.s.name, ok: false, detail: e.message }]; }
+            const ms = Math.round(performance.now() - t), bad = lines.filter(l => !l.ok).length, key = r.group.startsWith('Parity') ? 'parity' : 'behaviour';
+            totals[key][0] += lines.length - bad; totals[key][1] += lines.length;
+            r.lines = lines;
+            r.d.querySelector('.ct').textContent = `${lines.length - bad}/${lines.length} · ${ms} ms`;
+            const st = r.d.querySelector('.st'); st.className = 'st ' + (bad ? 'no' : 'ok'); st.textContent = bad ? `${bad} differ` : 'match';
+            if (bad) r.d.open = true;
+            renderLines(r);
+            r.d.addEventListener('toggle', () => renderLines(r));
+            summary(totals, Math.round(performance.now() - t0), false);
+        }
+        summary(totals, Math.round(performance.now() - t0), true);
+        running = false; $('p-run').disabled = false;
+        window.__engramParity = { parity: totals.parity, behaviour: totals.behaviour };
+        rowsCache = rows;
+    }
+    let rowsCache = [];
+    function renderLines(r) {
+        const box = r.d.querySelector('.plines');
+        if (!r.d.open || !r.lines) { box.innerHTML = ''; return; }
+        const only = $('p-fails').checked, show = r.lines.filter(l => !only || !l.ok);
+        box.innerHTML = show.length ? show.map(l => `<div><span class="${l.ok ? 'good' : 'bad'}">${l.ok ? 'ok  ' : 'FAIL'}</span> ${esc(l.label)} <span class="k">· ${esc(l.detail)}</span></div>`).join('') : '<div class="k">No failures.</div>';
+    }
+    function summary(t, ms, done) {
+        const [pp, pn] = t.parity, [bp, bn] = t.behaviour;
+        $('p-sum').innerHTML = `<span class="stat"><b>${pp}/${pn}</b> parity lines match</span><span class="stat"><b>${bp}/${bn}</b> behaviour checks hold</span>` +
+            `<span class="stat">${done ? `${ms} ms in this browser` : 'running&hellip;'}</span><span class="stat">${esc(EC.version)}</span>`;
+    }
+    $('p-run').addEventListener('click', runParity);
+    $('p-fails').addEventListener('change', () => rowsCache.forEach(renderLines));
+
+    async function loadTargets() {
+        try {
+            const get = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u + ': ' + r.status); return r.json(); };
+            [golden, trace] = await Promise.all([get('../reference/golden/engram_v1.json'), get('../reference/traces/engram.json')]);
+        } catch (e) {
+            $('p-load').hidden = false;
+            $('p-sum').innerHTML = '<span class="stat">Waiting for the two target files</span>';
+            return;
+        }
+        afterLoad();
+    }
+    function readFile(input, set) {
+        input.addEventListener('change', async () => {
+            try { set(JSON.parse(await input.files[0].text())); } catch (e) { $('p-sum').innerHTML = `<span class="stat">${esc(e.message)}</span>`; return; }
+            if (golden && trace) { $('p-load').hidden = true; afterLoad(); }
+        });
+    }
+    readFile($('f-golden'), v => { golden = v; });
+    readFile($('f-trace'), v => { trace = v; });
+    function afterLoad() { setDefaults(); runSession(); runParity(); }
+
+    // ---------------------------------------------------------------- a session in the browser
+    let run = null, keys = null, storeTokens = null;
+    function setDefaults() {
+        if (!golden) return;
+        const t = golden.packet_chain.turns;
+        $('s-strix').value = t[0].text; $('s-human').value = t[1].text;
+        storeTokens = EC.store(golden); keys = storeTokens.map(EC.key);
+        recall();
+    }
+    function runSession() {
+        const strix = EC.tokenize($('s-strix').value).slice(0, 400), human = EC.tokenize($('s-human').value).slice(0, 200);
+        if (strix.length + human.length < 3) { $('s-sum').innerHTML = '<span class="stat">Give at least three words in all.</span>'; return; }
+        run = new EC.Session([['strix', strix], ['human', human]], 'carry');
+        const P = run.chain.packets, regs = run.registers, ok = run.bChecks.filter(Boolean).length;
+        const back = EC.unfold(EC.chainQuaternion(run.values), run.values.length);
+        const closed = regs.filter(R => R.complete).length;
+        $('s-sum').innerHTML = [
+            `<span class="stat"><b>${P.length}</b> packets</span>`,
+            `<span class="stat">codex parity <b>${EC.hex32(run.chain.parity)}</b></span>`,
+            `<span class="stat"><b>${run.words.length}</b> memory words</span>`,
+            `<span class="stat">binding held <b>${ok}/${run.bChecks.length}</b></span>`,
+            `<span class="stat">chain address: <b>${28 * P.length}</b> letters, ${back && back.every((v, i) => v === run.values[i]) ? 'unfolds' : '<b>does not unfold</b>'}</span>`,
+            `<span class="stat">${regs.length} register${regs.length === 1 ? '' : 's'}, ${closed} complete</span>`
+        ].join('');
+        const last = P.slice(-10);
+        $('s-packets').innerHTML = last.map(p => `<tr><td>${p.index}</td><td>${esc(p.token)}</td><td>${p.source}</td><td>${p.header}</td><td>${EC.hex64(p.seed64)}</td><td>${p.footer}</td><td>${EC.CONCEPT_NAMES[p.concept] || '—'}</td></tr>`).join('') +
+            (P.length > 10 ? `<tr><td colspan="7" class="k">the last 10 of ${P.length}</td></tr>` : '');
+        showWord();
+        $('s-repair').innerHTML = '<span class="k">Alter the word to see Lemma 15 locate the cell and the parity rebuild it.</span>';
+    }
+    function lastWord() { return run && run.words.length ? run.words[run.words.length - 1] : null; }
+    function showWord() {
+        const w = lastWord();
+        if (!w) { $('s-word').innerHTML = '<span class="k">No zero point has three packets latched yet: give a few more words.</span>'; return; }
+        const names = ['α', 'β', 'γ', 'Y = α⊕β⊕γ'], toks = w.tokens.map(t => run.chain.packets[t].token);
+        $('s-word').innerHTML = `<span class="k">written at frame ${w.F} (zero point), address ${w.addr}, from ${toks.map(esc).join(', ')}</span>` +
+            `<div class="cellhex">${w.word.cells.map((c, j) => `<span class="n">${names[j]}</span><span>${EC.hex64(c)}</span>`).join('')}` +
+            `<span class="n">root</span><span>${w.root}</span><span class="n">link</span><span>${w.link}</span></div>`;
+    }
+    function alter(two) {
+        const w = lastWord();
+        if (!w) return;
+        const W = new EC.Word(...w.word.cells.slice(0, 3), w.addr, w.F);
+        const pick = () => Math.floor(Math.random() * 4), a = pick(), bit = Math.floor(Math.random() * 64);
+        let b = a; while (two && b === a) b = pick();
+        W.cells[a] ^= 1n << BigInt(bit);
+        if (two) W.cells[b] ^= 1n << BigInt(Math.floor(Math.random() * 64));
+        const names = ['α', 'β', 'γ', 'Y'], parity = W.parityOk(), loc = W.locate(), [verdict, j] = W.repair();
+        const ok = W.root() === W.tau0[1];
+        $('s-repair').innerHTML = [
+            `altered: ${two ? `${names[a]} and ${names[b]}` : `bit ${bit} of ${names[a]}`}`,
+            `<span class="k">parity α⊕β⊕γ⊕Y = 0:</span> ${parity ? 'yes' : 'no'}${two && parity ? ' <span class="k">(fooled: same bit twice)</span>' : ''}`,
+            `<span class="k">Lemma 15 locates:</span> ${loc === null ? 'nothing' : names[loc]}`,
+            `<span class="k">repair:</span> <span class="${verdict === 'refused' ? 'bad' : 'good'}">${verdict}</span>${j !== null ? ` (cell ${names[j]})` : ''} <span class="k">· root ${ok ? 'matches the recorded root' : 'still differs: the word is refused, not guessed'}</span>`
+        ].join('<br>');
+    }
+    function recall() {
+        if (!keys) return;
+        const q = $('s-query').value, k = EC.key(q), [near, d] = EC.nearest(k, keys);
+        const names = [...new Set(near.map(i => storeTokens[i]))];
+        const v = q && EC.parityVariants(q)[1];
+        $('s-recall').innerHTML = `<span class="k">key</span> ${EC.hex64(k)}<br><span class="k">nearest (distance ${d}):</span> ${names.slice(0, 12).map(esc).join(', ')}${names.length > 12 ? ` <span class="k">and ${names.length - 12} more</span>` : ''}` +
+            (v ? `<br><span class="k">its reversal "${esc(v)}" has the same key: engram/1 keeps only each letter's count parity (E9)</span>` : '');
+    }
+    $('s-run').addEventListener('click', runSession);
+    $('s-reset').addEventListener('click', () => { setDefaults(); runSession(); });
+    $('s-flip').addEventListener('click', () => alter(false));
+    $('s-two').addEventListener('click', () => alter(true));
+    $('s-query').addEventListener('input', recall);
+    if (!golden) { $('s-strix').value = 'I am STRIX. I process, I pattern-match, I crystallize.'; $('s-human').value = 'What does a geodesic feel like from the inside?'; }
+    loadTargets().then(() => { if (!golden) runSession(); });
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye hub&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;System map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye.html&quot;,&quot;label&quot;:&quot;Mind's Eye 2D: STRIX on the clock&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Talk with STRIX; every word on the five tiers, the clock, exact memory&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye-3d.html&quot;,&quot;label&quot;:&quot;Mind's Eye 3D: the memory in H³&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;The memory tree in H³, frames, the twin system, the fence and the guard&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;The Architecture&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 1: five systems, eight layers, a live lab&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;The Evidence and the Claims&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 2: spikes, golden corpus, E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;shared-cores.html&quot;,&quot;label&quot;:&quot;The Shared Cores&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 3: orbital_core.js, byte-identical pages, PolyStep without torch&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;reference-results.html&quot;,&quot;label&quot;:&quot;The Reference and the Results&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 4: Phase 2, the decisions on E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 5: engram_core.js, 849 parity lines, live in the page&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 6: every panel and control of mind-eye.html&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 7: every panel of mind-eye-3d.html, LATTICE-SEED/1&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 8: Owl Academy in and out, checked against its own code&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;follow-ups.html&quot;,&quot;label&quot;:&quot;The Follow-ups&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 9: E10 and E11, registered before any code, decided&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;integration.html&quot;,&quot;label&quot;:&quot;Integration and Upkeep&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 10: the ways in, the shared cores, one command for every check&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;One engine, five tiers: the pipeline for one word&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;Three engines: the clock the window rides&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;The triple quad, memory and the gauge&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Cross-engine TQF and the soliton crystal&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Exact addresses, H² and H³, the twin system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The watch layer's screen and guard&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

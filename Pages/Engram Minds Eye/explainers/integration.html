@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integration and Upkeep - Engram Mind's Eye</title>
+    <meta name="description" content="Explainer 10 of Engram Mind's Eye: Phase 8. How the system is reached from the rest of the site, the shared cores it loads unchanged and what it uses from each, one command that checks the system and everything it stands on, and what to do when something upstream changes.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/em.css">
+    <script src="../assets/em-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Engram Mind&rsquo;s Eye &middot; Explainer 10 &middot; Phase 8</div>
+    <h1>Integration and Upkeep</h1>
+    <p class="lede">The last phase connects the system to the rest of the site and makes it easy to keep working. You can reach it from the site catalog, from the Hyperbolic Oracles and Geometric Calculator menus, and from the Hyperbolic Oracles hub. It loads five shared cores without copying them. One command checks the system and every core it loads together, so a change anywhere upstream shows up here.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#ways">The ways in</a>
+        <a class="btn btn-ghost" href="#cores">What it stands on</a>
+        <a class="btn btn-ghost" href="#check">One command</a>
+        <a class="btn btn-ghost" href="#change">When something changes</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">Phases <b>0</b>&ndash;<b>8</b> done</span>
+        <span class="stat"><code>tests/all.cjs</code>: <b>15/15</b> checks</span>
+        <span class="stat"><code>tests/links.cjs</code>: <b>31/31</b>, three of them controls</span>
+        <span class="stat"><b>5</b> shared cores loaded unchanged</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#ways">2. The ways in</a></li>
+            <li><a href="#cores">3. What it stands on</a></li>
+            <li><a href="#check">4. One command</a></li>
+            <li><a href="#change">5. When something changes</a></li>
+            <li><a href="#record">6. The record</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#ways">The ways in</a></li><li><a href="#cores">What it stands on</a></li>
+            <li><a href="#check">One command</a></li><li><a href="#change">When something changes</a></li><li><a href="#record">The record</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">Integration takes the pages and the bridges built in Phases 4 to 6 and connects them to the systems they came from.</p>
+            <div data-em-map="focus" data-node="site"></div>
+        </section>
+
+        <section class="chapter" id="ways">
+            <div class="chapter-num">02</div>
+            <h2>The ways in</h2>
+            <p class="chapter-intro">Every way in opens the hub, and from there the 2D and 3D pages. <code>tests/links.cjs</code> checks each one.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>From</th><th>Where</th><th>Opens</th></tr></thead>
+                <tbody>
+                    <tr><td>The site catalog</td><td><code>pages.html</code>, a card after Hyperbolic Oracles</td><td>The hub, the 2D page, the 3D page, the bridges explainer</td></tr>
+                    <tr><td>Hyperbolic Oracles&rsquo; site bar</td><td><em>Elsewhere</em> menu, on every page of that system</td><td>The hub</td></tr>
+                    <tr><td>The Geometric Calculator&rsquo;s site bar</td><td><em>Simulations</em> menu, beside Hyperbolic Oracles</td><td>The hub</td></tr>
+                    <tr><td>The <a href="../../Hyperbolic%20Oracles/index.html#oracles">Hyperbolic Oracles hub</a></td><td>A &ldquo;Built on these cores&rdquo; note under its oracles, which says what Engram takes from each core</td><td>The hub, the 2D page, the 3D page</td></tr>
+                    <tr><td>Its <a href="../../Hyperbolic%20Oracles/index.html#map">system map</a></td><td>An <em>Engram Mind&rsquo;s Eye</em> node under a new band, &ldquo;Used by&rdquo;, fed by the four cores Engram loads from there</td><td>The hub</td></tr>
+                    <tr><td>Its <code>README.md</code></td><td>A &ldquo;Used by&rdquo; section listing every name Engram uses from each file, and the four commands to run after changing one</td><td>This folder&rsquo;s README</td></tr>
+                    <tr><td><code>scripts/geometric-build/README.md</code></td><td>Names this system as the first user of <code>orbital_core.js</code> (since Phase 1)</td><td>&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <p>The system&rsquo;s own pages carry its own menu set, <code>engram-minds-eye</code>, with three menus: the hub and the two pages, the ten explainers, and the systems it builds on. All three menu sets live in <code>scripts/page-chrome-targets.json</code>. <code>node scripts/install-page-chrome.mjs</code> writes the bar into every page, and <code>--check</code> confirms every page has it.</p>
+            <div class="callout plain"><span class="label">Not done here</span>
+                <p>Owl Academy does not link back. That would mean changing the Owl-Academy repository, which this project only reads: it pins Owl Academy&rsquo;s code and checks against it, and never edits it. A link from Owl Academy&rsquo;s Engram Mind Eye page to this hub is a change for that repository&rsquo;s owners to make.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="cores">
+            <div class="chapter-num">03</div>
+            <h2>What it stands on</h2>
+            <p class="chapter-intro">The engram layer is new. Everything under it is loaded by relative path from the system that owns it, in Node and in the pages, and is never copied.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>File</th><th>Owned by</th><th>What Engram uses</th><th>Checked by</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">orbital_core.js</td><td>Geometric Calculator (<code>scripts/geometric-build/</code>, Phase 1)</td><td><code>Fraction</code>, <code>state</code>, <code>packTile</code>, <code>merkleChain</code>, <code>gaugeExact</code>, <code>readout</code>, <code>pumpOf</code>, <code>wheelSector</code>, <code>muxIndex</code>, <code>sha256</code> and its byte helpers</td><td><code>tests/orbital-core.cjs</code> (18/18); <code>rebuild-identical.sh</code> for the four orbital pages</td></tr>
+                    <tr><td class="mono">hyperbolic_core.js</td><td>Hyperbolic Oracles</td><td>The norm-5 tree <code>P</code> (its reduced words are the addresses), <code>Rng</code>, and the clock <code>ON</code>/<code>OFF</code>, which Engram checks against its own</td><td><code>tests/parity.cjs</code> (169/169)</td></tr>
+                    <tr><td class="mono">decoder3d.js</td><td>Hyperbolic Oracles</td><td><code>TreeEmbedding3D</code>, the memory tree in H&sup3;</td><td><code>tests/parity3d.cjs</code> (28/28)</td></tr>
+                    <tr><td class="mono">twin3d.js</td><td>Hyperbolic Oracles</td><td><code>qmul</code>, <code>qconj</code>, <code>qnormExact</code>, <code>qnormFloat</code>, <code>rotOfQuat</code>: the coupler&rsquo;s mirror law and the frames</td><td><code>tests/parity-twin.cjs</code> (21/21)</td></tr>
+                    <tr><td class="mono">fence.js</td><td>Hyperbolic Oracles</td><td><code>fence</code>, <code>guardCheck</code>, <code>defect</code>, <code>distanceMatrix</code>, <code>centrePoint</code>, <code>generate</code>, <code>corrupt</code>, <code>treeWords</code>, <code>LN2</code>: the watch layer</td><td><code>tests/parity-fence.cjs</code> (101/101)</td></tr>
+                    <tr><td class="mono">ttmpt_core_v1.js</td><td>Owl Academy, copied verbatim and marked so</td><td>engram/1: the key, the grids, crystallization, the tokenizers</td><td>The golden corpus, E1 (613 cases in the parity check)</td></tr>
+                    <tr><td class="mono">strix_library_v1.js, lattice_seed_v1.js, biochain_v1.js</td><td>Owl Academy, generated from its code</td><td>STRIX&rsquo;s library and reply rule; LATTICE-SEED/1; the biomesh codec</td><td>Their pin scripts with <code>--check</code></td></tr>
+                </tbody>
+            </table></div>
+            <p>The browser core checks one of these assumptions as it loads: if <code>hyperbolic_core.js</code>&rsquo;s clock schedule ever differs from Engram&rsquo;s, <code>engram_core.js</code> refuses to start and says so. The rest are checked by the parity lines, which compare exact values with the Python reference. A change in a core&rsquo;s results shows up as failing lines, never as a page that quietly does something different.</p>
+        </section>
+
+        <section class="chapter" id="check">
+            <div class="chapter-num">04</div>
+            <h2>One command</h2>
+            <p class="chapter-intro"><code>tests/all.cjs</code> runs every Node check of the system and of the cores it loads, then the site bar and the four pins.</p>
+            <div class="out" style="white-space:pre-wrap">node "Pages/Engram Minds Eye/tests/all.cjs"
+<span class="k">pass  cores   orbital_core.js                     18/18 checks pass</span>
+<span class="k">pass  cores   hyperbolic_core.js parity           169/169 trace lines match</span>
+<span class="k">pass  cores   decoder3d.js parity                 28/28 decoder lines match</span>
+<span class="k">pass  cores   twin3d.js parity                    21/21 twin lines match</span>
+<span class="k">pass  cores   fence.js parity                     101/101 fence lines match</span>
+<span class="k">pass  engram  browser core against the reference  849/849 lines; 27/27 behaviour checks</span>
+<span class="k">pass  engram  the 2D page engine                  26/26 checks pass</span>
+<span class="k">pass  engram  the 3D page engine                  19/19 checks pass</span>
+<span class="k">pass  engram  the bridges                         34/34 checks pass</span>
+<span class="k">pass  engram  links and the ways in               31/31 link checks pass</span>
+<span class="k">pass  site    the site bar on every page</span>
+<span class="k">pass  pins    engram/1 golden corpus              engram_v1.json matches Owl Academy</span>
+<span class="k">pass  pins    STRIX library and exports           both match Owl Academy</span>
+<span class="k">pass  pins    LATTICE-SEED/1                      both match Owl Academy</span>
+<span class="k">pass  pins    the bridges to Owl Academy          both match Owl Academy</span>
+<span class="good">15/15 checks pass</span>  <span class="k">(about 75 s, most of it the twin trace)</span></div>
+            <p>The pins regenerate every pinned file from Owl Academy&rsquo;s code and compare them with the committed files. They need an Owl-Academy checkout: by default the one next to this repository, or a path given as the argument. Without one they are reported as <em>skipped</em>, never as passed. The Python reference has its own 45 tests:</p>
+            <div class="out">cd "Pages/Engram Minds Eye/reference" &amp;&amp; python3 -m pytest -q tests</div>
+            <p><code>tests/links.cjs</code> checks every relative <code>href</code> and <code>src</code> in the folder&rsquo;s pages and explainers, and every <code>#anchor</code> against the ids of the page it points to. It also checks every link on the system map, every file in every site-bar menu set, and each way in from the table above. It finds the folder&rsquo;s pages itself, so a new page is covered without editing the test. Its three controls must come out right on every run: a missing file and a missing anchor must be caught, and a real anchor must pass.</p>
+        </section>
+
+        <section class="chapter" id="change">
+            <div class="chapter-num">05</div>
+            <h2>When something changes</h2>
+            <p class="chapter-intro">Five kinds of change, and what each one needs.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Change</th><th>Do</th></tr></thead>
+                <tbody>
+                    <tr><td>Code inside a segment of <code>orbital_core.js</code></td><td>Rebuild with <code>build.py</code>. <code>rebuild-identical.sh</code> lists the orbital pages that moved; commit them if the move was intended. Then run <code>tests/all.cjs</code>. If an engram result changes, port the change to <code>reference/engram/orbital.py</code> too, regenerate the traces (<code>run_traces.py</code>) and commit both together. The parity check will not let the two drift apart.</td></tr>
+                    <tr><td>One of Hyperbolic Oracles&rsquo; four cores</td><td>Run that core&rsquo;s parity test, then <code>tests/all.cjs</code>. The names Engram depends on are listed in Hyperbolic Oracles&rsquo; README under &ldquo;Used by&rdquo;. Renaming one breaks this system.</td></tr>
+                    <tr><td>Owl Academy changes its engram code</td><td>The pins&rsquo; <code>--check</code> fails and names the file. Keep the <code>_v1</code> files as they are: they define engram/1, LATTICE-SEED/1 and the version 1 session format that existing chains, seeds and exports rely on. Pin the new version beside them as <code>_v2</code>, with its own script. If a claim is to rest on it, register an amendment first, as with Amendments 1 and 2.</td></tr>
+                    <tr><td>A menu or the site bar</td><td>Edit <code>scripts/page-chrome-targets.json</code> (four-space indent, final newline), run <code>node scripts/install-page-chrome.mjs</code>, then <code>--check</code>. The bar is part of the four built orbital pages, so <code>rebuild-identical.sh</code> will show them as moved: commit the reinstalled pages.</td></tr>
+                    <tr><td>A new module or page here</td><td>The five things on <a href="../index.html#conventions">the hub</a>: the code, an explainer, a node on the map, a ledger row for anything it claims, and tests. Add its test to <code>tests/all.cjs</code>. <code>tests/links.cjs</code> picks up the new page itself.</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="record">
+            <div class="chapter-num">06</div>
+            <h2>The record</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Phase</th><th>Delivered</th><th>Explainer</th></tr></thead>
+                <tbody>
+                    <tr><td>0 &middot; Scaffold</td><td>Hub, map, preregistration (E1&ndash;E9), golden corpus, four spikes</td><td><a href="architecture.html">1</a>, <a href="evidence.html">2</a></td></tr>
+                    <tr><td>1 &middot; Shared cores</td><td><code>orbital_core.js</code>, with the four orbital pages byte-identical</td><td><a href="shared-cores.html">3</a></td></tr>
+                    <tr><td>2 &middot; Python reference</td><td>Twelve modules; E1&ndash;E7 and E9 supported, E8 inconclusive</td><td><a href="reference-results.html">4</a></td></tr>
+                    <tr><td>3 &middot; Browser core</td><td><code>engram_core.js</code>, line for line with the reference (849/849 since Phase 7)</td><td><a href="browser-core.html">5</a></td></tr>
+                    <tr><td>4 &middot; The 2D page</td><td>STRIX on the clock; v1 exports byte-identical to Owl Academy</td><td><a href="page-2d.html">6</a></td></tr>
+                    <tr><td>5 &middot; The 3D page</td><td>The memory in H&sup3;, the twin system, the fence and the guard</td><td><a href="page-3d.html">7</a></td></tr>
+                    <tr><td>6 &middot; Bridges</td><td>Owl Academy in and out, each import verified by its own code</td><td><a href="bridges.html">8</a></td></tr>
+                    <tr><td>7 &middot; Follow-ups</td><td>E10 inconclusive (its exact parts supported), E11 supported</td><td><a href="follow-ups.html">9</a></td></tr>
+                    <tr><td>8 &middot; Integration</td><td>The ways in, the dependency record, one command for every check</td><td>10, this page</td></tr>
+                </tbody>
+            </table></div>
+            <p>Eleven claims have been decided: nine supported, two inconclusive, none refuted. The two inconclusive claims are about the same thing. The guard names a corrupted stored distance correctly 96 times in 100, short of the 99 its rule asked for. E10 showed why. Each miss is a tie, or a corruption that leaves no quadruple above ln&nbsp;2: the guard runs short of witnesses, not of blame. Naming the pair from fewer witnesses would need more than four-point counts, such as the stored distances&rsquo; own history. That would be a new claim, registered before any code for it.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="follow-ups.html">&larr; The follow-ups</a>
+                <a class="btn btn-ghost" href="../index.html">Back to the hub &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Engram Mind&rsquo;s Eye &middot; Explainer 10 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a></footer>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye hub&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;System map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye.html&quot;,&quot;label&quot;:&quot;Mind's Eye 2D: STRIX on the clock&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Talk with STRIX; every word on the five tiers, the clock, exact memory&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;../mind-eye-3d.html&quot;,&quot;label&quot;:&quot;Mind's Eye 3D: the memory in H³&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;The memory tree in H³, frames, the twin system, the fence and the guard&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;The Architecture&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 1: five systems, eight layers, a live lab&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;The Evidence and the Claims&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 2: spikes, golden corpus, E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;shared-cores.html&quot;,&quot;label&quot;:&quot;The Shared Cores&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 3: orbital_core.js, byte-identical pages, PolyStep without torch&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;reference-results.html&quot;,&quot;label&quot;:&quot;The Reference and the Results&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 4: Phase 2, the decisions on E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 5: engram_core.js, 849 parity lines, live in the page&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 6: every panel and control of mind-eye.html&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 7: every panel of mind-eye-3d.html, LATTICE-SEED/1&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 8: Owl Academy in and out, checked against its own code&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;follow-ups.html&quot;,&quot;label&quot;:&quot;The Follow-ups&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 9: E10 and E11, registered before any code, decided&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;integration.html&quot;,&quot;label&quot;:&quot;Integration and Upkeep&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 10: the ways in, the shared cores, one command for every check&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;One engine, five tiers: the pipeline for one word&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;Three engines: the clock the window rides&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;The triple quad, memory and the gauge&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Cross-engine TQF and the soliton crystal&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Exact addresses, H² and H³, the twin system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The watch layer's screen and guard&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

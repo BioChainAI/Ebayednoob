@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind's Eye 2D - Engram Mind's Eye</title>
+    <meta name="description" content="Engram Mind's Eye, the 2D page: talk with STRIX while every word runs through the five tiers, rides the three-engine zero-point clock into exact memory words, and closes 720-frame registers. Memory you can damage and repair, the gauge and lock, and exports byte-compatible with Owl Academy.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/em.css">
+    <link rel="stylesheet" href="assets/mind-eye.css">
+    <script src="../../scripts/geometric-build/orbital_core.js"></script>
+    <script src="../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+    <script src="../Hyperbolic%20Oracles/decoder3d.js"></script>
+    <script src="../Hyperbolic%20Oracles/twin3d.js"></script>
+    <script src="../Hyperbolic%20Oracles/fence.js"></script>
+    <script src="ttmpt_core_v1.js"></script>
+    <script src="engram_core.js"></script>
+    <script src="strix_library_v1.js"></script>
+    <script src="lattice_seed_v1.js"></script>
+    <script src="biochain_v1.js"></script>
+</head>
+<body class="app">
+<header class="app-head">
+    <div>
+        <div class="eyebrow">Engram Mind&rsquo;s Eye &middot; the 2D page</div>
+        <h1>STRIX on the Clock</h1>
+        <p>Every word is one calculation on the five tiers, rides one of three engines of the zero-point clock, and is written into exact memory at a zero point. <a href="explainers/page-2d.html">The manual</a> explains every panel; <a href="mind-eye-3d.html">the 3D page</a> shows the same memory in H&sup3;.</p>
+    </div>
+    <div class="chips" id="chips" aria-live="polite"></div>
+</header>
+
+<main class="board">
+    <section class="panel" id="p-dlg" aria-labelledby="h-dlg">
+        <h2 id="h-dlg">Dialogue <small>STRIX answers by retrieval from its library</small></h2>
+        <div class="msgs" id="msgs" role="log" aria-live="polite"></div>
+        <form class="composer" id="composer">
+            <label class="sr" for="say" hidden>Say something to STRIX</label>
+            <textarea id="say" placeholder="Say something to STRIX… (Enter to send)" spellcheck="true" maxlength="2000"></textarea>
+            <button class="btn-send" id="send" type="submit">Send</button>
+        </form>
+        <div class="row">
+            <button class="chip" type="button" id="b-new">New session</button>
+            <span class="help" id="save-note">Your dialogue is kept in this browser only.</span>
+        </div>
+    </section>
+
+    <section class="panel" id="p-clock" aria-labelledby="h-clock">
+        <h2 id="h-clock">The three-engine clock <small>α, β, γ ride Engines I, II, III</small></h2>
+        <canvas class="cv" id="cv-clock" width="640" height="520" role="img" aria-label="The zero-point clock: a 24-frame dial between three five-tier engines, with each packet travelling from tier T4 to T0 on its engine"></canvas>
+        <div class="row">
+            <button class="chip" type="button" id="b-play">Pause</button>
+            <button class="chip" type="button" id="b-step">Next event</button>
+            <button class="chip" type="button" id="b-end">To the end</button>
+            <button class="chip" type="button" id="b-replay">Replay the last turn</button>
+            <label>speed <select id="speed"><option value="12">12 frames/s</option><option value="48" selected>48 frames/s</option><option value="144">144 frames/s</option></select></label>
+        </div>
+        <div class="readout" id="clock-read"></div>
+    </section>
+
+    <section class="panel" id="p-tiers" aria-labelledby="h-tiers">
+        <h2 id="h-tiers">One word on the five tiers <small>T4 ingest → T0 latch</small></h2>
+        <div class="tok-head">
+            <button class="chip" type="button" id="t-prev" aria-label="Previous word">&larr;</button>
+            <span class="name" id="t-name">—</span>
+            <button class="chip" type="button" id="t-next" aria-label="Next word">&rarr;</button>
+            <label class="row"><input type="checkbox" id="t-follow" checked> follow the clock</label>
+        </div>
+        <div id="tiers"></div>
+    </section>
+
+    <section class="panel" id="p-res" aria-labelledby="h-res">
+        <h2 id="h-res">Resonance <small>the gauge, the lock and the crystal</small></h2>
+        <div class="res-wrap">
+            <figure><canvas class="cv" id="cv-tri" width="300" height="240" role="img" aria-label="The landing triangle of the selected word on tier T0"></canvas><figcaption id="tri-cap">landing triangle on T0</figcaption></figure>
+            <figure><canvas class="cv" id="cv-crystal" width="300" height="240" role="img" aria-label="The soliton crystal: centred when the gauge is zero, displaced by its lean, sheared when memory is damaged"></canvas><figcaption id="cry-cap">soliton crystal</figcaption></figure>
+        </div>
+        <div class="kv" id="gauge" style="margin-top:8px"></div>
+    </section>
+
+    <section class="panel" id="p-mem" aria-labelledby="h-mem">
+        <h2 id="h-mem">Memory <small>30 addresses · triple-quad words over GF(2)</small></h2>
+        <div class="addr-grid" id="addr-grid"></div>
+        <div id="word" style="margin-top:10px"></div>
+        <div class="row">
+            <button class="chip" type="button" id="m-flip">Flip a random bit</button>
+            <button class="chip" type="button" id="m-locate">Locate</button>
+            <button class="chip" type="button" id="m-repair">Repair</button>
+            <button class="chip" type="button" id="m-restore">Restore</button>
+        </div>
+        <div class="verdict" id="m-verdict"></div>
+        <p class="help">Click any cell of α, β, γ or Y to flip that bit. The parity notices a change, the Merkle chain (Lemma 15) says which cell, and the other three rebuild it. Change two cells and the word is refused, not guessed.</p>
+    </section>
+
+    <section class="panel" id="p-reg" aria-labelledby="h-reg">
+        <h2 id="h-reg">The register <small>720 frames → 72 blocks → 10 groups</small></h2>
+        <div class="row" id="reg-pick"></div>
+        <div class="progress"><i id="reg-prog" style="width:0"></i></div>
+        <div class="readout" id="reg-read"></div>
+        <div class="blocks" id="blocks" role="img" aria-label="The register's 72 ten-frame blocks"></div>
+        <div class="tw" id="reg-checks"></div>
+    </section>
+
+    <section class="panel" id="p-map" aria-labelledby="h-map">
+        <h2 id="h-map">The memory tree in H² <small>register → section → zero point → cell</small></h2>
+        <canvas class="cv" id="cv-map" width="420" height="420" role="img" aria-label="The memory tree of the register in the Poincaré disk"></canvas>
+        <p class="help">Six sections of five zero points: the register&rsquo;s 30 memory words, each with its α, β and γ. Placed on the norm-5 tree of Hyperbolic PolyStep and drawn in the Poincaré disk. Click a cell to select its word.</p>
+    </section>
+
+    <section class="panel" id="p-exp" aria-labelledby="h-exp">
+        <h2 id="h-exp">Exports and checks</h2>
+        <div class="exp-row">
+            <span class="help" style="margin:0">Manifold (v1 crystal anchor)</span>
+            <label>N <input type="number" id="mf-n" min="3" max="24" value="8"></label>
+            <label>K <input type="number" id="mf-k" min="1" max="24" value="3"></label>
+            <label>T <input type="number" id="mf-t" min="1" max="4" value="2"></label>
+        </div>
+        <div class="row">
+            <button class="chip" type="button" id="x-chain">v1 chain</button>
+            <button class="chip" type="button" id="x-72">v1 crystal · 72</button>
+            <button class="chip" type="button" id="x-720">v1 crystal · 720</button>
+            <button class="chip" type="button" id="x-v2">v2 · everything exact</button>
+        </div>
+        <div class="verdict" id="x-note"></div>
+        <p class="help">v1 files are byte for byte what Owl Academy&rsquo;s Engram Mind Eye downloads for the same chain, so they load there. v2 adds the addresses, memory words, registers and coupler.</p>
+        <div class="row"><button class="chip" type="button" id="b-check">Run the self-check</button></div>
+        <div class="checks" id="checks"></div>
+    </section>
+
+    <section class="panel" id="p-bridge" aria-labelledby="h-bridge">
+        <h2 id="h-bridge">Owl Academy, in and out <small>sessions, chains, crystals, biochains</small></h2>
+        <textarea id="b-text" class="seedbox" spellcheck="false" placeholder="Paste an Owl Academy file: a saved Engram Mind Eye session, a chain or crystal export, a biochain record or engram stream, or a v2 export from here." aria-label="A file to import"></textarea>
+        <div class="row">
+            <label class="chip" style="cursor:pointer">file <input type="file" id="b-file" accept=".json,application/json,text/plain" hidden></label>
+            <button class="chip" type="button" id="b-read">Read and check</button>
+            <button class="chip" type="button" id="b-load" disabled>Load as this session</button>
+        </div>
+        <div class="checks" id="b-out"></div>
+        <h3 class="mini">Back to Owl Academy</h3>
+        <p class="help">Owl Academy&rsquo;s Engram Mind Eye keeps its session in its own browser storage. Export this session in exactly that form, then in that page&rsquo;s console run the loader: it stores the session and reloads, and STRIX resumes it there, chain and all.</p>
+        <div class="row">
+            <button class="chip" type="button" id="x-owl">Owl Academy session</button>
+            <button class="chip" type="button" id="b-copy">Copy the loader</button>
+            <span class="help" id="b-copied" style="margin:0"></span>
+        </div>
+        <div class="out" id="b-snippet" style="max-height:120px;overflow:auto">localStorage.setItem('engram_mind_eye_v1', JSON.stringify(&hellip;the session&hellip;)); location.reload();</div>
+    </section>
+
+    <section class="panel" id="p-ledger" aria-labelledby="h-ledger">
+        <h2 id="h-ledger">Packet ledger <small>128 bits a word: header · body · footer</small></h2>
+        <div class="ledger-wrap"><table class="small">
+            <thead><tr><th>#</th><th>word</th><th>from</th><th>engine</th><th>on → off</th><th>header</th><th>body (seed64)</th><th>footer</th><th>nearest concept</th><th>memory word</th></tr></thead>
+            <tbody id="ledger"></tbody>
+        </table></div>
+    </section>
+</main>
+<footer>Engram Mind&rsquo;s Eye &middot; <a href="index.html">Hub</a> &middot; <a href="explainers/page-2d.html">Manual</a> &middot; <a href="explainers/browser-core.html">The browser core</a></footer>
+<script src="assets/mind-eye.js"></script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye hub&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;System map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;mind-eye.html&quot;,&quot;label&quot;:&quot;Mind's Eye 2D: STRIX on the clock&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Talk with STRIX; every word on the five tiers, the clock, exact memory&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;mind-eye-3d.html&quot;,&quot;label&quot;:&quot;Mind's Eye 3D: the memory in H³&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;The memory tree in H³, frames, the twin system, the fence and the guard&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;explainers/architecture.html&quot;,&quot;label&quot;:&quot;The Architecture&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 1: five systems, eight layers, a live lab&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/evidence.html&quot;,&quot;label&quot;:&quot;The Evidence and the Claims&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 2: spikes, golden corpus, E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/shared-cores.html&quot;,&quot;label&quot;:&quot;The Shared Cores&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 3: orbital_core.js, byte-identical pages, PolyStep without torch&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/reference-results.html&quot;,&quot;label&quot;:&quot;The Reference and the Results&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 4: Phase 2, the decisions on E1–E9&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 5: engram_core.js, 849 parity lines, live in the page&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 6: every panel and control of mind-eye.html&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 7: every panel of mind-eye-3d.html, LATTICE-SEED/1&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 8: Owl Academy in and out, checked against its own code&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/follow-ups.html&quot;,&quot;label&quot;:&quot;The Follow-ups&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 9: E10 and E11, registered before any code, decided&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;},{&quot;href&quot;:&quot;explainers/integration.html&quot;,&quot;label&quot;:&quot;Integration and Upkeep&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Explainer 10: the ways in, the shared cores, one command for every check&quot;,&quot;section&quot;:&quot;Engram Mind's Eye&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;One engine, five tiers: the pipeline for one word&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../Geometric%20Calculator/Zero%20Point%20Calculations/zero_point_tri_engine.html&quot;,&quot;label&quot;:&quot;Zero-Point Tri-Engine&quot;,&quot;icon&quot;:&quot;calc&quot;,&quot;note&quot;:&quot;Three engines: the clock the window rides&quot;,&quot;section&quot;:&quot;Orbital calculators&quot;},{&quot;href&quot;:&quot;../Geometric%20Calculator/Galactic%20Lensing/tri_engine_convergence.html&quot;,&quot;label&quot;:&quot;Tri-Engine Convergence&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;The triple quad, memory and the gauge&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../Geometric%20Calculator/Galactic%20Lensing/tri_engine_soliton.html&quot;,&quot;label&quot;:&quot;Tri-Engine Soliton&quot;,&quot;icon&quot;:&quot;soliton&quot;,&quot;note&quot;:&quot;Cross-engine TQF and the soliton crystal&quot;,&quot;section&quot;:&quot;Soliton convergence&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Exact addresses, H² and H³, the twin system&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/claude-fence.html&quot;,&quot;label&quot;:&quot;The 0.7 Claude Fence&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The watch layer's screen and guard&quot;,&quot;section&quot;:&quot;Hyperbolic Oracles&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

@@ -1,0 +1,23 @@
+Spike B · engrams as exact quaternion addresses (norm-5 tree, Hyperbolic PolyStep core 2.0.0)
+
+1. One packet: 64 bits <-> one integer quaternion of norm 5^28
+  [PASS] 2000 random 64-bit words round-trip through right division · 2000/2000, largest component 33 bits
+  [PASS] the GEODESIC engram round-trips · q = (-3818044787, 1453782896, 4232772142, -1626527674)
+  [PASS] its norm is exactly 5^28
+
+2. A chain: K packets -> one quaternion, unfolded in order by right division
+  [PASS] 40 packets recovered exactly from the one chain quaternion · 40/40
+  size: 4 components of up to 1301 bits = 5204 bits for 2560 data bits (exact, not compression)
+  [PASS] order matters: q(A then B) differs from q(B then A) · the XOR crystal cannot tell them apart
+
+3. The same word is a node of the 3D decoder's octahedral tree in H^3
+  [PASS] depth-6 prefixes placed in H^3 and decoded back · 50/50
+  float placement depth sweep (tau = 1.9459 per level, 50 random words each):
+    8: 50/50 · 10: 50/50 · 12: 50/50 · 14: 36/50 · 16: 9/50 · 18: 0/50 · 28: 0/50
+  so the full 28-letter address stays exact (the integer quaternion); only a shallow prefix is drawn as a float point
+
+4. Frames: the packet quaternion is an exact rotation, and the coupler law holds on it
+  [PASS] R^T R = I in exact rationals
+  [PASS] q1 <- w q1 and q2 <- q2 w^-1 keep B = q2 q1 (K1)
+
+8/8 checks pass
