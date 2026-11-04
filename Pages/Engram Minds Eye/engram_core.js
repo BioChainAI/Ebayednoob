@@ -640,6 +640,119 @@ function exportV2(live, { generatedAt = new Date().toISOString(), manifold = MAN
     return { name: `engram_mind_eye_v2_N${P.length}_P${hex32(live.chain.parity)}.json`, text: JSON.stringify(data, null, 1) };
 }
 
+// ================================================================== the 3D engine (Phase 5)
+// The memory tree of a register in H^3 on Hyperbolic PolyStep's octahedral tree embedding (decoder3d.js, step ln 7),
+// the same position words as the 2D page: the register at the root, six sections, thirty zero points (its memory
+// words), and each word's three cells. Positions are structural, so every full register has the same layout; what
+// differs between packets is their frame, the rotation of their own address quaternion.
+const LAYOUT = (() => {
+    const out = [{ key: 'r', depth: 0, word: [] }];
+    for (let s = 0; s < 6; s++) {
+        out.push({ key: `${s}`, depth: 1, s, word: [s] });
+        for (let c = 0; c < 5; c++) {
+            const l2 = C.P.children([s])[c];
+            out.push({ key: `${s},${c}`, depth: 2, s, c, word: [s, l2] });
+            for (let j = 0; j < 3; j++) out.push({ key: `${s},${c},${j}`, depth: 3, s, c, j, word: [s, l2, C.P.children([s, l2])[j]] });
+        }
+    }
+    return out;
+})();
+const EXACT3 = new Map(), FLOAT3 = new Map();
+const point3Exact = word => { const k = word.join(','); if (!EXACT3.has(k)) EXACT3.set(k, emb().pointExact(word)); return EXACT3.get(k); };
+const point3 = word => { const k = word.join(','); if (!FLOAT3.has(k)) FLOAT3.set(k, emb().point(word)); return FLOAT3.get(k); };
+
+// The memories of register r: the structural nodes, and a cell for each packet that latched in it.
+function memoryNodes(live, r) {
+    const cells = new Map();
+    for (let t = 0; t < live.sched.length; t++) {
+        const pos = positionOf(live.sched[t].off);
+        if (pos.r === r) cells.set(`${pos.s},${pos.c},${pos.j}`, t);
+    }
+    return LAYOUT.filter(n => n.depth < 3 || cells.has(n.key)).map(n => (n.depth === 3 ? Object.assign({ t: cells.get(n.key) }, n) : Object.assign({}, n)));
+}
+// A memory moved d levels deeper than its record says (E7's misplacement): d more letters below its word, drawn
+// from the shared generator with the given seed.
+function misplace(word, d = 2, seed = 0) {
+    const rng = new C.Rng(seed), w = word.slice();
+    for (let k = 0; k < d; k++) { const ch = C.P.children(w); w.push(ch[rng.below(ch.length)]); }
+    return w.slice(word.length);
+}
+// The watch layer on a memory (E7): the fence screens the exact points; every flag is settled by comparing the point
+// with the point of the recorded word, exactly. `moved` maps a node key to the extra letters of a misplaced memory.
+function watchMemory(nodes, moved = new Map()) {
+    const pts = nodes.map(n => point3Exact(moved.has(n.key) ? n.word.concat(moved.get(n.key)) : n.word));
+    const res = Fz.fence(pts, 3), T = emb(), flags = [];
+    nodes.forEach((n, i) => {
+        if (res.verdict[i] < 1) return;
+        const misplaced = moved.has(n.key), onRecord = pointEq(T.pointExact(n.word), pts[i]);
+        let found = null;
+        if (misplaced) { const full = T.decodeExact(pts[i], n.word.length + moved.get(n.key).length); found = { word: full, under: full.slice(0, n.word.length).join() === n.word.join() }; }
+        flags.push({ i, key: n.key, depth: n.depth, misplaced, cleared: onRecord, ok: misplaced ? !onRecord : onRecord, verdict: res.verdict[i], found });
+    });
+    const missed = nodes.filter((n, i) => moved.has(n.key) && res.verdict[i] < 1).map(n => n.key);
+    return { res, flags, missed, centre: Fz.centrePoint(res), shells: { d1: res.d1, d3: res.d3, rF: res.rF, rG: res.rG }, settleFail: flags.filter(f => !f.ok).length, pts };
+}
+// The guard on the stored distances between the register, its sections and its zero points (37 memories, E8).
+function guardMemory(nodes, corrupt = null) {
+    const ix = nodes.map((n, i) => (n.depth <= 2 ? i : -1)).filter(i => i >= 0);
+    const D = Fz.distanceMatrix(ix.map(i => point3Exact(nodes[i].word)));
+    const clean = Fz.guardCheck(D);
+    const out = { ix, clean: { worst: clean.worst, bad: clean.bad } };
+    if (corrupt) {
+        const [E, pairs] = Fz.corrupt(D, 1, corrupt.delta, corrupt.seed), g = Fz.guardCheck(E), top = g.top.length ? g.top[0][0] : null;
+        Object.assign(out, { pair: pairs[0], top, bad: g.bad, hit: !!top && top[0] === pairs[0][0] && top[1] === pairs[0][1], keys: pairs[0].map(k => nodes[ix[k]].key), topKeys: top && top.map(k => nodes[ix[k]].key) });
+    }
+    return out;
+}
+// Frames: a float unit quaternion from an exact one whose coprime integers may be far beyond 2^53, and its rotation.
+function floatQ(q) {
+    const bits = Math.max(...q.map(c => (c < 0n ? -c : c).toString(2).length)), sh = BigInt(Math.max(0, bits - 52));
+    return T3.qnormFloat(q.map(c => Number(c >> sh)));
+}
+const frameOf = q => T3.rotOfQuat(floatQ(q));
+// The two structures' frames after each latch, in floats for drawing (the binding is checked exactly by Live).
+function twinFrames(live, mirror = true) {
+    const fm = (a, b) => [a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3], a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+        a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1], a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0]];
+    let q1 = [1, 0, 0, 0], q2 = [1, 0, 0, 0];
+    return live.quats.map(w => {
+        const f = floatQ(w), c = [f[0], -f[1], -f[2], -f[3]];
+        q1 = T3.qnormFloat(fm(f, q1)); q2 = T3.qnormFloat(fm(q2, mirror ? c : f));
+        return [q1, q2];
+    });
+}
+// The breath of Owl Academy's Synchronization Pump, timed by the register: 1 + sin(pi t) amp over its 720 frames.
+const breathOf = (F, amp = 0.5) => 1 + Math.sin(Math.PI * (((Math.max(1, F) - 1) % 720) / 720)) * amp;
+
+// ---- LATTICE-SEED/1 import (lattice_seed_v1.js, Owl Academy's codec and hash, verbatim)
+function importLatticeSeed(LS, input) {
+    const s = typeof input === 'string' ? JSON.parse(input) : input;
+    if (s && s.kind === 'ENVIRONMENT/1') throw new Error('an ENVIRONMENT/1 object: environments come in Phase 6; paste its boundary seed');
+    if (!s || s.v !== 1 || !Array.isArray(s.nodes)) throw new Error('not a LATTICE-SEED/1 object (v 1 with nodes)');
+    const recomputed = LS.collectHashOf(s), hashOk = s.hash ? recomputed === s.hash : null;
+    const nodes = s.nodes.slice().sort((a, b) => a.i - b.i).map((n, k) => {
+        const u = LS.unpackWord(n.w), value = BigInt('0x' + n.w), address = encode(value);
+        return Object.assign({ i: n.i, k, w: n.w, raw: !!n.r, value, address, quat: C.P.wordQuaternion(address) }, u);
+    });
+    const byI = new Map(nodes.map(n => [n.i, n]));
+    const chains = (s.chains || []).map(c => {
+        const vals = c.map(i => byI.get(i)).filter(Boolean).map(n => n.value), q = chainQuaternion(vals), back = unfold(q, vals.length);
+        return { nodes: c.slice(), length: vals.length, missing: c.length - vals.length, quaternion: q, letters: L * vals.length, unfolds: !!back && back.every((v, k) => v === vals[k]) };
+    });
+    return { seed: s, recomputed, hashOk, nodes, chains, parityBad: nodes.filter(n => !n.parityOk).length };
+}
+// A seed's k-th node (by index) laid out like a register's k-th cell, 90 to a page.
+function seedPosition(k) {
+    const page = Math.floor(k / 90), j = k % 3, q = Math.floor(k / 3) % 30, s = Math.floor(q / 5), c = q % 5;
+    const key = `${s},${c},${j}`;
+    return { page, s, c, j, key, word: LAYOUT.find(n => n.key === key).word };
+}
+function seedNodes(imp, page) {
+    const cells = new Map();
+    imp.nodes.forEach(n => { const p = seedPosition(n.k); if (p.page === page) cells.set(p.key, n.k); });
+    return LAYOUT.filter(n => n.depth < 3 || cells.has(n.key)).map(n => (n.depth === 3 ? Object.assign({ k: cells.get(n.key) }, n) : Object.assign({}, n)));
+}
+
 // ================================================================== parity with the reference
 // Each check is one line: { section, label, ok, detail }. The sections can be run one at a time (a page yields
 // between them); runParity runs them all.
@@ -897,7 +1010,7 @@ function runParity(golden, trace) {
 }
 
 return {
-    version: 'engram-browser-2',
+    version: 'engram-browser-3',
     // engram/1
     crystallize, hamming, chiralKey, computeJ, hexLsb, jNum, packGrid64, gridOf, hex64, hex32, fold32, rotl32,
     tokenize, tokenizeBiomesh, engramStream, CONCEPT_NAMES, WINDOW_SEEDS, CODEX_ROOT, PacketChain,
@@ -913,6 +1026,8 @@ return {
     e7Instance, depth2Points, e8Instance,
     // the page engine (Phase 4)
     qnormPow5, bindingPow5, offOf, positionOf, strixReply, Live, MANIFOLD_DEFAULT, anchorOf, exportV1Chain, exportV1Crystal, exportV2,
+    // the 3D engine (Phase 5)
+    LAYOUT, point3, point3Exact, memoryNodes, misplace, watchMemory, guardMemory, floatQ, frameOf, twinFrames, breathOf, importLatticeSeed, seedPosition, seedNodes,
     // parity
     paritySections, behaviourSections, runParity,
 };

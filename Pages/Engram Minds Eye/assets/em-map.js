@@ -124,10 +124,10 @@
         { id: 'page2d', col: 3, row: 6, kind: 'artifact', status: 'done', label: 'The 2D page', sub: 'Phase 4 · mind-eye.html',
           desc: 'Built in Phase 4: talk with STRIX (Owl Academy’s retrieval rule and library, verbatim) while every word runs on the five tiers, rides one of three engines of the zero-point clock and becomes a cell of an exact memory word. Memory you can damage, locate and repair; the gauge, the lock and the soliton crystal; 720-frame registers that telescope, unfold and close; the memory tree in H²; v1 exports byte-identical to Owl Academy’s (9/9 files) and an exact v2. Its engine, Live, equals the reference Session turn by turn (tests/page-engine.cjs, 26/26).',
           refs: 'Phase 4 · tests/page-engine.cjs', explainer: 'explainers/page-2d.html', href: 'mind-eye.html' },
-        { id: 'page3d', col: 3, row: 7, kind: 'artifact', status: 'next', label: 'The 3D page', sub: 'Phase 5 · mind-eye-3d.html',
-          desc: 'The memory tree in H³ with frames, the twin system, the soliton crystal at the core and the fence shells with the screen and guard.',
-          refs: 'Phase 5' },
-        { id: 'bridges', col: 3, row: 8, kind: 'artifact', status: 'planned', label: 'Bridges', sub: 'Phase 6 · Owl Academy in and out',
+        { id: 'page3d', col: 3, row: 7, kind: 'artifact', status: 'done', label: 'The 3D page', sub: 'Phase 5 · mind-eye-3d.html',
+          desc: 'Built in Phase 5: the dialogue’s memory as a tree in H³ (register → section → zero point → cell, on PolyStep’s octahedral tree), each word with the frame of its exact quaternion, you and STRIX as the twin system with the binding as a third chain, the soliton crystal at the core, the 0.7 Claude fence on every closing register with each flag settled exactly, the ln 2 guard, the register’s breath, and LATTICE-SEED/1 import pinned from Owl Academy’s code (tests/page3d-engine.cjs, 19/19).',
+          refs: 'Phase 5 · tests/page3d-engine.cjs', explainer: 'explainers/page-3d.html', href: 'mind-eye-3d.html' },
+        { id: 'bridges', col: 3, row: 8, kind: 'artifact', status: 'next', label: 'Bridges', sub: 'Phase 6 · Owl Academy in and out',
           desc: 'Import and export of Owl Academy chains, 72/720 exports, biochain engram streams, lattice seeds and environments, with v1 exports byte-compatible.',
           refs: 'Phase 6' }
     ];
