@@ -1,10 +1,16 @@
 # Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: Phases 0 and 1 done. Phase 0 (scaffold): the hub, the preregistration of E1–E9, the golden corpus
-pinned from Owl Academy, and four feasibility spikes (36/36 checks pass). Phase 1 (shared cores): the orbital
-pages' exact code moved into one module, `scripts/geometric-build/orbital_core.js`, which the build writes back so
-the four pages stay byte-identical, and Hyperbolic PolyStep's exact modules now import without torch. Phase 2, the
-Python reference, is next. No engram code exists yet, and no claim is decided.**
+**Status: Phases 0, 1 and 2 done; Phase 3, the browser core, is next.**
+
+- **Phase 0 (scaffold):** the hub, the preregistration of E1–E9, the golden corpus pinned from Owl Academy, and four
+  feasibility spikes (36/36 checks pass).
+- **Phase 1 (shared cores):** the orbital pages' exact code moved into one module,
+  `scripts/geometric-build/orbital_core.js`, which the build writes back so the four pages stay byte-identical;
+  Hyperbolic PolyStep's exact modules import without torch.
+- **Phase 2 (Python reference):** `reference/engram/`, 41 tests with exact parity against `orbital_core.js`, traces
+  for the browser core, Amendment 1, and the runner, committed before it ran. **Decisions: E1–E7 and E9 supported;
+  E8 inconclusive** (the guard's ln 2 bound exact; naming the corrupted pair right 96 times in 100 at +1.5, where the
+  rule asked for 99). See Explainer 4 and `reference/results/`.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -183,30 +189,31 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 | --- | --- | --- |
 | 0 · Scaffold | This plan; the hub `index.html` with its system map, claims ledger and decisions; explainers 1 (the architecture, with a live lab) and 2 (the evidence and the claims); `PREREGISTRATION.md` with claims E1–E9 and their decision rules, fixed before any code; the golden corpus `reference/golden/engram_v1.json`; the reference skeleton; the site bar | done |
 | 1 · Shared cores | `scripts/geometric-build/orbital_core.js`: 15 segments (the exact core, tiers, the Fifteen-Lemma layer with tiles and the Merkle chain, tier frames and the TQF, the gauge, readout, memory repair, the pump), written back into the four orbital pages by `build.py`, which stay byte-identical (`tests/rebuild-identical.sh`); its Node test passes 18/18 (`tests/orbital-core.cjs`, Part 1's verification included) and the browser tests pass; a lazy `hpstep/__init__.py`: PolyStep's suite passes 137/137 before and after, its traces regenerate byte-identical, and its exact modules import without torch (30 tests run with numpy alone). Explainer 3 (`explainers/shared-cores.html`) | done |
-| 2 · Python reference | `reference/engram/`: `ttmpt.py`, `packet.py`, `address.py`, `memory.py`, `gauge.py`, `register.py`. Tests and traces | next |
-| 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence`), `tests/parity-engram.cjs`, and a live parity check in a page | planned |
+| 2 · Python reference | `reference/engram/`: `ttmpt`, `orbital`, `address`, `memory`, `clock`, `coupler`, `session`, `dialogue`, `recall`, `watch`, `stats`; 41 tests including exact parity with `orbital_core.js` through Node; `traces/engram.json`; Amendment 1; `run_claims.py`, committed before it ran, and its results (E1–E7, E9 supported; E8 inconclusive). Explainer 4 (`explainers/reference-results.html`) | done |
+| 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence`), `tests/parity-engram.cjs`, and a live parity check in a page | next |
 | 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge and lock, register closure, exports (v1 byte-compatible, and v2) | planned |
 | 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and coupler chain, the soliton crystal at the core, fence shells with the screen and guard, the breath pump, `LATTICE-SEED/1` import | planned |
 | 6 · Bridges | Import Owl Academy exports (`engram_chain`, `engram_text_chain` at 72 and 720, a biochain's `engramStream`, `LATTICE-SEED/1`, `ENVIRONMENT/1`); export v1 so a chain grown here loads back in Owl Academy | planned |
-| 7 · Preregistered runs | E1–E9 with controls | planned |
+| 7 · Follow-ups | The E1–E9 runs moved into Phase 2. What remains: the decisions shown in the browser after Phase 3's parity, and any new claim registered on new seeds (for instance a sharper test of the guard's naming) | planned |
 | 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
 
 Claims, registered in [`PREREGISTRATION.md`](PREREGISTRATION.md) on 2026-11-04 with their instances, controls
-and decision rules (all open; the Phase 2 reference decides them, the spikes do not):
+and decision rules, amended once before any decisive run (Amendment 1), and decided by the Phase 2 reference
+(`reference/results/claims.json`):
 
-- **E1:** engram/1 is bit-identical to Owl Academy on the golden corpus.
-- **E2:** the chain quaternion recovers every packet exactly and in order, for any chain length.
-- **E3:** the triple-quad memory locates and repairs any single altered cell, and its chain detects any
+- **E1** (supported): engram/1 is bit-identical to Owl Academy on the golden corpus.
+- **E2** (supported): the chain quaternion recovers every packet exactly and in order, for any chain length.
+- **E3** (supported): the triple-quad memory locates and repairs any single altered cell, and its chain detects any
   alteration of two cells.
-- **E4:** every register telescopes exactly through 720 → 72 → 10, and in the free-run + membrane setting every
+- **E4** (supported): every register telescopes exactly through 720 → 72 → 10, and in the free-run + membrane setting every
   register closes.
-- **E5:** the coupler's binding is unchanged at every zero point (K1), and carry is bit-identical to running
+- **E5** (supported): the coupler's binding is unchanged at every zero point (K1), and carry is bit-identical to running
   without the coupler (K2).
-- **E6:** the gauge recovers a packet's three distances exactly, and the landing triangle locks exactly when
+- **E6** (supported): the gauge recovers a packet's three distances exactly, and the landing triangle locks exactly when
   they are equal.
-- **E7:** the fence flags memories placed two levels too deep, and the exact address check settles every flag.
-- **E8:** the ln 2 guard blames a single corrupted stored distance on its own pair.
-- **E9:** Hamming recall is exact for variants that keep every letter count's parity, and at chance for
+- **E7** (supported): the fence flags memories placed two levels too deep, and the exact address check settles every flag.
+- **E8** (inconclusive): the ln 2 guard blames a single corrupted stored distance on its own pair.
+- **E9** (supported): Hamming recall is exact for variants that keep every letter count's parity, and at chance for
   one-letter substitutions (an equivalence test within ±0.05, predicted in advance).
 
 ## 6. Decisions (adopted 2026-11-04)
@@ -249,7 +256,11 @@ as a novelty detector, need engram/2 or another key, and that is a separate expe
 | `explainers/shared-cores.html` | Explainer 3: Phase 1, the orbital core moved into one module, how the byte-identity was proved, the module live, PolyStep without torch |
 | `assets/em.css`, `assets/em-map.js` | Shared style; the system map data and its chart renderer (Hyperbolic Oracles' renderer, renamed) |
 | `PREREGISTRATION.md` | Claims E1–E9, fixed design inputs D1–D7, instances, controls and decision rules |
-| `reference/README.md`, `reference/requirements.txt` | The skeleton of the Python reference (Phase 2) |
+| `explainers/reference-results.html` | Explainer 4: Phase 2, the reference, how it was checked, Amendment 1, and the decisions |
+| `reference/engram/`, `reference/tests/` | The Python reference (12 modules) and its 41 tests |
+| `reference/run_traces.py`, `reference/traces/engram.json` | Exact values the browser core must reproduce (Phase 3) |
+| `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
+| `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |
 | `reference/golden/make_golden_v1.cjs`, `engram_v1.json` | The golden corpus for E1, computed from Owl Academy's `Engram_Mind_Eye.html` and `biomesh.js`, which agree on every entry; `--check` recomputes it |
 | `spikes/ttmpt_core_v1.js` | The TTMPT core, verbatim from Owl Academy (`Engram_Mind_Eye.html`, lines 599–657, commit 9082520), as a UMD module |
 | `spikes/engram_core_audit.cjs`, `…_output.txt` | Spike A: the engram key, measured |
