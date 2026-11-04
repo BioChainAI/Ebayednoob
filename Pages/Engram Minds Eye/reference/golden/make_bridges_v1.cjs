@@ -91,36 +91,9 @@ const SC = { sha256Hex: async str => sha256(Buffer.from(String(str), 'utf8')) };
 const asyncPart = new Function('SC', body + '\n' + grab(BIO, 'growBiochain').replace(/^export /, '') + '\n' + grab(BIO, 'verifyIntegrity').replace(/^export /, '') +
     '\nreturn { growBiochain, verifyIntegrity };')(SC);
 
-// ---- the Engram Mind Eye: its session, saved and restored
-const a = EYE.indexOf('/* =====================================================================\n   TTMPT ENGRAM CORE');
-const b = EYE.indexOf('/* =====================================================================\n   RENDERING');
+// ---- the Engram Mind Eye: its session, saved and restored (owl_eye.cjs runs the page's code as written)
+const EYE_RUN = require('./owl_eye.cjs').loadOwlEye(OWL), owl = EYE_RUN.owl;
 const introM = /const STRIX_INTRO =\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+);/.exec(EYE);
-const saveBody = grab(EYE, 'saveEngram'), stateStmt = saveBody.slice(saveBody.indexOf('const state = '), saveBody.indexOf('localStorage.setItem'));
-const greetStmt = (() => { const i = EYE.indexOf('const resumeGreeting = '); return EYE.slice(i, EYE.indexOf(';', EYE.indexOf('We continue.', i)) + 1); })();
-function owl() {
-    return new Function(`
-        const window = { MANIFOLD_TOKEN: 'D8K3T2' };
-        let manifoldN = 8, manifoldK = 3, manifoldT = 2;
-        const setEngramManifold = (n, k, t) => { manifoldN = n; manifoldK = k; manifoldT = t; window.MANIFOLD_TOKEN = 'D' + n + 'K' + k + 'T' + t; };
-        const addMessage = () => ({}), escapeHtml = s => s;
-        ${EYE.slice(a, b)}
-        const STRIX_INTRO = ${introM[1]};
-        function stateJson() { ${stateStmt} return JSON.stringify(state); }
-        ${grab(EYE, 'restoreEngram')}
-        function greeting(saved) {
-            const epochCount = (saved.biochain || []).length, packetCount = (saved.packets || []).length;
-            const lastNode = (saved.biochain || []).slice(-1)[0], lastTheme = lastNode ? lastNode.theme : null;
-            ${greetStmt}
-            return resumeGreeting;
-        }
-        function say(text) {                          // transmit() without the page: the human turn, then STRIX's reply
-            conversationLog.push({ role: 'human', text }); logTokens(text, 'human');
-            const r = selectResponse(text); conversationLog.push({ role: 'strix', text: r.response }); logTokens(r.response, 'strix');
-            return r;
-        }
-        function intro() { logTokens(STRIX_INTRO, 'strix'); conversationLog.push({ role: 'strix', text: STRIX_INTRO }); }
-        return { intro, say, stateJson, restoreEngram, greeting, logTokens, packetChain, parity: () => codexParity, hex32, conversation: () => conversationLog };`)();
-}
 const HUMANS = ['What does a geodesic feel like in curved space?', "Don't the 720 frames fold into 72, then 10?",
     'Show me the boundary of the Poincare disk.', 'Is light parallel to the manifold, or does it bend?', 'I keep thinking about saddles and triangles.'];
 const short = owl(); short.intro(); short.say(HUMANS[0]);

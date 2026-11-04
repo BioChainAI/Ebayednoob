@@ -1,15 +1,20 @@
 # Engram Mind's Eye · Python reference
 
-The reference decides every claim in `../PREREGISTRATION.md` (with Amendment 1). Built in Phase 2.
+The reference decides every claim in `../PREREGISTRATION.md` (with Amendments 1 and 2). Built in Phase 2; E10 added in
+Phase 7. E11 is decided against Owl Academy's own code by `run_e11.cjs` (Node), as Amendment 2 sets out.
 
 ## Run
 
 ```bash
 pip install -r requirements.txt                 # numpy and pytest; torch is not needed
-python3 -m pytest -q tests                      # 41 tests, a few seconds (Node is used for the parity tests)
+python3 -m pytest -q tests                      # 45 tests, a few seconds (Node is used for the parity tests)
 python3 run_traces.py                           # traces/engram.json, which the browser core reproduces (Phase 3)
 python3 run_claims.py --dry                     # exercise the runner on unregistered seeds; writes nothing
 python3 run_claims.py                           # decide E1-E9: results/claims.json and results/claims.md
+python3 run_followups.py --dry                  # E10 on unregistered seeds (moved up by 3000); writes nothing
+python3 run_followups.py                        # decide E10: results/followups.json and results/followups.md
+node run_e11.cjs <Owl-Academy checkout> --dry   # E11 on unregistered seeds; writes nothing
+node run_e11.cjs <Owl-Academy checkout>         # decide E11 against Owl Academy's code: results/e11.json
 ```
 
 The unit tests and the traces use seeds of 9000 and above, outside the registered instances, so neither touches
@@ -34,10 +39,12 @@ and the golden session for unregistered stand-ins.
 | `engram/dialogue.py` | The dialogue store, the golden session, the synthetic dialogues |
 | `engram/recall.py` | Hamming recall, the parity-keeping variants and the one-letter substitutions of E9 |
 | `engram/watch.py` | The fence screen with the exact address check (E7) and the ln 2 guard (E8) (hpstep.fence and decode3d in place) |
+| `engram/guard.py` | The sharper guard of E10: every quadruple scanned at once; the original guard (checked against `hpstep.fence.guard_check`), the matching guard and the smallest-matching control |
 | `engram/stats.py` | The bootstrap of the Hyperbolic PolyStep preregistration |
 | `tests/` | One test file per module, each claim's mechanics with its control; `test_orbital_parity.py` checks `orbital.py` against `orbital_core.js` through Node (`js_orbital.cjs`) |
 | `run_traces.py`, `traces/engram.json` | Exact values the browser core reproduces line for line (`../tests/parity-engram.cjs`, Phase 3): addresses, the schedule, memory words, gauges and readouts, a complete register, the coupler, the watch layer, recall |
 | `run_claims.py`, `results/` | The decisive runs and their record |
+| `run_followups.py`, `run_e11.cjs`, `golden/owl_eye.cjs` | The follow-up claims of Amendment 2: E10 in Python; E11 in Node against Owl Academy's Engram Mind Eye, run as written by `owl_eye.cjs` (shared with `make_bridges_v1.cjs`) |
 
 ## Dependencies
 
