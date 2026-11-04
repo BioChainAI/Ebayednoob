@@ -1,0 +1,18 @@
+Spike D · the 0.7 Claude fence (fence-0.7) on a memory tree in H^3
+
+1. Misplaced memories: the tree to depth L (every memory at its recorded address) plus k memories placed deeper
+  L = 2, 37 memories, 5 placed 1 level too deep: flagged 4/5, flagged at their proper place 0/37
+  L = 2, 37 memories, 5 placed 2 levels too deep: flagged 5/5, flagged at their proper place 0/37
+  L = 3, 187 memories, 5 placed 1 level too deep: flagged 5/5, flagged at their proper place 6/187 (000, 111, 200, 300, 400, 500)
+  L = 3, 187 memories, 5 placed 2 levels too deep: flagged 5/5, flagged at their proper place 6/187 (000, 111, 200, 300, 400, 500)
+  [PASS] every memory two levels too deep is flagged
+  one level too deep: flagged 4/5 and 5/5 (the fence sits within ln 2 of the upper quartile, CF5)
+  at L = 3 the fence also flags the six straightest leaves, one per branch: it measures distance from the centre,
+  not depth, and straight paths reach farther than bent ones. So the fence screens and the address check decides:
+  [PASS] every flag is settled exactly: memories on their address cleared, misplaced memories confirmed · L2/+1: cleared 0, confirmed 4 · L2/+2: cleared 0, confirmed 5 · L3/+1: cleared 6, confirmed 5 · L3/+2: cleared 6, confirmed 5
+
+2. The guard: a corrupted stored distance is caught and blamed on its pair (CF9)
+  [PASS] clean distances: no four-point defect above ln 2 · worst defect 0.6923 (ln 2 = 0.6931)
+  [PASS] one distance off by 1.5: quads fail and the top-blamed pair is the corrupted one · 104 quads above ln 2, corrupted 2-4, blamed 2-4
+
+4/4 checks pass

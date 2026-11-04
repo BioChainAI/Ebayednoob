@@ -1,37 +1,46 @@
-# Engram Mind's Eye · a standalone build on the PolyStep and orbital stack
+# Engram Mind's Eye · a standalone build on the orbital calculators, PolyStep and the fence
 
-**Status: plan, plus two feasibility spikes. Nothing below is built yet.**
+**Status: plan, plus four feasibility spikes (36/36 checks pass). Nothing below is built yet.**
 
 This folder plans a standalone version of Owl Academy's engram memory and Mind's Eye: the STRIX familiar,
 the engram codec and the 3D lattice. Today they run on the S.P.I.R.E. side of Owl Academy. The plan
-rebuilds them in this repository on the systems made here over the past weeks:
+rebuilds them on five systems in this repository:
 
-- **2D:** the Zero-Point Tri-Engine and Tri-Engine Convergence (`Pages/Geometric Calculator/`), and
-  Hyperbolic PolyStep version 1 in H² (`Pages/Hyperbolic Oracles/simulation.html`);
-- **3D:** Hyperbolic PolyStep version 2 in H³: the 3D decoder, frames, the coupler and the twin system
-  (`Pages/Hyperbolic Oracles/simulation-3d.html`).
+| System | Where | Role in the Mind's Eye |
+| --- | --- | --- |
+| **Geometric Harmonics Calculator** (engine v10, one engine, five tiers) | `Pages/Geometric Calculator/index.html` | The per-token pipeline: every token is one calculation from T4 to T0. Its 64-bit Einstein tile is the wire format |
+| **Zero-Point Tri-Engine** (three engines on the zero-point clock) | `Pages/Geometric Calculator/Zero Point Calculations/` | The clock for the window α, β, γ: three channels, pairing at the zero point, and a 720-frame register with the 720 → 72 → 10 pump |
+| **Tri-Engine Soliton and Tri-Engine Convergence** | `Pages/Geometric Calculator/Galactic Lensing/` | Memory and resonance: the triple-quad word with Merkle locate and repair, the exact gauge of each packet's three distances, and the soliton crystal as the memory's health |
+| **Hyperbolic PolyStep** (v1 in H², v2 in H³) | `Pages/Hyperbolic Oracles/` | Exact quaternion addresses, the memory tree laid out in H² and H³, frames, and the twin system binding the human and STRIX streams |
+| **The 0.7 Claude fence** (H², H³) and its ln 2 guard | `Pages/Hyperbolic Oracles/fence.js` | A screen for misplaced memories in the H³ layout, settled by an exact address check, and a guard that names a corrupted stored distance |
 
 This is not the Nested Harmonic Cocoon's *Mind's Eye Interface* (`Pages/Nested Harmonic Cocoon/Minds Eye Interface/`),
 which is a different page about cymatics and the Enochian grid.
 
 ## The recommendation in brief
 
-1. **Freeze the engram key and change nothing in it.** The TTMPT core (Mulberry32, the 8×8 grids, XOR
-   crystallization, Hamming distance, chiral key, torsion J) is copied verbatim and pinned with golden vectors,
-   so chains, seeds and exports still move between the two repositories. `spikes/ttmpt_core_v1.js` is that
-   copy, and it reproduces Owl Academy's vectors.
-2. **Replace the float quaternion layer with this repository's exact one.** Each 64-bit engram becomes an
-   exact address in PolyStep's norm-5 quaternion tree: one integer quaternion, decoded back by right
-   division. A whole chain becomes one quaternion that unfolds in order with no loss. Spike B measures this.
-3. **Use the tri-engine memory for the context window.** The three-packet window α, β, γ becomes three
-   channels on the zero-point clock, with Y = α ⊕ β ⊕ γ as the fourth cell: a triple-quad word over GF(2).
-   It has the same Merkle chain and the same Lemma 15 locate-and-repair as Tri-Engine Convergence.
-4. **Put the Mind's Eye in H³ as the twin system.** The human stream and the STRIX stream become the two
-   structures. The coupler's binding B = q₂q₁ is checked exactly at every zero point. Each packet's
-   quaternion becomes its frame.
-5. **Build it the way Hyperbolic PolyStep was built:** Python reference, then the browser core with trace
-   parity, then the pages, explainers, preregistered runs and the map. Firebase, seals, biochain publishing
-   and BERT stay out of the core and become optional bridges.
+1. **Freeze the engram key.** The TTMPT core (Mulberry32, the 8×8 grids, XOR crystallization, Hamming
+   distance, chiral key, torsion J) is copied verbatim and pinned with golden vectors, so chains, seeds and
+   exports still move between the two repositories. `spikes/ttmpt_core_v1.js` reproduces Owl Academy's vectors.
+2. **Run each token through the five tiers.** On the one-engine calculator a calculation passes ingestion,
+   alignment, superposition, pruning and latch. A token does the same: it is crystallized, triangulated
+   against the window, folded into the window parity and the chain quaternion, reduced, and written.
+3. **Run the window on the three-engine clock.** α, β, γ are Engines I–III. At each zero point the three
+   cells pair into a triple-quad word with Y = α ⊕ β ⊕ γ. The Merkle chain and Lemma 15 come from Tri-Engine
+   Convergence. Each 720-frame register closes with the pump.
+4. **Read every packet through the soliton gauge.** The three Hamming distances from a new token to α, β, γ
+   go through the convergence gauge, which is exact and invertible. The soliton crystal sits at the centre
+   while parity holds and the chains match, and moves or shears when they do not.
+5. **Replace the float quaternion layer with PolyStep's exact one.** Each engram is an exact address in
+   the norm-5 quaternion tree, and a chain is one quaternion that unfolds in order. The memory's structure
+   is laid out in H² and H³, each packet carries its quaternion as its frame, and the human and STRIX
+   streams become the twin system.
+6. **Let the fence screen and the address check decide.** The fence flags memories that sit too far out
+   in the H³ layout, and an exact comparison with the recorded address settles each flag. The guard names
+   any stored distance that has been corrupted.
+7. **Build it the way PolyStep was built:** Python reference, then browser core with trace parity, then
+   pages, explainers, preregistered runs and the map. Firebase, seals, biochain publishing and BERT stay out
+   of the core and become optional bridges.
 
 ## 1. What exists in Owl Academy
 
@@ -56,86 +65,108 @@ None of the three is exact, and they share no module.
 
 | Need | Already built here | Where |
 | --- | --- | --- |
-| Exact arithmetic | Rationals on BigInt, tracks A (float), B (exact), C (snap to 2⁻ᵏ) and R (residues) | `Hyperbolic Oracles/hyperbolic_core.js` |
-| A clock | The 8-step zero-point cycle, the 24-frame joint cycle, onload at frames 18/10/2 and offload at 6/22/14, three channels | `hyperbolic_core.js` (`TriChannel`), `Zero Point Calculations/zero_point_tri_engine.html` |
-| A register | 720 frames closing with the pump identity H = Q₈·Q₁₀·P = P⁻¹ (720 → 72 → 10) | `zero_point_tri_engine.html` (`pumpOf`, `closeRegister`); `X.pumpHolds` in the core |
-| Memory | SHA-256 memory words chained at each zero point; triple-quad words (A, B, C, Y = A + B + C) at 30 addresses with a Merkle chain and Lemma 15 locate and repair | `memoryWord` in the core; `Galactic Lensing/tri_engine_convergence.html` |
-| A wire format | 64-bit Einstein tiles (`packTile`/`decodeTile`). Form 3 carries a binary32 value; Form 1 carries a Hurwitz quaternion with an honest loss flag | `zero_point_tri_engine.html` |
-| Exact quaternions | Cayley map; the norm-5 tree (`P.wordQuaternion`, `P.rightDivide`); frames transported with no square root; twist = triangle area; the coupler law with B = q₂q₁ invariant (K1) and carry bit-identical to no coupler (K2) | core, `decoder3d.js`, `twin3d.js` |
-| Hyperbolic placement | Tree embeddings in H² and H³ (the octahedral norm-5 tree, τ = ln 7), decoded exactly | core (`TreeEmbedding`), `decoder3d.js` (`TreeEmbedding3D`) |
-| Outlier detection | The 0.7 Claude fence in H² and H³ | `fence.js`, `claude-fence-3d.html` |
+| Exact arithmetic | Rationals on BigInt (`Fraction`, `Q`); tracks A (float), B (exact), C (snap to 2⁻ᵏ), R (residues) | `scripts/geometric-build/core.js`, `Hyperbolic Oracles/hyperbolic_core.js` |
+| A per-calculation pipeline | Five tiers T4 → T0 (R = 5n² + 15n + 15, r = 2n + 4, W = 16 − 2n), the 30-node clock, 150 pulses per calculation, TQF between the manifolds | engine v10; `TIERS_SPEC` in the build templates |
+| A wire format | The 64-bit Einstein tile: halo (step, wheel, structure), gate, ctrl (mux, Form, slot, Fibonacci scale), 32-bit core. Form 1 carries a Hurwitz quaternion with an honest loss flag; Form 4 reads the 64 bits as a 4 × 4 × 4 voxel cube | engine v10 ENGRAM tab; `packTile`/`decodeTile`, `hurwitzEncode` in `page.html` |
+| A clock | The 8-step zero-point cycle, the 24-frame joint cycle, onload at frames 18/10/2 and offload at 6/22/14, three branches | `gen4.py`, `TriChannel` |
+| A register | 720 frames closing with H = Q₈·Q₁₀·P = P⁻¹ (720 → 72 → 10); clutch modes hold, free-run and membrane | `pumpOf`, `closeRegister` (`gen4.py`); `X.pumpHolds` |
+| Memory | Triple-quad words (A, B, C, Y = A + B + C) at 30 addresses, the Lemma 15 Merkle chain, locate and repair; SHA-256 memory words chained at each zero point | `merkleChain` (`page.html`), `rebuild`/`locate` (`page3.html`), `memoryWord` |
+| A resonance reading | The Proposition 7.14 gauge (s, X, Y), exact and invertible; the cross-engine TQF with lock at χ = 1/√3; the soliton crystal that stays at the centre while the books balance | `gaugeExact`, `readout` (`page3.html`); `tqf` (`page2.html`) |
+| Exact quaternions | Cayley map; the norm-5 tree (`P.wordQuaternion`, `P.rightDivide`); frames transported with no square root; twist = triangle area; the coupler law with B = q₂q₁ invariant (K1), carry bit-identical to no coupler (K2) | core.js, `hyperbolic_core.js`, `decoder3d.js`, `twin3d.js` |
+| Hyperbolic placement | Tree embeddings in H² and H³ (the octahedral norm-5 tree, τ = ln 7), with exact points | `TreeEmbedding`, `TreeEmbedding3D` |
+| Outliers and corruption | The 0.7 Claude fence (exact in H², certified in H³); the four-point guard at ln 2 that blames pairs | `fence.js`, `claude-fence-3d.html` |
 | A way of building | Python reference → browser core → trace parity → pages → explainers → preregistration → map and claims ledger | `Hyperbolic Oracles/README.md` |
 
 Both repositories already use the same three scales. Owl Academy's Ontological Codex chain is
 720 → 72 → 10, and so is this repository's register pump. The 72- and 720-section exports and the
 720-frame breath pump therefore line up with the zero-point register without any rescaling.
 
+**One infrastructure fact shapes the plan.** The orbital machinery has no module of its own. The tiles and
+Merkle chain live in the Part 1 template (`page.html`), the tiers and TQF in Part 2 (`page2.html`), the gauge
+and repair in the Convergence template (`page3.html`) and the pump in `gen4.py`. `build.py` inlines them
+into the four pages. Hyperbolic PolyStep, by contrast, has UMD cores (`hyperbolic_core.js`, `decoder3d.js`,
+`twin3d.js`, `fence.js`). Engine v10 (`index.html`) is an uploaded export and stays untouched.
+
 ## 3. Findings
 
 ### Measured (`spikes/`, outputs captured beside the scripts)
 
-**Spike A, the engram key** (`node spikes/engram_core_audit.cjs`, 15/15 checks pass):
+**Spike A, the engram key** (`engram_core_audit.cjs`, 15/15 checks pass):
 
 - The verbatim copy reproduces Owl Academy's golden vectors: `GEODESIC → 5c896a4801c9c24c` and
-  `chiralKey(STRIX) = O1::S::48d835dfdfc5484e`. Compatibility is achievable.
+  `chiralKey(STRIX) = O1::S::48d835dfdfc5484e`.
 - **An engram is the parity of each letter's count.** The 26 letter grids are independent over GF(2), so at
-  most 2²⁶ of the 2⁶⁴ keys can occur. Two words share an engram exactly when their letter-count parities
-  agree. `LISTEN` = `SILENT`, `EYE` = `Y`, `ABBA` = the empty word, and every numeric token (`720`, `2026`)
-  is the zero engram.
-- Distances between distinct words look random: mean 32.4 of 64 over 190 pairs. Owl Academy's own notes say
-  the same: Hamming recall works for near-duplicates and fails for meaning.
-- The window works as a triple quad over GF(2). Lose any one of α, β, γ, and it is rebuilt exactly from the
-  other two and Y.
+  most 2²⁶ of the 2⁶⁴ keys can occur. `LISTEN` = `SILENT`, `EYE` = `Y`, `ABBA` = the empty word, and every
+  numeric token is the zero engram.
+- Distances between distinct words look random: mean 32.4 of 64 over 190 pairs (min 20, max 44).
+- The window works as a triple quad over GF(2): any one of α, β, γ is rebuilt from the other two and Y.
 
-**Spike B, quaternion addresses** (`node spikes/quaternion_address.cjs`, 8/8 checks pass; it uses the
-PolyStep cores as they are):
+**Spike B, quaternion addresses** (`quaternion_address.cjs`, 8/8; uses the PolyStep cores as they are):
 
-- 64 bits fit in a reduced word of 28 letters in the six generators 1 ± 2i, 1 ± 2j, 1 ± 2k, because
-  5²⁸ > 2⁶⁴. That word is one integer quaternion of norm 5²⁸, with components of at most 33 bits.
-  Right division recovers it: 2000/2000 random words round-trip.
-- A chain of 40 packets becomes **one** quaternion and unfolds back in order, 40/40 exact. The order
-  matters, which the XOR crystal cannot express. This is exact storage, not compression: 5,204 bits hold
-  2,560 data bits. Compression only comes from the lossy Form 1 offload, and its loss flag says so.
-- Every prefix of the word is a node of the 3D decoder's tree in H³. In floating point, placement decodes
-  cleanly to depth 12 (50/50) and fails from depth 14 on (36/50 at 14, 9/50 at 16, 0/50 at 18). So the full
-  address stays exact, and only a short prefix is drawn as a point.
-- The packet quaternion is an exact rotation (RᵀR = I in rationals), and the coupler law holds on it.
+- 64 bits fit in a reduced 28-letter word in 1 ± 2i, 1 ± 2j, 1 ± 2k, because 5²⁸ > 2⁶⁴. The word is one
+  integer quaternion of norm 5²⁸ (components of at most 33 bits). 2000/2000 round-trip by right division.
+- A chain of 40 packets is **one** quaternion and unfolds in order, 40/40 exact. Order matters, which the
+  XOR crystal cannot express. It is exact storage, not compression: 5,204 bits hold 2,560 data bits.
+- Every prefix of the word is a node of the H³ tree. Float placement decodes cleanly to depth 12 (50/50) and
+  fails from depth 14 (36/50 at 14, 9/50 at 16, 0/50 at 18), so the full address stays exact.
+- The packet quaternion is an exact rotation (RᵀR = I), and the coupler law holds on it.
+
+**Spike C, the orbital calculators' memory code** (`orbital_memory.cjs`, 9/9; reads the build templates by
+name and changes nothing):
+
+- An engram travels as two Einstein tiles, with the structure field set to α, β, γ or Y. All 60 tokens of a
+  sample dialogue round-trip with their header fields intact.
+- On 58 windows, one flipped bit in any cell is detected by the parity, located by the Part 1 Merkle chain
+  and rebuilt by XOR, with the root matching again (58/58 each). Two altered cells are caught by the chain.
+  The same bit flipped in two cells passes the parity, which is why the chain is needed.
+- The convergence gauge recovers the three footer distances exactly (57/57). Lock, meaning all three
+  distances are equal, happened on 1 of 57 packets.
+- The Zero-Point pump identity holds on every engram channel. With the clutch carrying only from onload to
+  offload, each register leaves a half turn (P = 360/720, compensator H = 360/720). With the clutch held
+  for the whole register, every register closes.
+
+**Spike D, the fence on a memory tree in H³** (`fence_memory.cjs`, 4/4; uses `fence.js` as it is):
+
+- Memories placed two levels too deep are always flagged (5/5 in every run); one level too deep, 4/5 and 5/5.
+- At depth 2 nothing at its proper place is flagged (0/37). At depth 3 the fence also flags the six
+  straightest leaves (6/187), one per branch: it measures distance from the centre, not depth, and straight
+  paths reach farther than bent ones.
+- Every flag is settled by comparing the memory's exact point with the exact point of its recorded address:
+  the six are cleared and every misplaced memory is confirmed. The fence screens; the exact check decides.
+- The guard passes clean distances (worst defect 0.6923 < ln 2) and, after one stored distance is moved by
+  1.5, blames exactly that pair first (104 quads above ln 2).
 
 ### Read from the code
 
 | Owl Academy piece | Finding | Consequence here |
 | --- | --- | --- |
-| `parityOk` in `logPacket` | It recomputes the same expression from the same inputs, so it is always true | Keep codex parity as a v1 field. Do integrity with SHA-256 memory words and the Merkle chain |
+| `parityOk` in `logPacket` | It recomputes the same expression from the same inputs, so it is always true | Keep codex parity as a v1 field. Do integrity with the Merkle chain and SHA-256 memory words |
 | Codex parity `fold32 ⊕ rotl32` | Linear and unkeyed, so anyone can recompute or forge it | Same as above |
 | `EPOCH_LIMIT = 128`, `biochain` | Declared and persisted, but no epoch is ever grown on the page | Epochs become 720-frame registers |
 | 72/720 export `quaternion_chain` | Each slot holds an XOR grid; it contains no quaternions | Each slot holds the exact chain quaternion of its packets |
 | Engram Codec | Kept on one axis so rotations commute; block boundaries reach about 1e-15 | Integer quaternion products are exact (zero error) and need no fixed axis |
-| `hpstep` package | `import hpstep.frames3d` pulls in torch and polystep through `__init__.py` | Make `hpstep/__init__.py` lazy (Phase 1 prerequisite) so the exact modules import on their own |
-| Two 64-bit formats | Owl's SHD-CCP word and this repository's Einstein tile differ field for field, though both give 32 bits to a quaternion | Use one inside, translate at the bridge (decision 2) |
+| `hpstep` package | `import hpstep.frames3d` pulls in torch and polystep through `__init__.py` | Make `hpstep/__init__.py` lazy so the exact modules import on their own |
+| Three 64-bit formats | Owl's TTMPT engram, Owl's SHD-CCP word, and engine v10's tile fingerprint (an FNV-1a hash of the text) are three different objects | Keep all three and name them apart: the engram is data, the tile is the envelope, the fingerprint is the engine's own |
 
 ## 4. The design
-
-The standalone system has five layers. Each row says what it replaces and what it reuses.
 
 | Layer | Owl Academy piece | Standalone replacement | Reuses |
 | --- | --- | --- | --- |
 | L0 Key | TTMPT core | Unchanged: `engram/1`, pinned by golden vectors | `spikes/ttmpt_core_v1.js` |
-| L1 Packet | 128-bit packet; `quat32` | The 128-bit packet kept for compatibility, plus an exact **address** (a 28-letter norm-5 word, one integer quaternion). On the wire: Einstein tiles, with Form 1 when only the compact, lossy direction is kept | `P.wordQuaternion`, `P.rightDivide`, `packTile`, `hurwitzEncode` |
-| L2 Memory | α/β/γ window, codex parity | Three channels on the zero-point clock. Y = α ⊕ β ⊕ γ on the inner manifold makes a triple-quad word over GF(2). The Merkle chain locates one altered cell and the parity rebuilds it. A SHA-256 memory word is chained at every zero point | `TriChannel` schedule, `memoryWord`, convergence memory (`rebuild`, `locate`, `repairAll`) |
-| L3 Register | Epochs, text crystal, 72/720 export, Engram Codec | The 720-frame register closing with the pump identity. Slots at 720 → 72 → 10 hold exact chain quaternions. The text crystal stays as a v1 field beside the ordered chain quaternion | `pumpOf`, `closeRegister`, `X.pumpHolds` |
-| L4 Geometry | SVG string-art manifold; Three.js lattice; breath pump | **2D:** the five-tier toroidal engines. A packet onloads on T4 and latches on T0, with memory beads on the manifolds, and the memory's structure tree (register → section → packet) is laid out in H² by PolyStep's tree embedding. **3D:** the same tree in H³, a frame per packet from its quaternion, human and STRIX as the twin system bound by the coupler (a third memory chain), and the breath pump timed by the zero-point clock with coupling by exact quadrance | `tri_engine_convergence.html`, `TreeEmbedding`, `TreeEmbedding3D`, `twin3d.js`, `tqf` |
-| Out of core | Firebase familiar binding, seals, biochain publishing, BERT | Optional bridges: import and export JSON; replies by retrieval in the core, with BERT or an API as an attested plugin | Page chrome sign-in only for the menus |
+| L1 Pipeline | `logPacket` | One calculation per token on the five tiers: **T4** ingest (crystallize) · **T3** align (triangulate against α, β, γ) · **T2** superpose (fold into Y and into the chain quaternion) · **T1** prune (keep the chain word reduced and the quaternion coprime) · **T0** latch (tiles, Merkle leaf, memory word) | engine v10's tier laws and 30-node clock (`TIERS_SPEC`) |
+| L2 Packet | 128-bit packet, `quat32` | The 128-bit packet kept for compatibility, plus an exact address (a 28-letter norm-5 word). On the wire, two Einstein tiles (structure = α, β, γ or Y); Form 1 when only the compact, lossy direction is kept | `packTile`, `hurwitzEncode`, `P.wordQuaternion`, `P.rightDivide` |
+| L3 Window and memory | α/β/γ window, codex parity | Three channels on the zero-point clock. At the zero point they pair into a triple-quad word over GF(2) at one of 30 addresses. The Merkle chain locates one altered cell and the parity rebuilds it. A SHA-256 memory word is chained at every zero point | `gen4.py` schedule, `merkleChain`, `rebuild`, `locate`, `memoryWord` |
+| L4 Resonance | concept chips, J meter, SVG pulse | The convergence gauge of the three footer distances: s is the total, X and Y the lean. Lock when all three are equal. The soliton crystal at the core: centred while parity holds and the chains match, displaced by the gauge, sheared when the coupler's binding breaks | `gaugeExact`, `readout`, `tqf`; the Part 2 crystal |
+| L5 Register | epochs, text crystal, 72/720 export, Engram Codec | The 720-frame register with the pump identity; slots at 720 → 72 → 10 hold exact chain quaternions. Clutch held, so every register closes; in carry mode the compensator is recorded | `pumpOf`, `closeRegister`, `X.pumpHolds` |
+| L6 Geometry | SVG string-art manifold; Three.js lattice; breath pump | **2D:** the five-tier engines with memory beads on the manifolds, and the memory tree (register → section → packet) laid out in H². **3D:** the same tree in H³, a frame per packet from its quaternion, human and STRIX as the twin system bound by the coupler (a third memory chain), the breath pump timed by the clock | `TreeEmbedding`, `TreeEmbedding3D`, `twin3d.js` |
+| L7 Watch | none | The fence screens the H³ layout at each register close and the exact address check settles every flag. The guard runs on the float distances the page draws from and names a corrupted pair. The fence shells give the 3D view its depth onion | `fence.js`, `claude-fence-3d.html` |
+| Out of core | Firebase familiar binding, seals, biochain publishing, BERT | Optional bridges: import and export JSON; replies by retrieval in the core, with BERT or an API as an attested plugin | page chrome sign-in only for the menus |
 
-**Position and frame are kept apart on purpose.** A packet's *position* in H² or H³ is where it sits in
-the memory: its register, section and slot. That is a short word, so it decodes in floating point, and
-PolyStep's tree embedding is built for exactly this. Its *frame* is what it holds: the exact quaternion of
-its 28-letter address. Engram bits behave like a hash, so placing packets by their content would scatter
-them at random. Placing them by structure gives a map you can read.
-
-**Where PolyStep does work here:** laying out the memory tree (B3, Helix A proposes and Helix B certifies
-exactly), keeping time (the clock and the register), and binding the two streams (the coupler). The fence
-does not get a role in version 1. It needs positions that carry content, and engram/1 cannot supply them.
-It joins with engram/2, if that is built (see Scope).
+**Position and frame are kept apart on purpose.** A packet's position is where it sits in the memory (its
+register, section and slot), a short word that decodes in floats and that the tree embedding is built for.
+Its frame is what it holds: the exact quaternion of its 28-letter address. Engram bits behave like a hash, so
+placing by content would scatter packets at random; placing by structure gives a map you can read, and gives
+the fence a hierarchy-shaped cloud, the regime where it is preregistered to work (CF-A, CF-B).
 
 ## 5. Build order
 
@@ -143,47 +174,55 @@ Every phase ships the repository's five things: code, an explainer, a map node, 
 
 | Phase | Delivers | Status |
 | --- | --- | --- |
-| 0 · Scaffold | This plan; the hub `index.html` with its system map and claims ledger; `PREREGISTRATION.md` with claims E1–E6 and their decision rules, fixed before any code | next |
-| 1 · Python reference | `reference/engram/`: `ttmpt.py` (v1 port with golden vectors), `packet.py` (128-bit packet, SHA-256 memory words), `address.py` (norm-5 addresses, chain quaternion), `memory.py` (GF(2) triple quad, Merkle chain, Lemma 15), `register.py` (the schedule and 720 → 72 → 10). Tests and traces. Prerequisite: the lazy `hpstep/__init__.py`, with PolyStep's 80 tests still green | planned |
-| 2 · Browser core | `engram_core.js` (UMD; loads `HPCore`, `HPDecode3D` and `HPTwin3D` from `../Hyperbolic Oracles/`), `tests/parity-engram.cjs`, and a live parity check in a page | planned |
-| 3 · The 2D page | `mind-eye.html`: STRIX on the zero-point clock; the window as three channels; the memory panel (alter, locate, repair); register closure; exports (v1 byte-compatible, and v2) | planned |
-| 4 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and the coupler chain, the breath pump on the clock, and `LATTICE-SEED/1` import | planned |
-| 5 · Bridges | Import Owl Academy exports (`engram_chain`, `engram_text_chain` at 72 and 720, a biochain's `engramStream`, `LATTICE-SEED/1`, `ENVIRONMENT/1`); export v1 so a chain grown here loads back in Owl Academy | planned |
-| 6 · Preregistered runs | E1–E6 with controls | planned |
-| 7 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
+| 0 · Scaffold | This plan; the hub `index.html` with its system map and claims ledger; `PREREGISTRATION.md` with claims E1–E9 and their decision rules, fixed before any code | next |
+| 1 · Shared cores | `scripts/geometric-build/orbital_core.js`, a UMD module holding the exact core, tiles, Merkle chain, tiers, TQF, gauge, repair and pump, which `build.py` inlines back so the four pages and this system share one copy (the existing browser tests `all`, `conv`, `clutch`, `zp`, `zp2`, `zp3` must pass unchanged); a lazy `hpstep/__init__.py`, with PolyStep's 80 tests still green | planned |
+| 2 · Python reference | `reference/engram/`: `ttmpt.py`, `packet.py`, `address.py`, `memory.py`, `gauge.py`, `register.py`. Tests and traces | planned |
+| 3 · Browser core | `engram_core.js` (UMD; loads `OrbitalCore`, `HPCore`, `HPDecode3D`, `HPTwin3D`, `HPFence`), `tests/parity-engram.cjs`, and a live parity check in a page | planned |
+| 4 · The 2D page | `mind-eye.html`: STRIX on the three-engine clock, each token on the five tiers, the memory panel (alter, locate, repair), the gauge and lock, register closure, exports (v1 byte-compatible, and v2) | planned |
+| 5 · The 3D page | `mind-eye-3d.html`: the memory tree in H³, a frame per packet, the twin system and coupler chain, the soliton crystal at the core, fence shells with the screen and guard, the breath pump, `LATTICE-SEED/1` import | planned |
+| 6 · Bridges | Import Owl Academy exports (`engram_chain`, `engram_text_chain` at 72 and 720, a biochain's `engramStream`, `LATTICE-SEED/1`, `ENVIRONMENT/1`); export v1 so a chain grown here loads back in Owl Academy | planned |
+| 7 · Preregistered runs | E1–E9 with controls | planned |
+| 8 · Integration | Menus in `scripts/page-chrome-targets.json`; cross-links from the Hyperbolic Oracles hub and the Geometric Calculator menus | planned |
 
 Claims for the preregistration:
 
 - **E1:** engram/1 is bit-identical to Owl Academy on a golden corpus.
 - **E2:** the chain quaternion recovers every packet exactly, for any chain length.
-- **E3:** the triple-quad memory locates and repairs any single altered cell. Two altered cells are detected
-  but cannot be repaired (two unknowns, one equation).
-- **E4:** every 720-frame register closes with the pump identity.
+- **E3:** the triple-quad memory locates and repairs any single altered cell, and the chain detects two.
+- **E4:** every register satisfies the pump identity; with the clutch held, every register closes.
 - **E5:** the coupler binding is unchanged at every zero point (K1), and carry is bit-identical to running
   without the coupler (K2).
-- **E6:** Hamming recall finds near-duplicates against a shuffled-key control. It is stated in advance to be
+- **E6:** the gauge recovers every packet's three distances exactly, and lock occurs exactly when they are equal.
+- **E7:** the fence flags every memory placed two levels too deep, and the exact address check settles every
+  flag; the false-flag rate is reported by depth.
+- **E8:** the guard blames a single corrupted stored distance on its own pair.
+- **E9:** Hamming recall finds near-duplicates against a shuffled-key control. It is stated in advance to be
   weak on paraphrase.
 
 ## 6. Decisions before Phase 1
 
 1. **Location.** Recommended: its own system here (`Pages/Engram Minds Eye/`, with its own menus), loading
-   the oracles' cores by relative path so there is one copy of each. The other option is a module inside
-   `Pages/Hyperbolic Oracles/`.
-2. **Wire format.** Recommended: Einstein tiles inside this system, with Owl Academy's SHD-CCP word only at
+   shared cores by relative path. The other option is a module inside `Pages/Hyperbolic Oracles/`.
+2. **Orbital core.** Recommended: extract `orbital_core.js` from the build templates and have `build.py`
+   inline it. The other option is to keep reading functions from the templates by name, as Spike C does:
+   no change to the pages, but a renamed function breaks it.
+3. **Wire format.** Recommended: Einstein tiles inside this system, with Owl Academy's SHD-CCP word only at
    the bridge.
-3. **Compatibility.** Recommended: freeze engram/1. An order-aware key that keeps digits would be engram/2,
+4. **Compatibility.** Recommended: freeze engram/1. An order-aware key that keeps digits would be engram/2,
    with its own preregistration, and never a silent change to v1.
-4. **Replies.** Recommended: retrieval only in the core (reproducible). BERT or an API comes as a plugin
-   whose turns are logged as attested, the way Owl Academy's Language Growing page does it.
-5. **`hpstep` import.** Recommended: make `__init__.py` lazy (PEP 562 `__getattr__`) rather than copy
-   `exact.py`, `frames3d.py` and the tree functions into a second package.
+5. **Clutch for the memory channels.** Recommended: hold, so every register closes. Carry leaves a half
+   turn per register, which the compensator records.
+6. **Replies.** Recommended: retrieval only in the core (reproducible). BERT or an API comes as a plugin whose
+   turns are logged as attested, the way Owl Academy's Language Growing page does it.
+7. **`hpstep` import.** Recommended: make `__init__.py` lazy (PEP 562 `__getattr__`) rather than copy the
+   exact modules into a second package.
 
 ## Scope
 
-Exact here means exact bookkeeping: addresses, chains, memory words, registers and frames. It does not make
-recall semantic. Engram/1 is a key built from letter-count parities, and no geometry placed on top of it
-adds meaning. Meaningful positions, and with them the fence as a novelty detector, need engram/2 or another
-key, and that is a separate experiment with its own controls.
+Exact here means exact bookkeeping: addresses, chains, memory words, registers, frames and gauges. It does not
+make recall semantic. Engram/1 is a key built from letter-count parities, and no geometry placed on top of it
+adds meaning. The fence finds misplaced memories, not new ideas. Meaningful positions, and with them the fence
+as a novelty detector, need engram/2 or another key, and that is a separate experiment with its own controls.
 
 ## Files
 
@@ -191,5 +230,9 @@ key, and that is a separate experiment with its own controls.
 | --- | --- |
 | `README.md` | This plan |
 | `spikes/ttmpt_core_v1.js` | The TTMPT core, verbatim from Owl Academy (`Engram_Mind_Eye.html`, lines 599–657, commit 9082520), as a UMD module |
-| `spikes/engram_core_audit.cjs`, `spikes/engram_core_audit_output.txt` | Spike A: the engram key, measured |
-| `spikes/quaternion_address.cjs`, `spikes/quaternion_address_output.txt` | Spike B: engrams as exact quaternion addresses, measured on the PolyStep cores |
+| `spikes/engram_core_audit.cjs`, `…_output.txt` | Spike A: the engram key, measured |
+| `spikes/quaternion_address.cjs`, `…_output.txt` | Spike B: engrams as exact quaternion addresses, on the PolyStep cores |
+| `spikes/orbital_memory.cjs`, `…_output.txt` | Spike C: the window on the orbital calculators' tiles, Merkle chain, gauge and pump |
+| `spikes/fence_memory.cjs`, `…_output.txt` | Spike D: the 0.7 Claude fence and the ln 2 guard on a memory tree in H³ |
+
+Run any spike with `node "Pages/Engram Minds Eye/spikes/<name>.cjs"`. They need Node 18 or later and nothing else.
