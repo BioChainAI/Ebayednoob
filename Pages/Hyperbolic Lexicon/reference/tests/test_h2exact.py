@@ -60,9 +60,9 @@ def test_construction():
 
 def test_denominators_are_the_lcm():
     """The scaling of the module docstring is the smallest one: for every n = 1..5 the lcm of the lowest-terms
-    denominators of all points of n letters is den(n) (2 * 300^n at t = 11/13, 175^n at t = 3/4)."""
+    denominators of all points of n letters is den(n) (2 * 300^n at t = 11/13, 175^n at t = 3/4), n = 1..6."""
     for T in (T12, T7):
-        for n in range(1, 6):
+        for n in range(1, 7):
             words = [w for w in all_reduced(n) if len(w) == n]
             lcm = 1
             for X in T.points(words):

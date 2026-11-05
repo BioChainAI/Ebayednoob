@@ -456,7 +456,6 @@ def run_l5(wn):
 # ---------------------------------------------------------------- L7
 def run_l7(wn):
     from lexicon import address as A, lps as LP
-    from hpstep.problems import GENS, qmul, word_quaternion
     qs = (13,) if DRY else LP.QS
     words_b = [LP.random_word(Rng(1000 + OFF + i)) for i in range(10000)]
     words_e = [LP.random_word(Rng(2000 + OFF + i)) for i in range(1000)]
@@ -504,14 +503,7 @@ def run_l7(wn):
     bad_e = LP.hurwitz_check(words_e)
     _, hz_sha = LP.load_hurwitz()
     unhalved = len(LP.hurwitz_check(words_e, halve=False))
-    # the registered control: products of doubled coordinates, compared without dividing by 2^L
-    raw_bad = 0
-    for w in words_e:
-        t = (2, 0, 0, 0)
-        for x in w:
-            t = qmul(t, tuple(2 * c for c in GENS[x]))
-        if tuple(c // 2 for c in t) != word_quaternion(w):
-            raw_bad += 1
+    raw_bad = len(LP.control_raw_doubled(words_e))
     controls['(e) registered: doubled-coordinate product not divided by 2^L, words that differ (must be > 0)'] = raw_bad
     controls['(e) also: the Hurwitz product without its final halving, words that differ (must be > 0)'] = unhalved
     ctl_ok = all((v > 0) if isinstance(v, int) and not isinstance(v, bool) else (v is False) for v in controls.values())

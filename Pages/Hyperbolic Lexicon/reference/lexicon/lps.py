@@ -31,7 +31,7 @@ import sys
 import time
 
 import numpy as np
-from hpstep.problems import GENS, INV, children, word_quaternion
+from hpstep.problems import GENS, INV, children, qmul, word_quaternion
 
 QS = (13, 17, 29)
 TWO_SQRT5 = 2 * math.sqrt(5)
@@ -278,6 +278,23 @@ def hurwitz_word(word, halve=True):
     if any(c % 2 for c in t):
         raise ArithmeticError('odd doubled coordinate')
     return tuple(c // 2 for c in t)
+
+
+def raw_doubled_product(word):
+    """L7(e)'s registered control: the product of the generators in doubled coordinates as plain integer
+    quaternions, from (2, 0, 0, 0), without SHD-CCP's per-product halving; it equals 2^(L+1) P.wordQuaternion(w), so
+    halved once and compared without dividing by 2^L it must differ from P.wordQuaternion on every word with L >= 1."""
+    t = (2, 0, 0, 0)
+    for g in word:
+        t = qmul(t, tuple(2 * c for c in GENS[g]))
+    return tuple(c // 2 for c in t)
+
+
+def control_raw_doubled(words):
+    """(e)'s registered control: the indices of the words where raw_doubled_product differs from word_quaternion
+    (it must find at least one). hurwitz_check(words, halve=False), SHD-CCP's product without its final halving, is a
+    second variant, reported."""
+    return [i for i, w in enumerate(words) if raw_doubled_product(w) != word_quaternion(w)]
 
 
 def hurwitz_check(words, halve=True):

@@ -60,12 +60,24 @@ def test_decode_int_is_hpstep_decode_exact():
         a = H3.decode_exact(X, n)
         assert a == w and H3.decode_int(X, n) == a
         assert H3.decode_int(tuple(3 * x for x in X), n) == w                  # any positive scale
-    # off the tree: random rational points of the sheet decode the same both ways, to any depth
+    # decoded to other depths than the word's own: the same both ways
     rng = Rng(8513)
     for _ in range(300):
         w, L = random_word(rng, 1 + rng.below(20)), 1 + rng.below(25)
         X = H3.point(w)
         assert H3.decode_int(X, L) == H3.decode_exact(X, len(w), L)
+    # off the tree: random integer points, and points with forced ties (equal spatial coordinates), decode the
+    # same both ways (decode_exact reads X as X / 7^n; decode_int takes any positive scale)
+    rng = Rng(8516)
+    for k in range(600):
+        a = [rng.below(2001) - 1000 for _ in range(3)]
+        if k % 3 == 1:
+            a[1] = a[0]
+        elif k % 3 == 2:
+            a[2] = a[1] = a[0]
+        X = (sum(abs(x) for x in a) + 1 + rng.below(50),) + tuple(a)
+        L = 1 + rng.below(12)
+        assert H3.decode_int(X, L) == H3.decode_exact(X, 0, L)
 
 
 def test_float_control_fails_beyond_12_letters():

@@ -20,7 +20,6 @@ hpstep.problems (children, word_quaternion, right_divide, is_reduced) and engram
 in place, unchanged.
 """
 import hashlib
-import unicodedata
 
 from engram.address import encode as engram_encode
 from hpstep.prng import Rng
@@ -246,13 +245,10 @@ _BERT_ASCII_PUNCT = frozenset(list(range(0x21, 0x30)) + list(range(0x3A, 0x41)) 
 
 def nb_punct(ch):
     """N_B's punctuation (Amendment 1, item 1, step 6): BERT's ASCII ranges 21-2F, 3A-40, 5B-60, 7B-7E, or a 15.1
-    category starting with P.
-
-    READING: decided here on Python 3.13's unicodedata, which is Unicode 15.1.0 (the source of the pinned table);
-    map_a takes is_punct= to use lexicon.normalise's predicate instead."""
-    if unicodedata.unidata_version != '15.1.0':
-        raise RuntimeError(f'unicodedata is {unicodedata.unidata_version}, not 15.1.0')
-    return ord(ch) in _BERT_ASCII_PUNCT or unicodedata.category(ch).startswith('P')
+    category starting with P, read from the pinned table through lexicon.normalise, as N_B itself reads it (so map A
+    never depends on the interpreter's own Unicode version)."""
+    from .normalise import PUNCT, _flags
+    return bool(_flags()[ord(ch)] & PUNCT)
 
 
 def is_special(entry):

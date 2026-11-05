@@ -106,7 +106,11 @@ def test_hurwitz_read_only():
     words = our_words(500) + s5_words()
     assert lps.hurwitz_check(words) == []
     assert lps.hurwitz_word(()) == (1, 0, 0, 0)
-    bad = lps.hurwitz_check(words, halve=False)            # the control: compared without the division
+    # the registered control: products of doubled coordinates, compared without dividing by 2^L
+    assert len(lps.control_raw_doubled(words)) == sum(1 for w in words if w)
+    assert all(lps.raw_doubled_product(w) == tuple(2 ** len(w) * c for c in word_quaternion(w)) for w in words[:50])
+    assert lps.raw_doubled_product(()) == (1, 0, 0, 0)
+    bad = lps.hurwitz_check(words, halve=False)            # the reported variant: no final halving
     assert len(bad) == len(words)
     assert all(lps.hurwitz_word(w, halve=False) == tuple(2 * c for c in word_quaternion(w)) for w in words[:50])
 
