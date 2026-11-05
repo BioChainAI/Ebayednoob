@@ -645,3 +645,62 @@ pointer; the 559 roots are the children of a virtual root at [1], with the L3 ru
 `Rng(4000).sample(13767, 200)`, S3 from `Rng(5000 + i)`; L2 on the words of the repository Markdown spike S6 used;
 L7 with `Rng(4000 + i)` and `Rng(5000 + i)` words and q = 13 only. Traces for the browser core use seeds 8000 + i,
 which no claim uses.
+
+### Amendment 2 · 2026-11-05, Phase 1, after the dry run and before any decisive run
+
+Written after the reference was built, reviewed and dry-run (`reference/results/dry/`), and before `run_claims.py`
+ran on any registered instance. No claim result was known when it was written. Nothing registered is changed.
+
+**1. A disclosure.** While the geometry modules were being written, a builder's timing script ran L3's `certify`
+and the prefix check of L3(d) over all 82,115 noun words to measure their cost. Its outcome was neither reported nor
+looked at, and no code was changed after it. Both checks are exact, deterministic and all-or-nothing, with nothing
+to tune; the decisive run recomputes them. It is recorded under the rule "Reporting".
+
+**2. An erratum to Amendment 1, item 1.** Its parenthesis "BERT drops every C category" is wrong for
+google-research/bert, whose `_is_control` drops only Cc and Cf; Hugging Face transformers' copy of the
+`BasicTokenizer` is the one that drops every C category. The rule of step 1 is unchanged (Cc, Cf and Co dropped, Cn
+kept to fail closed): it is the stated rule, and no L1 instance contains a Co code point. Explainer 3's "Cc, Cf"
+described google's BERT; it will state the rule in force.
+
+**3. Readings fixed in the reference** (each marked `READING` in its code):
+- *N_B.* The offset reported for invalid UTF-8 is where the first ill-formed sequence starts (Unicode Table 3-7,
+  Python's `UnicodeDecodeError.start`). L1's control 3 (accent stripping off) skips NFD and the Mn removal and keeps
+  the lowercase, as BERT does when `strip_accents` is off. A fail-closed word is one `[UNK]` piece with the
+  whitespace token's span.
+- *L1 (d)'s pool.* Each named class is its whole block or range (Greek is U+0370–03FF, whose 9 code points
+  unassigned in 15.1 fail closed). "The code points of the stress set assigned after Unicode 15.1" are the 64 of the
+  stress set's `post151First64` list, which spike S6 wrote as L1(d)'s pool, not all 9,988 such code points. The union
+  without repeats has 12,726 code points. Uniform draws from it practically never give a final-sigma context; L1's
+  Final_Sigma risk point is carried by (c)'s 444 Final_Sigma cases. The four instance lists are pinned by count and
+  an order-sensitive digest in `reference/golden/l1_instances_v1.meta.json`.
+- *Reported tokenizer metrics.* Bytes per token is input bytes over ids; Rényi efficiency at α = 2.5 is H₂.₅ of
+  the unigram token distribution over the log of the vocabulary's entry count (the variant over the distinct tokens
+  seen is also reported). V0's alphabet is the 64 code points of instance (a), which is ASCII, so under V0 a word with
+  a non-ASCII letter is `[UNK]`; this is reported and does not bear on L1's byte identity.
+- *L2.* A lemma whose N_B text is empty would be left out and counted, as a fail-closed one is.
+- *L3.* The truncation control gives every child one letter, the digit min(k, 4). The authority for H³ decoding is
+  hpstep's `decode_exact` on every node; an integer decoder is a reported cross-check. The canonical point list's
+  tree tokens are `H3` and `H2`. D6's codec counts the empty word (id 0), and the first letter is the most significant
+  digit.
+- *Map A.* Roots are decided in the order root 5, lemma, `##`, other, so an all-digit lemma is in root 5; `##` is
+  removed once; N_B punctuation is read from the pinned table. Item 4's "verb-forest word (item 6)" means item 10.
+- *Rank lists* have no final LF.
+- *L5.* Mean rank pools every (query, neighbour) pair, as Nickel & Kiela do. Distortion is computed for H3, H2, F3
+  and F2 and leaves out pairs at tree distance 0 (two synsets with one word). Bits per node are reported for the six
+  construction arms. F\*'s (1/4)^k applies per letter, as item 7 says, so a virtual letter shortens the edges after it.
+  A query without graph-edge neighbours has no AP and is left out of the paired differences, and counted (none among
+  the nouns or mammals; isolated roots in the dry run's verb forest).
+- *L7.* (a)'s bipartiteness is required where (5|q) = −1 and reported otherwise. The trivial eigenvalues are the
+  top and, for a bipartite graph, the bottom of the sorted spectrum, and their multiplicities are reported. (e)'s
+  registered control multiplies the doubled-coordinate generators as plain integer quaternions and compares without
+  dividing by 2^L; SHD-CCP's product without its final halving is reported as a second control. The spread over
+  vertices is reported for all noun addresses.
+
+**4. The reviews.** Before this amendment, two adversarial reviews (four reviewers per track, two skeptics per
+finding) checked the reference against the registration and Amendment 1 by independent reimplementation, on
+unregistered data only. An independent naive trainer rebuilt V0 byte for byte; an independent N_B oracle agreed on
+every L1 instance and on 6.7 million code-point contexts; independent Fraction trees, flat arms, rankings, the id
+codec and L7 agreed without a mismatch. The findings they confirmed were gaps in tests and pins (a trace check that
+skipped the normaliser trace when V1 was not cached, an incomplete guard against platform Unicode calls, a decoder
+test that did not test off-tree points, a mislabelled control), all fixed in the reference before the decisive run.
+
