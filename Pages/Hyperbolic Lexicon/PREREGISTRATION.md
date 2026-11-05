@@ -704,3 +704,15 @@ codec and L7 agreed without a mismatch. The findings they confirmed were gaps in
 skipped the normaliser trace when V1 was not cached, an incomplete guard against platform Unicode calls, a decoder
 test that did not test off-tree points, a mislabelled control), all fixed in the reference before the decisive run.
 
+### Amendment 3 · 2026-11-05, Phase 1 write-up: a correction to Amendment 2
+
+Written after the decisive run of L2, L3 (the Python side), L5 and L7, while writing it up; it changes no rule and no
+result. Amendment 2, item 4, says the reviews worked "on unregistered data only". That holds for the geometry
+review, but not for the text track: the builder's tests and the text review compared the Python N_B and WordPiece
+with Python oracles (built on Python's own Unicode functions and on BERT's WordPiece loop) over L1's instances (a),
+(b) and (c), and the review retrained V0 on instance (a), which is how V0 is registered to be trained. None of this
+is L1's metric, which compares the Python reference with Node and Chromium and has not been run, and none of it
+decided anything: L1 is decided in Phase 2. It is recorded under the rule "Reporting". Also for the record: the
+header of `reference/results/claims.json` reads "PREREGISTRATION.md with Amendment 1", the runner's fixed label; the
+run used the code at 88e63f7, which includes Amendment 2.
+
