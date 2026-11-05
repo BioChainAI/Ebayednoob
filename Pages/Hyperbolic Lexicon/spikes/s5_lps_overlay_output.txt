@@ -1,0 +1,183 @@
+S5 · s5_lps_overlay · the LPS overlay X(5,q), q = 13, 17, 29: structure, exact girth, word reduction, Ramanujan margin, Hurwitz identity
+settles: the RFC 03 proposal's facts and L7's feasibility (vertex counts, girth and r, Ramanujan margin, eigvalsh cost); decides no claim
+reference, unchanged: hpstep.problems (GENS, INV, word_quaternion, children, is_reduced), hpstep.prng.Rng; HPCore 2.0.0 hyperbolic_core.js in Node for the cross-check
+SHD-CCP geometric_engine/hurwitz.py sha256 cecb6dccb4f3757dcdb7ec96994e30a5d6c2fc2f973234b51e7e86ecf1b244e9 (read, imported with python3 -B -I)
+~ python 3.13.18, numpy 2.5.3, 4 cpus, load average at start 5.07 5.63 3.84
+data: synthetic reduced words only; word i (i = 0..999) from Rng(90000+i), length randint(1,60); girth roots Rng(91000+q); Lanczos start Rng(92000+q)
+
+0. The 1,000 synthetic words and P.wordQuaternion (Python reference against Node HPCore)
+  lengths: min 1, max 60, mean 30.229, total letters 30229; first letters 0..5: [179, 176, 182, 157, 152, 154]
+  [PASS] every word is reduced (no letter followed by its P.INV)
+  [PASS] norm of P.wordQuaternion(w) = 5^len(w) on all 1,000 words
+  word 0: len 31 1204204433535150050500242514221
+          quaternion (48450380097, -15098106454, -30745689390, -33703461350)
+  word 1: len 45 552053415225515025525213300214412525350400305
+          quaternion (-2024778704864303, -3411103421067770, 2774989341240840, -2232887868548604)
+  word 2: len 27 255344304343312225021300051
+          quaternion (2313707421, 909051868, -639734018, 928279944)
+  generators as quaternions, P.GENS: [(1, 2, 0, 0), (1, -2, 0, 0), (1, 0, 2, 0), (1, 0, -2, 0), (1, 0, 0, 2), (1, 0, 0, -2)]; P.INV [1, 0, 3, 2, 5, 4]
+~ node v22.23.4
+  HPCore version 2.0.0
+  [PASS] HPCore P.GENS and P.INV equal hpstep GENS and INV
+  [PASS] HPCore.Rng(90000+i) regenerates the same words in Node: 1000/1000
+  [PASS] HPCore.P.wordQuaternion = hpstep word_quaternion: 1000/1000
+  [PASS] fixed values agree: [] (1, 0, 0, 0), [0] (1, 2, 0, 0), [12] (1, -2, 2, -4), [024] (-7, 6, -2, 6), [5555] (-7, 0, 0, 24)
+~ words, quaternions and the Node run: 0.12 s
+
+1. The LPS map phi_q, i -> iota with iota^2 = -1 mod q
+  q=13: q mod 4 = 1, iota = 5 (5^2 = 25 = -1 mod 13), (5|13) = -1, so PGL(2,F_q), bipartite expected
+        phi(GENS) = [[11,0],[0,4]] [[4,0],[0,11]] [[1,2],[11,1]] [[1,11],[2,1]] [[1,10],[10,1]] [[1,3],[3,1]]
+  [PASS] q=13: det phi(g) = 5 for all six; phi(g)phi(h) = phi(gh) for all 36 pairs
+  [PASS] q=13: the six images are distinct, none is the identity or an involution, and phi(g) phi(P.INV[g]) = 5 I (projectively the identity): inverse-closed
+  q=17: q mod 4 = 1, iota = 4 (4^2 = 16 = -1 mod 17), (5|17) = -1, so PGL(2,F_q), bipartite expected
+        phi(GENS) = [[9,0],[0,10]] [[10,0],[0,9]] [[1,2],[15,1]] [[1,15],[2,1]] [[1,8],[8,1]] [[1,9],[9,1]]
+  [PASS] q=17: det phi(g) = 5 for all six; phi(g)phi(h) = phi(gh) for all 36 pairs
+  [PASS] q=17: the six images are distinct, none is the identity or an involution, and phi(g) phi(P.INV[g]) = 5 I (projectively the identity): inverse-closed
+  q=29: q mod 4 = 1, iota = 12 (12^2 = 144 = -1 mod 29), (5|29) = +1, so PSL(2,F_q), not bipartite expected
+        phi(GENS) = [[25,0],[0,6]] [[6,0],[0,25]] [[1,2],[27,1]] [[1,27],[2,1]] [[1,24],[24,1]] [[1,5],[5,1]]
+  [PASS] q=29: det phi(g) = 5 for all six; phi(g)phi(h) = phi(gh) for all 36 pairs
+  [PASS] q=29: the six images are distinct, none is the identity or an involution, and phi(g) phi(P.INV[g]) = 5 I (projectively the identity): inverse-closed
+~ BFS builds of the three graphs: 0.11 s
+
+2. L7(a): structure of the Cayley graph (BFS from the identity)
+  [PASS] q=13: 2,184 vertices = q(q^2-1) = 2,184 (|PGL(2,F_13)| = 2,184, |PSL(2,F_13)| = 1,092)
+  [PASS] q=13: 1,092 vertices have square determinant and 1,092 do not: the group is all of PGL(2,F_13)
+  [PASS] q=13: 6-regular (every vertex has 6 distinct neighbours, no loop)
+  [PASS] q=13: inverse-closed as a graph: nbr[nbr[v,g], P.INV[g]] = v for all v, g (adjacency symmetric)
+    q=13: connected by construction (the BFS from the identity enumerates the generated group, here the whole group above); section 6 confirms that the eigenvalue 6 is simple
+  [PASS] q=13: bipartite (every edge joins even and odd BFS depth); the sides are exactly the square / non-square determinant classes
+    sphere sizes from the identity, d = 0..7: [1, 6, 30, 150, 550, 890, 511, 46]; diameter 7 (vertex-transitive, so the eccentricity of the identity is the diameter)
+  [PASS] q=17: 4,896 vertices = q(q^2-1) = 4,896 (|PGL(2,F_17)| = 4,896, |PSL(2,F_17)| = 2,448)
+  [PASS] q=17: 2,448 vertices have square determinant and 2,448 do not: the group is all of PGL(2,F_17)
+  [PASS] q=17: 6-regular (every vertex has 6 distinct neighbours, no loop)
+  [PASS] q=17: inverse-closed as a graph: nbr[nbr[v,g], P.INV[g]] = v for all v, g (adjacency symmetric)
+    q=17: connected by construction (the BFS from the identity enumerates the generated group, here the whole group above); section 6 confirms that the eigenvalue 6 is simple
+  [PASS] q=17: bipartite (every edge joins even and odd BFS depth); the sides are exactly the square / non-square determinant classes
+    sphere sizes from the identity, d = 0..9: [1, 6, 30, 150, 678, 1778, 1712, 510, 27, 4]; diameter 9 (vertex-transitive, so the eccentricity of the identity is the diameter)
+  [PASS] q=29: 12,180 vertices = q(q^2-1)/2 = 12,180 (|PGL(2,F_29)| = 24,360, |PSL(2,F_29)| = 12,180)
+  [PASS] q=29: every vertex has square determinant, so the group is PSL(2,F_29) (in PGL, of index 2)
+  [PASS] q=29: 6-regular (every vertex has 6 distinct neighbours, no loop)
+  [PASS] q=29: inverse-closed as a graph: nbr[nbr[v,g], P.INV[g]] = v for all v, g (adjacency symmetric)
+    q=29: connected by construction (the BFS from the identity enumerates the generated group, here the whole group above); section 6 confirms that the eigenvalue 6 is simple
+  [PASS] q=29: not bipartite (12,234 edges join vertices of equal BFS depth parity)
+    sphere sizes from the identity, d = 0..8: [1, 6, 30, 150, 750, 3026, 5970, 2195, 52]; diameter 8 (vertex-transitive, so the eccentricity of the identity is the diameter)
+
+3. Exact girth, three ways, and r = floor((g-1)/2)
+   One BFS from the identity suffices: a Cayley graph is vertex-transitive (v -> h.v is an automorphism),
+   so every vertex lies on a shortest cycle and the BFS from any vertex returns the girth exactly.
+  [PASS] q=13: girth g = 8 by (1) BFS from the identity (vectorised and plain), (2) the shortest nontrivial reduced word equal to the identity, (3) the first k with W_k != T_k; BFS from 8 more roots (Rng(91013).below(N): [1500, 46, 235, 1075, 1961, 701, 1933, 493]) gives [8]
+    r = floor((g-1)/2) = 3; even girth; LPS lower bound 4 log_5 q - log_5 4 = 5.5134 <= 8: yes
+    reduced words of length g equal to the identity: 480 = W_g - T_g = 13266 - 12786 = 480; so 240 g-cycles pass through each vertex and the graph has 65,520 g-cycles (2,184 x 240 / 8)
+  [PASS] q=13: the two exact counts of length-g identity words agree, and N x (cycles through a vertex) is divisible by g
+    closed walks at the identity W_k, k = 0..12: [1, 0, 6, 0, 66, 0, 876, 0, 13266, 0, 231156, 0, 4755666]
+    6-regular tree T_k,                   k = 0..12: [1, 0, 6, 0, 66, 0, 876, 0, 12786, 0, 197796, 0, 3183156]
+  [PASS] q=17: girth g = 8 by (1) BFS from the identity (vectorised and plain), (2) the shortest nontrivial reduced word equal to the identity, (3) the first k with W_k != T_k; BFS from 8 more roots (Rng(91017).below(N): [562, 4315, 2479, 667, 2115, 2385, 2705, 1606]) gives [8]
+    r = floor((g-1)/2) = 3; even girth; LPS lower bound 4 log_5 q - log_5 4 = 6.1801 <= 8: yes
+    reduced words of length g equal to the identity: 144 = W_g - T_g = 12930 - 12786 = 144; so 72 g-cycles pass through each vertex and the graph has 44,064 g-cycles (4,896 x 72 / 8)
+  [PASS] q=17: the two exact counts of length-g identity words agree, and N x (cycles through a vertex) is divisible by g
+    closed walks at the identity W_k, k = 0..12: [1, 0, 6, 0, 66, 0, 876, 0, 12930, 0, 209436, 0, 3787908]
+    6-regular tree T_k,                   k = 0..12: [1, 0, 6, 0, 66, 0, 876, 0, 12786, 0, 197796, 0, 3183156]
+  [PASS] q=29: girth g = 9 by (1) BFS from the identity (vectorised and plain), (2) the shortest nontrivial reduced word equal to the identity, (3) the first k with W_k != T_k; BFS from 8 more roots (Rng(91029).below(N): [4982, 8108, 4048, 9912, 7770, 4284, 8255, 4757]) gives [9]
+    r = floor((g-1)/2) = 4; odd girth; LPS lower bound 2 log_5 q = 4.1844 <= 9: yes
+    reduced words of length g equal to the identity: 216 = W_g - T_g = 216 - 0 = 216; so 108 g-cycles pass through each vertex and the graph has 146,160 g-cycles (12,180 x 108 / 9)
+  [PASS] q=29: the two exact counts of length-g identity words agree, and N x (cycles through a vertex) is divisible by g
+    closed walks at the identity W_k, k = 0..12: [1, 0, 6, 0, 66, 0, 876, 0, 12786, 216, 198876, 16368, 3268644]
+    6-regular tree T_k,                   k = 0..12: [1, 0, 6, 0, 66, 0, 876, 0, 12786, 0, 197796, 0, 3183156]
+~ girth (three methods, 9 extra BFS roots per q): 0.12 s
+
+4. L7(b) [S5 task (a)]: phi_q(P.wordQuaternion(w)) projectivised = the vertex reached by walking w from the identity
+  [PASS] q=13: reduction = walk on 1000/1000 words (neighbour table), 1000/1000 (step-by-step matrix product)
+  [PASS] q=17: reduction = walk on 1000/1000 words (neighbour table), 1000/1000 (step-by-step matrix product)
+  [PASS] q=29: reduction = walk on 1000/1000 words (neighbour table), 1000/1000 (step-by-step matrix product)
+  worked examples (canonical projective matrix (m00,m01,m10,m11) mod q, vertex number in BFS order):
+    [0] (1, 2, 0, 0): q=13 (1, 0, 0, 11) #1; q=17 (1, 0, 0, 3) #1; q=29 (1, 0, 0, 13) #1
+    [02] (1, 2, 2, 4): q=13 (1, 2, 4, 11) #8; q=17 (1, 2, 11, 3) #8; q=29 (1, 2, 3, 13) #8
+    [024] (-7, 6, -2, 6): q=13 (1, 8, 11, 8) #45; q=17 (0, 1, 12, 4) #45; q=29 (1, 10, 23, 26) #45
+    [12042] (33, -16, 36, -22): q=13 (1, 6, 2, 7) #107; q=17 (1, 11, 4, 4) #1514; q=29 (1, 8, 9, 15) #1657
+~ reduction against walk, 3 x 1,000 words: 0.08 s
+
+5. L7(c) [S5 task (b)]: distinct reduced words of length <= r map to distinct vertices (exhaustive)
+  [PASS] q=13, r=3: all 187 reduced words of length <= 3 map to 187 distinct vertices (by reduction; the walk agrees on every word)
+    sharpness: the 937 words of length <= 4 reach 737 vertices (200 collisions)
+  [PASS] q=13: exact counting agrees (no collision up to r = 3, collisions from r+1 = 4); vertices reached = ball size at every L
+    L<=0: 1 words, 1 vertices, 0 collisions · L<=1: 7 words, 7 vertices, 0 collisions · L<=2: 37 words, 37 vertices, 0 collisions · L<=3: 187 words, 187 vertices, 0 collisions · L<=4: 937 words, 737 vertices, 200 collisions · L<=5: 4,687 words, 1,627 vertices, 3,060 collisions
+  [PASS] q=17, r=3: all 187 reduced words of length <= 3 map to 187 distinct vertices (by reduction; the walk agrees on every word)
+    sharpness: the 937 words of length <= 4 reach 865 vertices (72 collisions)
+  [PASS] q=17: exact counting agrees (no collision up to r = 3, collisions from r+1 = 4); vertices reached = ball size at every L
+    L<=0: 1 words, 1 vertices, 0 collisions · L<=1: 7 words, 7 vertices, 0 collisions · L<=2: 37 words, 37 vertices, 0 collisions · L<=3: 187 words, 187 vertices, 0 collisions · L<=4: 937 words, 865 vertices, 72 collisions · L<=5: 4,687 words, 2,643 vertices, 2,044 collisions
+  [PASS] q=29, r=4: all 937 reduced words of length <= 4 map to 937 distinct vertices (by reduction; the walk agrees on every word)
+    sharpness: the 4,687 words of length <= 5 reach 3,963 vertices (724 collisions)
+  [PASS] q=29: exact counting agrees (no collision up to r = 4, collisions from r+1 = 5); vertices reached = ball size at every L
+    L<=0: 1 words, 1 vertices, 0 collisions · L<=1: 7 words, 7 vertices, 0 collisions · L<=2: 37 words, 37 vertices, 0 collisions · L<=3: 187 words, 187 vertices, 0 collisions · L<=4: 937 words, 937 vertices, 0 collisions · L<=5: 4,687 words, 3,963 vertices, 724 collisions · L<=6: 23,437 words, 9,933 vertices, 13,504 collisions
+~ injectivity, exhaustive: 0.02 s
+
+6. L7(d): spectrum of the dense adjacency, numpy.linalg.eigvalsh (float64), one child process per q
+   Ramanujan bound 2 sqrt 5 = 4.4721359550; trivial eigenvalues excluded: +6, and -6 when bipartite
+  q=13: N = 2,184, dense float64 matrix 38,158,848 bytes (36.4 MiB)
+  [PASS] q=13: eigenvalue +6 has multiplicity 1 (connected) and -6 has multiplicity 1 (bipartite), tolerance 1e-9
+    largest nontrivial lambda_2 = 4.249721; smallest nontrivial = -4.249721
+    largest nontrivial |lambda| = 4.249721 (multiplicity 72, tolerance 1e-8; next value below it 4.246980)
+  [PASS] q=13: Ramanujan, max nontrivial |lambda| <= 2 sqrt 5 - 1e-9; margin 2 sqrt 5 - max = 0.222415
+    distinct eigenvalues (clusters, gap > 1e-7): 55
+~   q=13: cluster robustness: largest gap inside a cluster 2.452e-14, smallest gap between clusters 2.741e-03
+  [PASS] q=13: power sums sum(lambda^k), k = 0..12, equal the exact trace(A^k) = N W_k (relative error < 1e-9); e.g. trace(A^2) = 13,104, trace(A^8) = 28,972,944
+~   q=13: max relative power-sum error 9.581e-15; exact repr: lambda_2 4.249720849060803, max |lambda| 4.249720849060803, top 5.999999999999979, bottom -6.000000000000007
+  [PASS] q=13: Lanczos (300 steps, trivial eigenvectors projected out) gives max nontrivial |lambda| 4.249721, agreeing with eigvalsh within 1e-6
+~   q=13: Lanczos |difference| 2.665e-14, 1.22 s
+~   q=13: eigvalsh 2.64 s (dense build 0.01 s); child RSS before eigvalsh 69 MiB, peak RSS after 107 MiB (peak before 69 MiB)
+  q=17: N = 4,896, dense float64 matrix 191,766,528 bytes (182.9 MiB)
+  [PASS] q=17: eigenvalue +6 has multiplicity 1 (connected) and -6 has multiplicity 1 (bipartite), tolerance 1e-9
+    largest nontrivial lambda_2 = 4.308919; smallest nontrivial = -4.308919
+    largest nontrivial |lambda| = 4.308919 (multiplicity 96, tolerance 1e-8; next value below it 4.242641)
+  [PASS] q=17: Ramanujan, max nontrivial |lambda| <= 2 sqrt 5 - 1e-9; margin 2 sqrt 5 - max = 0.163217
+    distinct eigenvalues (clusters, gap > 1e-7): 79
+~   q=17: cluster robustness: largest gap inside a cluster 3.975e-14, smallest gap between clusters 2.568e-03
+  [PASS] q=17: power sums sum(lambda^k), k = 0..12, equal the exact trace(A^k) = N W_k (relative error < 1e-9); e.g. trace(A^2) = 29,376, trace(A^8) = 63,305,280
+~   q=17: max relative power-sum error 6.609e-15; exact repr: lambda_2 4.308918669345169, max |lambda| 4.308918669345169, top 6.000000000000006, bottom -6.000000000000014
+  [PASS] q=17: Lanczos (300 steps, trivial eigenvectors projected out) gives max nontrivial |lambda| 4.308919, agreeing with eigvalsh within 1e-6
+~   q=17: Lanczos |difference| 7.105e-15, 1.41 s
+~   q=17: eigvalsh 17.43 s (dense build 0.04 s); child RSS before eigvalsh 215 MiB, peak RSS after 401 MiB (peak before 215 MiB)
+  q=29: N = 12,180, dense float64 matrix 1,186,819,200 bytes (1131.8 MiB)
+  [PASS] q=29: eigenvalue +6 has multiplicity 1 (connected) and -6 has multiplicity 0 (not bipartite), tolerance 1e-9
+    largest nontrivial lambda_2 = 4.442016; smallest nontrivial = -4.410656
+    largest nontrivial |lambda| = 4.442016 (multiplicity 90, tolerance 1e-8; next value below it 4.410656)
+  [PASS] q=29: Ramanujan, max nontrivial |lambda| <= 2 sqrt 5 - 1e-9; margin 2 sqrt 5 - max = 0.030120
+    distinct eigenvalues (clusters, gap > 1e-7): 164
+~   q=29: cluster robustness: largest gap inside a cluster 2.833e-13, smallest gap between clusters 6.160e-05
+  [PASS] q=29: power sums sum(lambda^k), k = 0..12, equal the exact trace(A^k) = N W_k (relative error < 1e-9); e.g. trace(A^2) = 73,080, trace(A^9) = 2,630,880
+~   q=29: max relative power-sum error 1.150e-15; exact repr: lambda_2 4.44201644259386, max |lambda| 4.44201644259386, top 6.000000000000018, bottom -4.41065599556297
+  [PASS] q=29: Lanczos (300 steps, trivial eigenvectors projected out) gives max nontrivial |lambda| 4.442016, agreeing with eigvalsh within 1e-6
+~   q=29: Lanczos |difference| 4.530e-14, 19.00 s
+~   q=29: eigvalsh 161.24 s (dense build 0.21 s); child RSS before eigvalsh 1169 MiB, peak RSS after 2308 MiB (peak before 1169 MiB)
+~ eigvalsh scaling: t(4,896)/t(2,184) = 6.60 (n^3 predicts 11.27), t(12,180)/t(4,896) = 9.25 (n^3 predicts 15.40); measured directly, no extrapolation needed
+
+7. L7(e) [S5 task (c)]: P.wordQuaternion = SHD-CCP HurwitzQuaternion product in doubled coordinates, halved
+  generators in doubled coordinates: (2,4,0,0) (2,-4,0,0) (2,0,4,0) (2,0,-4,0) (2,0,0,4) (2,0,0,-4); norm() of each = [5, 5, 5, 5, 5, 5]
+  [PASS] HurwitzQuaternion product (left to right, h = h * g), halved, equals P.wordQuaternion on 1000/1000 words, and on the empty word
+  [PASS] HurwitzQuaternion.norm() of the product = 5^len(w) on 1000/1000 words
+~ Hurwitz products: 0.06 s
+
+8. Controls (each must FAIL)
+  [PASS] control (1), q=13: iota = 2 (2^2 = 4, not -1 = 12 mod 13; dets of phi_2(GENS) [11, 11, 5, 5, 11, 11]): walk != reduction on 968/1000 words (failing lengths 2..60); the control fails as required
+  [PASS] control (1), q=17: iota = 2 (2^2 = 4, not -1 = 16 mod 17; dets of phi_2(GENS) [2, 2, 5, 5, 2, 2]): walk != reduction on 968/1000 words (failing lengths 2..60); the control fails as required
+  [PASS] control (1), q=29: iota = 2 (2^2 = 4, not -1 = 28 mod 29; dets of phi_2(GENS) [14, 14, 5, 5, 14, 14]): walk != reduction on 968/1000 words (failing lengths 2..60); the control fails as required
+  [PASS] control (2), q=13: the subset {1+2i, 1-2i, 1+2j, 1-2j} generates 2,184 vertices, every vertex has degree [4]: not 6-regular, the control fails as required
+  [PASS] control (2), q=17: the subset {1+2i, 1-2i, 1+2j, 1-2j} generates 4,896 vertices, every vertex has degree [4]: not 6-regular, the control fails as required
+  [PASS] control (2), q=29: the subset {1+2i, 1-2i, 1+2j, 1-2j} generates 12,180 vertices, every vertex has degree [4]: not 6-regular, the control fails as required
+  [PASS] control (3), primary: the doubled coordinates without the final halving differ from P.wordQuaternion on 1000/1000 words (they are exactly 2 P.wordQuaternion(w) on 1000/1000); the control fails as required
+  [PASS] control (3), variant: products of doubled coordinates without the per-product halving (halved once at the end) differ on 1000/1000 words (they are exactly 2^len(w) P.wordQuaternion(w) on 1000/1000); the control fails as required
+~ controls: 0.24 s
+
+64/64 checks pass
+
+SETTLES:
+  - q = 13: iota = 5, (5|13) = -1; 2,184 vertices = |PGL(2,F_q)| = q(q^2-1), bipartite, 6-regular, connected, inverse-closed, diameter 7; exact girth g = 8, so r = 3; largest nontrivial |lambda| = 4.249721, Ramanujan margin 0.222415 to 2 sqrt 5 = 4.4721.
+  - q = 17: iota = 4, (5|17) = -1; 4,896 vertices = |PGL(2,F_q)| = q(q^2-1), bipartite, 6-regular, connected, inverse-closed, diameter 9; exact girth g = 8, so r = 3; largest nontrivial |lambda| = 4.308919, Ramanujan margin 0.163217 to 2 sqrt 5 = 4.4721.
+  - q = 29: iota = 12, (5|29) = +1; 12,180 vertices = |PSL(2,F_q)| = q(q^2-1)/2, not bipartite, 6-regular, connected, inverse-closed, diameter 8; exact girth g = 9, so r = 4; largest nontrivial |lambda| = 4.442016, Ramanujan margin 0.030120 to 2 sqrt 5 = 4.4721.
+  - mod-q shard keys separate every pair of distinct reduced words of length <= r = 3, 3, 4 (q = 13, 17, 29) and collide from length r+1 on; the reduction mod q of P.wordQuaternion is exactly the walk from the identity (1,000/1,000 synthetic words at each q).
+  - L7(e): P.wordQuaternion = HurwitzQuaternion product of (2, +-4, 0, 0), (2, 0, +-4, 0), (2, 0, 0, +-4), halved (1,000/1,000 words); without halving it never matches.
+  - L7 controls fail as required: iota = 2 breaks the walk identity at every q; the 4-generator subset is 4-regular; the unhalved Hurwitz product disagrees.
+  - L7 feasibility: dense float64 eigvalsh is tractable at all three q; the 12,180-vertex matrix is 1131.8 MiB (the "~" lines give the measured time and peak RSS on this machine).
+~   - eigvalsh measured on this machine: 2,184 vertices 2.6 s, 4,896 17.4 s, 12,180 161.2 s (peak RSS of that child 2308 MiB), 4 cpus
+~ load average at end 7.96 6.69 4.60
+~ total runtime 204.6 s

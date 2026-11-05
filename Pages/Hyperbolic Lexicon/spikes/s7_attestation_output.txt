@@ -1,0 +1,173 @@
+S7 s7_attestation: BioChain-AI's ATTEST/1 attestation (ECDSA P-256 over SHA-256) of an LPREP/1-style commitment, signed in Node WebCrypto and verified in Node and in Python cryptography across the P1363 / DER boundary; tampering; the reverse direction; a deterministic golden vector; sign and verify costs
+Settles: L10's encoding control and L11's attestation cost term. Decides no claim. Data: one synthetic shard from Rng(97000) (and one from Rng(97001)); the keys are random, so key-dependent values are on "~" lines; the golden vector uses RFC 6979's public test key.
+~ node v22.23.4, OpenSSL 3.5.9, linux-x64, 4 cpus (Intel(R) Xeon(R) Processor @ 2.30GHz)
+
+0. Sources (read only; run as written by name-grab, Firestore replaced by an in-memory map)
+  BioChain-AI src/identity/crypto-core.js: sha256 3070acb0b3fc0ae3acfb880373dd6fab788c1076a047e735d9b4c025d9849786
+  BioChain-AI src/identity/signing-key.js: sha256 066df02007797e4c7fe3991243b9008539cd3acc58d54217aef52bf3a9377157
+  BioChain-AI src/biomesh/biomesh.js: sha256 a2e2056f1231b9f65000690a5832a11108df2deb2fd4166b4e027d97a9ba1232
+  BioChain-AI src/identity/identity-registry.js: sha256 a8f2db18600447c1444c6d8610615beac3964a4822493ceaef45ffb0f66817ee
+  taken by name from crypto-core.js: subtle, enc, bufToHex, hexToBuf, sha256Hex, KEY_LATTICES, expandHolographic, shdccpCompress, canonicalParams, deriveKeyVector, ALGO, SIGN, generateKeypair, importPriv, importPub, signPayload, verifyPayload, keyIdFromPublic, attestationPayload
+  from signing-key.js: signWithKey, verifyAttestation, verifyAttestationAgainstContent; from biomesh.js: grownCommitment, verifyGrown; from identity-registry.js: LATTICE_SPACES, sha256Bytes, expandToHolographicInverse, shdccpCompress, xorBlendHex, computeGeoVector, computeIdentityId
+
+1. The ATTEST/1 format, read from the code
+  crypto-core.js:  const attestationPayload = ({ keyId, keyVector, contentHash, epochToken }) => ["ATTEST/1", keyId, keyVector, contentHash, epochToken].join("|");
+  crypto-core.js:  return "K-" + (await sha256Hex(`${publicJwk.x}|${publicJwk.y}`)).slice(0, 24);   (keyIdFromPublic)
+  crypto-core.js:  const SIGN = { name: "ECDSA", hash: "SHA-256" };   (signPayload / verifyPayload: WebCrypto ECDSA, P1363 r||s, hex)
+  signing-key.js:  const contentHash = await CC.sha256Hex(contentText);   (signWithKey)
+  signing-key.js:  if (block.keyVector !== reg.keyVector) return { valid: false, reason: "key-vector mismatch" };   (verifyAttestation)
+  biomesh.js:      const grownCommitment = (c) => ["GROWN/1", c.chainId, c.merkleRoot, c.weaveChiral, c.weaveMirror, String(c.origBytes)].join("|");
+  biomesh.js:      const h = await CC.sha256Hex(grownCommitment(chain));   (verifyGrown)
+  attestationPayload on placeholders: ATTEST/1|<keyId>|<keyVector>|<sha256(commitment)>|<epochToken>; equal to 'ATTEST/1|keyId|keyVector|SHA256(commitment)|epochToken': true
+  identityId = computeIdentityId('hyperbolic-lexicon spike S7 identity seed', 'spike-s7-uid'): 0x3576910B7E3DD241; recomputed with node:crypto + BigInt: true
+  canonicalParams({}): {"lattice":"E8","hilbertDim":64,"modulus":240,"manifold":"clifford","coherency":0.75,"torsion":0.5}; equal to the port's: true
+  keyVector = deriveKeyVector(identityId, {}, 'EPOCH-OFFLINE-SPIKE').vector64: AF95A64504223AA8; recomputed: true (it does not depend on the ECDSA key)
+
+2. The sample LPREP/1-style commitment (field order from the design's LPREP/1 row; pipe-joined like GROWN/1)
+  synthetic shard from HPCore.Rng(97000): 59993 B, 46115 code points, 9166 non-ASCII; sha256 92b10065af6d41824898acbd1005a44bb83b087257ca64e3bf2b6670ed51f360; orbital_core gives the same: true
+  fields (name:length): format:7, corpusId:8, shardIndex:1, chainId:27, merkleRoot:64, byteLen:5, rawSha256:64, spdx:7, sourceUrlSha:64, lvocabHash:64, idStreamSha256:64, laddrHash:64, weave3Sha:64, engramStreamSha:64, tier:1
+  placeholders (SHA-256 of 'S7 placeholder <name>'): chainId, merkleRoot, sourceUrlSha, lvocabHash, idStreamSha256, laddrHash, weave3Sha, engramStreamSha; from the shard: byteLen, rawSha256
+  commitment, 582 characters:
+    LPREP/1|S7-SPIKE|0|BC-bb5306c48ec981158afab12a|93b6aaf0dc5d47a9fe6ef8213d78eb53d79c872f3ea494b93fb6ea3b68439c6a|59993|92b10065af6d41824898acbd1005a44bb83b087257ca64e3bf2b6670ed51f360|CC0-1.0|cb1469a8988f5912c88f7588f2183d7514186eb305bbeed64d5d05ca20b6e6d5|c45f3f807bcb71c1d44de8b92e3307c3af4e6c3943791b920fd901dea27e06cb|6f4e21c755a57667956e3e153e09634117a0061d39d45f11be9d1a76901949ab|081e74925646a3583fd65435fab1618cbd05f696b92ae598d2238faae0a866fe|cb27ed23d2a6e8cedb8dc88f108682be2040497c984a974c63342bf3e8b4338f|5b5f1c1c7da0294aeca011a7b42cefb50fe1ecf3b12ea7fd6d39dabf897a2bb3|S
+  contentHash = sha256Hex(commitment) (BioChain, WebCrypto) e22ab274b7cd2aee8a1010fad90ae497911d7950894970f887de88ca1d573d03; node:crypto equal: true; orbital_core equal: true
+
+3. A P-256 key from BioChain's generateKeypair (WebCrypto), signed and verified in Node
+  public JWK fields: crv, ext, key_ops, kty, x, y; kty EC, crv P-256; x and y 43 and 43 base64url characters (32 bytes): true; private JWK adds: d
+  keyId = keyIdFromPublic(publicJwk): 26 characters, 'K-' + 24 hex: true; node:crypto gives the same: true
+~   keyId K-cd1fdf160ed916283fc0c9ab; x EwcAqViP3cB_ackfMV5K9neVKBdTR4ihE-9284Dl8R0; y wR63EKAWvUsikazL62MSyxYoZIO1a3fqLCZ8cTMS_oo
+  payload = attestationPayload({ keyId, keyVector, contentHash, epochToken }): 137 characters = 8 + 1 + 26 + 1 + 16 + 1 + 64 + 1 + 19: true; equal to the plain join: true
+~   payload ATTEST/1|K-cd1fdf160ed916283fc0c9ab|AF95A64504223AA8|e22ab274b7cd2aee8a1010fad90ae497911d7950894970f887de88ca1d573d03|EPOCH-OFFLINE-SPIKE
+  signPayload: 128 hex characters = 64 bytes, IEEE P1363 r||s: true; verifyPayload: true
+  node:crypto (OpenSSL, synchronous) verify with dsaEncoding 'ieee-p1363': true; with its default 'der' (the same bytes unconverted): false
+  signWithKey(uid, keyId, commitment) block fields: format, keyId, identityId, ownerUid, keyVector, epochToken, contentHash, sig, signedAt; format 'attestation/1'
+    its contentHash is sha256(commitment): true; its sig verifies against our payload (so it signs exactly that string): true
+    verifyAttestation: valid true, reason 'verified', reported identityId is the registry's: true
+    verifyAttestationAgainstContent(block, commitment): valid true, contentMatch true, reason 'verified'
+    ... against the commitment with its last character changed: valid false, reason 'content does not match attestation'
+    T5-style: a valid attestation of a different shard's commitment (Rng(97001)) checked against this one: verifyAttestation alone valid true; against this content valid false, reason 'content does not match attestation'
+  GROWN/1 (biomesh.js, as written) on a placeholder record: GROWN/1|BC-ef08f5f15b268932f64a1b4c|8d55860c77f3534c2188385290e35a500fa0894abf526a7561ff1fd4fd0e3f9f|S7-placeholder-weaveChiral|S7-placeholder-weaveMirror|59993
+    signWithKey + verifyGrown: valid true, reason 'certified grown by 0x3576910B7E3DD241'
+    the same record with merkleRoot's first character changed: valid false, reason 'commitment does not match certification'
+  BioChain's verifyAttestation on altered blocks (last character changed) and registry states:
+    keyId: valid false, reason 'unknown key — no registry entry'
+    keyVector: valid false, reason 'key-vector mismatch'
+    contentHash: valid false, reason 'signature invalid'
+    epochToken: valid false, reason 'signature invalid'
+    sig: valid false, reason 'signature invalid'
+    identityId (not in the payload): valid true, reason 'verified', reported identityId is the registry's: true
+    ownerUid (not in the payload): valid true, reason 'verified', reported identityId is the registry's: true
+    signedAt (not in the payload): valid true, reason 'verified', reported identityId is the registry's: true
+    format (not in the payload): valid true, reason 'verified', reported identityId is the registry's: true
+    registry status 'revoked' (L10 T4): valid false, reason 'key revoked — validity has been revoked'
+    registry status 'retired' (L10 T4): valid false, reason 'key retired — validity has been revoked'
+    signWithKey with the owner's copy marked revoked: refused with 'This signing key is revoked; only active keys can sign.'
+
+4. Tampering in Node, every position once (rule: digits cycle 0-9, hex letters a-f / A-F, other letters g-z / G-Z, anything else bit 0 flipped)
+  payload ATTEST/1 (8 positions): rejected 8/8
+  payload keyId (26 positions): rejected 26/26
+  payload keyVector (16 positions): rejected 16/16
+  payload contentHash (64 positions): rejected 64/64
+  payload epochToken (19 positions): rejected 19/19
+  payload separators (4 positions): rejected 4/4
+  commitment, all 582 positions in 15 fields and 14 separators: contentHash differs 582/582, signature over the rebuilt payload rejected 582/582
+    rejected by field: format 7/7, corpusId 8/8, shardIndex 1/1, chainId 27/27, merkleRoot 64/64, byteLen 5/5, rawSha256 64/64, spdx 7/7, sourceUrlSha 64/64, lvocabHash 64/64, idStreamSha256 64/64, laddrHash 64/64, weave3Sha 64/64, engramStreamSha 64/64, tier 1/1, separators 14/14
+    sha256 over the 582 tampered commitments, one per line: f3c6759048618e94aef5aebbd2975a84436d7d660781d1fa998fe8bcb390b774
+  signature hex, 128 positions: rejected 128/128
+  high-S twin (r, n - s): WebCrypto accepts: true; node:crypto accepts: true (ECDSA is malleable; neither enforces low-S, so signature bytes are not unique)
+  r and s of the primary signature are in [1, n - 1]: true
+
+5. Node's timed signatures and the short-r / short-s search (they are sent to Python)
+  200 signatures from the timed sign loop, all 64 bytes and verifying in Node: true
+  signatures with r < 2^248 and with s < 2^248 (a leading zero byte in P1363) found: true
+~   after 154 signatures
+
+6. Python: s7_attestation.py --json (python3 -B -I; the request on stdin, the answer on stdout; no file written)
+~ Python 3.13.18, cryptography 50.0.1, OpenSSL 4.0.2 25 Aug 2026
+  P1. Inputs recomputed in Python from the raw inputs (no JS code)
+    synthetic shard from hpstep.prng.Rng(97000): 59993 B, 46115 code points, sha256 92b10065af6d41824898acbd1005a44bb83b087257ca64e3bf2b6670ed51f360; equal to Node's: true
+    identityId (computeIdentityId port) 0x3576910B7E3DD241: equal: true
+    canonicalParams({}) {"lattice":"E8","hilbertDim":64,"modulus":240,"manifold":"clifford","coherency":0.75,"torsion":0.5}
+    keyVector (deriveKeyVector port: SHA-256 of identityId|params|epochToken, holographic 64 bytes, SHD-CCP accumulator) AF95A64504223AA8: equal: true
+    LPREP/1-style commitment: 15 fields, 582 characters; equal: true; contentHash = sha256(commitment) e22ab274b7cd2aee8a1010fad90ae497911d7950894970f887de88ca1d573d03: equal: true
+    keyId of Node's public JWK recomputed ('K-' + sha256(x|y)[0:24]): equal: true
+~   keyId K-cd1fdf160ed916283fc0c9ab
+    ATTEST/1 payload rebuilt in Python: 137 characters; equal: true
+  P2. Node's WebCrypto-format signatures (P1363 r||s, 64 bytes) verified in Python (cryptography ECDSA(SHA256), after encode_dss_signature)
+    primary signature: 64 bytes; DER-converted verifies: true; the DER decodes back to the same r and s: true
+~   primary signature DER length 72 B
+    the 200 signatures of Node's timed loop: verify after conversion 200/200
+    [L10 control] the same 200 given raw, as if DER: accepted 0/200; raised: InvalidSignature
+~   DER lengths of those 200: 69 B x1, 70 B x48, 71 B x96, 72 B x55
+    Node's signature with r < 2^248 (a leading zero byte in P1363): is short: true; verifies after conversion: true; raw as DER accepted: false
+    Node's signature with s < 2^248 (a leading zero byte in P1363): is short: true; verifies after conversion: true; raw as DER accepted: false
+  P3. Tampering, every position once (rule: digits cycle 0-9, hex letters a-f / A-F, other letters g-z / G-Z, anything else bit 0 flipped)
+    payload ATTEST/1 (8 positions): rejected 8/8
+    payload keyId (26 positions): rejected 26/26
+    payload keyVector (16 positions): rejected 16/16
+    payload contentHash (64 positions): rejected 64/64
+    payload epochToken (19 positions): rejected 19/19
+    payload separators (4 positions): rejected 4/4
+    commitment, all 582 positions in 15 fields and 14 separators: contentHash differs 582/582, signature over the rebuilt payload rejected 582/582
+      rejected by field: format 7/7, corpusId 8/8, shardIndex 1/1, chainId 27/27, merkleRoot 64/64, byteLen 5/5, rawSha256 64/64, spdx 7/7, sourceUrlSha 64/64, lvocabHash 64/64, idStreamSha256 64/64, laddrHash 64/64, weave3Sha 64/64, engramStreamSha 64/64, tier 1/1, separators 14/14
+      sha256 over the 582 tampered commitments, one per line: f3c6759048618e94aef5aebbd2975a84436d7d660781d1fa998fe8bcb390b774
+    signature hex, 128 positions: rejected 128/128
+    high-S twin (r, n - s) of the primary signature: accepted: true (ECDSA is malleable and OpenSSL does not enforce low-S; signature bytes are not unique)
+    the primary signature under a different key (Python's own): accepted: false
+  P4. Python's own key (ec.generate_private_key(SECP256R1)): signatures returned to Node as P1363
+    JWK x and y: 43 and 43 base64url characters (32 bytes each, left-padded); keyId 26 characters; payload 137 characters
+~   keyId K-0b5d98a05d48251a26339204
+    200 DER signatures (the timed loop) converted to P1363: all 64 bytes: true; verify again after the round trip: 200/200
+    searched for a signature with r < 2^248 and one with s < 2^248: found both: true
+~   after 711 signatures
+    short r: padded P1363 64 bytes verifies in Python: true; the unpadded conversion is shorter than 64 bytes: true (Node verifies both)
+    short s: padded P1363 64 bytes verifies in Python: true; the unpadded conversion is shorter than 64 bytes: true (Node verifies both)
+  P5. RFC 6979 A.2.5 known answer (P-256, SHA-256, message "sample") and a deterministic golden ATTEST/1
+    the RFC private key gives the RFC public key Ux, Uy: true
+    deterministic signing gives the RFC r and s: true; and again on a second call: true
+    golden attestation under the RFC test key (a known-answer vector, never a signing key):
+      public JWK x YP7UuiVanTHJYet0xjVtaMBJuJI7Yfps5mliLmDyn7Y y eQP-EAi4vJmkGunpVii8ZPLxsgwtfp9Rd6PClNRGIpk
+      keyId K-ba70de20e32549d49e6bd616
+      payload ATTEST/1|K-ba70de20e32549d49e6bd616|AF95A64504223AA8|e22ab274b7cd2aee8a1010fad90ae497911d7950894970f887de88ca1d573d03|EPOCH-OFFLINE-SPIKE
+      signature P1363 7e2e8b3a888b2e935680ed76210739aa24ca7f2292db9d119e31a66b137baafab41f991fa7f8ca36f1dd755d8300422ff3eef1cad3c063393890929655daa272
+      signature DER   304502207e2e8b3a888b2e935680ed76210739aa24ca7f2292db9d119e31a66b137baafa022100b41f991fa7f8ca36f1dd755d8300422ff3eef1cad3c063393890929655daa272 (71 B)
+      verifies in Python: true; repeat signing gives the same bytes: true
+  P6. Timings, median of 200 after 20 warm-up runs (time.perf_counter_ns)
+~   sign (DER) 0.0195 ms; sign + DER -> P1363 0.0204 ms
+~   verify DER, key loaded 0.0579 ms; P1363 -> DER + verify 0.0590 ms; + key loaded from the JWK each time 0.0695 ms (Node's key: 0.0696 ms)
+~   P1363 -> DER alone 0.0007 ms; sha256(commitment) + payload 0.0007 ms; the whole attestation step (contentHash check, payload, JWK load, conversion, verify) 0.0714 ms
+  Python's checks passed: 39/39
+  the same tampered strings in both languages: payloads true, commitments true, signatures true; high-S twin verdicts agree: true
+~   python3 round trip 331 ms
+
+7. Python's signatures verified in Node (the reverse direction: DER -> P1363)
+  keyIdFromPublic(Python's JWK) equals Python's keyId: true; attestationPayload rebuilds Python's payload: true
+  200 Python signatures converted to P1363: WebCrypto verifies 200/200, BioChain's verifyPayload 200/200
+  [reverse control] the same 200 as DER, unconverted: WebCrypto accepts 0/200, verifyPayload 0/200; node:crypto, which reads DER by default, accepts 200/200
+~   DER lengths of Python's 200: 70 B x51, 71 B x102, 72 B x47
+  Python's signature with r < 2^248: left-padded P1363 (64 B) verifies: true; unpadded (under 64 B) verifies: false
+  Python's signature with s < 2^248: left-padded P1363 (64 B) verifies: true; unpadded (under 64 B) verifies: false
+  a block carrying Python's signature, through BioChain's verifyAttestationAgainstContent (Python's JWK in the registry): valid true, reason 'verified'
+  Python's signature under Node's key: accepted false
+  the golden attestation (RFC 6979 A.2.5 test key, deterministic ECDSA in Python):
+    the JWK's x, y are the RFC's Ux, Uy: true; RFC r||s for "sample" verifies in WebCrypto: true
+    keyIdFromPublic gives Python's keyId K-ba70de20e32549d49e6bd616: true; attestationPayload rebuilds the payload: true
+    sha256(payload) e4e8d26c5322f8392c48697a07bb34a25bf5bde559c7403c1804aedf2bb2dd37; signature P1363 sha256 e9e1cc0c78d085a88be07c34cbfa784b98cdf07211672259a286a51643b6d120
+    WebCrypto verifies the P1363 signature: true; node:crypto the DER: true; BioChain's verifyAttestationAgainstContent: valid true, reason 'verified'
+
+8. Timings, median of 200 after 20 warm-up runs (process.hrtime.bigint; Python time.perf_counter_ns)
+~   Node sign: WebCrypto, key imported once 0.0604 ms; signPayload as written (JWK import + sign + hex) 0.1373 ms
+~   Node verify: WebCrypto, key imported once 0.1186 ms; verifyPayload as written (JWK import + verify) 0.1643 ms; importKey(jwk) alone 0.0405 ms
+~   Node verify, node:crypto synchronous (OpenSSL, ieee-p1363): KeyObject reused 0.0618 ms; created from the JWK each time 0.0874 ms
+~   Node sha256(commitment, 582 chars): WebCrypto 0.0355 ms; orbital_core 0.0132 ms
+~   Node attestation step (verifyAttestationAgainstContent as written: registry read, keyVector check, verifyPayload, contentHash) 0.2341 ms; the same without the signature (registry read + contentHash) 0.0423 ms
+~   Python sign (DER) 0.0195 ms, + DER -> P1363 0.0204 ms; verify DER 0.0579 ms, P1363 -> DER + verify 0.0590 ms, + JWK load 0.0695 ms; P1363 -> DER alone 0.0007 ms; whole attestation step 0.0714 ms
+
+Node checks passed: 66/66
+
+SETTLES:
+- ATTEST/1, from BioChain-AI's code: payload 'ATTEST/1|keyId|keyVector|contentHash|epochToken' (137 characters with the 19-character epoch token), contentHash = sha256Hex(commitment string) as signWithKey and verifyGrown compute it, keyId = 'K-' + sha256Hex(x|y)[0:24] over the JWK's base64url x and y, keyVector = deriveKeyVector(identityId, params, epochToken).vector64 (16 upper hex, independent of the key); ECDSA P-256 with SHA-256 over the UTF-8 payload; WebCrypto signatures are IEEE P1363 r||s, 64 bytes, carried as 128 hex characters. identityId, keyVector, commitment and contentHash agree in JS (BioChain's code, a port) and Python.
+- L10's encoding control: Python cryptography verifies Node's signatures after P1363 -> DER (encode_dss_signature) (200/200 plus the primary and the short-r and short-s ones) and accepts 0/200 given raw (InvalidSignature); the reverse holds: WebCrypto and BioChain's verifyPayload accept 0/200 of Python's DER signatures unconverted and 200/200 after DER -> P1363; that conversion must left-pad r and s to 32 bytes (an unpadded conversion of a short-r or short-s signature is under 64 bytes and rejected; r or s falls below 2^248 in about 1 signature in 128, 2 x 2^-8).
+- Tampering: every single-character substitution of the payload (137 positions, all 5 fields and the separators), of the commitment (582 positions; contentHash always changes) and of the signature (128 hex positions) is rejected in Node and in Python, on identical tampered strings. BioChain's verifyAttestation names the failing check (unknown key, key-vector mismatch, signature invalid, key revoked / retired); identityId, ownerUid, signedAt and format are outside the payload and do not affect its verdict. The high-S twin (r, n - s) verifies in WebCrypto, node:crypto and Python: signatures are not unique, so nothing may be keyed by signature bytes.
+- A deterministic golden ATTEST/1 for tests (RFC 6979 A.2.5 test key, deterministic ECDSA; RFC r, s for "sample" reproduced): keyId K-ba70de20e32549d49e6bd616, payload sha256 e4e8d26c5322f8392c48697a07bb34a25bf5bde559c7403c1804aedf2bb2dd37, signature P1363 7e2e8b3a888b2e935680ed76210739aa24ca7f2292db9d119e31a66b137baafab41f991fa7f8ca36f1dd755d8300422ff3eef1cad3c063393890929655daa272; it verifies in WebCrypto, node:crypto and Python and through BioChain's verifyAttestationAgainstContent.
+~ L11's attestation term per shard (this container): WebCrypto verify 0.1186 ms with the key imported once, 0.1643 ms as verifyPayload does it (JWK import each time); the whole step as BioChain writes it 0.2341 ms; node:crypto synchronous 0.0618 ms; Python 0.0590 ms (0.0714 ms with the JWK load and contentHash). Signing: WebCrypto 0.0604 ms, Python 0.0195 ms. For 1,000 shards: 0.23 s in Node.
+~ total runtime 0.9 s

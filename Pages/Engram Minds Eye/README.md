@@ -275,6 +275,12 @@ make recall semantic. Engram/1 is a key built from letter-count parities, and no
 adds meaning. The fence finds misplaced memories, not new ideas. Meaningful positions, and with them the fence
 as a novelty detector, need engram/2 or another key, and that is a separate experiment with its own controls.
 
+[Hyperbolic Lexicon](../Hyperbolic%20Lexicon/README.md) (`Pages/Hyperbolic Lexicon/`) builds the pieces such a key
+needs: a pinned subword tokenizer and an exact, training-free address in the same norm-5 tree. It keeps engram/1
+only as a compatibility checksum, and grows its language data as `shdccp/2` shards that import here through
+`importBiochain`. An engram/2 key would be registered in this folder by amendment, once the Lexicon's address
+claims are decided.
+
 ## Files
 
 | Path | Holds |

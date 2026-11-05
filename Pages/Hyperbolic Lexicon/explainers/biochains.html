@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Growing Language Biochains - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 4 of Hyperbolic Lexicon, Phase 0: what a biochain is in BioChain-AI and Owl Academy today, why the 60 KB lineage cap turns a corpus into many shards, the typed records signed in ATTEST/1, the RFC 6962 manifest, the exact norm-5 weave against the float weave, two privacy tiers, the hardened import and what verifyIntegrity misses, the costs spikes S4 and S7 measured, the bridge into Engram Mind's Eye, and a live lab that grows, verifies and breaks a shard in your browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 4 &middot; Phase 0</div>
+    <h1>Growing Language Biochains</h1>
+    <p class="lede">Can language data be grown as biochains, the way BioChain-AI and Owl Academy grow them? Yes, but not as one growing chain: a whole lineage is capped at 60,000 bytes. A corpus becomes many unmodified shards, tied together by a manifest that only grows, described by typed records and checked by a stricter importer than the one in use today. This page walks through the design, with what the spikes measured, and ends with a lab that grows a shard from your text and breaks it.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#lab">Grow a shard, live</a>
+        <a class="btn btn-ghost" href="#cap">The 60 KB cap</a>
+        <a class="btn btn-ghost" href="#manifest">The manifest</a>
+        <a class="btn btn-ghost" href="#verify">The hardened import</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">lineage cap: <b>60,000</b> bytes</span>
+        <span class="stat">S4: <b>126/126</b> records equal Owl&rsquo;s</span>
+        <span class="stat">inclusion proofs: <b>&le; 10</b> hashes at 1,000 shards</span>
+        <span class="stat">L11 threshold: <b>250 ms</b> a shard</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#today">2. Biochains today</a></li>
+            <li><a href="#cap">3. The 60 KB lineage cap</a></li>
+            <li><a href="#shards">4. Shards</a></li>
+            <li><a href="#records">5. Records</a></li>
+            <li><a href="#manifest">6. The manifest</a></li>
+            <li><a href="#weave">7. The weave</a></li>
+            <li><a href="#tiers">8. Two tiers</a></li>
+            <li><a href="#verify">9. The hardened import</a></li>
+            <li><a href="#costs">10. Costs</a></li>
+            <li><a href="#lab">11. Grow a shard, live</a></li>
+            <li><a href="#engram">12. Into Engram Mind&rsquo;s Eye</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#today">Biochains today</a></li><li><a href="#cap">The 60 KB lineage cap</a></li>
+            <li><a href="#shards">Shards</a></li><li><a href="#records">Records</a></li><li><a href="#manifest">The manifest</a></li>
+            <li><a href="#weave">The weave</a></li><li><a href="#tiers">Two tiers</a></li><li><a href="#verify">The hardened import</a></li>
+            <li><a href="#costs">Costs</a></li><li><a href="#lab">Grow a shard, live</a></li><li><a href="#engram">Into Engram Mind&rsquo;s Eye</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">This page expands answer 5 on the <a href="../index.html#answers">hub</a>: could we grow biochains of language pre-processing data as SHD-CCP chains, as BioChain-AI grows biochains? Its focus node is the Records layer, where every table the front end produces becomes a hashed, signable commitment.</p>
+            <div data-hl-map="focus" data-node="records"></div>
+            <p>Phase 0 is analysis, seven measurement spikes and a preregistration. No grower, record, manifest or importer code exists yet; Phase 3 builds them and decides claims L8&ndash;L11 (<a href="../README.md">README</a>, roadmap). What does exist: spike S4 grew WordNet gloss shards against Owl Academy&rsquo;s own code, and spike S7 signed and verified a record in BioChain-AI&rsquo;s attestation format in two languages. Their numbers are spike results, run on data disjoint from the registered instances, and they decide nothing (<a href="../spikes/s4_lexicon_shard_output.txt">S4 output</a>, <a href="../spikes/s7_attestation_output.txt">S7 output</a>). The background comes from a read-only survey of Owl Academy at 7f45f35 and BioChain-AI at c975161, re-checked by an adversarial cross-check whose corrections win.</p>
+            <div class="callout plain"><span class="label">How to read the marks</span>
+                <p><span class="mark exact">exact</span>: integers, bytes or hashes, identical in every engine. <span class="mark float">float</span>: floating point, rounded at every step. <span class="tag t-OPEN">REGISTERED</span>: a claim in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>, fixed and undecided. <span class="tag t-DESIGN">estimate</span>: arithmetic on measured numbers, not a measurement. Timings come from the spikes&rsquo; &ldquo;~&rdquo; lines, which depend on this container (4 CPU cores, Node 22.23.4).</p>
+            </div>
+            <dl class="gloss">
+                <dt>Biochain</dt><dd>One record that holds a UTF-8 text of at most 60,000 bytes, rebuilds it exactly, and carries hashes that commit to it. Owl Academy and BioChain-AI grow them in the browser.</dd>
+                <dt>Chunk, frame</dt><dd>The text is cut into chunks of 720 bytes. Each becomes a frame: a 64-bit packet, a 32-bit length and a residual.</dd>
+                <dt>Residual</dt><dd>The bits an order-2 rank coder writes for a chunk: for each byte, its rank among the bytes that followed the same two bytes before. Decoding replays the ranks, so the chunk comes back exactly.</dd>
+                <dt>Leaf, Merkle root</dt><dd>A leaf is one chunk&rsquo;s SHA-256 hash. The Merkle root hashes the leaves in pairs, level by level, to one value: change any chunk and the root changes.</dd>
+                <dt>Typed commitment</dt><dd>A pipe-joined string with a kind and version first, such as <code>GROWN/1|chainId|merkleRoot|&hellip;</code>. Its SHA-256 is what gets signed.</dd>
+                <dt>Attestation</dt><dd>An ECDSA P-256 signature over an <code>ATTEST/1|&hellip;</code> payload that contains a commitment&rsquo;s hash: it says which key committed to the record.</dd>
+                <dt>Shard, manifest</dt><dd>A shard is one biochain holding one slice of a corpus. A manifest is a record that commits to a list of shards, in order.</dd>
+            </dl>
+        </section>
+
+        <section class="chapter" id="today">
+            <div class="chapter-num">02</div>
+            <h2>Biochains today</h2>
+            <p class="chapter-intro">The biochain is the working SHD-CCP: the code Owl Academy and BioChain-AI actually run. Its pure codec is the same in both repositories and in Engram Mind&rsquo;s Eye&rsquo;s pinned copy, <code>biochain_v1.js</code> (<a href="shdccp.html#working">Explainer 2</a>).</p>
+            <h3>How <code>growBiochain</code> grows one</h3>
+            <ol class="steps">
+                <li><strong>Cut.</strong> The text&rsquo;s UTF-8 bytes are cut into 720-byte chunks. Above <code>MAX_GROW_BYTES = 60000</code> it throws.</li>
+                <li><strong>Code.</strong> Each chunk goes through the order-2 rank coder, which starts fresh for every chunk and writes Elias-gamma codes, with an 8-bit escape for a byte not seen in its context.</li>
+                <li><strong>Crystallize.</strong> Each chunk is folded into one 64-bit word of form 9, a &ldquo;crystal&rdquo;: form (bits 63..60), even parity (59), spin, a 32-bit digest of the chunk read as four int8 quaternion codes, the chunk length in the 16-bit payload, and a byte-sum checksum in the last 8 bits.</li>
+                <li><strong>Hash.</strong> Leaf i is SHA-256 of <code>i + "|" + sha256Hex(String.fromCharCode(...chunk))</code>, over UTF-8. The leaves build a binary Merkle tree that duplicates the last node on odd levels.</li>
+                <li><strong>Weave.</strong> Each chunk&rsquo;s crystal becomes a unit quaternion; their ordered product is the chiral weave, and the conjugates in reverse order give the mirror weave <span class="mark float">float</span>.</li>
+                <li><strong>Name.</strong> <code>chainId = "BC-" + SHA-256(merkleRoot + "|" + weaveChiral)</code>, first 24 hex digits. Frames are concatenated into one hex string, the <code>shdccp/2</code> stream.</li>
+                <li><strong>Engrams</strong> (on by default). One 64-bit engram/1 key per word token, recomputed from the text on verification: the <code>engramStream</code>.</li>
+            </ol>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Field</th><th>What it holds</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">chainId</td><td>&ldquo;BC-&rdquo; and 24 hex digits, from the root and the chiral weave</td></tr>
+                    <tr><td class="mono">stream, streamVersion</td><td>The frames as one hex string; <code>"shdccp/2"</code>, the only version marker</td></tr>
+                    <tr><td class="mono">leafHashes, merkleRoot</td><td>One SHA-256 hex per chunk, and their root</td></tr>
+                    <tr><td class="mono">weaveChiral, weaveMirror</td><td>Four components each, printed with <code>toFixed(12)</code> and joined by commas</td></tr>
+                    <tr><td class="mono">segCuts, segments</td><td>Seven weave segments, as a flat array of 8 cuts (Firestore rejects nested arrays)</td></tr>
+                    <tr><td class="mono">engramStream, engramCount, engramMeanJ</td><td>Optional: 16 hex digits a token, the token count, the mean torsion J</td></tr>
+                    <tr><td class="mono">origBytes, shippedBytes, value</td><td>Text bytes; stream + engrams + 32 B a leaf + 40; value = origBytes / shippedBytes</td></tr>
+                </tbody>
+            </table></div>
+            <p>Publishing adds the owner, the grower, a lineage list and the certification block. In BioChain-AI that block is <code>grownAttestation</code>; in Owl Academy it is <code>grownSeal</code>. The content fields agree in all three codebases; the certification names and the Firebase projects differ.</p>
+
+            <h3>What <code>verifyIntegrity</code> checks</h3>
+            <p>Stopping at the first failure: each packet&rsquo;s parity, decoding every residual, each leaf, the rebuilt Merkle root, the chiral weave, and the engram layer recomputed from the rebuilt text. Three things it does not do, which matter later (<a href="#verify">chapter 9</a>): leaves and root are checked only when the fields are present; a packet&rsquo;s crystal and checksum are never compared with the rebuilt chunk; and <code>chainId</code>, the mirror weave, <code>segCuts</code>, <code>origBytes</code> and <code>value</code> are never recomputed. It proves the record is consistent with itself, not who made it.</p>
+
+            <h3>Authority: typed commitments</h3>
+            <p>Who grew a chain, and where it went, is recorded by signed commitments, each a pipe-joined string built from the record&rsquo;s own fields.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Kind</th><th>Commits</th><th>Used for</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">GROWN/1</td><td class="mono">chainId|merkleRoot|weaveChiral|weaveMirror|origBytes</td><td>Certification by the grower</td></tr>
+                    <tr><td class="mono">GROWTH/1</td><td class="mono">parentChainId|chainId|parentMerkleRoot|merkleRoot|addedBytes</td><td>A child epoch&rsquo;s link to its parent</td></tr>
+                    <tr><td class="mono">CODEX/1</td><td class="mono">codexHash|order|entryCount</td><td>A codex: order-2 byte-context counts, a prior for the coder</td></tr>
+                    <tr><td class="mono">PAIR/1</td><td class="mono">chainId|codexHash</td><td>Binding a codex to a chain</td></tr>
+                    <tr><td class="mono">TRANSFER/1</td><td class="mono">chainId|identityId|toUid|epochToken</td><td>A free transfer, stamped with a sequence number and usable once</td></tr>
+                </tbody>
+            </table></div>
+            <p>In BioChain-AI each is signed as an <strong>ATTEST/1</strong> payload, <code>ATTEST/1|keyId|keyVector|SHA256(commitment)|epochToken</code>, with ECDSA P-256 over SHA-256 through WebCrypto, and checked against a <code>keyRegistry</code> of public keys. A key verifies only while it is active, and revocation is one way. Owl Academy signs the same commitments with its Minor Tome seals (<code>SEAL/1|sealId|sealVector|contentHash|tickToken</code>), and calls its transfer <code>BIOMESH-XFER/1</code>.</p>
+
+            <h3>Where they live, and who can read them</h3>
+            <p>A published biochain is one Firestore document, <code>biochains/{chainId}</code>, with the stream stored inline as hex. In both repositories&rsquo; <code>firestore.rules</code>, any signed-in user may read any biochain, and the stream decodes to plaintext: stored text is public to the whole tenant. On creation the rules check the grower and owner ids, not the record&rsquo;s body, its <code>chainId</code> or its attestation, and nothing may be deleted. The Lexicon publishes no shards to Firestore this round (<a href="../README.md">README</a>, open choices).</p>
+        </section>
+
+        <section class="chapter" id="cap">
+            <div class="chapter-num">03</div>
+            <h2>The 60 KB lineage cap</h2>
+            <p class="chapter-intro">A biochain can grow &ldquo;further&rdquo;, but only by regrowing. That puts a hard ceiling on a whole lineage, not on one step.</p>
+            <p>Both repositories set <code>MAX_GROW_BYTES = 60000</code>, with the comment &ldquo;Firestore doc budget (stream stored inline)&rdquo;. A published chain is frozen, so growth mints a new epoch. <code>extendBiochain(parent, newText)</code> verifies the parent, recreates its text, and calls <code>growBiochain(parentText + newText)</code>. The child carries <code>parentChainId</code>, <code>parentMerkleRoot</code>, <code>epoch + 1</code> and <code>addedBytes</code>, sealed by GROWTH/1. Nothing is appended: every epoch regrows everything, so its cost grows with the whole text, and the whole text must stay within 60,000 bytes.</p>
+            <div class="bits" role="img" aria-label="One lineage: every epoch regrows the parent text plus the new text, and the total is capped at 60,000 bytes">
+                <span style="flex:30;--c:#94a3b8">epoch 1</span>
+                <span style="flex:18;--c:#cbd5e1">+ epoch 2, regrown</span>
+                <span style="flex:12;--c:#e2e8f0">+ 3</span>
+                <span style="flex:4;--c:#fb7185">cap</span>
+            </div>
+            <div class="callout limit"><span class="label">A correction that shaped the design</span>
+                <p>Two of the survey&rsquo;s reports said larger corpora could grow through many GROWTH/1 epochs; a third said a lineage can never pass 60 KB. The cross-check read <code>biomesh.js</code> again and sided with the third: <code>growBiochain</code> throws above the cap, and <code>extendBiochain</code> passes it the whole text. So corpus growth needs many independent shards.</p>
+            </div>
+            <h3>The arithmetic</h3>
+            <p>Spike S4 cut WordNet 3.0&rsquo;s verb and adjective glosses into shards and found the full ones hold a mean of 59,930.9 bytes. At that fill:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Corpus</th><th>Text</th><th class="num">Shards</th></tr></thead>
+                <tbody>
+                    <tr><td>C0, WordNet 3.0 noun glosses (registered)</td><td>82,115 lines</td><td class="num">148 (147 &ge; 59,000 B)</td></tr>
+                    <tr><td>BabyLM strict-small, about 10M words</td><td>55&ndash;60 MB</td><td class="num">918&ndash;1,002</td></tr>
+                    <tr><td>BabyLM strict, about 100M words</td><td>550&ndash;600 MB</td><td class="num">9,178&ndash;10,012</td></tr>
+                </tbody>
+            </table></div>
+            <p>The BabyLM rows are S4&rsquo;s extrapolation <span class="tag t-DESIGN">estimate</span>: their text differs from glosses. C0 is fixed by the preregistration: noun synsets in offset order, one line each (<code>offset&#9;lemmas&#9;gloss</code>), cut at line boundaries into shards of at most 60,000 UTF-8 bytes, their SHA-256s pinned in <a href="../reference/golden/wordnet_v1.meta.json">wordnet_v1.meta.json</a> (smallest 20,962 B, largest 59,999 B). Neither BabyLM corpus can be fetched here (osf.io is blocked; <a href="benchmarks.html#stage3">Explainer 7</a>).</p>
+        </section>
+
+        <section class="chapter" id="shards">
+            <div class="chapter-num">04</div>
+            <h2>Shards</h2>
+            <p class="chapter-intro">Decision D8: shards of at most 60,000 UTF-8 bytes, in unmodified <code>shdccp/2</code> with the JavaScript codec&rsquo;s hashing. A shard is an ordinary biochain, so every existing reader accepts it as it is.</p>
+            <p>Unmodified matters. Owl Academy, BioChain-AI and Engram Mind&rsquo;s Eye already verify <code>shdccp/2</code>; any change of bytes would cut the shards off from them. So everything the Lexicon adds lives beside the shard, in records (<a href="#records">chapter 5</a>), and everything that would change bytes is only proposed, under a future <code>shdccp/3</code> (<a href="shdccp.html#boundary">Explainer 2</a>).</p>
+            <h3>What spike S4 measured</h3>
+            <p>S4 grew the 22 verb and 33 adjective gloss shards, and 8 synthetic ones, with a spike-only synchronous grower: <code>biochain_v1.js</code>&rsquo;s verbatim codec, the orbital core&rsquo;s SHA-256 over UTF-8, and Owl&rsquo;s leaf, Merkle, weave and <code>chainId</code> rules restated line for line. It then ran Owl Academy&rsquo;s own <code>growBiochain</code>, unchanged, on the same texts.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S4</th><th class="num">Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Records equal to Owl&rsquo;s, field for field (15 fields and their order), engrams on and off</td><td class="num">126/126</td></tr>
+                    <tr><td>Owl&rsquo;s <code>verifyIntegrity</code> accepts the engrams-off records, and the decoded stream equals the shard&rsquo;s bytes</td><td class="num">63/63</td></tr>
+                    <tr><td>Engram&rsquo;s <code>importBiochain</code> accepts every verb shard and recreates its text byte for byte, engrams off / on</td><td class="num">22/22 &middot; 22/22</td></tr>
+                    <tr><td>The orbital core&rsquo;s SHA-256 against Node&rsquo;s, over UTF-8 strings</td><td class="num">1000/1000</td></tr>
+                    <tr><td>Full gloss shards (53): mean bytes; chunks</td><td class="num">59,930.9 B; 52 with 84, 1 with 83</td></tr>
+                </tbody>
+            </table></div>
+            <p>It also ran BioChain-AI&rsquo;s Python kernel, which writes a crystal byte 0x80 as 0x81. Its normalised packets changed the stream of 43 of 63 shards, but never <code>merkleRoot</code>, the weaves or <code>chainId</code> (63/63), and Owl&rsquo;s <code>verifyIntegrity</code> and <code>EngramCore.verifyBiochain</code> both accepted the normalised records (63/63). The reason is a gap in its own right: leaves and weaves are computed from chunk bytes, never from packets, so nothing that names a chain commits to its packets (<a href="shdccp.html#d-0x80">Explainer 2</a>).</p>
+            <h3>The quirks a Python port must copy</h3>
+            <ul>
+                <li><strong>Leaf hashing.</strong> <code>String.fromCharCode</code> turns each byte into a code point and SHA-256 reads the UTF-8 of that string, so every byte from 0x80 up is hashed as two bytes. BioChain-AI&rsquo;s Python hashes binary, and the two cannot verify each other&rsquo;s chains.</li>
+                <li><strong>The 0x80 byte.</strong> Written raw, as the JavaScript does: 1.4131% of gloss chunks have a crystal holding one (64 of 4,529; analytic 1.5534%), and 39 of the 55 gloss shards have at least one.</li>
+                <li><strong>The float weave.</strong> V8&rsquo;s <code>Math.hypot</code> algorithm and an exact <code>toFixed(12)</code> (<a href="#weave">chapter 7</a>).</li>
+            </ul>
+            <div class="callout note"><span class="label">Claim L8 <span class="tag t-OPEN">REGISTERED</span></span>
+                <p>Language shards are Owl-valid biochains, field for field, in JS and Python: our synchronous JS grower and our Python port each give the record Owl Academy&rsquo;s own <code>growBiochain</code> gives (BioChain-AI&rsquo;s gives the same); Owl&rsquo;s and BioChain-AI&rsquo;s <code>verifyIntegrity</code> accept every record; <code>importBiochain</code> accepts every record and recreates the text; the derived layers and the <code>LPREP/1</code> strings agree in Python and JS. Instances: C0&rsquo;s 148 shards and 20 synthetic ones from <code>Rng(1000 + i)</code>, each grown with engrams on and off. Controls that must fail: a Python grower with the kernel&rsquo;s 0x80 normalisation; a grower that hashes leaves over binary bytes; one altered byte must change its leaf and root. S4&rsquo;s 126/126 is a spike result on verb, adjective and synthetic shards, not this claim&rsquo;s.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="records">
+            <div class="chapter-num">05</div>
+            <h2>Records</h2>
+            <p class="chapter-intro">A shard holds text. Everything else the front end produces (the vocabulary, the address table, the token ids, the manifest, the benchmark results) travels as typed commitments, in the pattern GROWN/1 already uses.</p>
+            <div class="pipeline">
+                <div class="exact"><b>LVOCAB/1 &middot; LADDR/1</b><span>The tokenizer and the address table, committed once and named by hash</span></div>
+                <div><b>Shard</b><span>A <code>shdccp/2</code> biochain of &le; 60,000 B: the text, unchanged</span></div>
+                <div class="exact"><b>LPREP/1</b><span>One per shard: binds the shard to its source, licence, tokenizer, ids, addresses and exact weave</span></div>
+                <div class="exact"><b>LCORPUS/1 &middot; LGROW/1</b><span>The manifest over every LPREP/1, and proof that each new manifest extends the last</span></div>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Kind</th><th>Commits</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">LVOCAB/1</td><td>The tokenizer: vocabulary SHA-256, the normaliser spec&rsquo;s hash, the Unicode 15.1 tables&rsquo; hash, algorithm and commit, training-manifest root, seed, special tokens. Content-addressed like a codex.</td></tr>
+                    <tr><td class="mono">LADDR/1</td><td>The address table: vocabulary hash, WordNet archive hash, the address rule, and <code>addrTableRoot</code>, an RFC 6962 root over rows <code>id|token|word|len|h3PointSha|h2PointSha</code>; the two trees&rsquo; steps, t = 3/4 and 11/13.</td></tr>
+                    <tr><td class="mono">LPREP/1</td><td>One per shard: corpus id, shard index, <code>chainId</code>, <code>merkleRoot</code>, byte length, SHA-256 of the raw slice, SPDX licence id, source hash, LVOCAB hash, id-stream SHA-256, LADDR hash, exact-weave hash, optional engram-stream hash, tier.</td></tr>
+                    <tr><td class="mono">LCORPUS/1</td><td>The manifest: corpus id, N, an RFC 6962 root over SHA-256(LPREP/1) in shard order, licence set, source manifest, evaluation-set hashes, a contamination receipt, a Croissant metadata sidecar&rsquo;s hash.</td></tr>
+                    <tr><td class="mono">LGROW/1</td><td><code>corpusId|N_old|root_old|N_new|root_new|SHA256(consistency proof)</code>: growth appends shards and proves it; nothing is regrown.</td></tr>
+                    <tr><td class="mono">LBENCH/1</td><td>A benchmark receipt: claim, subject hash, evaluation-set hash (gated sets by hash only), scorer and version, seeds, a hash of each item&rsquo;s output, metrics, hardware and versions, class (reproducible or attested).</td></tr>
+                    <tr><td class="mono">LMODEL/1 <span class="status s-planned">later</span></td><td>A model: a per-file hash manifest, training seed, LCORPUS root, mask-schedule seed and checkpoint hashes.</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>Kinds, not Form values.</strong> Decision D7 keeps the namespace in record kinds, never in a Form nibble: every one of the 16 Form values is already claimed by some consumer (<a href="shdccp.html#forms">Explainer 2</a>), and a biochain document has no type field (<code>publishBiochain</code> drops <code>meta.kind</code>). Each Lexicon record therefore carries <code>{kind, spec: 'hyperbolic-lexicon/0.1', compat: 'biomesh-js'}</code>.</p>
+            <p><strong>Derived layers are recomputed, not stored.</strong> Token ids and addresses are never written per token. They follow the <code>engramStream</code> precedent: a layer that is a pure function of the rebuilt text and pinned tables, which a verifier recomputes and compares by hash. The record holds only the id stream&rsquo;s SHA-256 (LEB128 varints, one per token) and <code>addrTableRoot</code>. That works only because the normaliser, the tokenizer and the address table are pinned and deterministic, which is what claims L1 and L3 test (<a href="architecture.html#ids">Explainer 3</a>). It also avoids the engram layer&rsquo;s cost: 8 bytes (16 hex digits) for every word token, while S4&rsquo;s gloss text averaged 6.7 bytes a token, so the layer is larger than the text it describes and more than halves a shard&rsquo;s value (<a href="#costs">chapter 10</a>).</p>
+
+            <h3>Signed in ATTEST/1, as spike S7 measured it</h3>
+            <p>Every record can be signed in BioChain-AI&rsquo;s exact format. S7 ran BioChain-AI&rsquo;s own <code>crypto-core.js</code>, <code>signing-key.js</code> and <code>biomesh.js</code> unchanged in Node (with Firestore replaced by an in-memory map) and recomputed its values in Python. It built a sample LPREP/1-style commitment of 15 fields, 582 characters, with placeholders in eight of its fields (the last six hashes are shortened here):</p>
+            <pre class="spike">LPREP/1|S7-SPIKE|0|BC-bb5306c48ec981158afab12a|93b6aaf0dc5d47a9fe6ef8213d78eb53d79c872f3ea494b93fb6ea3b68439c6a|59993|92b10065af6d41824898acbd1005a44bb83b087257ca64e3bf2b6670ed51f360|CC0-1.0|cb1469a8&hellip;|c45f3f80&hellip;|6f4e21c7&hellip;|081e7492&hellip;|cb27ed23&hellip;|5b5f1c1c&hellip;|S</pre>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S7 found</th><th>So the importer must</th></tr></thead>
+                <tbody>
+                    <tr><td>The payload is <code>ATTEST/1|keyId|keyVector|contentHash|epochToken</code>: 137 characters with S7&rsquo;s 19-character epoch token. <code>keyId</code> = &ldquo;K-&rdquo; + the first 24 hex of SHA-256 over the public key&rsquo;s x|y; <code>keyVector</code> is 16 hex derived from the identity, independent of the key.</td><td>Rebuild the payload from the commitment, never trust a stored one</td></tr>
+                    <tr><td>WebCrypto writes IEEE P1363 signatures (r&#8214;s, 64 bytes, 128 hex). Python&rsquo;s <code>cryptography</code> verified Node&rsquo;s 200/200 after conversion to DER and 0/200 raw; WebCrypto accepted Python&rsquo;s DER 0/200 raw and 200/200 converted.</td><td>Convert P1363 &harr; DER at the language boundary</td></tr>
+                    <tr><td>DER back to P1363 must left-pad r and s to 32 bytes: one of them falls below 2<sup>248</sup> in about 1 signature in 128, and the unpadded form is rejected.</td><td>Pad, and test the short cases</td></tr>
+                    <tr><td>The high-S twin (r, n &minus; s) of a signature also verifies, in WebCrypto, node:crypto and Python.</td><td>Key nothing by signature bytes</td></tr>
+                    <tr><td>Every single-character change of the payload (137 positions), the commitment (582) and the signature (128 hex) was rejected, in Node and in Python alike. <code>identityId</code>, <code>ownerUid</code>, <code>signedAt</code> and <code>format</code> lie outside the payload and do not affect the verdict.</td><td>Take the signer&rsquo;s identity from the key registry, never from unsigned fields</td></tr>
+                </tbody>
+            </table></div>
+            <p>S7 also wrote a deterministic golden ATTEST/1 under RFC 6979&rsquo;s public test key (keyId <code>K-ba70de20e32549d49e6bd616</code>), which verifies in WebCrypto, node:crypto and Python and through BioChain-AI&rsquo;s <code>verifyAttestationAgainstContent</code>: a known-answer vector for tests, never a signing key.</p>
+        </section>
+
+        <section class="chapter" id="manifest">
+            <div class="chapter-num">06</div>
+            <h2>The manifest</h2>
+            <p class="chapter-intro">Many shards need one commitment to the whole list, in order, that can grow without being rebuilt and that answers two questions cheaply: is this shard in the corpus, and is today&rsquo;s corpus an extension of last month&rsquo;s?</p>
+            <p><code>LCORPUS/1</code> is an <strong>RFC 6962</strong> Merkle tree, the one Certificate Transparency logs use, over SHA-256(<code>LPREP/1</code>) in shard order:</p>
+            <ul>
+                <li><strong>Leaf hash</strong> = SHA-256(0x00 &#8214; entry). <strong>Node hash</strong> = SHA-256(0x01 &#8214; left &#8214; right). The prefixes keep a leaf from ever passing as a node.</li>
+                <li><strong>Split rule.</strong> A list of n &gt; 1 entries splits at k, the largest power of two below n: the left subtree takes the first k, the right the rest. Nothing is duplicated.</li>
+                <li><strong>Inclusion proof.</strong> To show entry i is in a tree of N, give the sibling hashes along its path, about log&#8322;&nbsp;N of them; the verifier rebuilds the root.</li>
+                <li><strong>Consistency proof.</strong> To show a tree of N extends a smaller tree of m (the first m entries unchanged), give a few subtree hashes from which both roots can be rebuilt. That is what makes <code>LGROW/1</code> append-only.</li>
+            </ul>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S4, RFC 6962</th><th class="num">N = 1,000</th><th class="num">N = 10,000</th></tr></thead>
+                <tbody>
+                    <tr><td>Inclusion proofs that verify; rejected for the next leaf&rsquo;s hash; rejected at the next position</td><td class="num">1000/1000 each</td><td class="num">10000/10000 each</td></tr>
+                    <tr><td>Inclusion proof length</td><td class="num">8&ndash;10 hashes, &le; 320 B</td><td class="num">8&ndash;14 hashes, &le; 448 B</td></tr>
+                    <tr><td>Consistency proofs that verify, from every smaller size m</td><td class="num">999/999</td><td class="num">9999/9999</td></tr>
+                    <tr><td>Consistency proof length</td><td class="num">1&ndash;11 hashes, &le; 352 B</td><td class="num">1&ndash;15 hashes, &le; 480 B</td></tr>
+                    <tr><td>~ Verifying one inclusion proof</td><td class="num">8.4 &micro;s</td><td class="num">18.7 &micro;s</td></tr>
+                </tbody>
+            </table></div>
+            <p>S4 also reproduced the Certificate Transparency reference roots for every prefix of its 8-entry vector (9/9) and RFC 6962&rsquo;s own worked audit paths and consistency proofs (7/7), and got the same roots from the orbital core&rsquo;s SHA-256 as from Node&rsquo;s.</p>
+
+            <h3>Why not the <code>shdccp/2</code> rule</h3>
+            <p>The biochain rule hashes hex strings in pairs and, on an odd level, copies the last node before pairing. So [a, b, c] pairs as (a, b), (c, c), and [a, b, c, c] pairs as (a, b), (c, c) too: two different lists, one root. This is the CVE-2012-2459 class.</p>
+            <pre class="spike">shdccp/2
+[a, b, c]    &rarr; H(H(a b) H(c c))
+[a, b, c, c] &rarr; H(H(a b) H(c c))
+               <span class="fail">the same root</span>
+
+RFC 6962, with h(x) = H(0 &#8214; x)
+[a, b, c]    &rarr; H(1 &#8214; H(1 &#8214; h(a) &#8214; h(b)) &#8214; h(c))
+[a, b, c, c] &rarr; H(1 &#8214; H(1 &#8214; h(a) &#8214; h(b)) &#8214; H(1 &#8214; h(c) &#8214; h(c)))
+               <span class="pass">different roots</span></pre>
+            <p>Spike S4 checked every K from 1 to 200. Under the <code>shdccp/2</code> rule, a list and the same list with its last element repeated had equal roots at K = 3, 5, 7, &hellip;, 199: every odd K &ge; 3, 99 values. K = 1 is safe, because a one-leaf root is the leaf itself and is never hashed. Repeating the last <em>two</em> elements collided at K = 6, 10, 14, &hellip;, 198 (49 values). RFC 6962 roots of the same lists were equal at 0 of 200.</p>
+            <p>Inside one shard the damage is limited, because the stream fixes how many leaves there are. A manifest is different: a root alone must fix the list it commits to. So shards keep their <code>shdccp/2</code> root for compatibility, and every list the Lexicon commits to (shards, address-table rows) uses RFC 6962 (<a href="../proposals/SHD-CCP-Lemma15-note.md">Lemma 15 note</a>; the lab below shows both rules side by side).</p>
+            <div class="callout note"><span class="label">Claim L9(a) <span class="tag t-OPEN">REGISTERED</span></span>
+                <p><code>LCORPUS/1</code> is an RFC 6962 tree over SHA-256(<code>LPREP/1</code>) in shard order. Every inclusion proof verifies for its own leaf and position and fails for any other; every consistency proof from a smaller prefix size m verifies, so <code>LGROW/1</code> is append-only; every single alteration (replace, delete, insert, adjacent swap, duplicate-last, truncation with the old root kept) is detected; JS and Python give identical roots and proofs. Instances: the manifest over C0 (K = 148) and synthetic lists with K &isin; {1, 2, 3, 7, 84, 200, 1000, 1001}. The control that must fail: the <code>shdccp/2</code> rule must collide at every odd K &ge; 3 among them.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="weave">
+            <div class="chapter-num">07</div>
+            <h2>The weave</h2>
+            <p class="chapter-intro">A Merkle root says which chunks a chain holds. The weave is a second summary, built to change when chunks swap places. Today it is computed in floats, and that makes it fragile across languages.</p>
+            <h3>The float weave</h3>
+            <p>Each chunk&rsquo;s 32-bit crystal is read as four signed bytes s, made into (0.5 + s&#8320;/254, s&#8321;/127, s&#8322;/127, s&#8323;/127), and normalised with <code>Math.hypot</code>. The weave multiplies these unit quaternions in order, renormalising after each step, and prints each component with <code>toFixed(12)</code> <span class="mark float">float</span>. Because <code>chainId</code> hashes that string, a rounding difference that reaches the twelfth decimal changes the chain&rsquo;s name.</p>
+            <p>Spike S4 ported the weave to Python two ways and compared both with Owl&rsquo;s JavaScript on 1,000 synthetic shards. A faithful port (V8&rsquo;s <code>Math.hypot</code> algorithm, exact <code>toFixed(12)</code>) differed on 0 of 1,000. A naive port (Python&rsquo;s <code>math.hypot</code> and <code>'%.12f'</code>) wrote a different weave string on 2 of 1,000. The cause was <code>hypot</code>: Python&rsquo;s differed from V8&rsquo;s on 39,408 of 127,152 calls (30.9928%), while the formatting differed on 0 of 8,000 components.</p>
+            <h3>The exact norm-5 weave</h3>
+            <p>The Lexicon proposes an exact replacement, built from code Engram Mind&rsquo;s Eye already ships. Take the first 8 bytes of each leaf hash as a 64-bit value. <code>engram_core.chainQuaternion</code> writes each value as a 28-letter word of the norm-5 tree (each letter one of the integer quaternions 1&plusmn;2i, 1&plusmn;2j, 1&plusmn;2k) and multiplies the whole chain out into one integer quaternion <span class="mark exact">exact</span>. Its norm is exactly 5<sup>28K</sup> for K leaves, and right division (<code>engram_core.unfold</code>) reads the values back, in order (<a href="analysis.html#precision">Explainer 1</a>).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S4, verb shard 00</th><th class="num">Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Leaves K; letters</td><td class="num">84; 2,352</td></tr>
+                    <tr><td>Norm (sum of the four squared components) = 5<sup>2352</sup> exactly</td><td class="num">true</td></tr>
+                    <tr><td>Bits per component</td><td class="num">2730, 2730, 2729, 2730</td></tr>
+                    <tr><td><code>unfold(q, 84)</code> returns the 84 values in order</td><td class="num">true</td></tr>
+                    <tr><td>The ordered product of the 7 segment sub-weaves (cuts 0, 12, 24, 36, 48, 60, 72, 84) equals it</td><td class="num">true</td></tr>
+                    <tr><td>~ chainQuaternion; unfold; segment products</td><td class="num">16.3; 27.2; 3.3 ms</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table>
+                <thead><tr><th></th><th>Float weave (<code>shdccp/2</code>)</th><th>Exact weave (proposed)</th></tr></thead>
+                <tbody>
+                    <tr><td>Input</td><td>The crystals, 32 bits a chunk</td><td>Leaf-hash prefixes, 64 bits a leaf</td></tr>
+                    <tr><td>Arithmetic</td><td><span class="mark float">float</span> one rounding per step</td><td><span class="mark exact">exact</span> BigInt, no rounding</td></tr>
+                    <tr><td>Across languages</td><td>Only with a port of V8&rsquo;s <code>hypot</code></td><td>Integers, with nothing to round (L9(b) tests it)</td></tr>
+                    <tr><td>Invertible</td><td>No</td><td>Yes: unfolds to the prefixes, in order</td></tr>
+                    <tr><td>Size</td><td>Four 12-decimal strings</td><td>About 32.5 bits a leaf per component; 2,730 bits at K = 84</td></tr>
+                </tbody>
+            </table></div>
+            <p>The exact weave carries order; collision resistance still comes from the SHA-256 leaves underneath it. Shards keep the float weave, because <code>shdccp/2</code> readers check it; the exact weave travels beside them, as <code>weave3Sha</code> in <code>LPREP/1</code>, and is proposed in place of the float weave for <code>shdccp/3</code> (<a href="shdccp.html#d-weave">Explainer 2</a>).</p>
+            <div class="callout note"><span class="label">Claim L9(b) <span class="tag t-OPEN">REGISTERED</span></span>
+                <p>Each shard&rsquo;s exact norm-5 weave, <code>engram_core.chainQuaternion</code> over the first 8 bytes of each leaf hash in order, has norm exactly 5<sup>28K</sup>, unfolds in order to those prefixes, equals the ordered product of its 7 segment sub-weaves exactly, and has identical components in JS and Python, on every C0 shard. The control that must fail: an XOR summary of the same prefixes must miss at least one adjacent swap that the weave detects.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="tiers">
+            <div class="chapter-num">08</div>
+            <h2>Two tiers</h2>
+            <p class="chapter-intro">Every signed-in user can read every biochain, and a stream decodes to plaintext. Much language data may not be shared that way. So the design has two tiers: the text travels only when its licence allows; otherwise only commitments do.</p>
+            <div class="grid-2">
+                <div class="card"><h4>Tier S &middot; the stream</h4><p>Plaintext travels losslessly in the <code>shdccp/2</code> stream, with its leaves, for text whose licence allows redistribution: WordNet with its notice kept (<a href="../reference/golden/LICENSE-WORDNET.txt">licence</a>), UD English EWT (CC BY-SA 4.0), BLiMP (CC BY), public-domain Gutenberg texts, and the team&rsquo;s own text. Anyone holding a shard can rebuild and check it.</p><div class="meta">public recomputation</div></div>
+                <div class="card"><h4>Tier P &middot; public commitments</h4><p>Restricted corpora (BNC, OpenSubtitles, CHILDES/TalkBank, gated EWoK) publish only hashes, roots, counts, SPDX ids, metrics and receipts. Their streams stay on the holder&rsquo;s disk, or in object storage keyed by root. SNOMED CT is excluded; EWoK appears by hash only.</p><div class="meta">attestation plus audit</div></div>
+            </div>
+            <h3>Salted commitments</h3>
+            <p>A bare hash of a known text can be confirmed by anyone who hashes the same text. So a Tier-P shard&rsquo;s public <code>LPREP/1</code> carries <code>saltedRoot = SHA-256('LPREP-SALT/1'|salt|merkleRoot|chainId)</code>, with a 32-byte secret salt per shard, and omits <code>chainId</code>. Without the salt, guessing the text confirms nothing.</p>
+            <h3>Challenge audits</h3>
+            <p>Nobody else can recompute a Tier-P shard, so it is checked by challenge. The auditor derives k shard indices from SHA-256(LCORPUS root | &lsquo;audit&rsquo; | n); the holder reveals those shards, their salts and their inclusion proofs, privately. If a fraction f of the shards were bad, the audit misses all of them with probability (1 &minus; f)<sup>k</sup>:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Bad fraction f</th><th class="num">k = 10</th><th class="num">k = 30</th><th class="num">k = 100</th><th class="num">k = 300</th></tr></thead>
+                <tbody>
+                    <tr><td>1%</td><td class="num">0.904</td><td class="num">0.740</td><td class="num">0.366</td><td class="num">0.049</td></tr>
+                    <tr><td>5%</td><td class="num">0.599</td><td class="num">0.215</td><td class="num">0.0059</td><td class="num">2.1&times;10<sup>&minus;7</sup></td></tr>
+                    <tr><td>10%</td><td class="num">0.349</td><td class="num">0.042</td><td class="num">2.7&times;10<sup>&minus;5</sup></td><td class="num">1.9&times;10<sup>&minus;14</sup></td></tr>
+                </tbody>
+            </table></div>
+            <p>The table is arithmetic on the formula. Its lesson: an audit catches widespread problems quickly and rare ones slowly. With one bad shard in 1,000 (f = 0.001), even k = 300 misses it with probability about 0.74.</p>
+            <div class="callout limit"><span class="label">What Tier P is, and is not</span>
+                <p>It is attestation plus audit, not public recomputation, and the design says so plainly. A signature proves who committed a record. It does not prove that the licence holds or that the data is correct.</p>
+            </div>
+            <p><strong>Contamination receipts.</strong> <code>LCORPUS/1</code> also commits to a receipt: the 13-gram SHA-256 sets of the evaluation items, intersected with the training id streams. Only the counts are published. The full licence table is in <a href="benchmarks.html#licences">Explainer 7</a>.</p>
+        </section>
+
+        <section class="chapter" id="verify">
+            <div class="chapter-num">09</div>
+            <h2>The hardened import</h2>
+            <p class="chapter-intro">The verifier in use today proves that a record agrees with itself. Spike S4 measured how much that leaves open. The Lexicon&rsquo;s importer closes it, and reports two verdicts instead of one.</p>
+            <h3>What <code>verifyIntegrity</code> accepts</h3>
+            <p>S4 altered verb shard 00 in eight ways and ran Owl Academy&rsquo;s <code>verifyIntegrity</code>, unchanged, beside <code>EngramCore.verifyBiochain</code>. The two agreed every time.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Alteration (spike S4)</th><th>Owl&rsquo;s verdict</th><th>The hardened check that catches it</th></tr></thead>
+                <tbody>
+                    <tr><td>T1: <code>leafHashes</code> and <code>merkleRoot</code> deleted</td><td><strong style="color:var(--rose)">accepts</strong></td><td>Leaves and root are mandatory</td></tr>
+                    <tr><td>T2: packet 0&rsquo;s crystal bit 0 flipped, parity re-fixed</td><td><strong style="color:var(--rose)">accepts</strong></td><td>Re-crystallize each chunk</td></tr>
+                    <tr><td>Packet 0&rsquo;s checksum bit flipped, parity re-fixed</td><td><strong style="color:var(--rose)">accepts</strong></td><td>Re-crystallize each chunk</td></tr>
+                    <tr><td>T8: <code>chainId</code>&rsquo;s last hex digit changed</td><td><strong style="color:var(--rose)">accepts</strong></td><td>Recompute <code>chainId</code></td></tr>
+                    <tr><td>One padding bit of a residual flipped</td><td><strong style="color:var(--rose)">accepts</strong></td><td>Re-encode each chunk</td></tr>
+                    <tr><td>One bit of a raw-byte rank code flipped (decodes the same)</td><td><strong style="color:var(--rose)">accepts</strong></td><td>Re-encode each chunk</td></tr>
+                    <tr><td>T7: frames 0 and 1 swapped (a control)</td><td><strong style="color:var(--emerald)">rejects</strong>: leaf 0 mismatch</td><td>Already caught</td></tr>
+                    <tr><td>Packet 0&rsquo;s parity bit flipped (a control)</td><td><strong style="color:var(--emerald)">rejects</strong>: parity failed</td><td>Already caught</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>Residual aliasing.</strong> The last two rows need a word. When the decoder reads a rank larger than the number of bytes seen in a context, it reads the next 8 bits as a raw byte, whatever the rank was. So an escape code has aliases: several bit patterns decode to the same chunk, and leaves, root, weave and <code>chainId</code> all commit to decoded bytes only. S4 flipped every single bit of frame 0&rsquo;s residual in verb shards 00&ndash;03: 689 of 19,400 flips (3.5515%) decoded to the same 720 bytes (681 inside a raw-byte rank code, 8 in the last byte&rsquo;s padding, 0 elsewhere). A re-encode check (encode the decoded chunk and require the stored residual, byte for byte) rejected 689 of 689. S4 also altered one byte of each verb shard&rsquo;s stream; <code>importBiochain</code> rejected 21 of 22 copies, and the one it accepted decodes to the same bytes.</p>
+
+            <h3>The checks</h3>
+            <ol class="steps">
+                <li><strong>Packet parity</strong>, as today.</li>
+                <li><strong>Decode, then re-encode</strong> each chunk and require the stored residual, byte for byte: only the canonical encoding passes.</li>
+                <li><strong>Re-crystallize</strong> each chunk and require the stored packet: crystal and checksum are checked at last.</li>
+                <li><strong>Leaves and root</strong> mandatory, recomputed with the JavaScript rule.</li>
+                <li><strong>Both weaves and <code>chainId</code></strong> recomputed.</li>
+                <li><strong>The derived layers</strong> (the V0 id stream, <code>addrTableRoot</code>) and the exact weave recomputed; the <code>LPREP/1</code> commitment rebuilt from them.</li>
+                <li><strong>The ATTEST/1 signature</strong> verified against a pinned snapshot of the key registry, refusing revoked keys and key-vector mismatches; P1363 converted to DER for Python, and back with r and s left-padded.</li>
+                <li><strong>Manifest proofs</strong>: the shard&rsquo;s inclusion in <code>LCORPUS/1</code>, and the consistency of each <code>LGROW/1</code>.</li>
+            </ol>
+            <div class="grid-2">
+                <div class="card"><h4>Self-consistent</h4><p>Steps 1&ndash;6 and 8: the record, its derived layers and its place in the manifest agree with one another. Anyone can check this, but anyone can also produce it, by growing an altered text.</p></div>
+                <div class="card"><h4>Authentic</h4><p>Step 7: a registered, unrevoked key committed to exactly this record. Today nothing in Engram&rsquo;s import path calls <code>verifyGrown</code>, and the Firestore rules do not check attestations.</p></div>
+            </div>
+            <p>Engram&rsquo;s <code>importBiochain</code> is not changed; the Lexicon&rsquo;s importer wraps it.</p>
+            <div class="callout note"><span class="label">Claim L10 <span class="tag t-OPEN">REGISTERED</span></span>
+                <p>The lexicon importer, in JS (WebCrypto) and Python (<code>cryptography</code>), accepts every clean attested record and rejects every record in the registered tamper set, naming the failing check; its verdicts are reported separately as self-consistent and authentic, and are identical in both languages; Owl&rsquo;s <code>verifyIntegrity</code> accepts the classes that only the lexicon importer&rsquo;s checks catch. Instances: 50 C0 shards, each <code>LPREP/1</code> attested with a P-256 key generated per run, and 9 tamper classes of 50 records each: T1 leaves and root removed, T2 a crystal changed with parity re-fixed, T3 an <code>LPREP/1</code> field changed, T4 a revoked key, T5 a valid attestation of a different shard, T6 a Tier-P commitment with a wrong salt, T7 two frames swapped, T8 <code>chainId</code> altered, T9 a residual bit flipped that still decodes the same; 450 tampered records and 50 clean. Controls that must fail: Owl&rsquo;s <code>verifyIntegrity</code> must accept at least one T1, T2, T8 and T9 record; Python without the P1363-to-DER conversion must reject every valid signature.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="costs">
+            <div class="chapter-num">10</div>
+            <h2>Costs</h2>
+            <p class="chapter-intro">A design for corpora has to be cheap per shard. Spikes S4 and S7 measured the pieces on this container; claim L11 fixes the threshold the whole importer must meet.</p>
+            <h3>Size, per full 60 KB gloss shard</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S4, 53 full gloss shards</th><th class="num">Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Chunks</td><td class="num">84</td></tr>
+                    <tr><td>Stream: hex characters per text byte</td><td class="num">1.7120</td></tr>
+                    <tr><td>Residual: bits per text byte (the rank coder alone)</td><td class="num">6.7134</td></tr>
+                    <tr><td>Value, engrams off (median, range)</td><td class="num">1.1016 (1.0334&ndash;1.3070)</td></tr>
+                    <tr><td>Value, engrams on (median, range)</td><td class="num">0.4860 (0.4426&ndash;0.5194)</td></tr>
+                    <tr><td>Record JSON: characters per text byte, engrams off / on</td><td class="num">1.8131 / 4.2144</td></tr>
+                    <tr><td>Chunks whose crystal holds a 0x80 byte</td><td class="num">1.4131% (analytic 1.5534%)</td></tr>
+                </tbody>
+            </table></div>
+            <p>A value near 1 means the stream is about as large as the text. The rank coder is an integrity container, not compression; for context only, S4 measured gzip -9 at 3.1230 bits per byte on the same shards, and nothing is claimed from it.</p>
+            <h3>Time, per full shard</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>~ Median, this container</th><th class="num">ms</th></tr></thead>
+                <tbody>
+                    <tr><td>Encode / decode / crystallize (S4)</td><td class="num">24.9 / 22.3 / 4.3</td></tr>
+                    <tr><td>Whole synchronous grow, engrams off (S4)</td><td class="num">40.9</td></tr>
+                    <tr><td>Owl&rsquo;s own <code>growBiochain</code>, engrams off (S4)</td><td class="num">51.0</td></tr>
+                    <tr><td>Owl&rsquo;s verbatim engram layer on verb 00, 9,482 tokens: 731.2 &micro;s a token (S4)</td><td class="num">6,933.7</td></tr>
+                    <tr><td>The same layer in <code>engram_core</code>, 52.7&times; faster (S4)</td><td class="num">131.5</td></tr>
+                    <tr><td><strong>Codec part of the hardened verification</strong>, per verb shard: parse and parity 0.2, decode 21.3, crystal re-check 4.7, leaves and root 3.8, weaves and <code>chainId</code> 9.0, exact weave 2.0 (S4, range 33.0&ndash;43.4)</td><td class="num"><strong>41.0</strong></td></tr>
+                    <tr><td>The re-encode check, on top, per verb shard (S4)</td><td class="num">+23.5</td></tr>
+                    <tr><td>The attestation step as BioChain-AI writes it; WebCrypto verify alone, key imported once (S7)</td><td class="num">0.2341; 0.1186</td></tr>
+                    <tr><td>ECDSA verify in Python, with the P1363-to-DER conversion (S7)</td><td class="num">0.0590</td></tr>
+                </tbody>
+            </table></div>
+            <p>Two things stand out. Signatures are nearly free: S7 puts the attestation step for 1,000 shards at 0.23 s in Node. And the engram layer is the expensive part: Owl&rsquo;s verbatim code recomputes each letter&rsquo;s grid once for every one of its 64 bits. The Lexicon keeps engram/1 off by default for corpora and stores only hashes of derived layers.</p>
+            <h3>At BabyLM scale</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>S4&rsquo;s extrapolation <span class="tag t-DESIGN">estimate</span></th><th class="num">strict-small, 55&ndash;60 MB</th><th class="num">strict, 550&ndash;600 MB</th></tr></thead>
+                <tbody>
+                    <tr><td>Shards</td><td class="num">918&ndash;1,002</td><td class="num">9,178&ndash;10,012</td></tr>
+                    <tr><td>Stream hex</td><td class="num">94.2&ndash;102.7 MB</td><td class="num">941.6&ndash;1027.2 MB</td></tr>
+                    <tr><td>Record JSON, engrams off</td><td class="num">99.7&ndash;108.8 MB</td><td class="num">997.2&ndash;1087.9 MB</td></tr>
+                    <tr><td>Manifest inclusion proofs</td><td class="num">&le; 10 hashes (320 B)</td><td class="num">&le; 14 hashes (448 B)</td></tr>
+                    <tr><td>~ Whole synchronous grow, single thread</td><td class="num">37.5&ndash;41.0 s</td><td class="num">375.3&ndash;409.4 s</td></tr>
+                    <tr><td>~ Codec verification, single thread</td><td class="num">37.6&ndash;41.1 s</td><td class="num">376.2&ndash;410.4 s</td></tr>
+                    <tr><td>~ Engram layer: Owl&rsquo;s verbatim code / <code>engram_core</code></td><td class="num">1.8&ndash;1.9 h / 119.8&ndash;130.7 s</td><td class="num">17.7&ndash;19.3 h / 1197.5&ndash;1306.3 s</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">Claim L11 <span class="tag t-OPEN">REGISTERED</span></span>
+                <p>A holder verifies a full C0 shard with every hardened check of L10 (and the V0 id stream and <code>addrTableRoot</code> recomputed) in a median of at most 250 ms in Node, single-threaded, on this container; a 1,000-shard corpus therefore verifies in under about 5 minutes. Instances: the 147 C0 shards of at least 59,000 bytes, 3 timed repetitions each, the first discarded. Supported if the upper end of the median&rsquo;s bootstrap interval is &le; 250 ms; refuted if the lower end exceeds 500 ms; inconclusive otherwise. The control: a run with the attestation step skipped must be faster. Predicted: a median of about 50&ndash;150 ms.</p>
+            </div>
+            <p>Adding up what the spikes timed, the codec part, the re-encode and the attestation come to about 41.0 + 23.5 + 0.2 &asymp; 65 ms a shard <span class="tag t-DESIGN">estimate</span>. The id stream, <code>addrTableRoot</code> and the <code>LPREP/1</code> rebuild are not timed yet, because no tokenizer or address table exists. That is why L11 sets a threshold with headroom and predicts a range, not a number.</p>
+        </section>
+
+        <section class="chapter" id="lab">
+            <div class="chapter-num">11</div>
+            <h2>Grow a shard, live</h2>
+            <p class="chapter-intro">This lab grows a biochain from your text in the browser, with Engram Mind&rsquo;s Eye&rsquo;s <code>biochain_v1.js</code> (Owl Academy&rsquo;s synchronous code, verbatim) and the orbital core&rsquo;s SHA-256, then verifies it with <code>EngramCore.verifyBiochain</code>. Then you can break it, and watch which checks notice.</p>
+            <div class="lab">
+                <div class="lab-title">Lab &middot; grow, verify, break</div>
+                <div class="lab-row" id="lab-presets">
+                    <button class="chip on" type="button" data-p="few">a few sentences</button>
+                    <button class="chip" type="button" data-p="intl">non-ASCII</button>
+                    <button class="chip" type="button" data-p="three">three chunks</button>
+                    <button class="chip" type="button" data-p="full">a full shard, 60,000 B</button>
+                    <button class="chip" type="button" data-p="over">60,001 B</button>
+                </div>
+                <label for="lab-text" style="display:block;font-size:0.85rem;color:var(--muted);margin:4px 0">Text to grow</label>
+                <textarea id="lab-text" rows="6" spellcheck="false" autocomplete="off" style="display:block;width:100%;font:0.85rem/1.5 var(--mono);padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;resize:vertical">A biochain keeps a text and can rebuild it exactly. The text is cut into chunks of 720 bytes. Each chunk is coded without loss, folded into one 64-bit crystal packet and hashed into a leaf. The leaves build a Merkle root, and the root and the weave name the chain. Change one byte, and the leaf, the root and the chainId all change.</textarea>
+                <div class="lab-row">
+                    <label for="lab-eng"><input id="lab-eng" type="checkbox"> with the engram layer (texts up to 6,000 bytes)</label>
+                    <span class="mono" id="lab-bytes" style="font-size:0.85rem;color:var(--muted)"></span>
+                </div>
+                <div class="out" id="lab-sum">Loading the cores&hellip;</div>
+                <h4>The frames</h4>
+                <div class="table-wrap"><table>
+                    <thead><tr><th class="num">#</th><th class="num">Bytes</th><th>Packet (form 9)</th><th>Crystal</th><th class="num">Residual</th><th>Leaf hash</th></tr></thead>
+                    <tbody id="lab-frames"></tbody>
+                </table></div>
+                <p class="word" id="lab-stream" style="margin:0 0 8px"></p>
+                <h4>Break it</h4>
+                <div class="lab-row" id="lab-tampers">
+                    <button class="chip on" type="button" data-t="clean">clean record</button>
+                    <button class="chip" type="button" data-t="flip">flip one byte of the stream</button>
+                    <button class="chip" type="button" data-t="swap">swap frames 0 and 1</button>
+                    <button class="chip" type="button" data-t="strip">delete leaves and root</button>
+                    <button class="chip" type="button" data-t="crystal">change a crystal</button>
+                    <button class="chip" type="button" data-t="chainid">alter chainId</button>
+                </div>
+                <div class="lab-row">
+                    <label for="lab-byte">byte to flip <input id="lab-byte" type="range" min="0" max="1" value="0"></label>
+                    <span class="mono" id="lab-byte-out" style="font-size:0.85rem"></span>
+                </div>
+                <div class="grid-2">
+                    <div class="out" id="lab-owl"></div>
+                    <div class="out" id="lab-hard"></div>
+                </div>
+                <h4>One list, two Merkle rules</h4>
+                <div class="lab-row">
+                    <label for="lab-k">K leaves <input id="lab-k" type="range" min="1" max="10" value="3"></label>
+                    <span class="mono" id="lab-k-out">3</span>
+                </div>
+                <div class="out" id="lab-roots"></div>
+                <div class="table-wrap"><table>
+                    <thead><tr><th class="num">K</th><th><code>shdccp/2</code>: L and L + [last]</th><th>RFC 6962: L and L + [last]</th></tr></thead>
+                    <tbody id="lab-ktable"></tbody>
+                </table></div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">The grower follows the steps of spike S4&rsquo;s synchronous grower: <code>biochain_v1.js</code> for encoding, crystals, framing and the weave quaternions, <code>OrbitalCore.sha256</code> over UTF-8 for leaves, root and <code>chainId</code>. S4 found that grower equal to Owl&rsquo;s <code>growBiochain</code> on 126/126 records; this page&rsquo;s copy was checked against the three Owl-grown records in Engram&rsquo;s <code>bridges_v1.json</code>, not separately registered. The left box is <code>EngramCore.verifyBiochain</code>, which repeats Owl&rsquo;s <code>verifyIntegrity</code> step for step. The right box sketches the codec checks L10 adds; it is not the Phase 3 importer, and the derived layers, the <code>LPREP/1</code> commitment, the signature and the manifest proofs are not in it. &ldquo;Flip one byte&rdquo; flips the top bit of one byte of frame 0&rsquo;s residual (by default the middle byte, as S4 did). The Merkle panel uses the list L = SHA-256(&ldquo;leaf 0&rdquo;), SHA-256(&ldquo;leaf 1&rdquo;), &hellip;: the <code>shdccp/2</code> rule pairs their hex strings, RFC 6962 hashes their 32 bytes with the 0x00 and 0x01 prefixes. Generated texts are repetitive word lists, so their sizes and values are not those of real text; S4&rsquo;s values are for WordNet glosses.</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li><strong>Flip one byte</strong>: the decoder either runs out of bits (&ldquo;residual truncated&rdquo;) or rebuilds different bytes (&ldquo;leaf 0 mismatch&rdquo;). Slide the byte along: now and then a flip lands inside an escape&rsquo;s rank code, which still reads as an escape, and the chunk decodes the same. Then Owl&rsquo;s steps accept, and only the re-encode check objects.</li>
+                    <li><strong>Delete leaves and root</strong>, <strong>change a crystal</strong>, <strong>alter chainId</strong>: Owl&rsquo;s steps still accept. These are S4&rsquo;s T1, T2 and T8.</li>
+                    <li><strong>Three chunks</strong>, then <strong>swap frames 0 and 1</strong>: rejected at leaf 0, because the stored leaves fix the order. The shard&rsquo;s own three leaves also show the duplicate-last collision in the Merkle panel.</li>
+                    <li><strong>60,001 B</strong>: the error <code>growBiochain</code> throws. One byte over is the lineage cap.</li>
+                    <li><strong>Non-ASCII</strong>: each byte from 0x80 up is hashed as two bytes in the leaf, the quirk a Python port must copy.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="chapter" id="engram">
+            <div class="chapter-num">12</div>
+            <h2>Into Engram Mind&rsquo;s Eye</h2>
+            <p class="chapter-intro">Every Lexicon shard is a <code>shdccp/2</code> biochain, so the bridge into Engram Mind&rsquo;s Eye already exists. What it lacks is a key whose bits mean something; that is the longer bridge.</p>
+            <p><code>EngramCore.importBiochain</code> runs <code>verifyBiochain</code> (Owl&rsquo;s <code>verifyIntegrity</code>, step for step), then checks that Engram&rsquo;s own engram stream of the rebuilt text equals the record&rsquo;s, and brings the text in as one turn of words, tokenized as <code>biomesh.js</code> tokenizes them (<a href="../../Engram%20Minds%20Eye/explainers/bridges.html#in">Engram&rsquo;s bridges</a>). S4 measured it accepting all 22 verb shards, engrams off and on, with the text recreated byte for byte; with engrams off its median was 170.6 ms a shard. It computes Engram&rsquo;s own engram stream of the text on every import, and that layer alone took a median 130.5 ms a shard in S4. It checks no signature.</p>
+            <div class="grid-3">
+                <div class="card"><h4>Now</h4><p>Shards import unchanged through <code>importBiochain</code>; claim L8(c) registers it on all of C0. The Lexicon&rsquo;s importer wraps it with the hardened checks and the attestation.</p><div class="meta">L8 &middot; L10</div></div>
+                <div class="card planned"><h4>Phase 5</h4><p>The 2D and 3D Lexicon pages get a shard panel, and read Engram session exports with <code>engram_core</code>&rsquo;s own importers, showing each token&rsquo;s lexicon address beside its engram/1 key (<a href="architecture.html#pages">Explainer 3</a>).</p><div class="meta">lexicon-2d.html &middot; lexicon-3d.html</div></div>
+                <div class="card planned"><h4>Phase 8</h4><p>engram/2: a subword id plus the lexicon address, registered by amendment in Engram&rsquo;s own preregistration once the address claims are decided. Placement by content would then make Engram&rsquo;s fence a novelty screen, which its Scope reserves for engram/2.</p><div class="meta">engram/2 candidate</div></div>
+            </div>
+            <p>engram/1 itself stays what <a href="analysis.html#engram">Explainer 1</a> found it to be: letter-count parity, a compatibility checksum for Owl Academy, off by default for corpora and never an input. The <a href="../proposals/Owl-Academy-notes.md">Owl notes</a> and the <a href="../proposals/BioChain-AI-language-chains.md">BioChain-AI proposal</a> carry this design to those repositories as documents; nothing in them is changed.</p>
+            <h3>Out of reach until others act</h3>
+            <ul>
+                <li><strong>Existing BioChain-AI Python records</strong> cannot be cross-verified: that Python disagrees with the JavaScript on the 0x80 byte and on leaf hashing.</li>
+                <li><strong>GROWTH/1 as corpus growth</strong>: the cap holds for a whole lineage.</li>
+                <li><strong>Meaning in the crystal word</strong>: the 64-bit crystal is a digest of the chunk, not a representation of it.</li>
+            </ul>
+            <div class="callout note"><span class="label">What this page decides</span>
+                <p>Nothing. L8&ndash;L11 are registered and undecided; Phase 3 builds the grower in JS and Python, the records, the manifests, the exact weave and the hardened importer, and decides them on the instances fixed in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> (<a href="../index.html#ledger">ledger</a>, <a href="evidence.html#claims">Explainer 8</a>).</p>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="architecture.html">&larr; A Hyperbolic BERT Front End in H&sup2; and H&sup3;</a>
+                <a class="btn btn-ghost" href="alternatives.html">The Alternatives, Each With a Role &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 4 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a></footer>
+<script src="../../../scripts/geometric-build/orbital_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+<script src="../../Hyperbolic%20Oracles/twin3d.js"></script>
+<script src="../../Hyperbolic%20Oracles/fence.js"></script>
+<script src="../../Engram%20Minds%20Eye/ttmpt_core_v1.js"></script>
+<script src="../../Engram%20Minds%20Eye/engram_core.js"></script>
+<script src="../../Engram%20Minds%20Eye/biochain_v1.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const O = window.OrbitalCore, BC = window.BiochainV1, EC = window.EngramCore;
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const good = s => `<span class="good">${s}</span>`, bad = s => `<span class="bad">${s}</span>`, k = s => `<span class="k">${s}</span>`;
+    const sumEl = $('lab-sum'), input = $('lab-text'), engBox = $('lab-eng');
+    if (!O || !O.sha256 || !BC) { sumEl.innerHTML = bad('The orbital core (scripts/geometric-build/orbital_core.js) or Engram&rsquo;s biochain_v1.js did not load, so the lab cannot run. Open this page from its place in the site.'); return; }
+    const enc = new TextEncoder(), group = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+    // ---- the grower: spike S4's growSync steps (biochain_v1.js codec, orbital_core SHA-256 over UTF-8)
+    const sha = s => O.toHex(O.sha256(O.utf8(String(s))));
+    const qconj = a => [a[0], -a[1], -a[2], -a[3]];          // biomesh.js's qconj (biochain_v1.js does not export it)
+    function merkle2(leaves) {                                 // shdccp/2: pairwise SHA-256 over hex strings, odd last node duplicated
+        let root = leaves.slice();
+        if (!root.length) return sha('empty');
+        while (root.length > 1) {
+            if (root.length & 1) root.push(root[root.length - 1]);
+            const next = [];
+            for (let i = 0; i < root.length; i += 2) next.push(sha(root[i] + root[i + 1]));
+            root = next;
+        }
+        return root[0];
+    }
+    function weaves(chunks) {
+        let wf = [1, 0, 0, 0], wm = [1, 0, 0, 0];
+        for (const c of chunks) wf = BC.qn(BC.qmul(BC.crystalQuat(c), wf));
+        for (const c of chunks.slice().reverse()) wm = BC.qn(BC.qmul(qconj(BC.crystalQuat(c)), wm));
+        return [BC.quatHex(wf), BC.quatHex(wm)];
+    }
+    const leafOf = (c, i) => sha(i + '|' + sha(String.fromCharCode(...c)));
+    function grow(text, engrams) {
+        const data = [...enc.encode(text)];
+        if (!data.length) throw new Error('Nothing to grow.');
+        if (data.length > BC.MAX_GROW_BYTES) throw new Error(`Grow input capped at ${BC.MAX_GROW_BYTES} bytes (got ${data.length}).`);
+        const chunks = [];
+        for (let i = 0; i < data.length; i += BC.CHUNK) chunks.push(data.slice(i, i + BC.CHUNK));
+        const residuals = chunks.map(c => BC.encodeChunk(c)), packets = chunks.map(c => BC.crystallizeBytes(c)), leafHashes = chunks.map(leafOf);
+        const stream = BC.frameStream(packets, residuals);
+        const segCuts = Array.from({ length: BC.SEGMENTS + 1 }, (_, i) => Math.round(i * chunks.length / BC.SEGMENTS));
+        const [weaveChiral, weaveMirror] = weaves(chunks);
+        const merkleRoot = merkle2(leafHashes);
+        const chainId = 'BC-' + sha(merkleRoot + '|' + weaveChiral).slice(0, 24);
+        const eng = engrams ? (EC ? EC.engramStream(text) : BC.engramStreamFromText(text)) : null;
+        const ship = stream.length / 2 + (eng ? eng.stream.length / 2 : 0) + leafHashes.length * 32 + 40;
+        return {
+            chainId, stream, streamVersion: BC.STREAM_VERSION, leafHashes, merkleRoot, weaveChiral, weaveMirror, segCuts, segments: BC.SEGMENTS,
+            ...(eng ? { engramStream: eng.stream, engramCount: eng.count, engramMeanJ: eng.meanJ } : {}),
+            origBytes: data.length, shippedBytes: Math.round(ship), value: +(data.length / ship).toFixed(4)
+        };
+    }
+    function frameOffsets(stream) {                            // [packet offset, residual offset, residual hex length]
+        const out = []; let p = 0;
+        while (p + 24 <= stream.length) {
+            const r = parseInt(stream.slice(p + 16, p + 24), 16) * 2;
+            if (!Number.isFinite(r)) break;
+            out.push([p, p + 24, r]); p += 24 + r;
+        }
+        return out;
+    }
+    const hex16 = w => w.toString(16).toUpperCase().padStart(16, '0');
+    const refix = w => { w &= ~(1n << 59n); return w | (BC.popcountEven(w) << 59n); };
+
+    // ---- the codec checks L10 adds (a sketch of the registered importer's codec part)
+    function hardened(rec) {
+        const out = [], add = (ok, label, detail) => out.push({ ok, label, detail: detail || '' });
+        let fr;
+        try { fr = BC.parseBiochainStream(rec.stream); } catch (e) { add(false, 'the stream parses', esc((e && e.message) || e)); return out; }
+        const badPar = fr.findIndex(f => !f.parityOk);
+        add(badPar < 0, 'packet parity', badPar < 0 ? `${fr.length} packet${fr.length > 1 ? 's' : ''}` : `packet ${badPar} fails`);
+        if (badPar >= 0) return out;
+        const chunks = []; let decErr = '';
+        for (let i = 0; i < fr.length; i++) {
+            try { chunks.push(BC.decodeChunk(fr[i].residual, fr[i].chunkLen)); } catch (e) { decErr = `frame ${i}: ${esc((e && e.message) || e)}`; break; }
+        }
+        add(!decErr, 'every residual decodes', decErr || `${group(chunks.reduce((a, c) => a + c.length, 0))} B`);
+        if (decErr) return out;
+        const reenc = chunks.findIndex((c, i) => BC.encodeChunk(c) !== fr[i].residual);
+        add(reenc < 0, 're-encode gives the stored residual', reenc < 0 ? 'canonical' : `frame ${reenc} is not the canonical encoding`);
+        const recry = chunks.findIndex((c, i) => BC.crystallizeBytes(c) !== fr[i].packet.toUpperCase());
+        add(recry < 0, 're-crystallize gives the stored packet', recry < 0 ? 'crystals and checksums' : `packet ${recry} differs`);
+        const leaves = chunks.map(leafOf), root = merkle2(leaves);
+        const hasL = Array.isArray(rec.leafHashes), hasR = typeof rec.merkleRoot === 'string';
+        const lOk = hasL && rec.leafHashes.length === leaves.length && leaves.every((h, i) => h === rec.leafHashes[i]);
+        add(lOk, 'leafHashes present and recomputed', !hasL ? 'missing' : lOk ? `${leaves.length} lea${leaves.length > 1 ? 'ves' : 'f'}` : 'they differ');
+        add(hasR && rec.merkleRoot === root, 'merkleRoot present and recomputed', !hasR ? 'missing' : rec.merkleRoot === root ? 'equal' : 'it differs');
+        const [wc, wm] = weaves(chunks);
+        add(wc === rec.weaveChiral && wm === rec.weaveMirror, 'both weaves recomputed', wc !== rec.weaveChiral ? 'the chiral weave differs' : wm !== rec.weaveMirror ? 'the mirror weave differs' : 'equal');
+        const cid = 'BC-' + sha(root + '|' + wc).slice(0, 24);
+        add(cid === rec.chainId, 'chainId recomputed', cid === rec.chainId ? 'equal' : `recomputed ${cid}`);
+        return out;
+    }
+    const TAMPER = {
+        clean: rec => ({ rec, note: 'the record as grown' }),
+        flip(rec, b) {                                         // S4: one byte of frame 0's residual, its top bit flipped
+            const f = frameOffsets(rec.stream)[0];
+            if (!f || f[2] < 2) return null;
+            const nb = f[2] / 2, at = Math.max(0, Math.min(nb - 1, b)), pos = f[1] + 2 * at, d = parseInt(rec.stream[pos], 16);
+            return { rec: { ...rec, stream: rec.stream.slice(0, pos) + (d ^ 8).toString(16) + rec.stream.slice(pos + 1) }, note: `byte ${at} of frame 0&rsquo;s ${nb}-byte residual, top bit flipped` };
+        },
+        swap(rec) {
+            const fo = frameOffsets(rec.stream);
+            if (fo.length < 2) return null;
+            const [a, b] = fo, fa = rec.stream.slice(a[0], a[1] + a[2]), fb = rec.stream.slice(b[0], b[1] + b[2]);
+            return { rec: { ...rec, stream: fb + fa + rec.stream.slice(b[1] + b[2]) }, note: 'frames 0 and 1 swapped (T7)' };
+        },
+        strip(rec) { const r = { ...rec }; delete r.leafHashes; delete r.merkleRoot; return { rec: r, note: 'leafHashes and merkleRoot deleted (T1)' }; },
+        crystal(rec) {
+            const w0 = BigInt('0x' + rec.stream.slice(0, 16));
+            return { rec: { ...rec, stream: hex16(refix(w0 ^ (1n << 24n))) + rec.stream.slice(16) }, note: 'packet 0&rsquo;s crystal bit 0 flipped, parity re-fixed (T2)' };
+        },
+        chainid(rec) { return { rec: { ...rec, chainId: rec.chainId.slice(0, -1) + (rec.chainId.endsWith('0') ? '1' : '0') }, note: 'chainId&rsquo;s last hex digit changed (T8)' }; }
+    };
+
+    // ---- RFC 6962 over 32-byte entries
+    const fromHex = h => { const b = new Uint8Array(h.length / 2); for (let i = 0; i < b.length; i++) b[i] = parseInt(h.substr(2 * i, 2), 16); return b; };
+    const cat = (...a) => { const r = new Uint8Array(a.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of a) { r.set(x, o); o += x.length; } return r; };
+    const P0 = Uint8Array.of(0), P1 = Uint8Array.of(1);
+    function mth(ents) {
+        if (!ents.length) return O.sha256(new Uint8Array(0));
+        if (ents.length === 1) return O.sha256(cat(P0, ents[0]));
+        let s = 1; while (s * 2 < ents.length) s *= 2;
+        return O.sha256(cat(P1, mth(ents.slice(0, s)), mth(ents.slice(s))));
+    }
+    const rfcRoot = hexes => O.toHex(mth(hexes.map(fromHex)));
+    function exactWeave(leafHashes) {
+        if (!EC || !EC.chainQuaternion) return null;
+        const vals = leafHashes.map(h => BigInt('0x' + h.slice(0, 16))), K = vals.length;
+        const q = EC.chainQuaternion(vals), back = EC.unfold(q, K);
+        return { K, normOk: EC.qnorm(q) === 5n ** BigInt(28 * K), bits: q.map(c => (c < 0n ? -c : c).toString(2).length), unfoldOk: !!back && back.length === K && back.every((v, i) => v === vals[i]) };
+    }
+
+    // ---- preset texts (generated ones are ASCII, so bytes = characters)
+    const FEW = 'A biochain keeps a text and can rebuild it exactly. The text is cut into chunks of 720 bytes. Each chunk is coded without loss, folded into one 64-bit crystal packet and hashed into a leaf. The leaves build a Merkle root, and the root and the weave name the chain. Change one byte, and the leaf, the root and the chainId all change.';
+    const INTL = 'Ångström and the naïve café served crème brûlée. Ελληνικά, русский, 日本語 and 🦉 take two, three or four bytes each in UTF-8, and every byte from 0x80 up is hashed twice in a leaf.';
+    const WORDS = ('the a of and to in is that for it as with was on be by this are from or which an not but at have one all has were they its more can been so these would will some what into other only also then than may two most such each when time about many very after no first could through way any same new where much who both those between even over since used under part well because does here three while without before during kind just must order shard chunk leaf root weave text byte record corpus gloss word tree').split(' ');
+    function filler(n) {
+        let s = '', x = 20260 >>> 0, i = 0;
+        while (s.length < n) {
+            let line = String(i + 1).padStart(6, '0') + '\t';
+            const m = 6 + (i % 9);
+            for (let j = 0; j < m; j++) { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; line += (j ? ' ' : '') + WORDS[x % WORDS.length]; }
+            s += line + '.\n'; i++;
+        }
+        return s.slice(0, n);
+    }
+    const PRESETS = { few: () => FEW, intl: () => INTL, three: () => filler(1800), full: () => filler(60000), over: () => filler(60001) };
+
+    // ---- state and rendering
+    let rec = null, tamper = 'clean', flipAt = 0, timer = null;
+    const byteEl = $('lab-byte'), byteOut = $('lab-byte-out'), kEl = $('lab-k'), kOut = $('lab-k-out');
+    const presetBtns = document.querySelectorAll('#lab-presets [data-p]'), tamperBtns = document.querySelectorAll('#lab-tampers [data-t]');
+    const short = h => `<span title="${esc(h)}">${esc(h.slice(0, 16))}&hellip;</span>`;
+
+    function regrow() {
+        const text = input.value, n = enc.encode(text).length;
+        $('lab-bytes').textContent = `${group(n)} of 60,000 bytes`;
+        const wantEng = engBox.checked && n <= 6000;
+        let t0 = now(), ms;
+        try { rec = grow(text, wantEng); ms = now() - t0; } catch (e) {
+            rec = null;
+            sumEl.innerHTML = bad('growBiochain&rsquo;s rule: ' + esc((e && e.message) || e)) + (n > BC.MAX_GROW_BYTES ? '<br>' + k('This is the lineage cap. extendBiochain would hit the same error, because it regrows the parent&rsquo;s text plus the new text.') : '');
+            $('lab-frames').innerHTML = ''; $('lab-stream').innerHTML = ''; $('lab-owl').innerHTML = ''; $('lab-hard').innerHTML = '';
+            renderRoots();
+            return;
+        }
+        const fo = frameOffsets(rec.stream), K = rec.leafHashes.length, resB = fo.reduce((a, f) => a + f[2] / 2, 0);
+        const n80 = fo.filter(f => { const c = rec.stream.slice(f[0] + 2, f[0] + 10); return /^(..)*80/.test(c); }).length;
+        let ew = null, ewMs = 0;
+        try { const t1 = now(); ew = exactWeave(rec.leafHashes); ewMs = now() - t1; } catch (e) { ew = null; }
+        sumEl.innerHTML =
+            `${k('bytes')} ${group(rec.origBytes)} &nbsp; ${k('chunks')} ${K} &nbsp; ${k('stream')} ${group(rec.stream.length)} hex (${(rec.stream.length / rec.origBytes).toFixed(4)} a byte) &nbsp; ${k('residuals')} ${group(resB)} B` +
+            `<br>${k('shipped')} ${group(rec.shippedBytes)} B &nbsp; ${k('value')} ${rec.value}${rec.engramStream !== undefined ? ` &nbsp; ${k('engram tokens')} ${rec.engramCount}, mean J ${rec.engramMeanJ}` : (engBox.checked ? ' &nbsp; ' + k('engram layer skipped: over 6,000 bytes') : '')}` +
+            `<br>${k('chainId')} ${esc(rec.chainId)}` +
+            `<br>${k('merkleRoot')} ${esc(rec.merkleRoot)}` +
+            `<br>${k('weaveChiral')} ${esc(rec.weaveChiral)} <span class="mark float">float</span>` +
+            `<br>${k('segCuts')} ${rec.segCuts.join(', ')} &nbsp; ${k('crystals holding 0x80')} ${n80} of ${K}` +
+            (ew ? `<br>${k('exact weave')} K = ${ew.K}, norm = 5<sup>${28 * ew.K}</sup> exactly: ${ew.normOk ? good('yes') : bad('no')}; bits per component ${ew.bits.join(', ')}; unfolds in order: ${ew.unfoldOk ? good('yes') : bad('no')} <span class="mark exact">exact</span>` : `<br>${k('exact weave: engram_core.js did not load')}`) +
+            `<br>${k('~ grown in')} ${ms.toFixed(1)} ms${ew ? `, exact weave ${ewMs.toFixed(1)} ms` : ''}`;
+        const MAXF = 8;
+        $('lab-frames').innerHTML = fo.slice(0, MAXF).map((f, i) => {
+            const p = rec.stream.slice(f[0], f[0] + 16), u = BC.unpackPacket(p);
+            return `<tr><td class="num">${i}</td><td class="num">${u.chunkLen}</td><td class="mono">${esc(p)}</td><td class="mono">${esc(p.slice(2, 10))}</td><td class="num">${f[2] / 2}</td><td class="mono">${short(rec.leafHashes[i])}</td></tr>`;
+        }).join('') + (fo.length > MAXF ? `<tr><td colspan="6" style="color:var(--muted)">&hellip; and ${fo.length - MAXF} more frames</td></tr>` : '');
+        const f0 = fo[0];
+        $('lab-stream').innerHTML = `${k('the stream begins')} <b>${esc(rec.stream.slice(0, 16))}</b> ${esc(rec.stream.slice(16, 24))} ${esc(rec.stream.slice(24, 24 + Math.min(f0[2], 96)))}${f0[2] > 96 ? '&hellip;' : ''} ${k('(packet in gold, then the residual&rsquo;s length in bytes, then the residual)')}`;
+        const nb = Math.max(1, f0[2] / 2);
+        byteEl.max = String(nb - 1);
+        flipAt = Math.floor(nb / 2); byteEl.value = String(flipAt);
+        if (tamper === 'swap' && fo.length < 2) setTamper('clean'); else check();
+        renderRoots();
+    }
+    function check() {
+        const owl = $('lab-owl'), hard = $('lab-hard');
+        if (!rec) return;
+        tamperBtns.forEach(b => { b.disabled = b.dataset.t === 'swap' && rec.leafHashes.length < 2; b.style.opacity = b.disabled ? '0.45' : ''; });
+        const t = TAMPER[tamper](rec, flipAt) || TAMPER.clean(rec);
+        byteOut.innerHTML = tamper === 'flip' ? t.note : `byte ${flipAt} (used by &ldquo;flip one byte&rdquo;)`;
+        if (!EC || !EC.verifyBiochain) owl.innerHTML = bad('engram_core.js did not load, so EngramCore.verifyBiochain cannot run.');
+        else {
+            let v;
+            try { v = EC.verifyBiochain(BC, t.rec); } catch (e) { v = { ok: false, reasons: ['threw: ' + ((e && e.message) || e)] }; }
+            let same = '';
+            if (v.ok && typeof v.text === 'string') {
+                const a = enc.encode(v.text), b = enc.encode(input.value);
+                same = `<br>${k('text recreated byte for byte')} ${a.length === b.length && a.every((x, i) => x === b[i]) ? good('yes') : bad('no')}`;
+            }
+            owl.innerHTML = `${k('EngramCore.verifyBiochain (Owl&rsquo;s steps)')}<br>${k('record')} ${t.note}<br>${v.ok ? good('ACCEPTS') : bad('REJECTS')}: ${esc(v.reasons[0] || '')}${same}`;
+        }
+        const hs = hardened(t.rec), fails = hs.filter(c => !c.ok).length;
+        hard.innerHTML = `${k('the codec checks L10 adds (a sketch)')}<br>` + hs.map(c => `${c.ok ? good('pass') : bad('FAIL')} ${c.label} ${k('&middot; ' + c.detail)}`).join('<br>') +
+            `<br>${fails ? bad(`${fails} check${fails > 1 ? 's' : ''} failed: not self-consistent`) : good('self-consistent')} ${k('&middot; authenticity needs the signature, not sketched here')}`;
+    }
+    function renderRoots() {
+        const K = Number(kEl.value) || 1;
+        kOut.textContent = String(K);
+        const L = Array.from({ length: 11 }, (_, i) => sha('leaf ' + i));
+        const row = n => {
+            const l = L.slice(0, n), d = l.concat([l[n - 1]]);
+            return { s: merkle2(l), sd: merkle2(d), r: rfcRoot(l), rd: rfcRoot(d) };
+        };
+        const x = row(K);
+        let own = '';
+        if (rec && rec.leafHashes.length) {
+            const l = rec.leafHashes, d = l.concat([l[l.length - 1]]), se = merkle2(l) === merkle2(d), re = rfcRoot(l) === rfcRoot(d);
+            own = `<br>${k('this shard&rsquo;s own ' + l.length + (l.length > 1 ? ' leaves' : ' leaf') + ', last repeated:')} shdccp/2 ${se ? bad('same root') : good('different root')} &middot; RFC 6962 ${re ? bad('same root') : good('different root')}`;
+        }
+        $('lab-roots').innerHTML =
+            `${k('shdccp/2')} root(L) ${short(x.s)} root(L + [last]) ${short(x.sd)} ${x.s === x.sd ? bad('the same: two lists, one root') : good('different')}` +
+            `<br>${k('RFC 6962')} root(L) ${short(x.r)} root(L + [last]) ${short(x.rd)} ${x.r === x.rd ? bad('the same') : good('different')}` + own;
+        let rows = '';
+        for (let n = 1; n <= 10; n++) {
+            const y = row(n);
+            rows += `<tr${n === K ? ' style="background:rgba(120,53,15,0.25)"' : ''}><td class="num">${n}</td><td>${y.s === y.sd ? bad('same root') : good('different')}</td><td>${y.r === y.rd ? bad('same root') : good('different')}</td></tr>`;
+        }
+        $('lab-ktable').innerHTML = rows;
+    }
+    function setTamper(t) {
+        tamper = t;
+        tamperBtns.forEach(b => b.classList.toggle('on', b.dataset.t === t));
+        check();
+    }
+    const markPresets = p => presetBtns.forEach(b => b.classList.toggle('on', b.dataset.p === p));
+    presetBtns.forEach(b => b.addEventListener('click', () => {
+        input.value = PRESETS[b.dataset.p]();
+        markPresets(b.dataset.p);
+        regrow();
+    }));
+    input.addEventListener('input', () => { markPresets(''); clearTimeout(timer); timer = setTimeout(regrow, 250); });
+    engBox.addEventListener('change', regrow);
+    tamperBtns.forEach(b => b.addEventListener('click', () => { if (!b.disabled) setTamper(b.dataset.t); }));
+    byteEl.addEventListener('input', () => { flipAt = Number(byteEl.value) || 0; if (tamper !== 'flip') setTamper('flip'); else check(); });
+    kEl.addEventListener('input', renderRoots);
+    try { regrow(); } catch (e) { sumEl.innerHTML = bad('The lab stopped: ' + esc((e && e.message) || e)); }
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Hyperbolic Lexicon</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Hyperbolic Lexicon, Phase 0: what we have built, what SHD-CCP integration would look like, a staged hyperbolic BERT front end for H² and H³, language biochains, and a benchmark ladder, with seven measurement spikes and eleven preregistered claims.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: one reading column of numbered answers, then reference tables; the pipeline and the two trees as figures. */
+:root {
+    color-scheme: dark;
+    --bg: #020617; --panel: #0b1224; --panel-2: #0f172a; --line: #1e293b; --line-strong: #334155;
+    --fg: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
+    --cyan: #22d3ee; --emerald: #34d399; --gold: #f5c542; --rose: #fb7185; --violet: #c4b5fd; --pink: #f472b6;
+    --exact-bg: rgba(52, 211, 153, 0.10); --float-bg: rgba(245, 197, 66, 0.10); --later-bg: rgba(100, 116, 139, 0.10);
+    --display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'Fira Code', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #f7f9fc; --panel: #ffffff; --panel-2: #eef3f8; --line: #d7dee8; --line-strong: #b6c2d2;
+    --fg: #0f172a; --muted: #475569; --faint: #64748b;
+    --cyan: #0e7490; --emerald: #047857; --gold: #a16207; --rose: #be123c; --violet: #6d28d9; --pink: #be185d;
+    --exact-bg: rgba(4, 120, 87, 0.08); --float-bg: rgba(161, 98, 7, 0.08); --later-bg: rgba(71, 85, 105, 0.07);
+} }
+:root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f9fc; --panel: #ffffff; --panel-2: #eef3f8; --line: #d7dee8; --line-strong: #b6c2d2;
+    --fg: #0f172a; --muted: #475569; --faint: #64748b;
+    --cyan: #0e7490; --emerald: #047857; --gold: #a16207; --rose: #be123c; --violet: #6d28d9; --pink: #be185d;
+    --exact-bg: rgba(4, 120, 87, 0.08); --float-bg: rgba(161, 98, 7, 0.08); --later-bg: rgba(71, 85, 105, 0.07);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.65 var(--body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--cyan); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 1.45rem; font-weight: 700; margin-top: 2.6rem; }
+h3 { font-size: 1.05rem; font-weight: 650; margin-top: 1.4rem; }
+p { margin: 0.6rem 0; max-width: 72ch; }
+.eyebrow { font: 600 0.74rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); }
+.lede { font-size: 1.08rem; color: var(--muted); margin-top: 0.8rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1.1rem; }
+.chip { font: 500 0.78rem var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--fg); background: var(--panel); }
+.chip b { color: var(--gold); font-weight: 600; }
+.answers { display: grid; gap: 14px; margin-top: 1.2rem; }
+.answer { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: 4px 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.answer .n { font: 700 1.3rem var(--mono); color: var(--gold); line-height: 1.3; }
+.answer h3 { margin: 0; font-size: 1.04rem; }
+.answer p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.95rem; max-width: none; }
+.answer .where { grid-column: 2; font: 0.74rem var(--mono); color: var(--faint); margin-top: 6px; }
+.pipeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 1rem; }
+.stage { border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 10px; padding: 9px 11px; background: var(--bg-s); min-width: 0; }
+.stage b { display: block; font: 600 0.78rem var(--mono); color: var(--c); }
+.stage span { display: block; font-size: 0.84rem; color: var(--muted); line-height: 1.4; margin-top: 3px; }
+.stage.exact { --c: var(--emerald); --bg-s: var(--exact-bg); }
+.stage.float { --c: var(--gold); --bg-s: var(--float-bg); }
+.stage.later { --c: var(--faint); --bg-s: var(--later-bg); border-style: dashed; border-top-style: solid; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font: 0.76rem var(--mono); color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.table-wrap { overflow-x: auto; margin: 0.9rem 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { padding: 8px 11px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--panel-2); color: var(--fg); font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.mono, .mono { font-family: var(--mono); font-size: 0.82rem; }
+td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font: 600 0.7rem var(--mono); padding: 1px 8px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.p-here { color: var(--emerald); border-color: var(--emerald); }
+.p-net { color: var(--rose); border-color: var(--rose); }
+.p-gpu { color: var(--violet); border-color: var(--violet); }
+.p-sup { color: var(--emerald); border-color: var(--emerald); }
+.p-ref { color: var(--rose); border-color: var(--rose); }
+.p-done { color: var(--emerald); border-color: var(--emerald); }
+.p-next { color: var(--gold); border-color: var(--gold); }
+.p-plan { color: var(--muted); border-color: var(--line-strong); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 1rem; }
+.tree { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); min-width: 0; }
+.tree h3 { margin: 0 0 4px; }
+.tree dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 8px 0 0; font-size: 0.88rem; }
+.tree dt { color: var(--faint); font: 0.78rem var(--mono); padding-top: 2px; }
+.tree dd { margin: 0; }
+.tree svg { display: block; width: 100%; max-width: 260px; height: auto; margin: 6px auto 0; }
+.note { border-left: 3px solid var(--gold); padding: 8px 12px; background: var(--panel); border-radius: 0 10px 10px 0; color: var(--muted); font-size: 0.93rem; margin: 1rem 0; }
+.note b { color: var(--fg); }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font: 0.8rem var(--mono); margin: 0.8rem 0; }
+.flow span { padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); }
+.flow em { color: var(--faint); font-style: normal; }
+ul.tight { margin: 0.5rem 0; padding-left: 1.2rem; }
+ul.tight li { margin: 0.25rem 0; }
+footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+code { font-family: var(--mono); font-size: 0.86em; color: var(--fg); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+@media (max-width: 760px) { .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } .two { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+    <div class="eyebrow">BioChain AI · Ebayednoob · Phase 0</div>
+    <h1>Hyperbolic Lexicon</h1>
+    <p class="lede">What we have built, judged for language; what SHD-CCP integration would look like; a staged hyperbolic BERT front end for our 2D (H²) and 3D (H³) systems; whether language data can grow as SHD-CCP biochains; and the benchmarks that would show whether any of it works.</p>
+    <div class="chips">
+        <span class="chip">Phase <b>0</b> of 8 done</span>
+        <span class="chip"><b>7</b> spikes, reruns reproduce</span>
+        <span class="chip"><b>11</b> claims registered, <b>0</b> decided</span>
+        <span class="chip">no model code yet</span>
+    </div>
+</header>
+
+<h2>Six answers</h2>
+<div class="answers">
+    <div class="answer"><div class="n">1</div><div><h3>What we built is exact geometry, not language learning</h3>
+        <p>Engram Mind’s Eye and Hyperbolic Oracles give exact quaternion addresses, an exact tree in H³ to depth 28, hyperboloid tools, Merkle chains, an outlier fence and a method that checks browser code against Python line for line. None of the four repositories has a subword tokenizer, a vocabulary, learned embeddings, an encoder or a language benchmark. The engram/1 key keeps only the parity of each letter’s count, so <code>LISTEN</code> = <code>SILENT</code> and every number lands on the zero key: it cannot be a token id. PolyStep is gradient-free and trained 48 parameters at most; its “hyperbolic beats flat” claim was refuted.</p></div></div>
+    <div class="answer"><div class="n">2</div><div><h3>SHD-CCP is three layers that disagree, and one bridge</h3>
+        <p>A specification repository (RFC 01 tile, a Kernel Ontology, golden vectors; no chain format), the working Blackwell word and <code>shdccp/2</code> stream in Owl Academy and BioChain-AI, and prose that was never built. At least eight 64-bit layouts exist: the check word <code>9841D88D8B003CEA</code> reads as Form 9, 8 or 13 depending on the reader, and every Form value is already claimed. Integration means the Blackwell word only where we hand data to Owl Academy and BioChain-AI, record kinds above the word, golden vectors, and proposals instead of edits. The strongest link is mathematical: our tree’s generators 1±2i, 1±2j, 1±2k are the Lubotzky–Phillips–Sarnak set for p = 5, so SHD-CCP’s planned X(5, q) overlay is a quotient of the tree our addresses already live on.</p></div></div>
+    <div class="answer"><div class="n">3</div><div><h3>A hyperbolic BERT, in two stages</h3>
+        <p>Stage 1 is exact and needs no training: pinned Unicode, WordPiece, a training-free address for every WordNet synset in the quaternion tree, exact points in H³ and in a new exact H² tree, exact ranking. Stage 2 follows the best-supported route in the literature: a Euclidean encoder that takes the address as a hierarchy factor, with a hyperbolic hierarchy head. H² and H³ are far below language-model width, so they serve as factors, heads and views, not as the main embedding.</p></div></div>
+    <div class="answer"><div class="n">4</div><div><h3>Every alternative has a role</h3>
+        <p>Main routes, baselines, controls built to fail, later work and rejected ideas. Fully hyperbolic encoders (HyboNet, HyperCore, HELM) need a GPU. No published work applies hyperbolic geometry at the tokenizer level, an open gap. Gradient-free methods fine-tune heads; they do not pretrain. A Euclidean control at matched dimension is mandatory: one study found flat embeddings catching up from about 50 dimensions.</p></div></div>
+    <div class="answer"><div class="n">5</div><div><h3>Language biochains: yes, as shards under a manifest</h3>
+        <p>A biochain’s whole lineage is capped at 60 KB, because each growth step regrows all its text. So a corpus becomes many unmodified <code>shdccp/2</code> shards, each one a biochain Owl Academy already accepts, tied together by an append-only RFC 6962 manifest, with typed signed records, two privacy tiers, and a stricter importer that closes what Owl’s verifier misses.</p></div></div>
+    <div class="answer"><div class="n">6</div><div><h3>A benchmark ladder, across three compute tracks</h3>
+        <p>Stage 0 checks determinism and the tokenizer, Stage 1 WordNet hierarchy reconstruction, Stage 2 lexical semantics, Stage 3 small-scale pretraining (BabyLM, BLiMP), Stage 4 sentence tasks (GLUE, MTEB). Browser, CPU and GPU tracks share one tokenizer record, the data roots, the seeds and the metric code, so their results compare.</p></div></div>
+</div>
+
+<h2>The front end, stage by stage</h2>
+<p>Exact stages compute in integers and rationals and give the same bytes in Python, Node and the browser. Float stages learn, and store what they learn as exact dyadic snapshots.</p>
+<div class="pipeline">
+    <div class="stage exact"><b>A · Normalise</b><span>BERT rules on pinned Unicode 15.1 tables</span></div>
+    <div class="stage exact"><b>B · Tokenize</b><span>WordPiece, ## continuations</span></div>
+    <div class="stage exact"><b>C · Ids</b><span>id stream; engram/1 only a checksum</span></div>
+    <div class="stage exact"><b>D · Address</b><span>a word of the norm-5 tree per synset</span></div>
+    <div class="stage exact"><b>E · Placement</b><span>exact points in H³ and H²; exact ranking</span></div>
+    <div class="stage float"><b>F · Embeddings</b><span>Lorentz vs Euclidean, float64, snapped</span></div>
+    <div class="stage later"><b>G · Encoder</b><span>Euclidean BERT with a hierarchy factor</span></div>
+    <div class="stage later"><b>H · Heads</b><span>MLM and a hyperbolic hierarchy head</span></div>
+</div>
+<div class="legend"><span><i style="background:var(--emerald)"></i>exact</span><span><i style="background:var(--gold)"></i>float, snapped for storage</span><span><i style="background:var(--faint)"></i>Stage 2, after the gate</span></div>
+
+<h3>The address rule</h3>
+<p>Each WordNet noun synset’s spanning parent is its first hypernym pointer. A child of a node with c children takes max(1, ⌈log₅ c⌉) letters of the tree, so ancestry becomes prefix order and every address is an exact integer quaternion that right division unfolds. Nodes with more than five children need extra “virtual” letters, and those put siblings as close as parents: on WordNet’s verb forest the exact tree’s graph-edge MAP is 0.6309 (spike S3), against 0.9974 on edges that need one letter.</p>
+
+<h2>2D and 3D</h2>
+<div class="two">
+    <div class="tree"><h3>H³ · the primary store</h3>
+        <svg viewBox="0 0 200 200" role="img" aria-label="An octahedral tree: six directions at right angles"><circle cx="100" cy="100" r="92" fill="none" stroke="var(--line-strong)"/><g stroke="var(--emerald)" stroke-width="2" fill="none"><path d="M100 100 L170 100 M100 100 L30 100 M100 100 L100 30 M100 100 L100 170 M100 100 L140 140 M100 100 L60 60"/><path d="M170 100 L188 100 M170 100 L170 82 M170 100 L170 118 M170 100 L182 112 M170 100 L158 88" stroke-width="1.2"/></g><g fill="var(--emerald)"><circle cx="100" cy="100" r="4"/><circle cx="170" cy="100" r="3"/><circle cx="30" cy="100" r="3"/><circle cx="100" cy="30" r="3"/><circle cx="100" cy="170" r="3"/><circle cx="140" cy="140" r="3"/><circle cx="60" cy="60" r="3"/></g></svg>
+        <dl><dt>tree</dt><dd>octahedral, Hyperbolic Oracles’ <code>decoder3d.js</code></dd><dt>step</dt><dd>t = 3/4, cosh 25/7, τ = ln 7</dd><dt>decodes</dt><dd>exactly, 840/840 (S1)</dd><dt>bits</dt><dd>≤ 139 / 79 at depth 28</dd><dt>floats</dt><dd>ranking inverts from depth 10–12</dd></dl></div>
+    <div class="tree"><h3>H² · the 2D system</h3>
+        <svg viewBox="0 0 200 200" role="img" aria-label="A Pythagorean tree in the disk: six rational directions"><circle cx="100" cy="100" r="92" fill="none" stroke="var(--line-strong)"/><g stroke="var(--gold)" stroke-width="2" fill="none"><path d="M100 100 L170 100 M100 100 L142 44 M100 100 L142 156 M100 100 L80 33 M100 100 L80 167 M100 100 L30 100"/><path d="M170 100 L186 100 M170 100 L180 87 M170 100 L180 113 M170 100 L165 84 M170 100 L165 116" stroke-width="1.2"/></g><g fill="var(--gold)"><circle cx="100" cy="100" r="4"/><circle cx="170" cy="100" r="3"/><circle cx="142" cy="44" r="3"/><circle cx="142" cy="156" r="3"/><circle cx="80" cy="33" r="3"/><circle cx="80" cy="167" r="3"/><circle cx="30" cy="100" r="3"/></g></svg>
+        <dl><dt>tree</dt><dd>new: directions (1,0), (3/5, ±4/5), (−7/25, ±24/25)</dd><dt>step</dt><dd>t = 11/13, cosh 145/24, τ = ln 12</dd><dt>decodes</dt><dd>500/500 at every depth to 28 (S2)</dd><dt>bits</dt><dd>1.28–2.38× those of H³</dd><dt>control</dt><dd>t = 3/4 decodes only 226/500 at depth 12</dd></dl></div>
+</div>
+
+<h2>SHD-CCP and the biochains</h2>
+<div class="flow"><span>text ≤ 60,000 B</span><em>→</em><span>shdccp/2 shard</span><em>→</em><span>LPREP/1 record</span><em>→</em><span>LCORPUS/1 manifest (RFC 6962)</span><em>→</em><span>LGROW/1 append-only</span></div>
+<div class="table-wrap"><table>
+    <thead><tr><th>What Owl’s <code>verifyIntegrity</code> does today (spike S4)</th><th>The hardened importer</th></tr></thead>
+    <tbody>
+        <tr><td>Accepts a record with its leaf hashes and Merkle root deleted</td><td>Leaves and root are mandatory and recomputed</td></tr>
+        <tr><td>Accepts a changed crystal or checksum (parity re-fixed)</td><td>Recomputes each chunk’s crystal and compares</td></tr>
+        <tr><td>Accepts an altered chainId</td><td>Recomputes chainId and the weaves</td></tr>
+        <tr><td>Accepts 3.55% of single-bit residual flips (they decode the same)</td><td>Re-encodes each chunk and requires the stored bytes</td></tr>
+        <tr><td>Never checks a signature on import</td><td>Verifies the ATTEST/1 ECDSA signature; reports self-consistent and authentic separately</td></tr>
+    </tbody>
+</table></div>
+<p>Shards grown here equal Owl Academy’s own biochains field for field (126 of 126). The RFC 6962 manifest proves inclusion in at most 10 hashes at 1,000 shards and 14 at 10,000, where the current Merkle rule gives a list and the same list with its last element repeated the same root. Plaintext is chained only for text whose licence allows it; restricted corpora publish salted commitments and are checked by audit.</p>
+
+<h2>The benchmark ladder</h2>
+<div class="table-wrap"><table>
+    <thead><tr><th>Stage</th><th>Question</th><th>Benchmarks</th><th>Runs</th></tr></thead>
+    <tbody>
+        <tr><td class="mono">0</td><td>Is the front end deterministic, and is the tokenizer sane?</td><td>Byte identity in Python, Node and Chromium; engram/1 collisions; fertility, bytes per token, Rényi efficiency (gates, not goals)</td><td><span class="pill p-here">here</span></td></tr>
+        <tr><td class="mono">1</td><td>Does the geometry hold the hierarchy?</td><td>WordNet nouns (82,115) and mammals: graph-edge and closure MAP, mean rank, bits per node, against a Euclidean control</td><td><span class="pill p-here">here</span></td></tr>
+        <tr><td class="mono">2</td><td>Does it carry lexical meaning?</td><td>HyperLex, the hypernymy suite, SimLex, WordSim, MEN, SemEval-2018 Task 9</td><td><span class="pill p-net">network</span></td></tr>
+        <tr><td class="mono">3</td><td>Does small pretraining learn grammar?</td><td>BabyLM 10M and 100M words; BLiMP scored with a pinned rule and pipeline</td><td><span class="pill p-net">network</span> <span class="pill p-gpu">GPU</span></td></tr>
+        <tr><td class="mono">4</td><td>Does the encoder help on sentences?</td><td>GLUE (BERT-Tiny 64.2 to ELECTRA-Small 77.4), a cheap MTEB subset, SentEval probes</td><td><span class="pill p-gpu">GPU</span></td></tr>
+    </tbody>
+</table></div>
+
+<h2>Eleven registered claims</h2>
+<p>Registered before any code that tests them, each with controls that must fail and a rule fixed in advance. Predictions are on record; nothing is decided yet.</p>
+<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Claim</th><th>Prediction</th></tr></thead>
+    <tbody>
+        <tr><td class="mono">L1</td><td>The front end is byte-identical in Python, Node and Chromium</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L2</td><td>engram/1 cannot be a token id: ≥ 1% of WordNet’s lemma types share a key</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L3</td><td>Every noun synset has an exact, invertible, certified address and points in H³ and H²</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L4</td><td>Exact ranking agrees across engines; float64 is not certifiable at WordNet depth</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L5</td><td>The exact hyperbolic tree beats the same construction at curvature 0</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L6</td><td>Learned Lorentz beats learned Euclidean at d = 2, 3, not at 50; the exact tree against learned</td><td><span class="pill p-sup">mostly supported</span> <span class="pill p-ref">(c) refuted</span></td></tr>
+        <tr><td class="mono">L7</td><td>Address, H³ point and X(5, q) vertex are one tree read three ways</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L8</td><td>Language shards are Owl-valid biochains in JS and Python</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L9</td><td>The RFC 6962 manifest, its growth, and the exact weave</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L10</td><td>The hardened importer rejects every registered tamper, identically in JS and Python</td><td><span class="pill p-sup">supported</span></td></tr>
+        <tr><td class="mono">L11</td><td>A full shard verifies with every check in a median of at most 250 ms</td><td><span class="pill p-sup">supported</span></td></tr>
+    </tbody>
+</table></div>
+<div class="note"><b>One prediction is already “refuted”.</b> L6(c) asks whether the training-free tree matches a learned 3-d Lorentz embedding on graph-edge MAP. Its prediction was fixed by a rule on spike S3’s verb forest (supported only at 0.90 or more), and S3 measured 0.6309. The virtual letters are the cost of a fixed branching of 5.</div>
+
+<h2>What the spikes measured</h2>
+<div class="table-wrap"><table>
+    <thead><tr><th>Spike</th><th>Found</th></tr></thead>
+    <tbody>
+        <tr><td class="mono">S1</td><td>Float64 ranking of exact H³ points first inverts an exactly strict order at depth 10 (straight paths) and 12 (random words); float32 at depth 5; exact decoding never failed.</td></tr>
+        <tr><td class="mono">S2</td><td>The new exact H² tree at t = 11/13 decodes every random word at every depth to 28; t = 3/4 decodes only 226 of 500 at depth 12.</td></tr>
+        <tr><td class="mono">S3</td><td>The address rule on WordNet’s verb forest: graph-edge MAP 0.6309, closure MAP 0.4206, reproduced exactly in Python; 99.96% of verb words fit 25 letters.</td></tr>
+        <tr><td class="mono">S4</td><td>Lexicon shards equal Owl’s biochains (126/126); Owl’s verifier misses deletions and changes; a Python port agrees with the JavaScript weave only with V8’s hypot algorithm.</td></tr>
+        <tr><td class="mono">S5</td><td>X(5, q): 2,184, 4,896 and 12,180 vertices for q = 13, 17, 29; girths 8, 8, 9; Ramanujan; SHD-CCP’s Hurwitz products, halved, equal our tree’s quaternions.</td></tr>
+        <tr><td class="mono">S6</td><td>Node and Chromium are at Unicode 17.0, Python at 15.1; a pinned 15.1 table matches Python on all 1,112,064 code points; a 20,520-case stress set.</td></tr>
+        <tr><td class="mono">S7</td><td>BioChain-AI’s ATTEST/1 signatures cross between browser and Python only through a padded P1363–DER conversion; verification takes about 0.2 ms.</td></tr>
+    </tbody>
+</table></div>
+
+<h2>Roadmap</h2>
+<div class="table-wrap"><table>
+    <thead><tr><th>Phase</th><th>Delivers</th><th>Status</th></tr></thead>
+    <tbody>
+        <tr><td>0 · Analysis</td><td>Pins, spikes S1–S7, the preregistration, eight explainers, proposals, the hub and this page</td><td><span class="pill p-done">done</span></td></tr>
+        <tr><td>1 · Python reference</td><td>The exact stages; decides L2, L3, L5, L7</td><td><span class="pill p-next">next</span></td></tr>
+        <tr><td>2 · Browser core</td><td>Line-for-line parity; L1, L4</td><td><span class="pill p-plan">here</span></td></tr>
+        <tr><td>3 · Biochains</td><td>Shards, records, manifests, the hardened importer; L8–L11</td><td><span class="pill p-plan">here</span></td></tr>
+        <tr><td>4 · Embeddings</td><td>Learned Lorentz against Euclidean; L6</td><td><span class="pill p-plan">here</span> <span class="pill p-net">+ network</span></td></tr>
+        <tr><td>5 · 2D and 3D pages</td><td>The exact trees in the disk and the ball; then the Stage-1 gate</td><td><span class="pill p-plan">here</span></td></tr>
+        <tr><td>6 · CPU encoder</td><td>1–10M parameters, BabyLM 10M, claims by amendment</td><td><span class="pill p-net">network</span></td></tr>
+        <tr><td>7 · GPU track</td><td>BERT-mini/small, BabyLM 100M, GLUE</td><td><span class="pill p-gpu">your GPU</span></td></tr>
+        <tr><td>8 · Integration</td><td>engram/2 in Engram Mind’s Eye; proposals delivered</td><td><span class="pill p-plan">here</span></td></tr>
+    </tbody>
+</table></div>
+
+<h2>Decisions for you</h2>
+<ul class="tight">
+    <li><b>Network.</b> Widen the environment to huggingface.co, osf.io, zenodo.org, arxiv.org and aclanthology.org before Phase 4. Until then Stages 0–1 run on WordNet, UD EWT and BLiMP from GitHub.</li>
+    <li><b>GPU.</b> Run the GPU track on your own hardware or a rented GPU, from Phase 7; results return as receipts this system re-checks.</li>
+    <li><b>Publishing.</b> No shards go to Firestore this round: every signed-in user can read every biochain.</li>
+    <li><b>Proposals.</b> Send them to the SHD-CCP, BioChain-AI and Owl Academy maintainers after Phase 3, with measured numbers.</li>
+</ul>
+
+<footer>Hyperbolic Lexicon is a new system in the Ebayednoob repository, at <code>Pages/Hyperbolic Lexicon/</code>: the hub, eight explainers, <code>PREREGISTRATION.md</code>, the spikes and the proposals. It loads Hyperbolic Oracles’ and Engram Mind’s Eye’s cores unchanged and never modifies the SHD-CCP, BioChain-AI or Owl Academy repositories.</footer>
+</div>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;explainers/analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

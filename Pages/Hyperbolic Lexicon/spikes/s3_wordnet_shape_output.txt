@@ -1,0 +1,181 @@
+S3 s3_wordnet_shape: the WordNet 3.0 verb forest and Owl Academy's canon tree under the L3 address rule: shape, exact H^3 points (TreeEmbedding3D, t = 3/4), exact-tree graph-edge and closure MAP with pessimistic ties
+Settles: the value behind L6(c)'s prediction rule; the bit and time budgets; query sampling; the kernel's 25-letter tile limit. Decides no claim. Verbs and the canon tree only; nouns are counted, never addressed or ranked.
+~ node v22.23.4, HPCore 2.0.0, HPDecode3D 2.0-a, linux-x64
+
+0. Data and metadata (counts only for nouns)
+  wordnet.zip (nltk_data, WordNet 3.0): 10775600 B, sha256 cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59 (pinned yes); data.verb sha256 29cc96ed80c9f47d94fe75e332a9df80f4b1c737205f92d2f433d63c6da2ab51
+  canon/canon.manifest.json (Owl-Academy, read only): 61955 B, sha256 2ddc35b1f1c1ae8bb839d1fda176d32f1d5b705110408f1cb44143d7a749db1f; format owl-canon/1, 145 tome records
+  synsets (recounted as map sizes, equal to wordnet_v1.meta.json): noun 82115, verb 13767, adj 18156 (10693 satellites), adv 3621
+  echoed from wordnet_v1.meta.json, not recomputed: noun closure edges (hypernym + instance hypernym) 743241; mammal.n.01 (01861778) closure 1182 nodes, 6542 edges, spanning subtree 1176 nodes
+~ load 737 ms
+
+1. Shape under the L3 rule
+  (a) VERB forest: 13767 synsets, 559 roots (no '@' pointer; 225 of them isolated: no children), 13239 '@' pointers, 0 '@i';
+      31 synsets have more than one '@' (the spanning parent is the first; the closure keeps all)
+      virtual root [1] with 559 children, m = 4 letters each, so every verb root has a 5-letter word; P.children([1]) = [1,2,3,4,5]
+  depth (top-level nodes = 0) histogram, with word length min..max (mean) at each depth:
+    depth  0:    559 nodes, word length 5..5 (mean 5.00)
+    depth  1:   3280 nodes, word length 6..9 (mean 7.58)
+    depth  2:   3902 nodes, word length 7..12 (mean 9.53)
+    depth  3:   3013 nodes, word length 8..14 (mean 11.40)
+    depth  4:   1595 nodes, word length 9..16 (mean 13.05)
+    depth  5:    735 nodes, word length 10..18 (mean 14.75)
+    depth  6:    366 nodes, word length 12..20 (mean 16.36)
+    depth  7:    150 nodes, word length 13..21 (mean 18.29)
+    depth  8:     60 nodes, word length 14..23 (mean 20.35)
+    depth  9:     63 nodes, word length 19..25 (mean 21.65)
+    depth 10:     32 nodes, word length 20..26 (mean 21.94)
+    depth 11:     11 nodes, word length 21..23 (mean 22.64)
+    depth 12:      1 nodes, word length 22..22 (mean 22.00)
+  internal nodes (>= 1 child): 3309; children per internal node, c:count:
+    1:1462 2:599 3:338 4:237 5:147 6:93 7:57 8:62 9:38 10:41 11:28 12:29 13:26 14:18 15:16 16:8 17:9 18:16 19:8
+    20:12 21:7 22:4 23:6 24:5 25:2 26:2 27:1 28:3 29:1 30:1 32:1 33:3 34:1 35:1 36:2 37:1 38:2 39:1 41:2 44:1
+    45:1 53:1 56:2 59:1 62:1 72:1 73:1 77:1 83:1 92:1 96:1 98:1 112:1 122:1 137:1 192:1 399:1
+  internal nodes by letters per child m = max(1, ceil(log5 c)): m=1 (c <= 5): 2783, m=2 (6..25): 485, m=3 (26..125): 38, m=4 (126..625): 3
+  nodes with more than 5 children: 526; more than 25: 41 (plus the virtual root, 559)
+  single-child share: 1462/3309 internal nodes have exactly one child (44.18%); 1462/13767 nodes are only children (10.62%)
+  letters per node (on the edge from its parent, the virtual root included): m=1: 5357, m=2: 5195, m=3: 1928, m=4: 1287; mean 1.9379 letters per edge; 12912 virtual letters (letters beyond the first on an edge)
+  word length histogram, length:count:
+    5:559 6:445 7:1447 8:1577 9:1985 10:1650 11:1690 12:1376 13:1041 14:729 15:388 16:300 17:148 18:132 19:82
+    20:90 21:51 22:23 23:27 24:13 25:9 26:5
+  maximum word length 26; words with <= 25 letters: 13762/13767 (99.96%); <= 27 letters: 13767/13767 (100.00%)
+  the 5 longest words (26 letters), offset lemma depth word:
+    00513757 pick_up depth 10 14000211120312002402125020
+    00513936 wave_off depth 10 14000211120312002402125000
+    00514069 foreground depth 10 14000211120312002402125021
+    00557537 raise depth 10 14000211120312002402125022
+    00840264 soft-pedal depth 10 14000211120312002402125002
+  largest families: 00126264 change (c = 399, m = 4); 00109660 change (c = 192, m = 4); 02604760 be (c = 137, m = 4); 01835496 travel (c = 122, m = 3); 00173338 remove (c = 112, m = 3); 02327200 supply (c = 98, m = 3)
+  (b) CANON tree (canon root > dept > artifact > tome; root at [0]; children by globalIndex, checked equal to I..X, artifact number and clusterIndex order):
+      169 nodes = 1 root + 10 depts + 13 artifacts + 145 tomes; P.children([0]) = [0,2,3,4,5]
+  depth (top-level nodes = 0) histogram, with word length min..max (mean) at each depth:
+    depth  0:      1 nodes, word length 1..1 (mean 1.00)
+    depth  1:     10 nodes, word length 3..3 (mean 3.00)
+    depth  2:     13 nodes, word length 4..4 (mean 4.00)
+    depth  3:    145 nodes, word length 6..6 (mean 6.00)
+  internal nodes (>= 1 child): 24; children per internal node, c:count:
+    1:9 4:1 9:9 10:1 16:4
+  internal nodes by letters per child m = max(1, ceil(log5 c)): m=1 (c <= 5): 10, m=2 (6..25): 14, m=3 (26..125): 0, m=4 (126..625): 0
+  nodes with more than 5 children: 14; more than 25: 0
+  single-child share: 9/24 internal nodes have exactly one child (37.50%); 9/169 nodes are only children (5.33%)
+  letters per node (on the edge from its parent): m=1: 13, m=2: 155; mean 1.9226 letters per edge; 155 virtual letters (letters beyond the first on an edge)
+  word length histogram, length:count:
+    1:1 3:10 4:13 6:145
+  maximum word length 6; words with <= 25 letters: 169/169 (100.00%); <= 27 letters: 169/169 (100.00%)
+  example words: canon 0; dept-I 000; artifact-I-1 0000; dept-I/clifford-toroid-proof 000000; dept-X 025; artifact-X-4 0253; dept-X/expression-16 025340
+~ section 1: 63 ms
+
+2. Exact H^3 points (HPDecode3D.TreeEmbedding3D.pointExact, t = 3/4, cosh tau = 25/7, sinh tau = 24/7)
+  verbs: pointExact on all 13767 nodes; sheet identity exact on 13767/13767; every coordinate is an integer over 7^n (n = word length);
+    equal to the BigInt frame product (step matrices x 7, second way) on 13767/13767
+    max bits per coordinate (lowest terms): numerator 133, denominator 73; by word length n, max numerator/denominator bits:
+      5:28/15 6:32/17 7:39/20 8:43/23 9:49/26 10:54/29 11:59/31 12:64/34 13:70/37 14:74/40 15:80/43 16:85/45
+      17:90/48 18:96/51 19:101/54 20:105/57 21:110/59 22:115/62 23:120/65 24:124/68 25:127/71 26:133/73
+    the virtual root [1] (not a node): (25/7, -24/7, 0/1, 0/1)
+  canon: pointExact on all 169 nodes; sheet identity exact on 169/169; every coordinate is an integer over 7^n (n = word length);
+    equal to the BigInt frame product (step matrices x 7, second way) on 169/169
+    max bits per coordinate (lowest terms): numerator 33, denominator 17; by word length n, max numerator/denominator bits:
+      1:5/3 3:16/9 4:22/12 6:33/17
+~ pointExact: verbs 3527 ms for 13767 points (0.256 ms per point), 1.406 ms per point at n = 26; canon 17 ms for 169
+~ section 2: 3791 ms
+
+3. Exact-tree MAP on the VERB forest (H^3, L3 rule, exact integer keys, ties pessimistic)
+  queries: 13542 (every real verb with a graph-edge neighbour; the 225 isolated roots are candidates only); 13766 candidates per query; the virtual root is neither
+  graph-edge neighbours: 26416 in all (mean 1.9507), max 399 (00126264 change)
+  closure neighbours (ancestors and descendants in the '@' closure): 35079 ancestor-descendant pairs; per query 70158 in all (mean 5.1808), max 1703 (00126264 change); 0 non-queries have closure neighbours (an extra '@' parent)
+  integer keys: points scaled to 7^26 (<= 133-bit coordinates); key = cosh d * 7^52; largest key of any (query, candidate) pair 257 bits, of any neighbour 200 bits
+
+VERB GRAPH-EDGE MAP (exact H^3, L3 rule) = 0.6309 over 13542 queries
+
+  graph-edge MAP exactly: 205-digit / 205-digit rational, sha256("n/d") 2e428dd7f198b81b0ee0e824404aefaf40ed3542a292c761eb7664968ad0efb2; truncated 0.6308581090844327
+    queries with AP < 1: 7893/13542; with a neighbour tied exactly with a non-neighbour: 5396/13542; optimistic-tie MAP (contrast only) 0.8149
+  closure MAP = 0.4206 (2052-digit / 2053-digit rational, sha256 f274ad0b43f3ea8fb489efda272cf8799ec68ccf1a856e2a264b3b50afd49e85; truncated 0.4206252510130392)
+    queries with AP < 1: 12919/13542; with a neighbour/non-neighbour exact tie: 9716/13542; optimistic-tie MAP (contrast only) 0.5390
+  graph-edge MAP by the letters of the query's own children (leaf = no children):
+    leaf      10233 queries, MAP 0.5683
+    m_out=1    2783 queries, MAP 0.8607
+    m_out=2     485 queries, MAP 0.6238
+    m_out=3      38 queries, MAP 0.7368
+    m_out=4       3 queries, MAP 0.7265
+  graph-edge MAP by the letters on the query's edge from its parent (m_in = 4: the 334 verb roots with children, and the
+  728 children of the 3 families with more than 125 children):
+    m_in=1     5357 queries, MAP 0.9974
+    m_in=2     5195 queries, MAP 0.4087
+    m_in=3     1928 queries, MAP 0.3217
+    m_in=4     1062 queries, MAP 0.4301
+  query sampling (all 13542 queries were run, so nothing above is sampled; for comparison):
+    Rng(90000).sample(13542, 2000): graph-edge 0.6247, closure 0.4200; Rng(90001).sample(13542, 1000): graph-edge 0.6262, closure 0.4215
+    20 replicate 1,000-query samples Rng(90010..90029): graph-edge 0.6114..0.6427 (sd 0.0085), closure 0.4028..0.4347 (sd 0.0084)
+  second way: AP recomputed with Q Lorentz products and an explicit sort on 11 queries (Rng(90002).sample(13542, 10), the most graph-edge and the most closure neighbours), graph-edge and closure: equal
+  exact MAP against the float64 mean of the APs: |difference| < 1e-12 (graph-edge and closure)
+~ exact ranking: 35.5 s for 13542 queries x 13766 candidates (2.62 ms per query, 191 ns per pair, both MAPs in one pass); exact MAP sums 147 ms; Q-path verification 3.6 s (163 ms per AP)
+~ extrapolation at this cost per pair (noun words are longer, so a lower bound): 1,000 queries x 82,115 noun candidates ~ 16 s; 200 queries ~ 3 s
+~ section 3: 39524 ms
+
+4. Exact-tree MAP on the CANON tree (all nodes are queries and candidates; ties pessimistic)
+  canon graph-edge MAP = 0.3544 over 169 queries (exactly 14815261627/41800814055; truncated 0.3544251939090615); AP < 1 on 155; neighbour/non-neighbour ties on 123; optimistic 0.8559
+  canon closure MAP = 0.3435 (exactly a 33-digit / 34-digit rational; truncated 0.3435433135098868); AP < 1 on 168
+  graph-edge AP by level: root 1.0000 (1), dept 0.7158 (10), artifact 0.9261 (13), tome 0.2738 (145); closure AP by level: root 1.0000 (1), dept 0.5465 (10), artifact 0.9122 (13), tome 0.2740 (145)
+  contrast only, the canon root treated as virtual (as the verb root is): 168 queries, graph-edge MAP 0.3675, closure MAP 0.3774
+  second way: every canon AP (both variants, graph-edge and closure) recomputed with Q Lorentz products and an explicit sort: equal
+~ section 4: 508 ms
+
+5. Python recomputation (s3_wordnet_shape.py, python3 -B -I, hpstep imported in place; exact ints and Fractions; independent of this file)
+  py| S3 python: independent recomputation of the verb forest and the canon tree (hpstep exact frames, int keys, Fractions)
+~ py| python 3.13.18, numpy 2.5.3
+  py| wordnet.zip sha256 cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59 (pinned: yes); data.verb sha256 29cc96ed80c9f47d94fe75e332a9df80f4b1c737205f92d2f433d63c6da2ab51
+  py| verb forest: 13767 synsets, 559 roots, 3309 internal; virtual root [1], 4 letters per root; max word length 26
+  py| verb.synsets = 13767
+  py| verb.roots = 559
+  py| verb.maxlen = 26
+  py| verb.words.sha256 = ec39f99762d2814876ee1339664903308a7c36a0c47ba535e7279cec85e9c3d7
+  py| points: integer frame products on all 13767 nodes; equal to hpstep point_exact on 69 nodes (Rng(90003).sample(13767, 64) and the 5 deepest)
+  py| verb.points.sha256 = c230e715293fa61a4f96b8ea214f0b288508a82e7f86415d38a05881096b53b9
+~ py| points: 113 ms for 13767 integer frames; point_exact check 44 ms for 69 nodes
+  py| queries: 13542 (every verb with a graph-edge neighbour), 13766 candidates each; closure pairs 35079
+  py| verb.queries = 13542
+  py| verb graph-edge MAP = 0.6308581090844327 (truncated; exactly a 205-digit / 205-digit rational)
+  py| verb.graph.ap.sha256 = 65b4d27e237d90c65fe5bbbec41cff9ae2124bc91c96e2c733a3f741bd629b49
+  py| verb.graph.map.sha256 = 2e428dd7f198b81b0ee0e824404aefaf40ed3542a292c761eb7664968ad0efb2
+  py| verb.graph.map.trunc16 = 0.6308581090844327
+  py| verb closure MAP = 0.4206252510130392 (truncated; exactly a 2052-digit / 2053-digit rational)
+  py| verb.closure.ap.sha256 = 6f9f6dbbe6d647257b2c24945914df8b6c4392d171ed9faa284249ed037b20fc
+  py| verb.closure.map.sha256 = f274ad0b43f3ea8fb489efda272cf8799ec68ccf1a856e2a264b3b50afd49e85
+  py| verb.closure.map.trunc16 = 0.4206252510130392
+  py| query samples, graph-edge MAP: Rng(90000) 2000 queries 0.6247051130304867, Rng(90001) 1000 queries 0.6261891982235723
+  py| verb.graph.sample2000.sha256 = e23654ac205da3bce4f22d74d1af8fa900dee66e7b464692fb1eaa070eb36297
+  py| verb.graph.sample1000.sha256 = 3b565d87fd8778b33f9d0329a2d92d7db19a78337a17685534cf1500a1441b05
+~ py| ranking: 68.3 s for 13542 queries x 13766 candidates (5.04 ms per query, both MAPs)
+  py| canon.manifest.json sha256 2ddc35b1f1c1ae8bb839d1fda176d32f1d5b705110408f1cb44143d7a749db1f; 145 tomes
+  py| canon tree: 169 nodes (root [0] > 10 depts > artifacts > tomes), max word length 6
+  py| canon.nodes = 169
+  py| canon.words.sha256 = e9e5f44ba5f2bfc0009e20c0e9b8793c82d727efbac298cc1d989261d5b97e85
+  py| canon.points.sha256 = b9e27813d64511edd3b1530d1e50c0146aa20ce9eb95f673ecd6a8c209b89d4a
+  py| canon graph-edge MAP = 0.3544251939090615, closure MAP = 0.3435433135098868 (truncated), over 169 queries
+  py| canon.graph.ap.sha256 = 50e298eb5c70701dceb8c179fd01c542c07dda2d1bea6e9829742e432d94700d
+  py| canon.graph.map.sha256 = 3e6f8a7fd01d02a39120f4a7b70c77625b1576c379679be7b36a5419497f6ad0
+  py| canon.closure.ap.sha256 = 92d29d888f048234e1e7299b5f86942459eb1a152070c31754b70fec52334bf4
+  py| canon.closure.map.sha256 = a3bd34f1f5b4c1362fabc78fea3da1287ecf662168cf2b61ce31cd8ca702c15b
+~ py| python total 68.8 s
+  comparison with this script: 21/21 values identical (verb.synsets, verb.roots, verb.maxlen, verb.words.sha256, verb.points.sha256, verb.queries, verb.graph.ap.sha256, verb.graph.map.sha256, verb.graph.map.trunc16, verb.closure.ap.sha256, verb.closure.map.sha256, verb.closure.map.trunc16, verb.graph.sample2000.sha256, verb.graph.sample1000.sha256, canon.nodes, canon.words.sha256, canon.points.sha256, canon.graph.ap.sha256, canon.graph.map.sha256, canon.closure.ap.sha256, canon.closure.map.sha256)
+  verb graph-edge MAP: node 0.6308581090844327, python 0.6308581090844327 (truncated to 16 decimals); the exact rationals are equal (same reduced n/d, by SHA-256), so |difference| = 0
+~ python wall time 68.9 s (concurrent with sections 1-4); section 5 waited 24282 ms
+
+SETTLES:
+- L6(c)'s rule: VERB GRAPH-EDGE MAP (exact H^3, L3 rule) = 0.6309 over all 13542 verb queries (exact rational, sha256 2e428dd7f198b81b...,
+  0.6308581090844327 truncated), reproduced exactly by the Python reference. Against the rule's threshold 0.90,
+  L6(c)'s registered prediction would read "refuted" (a prediction fixed by the rule, not a decision of L6(c)).
+  Verb closure MAP on the same queries 0.4206. Canon tree (all 169 nodes): graph-edge 0.3544, closure 0.3435.
+  Ties pessimistic: 5396 of 13542 verb queries have a neighbour tied exactly with a non-neighbour; the optimistic MAP would be 0.8149.
+- Shape: verbs 13767 synsets under a virtual root [1] with 559 children (4 letters each); depth <= 12 below the verb roots;
+  1462/3309 internal nodes (44.18%) have one child; 526 have more than 5 children and 41 more than 25; 12912 virtual letters.
+  Canon: 169 nodes, words of 1, 3, 4 and 6 letters (depts 2 letters, artifacts 1, tomes 2).
+- Tile limit: the longest verb word has 26 letters; 13762/13767 verb words (99.96%) fit the kernel's 25-letter id59 tile and 13767/13767 (100.00%)
+  fit id64 (<= 27); 5 verb words need a continuation tile. Every canon word fits (max 6).
+- Bit budget: verb points have <= 133-bit numerators and <= 73-bit denominators per coordinate (lowest terms); over the common 7^26
+  they are <= 133-bit integers; the ranking keys (cosh d * 7^52) have <= 257 bits.
+- Query sampling: not needed for verbs; all 13542 queries were ranked against all 13766 candidates. A 1,000-query sample would have moved the
+  verb graph-edge MAP by up to 0.0195 (20 replicates, sd 0.0085); the Rng(90000) 2,000-query sample gives 0.6247.
+~ - Time budget (this machine): pointExact 0.256 ms per verb point on average, 1.406 ms at n = 26; exact ranking
+~   2.62 ms per verb query (191 ns per pair) in Node, 35.5 s for all; Python 68.3 s for all; 1,000 noun queries x 82,115 candidates ~ 16 s or more in Node.
+~ total runtime 68.9 s

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What We Have Made, Measured - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 1 of Hyperbolic Lexicon, Phase 0: an inventory of what Engram Mind's Eye, Hyperbolic Oracles and the orbital core already give a language system, what is missing from all four repositories, why engram/1 cannot be a token id, what gradient-free learning can do after C1 was refuted, exact against float precision, and a live lab with keys, addresses and exact H3 points.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 1 &middot; Phase 0</div>
+    <h1>What We Have Made, Measured</h1>
+    <p class="lede">Before we build a hyperbolic BERT, we take stock. This repository already gives a language system exact geometry, exact addresses and strong integrity checks. None of the four repositories gives it a subword tokenizer, a vocabulary, learned embeddings, an encoder or gradients. This page sorts what exists from what is missing, with the measurements, and ends with a lab you can type words into.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#lab">Try words, live</a>
+        <a class="btn btn-ghost" href="#built">What exists</a>
+        <a class="btn btn-ghost" href="#missing">What is missing</a>
+        <a class="btn btn-ghost" href="#answer">The short answer</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">engram/1 key: <b>26</b> useful bits of 64</span>
+        <span class="stat">C1, hyperbolic beats flat: <b>refuted</b> 0/12/1</span>
+        <span class="stat">exact H&sup3; to depth <b>28</b> &middot; float to <b>12</b></span>
+        <span class="stat">chain: <b>~130</b> bits per 64-bit packet</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#built">2. What exists</a></li>
+            <li><a href="#engram">3. engram/1: a checksum, not an id</a></li>
+            <li><a href="#missing">4. What is missing everywhere</a></li>
+            <li><a href="#learning">5. Learning without gradients</a></li>
+            <li><a href="#precision">6. Exact against float</a></li>
+            <li><a href="#lab">7. Words, live</a></li>
+            <li><a href="#answer">8. The short answer</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#built">What exists</a></li><li><a href="#engram">engram/1: a checksum, not an id</a></li>
+            <li><a href="#missing">What is missing everywhere</a></li><li><a href="#learning">Learning without gradients</a></li><li><a href="#precision">Exact against float</a></li>
+            <li><a href="#lab">Words, live</a></li><li><a href="#answer">The short answer</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">This is the analysis the rest of Hyperbolic Lexicon stands on. Its focus node is Engram Mind&rsquo;s Eye: the system whose words, codec and bridges this one starts from, and the one it bridges back into.</p>
+            <div data-hl-map="focus" data-node="engram"></div>
+            <p>Phase 0 is analysis, measurement spikes and a preregistration; there is no model code yet. This page rests on a read-only survey of four repositories (Ebayednoob, this site; Owl Academy; BioChain-AI; SHD-CCP) and of the literature, re-checked by an adversarial cross-check whose corrections win. Other numbers come from the design spec (its planning measurements are called &ldquo;a planning check&rdquo;), from Phase 0&rsquo;s two pins (WordNet 3.0 and UD English EWT), or from the existing systems&rsquo; own pages. Spikes S1&ndash;S7 are still running; nothing here quotes them (<a href="evidence.html#spikes">Explainer 8</a>).</p>
+            <div class="callout plain"><span class="label">How to read the marks</span>
+                <p><span class="mark exact">exact</span>: integers, rationals or bytes, identical in every engine. <span class="mark float">float</span>: floating point, rounded at every step. Decisions use the ledger&rsquo;s tags: <span class="tag t-SUPPORTED">SUPPORTED</span> <span class="tag t-REFUTED">REFUTED</span> <span class="tag t-MIXED">INCONCLUSIVE</span>.</p>
+                <p>Literature numbers carry the survey&rsquo;s grade. <strong>Verified</strong>: matched against the paper&rsquo;s own page or repository. <strong>Likely</strong>: from a search summary of a primary source that could not be opened (many paper hosts are blocked here). <strong>Secondary</strong>: only from someone else&rsquo;s summary.</p>
+            </div>
+            <dl class="gloss">
+                <dt>H&sup2;, H&sup3;</dt><dd>The hyperbolic plane and 3-space. Room grows exponentially with distance, as a tree&rsquo;s nodes multiply with depth.</dd>
+                <dt>Hyperboloid</dt><dd>The points with x&#8320;&sup2; &minus; x&#8321;&sup2; &minus; &hellip; &minus; x&#8345;&sup2; = 1, x&#8320; &gt; 0: the &ldquo;sheet&rdquo; of the Lorentz model. The Poincar&eacute; disk and ball draw the same space inside a unit circle or sphere.</dd>
+                <dt>The norm-5 tree</dt><dd>Words in the integer quaternions 1&plusmn;2i, 1&plusmn;2j, 1&plusmn;2k that never undo the previous letter. An n-letter word multiplies out to one quaternion of norm 5&#8319;; right division reads it back.</dd>
+                <dt>GF(2)</dt><dd>Arithmetic on bits, where 1 + 1 = 0: adding is XOR.</dd>
+            </dl>
+        </section>
+
+        <section class="chapter" id="built">
+            <div class="chapter-num">02</div>
+            <h2>What exists</h2>
+            <p class="chapter-intro">Three systems here already run, tested, in Node and in the browser. None was built for language. The last column says what each piece is worth to a language system, often less than its name suggests.</p>
+
+            <h3>Engram Mind&rsquo;s Eye</h3>
+            <p>A standalone rebuild of Owl Academy&rsquo;s engram memory and its STRIX familiar: words enter as keys and become exact addresses, memory words and registers (<a href="../../Engram%20Minds%20Eye/README.md">README</a>).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Piece</th><th>What it is, and the evidence</th><th>For a language system</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>engram/1 keys</strong> <span class="mark exact">exact</span></td><td>The TTMPT key, verbatim from Owl Academy: the XOR of one fixed 64-bit grid per letter A&ndash;Z. <span class="tag t-SUPPORTED">E1</span> bit-identical to Owl on the golden corpus.</td><td>A checksum Owl Academy reads. Not an id (<a href="#engram">chapter 3</a>).</td></tr>
+                    <tr><td><strong>128-bit packets</strong></td><td>A 32-bit codex parity, the 64-bit grid, and a footer with the Hamming distances (bits that differ) to the three-packet window and the nearest of 15 concepts.</td><td>A per-token record in Owl&rsquo;s shape. The parity is linear and unkeyed, so forgeable; integrity needs SHA-256.</td></tr>
+                    <tr><td><strong>28-letter addresses</strong> <span class="mark exact">exact</span></td><td>Any 64-bit value as a reduced 28-letter word of the norm-5 tree: one integer quaternion of norm 5&sup2;&#8312;. A chain of packets is one quaternion that right division unfolds in order. <span class="tag t-SUPPORTED">E2</span> up to 720 packets.</td><td>Exact, invertible addressing of any 64-bit id; an exact chain that keeps order. Storage, not compression (<a href="#precision">chapter 6</a>).</td></tr>
+                    <tr><td><strong>Triple-quad memory</strong> <span class="mark exact">exact</span></td><td>Cells &alpha;, &beta;, &gamma; and Y = &alpha; &oplus; &beta; &oplus; &gamma; over GF(2), each sent as two Form 5 Einstein tiles (the orbital 64-bit wire word), with SHA-256 links. <span class="tag t-SUPPORTED">E3</span> 1,444,184 cases, no failures.</td><td>Locate and repair one altered cell, and detect two: a way to certify an id stream segment by segment.</td></tr>
+                    <tr><td><strong>Clock and registers</strong> <span class="mark exact">exact</span></td><td>A three-packet window; a 720-frame register of 90 packets whose ordered product telescopes 720 &rarr; 72 &rarr; 10. <span class="tag t-SUPPORTED">E4</span></td><td>Deterministic 90-token segments with exact products. Bookkeeping, not a learned context.</td></tr>
+                    <tr><td><strong>Coupler, twin system</strong> <span class="mark exact">exact</span></td><td>q&#8321; &larr; w q&#8321;, q&#8322; &larr; q&#8322; w&#772; (w&#772; the conjugate) keeps B = q&#8322;q&#8321; fixed across the human and STRIX streams. <span class="tag t-SUPPORTED">E5</span></td><td>An integrity binding of two streams, like BERT&rsquo;s segments A and B, with no cross-attention and no meaning.</td></tr>
+                    <tr><td><strong>H&sup2; and H&sup3; memory trees</strong></td><td>Register &rarr; section &rarr; zero point &rarr; cell, drawn on the <a href="../../Engram%20Minds%20Eye/mind-eye.html">2D</a> (float) and <a href="../../Engram%20Minds%20Eye/mind-eye-3d.html">3D</a> (exact) pages.</td><td>Views. Positions are structural; placing by content was rejected, since engram bits scatter like a hash.</td></tr>
+                    <tr><td><strong>Fence and guard</strong></td><td>The 0.7 fence flags memories sitting too far out and an exact address check settles each flag; the ln&nbsp;2 guard names a corrupted stored distance. <span class="tag t-SUPPORTED">E7</span> <span class="tag t-MIXED">E8</span> <span class="tag t-MIXED">E10</span></td><td>Descriptors for stored tables. The fence over-flags Gaussian-like clouds, which learned embeddings probably are.</td></tr>
+                    <tr><td><strong>Bridges to Owl</strong></td><td>Session export and import, and <code>biochain_v1.js</code>: Owl&rsquo;s <code>biomesh.js</code> codec copied verbatim and pinned by SHA-256, the working SHD-CCP word and <code>shdccp/2</code> stream (<a href="shdccp.html#working">Explainer 2</a>). <span class="tag t-SUPPORTED">E11</span> 50/50.</td><td>Language shards in Owl&rsquo;s format that Engram verifies and imports (but does not grow). The check proves self-consistency, not authorship.</td></tr>
+                    <tr><td><strong>Reference and browser core</strong></td><td><code>reference/engram/</code> (41 tests) and <code>engram_core.js</code>: 849/849 parity lines, also <a href="../../Engram%20Minds%20Eye/explainers/browser-core.html">live in the page</a>.</td><td>The method: Python and JavaScript agree bit for bit.</td></tr>
+                    <tr><td><strong>11 claims</strong></td><td>E1&ndash;E11, each registered before its code. <span class="tag t-SUPPORTED">9 supported</span> <span class="tag t-MIXED">2 inconclusive</span>, none refuted.</td><td>The template for L1&ndash;L11 (<a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>).</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>Hyperbolic Oracles</h3>
+            <p>Hyperbolic PolyStep, a gradient-free optimizer in hyperbolic space, and the 0.7 Claude fence. Its browser cores give the Lexicon its geometry (<a href="../../Hyperbolic%20Oracles/README.md">README</a>).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Piece</th><th>What it is, and the evidence</th><th>For a language system</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>PolyStepH</strong> <span class="mark float">float</span></td><td>A gradient-free optimizer on products of hyperbolic and flat factors. 169/169 parity; over 7,740 runs <span class="tag t-REFUTED">C1</span> <span class="tag t-SUPPORTED">C2</span> <span class="tag t-REFUTED">C3</span>.</td><td>Heads of a few hundred parameters at most; never an encoder (<a href="#learning">chapter 5</a>).</td></tr>
+                    <tr><td><strong>Q</strong> <span class="mark exact">exact</span></td><td>Rationals on BigInt, rounded to doubles exactly as Python&rsquo;s <code>float(Fraction)</code>.</td><td>Exact points, rankings and metrics.</td></tr>
+                    <tr><td><strong>The norm-5 tree P</strong> <span class="mark exact">exact</span></td><td>Generators 1&plusmn;2i, 1&plusmn;2j, 1&plusmn;2k, exactly the Lubotzky&ndash;Phillips&ndash;Sarnak set for p&nbsp;=&nbsp;5 (<a href="shdccp.html#lps">Explainer 2</a>); six children at the root, five after. 2,000/2,000 address round trips (<a href="../../Engram%20Minds%20Eye/explainers/evidence.html#spike-b">Engram spike B</a>).</td><td>The address space for every synset and token, with no training (claim L3).</td></tr>
+                    <tr><td><strong>Hyperboloid tools H</strong> <span class="mark float">float</span></td><td>Poincar&eacute; and Klein maps, exp/log, distance, boosts; the Lorentz centroid (a weighted mean put back on the sheet), Einstein-midpoint weights, softmax and Sinkhorn (optimal-transport) weights.</td><td>Drawing, and distance attention in floats: softmax of &minus;distance, then a Lorentz centroid.</td></tr>
+                    <tr><td><strong>Exact H&sup3; tree</strong> <span class="mark exact">exact</span></td><td><code>TreeEmbedding3D</code>: each letter a boost of t&nbsp;=&nbsp;3/4 along an octahedral direction, step &tau; = ln&nbsp;7; <code>pointExact</code>, <code>decodeExact</code>, <code>nearestExact</code>, <code>certifyWord</code>. 28/28 parity; exact to depth 28.</td><td>The primary exact store, and, as an exploratory test, a codebook from learned points to tree words (<a href="architecture.html#place">Explainer 3</a>).</td></tr>
+                    <tr><td><strong>Exact snapping</strong> <span class="mark exact">exact</span></td><td><code>X.ghost</code> (a rational Poincar&eacute; point to an exact hyperboloid point), <code>X.snap</code> onto a 2<sup>&minus;24</sup> grid, and <code>fence.js</code> <code>dyadic</code>/<code>lift</code> onto a 2<sup>&minus;32</sup> grid.</td><td>Learned tables stored and ranked exactly (L4(c)).</td></tr>
+                    <tr><td><strong>The fence</strong></td><td>Tukey&rsquo;s box-plot fence on the mass of hyperbolic balls about a Fr&eacute;chet median (the point of least total distance), exact in H&sup2;, certified in H&sup3;, with the ln&nbsp;2 guard. 101/101 parity; <span class="tag t-SUPPORTED">CF-A</span> <span class="tag t-SUPPORTED">CF-B</span> <span class="tag t-SUPPORTED">CF-C</span>.</td><td>Descriptors only. CF-C, the registered weakness: 6.05% flagged on wrapped-Gaussian clouds at &sigma;&nbsp;0.5 in H&sup2;, against 1.15% for distance-Tukey.</td></tr>
+                    <tr><td><strong>Frames</strong> <span class="mark exact">exact</span></td><td><code>twin3d.js</code>: exact quaternion frames, transport, <code>rotOfQuat</code>. 21/21 parity.</td><td>A frame per token on the planned 3D page.</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>The orbital core</h3>
+            <p><code>orbital_core.js</code> (<a href="../../../scripts/geometric-build/README.md">scripts/geometric-build</a>) holds the orbital calculators&rsquo; exact code: BigInt fractions and quaternions, the Cayley map, SHA-256, the 64-bit Einstein tile, Hurwitz Form 1 (flagged lossy), the Lemma 15 chain, the triple-quad formula, the invertible gauge (s, X, Y), the readout and the 720 &rarr; 72 &rarr; 10 pump. Its Node test passes 18/18 and the four orbital pages rebuild byte-identical (<a href="../../Engram%20Minds%20Eye/explainers/shared-cores.html">how</a>). For language it offers SHA-256 and byte helpers for the Lexicon&rsquo;s records. None of it learns.</p>
+            <div class="callout deep"><span class="label">Two things called &ldquo;Merkle&rdquo;</span>
+                <p>A <strong>Merkle root</strong> is one hash that commits to a whole list: hash each item, then hash the hashes in pairs, level by level, to a single value. Change any item and the root changes. Biochains use this binary tree. The orbital core&rsquo;s &ldquo;Lemma 15 Merkle chain&rdquo; is a linear backward chain instead, each link hashing its item with the next link&rsquo;s hash. They are not interchangeable, so the Lexicon names them apart (<a href="../proposals/SHD-CCP-Lemma15-note.md">Lemma 15 note</a>).</p>
+            </div>
+            <p><strong>Measured costs.</strong> A 1,572-packet conversation runs in 1.4 s; 2,000 address round trips take 63 ms. The fence takes 292 ms on 300 points in H&sup3; and grows as N&sup2;; the guard takes 13 ms on 37 points and grows as N&#8308;. Neither reaches a vocabulary of 10&#8308;&ndash;10&#8309; points without sampling.</p>
+        </section>
+
+        <section class="chapter" id="engram">
+            <div class="chapter-num">03</div>
+            <h2>engram/1: a checksum, not a token id</h2>
+            <p class="chapter-intro">engram/1 is where the existing systems turn a word into numbers. So it is worth knowing exactly how little it carries.</p>
+            <p><strong>How a key is made.</strong> Each letter A&ndash;Z has a fixed 64-bit grid from a seeded generator (Mulberry32), and a word&rsquo;s key is the XOR of its letters&rsquo; grids. Case is ignored; only A&ndash;Z count, so digits, apostrophes and non-ASCII letters are ignored.</p>
+            <p><strong>What survives.</strong> XOR is addition in GF(2), so a letter that appears twice cancels itself. The key depends only on which letters appear an odd number of times: at most 2<sup>26</sup> &asymp; 67 million keys out of 2<sup>64</sup>. The survey found the 26 grids independent over GF(2) (rank 26), so distinct letter-parity patterns always give distinct keys.</p>
+            <div class="bits" role="img" aria-label="Of the key's 64 bits, 26 carry information; the other 38 follow from them">
+                <span style="flex:26;--c:#34d399">26 bits: which letters occur an odd number of times</span>
+                <span style="flex:38;--c:#94a3b8">38 bits: fixed by those 26</span>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Words</th><th>engram/1 key</th><th>Why they share it</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">LISTEN = SILENT</td><td class="mono">c67bb3c08e31a33a</td><td>anagrams: the same letters, once each</td></tr>
+                    <tr><td class="mono">DOG = GOD</td><td class="mono">334b201534da139b</td><td>anagrams</td></tr>
+                    <tr><td class="mono">EYE = Y</td><td class="mono">cd256ab50832b4aa</td><td>the two Es cancel</td></tr>
+                    <tr><td class="mono">NOON = ABBA = 2024 = 42</td><td class="mono">0000000000000000</td><td>every letter an even number of times, or no letters at all: the zero key</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>No similarity.</strong> Distances between distinct words look random: a mean Hamming distance of 32.4 of 64 over 190 pairs (min 20, max 44); cat/cats 30, run/running 31, king/queen 26. Engram&rsquo;s E9b found recall after a one-letter substitution at chance: 0.0002 against 0.0021, the difference&rsquo;s interval [&minus;0.0017, 0.0004]. Engram&rsquo;s 477-token dialogue store has 458 distinct keys.</p>
+
+            <h3>Why it cannot be a token id</h3>
+            <p>A token id must give every vocabulary entry its own number, and a model learns one embedding per id. engram/1 fails the first test, and its bits carry nothing a model could use as a feature. Engram froze it on purpose (its D4) so Owl Academy&rsquo;s chains stay readable.</p>
+            <p>The Lexicon keeps it only as an Owl-compatibility checksum, off by default for corpora and never an input (D4 here; <a href="architecture.html#tokenize">Explainer 3</a>). Claim <strong>L2</strong> registers the collision rate: on the WordNet 3.0 lemma vocabulary (147,306 types in the pin), at least 1% of types share a key with another type; predicted 2&ndash;10%. A 64-bit SHA-256-prefix key on the same types is the control and must give no collisions (<a href="evidence.html#claims">Explainer 8</a>).</p>
+
+            <h3>Addresses are 5-adic, not semantic</h3>
+            <p>The 28-letter address reads the 64-bit value in base 5, least significant digit first, each digit picking one of five children. Two values therefore share a k-letter prefix exactly when they agree mod 5<sup>k</sup>: their last k base-5 digits match. That is <em>5-adic</em> closeness, of low digits, not of meaning; for hash-like engram values the tree distance is as random as the keys. In a chain a word&rsquo;s letters also depend on the previous packet&rsquo;s last letter, so only the 64-bit value is a stable id.</p>
+            <p>The design&rsquo;s re-check of the code found one more limit: <code>engram_core.encode</code> always writes 28 letters, never uses the sixth root generator, and records no length. The Lexicon uses its own bijective id instead: 64 bits for words up to 27 letters, 59 bits up to 25 (<a href="architecture.html#address">Explainer 3</a>).</p>
+            <div class="callout note"><span class="label">What would give the prefix a meaning</span>
+                <p>Assign the ids by a hierarchy, and a shared prefix becomes a shared ancestor. That is the Lexicon&rsquo;s address rule. WordNet&rsquo;s own noun tree chooses the letters, and claim L3 will test whether the result is exact and invertible for all 82,115 noun synsets. The lexicon address is the candidate for an engram/2 key, to be preregistered later in Engram&rsquo;s own folder.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="missing">
+            <div class="chapter-num">04</div>
+            <h2>What is missing everywhere</h2>
+            <p class="chapter-intro">The survey searched Ebayednoob, Owl Academy, BioChain-AI and SHD-CCP for language machinery. Most of what a BERT needs is absent from all four.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>A BERT needs</th><th>Across the four repositories</th><th>The Lexicon&rsquo;s answer</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>A subword tokenizer</strong></td><td>None: no WordPiece, BPE or SentencePiece. There are five word splitters, using regex or whitespace. Two of them disagree: <code>don't 3.14 e-mail</code> gives DON, T, 3, 14, E, MAIL in Engram&rsquo;s splitter and don&rsquo;t, 3, 14, e, mail in <code>biomesh.js</code> (<a href="../proposals/Owl-Academy-notes.md">Owl notes</a>).</td><td>One pinned normaliser and WordPiece tokenizer for every track (<a href="architecture.html#normalise">normalise</a>, <a href="architecture.html#tokenize">tokenize</a>)</td></tr>
+                    <tr><td><strong>A vocabulary</strong></td><td>No subword vocabulary and no special tokens ([CLS], [SEP], [MASK]). Owl&rsquo;s <code>text_to_codex.py</code> gives word-level ids. It is the nearest precedent: an exact token-id stream beside a geometric chain.</td><td>V0 &ldquo;lex0&rdquo; (8,192 entries, to be trained on WordNet glosses) first; BERT&rsquo;s 30,522-entry vocabulary once it can be fetched</td></tr>
+                    <tr><td><strong>Unicode handling</strong></td><td>Non-ASCII letters split words, and the key drops them.</td><td>Unicode 15.1 tables pinned as data. Node 22.23.4 here carries Unicode 17.0; Python 3.13.18 carries 15.1.0</td></tr>
+                    <tr><td><strong>Learned embeddings</strong></td><td>None. Every hyperbolic position in Engram is structural or a tree node.</td><td>Lorentz against Euclidean tables at matched dimension, Phase 4 (L6)</td></tr>
+                    <tr><td><strong>An encoder</strong></td><td>No attention layer, masked-language-model objective, positional encoding or loss over text. The nearest piece is PolyStep&rsquo;s softmax weights followed by a Lorentz centroid.</td><td>Stage 2, only after every Stage-1 claim is decided (<a href="architecture.html#encoder">encoder</a>)</td></tr>
+                    <tr><td><strong>Gradients</strong></td><td>No autodiff in the JavaScript or in the Python reference. Owl&rsquo;s &ldquo;pretrained&rdquo; codex priors are byte statistics, and its bulk trainer has only a toy bit-overlap &ldquo;attention&rdquo;.</td><td>A numpy float64 trainer (D9); <a href="#learning">chapter 5</a></td></tr>
+                    <tr><td><strong>Language data</strong></td><td>No datasets. Owl&rsquo;s code has no WordNet, word2vec or GloVe.</td><td>Phase 0 pinned WordNet 3.0 and UD English EWT (<a href="evidence.html#pins">pins</a>)</td></tr>
+                    <tr><td><strong>NLP benchmarks</strong></td><td>None: no GLUE, SentEval, WordNet reconstruction or perplexity. The only learning metric is the codex attunement &epsilon; on synthetic wiki-style text.</td><td>A five-stage ladder (<a href="benchmarks.html">Explainer 7</a>)</td></tr>
+                    <tr><td><strong>A language model</strong></td><td>Only BERT fill-mask: <code>Xenova/bert-base-uncased</code> via Transformers.js 2.6.0 fills one [MASK] in a template, in Owl&rsquo;s Engram Mind Eye and Language Growing (whose &ldquo;BART&rdquo; mode is the same BERT) and BioChain-AI&rsquo;s Language Studio. Turns are logged as attested; Engram left it out of its core (its D6).</td><td>Not reused; a Stage-2 encoder of its own, registered by amendment first</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>WordPiece</strong>, BERT&rsquo;s subword tokenizer, splits each word greedily into the longest pieces found in a fixed <strong>vocabulary</strong> (a list of pieces, each with an id), marking continuations with &ldquo;##&rdquo;, so a rare word still gets ids. [CLS], [SEP] and [MASK] are reserved entries: sentence start, separator, and the hidden word a BERT learns to predict.</p>
+            <p><strong>Nearly there:</strong> the softmax-then-Lorentz-centroid step (an attention-like average, in floats); one deterministic generator in JavaScript and Python (xoshiro128** seeded by splitmix32), so data splits and masked positions can be drawn identically everywhere; exact dyadic snapping; and the way of building, Python first, then a browser core with trace parity, claims registered before code.</p>
+            <div class="callout limit"><span class="label">A framing to drop</span>
+                <p>The site&rsquo;s AI hub pages are tutorials with no runnable NLP code, and a PDF in <code>research_papers</code> argues that tokens should be compressed into quaternions. The repository&rsquo;s own measurement disagrees: an exact quaternion chain costs about 130 bits per 64-bit packet. It stores; it does not compress.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="learning">
+            <div class="chapter-num">05</div>
+            <h2>Learning without gradients</h2>
+            <p class="chapter-intro">The existing systems can learn, but only without gradients and only at toy scale. That decides where learning happens in the Lexicon.</p>
+            <p>Hyperbolic PolyStep is <strong>zeroth-order</strong>: it uses only values of the objective, never its gradient. One step works like this. Take a random block of factors. For each particle, score the 2&middot;D corners of an orthoplex around it (one step each way along every axis). Weight the corners by a softmax or a Sinkhorn transport of their costs. Move each factor to the Lorentz centroid of its weighted corners. The step builds on polystep&rsquo;s optimal-transport step (An&nbsp;T.&nbsp;Le, TMLR 2026) (<a href="../../Hyperbolic%20Oracles/explainers/hyperbolic-step.html">how it works</a>).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Claim (7,740 runs)</th><th class="num">Cells</th><th class="num">Supported / refuted / inconclusive</th><th>Decision</th></tr></thead>
+                <tbody>
+                    <tr><td>C1: hyperbolic beats curvature 0 at equal budget</td><td class="num">13</td><td class="num">0 / 12 / 1</td><td><span class="tag t-REFUTED">REFUTED</span></td></tr>
+                    <tr><td>C2: the built-in annealing works (Spearman about &minus;0.90)</td><td class="num">12</td><td class="num">12 / 0 / 0</td><td><span class="tag t-SUPPORTED">SUPPORTED</span></td></tr>
+                    <tr><td>C3: three channels beat one with three times the particles</td><td class="num">9</td><td class="num">0 / 9 / 0</td><td><span class="tag t-REFUTED">REFUTED</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>On the problem benchmarks flat did better. On MAX-3-SAT at n&nbsp;=&nbsp;500 (B2), hyper3 reached 0.935 against flat3&rsquo;s 0.962; on tree search (B3), flat3 beat hyper3 by 0.40&ndash;0.59 in success rate. The largest model, B4, is an encoder W in R<sup>32</sup> plus 8 prototypes in H&sup2;: 48 numbers, 8 classes, 2&times;10&#8309; evaluations, about 19 s per Python run. Its test accuracy: hyper3 <strong>0.325</strong>, flat3 0.334, polystep 0.336, random search 0.224, chance 0.125. Every learned method landed within about 0.014 of the others, hyper3 the weakest (<a href="../../Hyperbolic%20Oracles/explainers/proofs-and-results.html#results">the results</a>).</p>
+            <p>The survey measured about 2,900 evaluations per second in Node. The smallest encoder the Lexicon plans, 1 million parameters on CPU, is more than 20,000 times the size of B4.</p>
+
+            <h3>What gradient-free methods are good for</h3>
+            <p>The literature agrees. MeZO runs zeroth-order SGD at inference memory cost: on one 80&nbsp;GB A100 it trains a 30B-parameter model where backpropagation fits about 2.7B, and with OPT-13B it lands within 1% of Adam on 7 of 11 tasks. But it relies on pretraining and prompts. ZO-Bench and Evolution Strategies at scale tell the same story: they fine-tune, and none pretrains from scratch (<a href="https://github.com/princeton-nlp/MeZO">MeZO</a>; verified).</p>
+            <p>So PolyStep is kept for small jobs: heads, curvature and small adapters, in the literature&rsquo;s terms. Decision D11 limits it to heads of at most a few hundred parameters. In the Lexicon it would tune the hierarchy head&rsquo;s weight, threshold and temperature in the browser (<a href="architecture.html#encoder">Explainer 3</a>). A fair comparison with MeZO and plain ZO-SGD, at equal evaluations on a fixed head, is a candidate claim for Phase 6. It will be registered by amendment before any code.</p>
+
+            <h3>Where learning happens instead</h3>
+            <p>Static embeddings will be trained in Python float64 by a numpy trainer, the authority (D9): Nickel and Kiela&rsquo;s Riemannian SGD in the Lorentz model (take the gradient, project it onto the sheet&rsquo;s tangent plane, move along the sheet with the exponential map), and plain SGD for the Euclidean control. geoopt is a reported cross-check if torch installs. It is not installed here: PyPI&rsquo;s Linux wheel brings the CUDA libraries, download.pytorch.org is blocked, and there is no GPU (4 CPU cores, 15 GB RAM; <a href="tracks.html#cpu">Explainer 6</a>).</p>
+
+            <h3>The honest frame</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Finding</th><th>Grade</th></tr></thead>
+                <tbody>
+                    <tr><td>Poincar&eacute; embeddings beat Euclidean ones on latent hierarchies such as WordNet nouns, most clearly in low dimensions (<a href="https://proceedings.neurips.cc/paper/2017/hash/59dfa2df42d9e3d41f5b02bfc32229dd-Abstract.html">Nickel &amp; Kiela 2017</a>).</td><td class="mono">verified</td></tr>
+                    <tr><td>On general NLP, mixed: hyperbolic text embeddings helped some tasks and not others (<a href="https://research.google/pubs/embedding-text-in-hyperbolic-spaces/">Dhingra et al. 2018</a>); hyperbolic skip-gram was promising in low dimensions but not clearly better (<a href="https://arxiv.org/pdf/1809.01498.pdf">Leimeister &amp; Wilson 2018</a>).</td><td class="mono">verified</td></tr>
+                    <tr><td>A Lorentz-model BERT claims gains on GLUE, SuperGLUE and extractive QA; its architecture and numbers could not be seen (<a href="https://dl.acm.org/doi/10.1109/TASLP.2024.3407575">TASLP 2024</a>).</td><td class="mono">likely</td></tr>
+                    <tr><td>HELM&rsquo;s fully hyperbolic LLMs: up to 4% at about 1B parameters. The repository states no percentage; the abstract was not fetched (<a href="https://github.com/Graph-and-Geometric-Learning/helm">HELM</a>).</td><td class="mono">likely</td></tr>
+                    <tr><td>Hyperbolic attention on the hyperboloid and Klein models (<a href="https://mlanthology.org/iclr/2019/gulcehre2019iclr-hyperbolic">Gulcehre et al. 2019</a>); that its Klein aggregation is the Einstein midpoint comes from a summary.</td><td class="mono">verified; midpoint secondary</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout limit"><span class="label">What C1 means for this system</span>
+                <p>Hyperbolic geometry clearly helps on explicit hierarchies, and modestly or not at all on general NLP. C1 tested optimisation and found no hyperbolic advantage. The Lexicon bets instead on <em>representation</em> (low-dimensional trees, which hyperbolic space has room for) and on <em>certification</em> (exactness, invertibility, identical results across engines). Every hyperbolic claim has a matched Euclidean control, including learned Euclidean tables at matched dimension (L6), and encoder-level gains are predicted small or null.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="precision">
+            <div class="chapter-num">06</div>
+            <h2>Exact against float</h2>
+            <p class="chapter-intro">Hyperbolic space grows exponentially, and so do the numbers that describe deep points in it. Floats run out at a depth WordNet passes easily. Exact rationals do not run out, but they cost bits.</p>
+            <p>A <strong>float64</strong> number keeps 53 significant bits, about 16 decimal digits, and rounds after every operation. An <strong>exact rational</strong> keeps a numerator and a denominator as integers of any size, and never rounds. In the H&sup3; tree each step multiplies by cosh = 25/7 and sinh = 24/7, so a point at word length n has coordinates over 7&#8319;.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Object</th><th><span class="mark exact">exact</span></th><th><span class="mark float">float64</span></th></tr></thead>
+                <tbody>
+                    <tr><td>H&sup3; octahedral tree, &tau; = ln&nbsp;7</td><td>Points and decoding exact to depth 28: about 138-bit numerators, 79-bit denominators, ~3 ms per point</td><td>Decodes 50/50 words to depth 12, 36/50 at 14, 9/50 at 16, 0/50 at 18 (<a href="../../Engram%20Minds%20Eye/explainers/evidence.html#spike-b">Engram spike B</a>)</td></tr>
+                    <tr><td>H&sup2; tree (<code>TreeEmbedding</code>)</td><td>None yet: it is built from cos and sin</td><td>Without local charts it leaves the sheet near distance 17&ndash;24 (depth 8 at &tau; = 3), so PolyStep runs clamp to a horizon of radius 8</td></tr>
+                    <tr><td>Ranking by distance</td><td>Integer keys, ties counted exactly (designed, L4)</td><td>A planning check found straight paths invert at depth 11&ndash;12. Coordinates of words longer than about 19 letters exceed 2<sup>53</sup></td></tr>
+                    <tr><td>Chain quaternions</td><td>Grow about 32.5 bits per packet per component; a 720-packet chain has 23,405-bit components</td><td>&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <p>The chain&rsquo;s cost is easy to see per packet. Forty packets took 5,204 bits (four components of 1,301 bits) to hold 2,560 bits of data:</p>
+            <div class="bits" role="img" aria-label="About 130 bits per 64-bit packet: 64 bits of data and about 66 bits of overhead">
+                <span style="flex:64;--c:#fbbf24">64 data bits</span>
+                <span style="flex:66;--c:#c084fc">~66 bits the exact chain adds</span>
+            </div>
+            <p>Unfolding grows roughly quadratically with chain length, so chains must be segmented. A 90-packet register, or one shard, is the natural unit (<a href="biochains.html#weave">Explainer 4</a>).</p>
+            <p><strong>Why this bites on WordNet.</strong> The pinned noun spanning tree reaches depth 19 below entity.n.01. One node has 659 children, 3,291 nodes have more than five, and 396 have more than 25. Under the address rule, each child of a node with c children takes max(1, &lceil;log&#8325; c&rceil;) letters. So the addresses of deep synsets run past depth 12, beyond which float decoding starts to fail. The design concludes that float64 is not certifiable at WordNet depth, and claim L4 registers that (<a href="architecture.html#rank">Explainer 3</a>).</p>
+
+            <h3>The missing exact H&sup2; tree, and the one designed</h3>
+            <p>No exact tree exists in H&sup2;. The existing <code>TreeEmbedding</code> uses <code>Math.cos</code> and <code>Math.sin</code>. The Lexicon designs a new one on rational directions only: (1,&nbsp;0), (3/5,&nbsp;&plusmn;4/5), (&minus;7/25,&nbsp;&plusmn;24/25) and (&minus;1,&nbsp;0), with a boost of t&nbsp;=&nbsp;11/13, so cosh = 145/24 and &tau; = ln&nbsp;12.</p>
+            <p>A planning check, run in memory before any spike, found the following. Exact greedy decoding worked for 100/100 random words at depth 12 and 40/40 at depth 28. With the H&sup3; step t&nbsp;=&nbsp;3/4, the same directions decoded only 48/100 at depth 12. At depth 28 the new tree cost up to 217/143 bits (numerator/denominator) for random words and 229/188 in the worst case, against about 138/79 in H&sup3;. That is 1.5&ndash;2.4 times the bits. Spike S2 measures this properly; this page does not quote it (<a href="architecture.html#place">Explainer 3</a>, <a href="evidence.html#spikes">Explainer 8</a>).</p>
+            <div class="callout deep"><span class="label">Exactness moves the cost; it does not remove it</span>
+                <p>WordNet reconstruction is scored by <strong>MAP</strong>, mean average precision. For each node, rank every other node by distance, and measure how high its true neighbours come. Then average over all nodes; 1 is perfect. A combinatorial tree embedding reached a MAP of 0.989 in 2 dimensions, against 0.87 for learned Poincar&eacute; embeddings in 200. It needed almost 500 bits of precision, or 10 dimensions at 32 bits (<a href="https://proceedings.mlr.press/v80/sala18a.html">Sala, De Sa, Gu &amp; R&eacute; 2018</a>; verified; the 0.87 for Poincar&eacute; is quoted through Sala and graded likely). Exact points pay that price in BigInt, as the 138 and 217 bits above show. Benchmarks will therefore compare at matched dimension <em>and</em> at matched bits.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="lab">
+            <div class="chapter-num">07</div>
+            <h2>Words, live</h2>
+            <p class="chapter-intro">This lab runs the shared cores unchanged in your browser: the verbatim engram/1 core, Engram&rsquo;s address code and Hyperbolic Oracles&rsquo; exact H&sup3; tree. Type some words and look for three things. Words that share a key. Addresses that share a prefix only by base-5 accident. And the size of an exact point.</p>
+            <div class="lab">
+                <div class="lab-title">Lab &middot; key, address and exact point for each word</div>
+                <div class="lab-row">
+                    <label for="lab-text">Words <input id="lab-text" type="text" value="listen silent noon geodesic" maxlength="200" autocomplete="off" spellcheck="false" style="font:0.9rem var(--mono);padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;width:min(24em,72vw)"></label>
+                </div>
+                <div class="lab-row" id="lab-presets">
+                    <button class="chip on" type="button" data-w="listen silent noon geodesic">listen silent noon geodesic</button>
+                    <button class="chip" type="button" data-w="dog god eye y">dog god eye y</button>
+                    <button class="chip" type="button" data-w="cat cats king queen">cat cats king queen</button>
+                    <button class="chip" type="button" data-w="deed abba 2024 42">deed abba 2024 42</button>
+                    <button class="chip" type="button" data-w="don't e-mail caf&eacute;">don&rsquo;t e-mail caf&eacute;</button>
+                </div>
+                <div class="out" id="lab-sum">Loading the cores&hellip;</div>
+                <h4>The keys</h4>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Token</th><th>engram/1 key</th><th>Letters an odd number of times</th><th>Same key as</th><th class="num">Hamming to the token above</th></tr></thead>
+                    <tbody id="lab-keys"></tbody>
+                </table></div>
+                <h4>The addresses and the exact points</h4>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Token</th><th>28-letter address</th><th>Prefix shared with the token above</th><th>Certified</th><th>Exact H&sup3; point (numerator / denominator bits), and the same in float64</th></tr></thead>
+                    <tbody id="lab-addr"></tbody>
+                </table></div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">Tokens come from Engram&rsquo;s splitter (anything but A&ndash;Z and 0&ndash;9 splits; upper-cased; the first 12 shown). Keys print as <code>chiralKey</code> does. The address encodes the packet value (bit i = grid cell i) from the root, as <code>EngramCore.encode</code> does; letters 0&ndash;5 are 1+2i, 1&minus;2i, 1+2j, 1&minus;2j, 1+2k, 1&minus;2k. Certified: <code>certifyWord</code> holds (norm exactly 5&sup2;&#8312;, right division returns the word, the word is reduced) and decoding returns the 64 bits. The point is <code>TreeEmbedding3D.pointExact</code>, checked on the sheet and decoded back exactly; the float64 line places the same word in floats and decodes it again.</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li><strong>listen silent</strong>: one key, so one address and one point. Everything downstream inherits the collision.</li>
+                    <li><strong>noon</strong>, <strong>deed</strong>, <strong>abba</strong>, <strong>2024</strong>, <strong>42</strong>: the zero key. Its address takes the first child at every letter, the straight path in the H&sup3; tree (<code>decoder3d.js</code> <code>LOCAL[0]</code>); compare its numerator bits with a typical word&rsquo;s.</li>
+                    <li><strong>cat cats</strong>: one letter more, 30 of 64 bits different, no shared prefix. Nothing says the words are related.</li>
+                    <li><strong>don&rsquo;t e-mail caf&eacute;</strong>: the splitter breaks words and drops the &eacute;, the Unicode gap of <a href="#missing">chapter 4</a>.</li>
+                    <li>The float64 line: most words decode wrongly somewhere past letter 12, while the exact point decodes all 28.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="chapter" id="answer">
+            <div class="chapter-num">08</div>
+            <h2>The short answer</h2>
+            <p class="chapter-intro">What have we built, for language? An exact, tested base for geometry, bookkeeping and integrity, and nothing that learns language.</p>
+            <div class="grid-3">
+                <div class="card"><h4>Reuse as it is</h4><p>The norm-5 tree and its LPS generators. The exact H&sup3; tree with exact decoding. <code>Q</code>, the shared <code>Rng</code>, dyadic snapping and SHA-256. The verbatim <code>shdccp/2</code> codec and Engram&rsquo;s importer. The method: reference, parity, preregistration.</p><div class="meta">loaded unchanged, by relative path</div></div>
+                <div class="card"><h4>Reuse, demoted</h4><p>engram/1 as an Owl-compatibility checksum only. The fence and guard as descriptors. PolyStep for heads of a few hundred parameters. The float H&sup2; tree for drawing. Registers and the coupler stay out of the model: they are bookkeeping.</p><div class="meta">D4 &middot; D11</div></div>
+                <div class="card planned"><h4>Build new</h4><p>A pinned normaliser and WordPiece tokenizer. The address rule and a bijective id code. An exact H&sup2; tree and exact ranking. A float64 trainer with Euclidean controls. Records and manifests for shards. An encoder only at Stage 2.</p><div class="meta">Phases 1&ndash;7 &middot; <a href="../README.md">README</a></div></div>
+            </div>
+            <p>The rest of the library takes these pieces in turn. <a href="shdccp.html">Explainer 2</a> sorts out SHD-CCP&rsquo;s layers and layouts and fixes the one bridge. <a href="architecture.html">Explainer 3</a> follows a sentence through the front end in H&sup2; and H&sup3;. <a href="biochains.html">Explainer 4</a> grows language shards as biochains. <a href="alternatives.html">Explainer 5</a> gives every alternative a role. <a href="tracks.html">Explainer 6</a> sets out the browser, CPU and GPU tracks. <a href="benchmarks.html">Explainer 7</a> builds the benchmark ladder. <a href="evidence.html">Explainer 8</a> holds the spikes and claims L1&ndash;L11.</p>
+            <div class="callout note"><span class="label">What this page decides</span>
+                <p>Nothing. It is an inventory. Decisions are made by the claims in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>, on the instances and rules fixed there, after the spikes and before any code that tests them (<a href="../index.html#ledger">ledger</a>).</p>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="../index.html">&larr; Hub</a>
+                <a class="btn btn-ghost" href="shdccp.html">Next: SHD-CCP, three layers, eight layouts, one bridge &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 1 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a></footer>
+<script src="../../../scripts/geometric-build/orbital_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+<script src="../../Hyperbolic%20Oracles/twin3d.js"></script>
+<script src="../../Hyperbolic%20Oracles/fence.js"></script>
+<script src="../../Engram%20Minds%20Eye/ttmpt_core_v1.js"></script>
+<script src="../../Engram%20Minds%20Eye/engram_core.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const T = window.TTMPTv1, C = window.HPCore, D3 = window.HPDecode3D, EC = window.EngramCore;
+    const sum = $('lab-sum'), keysBody = $('lab-keys'), addrBody = $('lab-addr'), input = $('lab-text');
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const good = s => `<span style="color:var(--emerald)">${s}</span>`, bad = s => `<span style="color:var(--rose)">${s}</span>`;
+    if (!T) { sum.innerHTML = bad('The engram/1 core (Engram Minds Eye/ttmpt_core_v1.js) did not load, so the lab cannot run. Open this page from its place in the site.'); return; }
+    const P = C && C.P, L = 28, MAX = 12, ZERO = '0000000000000000';
+    const tokenize = EC ? EC.tokenize : text => (text || '').split(/[^A-Za-z0-9]+/).filter(t => t.length > 0).map(t => t.toUpperCase());
+    const hexLsb = g => { let s = ''; for (let i = 0; i < 8; i++) { let b = 0; for (let k = 0; k < 8; k++) b |= g[i * 8 + k] << k; s += b.toString(16).padStart(2, '0'); } return s; };
+    const pack = g => g.reduce((v, b, i) => (b ? v | (1n << BigInt(i)) : v), 0n);
+    // engram_core's address (encode/decode); the same rule written out in case engram_core.js did not load
+    const after = last => (last === undefined ? [0, 1, 2, 3, 4] : P.children([last]));
+    function encode(v) {
+        if (EC) return EC.encode(v);
+        const w = []; let x = v, last;
+        for (let s = 0; s < L; s++) { last = after(last)[Number(x % 5n)]; w.push(last); x /= 5n; }
+        return w;
+    }
+    function decode(w) {
+        if (EC) return EC.decode(w);
+        let x = 0n, m = 1n, last;
+        for (const g of w) { const i = after(last).indexOf(g); if (i < 0) return null; x += BigInt(i) * m; m *= 5n; last = g; }
+        return x;
+    }
+    let emb = null;
+    try { if (D3) emb = new D3.TreeEmbedding3D(); } catch (e) { emb = null; }
+    const bitLen = n => (n < 0n ? -n : n).toString(2).length;
+    const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    function oddLetters(tok) {
+        const c = {};
+        for (const ch of tok.toUpperCase()) if (ch >= 'A' && ch <= 'Z') c[ch] = (c[ch] || 0) ^ 1;
+        return Object.keys(c).filter(k => c[k]).sort().join('');
+    }
+    const cache = new Map();
+    function study(tok) {
+        if (cache.has(tok)) return cache.get(tok);
+        const r = { tok };
+        r.grid = T.crystallize(tok); r.key = hexLsb(r.grid); r.v = pack(r.grid); r.odd = oddLetters(tok);
+        if (P) {
+            try {
+                r.word = encode(r.v);
+                r.back = decode(r.word) === r.v;
+                r.cert = D3 && D3.certifyWord ? D3.certifyWord(r.word, L) : null;
+            } catch (e) { r.word = null; r.err = String((e && e.message) || e); }
+        }
+        if (emb && r.word) {
+            try {
+                const t0 = now(), p = emb.pointExact(r.word);
+                r.ms = now() - t0;
+                r.num = Math.max(...p.map(q => bitLen(q.n)));
+                r.den = Math.max(...p.map(q => bitLen(q.d)));
+                r.sheet = C.X && C.X.onSheet ? C.X.onSheet(p) : null;
+                r.exactBack = emb.decodeExact(p, L).join(',') === r.word.join(',');
+                const fw = emb.decode(emb.point(r.word), L);
+                r.floatWrong = fw.findIndex((g, i) => g !== r.word[i]);
+            } catch (e) { r.ptErr = String((e && e.message) || e); }
+        }
+        cache.set(tok, r);
+        return r;
+    }
+    const grouped = w => w.join('').replace(/(.{7})(?=.)/g, '$1 ');
+
+    function render() {
+        let all;
+        try { all = tokenize(input.value); } catch (e) { all = []; }
+        const toks = all.slice(0, MAX);
+        if (!toks.length) { sum.innerHTML = '<span class="k">Type a few words.</span>'; keysBody.innerHTML = ''; addrBody.innerHTML = ''; return; }
+        const rs = toks.map(study);
+        const byKey = new Map();
+        rs.forEach(r => { if (!byKey.has(r.key)) byKey.set(r.key, new Set()); byKey.get(r.key).add(r.tok); });
+        const distinct = new Set(toks).size, shared = [...byKey.values()].filter(s => s.size > 1);
+        const onZero = [...(byKey.get(ZERO) || [])];
+        const loaded = [P ? good('norm-5 tree') : bad('norm-5 tree missing'), emb ? good('exact H&sup3; tree') : bad('H&sup3; tree missing'), EC ? good('EngramCore') : '<span class="k">EngramCore not loaded: the same address rule, written out here</span>'];
+        sum.innerHTML = `<span class="k">tokens</span> ${toks.length}${all.length > MAX ? ` (the first ${MAX} of ${all.length})` : ''} &nbsp; <span class="k">distinct</span> ${distinct} &nbsp; <span class="k">distinct keys</span> ${byKey.size}` +
+            `<br><span class="k">shared keys</span> ${shared.length ? bad(shared.map(s => [...s].map(esc).join(' = ')).join('; ')) : good('none among these')}` +
+            (onZero.length ? `<br><span class="k">on the zero key</span> ${bad(onZero.map(esc).join(', '))}` : '') +
+            `<br><span class="k">possible keys</span> at most 2<sup>26</sup> = 67,108,864 of 2<sup>64</sup> &nbsp; <span class="k">cores</span> ${loaded.join(' &middot; ')}`;
+        keysBody.innerHTML = rs.map((r, i) => {
+            const others = [...byKey.get(r.key)].filter(t => t !== r.tok).map(esc);
+            let same = others.length ? bad(others.join(', ')) : good('none here');
+            if (r.key === ZERO) same = bad('the zero key') + (others.length ? ' &middot; ' + bad(others.join(', ')) : '');
+            const ham = i ? `${T.hamming(r.grid, rs[i - 1].grid)} / 64` : '&mdash;';
+            return `<tr><td class="mono">${esc(r.tok)}</td><td class="mono">${r.key}</td><td class="mono">${r.odd ? esc(r.odd) : '(none)'}</td><td>${same}</td><td class="num">${ham}</td></tr>`;
+        }).join('');
+        addrBody.innerHTML = rs.map((r, i) => {
+            if (!r.word) return `<tr><td class="mono">${esc(r.tok)}</td><td colspan="4">${bad(P ? 'the address could not be computed: ' + esc(r.err || '') : 'Hyperbolic Oracles&rsquo; core did not load')}</td></tr>`;
+            let pre = '&mdash;';
+            const w0 = i ? rs[i - 1].word : null;
+            if (w0) {
+                let k = 0;
+                while (k < L && w0[k] === r.word[k]) k++;
+                pre = k === L ? 'all 28: the same value' : k === 0 ? '0: last base-5 digits differ' : `${k}: the values agree mod 5<sup>${k}</sup>`;
+            }
+            const cert = (r.back && r.cert !== false) ? good(r.cert === null ? 'decodes back' : 'yes') : bad('no');
+            let pt = '&mdash;';
+            if (r.ptErr) pt = bad('error: ' + esc(r.ptErr));
+            else if (r.num !== undefined) {
+                pt = `<span class="mono">${r.num} / ${r.den} bits &middot; ${r.ms.toFixed(1)} ms</span>` +
+                    `<br>exact: ${r.sheet === false ? bad('off the sheet') : good('on the sheet')}, ${r.exactBack ? good('decodes back') : bad('does not decode back')}` +
+                    `<br>float64: ${r.floatWrong < 0 ? good('all 28 letters right') : bad(`wrong from letter ${r.floatWrong + 1}`)}`;
+            } else if (!emb) pt = bad('decoder3d.js did not load');
+            return `<tr><td class="mono">${esc(r.tok)}</td><td><span class="word">${grouped(r.word)}</span></td><td>${pre}</td><td>${cert}</td><td>${pt}</td></tr>`;
+        }).join('');
+    }
+    let timer = null;
+    const presets = document.querySelectorAll('#lab-presets [data-w]');
+    const mark = () => presets.forEach(b => b.classList.toggle('on', b.dataset.w === input.value));
+    input.addEventListener('input', () => { mark(); clearTimeout(timer); timer = setTimeout(render, 150); });
+    presets.forEach(b => b.addEventListener('click', () => { input.value = b.dataset.w; mark(); render(); }));
+    try { render(); } catch (e) { sum.innerHTML = bad('The lab stopped: ' + esc((e && e.message) || e)); }
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

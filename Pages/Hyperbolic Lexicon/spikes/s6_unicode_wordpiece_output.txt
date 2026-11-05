@@ -1,0 +1,245 @@
+S6 s6_unicode_wordpiece: Unicode behaviour of Node, Python 3.13 and headless Chromium over every code point; the L1 stress set; Final_Sigma and U+0130; a toy WordPiece in all three runtimes
+Settles: the pinned-table design (D5), the table size, L1's must-fail control (1) and the stress-set hash. Decides no claim. Data: full Unicode sweeps, synthetic strings Rng(90000+i), repository Markdown at commit 7b10514; no WordNet, nothing registered.
+~ node v22.23.4, linux-x64
+
+0. Runtimes and their Unicode versions
+~ node v22.23.4: process.versions.unicode 17.0, icu 78.3, cldr 48.0, v8 12.4.254.21-node.57
+~ python 3.13.18 (python3 -B -I): unicodedata.unidata_version 15.1.0
+~ chromium: Chrome for Testing 153.0.8010.12 via Playwright 1.63.0; secure context true; UA Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36
+  inference from behaviour: assigned graphic + format code points (gc not Cn, Co, Cs, Cc) against the published totals
+  (15.0: 149,186, 15.1: 149,813, 16.0: 154,998, 17.0: 159,801); checked on Python and Node first. Markers: U+2FFC (15.1), U+0897 (16.0), U+20C1 (17.0)
+  python: 149,813 -> Unicode 15.1 (reports 15.1.0)
+~ node: 159,801 -> Unicode 17.0 (reports 17.0); markers 2FFC So, 0897 Mn, 20C1 Sc
+~ chromium: 159,801 -> Unicode 17.0 (inferred); markers 2FFC So, 0897 Mn, 20C1 Sc
+~ agreement of the inference with the reported version: python yes, node yes
+
+1. Every code point 0..10FFFF except D800..DFFF (1,112,064): gc, lower, nfd, mn (the stress-set properties) and sigma, ordp (reported)
+  canonical texts, SHA-256 per runtime: gc runs "SSSS..EEEE Cat"; lower and nfd "XXXX:YYYY ZZZZ" where the mapping is not the identity;
+  mn and ordp runs of members; sigma runs of classes I and C; hex upper case, >= 4 digits, LF, code point order
+  python gc      4008 lines  sha256 1d80bbbd817e488649558beaf10362ffc7f6c15dfcd15e06fc29217697a3c3ba
+  python lower   1433 lines  sha256 074bc897bf18fc676ae83c834964b846efa7a2d3f0ba2f216410636f35686354
+  python nfd    13233 lines  sha256 45fca1c96e3b56fd2a3b88f836d093fb936f502fbd60872782090b6cf20074c9
+  python mn       346 lines  sha256 e5746887f2e4de7301ee1cf3af4162cc496f94ed28f69f7fb0559c3b4a35e428
+  python sigma    587 lines  sha256 f1c37898c1559dddcec551ba90a8b16f5d6e6b91f8bc9e28b4ec6560640a9abb
+  python ordp     335 lines  sha256 4fa63d764d8aecdc8292ce29369faac36af04d57fa165c3410cd056355765a70
+~ node   gc      4143 lines  sha256 d3fdf89e5b000e0cf0bfaf6eef777508bbb36dd5c45da09f3bb8114a6d51eb24
+~ node   lower   1488 lines  sha256 bac515c0fd670031a83b6b9ad26deb75ebb9a232444370321dad7295078a33ca
+~ node   nfd    13253 lines  sha256 689033e08254ca742add0b708b79517a80c0cb7aa543ba09cb42977ab4e99e64
+~ node   mn       365 lines  sha256 a6982c9e508f7e4f348bca5cde2394475e90cb15c55d9ad9d39fb02f5f9dacd2
+~ node   sigma    615 lines  sha256 aa426c97d9737f2d7e49d11a506fde83e24c6ba53ab55d714e0d7ead2cc52174
+~ node   ordp     347 lines  sha256 7f3d136b6d40cb4d0803ee8ef6d6025b018c877047e38fbba2d513df41dd380a
+~ chrome gc      4143 lines  sha256 d3fdf89e5b000e0cf0bfaf6eef777508bbb36dd5c45da09f3bb8114a6d51eb24 (= node)
+~ chrome lower   1488 lines  sha256 bac515c0fd670031a83b6b9ad26deb75ebb9a232444370321dad7295078a33ca (= node)
+~ chrome nfd    13253 lines  sha256 689033e08254ca742add0b708b79517a80c0cb7aa543ba09cb42977ab4e99e64 (= node)
+~ chrome mn       365 lines  sha256 a6982c9e508f7e4f348bca5cde2394475e90cb15c55d9ad9d39fb02f5f9dacd2 (= node)
+~ chrome sigma    615 lines  sha256 aa426c97d9737f2d7e49d11a506fde83e24c6ba53ab55d714e0d7ead2cc52174 (= node)
+~ chrome ordp     347 lines  sha256 7f3d136b6d40cb4d0803ee8ef6d6025b018c877047e38fbba2d513df41dd380a (= node)
+  python counts: lower 1433 (multi-code-point 1), nfd 13233, Mn 1985, sigma I 2707 / C 4259 / X 0, ordp 1867, Cn 824,718; ordp = (combining != 0) on every code point without a decomposition: yes
+~ node counts: lower 1488 (multi-code-point 1), nfd 13253, Mn 2059, sigma I 2794 / C 4364 / X 0, ordp 1915, Cn 814,730
+~ chromium counts: lower 1488 (multi-code-point 1), nfd 13253, Mn 2059, sigma I 2794 / C 4364 / X 0, ordp 1915, Cn 814,730
+~ JS gc check: every code point matched by exactly one of the 30 classes: node yes, chromium yes
+~ sweep time: python 1041 ms, node 1076 ms, chromium 1039 ms
+
+2. Divergences (code points on which two runtimes give different values)
+~ gc    node-python  9990 (assigned in both: 2), chromium-python  9990, node-chromium 0
+~ lower node-python    55 (assigned in both: 0), chromium-python    55, node-chromium 0
+~ nfd   node-python    20 (assigned in both: 0), chromium-python    20, node-chromium 0
+~ mn    node-python    76 (assigned in both: 1), chromium-python    76, node-chromium 0
+~ sigma node-python   196 (assigned in both: 2), chromium-python   196, node-chromium 0
+~ ordp  node-python    48 (assigned in both: 0), chromium-python    48, node-chromium 0
+~ code points assigned in node but Cn in python: 9,988; in chromium but Cn in python: 9,988; assigned in python but Cn in node: 0
+~ gc differences on code points assigned in all three runtimes: 2:
+~   0295 P:Ll NC:Lo; 1171E P:Mn NC:Mc
+~ lower differences on code points assigned in all three runtimes: 0
+~ nfd differences on code points assigned in all three runtimes: 0
+~ mn differences on code points assigned in all three runtimes: 1:
+~   1171E P:1 NC:0
+~ sigma differences on code points assigned in all three runtimes: 2:
+~   0295 P:C NC:N; 1171E P:I NC:N
+~ ordp differences on code points assigned in all three runtimes: 0
+
+3. The L1 stress set (s6_stress_set_v1.json)
+~ regenerated in memory: 20,520 cases, 360,160 B, sha256 bd1179ea80eb3dd44e05a4efa0484f034a637a66d8f09ffe10e428f040f6e94a; equal to the committed file: yes
+  committed file: 360,160 B, sha256 bd1179ea80eb3dd44e05a4efa0484f034a637a66d8f09ffe10e428f040f6e94a
+  canonical (JSON.stringify(set, null, 1) + LF, printable ASCII): yes; recorded Unicode versions: python 15.1.0, node 17.0, chromium 17.0 (inferred)
+  20,520 cases: divergentAlone 9990, divergentInContext 9990, finalSigma 444, u0130 10, hangul 15, canonicalOrdering 71
+  9,990 divergent code points (= 9,990 in 159 ranges) by property: gc 9990, lower 55, nfd 20, mn 76
+  code points by divergence signature:
+     8818  gc[P:Cn NC:Lo]
+      829  gc[P:Cn NC:So]
+       90  gc[P:Cn NC:Nd]
+       67  gc[P:Cn NC:Mn] mn[P:0 NC:1]
+       55  gc[P:Cn NC:Lu] lower[P|NC]
+       51  gc[P:Cn NC:Ll]
+       15  gc[P:Cn NC:Mc]
+       13  gc[P:Cn NC:Lm]
+       13  gc[P:Cn NC:Po]
+       12  gc[P:Cn NC:Sm]
+        9  gc[P:Cn NC:Lo] nfd[P|NC]
+        8  gc[P:Cn NC:Mn] nfd[P|NC] mn[P:0 NC:1]
+        3  gc[P:Cn NC:Mc] nfd[P|NC]
+        3  gc[P:Cn NC:Nl]
+        1  gc[P:Cn NC:Pd]
+        1  gc[P:Cn NC:Sc]
+        1  gc[P:Ll NC:Lo]
+        1  gc[P:Mn NC:Mc] mn[P:1 NC:0]
+  finalSigma: 52 fixed + 392 derived (2 per code point whose sigma class differs); canonicalOrdering: 23 fixed + 48 derived
+  post151First64 (assigned in Node, Cn in Python 15.1.0; L1(d)'s pool):
+    088F 0897 0C5C 0CDC 1ACF 1AD0 1AD1 1AD2 1AD3 1AD4 1AD5 1AD6 1AD7 1AD8 1AD9 1ADA
+    1ADB 1ADC 1ADD 1AE0 1AE1 1AE2 1AE3 1AE4 1AE5 1AE6 1AE7 1AE8 1AE9 1AEA 1AEB 1B4E
+    1B4F 1B7F 1C89 1C8A 20C1 2427 2428 2429 2B96 31E4 31E5 A7CB A7CC A7CD A7CE A7CF
+    A7D2 A7D4 A7DA A7DB A7DC A7F1 FBC3 FBC4 FBC5 FBC6 FBC7 FBC8 FBC9 FBCA FBCB FBCC
+~ python read the committed set: sha256 equal; json.dumps(json.loads(text), indent=1) + LF reproduces it byte for byte: yes
+
+4. Final_Sigma and U+0130: lowercase in each runtime, as code point lists (the fixed cases; derived cases summarised)
+  Final_Sigma (U+03A3 -> U+03C2 when final, U+03C3 otherwise; the context skips case-ignorable code points), python:
+    [039F 0394 039F 03A3] -> [03BF 03B4 03BF 03C2]
+    [039F 0394 039F 03A3 0020 039F 0394 039F 03A3] -> [03BF 03B4 03BF 03C2 0020 03BF 03B4 03BF 03C2]
+    [03A3] -> [03C3]
+    [0041 03A3 002E] -> [0061 03C2 002E]
+    [0041 03A3] -> [0061 03C2]
+    [03A3 0041] -> [03C3 0061]
+    [0041 03A3 0042] -> [0061 03C3 0062]
+    [0041 03A3 03A3] -> [0061 03C3 03C2]
+    [03A3 03A3] -> [03C3 03C2]
+    [0041 03A3 03A3 0042] -> [0061 03C3 03C3 0062]
+    [03A3 0391 03A3] -> [03C3 03B1 03C2]
+    [0041 002E 03A3] -> [0061 002E 03C2]
+    [0041 002E 03A3 002E] -> [0061 002E 03C2 002E]
+    [0041 03A3 002E 0042] -> [0061 03C3 002E 0062]
+    [0041 03A3 0301] -> [0061 03C2 0301]
+    [0041 0301 03A3] -> [0061 0301 03C2]
+    [0041 03A3 0301 0042] -> [0061 03C3 0301 0062]
+    [0301 03A3] -> [0301 03C3]
+    [0041 03A3 0027] -> [0061 03C2 0027]
+    [0041 03A3 0027 0042] -> [0061 03C3 0027 0062]
+    [0041 0027 03A3] -> [0061 0027 03C2]
+    [0041 03A3 2019 0042] -> [0061 03C3 2019 0062]
+    [0041 2019 03A3] -> [0061 2019 03C2]
+    [0041 03A3 00AD 0042] -> [0061 03C3 00AD 0062]
+    [0041 00AD 03A3] -> [0061 00AD 03C2]
+    [0041 03A3 200D 0042] -> [0061 03C3 200D 0062]
+    [0041 200D 03A3] -> [0061 200D 03C2]
+    [0041 03A3 003A 0042] -> [0061 03C3 003A 0062]
+    [0041 003A 03A3] -> [0061 003A 03C2]
+    [0041 03A3 00B7 0042] -> [0061 03C3 00B7 0062]
+    [0031 03A3] -> [0031 03C3]
+    [0041 03A3 0031] -> [0061 03C2 0031]
+    [0041 0020 03A3] -> [0061 0020 03C3]
+    [0041 03A3 0020 0042] -> [0061 03C2 0020 0062]
+    [0041 002D 03A3] -> [0061 002D 03C3]
+    [1D2C 03A3] -> [1D2C 03C3]
+    [0041 1D2C 03A3] -> [0061 1D2C 03C2]
+    [0041 03A3 1D2C] -> [0061 03C2 1D2C]
+    [0041 03A3 1D2C 0042] -> [0061 03C3 1D2C 0062]
+    [0345 03A3] -> [0345 03C3]
+    [0041 0345 03A3] -> [0061 0345 03C2]
+    [0041 03A3 0345] -> [0061 03C2 0345]
+    [0041 03A3 0345 0042] -> [0061 03C3 0345 0062]
+    [01C5 03A3] -> [01C6 03C2]
+    [0041 03A3 01C5] -> [0061 03C3 01C6]
+    [02B0 03A3] -> [02B0 03C3]
+    [0041 02B0 03A3] -> [0061 02B0 03C2]
+    [0041 03A3 02B0 0042] -> [0061 03C3 02B0 0062]
+    [1F48 0394 03A5 03A3 03A3 0395 038E 03A3] -> [1F40 03B4 03C5 03C3 03C3 03B5 03CD 03C2]
+    [038C 03A3 039F 03A3] -> [03CC 03C3 03BF 03C2]
+    [0130 03A3] -> [0069 0307 03C2]
+    [0041 03A3 0130] -> [0061 03C3 0069 0307]
+~ node and chromium give python's lowercase on all 52 of these cases
+~ derived Final_Sigma cases: node lowercase differs from python on 392 of 392, chromium on 392; first:
+~   [0041 0295 03A3]: python [0061 0295 03C2], node [0061 0295 03C3]
+~   [0041 03A3 0295 0042]: python [0061 03C3 0295 0062], node [0061 03C2 0295 0062]
+~   [0041 0897 03A3]: python [0061 0897 03C3], node [0061 0897 03C2]
+~   [0041 03A3 0897 0042]: python [0061 03C2 0897 0062], node [0061 03C3 0897 0062]
+~   [0041 1ACF 03A3]: python [0061 1ACF 03C3], node [0061 1ACF 03C2]
+~   [0041 03A3 1ACF 0042]: python [0061 03C2 1ACF 0062], node [0061 03C3 1ACF 0062]
+~ the 196 code points whose sigma class differs: 2 assigned in python (U+0295 C -> N, U+1171E I -> N), 194 new since 15.1 (node class C 106, I 88)
+  U+0130 (full lowercase mapping to U+0069 U+0307; no locale), python:
+    [0130] -> [0069 0307]
+    [0061 0130 0062] -> [0061 0069 0307 0062]
+    [0130 0053 0054 0041 004E 0042 0055 004C] -> [0069 0307 0073 0074 0061 006E 0062 0075 006C]
+    [0049 0307] -> [0069 0307]
+    [0130 0301] -> [0069 0307 0301]
+    [0130 0130] -> [0069 0307 0069 0307]
+    [0049 0131 0130 0069] -> [0069 0131 0069 0307 0069]
+    [0049 0307 0301] -> [0069 0307 0301]
+    [0130 0323] -> [0069 0307 0323]
+    [0069 0307] -> [0069 0307]
+~ node and chromium give python's lowercase on all 10 of these cases
+
+5. L1's must-fail control (1): platform normaliser toLowerCase().normalize('NFD').replace(/\p{Mn}/gu, '') against Python's R(s) on the stress set
+  python reference outputs (all 20,520 cases, "hex\n" each), sha256 6af0be2e5dc9827aa37bf9d594dc8fbb1342547cf9d174b5a8553fb9b55613c6
+~ node: differs from python on 725 of 20,520 cases (divergentAlone 143/9990, divergentInContext 143/9990, finalSigma 392/444, u0130 0/10, hangul 0/15, canonicalOrdering 47/71); the control FAILS, as it must; the first two per group:
+~   divergentAlone [0897]: python [0897], node []
+~   divergentAlone [1ACF]: python [1ACF], node []
+~   divergentInContext [0061 0897 0062]: python [0061 0897 0062], node [0061 0062]
+~   divergentInContext [0061 1ACF 0062]: python [0061 1ACF 0062], node [0061 0062]
+~   finalSigma [0041 0295 03A3]: python [0061 0295 03C2], node [0061 0295 03C3]
+~   finalSigma [0041 03A3 0295 0042]: python [0061 03C3 0295 0062], node [0061 03C2 0295 0062]
+~   canonicalOrdering [0061 0301 0897 0323]: python [0061 0897], node [0061]
+~   canonicalOrdering [0061 0301 1ACF 0323]: python [0061 1ACF], node [0061]
+~ chromium: differs from python on 725 of 20,520 cases (divergentAlone 143/9990, divergentInContext 143/9990, finalSigma 392/444, u0130 0/10, hangul 0/15, canonicalOrdering 47/71); the control FAILS, as it must; the first two per group:
+~   divergentAlone [0897]: python [0897], chromium []
+~   divergentAlone [1ACF]: python [1ACF], chromium []
+~   divergentInContext [0061 0897 0062]: python [0061 0897 0062], chromium [0061 0062]
+~   divergentInContext [0061 1ACF 0062]: python [0061 1ACF 0062], chromium [0061 0062]
+~   finalSigma [0041 0295 03A3]: python [0061 0295 03C2], chromium [0061 0295 03C3]
+~   finalSigma [0041 03A3 0295 0042]: python [0061 03C3 0295 0062], chromium [0061 03C2 0295 0062]
+~   canonicalOrdering [0061 0301 0897 0323]: python [0061 0897], chromium [0061]
+~   canonicalOrdering [0061 0301 1ACF 0323]: python [0061 1ACF], chromium [0061]
+~ node and chromium platform normalisers (and lowercases) differ from each other on 0 cases
+
+6. The pinned Unicode 15.1 table, prototyped from Python's unicodedata (nothing written; reference/golden/unicode_15_1_v1.json will be the real one)
+  categories: 4,009 ranges over 0..10FFFF (they also give Mn, Cc/Cf, Zs and P* for N_B's other steps); canonical decompositions
+  (single step, Hangul algorithmic): 2,061 (1,035 singletons);
+  combining classes: 388 ranges of 922 code points, 55 distinct non-zero values; lowercase: 1,433 mappings (1 to more than one code point);
+  Final_Sigma sets: case-ignorable 2,707 code points in 437 ranges, cased-not-ignorable 4,259 in 150 ranges (read from str.lower by the sigma probes)
+  compact JSON: 142,041 B, sha256 7b3b2bf293f0484bbfb8b7226a9b329b2246172920d5ec1681501bfdba2bd237 (a prototype, not a pin)
+  exactness, table-driven lower + Final_Sigma + NFD + drop Mn against Python's own functions: every code point alone: lower 0, nfd 0, full 0 mismatches of 1,112,064;
+  2,000 synthetic strings Rng(90000+i) from a 264-code-point pool: 0 mismatches (431 contain a final sigma, 1100 a non-final one); digest de7c169aaba4699eb99947edb6954246f9d63a1fe9ab9ef9d07c5723d4acabe3
+~ table build 329 ms, check 3158 ms
+
+7. Toy WordPiece (greedy longest-match-first, "##", [UNK], 100 code points per word; 500-entry vocabulary from the corpus) in three runtimes
+  corpus: commit 7b10514a4f2955c92cd0a06a3a658998080cb310, 10 files (Pages/**/*.md), 114,397 B UTF-8 joined with LF, 113,713 code points (473 non-ASCII)
+  manifest sha256 ("sha256 path\n" per file) 125a67c9321550069c552da27b82843338b171de4ce1ef8e70db8a076a354edf (python equal); text sha256 2eb0d45ae2aafbd80946f0eb9fb9c84a5ff577e8f09c2a5d4b05296145b9f3e8
+     25999 B  Pages/Engram Minds Eye/PREREGISTRATION.md
+     36547 B  Pages/Engram Minds Eye/README.md
+      5282 B  Pages/Engram Minds Eye/reference/README.md
+      1256 B  Pages/Engram Minds Eye/reference/results/claims.md
+      1091 B  Pages/Engram Minds Eye/reference/results/followups.md
+       208 B  Pages/Geometric Calculator/Hyperbolic PolyStep/README.md
+     10849 B  Pages/Geometric Calculator/update.md
+     19582 B  Pages/Hyperbolic Oracles/PREREGISTRATION.md
+     10005 B  Pages/Hyperbolic Oracles/README.md
+      3569 B  Pages/Hyperbolic Oracles/reference/README.md
+  python:   words 29659, tokens 48007, unk 434, longWords 0, multiPieceWords 6506, streamBytes 63002, vocabSize 500
+            vocab sha256 57273a742c83ea40b8f1583f3d96c3fdaa36b06b5d35af351b51944f943bf3ee, id stream sha256 a64bec9fbc9a965f30bef598213859f99a74657efbff962777d174c6e6edc303
+  node:     words 29659, tokens 48007, unk 434, longWords 0, multiPieceWords 6506, streamBytes 63002, vocabSize 500
+            vocab sha256 equal, id stream sha256 equal, text sha256 equal: identical to python
+  chromium: words 29659, tokens 48007, unk 434, longWords 0, multiPieceWords 6506, streamBytes 63002, vocabSize 500
+            vocab sha256 equal, id stream sha256 equal, text sha256 equal: identical to python
+  chromium's stream re-hashed in Node: equal to its WebCrypto hash; byte-identical to Node's: yes
+  vocabulary: ids 0-4 specials, 5-72 ASCII, 73-108 "##" + [0-9a-z], 109-304 words (the and is in of with ... over), 305-499 "##" suffixes (##he ##es ##ed ##nd ##er ##ts ... ##ator)
+  example: "Hyperbolic Lexicon: pinned tables, tokenization and WordPiece." -> hyperbolic l ##ex ##ic ##on : p ##in ##ne ##d t ##a ##b ##les , token ##i ##z ##at ##ion and word ##p ##i ##e ##ce .
+           ids 143 54 454 338 311 30 58 355 316 86 62 83 84 361 16 260 91 108 367 315 110 193 98 91 87 313 18
+~ python   throughput 1,410,800 tokens/s, 3.36 MB/s (best of 20 passes, 34.0 ms per pass)
+~ node     throughput 2,327,351 tokens/s, 5.55 MB/s (best of 20 passes, 20.6 ms per pass)
+~ chromium throughput 3,057,771 tokens/s, 7.29 MB/s (best of 20 passes, 15.7 ms per pass)
+
+SETTLES:
+~ - Unicode versions: Node 17.0 (ICU 78.3), Python 15.1.0, Chrome for Testing 153.0.8010.12 Unicode 17.0 (inferred from 159,801 assigned graphic + format code points).
+~ Node and Python differ on 9,990 gc, 55 lower, 20 nfd and 76 Mn values (9,990 code points in all; on code points assigned in
+~ both: gc 2, lower 0, nfd 0, mn 1); Final_Sigma context classes on 196; Node and Chromium differ on 0 values.
+- D5 (pinned tables) and the table size: the 15.1 table prototyped from Python's unicodedata 15.1.0 (4,009 category ranges, 2,061
+  single-step canonical decompositions, 388 combining-class ranges, 1,433 lowercase mappings, 2 Final_Sigma sets of 437 + 150 ranges;
+  142,041 B as compact JSON) reproduces Python's lower + Final_Sigma + NFD + drop Mn: 0 mismatches on 1,112,064 code points
+  alone and 0 on 2,000 synthetic strings. Final_Sigma needs the Cased and Case_Ignorable sets, which unicodedata does not expose;
+  the sigma probes read them from str.lower, so the export must include them.
+~ - L1 control (1): the platform normaliser differs from Python's R(s) on 725 of 20,520 stress-set cases in Node and 725 in Chromium
+~ (it must differ on >= 1: it does, so the control fails as required). Node and Chromium agree with each other on every case.
+- Stress set: s6_stress_set_v1.json, 360,160 B, 20,520 cases (9,990 divergent code points x 2 + 540 explicit),
+  sha256 bd1179ea80eb3dd44e05a4efa0484f034a637a66d8f09ffe10e428f040f6e94a; post151First64 from U+088F to U+FBCC.
+- Toy WordPiece on the pinned Markdown: Python, Node and Chromium give the same vocabulary (sha256 57273a742c83ea40...) and the same
+  48,007-token id stream (sha256 a64bec9fbc9a965f...): identical.
+~ Throughput: python 1,410,800, node 2,327,351, chromium 3,057,771 tokens/s.
+~ total runtime 10.9 s (python --sweep call: sweep, table, check, WordPiece 5.5 s, node sweep 1.1 s, chromium launch + sweep + WordPiece 1.5 s, node WordPiece 0.5 s)

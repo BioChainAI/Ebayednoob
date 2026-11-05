@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Benchmark Ladder - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 7 of Hyperbolic Lexicon, Phase 0: the benchmark ladder, from a byte-identical tokenizer to GLUE. Five stages, each with its question, data, metrics in plain words, published baselines with their grade (verified, likely or secondary), the controls, where it can run (here, with a wider network, or on a GPU), and what is known of each dataset&rsquo;s licence. A design: no Lexicon result is quoted.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 7 &middot; Phase 0</div>
+    <h1>The Benchmark Ladder</h1>
+    <p class="lede">Five rungs, from &ldquo;does the text become the same ids in Python and in the browser?&rdquo; to &ldquo;does a hierarchy factor help a small BERT on GLUE?&rdquo;. Each rung names its question, its data, its metrics in plain words, the published numbers to compare with and how far each can be trusted, the controls, and where it can run. Only the first two rungs run fully here. The rest wait for a wider network or a GPU, and for claims registered before any code.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#ladder">The ladder at a glance</a>
+        <a class="btn btn-ghost" href="#stage0">Stage 0: the tokenizer</a>
+        <a class="btn btn-ghost" href="#stage1">Stage 1: WordNet</a>
+        <a class="btn btn-ghost" href="#throughout">Rules for every stage</a>
+        <a class="btn btn-ghost" href="#licences">Licences</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">WordNet nouns <b>82,115</b> &middot; closure edges <b>743,241</b></span>
+        <span class="stat">runs here: Stages <b>0&ndash;1</b></span>
+        <span class="stat">BLiMP, LTG-BERT strict-small: <b>60.6</b> (2024 pipeline)</span>
+        <span class="stat">Euclidean control: <b>every</b> hyperbolic claim</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#ladder">2. The ladder at a glance</a></li>
+            <li><a href="#stage0">3. Stage 0: determinism and the tokenizer</a></li>
+            <li><a href="#stage1">4. Stage 1: the WordNet hierarchy</a></li>
+            <li><a href="#stage2">5. Stage 2: lexical semantics</a></li>
+            <li><a href="#stage3">6. Stage 3: small MLM pretraining</a></li>
+            <li><a href="#stage4">7. Stage 4: sentence and encoder tasks</a></li>
+            <li><a href="#throughout">8. Rules for every stage</a></li>
+            <li><a href="#licences">9. Licences</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#ladder">The ladder at a glance</a></li><li><a href="#stage0">Stage 0: determinism and the tokenizer</a></li>
+            <li><a href="#stage1">Stage 1: the WordNet hierarchy</a></li><li><a href="#stage2">Stage 2: lexical semantics</a></li><li><a href="#stage3">Stage 3: small MLM pretraining</a></li>
+            <li><a href="#stage4">Stage 4: sentence and encoder tasks</a></li><li><a href="#throughout">Rules for every stage</a></li><li><a href="#licences">Licences</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The ladder is the last layer of the system map. It scores what the exact placement, the learned static embeddings and, later, the encoder&rsquo;s heads produce. Its own outside data is BabyLM, BLiMP and GLUE; WordNet and UD English EWT reach it through the earlier stages.</p>
+            <div data-hl-map="focus" data-node="ladder"></div>
+            <p>Each rung asks one question and is climbed only when the one below it holds: the same ids in every engine, then the geometry against a real hierarchy, then word meaning, grammar and sentence tasks. Stages 0 and 1 run fully in this container (4 CPU cores, 15 GB RAM, no GPU); the rest need blocked hosts or a GPU (<a href="tracks.html#browser">Explainer 6</a> has the three compute tracks).</p>
+            <p><strong>This page is a design, not a report.</strong> No number on it is a Lexicon result. The WordNet and UD English EWT numbers are Phase 0 pins: counts and hashes measured from the pinned archives (<a href="../reference/golden/wordnet_v1.meta.json">wordnet_v1.meta.json</a>, <a href="../reference/golden/ewt_v1.meta.json">ewt_v1.meta.json</a>). Numbers called &ldquo;a planning check&rdquo; or &ldquo;an estimate&rdquo; come from the design and wait for a spike or a run. Spikes S1&ndash;S7 are still running, and nothing here quotes them (<a href="evidence.html#spikes">Explainer 8</a>).</p>
+            <div class="callout plain"><span class="label">How to read the marks</span>
+                <p>Every published score carries the survey&rsquo;s grade. <span class="tag t-COMPUTED">verified</span>: read from a repository or source code (for Sala et al., confirmed against the paper by the cross-check). <span class="tag t-HEURISTIC">likely</span>: from a search summary of the primary paper, which could not be opened because arxiv.org and aclanthology.org are blocked here. <span class="tag t-OPEN">secondary</span>: only from someone else&rsquo;s summary or table. Where the survey&rsquo;s adversarial cross-check corrected a survey, the correction is used.</p>
+                <p>Where a stage can run: <span class="mark here">here</span> in this container, browser or CPU; <span class="mark net">net</span> needs a host that is blocked here (huggingface.co, osf.io, zenodo.org and others); <span class="mark gpu">gpu</span> needs a GPU, on the user&rsquo;s hardware or in the cloud.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="ladder">
+            <div class="chapter-num">02</div>
+            <h2>The ladder at a glance</h2>
+            <p class="chapter-intro">Five stages, cheapest first. The bottom two are exact, run here, and decide seven of the eleven registered claims (L1&ndash;L7; the other four, L8&ndash;L11, concern the records of <a href="biochains.html#records">Explainer 4</a>). The top three need hosts or hardware this container lacks, and the top two are where hyperbolic geometry has its weakest published record, so they come last, after a gate.</p>
+            <figure><div class="map-wrap mini"><svg viewBox="0 0 760 330" role="img" aria-label="The ladder: Stage 0 at the bottom, then Stage 1, both run here; Stage 2 needs a wider network; a gate follows; Stages 3 and 4 need a wider network and a GPU">
+                <g font-family="Inter, system-ui, sans-serif" font-size="13">
+                    <line x1="34" y1="8" x2="34" y2="322" stroke="#334155" stroke-width="4"/><line x1="726" y1="8" x2="726" y2="322" stroke="#334155" stroke-width="4"/>
+                    <rect x="40" y="16" width="680" height="46" rx="8" fill="rgba(167,139,250,0.08)" stroke="#a78bfa"/>
+                    <text x="56" y="44" fill="#c4b5fd" font-family="Fira Code, monospace" font-size="12">STAGE 4</text><text x="134" y="44" fill="#e2e8f0">Sentence and encoder tasks: GLUE, an MTEB subset, SentEval probes</text><text x="706" y="44" fill="#c4b5fd" text-anchor="end" font-family="Fira Code, monospace" font-size="11">gpu + net</text>
+                    <rect x="40" y="74" width="680" height="46" rx="8" fill="rgba(244,63,94,0.07)" stroke="#f43f5e"/>
+                    <text x="56" y="102" fill="#fda4af" font-family="Fira Code, monospace" font-size="12">STAGE 3</text><text x="134" y="102" fill="#e2e8f0">Small MLM pretraining: BabyLM, BLiMP, a (Super)GLUE subset</text><text x="706" y="102" fill="#fda4af" text-anchor="end" font-family="Fira Code, monospace" font-size="11">net; gpu at 100M</text>
+                    <line x1="40" y1="137" x2="720" y2="137" stroke="#f5c542" stroke-dasharray="6 4"/>
+                    <rect x="210" y="128" width="340" height="18" rx="4" fill="#020617"/>
+                    <text x="380" y="141" fill="#f5c542" text-anchor="middle" font-size="12">gate: L1&#8211;L11 decided and reviewed before any encoder code</text>
+                    <rect x="40" y="152" width="680" height="46" rx="8" fill="rgba(244,63,94,0.07)" stroke="#f43f5e"/>
+                    <text x="56" y="180" fill="#fda4af" font-family="Fira Code, monospace" font-size="12">STAGE 2</text><text x="134" y="180" fill="#e2e8f0">Lexical semantics: HyperLex, hypernymy suites, similarity controls</text><text x="706" y="180" fill="#fda4af" text-anchor="end" font-family="Fira Code, monospace" font-size="11">cpu + net</text>
+                    <rect x="40" y="210" width="680" height="46" rx="8" fill="rgba(52,211,153,0.08)" stroke="#34d399"/>
+                    <text x="56" y="238" fill="#6ee7b7" font-family="Fira Code, monospace" font-size="12">STAGE 1</text><text x="134" y="238" fill="#e2e8f0">Hierarchy: WordNet noun closure and mammals, exact MAP</text><text x="706" y="238" fill="#22d3ee" text-anchor="end" font-family="Fira Code, monospace" font-size="11">here &#183; L3&#8211;L7</text>
+                    <rect x="40" y="268" width="680" height="46" rx="8" fill="rgba(52,211,153,0.08)" stroke="#34d399"/>
+                    <text x="56" y="296" fill="#6ee7b7" font-family="Fira Code, monospace" font-size="12">STAGE 0</text><text x="134" y="296" fill="#e2e8f0">Determinism and the tokenizer: byte identity, engram/1 collisions</text><text x="706" y="296" fill="#22d3ee" text-anchor="end" font-family="Fira Code, monospace" font-size="11">here &#183; L1, L2</text>
+                </g></svg></div><figcaption>Green rungs run here and decide registered claims; rose rungs need blocked hosts; violet needs a GPU. The dashed line is the roadmap&rsquo;s Stage-1 gate: L1&ndash;L11 decided and reviewed with the project&rsquo;s owner before any encoder code is written.</figcaption></figure>
+
+            <div class="table-wrap"><table>
+                <thead><tr><th>Stage</th><th>Question</th><th>Data</th><th>Metrics</th><th>Published baselines</th><th>Runs</th></tr></thead>
+                <tbody>
+                    <tr><td><a href="#stage0"><strong>0</strong></a> <span class="status s-next">next</span></td><td>Does text become the same bytes, pieces, ids and offsets in Python, Node and Chromium? How often does engram/1 merge distinct words?</td><td>WordNet glosses (117,659); UD EWT (16,622 sentences); a Unicode stress set; 2,000 synthetic strings; 147,306 WordNet lemma types</td><td>byte identity (all-or-nothing); collision share; as gates only: fertility, continued words, bytes per token, R&eacute;nyi efficiency, MorphScore</td><td>none for English WordPiece were found, so baselines are computed locally on the same text</td><td><span class="mark here">here</span></td></tr>
+                    <tr><td><a href="#stage1"><strong>1</strong></a> <span class="status s-next">next</span></td><td>Does the exact tree carry WordNet&rsquo;s hierarchy, better than flat trees, and how does it stand against learned embeddings?</td><td>noun closure (82,115 nouns, 743,241 edges); mammals (1,182 nodes); verb forest for dry runs</td><td>graph-edge and closure MAP, mean rank (pessimistic ties), distortion, bits per node; later cone F1, HiT F1</td><td>Sala 2-d 0.989 <span class="tag t-COMPUTED">verified</span>; Poincar&eacute; 200-d 0.87 <span class="tag t-HEURISTIC">likely</span>; 5-d values <span class="tag t-OPEN">secondary</span></td><td><span class="mark here">here</span></td></tr>
+                    <tr><td><a href="#stage2"><strong>2</strong></a> <span class="status s-planned">Phase 4</span></td><td>Do the geometries track graded and directional hypernymy, and lose where they should on similarity and relatedness?</td><td>HyperLex (2,616 pairs); BLESS, EVAL, LEDS, Shwartz, WBLESS, BiBLESS; SimLex-999, WordSim-353, MEN; SemEval-2018 Task 9</td><td>Spearman; detection AP, direction accuracy; MAP, MRR, P@5</td><td>HyperLex Poincar&eacute; 0.512, LEAR 0.686 <span class="tag t-HEURISTIC">likely</span>; Hearst patterns <span class="tag t-OPEN">secondary</span></td><td>CPU <span class="mark net">net</span></td></tr>
+                    <tr><td><a href="#stage3"><strong>3</strong></a> <span class="status s-planned">Phase 6</span></td><td>Does a hierarchy factor help a small masked LM learn grammar, at matched parameters and tokens?</td><td>BabyLM strict-small (&le; 10M words) and strict (&le; 100M); BLiMP 67 &times; 1,000 pairs; UD EWT for probes</td><td>BLiMP accuracy under PLL-word-l2r; (Super)GLUE subset; probe UUAS and depth Spearman</td><td>2024 pipeline: LTG-BERT 60.6, BabyLlama 69.8 on strict-small <span class="tag t-COMPUTED">verified</span></td><td><span class="mark net">net</span> <span class="mark gpu">gpu</span> at 100M</td></tr>
+                    <tr><td><a href="#stage4"><strong>4</strong></a> <span class="status s-planned">Phase 7</span></td><td>At BERT-mini and BERT-small size, does it help sentence tasks, and at what cost?</td><td>GLUE; the cheap MTEB(eng, v2) subset; SentEval TreeDepth and TopConst</td><td>macro GLUE; MTEB task scores; probe accuracy; parameters, FLOPs, browser latency</td><td>BERT-Tiny 64.2 to BERT-Medium 73.5, ELECTRA-Small 77.4 <span class="tag t-COMPUTED">verified</span></td><td><span class="mark gpu">gpu</span> <span class="mark net">net</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">What each stage decides</span>
+                <p><strong>Stage 0</strong> decides L1 (byte identity) and L2 (engram/1 collisions) in Phases 1&ndash;2. <strong>Stage 1</strong> decides L3&ndash;L7 in Phases 1&ndash;4: exact addresses, exact ranking, the tree against curvature 0, learned Lorentz against learned Euclidean, and the X(5,q) overlay. <strong>Stages 2&ndash;4</strong> decide nothing yet. Their claims are registered by dated amendment before any code for them is written, as decision D11 requires. The registered claims are on the <a href="../index.html#ledger">claims ledger</a> and in <a href="evidence.html#claims">Explainer 8</a>; their full text is in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="stage0">
+            <div class="chapter-num">03</div>
+            <h2>Stage 0: determinism and the tokenizer</h2>
+            <p class="chapter-intro">Before any geometry, the text has to become the same numbers everywhere. If Python and the browser disagree on a single byte, nothing computed on one side can be checked on the other. So Stage 0 has two hard gates and a handful of descriptors that are reported but never optimised.</p>
+            <dl class="gloss">
+                <dt>Normaliser</dt><dd>The step that cleans text before it is split: lower-casing, splitting off punctuation, and removing accents by decomposing letters (NFD) and dropping the combining marks. The Lexicon&rsquo;s N_B follows BERT-uncased&rsquo;s rules on Unicode 15.1 tables exported from Python and pinned by SHA-256 (<a href="architecture.html#normalise">Explainer 3</a>).</dd>
+                <dt>WordPiece</dt><dd>BERT&rsquo;s subword tokenizer. Each word is cut, from the left, into the longest pieces found in a fixed vocabulary. Pieces after the first carry a <code>##</code> mark: <span class="word">cats &rarr; cat ##s</span>. A word with no possible cut becomes <code>[UNK]</code>, the unknown token.</dd>
+                <dt>Fail closed</dt><dd>On a code point that Unicode 15.1 does not assign, N_B emits <code>[UNK]</code> for the word and logs its offset, rather than guessing.</dd>
+                <dt>Id stream</dt><dd>The token ids of a text in order. Its SHA-256 is one 64-hex-digit fingerprint: equal fingerprints mean byte-identical streams.</dd>
+            </dl>
+
+            <h3>Gate 1 &middot; byte identity (claim L1)</h3>
+            <p>The Python reference (the authority), Node 22 and headless Chromium must produce identical normalised bytes, token strings, token ids, byte offsets and id-stream SHA-256 on every instance. The JavaScript never calls <code>String.prototype.normalize</code>, <code>toLowerCase</code> or <code>\p{}</code> classes, because the engines here ship different Unicode versions: Node 22.23.4 has Unicode 17.0 (ICU 78.3), Python 3.13.18 has unicodedata 15.1.0. Tables are data, so the platform&rsquo;s version cannot leak in.</p>
+            <ul>
+                <li><strong>Instances.</strong> Every WordNet 3.0 gloss: 117,659 strings, one per synset (82,115 nouns, 13,767 verbs, 18,156 adjectives, 3,621 adverbs). Every sentence of UD English EWT at commit <code>4a4d77f</code>: 12,544 train, 2,001 dev, 2,077 test. The Unicode stress set spike S6 writes. 2,000 synthetic strings from a registered pool of scripts, marks, controls and emoji.</li>
+                <li><strong>Vocabularies.</strong> V0 &ldquo;lex0&rdquo;, 8,192 entries trained on the glosses and frozen by hash, decides. V1, bert-base-uncased (30,522 entries, Apache-2.0), is a second cell only if pinned in time; it needs huggingface.co <span class="mark net">net</span> or a copy the user supplies.</li>
+                <li><strong>Rule.</strong> Exact and all-or-nothing, per vocabulary and per runtime. One differing instance refutes and is recorded as a counterexample.</li>
+                <li><strong>Controls that must fail.</strong> A normaliser that uses the platform&rsquo;s own functions must differ somewhere on the stress set. Shortest-match-first WordPiece must differ on the glosses. Turning accent stripping off must differ on the glosses or EWT. If any of these passes, the test cannot see what it claims to see, and the cell is void.</li>
+            </ul>
+
+            <h3>Gate 2 &middot; engram/1 collisions (claim L2)</h3>
+            <p>engram/1 is the 64-bit key the existing systems give a word: the XOR of one fixed grid per letter. It keeps only whether each letter occurs an odd or even number of times (rank 26 over GF(2)), so <span class="word">LISTEN = SILENT</span>, and numbers and words such as <span class="word">noon</span> land on the zero key (<a href="analysis.html#engram">Explainer 1</a>). L2 measures how often that bites on a real vocabulary: the share of WordNet&rsquo;s 147,306 distinct lemma types that share a key with another type. Supported at &ge; 1%; the prediction is 2&ndash;10%. The control, a 64-bit SHA-256-prefix key on the same types, must show no collision at all, and Python and Node must produce the same key table. Whatever the share, engram/1 stays a compatibility checksum, never a token id (decision D4); L2 measures what using it as an id would cost.</p>
+
+            <h3>Descriptors: reported, never optimised</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Descriptor</th><th>In plain words</th><th>Source and grade</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Fertility</strong></td><td>Tokens per word. 1.0 means no word is split; higher means more splitting.</td><td><a href="https://arxiv.org/pdf/2012.15613">Rust et al.</a> <span class="tag t-HEURISTIC">likely</span></td></tr>
+                    <tr><td><strong>Continued words</strong></td><td>The share of words cut into two or more tokens. Occiglot treats fertility 1.0 with continuation 0.0 as the ideal.</td><td>Rust et al. <span class="tag t-HEURISTIC">likely</span></td></tr>
+                    <tr><td><strong>Bytes per token</strong></td><td>UTF-8 bytes of text per token: how much text each id carries on average.</td><td>standard; computed locally</td></tr>
+                    <tr><td><strong>R&eacute;nyi efficiency, &alpha; = 2.5</strong></td><td>How evenly the tokens use the vocabulary. Take each piece&rsquo;s share p of all tokens; the R&eacute;nyi entropy is H<sub>&alpha;</sub> = log<sub>2</sub>(&Sigma; p<sup>&alpha;</sup>) / (1 &minus; &alpha;). Divide by log<sub>2</sub> V, its largest possible value for V pieces. 1 is perfectly even use. At &alpha; = 2.5 frequent pieces dominate, so a vocabulary where a few pieces do most of the work scores low.</td><td><a href="https://github.com/zouharvi/tokenization-scorer">tokenization-scorer</a> (MIT). Zouhar et al. (ACL 2023): correlated with BLEU in German&ndash;English translation at r = 0.78 (arXiv version) and 0.82 (ACL version), where compressed length did not <span class="tag t-COMPUTED">verified</span></td></tr>
+                    <tr><td><strong>MorphScore v2</strong></td><td>Whether token boundaries fall on morpheme boundaries (<span class="word">un|happi|ness</span>): precision and recall, frequency-weighted, on Universal Dependencies treebanks in 70 languages.</td><td><a href="https://github.com/catherinearnett/morphscore">catherinearnett/morphscore</a>; no licence stated, so report only. Its 70-language study found morphological alignment explains little of downstream performance <span class="tag t-COMPUTED">verified</span></td></tr>
+                    <tr><td><strong>[UNK] rate, fail-closed count</strong></td><td>How often a word cannot be represented, and how often the normaliser refused an unassigned code point.</td><td>ours</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout limit"><span class="label">Gates, not goals</span>
+                <p>Three large studies found that these numbers predict downstream quality weakly. <a href="https://arxiv.org/pdf/2310.08754">Ali et al. (NAACL Findings 2024)</a>, with 24 models at 2.6B parameters: fertility and parity do not reliably predict downstream performance. <a href="https://aclanthology.org/2024.emnlp-main.40">Schmidt et al. (EMNLP 2024)</a>, with 64 models from 350M to 2.4B: fewer tokens does not mean a better model, and pre-tokenization matters. <a href="https://machinelearning.apple.com/research/beyond-text-compression">Lotz et al. (ACL 2025)</a>: compression alone is unreliable. All three <span class="tag t-HEURISTIC">likely</span>.</p>
+                <p>So the descriptors catch a broken tokenizer (a flood of <code>[UNK]</code>, a fertility that explodes on one script) and are never used to claim one tokenizer is better. No published fertility for BERT&rsquo;s WordPiece on English was found, so every comparison is computed here, on the same text, with both vocabularies.</p>
+            </div>
+
+            <div class="table-wrap"><table>
+                <thead><tr><th>Worked example: a made-up split</th><th class="num">Words</th><th class="num">Pieces</th><th class="num">Fertility</th><th class="num">Continued</th><th class="num">Bytes per token</th><th class="num">R&eacute;nyi efficiency</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">the cat ##s sat on the mat</td><td class="num">6</td><td class="num">7</td><td class="num">1.17</td><td class="num">1 of 6</td><td class="num">2.57</td><td class="num">0.93</td></tr>
+                    <tr><td class="mono">the cats sat on the mat</td><td class="num">6</td><td class="num">6</td><td class="num">1.00</td><td class="num">0 of 6</td><td class="num">3.00</td><td class="num">0.92</td></tr>
+                    <tr><td class="mono">t ##h ##e c ##a ##t ##s s ##a ##t</td><td class="num">3</td><td class="num">10</td><td class="num">3.33</td><td class="num">3 of 3</td><td class="num">1.00</td><td class="num">0.93</td></tr>
+                    <tr><td class="mono">the the the the the the the cat</td><td class="num">8</td><td class="num">8</td><td class="num">1.00</td><td class="num">0 of 8</td><td class="num">3.00</td><td class="num">0.31</td></tr>
+                </tbody>
+            </table></div>
+            <p>Arithmetic on invented splits, not a measurement of any tokenizer. Bytes count each word&rsquo;s UTF-8 bytes without spaces; V is the number of distinct pieces in the line (a real run states which V it uses and pins the scorer&rsquo;s version). Read the rows together. Whole words score the &ldquo;ideal&rdquo; fertility of 1.0, which a vocabulary of every word would also give. Letter-by-letter splitting never fails but makes each id carry one byte. One piece used seven times in eight drags R&eacute;nyi efficiency down to 0.31, because at &alpha; = 2.5 frequent pieces dominate. None of these says which tokenizer helps a model.</p>
+            <p><strong>Later on this rung.</strong> Bits per byte of the shards against gzip, xz and zstd, and the enwik8 and text8 benchmarks once mattmahoney.net is reachable <span class="mark net">net</span>. TokSuite&rsquo;s perturbation benchmark (14 models that differ only in tokenizer) is a later robustness probe <span class="tag t-HEURISTIC">likely</span>.</p>
+        </section>
+
+        <section class="chapter" id="stage1">
+            <div class="chapter-num">04</div>
+            <h2>Stage 1: the WordNet hierarchy</h2>
+            <p class="chapter-intro">This is where hyperbolic geometry has its strongest published record, and where this stack can decide something now: does the exact, training-free LPS tree carry a real linguistic hierarchy? Everything runs here, exactly, on WordNet 3.0.</p>
+
+            <h3>The data, pinned</h3>
+            <p>WordNet 3.0 comes from nltk_data on GitHub (<code>wordnet.zip</code>, 10,775,600 bytes, SHA-256 <code>cbda5ea6&hellip;</code>), fetched once into a cache outside git and re-checked by <code>make_wordnet_v1.cjs --check</code>. A <em>synset</em> is one sense shared by a set of words; a <em>hypernym</em> is its more general sense (a dog is a kind of canine). Following hypernym and instance-hypernym links upward from every noun gives the <em>closure</em>: every (noun, ancestor) pair.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Pinned count</th><th class="num">Value</th><th>Why it matters</th></tr></thead>
+                <tbody>
+                    <tr><td>Noun synsets</td><td class="num">82,115</td><td>Exactly the count the survey gives for Nickel &amp; Kiela&rsquo;s noun set <span class="tag t-HEURISTIC">likely</span>, so their protocol can be followed.</td></tr>
+                    <tr><td>Closure edges (hypernym and instance hypernym)</td><td class="num">743,241</td><td>Also exactly their count: the positives of closure reconstruction.</td></tr>
+                    <tr><td>Spanning roots</td><td class="num">1</td><td><code>entity.n.01</code>; the spanning parent is each synset&rsquo;s first hypernym or instance-hypernym pointer (<code>@</code> or <code>@i</code>).</td></tr>
+                    <tr><td>Maximum spanning depth</td><td class="num">19</td><td>Deep enough that float64 ranking is at risk (L4).</td></tr>
+                    <tr><td>Maximum children of one node</td><td class="num">659</td><td>Below its root the tree has 5 children per node, so this node&rsquo;s children need &lceil;log<sub>5</sub> 659&rceil; = 5 letters each.</td></tr>
+                    <tr><td>Nodes with more than 5 / more than 25 children</td><td class="num">3,291 / 396</td><td>Their children need 2 or more / 3 or more letters each; the letters beyond the first are &ldquo;virtual letters&rdquo;.</td></tr>
+                    <tr><td>Nodes with exactly one child</td><td class="num">6,162</td><td>Each still costs one letter.</td></tr>
+                    <tr><td>Nouns with several parents</td><td class="num">2,213</td><td>The spanning tree keeps one parent; closure reconstruction keeps all of them.</td></tr>
+                    <tr><td>Mammal closure: nodes / edges</td><td class="num">1,182 / 6,542</td><td>The set L6 trains and scores on.</td></tr>
+                    <tr><td>Mammal spanning subtree</td><td class="num">1,176</td><td>Every node a query in L4 and L5; seconds in the browser.</td></tr>
+                    <tr><td>Verb synsets / spanning roots</td><td class="num">13,767 / 559</td><td>A forest disjoint from the nouns: spikes and dry runs only.</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>Two protocols, never equated</h3>
+            <figure><div class="map-wrap mini"><svg viewBox="0 0 760 210" role="img" aria-label="Two small trees. Left, graph-edge: the query's neighbours are its parent and its child. Right, closure: its neighbours are all its ancestors and descendants.">
+                <g font-family="Inter, system-ui, sans-serif" font-size="12">
+                    <text x="190" y="20" fill="#e2e8f0" text-anchor="middle" font-weight="600">Graph-edge (Sala-style)</text>
+                    <text x="570" y="20" fill="#e2e8f0" text-anchor="middle" font-weight="600">Closure (Nickel&#8211;Kiela)</text>
+                    <g stroke="#475569" stroke-width="2">
+                        <line x1="190" y1="48" x2="120" y2="98"/><line x1="190" y1="48" x2="260" y2="98"/><line x1="120" y1="98" x2="80" y2="148"/><line x1="120" y1="98" x2="160" y2="148"/><line x1="80" y1="148" x2="80" y2="190"/>
+                        <line x1="570" y1="48" x2="500" y2="98"/><line x1="570" y1="48" x2="640" y2="98"/><line x1="500" y1="98" x2="460" y2="148"/><line x1="500" y1="98" x2="540" y2="148"/><line x1="460" y1="148" x2="460" y2="190"/>
+                    </g>
+                    <circle cx="190" cy="48" r="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/><text x="210" y="52" fill="#94a3b8">root</text>
+                    <circle cx="120" cy="98" r="12" fill="#064e3b" stroke="#34d399" stroke-width="2"/><text x="138" y="94" fill="#6ee7b7">parent</text>
+                    <circle cx="260" cy="98" r="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="80" cy="148" r="12" fill="#422006" stroke="#f5c542" stroke-width="3"/><text x="40" y="152" fill="#f5c542" text-anchor="end">query</text>
+                    <circle cx="160" cy="148" r="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/><text x="178" y="152" fill="#94a3b8">sibling</text>
+                    <circle cx="80" cy="190" r="10" fill="#064e3b" stroke="#34d399" stroke-width="2"/><text x="98" y="194" fill="#6ee7b7">child</text>
+                    <circle cx="570" cy="48" r="12" fill="#064e3b" stroke="#34d399" stroke-width="2"/><text x="590" y="52" fill="#6ee7b7">root (ancestor)</text>
+                    <circle cx="500" cy="98" r="12" fill="#064e3b" stroke="#34d399" stroke-width="2"/><text x="518" y="94" fill="#6ee7b7">parent</text>
+                    <circle cx="640" cy="98" r="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="460" cy="148" r="12" fill="#422006" stroke="#f5c542" stroke-width="3"/><text x="420" y="152" fill="#f5c542" text-anchor="end">query</text>
+                    <circle cx="540" cy="148" r="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/><text x="558" y="152" fill="#94a3b8">sibling</text>
+                    <circle cx="460" cy="190" r="10" fill="#064e3b" stroke="#34d399" stroke-width="2"/><text x="478" y="194" fill="#6ee7b7">child (descendant)</text>
+                </g></svg></div><figcaption>Green nodes count as the query&rsquo;s true neighbours. A graph-edge score rewards keeping parent and children close; a closure score also rewards keeping distant ancestors closer than siblings, which a distance-based tree does not do.</figcaption></figure>
+            <p>The same embedding can score very differently under the two, so the Lexicon reports both and never compares a number from one with a number from the other. The design pairs Sala et al.&rsquo;s numbers with graph-edge reconstruction and Nickel &amp; Kiela&rsquo;s with closure reconstruction.</p>
+
+            <h3>The metrics</h3>
+            <dl class="gloss">
+                <dt>MAP</dt><dd>Mean average precision. For one query, rank every other node by distance. At each true neighbour, take the precision so far: true neighbours ranked at or above it, divided by its rank. Average those over the query&rsquo;s true neighbours (AP), then average AP over all queries. 1 is perfect.</dd>
+                <dt>Mean rank</dt><dd>For each true neighbour, one plus the number of non-neighbours ranked ahead of it, averaged over all true neighbours of all queries. 1 is perfect.</dd>
+                <dt>Pessimistic ties</dt><dd>Exact distances can tie. Decisions place tied non-neighbours ahead of the true neighbour, the worst case, so a tie can never help a claim. Fractional ties, the average over every order of the tied block, are reported beside them.</dd>
+                <dt>Computed exactly</dt><dd>Ranks come from the exact Lorentz inner product of exact points, compared as integers, so MAP and mean rank are exact fractions, identical in Python and JavaScript (L4). Float64 ranks can invert on deep words; a planning check saw straight paths invert at depth 11&ndash;12.</dd>
+                <dt>Distortion</dt><dd>How far distances in the space stray from distances in the tree: the mean of |d<sub>H</sub> / (&tau; &middot; d<sub>T</sub>) &minus; 1|, where d<sub>T</sub> counts tree edges, d<sub>H</sub> is the hyperbolic distance and &tau; is one step&rsquo;s length (ln 7 in the H&sup3; tree). 0 is perfect.</dd>
+                <dt>Bits per node</dt><dd>What an address costs to store: letters &times; log<sub>2</sub> 5 &asymp; 2.32 bits per letter. A learned table snapped to a 2<sup>&minus;32</sup> grid costs d &times; 33 bits per node: 66 at d = 2, 99 at d = 3.</dd>
+                <dt>Cone F1 (later)</dt><dd>Ganea et al.&rsquo;s protocol: train on the basic edges (the transitive reduction) plus 0, 10, 25 or 50% of the other closure edges, then test whether held-out pairs are recognised. F1 is the balance of precision and recall.</dd>
+                <dt>HiT F1 (later)</dt><dd>Hierarchy Transformers&rsquo; tests. Multi-hop: train on one-hop edges, test transitive ones. Mixed-hop: an incomplete hierarchy, possibly with unseen entities. Random and hard negatives; a threshold tuned on validation.</dd>
+            </dl>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Worked example: one query, five candidates</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr></thead>
+                <tbody>
+                    <tr><td>Exact distance</td><td class="num">1</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">4</td></tr>
+                    <tr><td>True neighbour?</td><td>yes</td><td>yes</td><td>no</td><td>no</td><td>yes</td></tr>
+                </tbody>
+            </table></div>
+            <p>B and C tie. <strong>Pessimistic</strong>, C goes first: the neighbours sit at ranks 1, 3 and 5, so AP = (1/1 + 2/3 + 3/5) / 3 = 34/45 &asymp; 0.756, and the mean rank is (1 + 2 + 3) / 3 = 2. <strong>Optimistic</strong>, B goes first: AP = (1 + 1 + 3/5) / 3 = 13/15 &asymp; 0.867, mean rank 5/3. <strong>Fractional</strong>, the average over both orders: AP = 73/90 &asymp; 0.811. A float evaluator that breaks ties by node index lands on one of the two, depending on how the nodes happen to be numbered; L4 keeps such an evaluator as a control that must disagree with the exact one on a query with exact ties.</p>
+
+            <h3>Published baselines</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Work</th><th>Setting</th><th>Number</th><th>Grade</th></tr></thead>
+                <tbody>
+                    <tr><td><a href="https://proceedings.mlr.press/v80/sala18a.html">Sala, De Sa, Gu &amp; R&eacute; (ICML 2018)</a>: combinatorial, no training</td><td>WordNet, 2 dimensions</td><td>MAP 0.989 at about 500 bits of precision, or 10 dimensions at 32 bits</td><td><span class="tag t-COMPUTED">verified</span> from the abstract; confirmed by the cross-check</td></tr>
+                    <tr><td><a href="https://arxiv.org/pdf/1705.08039">Nickel &amp; Kiela (2017)</a>: Poincar&eacute; embeddings</td><td>noun closure, 200 dimensions</td><td>MAP 0.87, as quoted by Sala et al.</td><td><span class="tag t-HEURISTIC">likely</span></td></tr>
+                    <tr><td>Same, from secondary tables</td><td>noun closure, 5 dimensions</td><td>MAP: Poincar&eacute; 0.823, TransE 0.517, Euclidean 0.024</td><td><span class="tag t-OPEN">secondary</span></td></tr>
+                    <tr><td><a href="https://github.com/lateral/poincare-embeddings">lateral/poincare-embeddings</a>, an open reimplementation</td><td>a 1,000-node sample</td><td>MAP 0.5974, mean rank 286.23</td><td><span class="tag t-HEURISTIC">likely</span></td></tr>
+                    <tr><td><a href="https://arxiv.org/pdf/1804.01882.pdf">Ganea et al. (2018)</a>: entailment cones</td><td>10 dimensions</td><td>F1 85.9 with 10% non-basic edges, 94.4 with 50%; order embeddings lead at 0%</td><td><span class="tag t-OPEN">secondary</span></td></tr>
+                    <tr><td><a href="https://github.com/KRR-Oxford/HierarchyTransformers">HiT (He et al., NeurIPS 2024)</a></td><td>WordNet multi-hop, random / hard negatives</td><td>F1: HiT 0.916 / 0.899; Poincar&eacute; 0.864 / 0.830; fine-tuned all-mpnet 0.615 / 0.687</td><td><span class="tag t-HEURISTIC">likely</span></td></tr>
+                    <tr><td><a href="https://arxiv.org/pdf/2109.07488">Bansal &amp; Benton (2021)</a></td><td>WordNet nouns, by dimension</td><td>Euclidean matches or beats Poincar&eacute; and Lorentz at 50 or more dimensions</td><td><span class="tag t-HEURISTIC">likely</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout deep"><span class="label">Exactness pays for precision; it does not escape it</span>
+                <p>Sala&rsquo;s construction is the published family closest to the norm-5 tree, and it needs about 500 bits to reach 0.989 in two dimensions. One survey said our exact tree &ldquo;avoids&rdquo; that problem; the cross-check corrected it. Exact H&sup3; points at depth 28 already carry 138-bit numerators and 79-bit denominators. Exact BigInt arithmetic pays the precision cost; it does not remove it. What exactness buys is certification: ranks, ties and MAP that are identical in every engine. Fixed branching also costs MAP: where a node has more than five children, &ldquo;virtual&rdquo; siblings sit as close as the parent, or closer. So the design predicts the noun graph-edge MAP will fall below Sala&rsquo;s 0.989, and the closure MAP well below 0.87. Those are predictions, not results.</p>
+            </div>
+
+            <h3>Controls and claims</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Claim</th><th>Question</th><th>Its controls</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">L3</td><td>Does every noun synset get an exact, invertible, certified address and point in H&sup3; and H&sup2;?</td><td>Variants that drop or fold letters must break injectivity</td></tr>
+                    <tr><td class="mono">L4</td><td>Is exact ranking identical across engines, and float ranking not certifiable?</td><td>Float32 must show an inversion, or the test is insensitive</td></tr>
+                    <tr><td class="mono">L5</td><td>Does the training-free tree beat curvature 0 at d = 2 and 3, on mammals and 1,000 noun queries?</td><td>Flat trees F (unit edges) and F* (edges shrinking by 1/4 a level); shuffled (S3) and content-hash (K3) addresses must score below the tree, or the test is void</td></tr>
+                    <tr><td class="mono">L6</td><td>Do learned Lorentz embeddings beat learned Euclidean at d = 2 and 3, and the advantage vanish at d = 50?</td><td>Euclidean at matched d (5 and 10 reported); shuffled labels must give MAP &le; 0.05; training on random pairs must lose</td></tr>
+                    <tr><td class="mono">L7</td><td>Does the same tree, read mod q, give SHD-CCP RFC 03&rsquo;s Ramanujan graphs (<a href="shdccp.html#lps">Explainer 2</a>)?</td><td>A wrong square root of &minus;1, a 4-generator subset</td></tr>
+                </tbody>
+            </table></div>
+            <p>Effects are paired differences with 95% bootstrap intervals; full rules are in <a href="evidence.html#claims">Explainer 8</a>, and the controls are explained in <a href="alternatives.html#controls">Explainer 5</a>.</p>
+            <p><strong>Cost.</strong> Mammals take seconds in the browser. Nouns run as 1,000 sampled queries in Python, minutes per arm; L6&rsquo;s roughly 290 runs, tuning included, are estimated at 1&ndash;5 hours. All are estimates. <strong>A cheap pre-check</strong> before any ranking: estimate how tree-like a set of distances is with Gromov&rsquo;s &delta;, built from four points at a time, by sampling with the four-point machinery of Hyperbolic Oracles&rsquo; ln&nbsp;2 guard. <strong>Later:</strong> cone F1, and HiT&rsquo;s tests with splits rebuilt from WordNet by HiT&rsquo;s protocol, compared with HiT&rsquo;s published numbers only as <em>indicative</em>, because its own data sits on zenodo.org and huggingface.co <span class="mark net">net</span>.</p>
+        </section>
+
+        <section class="chapter" id="stage2">
+            <div class="chapter-num">05</div>
+            <h2>Stage 2: lexical semantics</h2>
+            <p class="chapter-intro">From a curated tree to human judgements about words: is &ldquo;dog&rdquo; a kind of &ldquo;animal&rdquo;, and how much? Hypernymy is asymmetric and graded, the kind of relation hyperbolic embeddings are usually proposed for. Nothing here is registered yet: these claims are added by amendment in Phase 4, before their code.</p>
+            <dl class="gloss">
+                <dt>Spearman correlation</dt><dd>Agreement between two rankings: the model&rsquo;s scores and the humans&rsquo;. 1 is the same order, 0 no relation.</dd>
+                <dt>Detection AP</dt><dd>Average precision of ranking true hypernym pairs above other pairs.</dd>
+                <dt>Direction accuracy</dt><dd>For true pairs, the share where the model picks which word is the more general one.</dd>
+                <dt>MRR and P@5</dt><dd>For hypernym discovery: the average of 1 / (rank of the first correct hypernym), and the share of the top five candidates that are correct.</dd>
+            </dl>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Set</th><th>What it holds</th><th>Metric</th><th>Published numbers</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td><a href="https://aclanthology.org/J17-4004/">HyperLex</a> (Vuli&#263; et al., 2017)</td><td>2,616 graded lexical-entailment pairs, nouns and verbs</td><td>Spearman</td><td>Poincar&eacute; 0.512 (gensim&rsquo;s replication 0.48); <a href="https://github.com/nmrksic/LEAR">LEAR</a> 0.686, nouns 0.705; humans about 0.85 <span class="tag t-HEURISTIC">likely</span></td><td>licence not checked</td></tr>
+                    <tr><td><a href="https://github.com/facebookresearch/hypernymysuite">hypernymysuite</a>: BLESS, LEDS, EVAL, Shwartz</td><td>detection sets; validation lines 1,453, 275, 736 and 5,256</td><td>detection AP</td><td>Hearst patterns AP 0.76 on BLESS (distributional 0.19) <span class="tag t-OPEN">secondary</span></td><td>code CC-BY-NC 4.0, archived 31 Oct 2023; <code>download_data.sh</code> exits before downloading and must be adapted <span class="tag t-COMPUTED">verified</span></td></tr>
+                    <tr><td>hypernymysuite: WBLESS, BiBLESS</td><td>two further sets (WBLESS: 167 validation lines)</td><td>accuracy (LEAR); detection AP (Hearst)</td><td>LEAR 0.912 on WBLESS and 0.875 on BiBLESS <span class="tag t-HEURISTIC">likely</span>; Hearst patterns AP 0.96 on WBLESS (distributional 0.69) <span class="tag t-OPEN">secondary</span></td><td>seeded splits (seed 42)</td></tr>
+                    <tr><td><a href="https://www.cl.cam.ac.uk/~fh295/simlex.html">SimLex-999</a></td><td>666 noun, 222 verb, 111 adjective pairs; similarity, not relatedness</td><td>Spearman</td><td>&mdash;</td><td>licence unknown; its host is blocked here</td></tr>
+                    <tr><td><a href="https://gabrilovich.com/resources/data/wordsim353/wordsim353.html">WordSim-353</a></td><td>Agirre&rsquo;s split: 203 similarity, 252 relatedness pairs</td><td>Spearman</td><td>&mdash;</td><td>CC BY 4.0</td></tr>
+                    <tr><td>MEN</td><td>3,000 relatedness pairs</td><td>Spearman</td><td>&mdash;</td><td>licence unverified</td></tr>
+                    <tr><td>SemEval-2018 Task 9</td><td>hypernym discovery from a corpus: 5 subtasks, 11 teams, 39 systems</td><td>MAP, MRR, P@5</td><td>CRIM: Medical MAP 34.05, Music 40.97 <span class="tag t-OPEN">secondary</span></td><td>data on CodaLab; licence not checked</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>Controls where flat should win.</strong> SimLex-999, WordSim-353 and MEN measure similarity and relatedness: &ldquo;cup&rdquo; and &ldquo;coffee&rdquo; are related, but neither is a kind of the other. The design expects a Euclidean space to win there. A hyperbolic gain on hypernymy means more when it sits next to a flat gain on relatedness, because it shows the geometry is doing a specific job. For context, <a href="https://arxiv.org/abs/1810.06546v2">Poincar&eacute; GloVe</a> (ICLR 2019) beat Euclidean GloVe on similarity and set an unsupervised state of the art on WBLESS <span class="tag t-HEURISTIC">likely</span>.</p>
+            <p><strong>Where it runs.</strong> The computation is small and runs on the CPU, but most of these files sit on hosts that are blocked here <span class="mark net">net</span>. What can be built here is built from WordNet: HiT-protocol multi-hop and mixed-hop splits, rebuilt in Phase 4.</p>
+        </section>
+
+        <section class="chapter" id="stage3">
+            <div class="chapter-num">06</div>
+            <h2>Stage 3: small MLM pretraining</h2>
+            <p class="chapter-intro">The first stage with an encoder. A <em>masked language model</em> (MLM) learns by hiding some tokens and predicting them from the rest, as BERT does. The question is narrow: does feeding it the tree address as a hierarchy factor help it learn grammar from a child-sized corpus, at the same parameters and tokens?</p>
+            <h3>The corpus: BabyLM</h3>
+            <ul>
+                <li><strong>Tracks.</strong> Strict-small allows at most 10M words; strict at most 100M. From 2025 the total words seen are also capped, about 10 epochs: 100M for strict-small, 1B for strict <span class="tag t-HEURISTIC">likely</span>. 2026 adds a multilingual track; which track to target is an open question.</li>
+                <li><strong>Composition</strong> (2024 strict): CHILDES 29M, BNC 8M, Gutenberg 26M, OpenSubtitles 20M, Simple Wikipedia 15M, Switchboard 1M words; strict-small is about a tenth of each <span class="tag t-OPEN">secondary</span>.</li>
+                <li><strong>Access.</strong> The corpus is on osf.io and Hugging Face, both blocked here <span class="mark net">net</span>. Dry runs use WordNet glosses and UD EWT here; decisive runs need a wider network or the user&rsquo;s machine. As 60 KB shards, strict-small would be about 1,000 independent chains and strict about 10,000 (<a href="biochains.html#manifest">Explainer 4</a>).</li>
+                <li><strong>Cost.</strong> About 6 &middot; N &middot; T operations to train: N = 5M parameters on T &asymp; 1.3 &times; 10<sup>8</sup> tokens is about 3.9 &times; 10<sup>15</sup>, roughly 11&ndash;22 hours on 4 cores. That is an estimate; a calibration spike measures throughput first.</li>
+            </ul>
+            <h3>Scoring</h3>
+            <dl class="gloss">
+                <dt>BLiMP</dt><dd>67 paradigms &times; 1,000 <em>minimal pairs</em>: two sentences that differ in one place, one grammatical and one not. Accuracy is the share of pairs where the model prefers the grammatical sentence. Human agreement 96.4%; CC BY; on GitHub, reachable here; errata exist for its TACL Tables 3&ndash;4 <span class="tag t-COMPUTED">verified</span>.</dd>
+                <dt>Pseudo-log-likelihood</dt><dd>A masked model has no left-to-right probability, so a sentence is scored by masking each token in turn and adding up the log-probability of the true token (PLL).</dd>
+                <dt>PLL-word-l2r</dt><dd><a href="https://arxiv.org/abs/2305.10588">Kauf &amp; Ivanova (ACL 2023)</a>: plain PLL inflates scores for words split into several tokens, because the other pieces give the answer away. PLL-word-l2r also masks the rest of the word to the right. The choice changes BLiMP results <span class="tag t-HEURISTIC">likely</span>, so it is pinned with a commit of <a href="https://github.com/babylm/evaluation-pipeline-2025">babylm/evaluation-pipeline-2025</a> (Apache-2.0).</dd>
+                <dt>Structural probe</dt><dd>A linear map under which squared distances between a model&rsquo;s word vectors track distances in the parse tree and squared norms track depth (<a href="https://aclanthology.org/N19-1419/">Hewitt &amp; Manning, 2019</a>). The <a href="https://arxiv.org/abs/2104.03869">Poincar&eacute; probe</a> (ICLR 2021) recovers syntax trees from BERT better than Euclidean probes. Scored by UUAS (the share of gold tree edges recovered, ignoring labels and direction) and the Spearman correlation of predicted with true depth, on UD EWT here.</dd>
+            </dl>
+            <h3>Published baselines, and why the pipeline is pinned</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Track</th><th>Model</th><th class="num">BLiMP</th><th class="num">BLiMP-supp</th><th class="num">EWoK</th><th class="num">GLUE</th><th class="num">Macro</th></tr></thead>
+                <tbody>
+                    <tr><td>strict-small</td><td>LTG-BERT (flagged undertrained)</td><td class="num">60.6</td><td class="num">60.8</td><td class="num">48.9</td><td class="num">60.3</td><td class="num">57.7</td></tr>
+                    <tr><td>strict-small</td><td>BabyLlama</td><td class="num">69.8</td><td class="num">59.5</td><td class="num">50.7</td><td class="num">63.3</td><td class="num">60.8</td></tr>
+                    <tr><td>strict</td><td>LTG-BERT</td><td class="num">69.2</td><td class="num">66.5</td><td class="num">51.9</td><td class="num">68.4</td><td class="num">64.0</td></tr>
+                    <tr><td>strict</td><td>BabyLlama</td><td class="num">73.1</td><td class="num">60.6</td><td class="num">52.1</td><td class="num">69.0</td><td class="num">63.7</td></tr>
+                </tbody>
+            </table></div>
+            <p>The baselines of <a href="https://github.com/babylm/evaluation-pipeline-2024">babylm/evaluation-pipeline-2024</a> <span class="tag t-COMPUTED">verified</span>. The macro column is the plain mean of the four columns before it, which the numbers bear out to rounding. The GLUE column there is a subset: BoolQ, CoLA (Matthews correlation), MNLI, MNLI-mm, MRPC (F1), MultiRC, QNLI, QQP (F1), RTE, SST-2 and WSC.</p>
+            <div class="callout limit"><span class="label">Same architecture, 60.6 or about 80</span>
+                <p>The 2024 pipeline gives strict-small LTG-BERT a BLiMP of 60.6, and its README flags the score as lower than expected, possibly from too few epochs. 2023-era entries put LTG-BERT and ELC-BERT at about 80.5 on strict-small, under a different pipeline; GPT-BERT, the 2024 winner, is reported at 81.2 (about 30M parameters, 10M words) and 86.1 (119M parameters, 100M words) <span class="tag t-HEURISTIC">likely</span>. The cross-check traced the clash to different pipeline years and scoring rules, on top of the undertraining the README flags. A gap of some 20 points between reports of one architecture is why every BLiMP number here names its pipeline commit and its scorer, and is compared only with numbers from the same ones.</p>
+            </div>
+            <div class="grid-2">
+                <div class="card"><h4>Floors (2023 pipeline, majority label)</h4><p>CoLA 0.0, SST-2 50.2, MRPC F1 82.0, QQP F1 53.1, MNLI 35.7, QNLI 35.4, RTE 53.1, BoolQ 50.5, MultiRC 59.9, WSC 53.2. RoBERTa-base on strict-small: CoLA 25.8, SST-2 87.0, MNLI 73.2.</p><div class="meta">babylm/evaluation-pipeline-2023 &middot; MIT &middot; verified</div></div>
+                <div class="card"><h4>The 2025 suite</h4><p>Zero-shot BLiMP, BLiMP-supplement, EWoK, entity tracking, derivational morphology and reading alignment, plus hidden tasks. Fine-tuning on (Super)GLUE with MNLI and QQP cut to 10k and CoLA, SST-2, MNLI-mm and QNLI removed: lr 3e-5, batch 32, 10 epochs, seed 42. Baselines GPT-BERT and GPT-2 Small.</p><div class="meta">babylm/evaluation-pipeline-2025 &middot; Apache-2.0 &middot; verified</div></div>
+            </div>
+            <p><strong>EWoK</strong> (EWoK-core-1.0: 4,374 items in 11 domains) stays near chance, about 50, for every baseline, so it says little early. It is gated on Hugging Face, and its terms forbid public plain-text redistribution, so it is reported only and enters a chain by hash only <span class="tag t-COMPUTED">verified</span>.</p>
+            <p><strong>Candidate claims</strong>, to be registered by amendment in Phase 6 before any code: L12, the address factor against shuffled addresses and no factor, on BLiMP, at matched parameters and tokens, with an equivalence band of &plusmn;1 point predicted (a null result); L13, Lorentz or Poincar&eacute; against Euclidean hierarchy heads on HiT-protocol F1; L14, the Poincar&eacute; probe against the Euclidean structural probe on UD EWT; L15, PolyStep against MeZO and ZO-SGD on a fixed head at equal evaluations. None is registered yet.</p>
+        </section>
+
+        <section class="chapter" id="stage4">
+            <div class="chapter-num">07</div>
+            <h2>Stage 4: sentence and encoder tasks</h2>
+            <p class="chapter-intro">The general-NLP rung, where hyperbolic geometry has helped modestly or not at all. It runs in Phase 7, on a GPU with access to Hugging Face, and only for claims registered by amendment first.</p>
+            <dl class="gloss">
+                <dt>GLUE</dt><dd>Nine sentence-level tasks: acceptability, sentiment, paraphrase, similarity and inference. Tasks with two metrics (accuracy and F1, say) are averaged first.</dd>
+                <dt>Macro GLUE</dt><dd>The plain mean over tasks, each task counting once whatever its size.</dd>
+                <dt>MTEB</dt><dd>The Massive Text Embedding Benchmark: tasks that score a sentence embedding by similarity, classification, pair classification, clustering and retrieval.</dd>
+                <dt>SentEval probes</dt><dd>Small classifiers that read one property off a sentence vector. TreeDepth (depth of the parse tree) and TopConst (its top constituents) suit hierarchy claims.</dd>
+            </dl>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Euclidean baseline</th><th>Shape</th><th class="num">GLUE test</th><th>Grade</th></tr></thead>
+                <tbody>
+                    <tr><td>BERT-Tiny</td><td>2 layers, width 128</td><td class="num">64.2</td><td rowspan="4"><a href="https://github.com/google-research/bert">google-research/bert</a> README, Apache-2.0; fine-tuned 4 epochs, lr 3e-4 to 3e-5 <span class="tag t-COMPUTED">verified</span></td></tr>
+                    <tr><td>BERT-Mini</td><td>4 / 256</td><td class="num">65.8</td></tr>
+                    <tr><td>BERT-Small</td><td>4 / 512</td><td class="num">71.2</td></tr>
+                    <tr><td>BERT-Medium</td><td>8 / 512</td><td class="num">73.5</td></tr>
+                    <tr><td>ELECTRA-Small</td><td>12 / 256, 14M parameters</td><td class="num">77.4</td><td><a href="https://github.com/google-research/electra">google-research/electra</a>: about 4 days on one V100, decent after 200k steps (about 10 h) <span class="tag t-COMPUTED">verified</span></td></tr>
+                </tbody>
+            </table></div>
+            <ul>
+                <li><strong>MTEB(eng, v2)</strong> has exactly 41 tasks <span class="tag t-COMPUTED">verified</span> in the <a href="https://github.com/embeddings-benchmark/mteb">mteb</a> source (Apache-2.0). The cheap subset: STS12&ndash;15, STS17, STS22.v2, STSBenchmark, SICK-R and BIOSSES; classification (Banking77 and others); pair classification (SprintDuplicateQuestions, TwitterSemEval2015, TwitterURLCorpus); and ArXivHierarchicalClustering, which is about hierarchy. Retrieval is skipped as too expensive.</li>
+                <li><strong>SentEval</strong> TreeDepth and TopConst: 100k training and 10k test sentences each; the repository was archived on 6 Aug 2025 <span class="tag t-COMPUTED">verified</span>. STS-B has 8,628 pairs (5,749 / 1,500 / 1,379).</li>
+                <li><strong>SuperGLUE</strong> is too hard for a tiny model, except the BoolQ, MultiRC and WSC slices BabyLM uses <span class="tag t-HEURISTIC">likely</span>.</li>
+                <li><strong>Efficiency.</strong> Parameters and FLOPs in the style of ELUE, which scores a model against the ElasticBERT curve (0 = on par) <span class="tag t-HEURISTIC">likely</span>. Browser latency and memory against a locally pinned BERT-Tiny ONNX run through <a href="https://github.com/huggingface/transformers.js">transformers.js</a> (Apache-2.0), which publishes no speed claims, so latency is measured here.</li>
+                <li><strong>The runs.</strong> BERT-mini and BERT-small with the hierarchy factor, against shuffled-address, content-hash, no-factor and byte-level controls at matched parameters, on BabyLM strict. BERT-small (29M parameters) on 1.3 &times; 10<sup>9</sup> tokens is about 2.3 &times; 10<sup>17</sup> operations, roughly 0.5&ndash;2 hours on one A100 (estimate). Results come back as receipts that are re-checked here.</li>
+            </ul>
+            <div class="callout note"><span class="label">No hyperbolic encoder number is a baseline</span>
+                <p>The Hyperbolic Pre-Trained Language Model (TASLP 2024), a Lorentz BERT, reports gains across GLUE, SuperGLUE and QA, but its numbers could not be checked, and a secondary survey puts it at about 1.3&times; slower than BERT <span class="tag t-HEURISTIC">likely</span>. HELM&rsquo;s &ldquo;up to 4%&rdquo; on MMLU and ARC is at about a billion parameters, and its repository states no percentage; the figure rests on an abstract that was not fetched <span class="tag t-HEURISTIC">likely</span>. Neither is used as a comparator until its numbers are checked.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="throughout">
+            <div class="chapter-num">08</div>
+            <h2>Rules for every stage</h2>
+            <p class="chapter-intro">The same rules hold on every rung and on every compute track, so that a number from the browser, the CPU and a GPU can be compared, and so that a null result is reported as plainly as a win. Decision D10 fixes what the tracks share: the tokenizer record, the manifests, the random generator, the metric code, the budgets and the receipts.</p>
+            <ol class="steps">
+                <li><strong>A Euclidean control, always.</strong> Every hyperbolic claim is paired with a flat arm at matched dimension, matched bits and matched parameters, plus shuffled-address and content-hash controls. Bansal &amp; Benton found Euclidean embeddings matching Poincar&eacute; at 50 or more dimensions <span class="tag t-HEURISTIC">likely</span>, so a low-dimension win says nothing about high dimensions.</li>
+                <li><strong>Pinned scorers and pipelines.</strong> PLL-word-l2r at a pinned evaluation-pipeline-2025 commit; a GLUE fine-tuning recipe fixed before decisive runs; tokenization-scorer at a pinned version, with &alpha; = 2.5 stated. The 60.6-against-80 gap above is the reason.</li>
+                <li><strong>One tokenizer, one data identity, one seed scheme.</strong> A single LVOCAB/1 record names the vocabulary, the normaliser and the Unicode tables; L1 proves Python = Node = Chromium. Every corpus and split is named by its LCORPUS/1 root. Splits and MLM masks come from the shared generator, so every track masks identically. Instances use seeds 1000+i, secondary draws 2000+i, dry runs +3000, tuning 9000&ndash;9023, spikes 90000+i, training seeds 0&ndash;4; bootstraps take 10,000 resamples with seed 7.</li>
+                <li><strong>One metric implementation.</strong> Python is the authority. JavaScript reproduces exact metrics line for line; float metrics carry registered tolerances and per-item output hashes.</li>
+                <li><strong>Matched budgets, recorded.</strong> Gradient-free runs are matched on evaluations. Gradient runs record parameters, tokens seen, FLOPs, hardware, library versions, thread count and wall-clock time.</li>
+                <li><strong>Receipts.</strong> Each result is an LBENCH/1 record: claim id, the hash of what was scored, the evaluation set&rsquo;s hash (gated sets by hash only), scorer and version, seeds, a hash per item&rsquo;s output, the metrics&rsquo; hash, hardware and versions, and a class: <em>reproducible</em> (a CPU twin re-evaluation is bit-identical) or <em>attested</em> (float, single run). The browser re-evaluates every snapped table exactly, and a fixed BLiMP subsample of 67 &times; 100 pairs is scored on CPU and GPU within a registered tolerance (<a href="biochains.html#records">Explainer 4</a>).</li>
+                <li><strong>A contamination receipt.</strong> SHA-256 sets of every 13-gram in the evaluation items, intersected with the training id streams; only the counts are published.</li>
+                <li><strong>Equivalence tests where a null is predicted.</strong> When the prediction is &ldquo;no difference&rdquo;, the claim says how small a difference counts as none, and is supported only if the whole interval sits inside that band. Engram&rsquo;s E9b did this for recall after a one-letter substitution: 0.0002 against 0.0007 from a shuffled store, a difference of &minus;0.0005 with interval [&minus;0.0017, 0.0004], inside &plusmn;0.05 (<a href="../../Engram%20Minds%20Eye/explainers/reference-results.html#details">Engram, Explainer 4</a>). L12 would do the same with a &plusmn;1-point band on BLiMP.</li>
+                <li><strong>Grades travel with numbers.</strong> A literature number stays <em>likely</em> until its primary source is read, which needs arxiv.org and aclanthology.org. No first-round claim compares against a likely or secondary number.</li>
+            </ol>
+            <div class="callout limit"><span class="label">Honest about the limits</span>
+                <p>Hyperbolic geometry clearly helps on explicit hierarchies such as WordNet, and in low dimensions. On general NLP it helps modestly or not at all. This stack&rsquo;s own record agrees. Hyperbolic Oracles&rsquo; C1, &ldquo;on tree-structured problems the hyperbolic step beats the Euclidean step at equal evaluation budget&rdquo;, was refuted in 12 of 13 cells, with none supported and one inconclusive; on B4, the inconclusive cell, hyper3 scored 0.325 against flat3&rsquo;s 0.334 (<a href="../../Hyperbolic%20Oracles/explainers/benchmarks.html#b4">B4</a>, <a href="../../Hyperbolic%20Oracles/PREREGISTRATION.md">its preregistration</a>). engram/1, the only word key the stack had, is letter-count parity: <span class="word">LISTEN = SILENT</span>, numbers and even-count words on the zero key, and recall after a misspelling at chance. So encoder-level effects at Stages 3&ndash;4 are expected to be small or null, and where a null is predicted the claim is written as an equivalence test (L12). The bet is on Stages 0&ndash;1: representation, where low-dimensional trees favour curvature, and certification, where exact results are identical in every engine.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="licences">
+            <div class="chapter-num">09</div>
+            <h2>Licences</h2>
+            <p class="chapter-intro">A dataset that cannot be redistributed cannot travel inside a public chain, and a licence nobody checked is treated as unknown. An audit of more than 1,800 fine-tuning datasets by the <a href="https://github.com/Data-Provenance-Initiative/Data-Provenance-Collection">Data Provenance Initiative</a> found licences omitted in over 70% and errors in over 50% <span class="tag t-COMPUTED">verified</span>, so each source is listed here with what is known about it.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Resource</th><th>Licence</th><th>How the Lexicon uses it</th></tr></thead>
+                <tbody>
+                    <tr><td>WordNet 3.0</td><td>WordNet licence: use, copy, modify and distribute for any purpose, without fee, if the copyright notice and disclaimer appear on all copies. The text is pinned beside the data (<a href="../reference/golden/LICENSE-WORDNET.txt">LICENSE-WORDNET.txt</a>).</td><td>Stages 0&ndash;2. Shards may carry its text with the notice kept.</td></tr>
+                    <tr><td>UD English EWT @ <code>4a4d77f</code></td><td>CC BY-SA 4.0</td><td>L1 and the probes. Pinned by hashes; no text is committed.</td></tr>
+                    <tr><td>BLiMP</td><td>CC BY</td><td>Stage 3; on GitHub, reachable here.</td></tr>
+                    <tr><td>Unicode tables</td><td>Unicode data licence, notice kept</td><td>Exported from Python&rsquo;s unicodedata 15.1.0 for N_B.</td></tr>
+                    <tr><td>facebookresearch/poincare-embeddings</td><td>CC-BY-NC 4.0; archived 21 Oct 2025</td><td>Protocol reference only: how the closures are built and scored. Not redistributed.</td></tr>
+                    <tr><td>facebookresearch/hypernymysuite</td><td>CC-BY-NC 4.0; archived 31 Oct 2023</td><td>Protocol reference only: its source URLs and seeded splits. Not redistributed.</td></tr>
+                    <tr><td>WordSim-353</td><td>CC BY 4.0</td><td>Stage 2 control.</td></tr>
+                    <tr><td>tokenization-scorer</td><td>MIT</td><td>Stage 0 R&eacute;nyi efficiency.</td></tr>
+                    <tr><td>HiT code, mteb, babylm/evaluation-pipeline-2025, google-research/bert and electra, the bert-base-uncased vocabulary (V1), transformers.js, geoopt</td><td>Apache-2.0</td><td>Tools, baselines and the second vocabulary cell.</td></tr>
+                    <tr><td>babylm/evaluation-pipeline-2023</td><td>MIT</td><td>Source of the majority floors.</td></tr>
+                    <tr><td>EWoK-core-1.0</td><td>Gated on Hugging Face; no public plain-text redistribution; acknowledgement required if used in training</td><td>Reported only. Enters a chain by hash only.</td></tr>
+                    <tr><td>SNOMED CT</td><td>Needs an affiliate licence (the survey&rsquo;s note, from memory)</td><td>Excluded, along with HiT&rsquo;s SNOMED-based data.</td></tr>
+                    <tr><td>BabyLM components: BNC, OpenSubtitles, CHILDES/TalkBank and others</td><td>Unknown until checked source by source</td><td>Public hashes and roots only; the text stays on the holder&rsquo;s disk.</td></tr>
+                    <tr><td>SimLex-999, MEN, MorphScore and its data, HiT&rsquo;s Zenodo datasets, HyperLex, SemEval-2018 Task 9, individual GLUE tasks (QQP&rsquo;s terms, for one), SentEval, HazyResearch/hyperbolics</td><td>Unknown: not found or not checked</td><td>Report only; nothing redistributed.</td></tr>
+                    <tr><td>DOID, FoodOn (HiT transfer sets)</td><td>CC0 and CC BY 4.0, from memory, not checked</td><td>Later, after a check.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout plain"><span class="label">Two tiers in the chain</span>
+                <p>Text travels inside a shard only when its licence allows redistribution: WordNet with its notice, UD EWT, BLiMP, public-domain Gutenberg and the team&rsquo;s own text. Everything else publishes only hashes, roots, counts, SPDX licence identifiers, metrics and receipts, with salted commitments so that known text cannot be confirmed by guessing. That is attestation plus audit, not public recomputation. <a href="biochains.html#records">Explainer 4</a> has the records.</p>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="tracks.html">&larr; Three Compute Tracks</a>
+                <a class="btn btn-ghost" href="evidence.html">Spikes and Claims &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 7 &middot; <a href="../index.html">Hub</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a> &middot; <a href="../README.md">README</a></footer>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

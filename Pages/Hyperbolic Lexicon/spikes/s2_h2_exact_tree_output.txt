@@ -1,0 +1,193 @@
+S2 · s2_h2_exact_tree · the exact H^2 tree: decodability, sheet identity, bits, float failure
+settles: t = 11/13 for the H^2 tree (D3), L3's control t = 3/4, the H^2/H^3 bit cost ratio; decides no claim
+cores, unchanged: hyperbolic_core.js 2.0.0 (Q, X, P, Rng), decoder3d.js TreeEmbedding3D (t = 3/4)
+~ node v22.23.4
+data: synthetic reduced words only; Rng(90000+depth) random words, Rng(90100+depth) 106+- words, Rng(90200+depth) H^3 90-random words, Rng(90001) planning replay
+
+1. Construction, exact
+  root directions, generators 0..5: (1,0) (3/5,4/5) (3/5,-4/5) (-7/25,24/25) (-7/25,-24/25) (-1,0)
+  local directions, P.children(w)[k], k = 0..4: (1,0) (3/5,4/5) (3/5,-4/5) (-7/25,24/25) (-7/25,-24/25); back (-1,0)
+  [PASS] all six directions are unit vectors exactly (3^2 + 4^2 = 5^2, 7^2 + 24^2 = 25^2)
+  cosines between directions: (1,0)~(3/5,4/5) 3/5, (3/5,4/5)~(-7/25,24/25) 3/5, (-7/25,24/25)~(-1,0) 7/25, (-7/25,24/25)~(-7/25,-24/25) -527/625
+  so the angles are 0, +-53.13, +-106.26 (the "106-degree" pair), 180 degrees; the gap from 106 to back is 73.74
+    m  t        cosh       sinh       cosh+sinh   tau = ln m
+    3  1/2      5/3        4/3        3           1.0986
+    5  2/3      13/5       12/5       5           1.6094
+    7  3/4      25/7       24/7       7           1.9459
+   12  11/13    145/24     143/24     12          2.4849
+   19  9/10     181/19     180/19     19          2.9444
+   20  19/21    401/40     399/40     20          2.9957
+  [PASS] for every m: cosh^2 - sinh^2 = 1 and cosh + sinh = m exactly (so e^tau = m, tau = ln m), and X.coshSinh(t) agrees
+  [PASS] for every m: cosh = (m^2+1)/(2m), sinh = (m^2-1)/(2m)
+  [PASS] every rotation R(u) is orthogonal and takes (1,0) to u; every step R(u)B(t) is Lorentz (M^T J M = J); J M^T J times M is I · 36 step matrices
+  [PASS] D3: t = 11/13 gives cosh = 145/24, sinh = 143/24, cosh + sinh = 12, tau = ln 12 = 2.4849
+  [PASS] L3's control: t = 3/4 (m = 7) gives cosh = 25/7, sinh = 24/7, tau = ln 7 = 1.9459, the H^3 tree's own boost
+  integer form of the m = 12 steps (index 0..5): common denominators 24, 120, 120, 600, 600, 24 (boost 24 times rotation 1, 5 or 25)
+
+2. Exact greedy decodability: successes / 500 random reduced words per depth, Rng(90000+depth), the same words for every m
+  depth              2    4    6    8   10   12   16   20   24   28
+  m=3  t=1/2       303  105   23    7    4    1    0    0    0    0
+  m=5  t=2/3       375  179   80   54   28   16    5    0    0    0
+  m=7  t=3/4       500  443  376  311  274  226  148  124   84   55
+  m=12 t=11/13     500  500  500  500  500  500  500  500  500  500
+  m=19 t=9/10      500  500  500  500  500  500  500  500  500  500
+  m=20 t=19/21     500  500  500  500  500  500  500  500  500  500
+  H^3 t=3/4        500  500  500  500  500  500  500  500  500  500   (decoder3d decodeExact, octahedral tree)
+  exact ties among the best-scoring children: 0 in 390000 greedy decisions (none happened)
+  [PASS] sheet identity x0^2 - x1^2 - x2^2 = 1 with x0 > 0, exactly in Q, on every H^2 point · 30000/30000
+  [PASS] every H^2 point computed two ways agrees: Q frame product (X.matmul, left to right) and BigInt integer steps (right to left, one reduction) · 30000/30000
+  [PASS] the integer form satisfies N0^2 - N1^2 - N2^2 = D^2 on every point · 30000/30000
+  [PASS] every successful exact decode ends exactly at (1,0,0) in the leaf's frame · 18721/18721
+  [PASS] sheet identity on every H^3 point (X.onSheet) · 5000/5000
+  first wrong level (0 = root letter) among the failing words at depth 28:
+    m=3: 500 failures · 0:242 1:123 2:63 3:35 4:19 5:9 6:4 7:1 8:3 11:1
+    m=5: 500 failures · 0:113 1:105 2:85 3:60 4:53 5:21 6:18 7:11 8:9 9:10 10:4 11:1 12:4 13:1 15:1 16:2 17:1 21:1
+    m=7: 445 failures · 0:37 1:46 2:45 3:36 4:31 5:21 6:26 7:18 8:13 9:20 10:18 11:18 12:11 13:15 14:9 15:11 16:9 17:9 18:8 19:10 20:5 21:9 22:4 23:13 24:2 25:1
+    m=12: no failures
+    m=19: no failures
+    m=20: no failures
+  planning replay, Rng(90001): 100 words at depth 12 then 40 at depth 28 from the same stream: t = 11/13 100/100 and 40/40; t = 3/4 48/100 and 1/40
+  [PASS] the replay reproduces the planning figures (100/100 and 40/40 at t = 11/13, 48/100 at t = 3/4)
+  [PASS] L3's control: t = 3/4 decodes noticeably worse than t = 11/13 at depth 12 · 226/500 against 500/500
+  m with 500/500 at every depth 2..28: 12, 19, 20; the smallest such m among {3, 5, 7, 12, 19, 20}: 12
+
+  2b. Supplementary: where the decodability threshold lies (m outside the spec's set included; it decides nothing)
+  the same 500 words per depth (section 2):
+  depth              2    4    6    8   10   12   16   20   24   28
+  m=8  t=7/9       500  483  443  404  375  362  285  253  198  178
+  m=9  t=4/5       500  500  498  480  489  490  466  452  443  430
+  m=10 t=9/11      500  500  500  500  500  500  500  500  500  500
+  m=11 t=5/6       500  500  500  500  500  500  500  500  500  500
+  [PASS] sheet identity on every supplementary point · 20000/20000
+  exhaustive, every reduced word of length 1..6 (23436 words): m=7 17528 · m=8 21108 · m=9 23236 · m=10 23436 · m=11 23436 · m=12 23436
+  half-width of a child's subtree seen from its parent, max over descendants 0..d levels below the child (degrees; the bisector is 26.57 = atan 1/2):
+  levels below         0      1      2      3      4      5      6      7   beyond the bisector (of the nodes)
+  m=3  t=1/2        0.00  38.66  78.23   >=90   >=90   >=90   >=90   >=90   46712 of 97656
+  m=5  t=2/3        0.00  27.15  47.75  75.75   >=90   >=90   >=90   >=90   25614 of 97656
+  m=7  t=3/4        0.00  20.47  31.42  40.22  50.30  67.29   >=90   >=90   9034 of 97656
+  m=8  t=7/9        0.00  18.17  26.51  31.82  36.09  40.21  44.98  51.77   4640 of 97656
+  m=9  t=4/5        0.00  16.31  22.83  26.25  28.34  29.74  30.75  31.51   690 of 97656
+  m=10 t=9/11       0.00  14.79  20.01  22.32  23.46  24.06  24.38  24.55   0 of 97656
+  m=11 t=5/6        0.00  13.52  17.79  19.42  20.09  20.38  20.51  20.57   0 of 97656
+  m=12 t=11/13      0.00  12.45  15.99  17.18  17.61  17.77  17.82  17.85   0 of 97656
+  m=19 t=9/10       0.00   7.97   9.31   9.55   9.59   9.60   9.60   9.60   0 of 97656
+  m=20 t=19/21      0.00   7.58   8.78   8.98   9.02   9.02   9.02   9.02   0 of 97656
+  exactly below the bisector at 7 levels (2|x2| < x1 for every descendant): 10, 11, 12, 19, 20; beyond it (an exact witness of a failing word exists): 3, 5, 7, 8, 9
+  margin to the bisector at 7 levels (a lower bound on the half-width, so an upper bound on the margin): m=10 2.01 · m=11 6.00 · m=12 8.72 · m=19 16.96 · m=20 17.54 degrees
+  [PASS] the half-width analysis agrees with sampling: every m whose subtree crosses the bisector fails some sampled or exhaustive word, and every m that stays below decodes all of them
+
+3. Bits: max numerator / max denominator bits over the coordinates, each coordinate in lowest terms
+  3a. random words by depth (the words of section 2)
+  depth                  2        4        6        8       10       12       16       20       24       28
+  m=3  t=1/2         12/11    23/20    33/29    43/38    52/45    63/53    81/69    99/87   120/98  139/115
+  m=5  t=2/3         17/14    34/28    51/42    63/54    78/66    90/77  122/103  147/126  177/147  205/168
+  m=7  t=3/4         19/15    37/30    56/45    70/58    87/70   102/83  136/110  167/136  197/151  232/181
+  m=12 t=11/13       18/15    37/28    54/41    68/53    85/62   100/71   133/97  161/114  191/131  225/152
+  m=19 t=9/10        22/16    46/34    70/52    88/60   108/75   124/86  170/117  202/134  241/160  277/182
+  m=20 t=19/21       24/19    48/37    72/55    91/69   114/85   134/98  178/132  220/156  262/188  300/206
+  H^3 t=3/4           11/6    22/12    32/17    42/23    52/29    63/34    84/45   104/57   122/68   142/79
+  supplementary m at depth 28, the same random words, per coordinate: m=8 (t=7/9) 225/168 · m=9 (t=4/5) 189/114 · m=10 (t=9/11) 247/185 · m=11 (t=5/6) 235/167
+  3b. depth 28, per coordinate (numerator/denominator bits), and pt = the whole point over one common denominator
+  m=3   random (500)     x0 136/113  x1 133/114  x2 139/115   pt 529
+        straight (1)     x0 88/45  x1 88/45  x2 0/1   pt 221
+        106+ (1)         x0 126/126  x1 126/131  x2 130/131   pt 518
+        106+- (500)      x0 146/126  x1 150/131  x2 150/131   pt 580
+  m=5   random (500)     x0 205/165  x1 205/168  x2 205/168   pt 782
+        straight (1)     x0 130/66  x1 130/66  x2 0/1   pt 326
+        106+ (1)         x0 193/191  x1 198/196  x2 196/196   pt 788
+        106+- (500)      x0 226/191  x1 229/196  x2 230/196   pt 885
+  m=7   random (500)     x0 231/179  x1 229/177  x2 232/181   pt 876
+        straight (1)     x0 157/79  x1 157/79  x2 0/1   pt 393
+        106+ (1)         x0 206/204  x1 208/206  x2 206/209   pt 837
+        106+- (500)      x0 250/204  x1 251/206  x2 255/209   pt 972
+  m=12  random (500)     x0 225/152  x1 223/150  x2 218/148   pt 823
+        straight (1)     x0 201/102  x1 201/102  x2 0/1   pt 504
+        106+ (1)         x0 225/183  x1 229/188  x2 227/185   pt 877
+        106+- (500)      x0 248/183  x1 251/188  x2 249/185   pt 943
+  m=19  random (500)     x0 274/180  x1 276/182  x2 277/182   pt 1007
+        straight (1)     x0 237/119  x1 237/119  x2 0/1   pt 593
+        106+ (1)         x0 189/119  x1 190/122  x2 191/122   pt 694
+        106+- (500)      x0 287/205  x1 298/219  x2 301/219   pt 1119
+  m=20  random (500)     x0 298/205  x1 300/206  x2 298/204   pt 1105
+        straight (1)     x0 243/123  x1 243/123  x2 0/1   pt 609
+        106+ (1)         x0 320/248  x1 323/253  x2 321/250   pt 1225
+        106+- (500)      x0 331/248  x1 335/253  x2 333/250   pt 1260
+  H^3   random (500)     x0 142/79  x1 141/79  x2 142/79  x3 142/79   pt 637
+        straight (1)     x0 157/79  x1 157/79  x2 0/1  x3 0/1   pt 393
+        90 fixed (1)     x0 133/79  x1 133/79  x2 128/76  x3 123/73   pt 605
+        90 random (500)  x0 133/79  x1 133/79  x2 133/79  x3 133/79   pt 606
+  [PASS] sheet identity on every depth-28 class point (H^2 all m, and H^3)
+  [PASS] straight words recomputed in closed form: x0 = (m^56 + 1)/(2 m^28) for every m, and (7^56 + 1)/(2 7^28) in H^3
+  3c. by depth for m = 12 and H^3: max numerator / max denominator bits per class
+  depth      H2 random H2 straight     H2 106+    H2 106+-   H3 random H3 straight H3 90 fixed  H3 90 rand
+      2          18/15        15/9       18/15       18/15        11/6        11/6        10/6        10/6
+      4          37/28       29/16       35/28       37/28       22/12       22/12       19/12       20/12
+      6          54/41       44/23       51/41       55/41       32/17       33/17       29/17       30/17
+      8          68/53       58/30       68/55       73/55       42/23       44/23       38/23       39/23
+     10          85/62       72/37       84/68       91/68       52/29       56/29       48/29       48/29
+     12         100/71       87/45      100/81      109/81       63/34       67/34       57/34       58/34
+     16         133/97      115/59     132/108     145/108       84/45       89/45       76/45       77/45
+     20        161/114      144/73     164/134     180/134      104/57      112/57       95/57       96/57
+     24        191/131      173/88     197/161     216/161      122/68      134/68      114/68      115/68
+     28        225/152     201/102     229/188     251/188      142/79      157/79      133/79      133/79
+  3d. the bit cost ratio at depth 28, H^2 over H^3 (t = 3/4), class against class: numerator, denominator, pt
+  H^2 m = 12 (t = 11/13), the D3 choice:
+    random              225/152 vs 142/79: 1.58x, 1.92x · pt 823 vs 637: 1.29x
+    straight            201/102 vs 157/79: 1.28x, 1.29x · pt 504 vs 393: 1.28x
+    106+ / 90 fixed     229/188 vs 133/79: 1.72x, 2.38x · pt 877 vs 605: 1.45x
+    106+- / 90 random   251/188 vs 133/79: 1.89x, 2.38x · pt 943 vs 606: 1.56x
+  H^2 m = 7 (t = 3/4), the same boost as H^3: the cost of the rotation denominators alone:
+    random              232/181 vs 142/79: 1.63x, 2.29x · pt 876 vs 637: 1.38x
+    straight            157/79 vs 157/79: 1.00x, 1.00x · pt 393 vs 393: 1.00x
+    106+ / 90 fixed     208/209 vs 133/79: 1.56x, 2.65x · pt 837 vs 605: 1.38x
+    106+- / 90 random   255/209 vs 133/79: 1.92x, 2.65x · pt 972 vs 606: 1.60x
+  range of the per-coordinate ratios at t = 11/13 over the four classes: 1.28x .. 2.38x
+  worst over all classes at depth 28: H^2 t = 11/13 251/188 bits, H^3 157/79 bits (1.60x, 2.38x)
+
+4. Float64 decoding: successes / 500, the words of section 2
+   float = the same construction in floats (correctly rounded step entries, float frame products, float J M^T J, float argmax)
+   exact>f = the exact point rounded once to float64, then the float decoder
+  depth              2    4    6    8   10   12   16   20   24   28
+  m=3  float       303  105   23    7    4    1    0    0    0    0
+       exact>f     303  105   23    7    4    1    0    0    0    0
+  m=5  float       375  179   80   54   28   16    0    0    0    0
+       exact>f     375  179   80   54   28   16    1    0    0    0
+  m=7  float       500  443  376  311  274  196    0    0    0    0
+       exact>f     500  443  376  311  274  215    0    0    0    0
+  m=12 float       500  500  500  500  306   17    1    0    0    0
+       exact>f     500  500  500  500  368   48    0    0    0    0
+  m=19 float       500  500  500  395   20    2    0    0    0    0
+       exact>f     500  500  500  446   31    2    0    0    0    0
+  m=20 float       500  500  500  375   22    0    0    0    0    0
+       exact>f     500  500  500  436   30    1    0    0    0    0
+  H^3  float       500  500  500  500  500  500   57    0    0    0   (decoder3d point/decode)
+       exact>f     500  500  500  500  500  500   83    0    0    0
+  float (same construction): last depth of an unbroken 500/500 run from depth 2, first depth at 0/500, first depth where float falls below exact (on this depth grid):
+    m=3   last 500/500 at none · first 0/500 at 16 · float below exact from depth none (tau x depth there = -)
+    m=5   last 500/500 at none · first 0/500 at 16 · float below exact from depth 16 (tau x depth there = 25.8)
+    m=7   last 500/500 at 2 · first 0/500 at 16 · float below exact from depth 12 (tau x depth there = 23.4)
+    m=12  last 500/500 at 8 · first 0/500 at 20 · float below exact from depth 10 (tau x depth there = 24.8)
+    m=19  last 500/500 at 6 · first 0/500 at 16 · float below exact from depth 8 (tau x depth there = 23.6)
+    m=20  last 500/500 at 6 · first 0/500 at 12 · float below exact from depth 8 (tau x depth there = 24.0)
+    H^3    last 500/500 at 12 · first 0/500 at 20 · float below exact from depth 16 (tau x depth there = 31.1)
+  float decoding never succeeds on more words than exact decoding at any (m, depth): yes
+
+5. Time per point at depth 28 (machine-dependent)
+~   m=3   exact point (Q frame product) 0.624 ms · exact decode 2.441 ms · float point 11.8 us
+~   m=5   exact point (Q frame product) 1.078 ms · exact decode 4.470 ms · float point 12.9 us
+~   m=7   exact point (Q frame product) 1.110 ms · exact decode 3.355 ms · float point 12.9 us
+~   m=12  exact point (Q frame product) 0.836 ms · exact decode 1.057 ms · float point 10.8 us
+~   m=19  exact point (Q frame product) 1.168 ms · exact decode 1.507 ms · float point 11.5 us
+~   m=20  exact point (Q frame product) 1.293 ms · exact decode 1.821 ms · float point 11.4 us
+~   H^3    exact point (decoder3d pointExact) 1.672 ms · exact decode (decodeExact) 0.793 ms
+
+17/17 checks pass
+
+SETTLES:
+  - D3: t = 11/13 gives cosh = 145/24, sinh = 143/24, tau = ln 12 exactly (cosh + sinh = 12); the exact H^2 tree at t = 11/13 decodes 500/500/500/500/500/500/500/500/500/500 of 500 random words at depths 2/4/6/8/10/12/16/20/24/28, with 0 exact ties; the sheet identity holds exactly on all 30000 points.
+  - smallest m in {3, 5, 7, 12, 19, 20} with 500/500 at every depth 2..28: 12. Supplementary: m = 10, 11 also decode 500/500 at every depth; the exact half-width of a subtree (7 levels) crosses the bisector tan = 1/2 for m = 3, 5, 7, 8, 9 and stays below it for m = 10, 11, 12, 19, 20, so the threshold lies between m = 9 and m = 10; t = 11/13 keeps at most 8.72 degrees of margin (m = 10: 2.01, m = 11: 6.00). On the same depth-28 random words m = 10, 11, 12 cost 247/185, 235/167, 225/152 bits (max numerator/denominator).
+  - L3's control: t = 3/4 (m = 7) decodes 226/500 at depth 12 and 55/500 at depth 28 (planning replay: 48/100 at depth 12 reproduced); the same t in the octahedral H^3 tree decodes 500/500 and 500/500.
+  - bits at depth 28, t = 11/13 (max numerator/denominator): random 225/152, straight 201/102, 106+ 229/188, 106+- 251/188; H^3: random 142/79, straight 157/79, 90 fixed 133/79, 90 random 133/79.
+  - the H^2/H^3 per-coordinate bit cost ratio at depth 28 is 1.28x .. 2.38x over the four classes (whole point over a common denominator: 1.29x, 1.28x, 1.45x, 1.56x).
+  - float64 (same construction) at t = 11/13 keeps 500/500 up to depth 8 and reaches 0/500 at depth 20; exact rationals are required beyond that.
+~ total runtime 69.2 s
