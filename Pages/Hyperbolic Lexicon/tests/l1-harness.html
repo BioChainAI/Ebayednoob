@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hyperbolic Lexicon: Phase 2 harness</title>
+<!--
+Hyperbolic Lexicon: the minimal page that reference/run_claims_js.cjs opens in headless Chromium for Phase 2
+(PREREGISTRATION.md Amendment 4 items 1, 2, 3 and 5). It is not a page for readers and has no site bar.
+
+How to run: never by hand. The runner serves the repository root over HTTP on a free local port, opens
+http://127.0.0.1:<port>/Pages/Hyperbolic%20Lexicon/tests/l1-harness.html, and drives window.L1H with page.evaluate:
+  L1H.ready()                     the core, the pinned table and V0 loaded from data/*.js (the core refuses unpinned data)
+  L1H.setV1(base64)               V1's vocab.txt bytes from Node's cache (refused unless they are the pinned file)
+  L1H.begin(tags)                 start an instance set for the vocabularies `tags` ('V0', 'V1')
+  L1H.chunk(base64[])             N_B + WordPiece of each instance: per vocabulary, the record's SHA-256 (Amendment 4
+                                  item 2); the id stream (Amendment 1 item 2) grows in the page
+  L1H.end()                       per vocabulary: the id stream's SHA-256, instance, id and byte counts
+  L1H.records(tag, base64[])      the records themselves (counterexamples)
+  L1H.control1(base64[])          L1 control 1 (item 3): per case, SHA-256 of the platform normaliser's output and of
+                                  the pinned table's R(s), and whether the two strings are equal
+  L1H.rank(spec)                  L4(a) on the small set (item 5, reported): rank-list SHA-256s, exact MAP and mean rank
+  L1H.env()                       the page's user agent and Unicode behaviour
+Everything below calls lexicon_core.js; the page adds only base64 decoding, timing and bookkeeping. The platform's
+Unicode functions appear only in env() (what the page reports about its runtime) and in the core's platformNormalise.
+Load order as lexicon_core.js's header gives it; every path is relative to this file.
+-->
+<script src="../../../scripts/geometric-build/orbital_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+<script src="../data/unicode_15_1_v1.js"></script>
+<script src="../data/vocab_v0_lex0.js"></script>
+<script src="../lexicon_core.js"></script>
+<script>
+'use strict';
+(function () {
+    const LC = window.LexiconCore;
+    const vocabs = {};
+    let cur = null;                              // the instance set being run: { tags, parts: {tag: [Uint8Array]}, ... }
+    // base64 (from Node's Buffer) to bytes; atob gives one char per byte
+    function bytesOf(b64) {
+        const s = atob(b64), out = new Uint8Array(s.length);
+        for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+        return out;
+    }
+    function concat(parts) {
+        let n = 0;
+        for (const p of parts) n += p.length;
+        const out = new Uint8Array(n);
+        let o = 0;
+        for (const p of parts) { out.set(p, o); o += p.length; }
+        return out;
+    }
+    const qs = q => (q === null || q === undefined ? null : q.n + '/' + q.d);
+    window.L1H = {
+        ready() {
+            const T = LC.tables();
+            vocabs.V0 = LC.loadV0();
+            return { core: LC.version, unicodeTable: T.unicode, V0: { entries: vocabs.V0.size, sha256: vocabs.V0.sha256 } };
+        },
+        setV1(b64) {
+            vocabs.V1 = LC.vocabFromText(bytesOf(b64), 'V1');
+            return { entries: vocabs.V1.size, sha256: vocabs.V1.sha256 };
+        },
+        begin(tags) {
+            cur = { tags, parts: {}, ids: {}, n: 0, ms: 0 };
+            for (const t of tags) { if (!vocabs[t]) throw new Error('vocabulary ' + t + ' is not loaded'); cur.parts[t] = []; cur.ids[t] = 0; }
+            return true;
+        },
+        chunk(list) {
+            const t0 = performance.now(), out = {};
+            for (const t of cur.tags) out[t] = [];
+            for (const b64 of list) {
+                const r = LC.nb(bytesOf(b64));
+                for (const t of cur.tags) {
+                    const v = vocabs[t];
+                    out[t].push(LC.recordSha256(LC.recordNb(r, v)));
+                    const ids = LC.encodeNb(r, v).ids;          // memoised per word: the record's own pieces
+                    cur.parts[t].push(LC.leb128([ids.length]), LC.leb128(ids));
+                    cur.ids[t] += ids.length;
+                }
+                cur.n++;
+            }
+            cur.ms += performance.now() - t0;
+            return out;
+        },
+        end() {
+            const t0 = performance.now(), out = {};
+            for (const t of cur.tags) {
+                const s = concat(cur.parts[t]);
+                out[t] = { instances: cur.n, ids: cur.ids[t], bytes: s.length, sha256: LC.sha256Hex(s) };
+            }
+            const ms = cur.ms + performance.now() - t0;
+            cur = null;
+            return { streams: out, ms };
+        },
+        records(tag, list) { return list.map(b64 => LC.record(bytesOf(b64), vocabs[tag])); },
+        control1(list) {
+            const t0 = performance.now();
+            const rows = list.map(b64 => {
+                const s = LC.fromCps(LC.decodeUtf8(bytesOf(b64)).cps), p = LC.platformNormalise(s), r = LC.tableLowerNfdDropMn(s);
+                return [LC.sha256Hex(LC.utf8(p)), LC.sha256Hex(LC.utf8(r)), p === r ? 1 : 0];
+            });
+            return { rows, ms: performance.now() - t0 };
+        },
+        // spec: { words: ['0213', ...], offsets, graph: [[i...]], closure: [[i...]], queries: [u...] }
+        rank(spec) {
+            const words = spec.words.map(s => Array.from(s, ch => ch.charCodeAt(0) - 48)), out = {};
+            for (const tree of ['H3', 'H2']) {
+                const t0 = performance.now();
+                const arm = tree === 'H3' ? LC.h3Arm(words) : LC.h2Arm(words), msArm = performance.now() - t0;
+                const shas = [], g = [], c = [], rg = [], rc = [];
+                for (const u of spec.queries) {
+                    const r = LC.rankQuery(arm, u, [spec.graph, spec.closure], spec.offsets, 'sha');
+                    shas.push(r.sha); g.push(r.ap[0]); c.push(r.ap[1]); rg.push(r.ranks[0]); rc.push(r.ranks[1]);
+                }
+                out[tree] = {
+                    queries: shas.length, rank_list_sha256: shas, rank_lists_digest: LC.listDigest(shas),
+                    graph_map: qs(LC.mapExact(g)), closure_map: qs(LC.mapExact(c)),
+                    graph_mean_rank: qs(LC.meanRank(rg)), closure_mean_rank: qs(LC.meanRank(rc)),
+                    graph_ap_list_digest: LC.listDigest(g.map(LC.qOrDash)), closure_ap_list_digest: LC.listDigest(c.map(LC.qOrDash)),
+                    ms: performance.now() - t0, msArm,
+                };
+            }
+            return out;
+        },
+        // What the page can say about its runtime: the user agent, and Unicode behaviour read from the platform's
+        // own functions (pages expose no ICU version string). The same probe runs in Node.
+        env() {
+            const assigned = cp => /^\p{Assigned}$/u.test(String.fromCodePoint(cp));
+            const hexcps = s => Array.from(s, ch => ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ');
+            const markers = {};
+            let newest = 'none of the markers';
+            for (const [cp, v] of [[0x2FFC, '15.1'], [0x0897, '16.0'], [0x20C1, '17.0']]) {
+                const a = assigned(cp);
+                markers['U+' + cp.toString(16).toUpperCase().padStart(4, '0') + ' (new in ' + v + ')'] = a;
+                if (a) newest = v;
+            }
+            const dt = Intl.DateTimeFormat().resolvedOptions();
+            return {
+                userAgent: navigator.userAgent, markersAssigned: markers, newestMarkerAssigned: newest,
+                lowercase_U0130: hexcps(String.fromCodePoint(0x130).toLowerCase()), lowercase_final_sigma: hexcps(String.fromCodePoint(0x391, 0x3A3).toLowerCase()),
+                nfd_U1E9B_U0323: hexcps(String.fromCodePoint(0x1E9B, 0x323).normalize('NFD')), intlLocale: dt.locale, intlTimeZone: dt.timeZone,
+            };
+        },
+    };
+})();
+</script>
+</head>
+<body>
+<p>Hyperbolic Lexicon: the Phase 2 harness page for <code>reference/run_claims_js.cjs</code>.</p>
+</body>
+</html>

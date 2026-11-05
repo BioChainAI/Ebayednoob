@@ -26,6 +26,8 @@ const RUNS = [
     ['cores', 'fence.js parity', ['node', HO + 'tests/parity-fence.cjs']],
     ['cores', 'Engram browser core', ['node', E + 'tests/parity-engram.cjs']],
     ['cores', 'Engram bridges (biochain codec)', ['node', E + 'tests/bridges.cjs']],
+    ['lexicon', 'browser core parity (traces)', ['node', L + 'tests/parity-lexicon.cjs', '--quiet']],
+    ['lexicon', 'JS data wrappers', ['node', L + 'reference/golden/make_js_data_v1.cjs', '--check']],
     ['lexicon', 'links and the ways in', ['node', L + 'tests/links.cjs']],
     ['lexicon', 'spike reruns', ['node', L + 'tests/spikes.cjs', ...(process.argv.includes('--all') ? ['--all'] : [])]],
     ['site', 'the site bar on every page', ['node', 'scripts/install-page-chrome.mjs', '--check']],

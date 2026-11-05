@@ -55,6 +55,7 @@ Built in Phase 1, in `lexicon/`:
 | `lexicon/flat.py` | The curvature-0 arms F3, F2, F3\*, F2\* (item 7) |
 | `lexicon/rank.py` | Exact ranking keys, rank lists, pessimistic AP, MAP and mean rank as exact rationals, distortion, bits, the bootstrap |
 | `lexicon/lps.py` | X(5, q) for q ∈ {13, 17, 29}: L7's checks (a)–(e) and controls |
+| `lexicon/phase2.py` | Phase 2 (Amendment 4): L1's per-instance record and digests, S6's R(s) from the pinned table (L1 control 1's reference side), the Hugging Face wrapper; L4(b)'s float64 rounding, left-to-right float key, inversions and float ties, and control 2's acosh evaluator |
 
 Still planned:
 
@@ -72,11 +73,14 @@ Eye (`engram.ttmpt`, `engram.address`) are imported in place, unchanged, from th
 From this folder (`Pages/Hyperbolic Lexicon/reference/`), with the data cached:
 
 ```
-python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (103 tests, under a minute)
-python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 4 slow full-corpus checks
+python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (123 tests, about a minute)
+python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 5 slow checks (full corpora; the Phase 2 dry run)
 python3 -B run_claims.py --dry                         # the registered dry run (Amendment 1, item 10) into results/dry/
 python3 -B run_claims.py                               # the Phase 1 claims L2, L3, L5, L7 into results/ (about 5 minutes)
 python3 -B run_claims.py L3 L7                         # only these claims (results/claims-L3-L7.json and .md)
+python3 -B run_claims.py --phase2 --dry                # Phase 2's dry run (Amendment 4 item 7) into results/dry/phase2-python.json
+python3 -B run_claims.py --phase2                      # the reference's half of L1 and L4 into results/phase2-python.json;
+                                                       # per-instance lists in ~/.cache/hyperbolic-lexicon/phase2/ (outside git)
 python3 -B traces_text.py --check                      # rebuild the normaliser and WordPiece traces and compare
 python3 -B traces_geometry.py --check                  # rebuild the address, point and rank traces and compare
 python3 -B traces_geometry.py                          # rewrite the address, point and rank traces
@@ -88,6 +92,10 @@ python3 -B traces_geometry.py                          # rewrite the address, po
   this repository (L7(e), imported read-only). It counts every case, keeps the first failures of each part as
   counterexamples, and runs every control; an exact claim whose control passes is void. A dry run moves every seed
   up by 3000 and uses the verb forest and the repository Markdown in place of the registered instances.
+- **Phase 2** (`--phase2`, then `node run_claims_js.cjs`): V1 is pinned, so L1's V1 cells are in force and the
+  decisive run refuses unless both runners have V1 (a dry run goes on without it, and its L1 is then not supported).
+  UD EWT text is not committed (L1 Data): for set (b) the JSON keeps only indices, offsets, lengths and SHA-256s of
+  its examples and counterexamples; the text goes to the cache beside the per-instance records.
 - **Traces** use seeds 8000 + i, which no claim uses. `traces_text.py` writes `traces/normalise_v1.txt` and
   `traces/wordpiece_v1.txt` (with V1 lines when V1 is cached); `traces_geometry.py` writes
   `traces/address_v1.txt`, `traces/points_v1.txt` and `traces/rank_v1.txt`. Both `--check`s rebuild in memory and

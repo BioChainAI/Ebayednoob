@@ -15,6 +15,8 @@ Modules (Phase 1):
     flat            the curvature-0 arms F and F* in R^2 and R^3 (item 7)
     rank            exact ranking keys, pessimistic AP, MAP, mean rank, rank lists, distortion, the bootstrap
     lps             the LPS overlay X(5, q) of SHD-CCP RFC 03 (L7)
+    phase2          Phase 2 (Amendment 4): L1's records and digests, S6's R(s) from the table (L1 control 1), the
+                    Hugging Face wrapper; L4(b)'s float keys, inversions and control 2 (run_claims.py --phase2)
 
 Hyperbolic Oracles' exact modules (hpstep: prng, problems, decode3d) and Engram Mind's Eye's (engram: ttmpt,
 address) are imported in place, unchanged, from their reference folders.
