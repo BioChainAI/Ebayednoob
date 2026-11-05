@@ -1,5 +1,5 @@
 """Hyperbolic Lexicon: the Python reference (Phase 1). It decides the exact claims in ../../PREREGISTRATION.md
-(with Amendment 1); the browser core must reproduce its traces line for line.
+(with Amendments 1 and 2); the browser core must reproduce its traces line for line.
 
 Modules (Phase 1):
     wordnet         the reader of golden/wordnet_v1.cjs in Python: synsets, the spanning forest, the closure,
@@ -7,6 +7,8 @@ Modules (Phase 1):
     unicode_tables  the pinned Unicode 15.1 table (golden/unicode_15_1_v1.json, from golden/make_unicode_v1.py)
     normalise       N_B (Amendment 1, item 1) with byte spans, failing closed; N1, the registered fallback
     wordpiece       greedy longest-match-first WordPiece, the id stream, the V0 "lex0" trainer (item 3)
+    l1              L1's instance loaders (a)-(d), the dry-run and trace strings, and (d)'s pool (item 2;
+                    loaders only, pinned by golden/l1_instances_v1.meta.json)
     address         the L3 rule and its controls, the verb forest, the bijective 59/64-bit id codec, map A (item 4)
     h3tree          exact H^3 points of a whole forest, frame by frame, as integer vectors over 7^n
     h2exact         the exact H^2 tree of D3 (t = 11/13): points, frames and exact greedy decoding

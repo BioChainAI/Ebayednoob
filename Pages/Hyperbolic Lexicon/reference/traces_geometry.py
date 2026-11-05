@@ -10,6 +10,10 @@
                             neighbour ranks, in H^3 and H^2; the first 100 rank-list lines of query 0
 
     python3 -B traces_geometry.py            (from this folder; needs the WordNet archive in the cache)
+    python3 -B traces_geometry.py --check    rebuild in memory and compare bytes with the committed files
+
+--check exits 0 equal, 1 different, 2 "skipped" when the WordNet archive is not cached (after points_v1.txt, which
+needs no WordNet, matched).
 
 Seeds 8000 + i are the traces' own (Amendment 1, item 10): no claim uses them. A word from a generator is item 9's
 draw with the length given: root letter below(6), then children(w)[below(5)]. Lines starting with '#' are comments;
@@ -47,12 +51,21 @@ def word_of(rng, L):
     return tuple(w)
 
 
+def text_of(lines):
+    return '\n'.join(lines) + '\n'
+
+
 def write(name, lines):
     os.makedirs(OUT, exist_ok=True)
-    text = '\n'.join(lines) + '\n'
+    text = text_of(lines)
     with open(os.path.join(OUT, name), 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
     print(f'{name}: {len(lines)} lines, sha256 {hashlib.sha256(text.encode()).hexdigest()}')
+
+
+def same(name, lines):
+    p = os.path.join(OUT, name)
+    return os.path.exists(p) and open(p, 'rb').read() == text_of(lines).encode('utf-8')
 
 
 def address_trace(wn):
@@ -126,12 +139,37 @@ def rank_trace(wn):
     return lines + heads
 
 
+def check():
+    # points_v1.txt needs no WordNet: it is always compared
+    texts = {'points_v1.txt': points_trace()}
+    if not same('points_v1.txt', texts['points_v1.txt']):
+        print('MISMATCH: points_v1.txt', file=sys.stderr)
+        return 1
+    if not W.available():
+        print(f'points_v1.txt matches; skipped: address_v1.txt and rank_v1.txt need the WordNet archive, which is '
+              f'not cached at {W.ZIP_PATH} (run golden/make_wordnet_v1.cjs)', file=sys.stderr)
+        return 2
+    wn = W.load()
+    texts = {'address_v1.txt': address_trace(wn), **texts, 'rank_v1.txt': rank_trace(wn)}
+    bad = [name for name, lines in texts.items() if not same(name, lines)]
+    if bad:
+        print('MISMATCH: ' + ', '.join(bad), file=sys.stderr)
+        return 1
+    print('traces match: ' + ', '.join('%s (%d lines, sha256 %s)' % (
+        name, len(lines), hashlib.sha256(text_of(lines).encode('utf-8')).hexdigest()[:16])
+        for name, lines in texts.items()))
+    return 0
+
+
 def main():
+    if '--check' in sys.argv[1:]:
+        return check()
     wn = W.load()
     write('address_v1.txt', address_trace(wn))
     write('points_v1.txt', points_trace())
     write('rank_v1.txt', rank_trace(wn))
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

@@ -35,8 +35,9 @@ X(5, q) vertex agree.
 
 The id: id(w) = (number of reduced words shorter than w) + (rank of w among words of its length, with the first
 letter in base 6 and later letters in base 5). Words of length ≤ 25 number 1 + 6·(5²⁵ − 1)/4 ≈ 4.47·10¹⁷ < 2⁵⁹, so
-they fit in 59 bits. Longer words need continuation tiles; that is left for a version 0.2, once Hyperbolic
-Lexicon's L3 has reported how long WordNet's addresses actually are.
+they fit in 59 bits. Longer words need continuation tiles; that is left for a version 0.2. Hyperbolic Lexicon's L3
+has since reported how long WordNet's noun addresses are: 74,630 of 82,115 (90.88%) have at most 25 letters, 78,550
+(95.66%) at most 27, and the longest has 36 (`reference/results/claims.json`).
 
 ## Checked with SHD-CCP's own tooling
 
