@@ -1,7 +1,8 @@
 // Hyperbolic Lexicon: the system map, drawn on the hub in full and on every explainer as a focused chart.
 // One list of nodes and edges serves every page. When a module is added or built, change its node here (its
 // status, its explainer) and every chart in the folder picks it up. The renderer is Hyperbolic Oracles'
-// hp-map.js, unchanged apart from its names, as Engram Mind's Eye's em-map.js is, so the three maps read alike.
+// hp-map.js, unchanged apart from its names and one status ('both': built in Python and JS), as Engram Mind's Eye's
+// em-map.js is, so the three maps read alike.
 //
 //   <div data-hl-map="full"></div>                    the whole system, four columns, click a node for details
 //   <div data-hl-map="focus" data-node="addr"></div>  what one node draws on (left) and feeds (right)
@@ -17,7 +18,7 @@
         artifact: { name: 'Page, data or code', color: '#34d399' }
     };
     const STATUS = {
-        source: 'source', existing: 'built earlier', done: 'done', built: 'built in the Python reference', design: 'designed, not built', next: 'next to build', planned: 'planned'
+        source: 'source', existing: 'built earlier', done: 'done', built: 'built in the Python reference', both: 'built in Python and JS', design: 'designed, not built', next: 'next to build', planned: 'planned'
     };
     const GH = 'https://github.com/BioChainAI/';
     const ANA = 'explainers/analysis.html', SHD = 'explainers/shdccp.html', ARC = 'explainers/architecture.html', BIO = 'explainers/biochains.html';
@@ -58,13 +59,13 @@
           desc: 'The norm-5 quaternion tree’s generators are exactly the Lubotzky-Phillips-Sarnak set for p = 5. Every reduced word is an integer quaternion of norm 5^L that right division unfolds; the same tree’s finite quotients X(5, q) are the Ramanujan graphs SHD-CCP RFC 03 plans as an overlay.',
           refs: 'hyperbolic_core.js P.GENS', explainer: SHD + '#lps' },
         { id: 'h3', col: 1, row: 1.5, kind: 'math', status: 'existing', label: 'Exact H³ tree', sub: 't = 3/4 · τ = ln 7 · to depth 28',
-          desc: 'decoder3d.js steps along the six octahedral directions with the rational boost t = 3/4 (cosh 25/7, sinh 24/7, τ = ln 7). A word of length n is an integer vector over 7^n, and decodeExact returns the word. The primary exact store of the lexicon (D3).',
+          desc: 'decoder3d.js steps along the six octahedral directions with the rational boost t = 3/4 (cosh 25/7, sinh 24/7, τ = ln 7). A word of length n is an integer vector over 7^n, and decodeExact returns the word. The primary exact store of the lexicon (D3). In Phase 2 its pointExact placed every noun for L3(f).',
           refs: 'decoder3d.js TreeEmbedding3D', explainer: ARC + '#place' },
-        { id: 'h2', col: 1, row: 2.5, kind: 'math', status: 'built', label: 'Exact H² tree', sub: 't = 11/13 · τ = ln 12 · Pythagorean',
-          desc: 'New: six rational directions (1,0), (3/5,±4/5), (−7/25,±24/25), (−1,0) with a boost t = (m−1)/(m+1), so τ = ln m exactly. Spike S2 measured decodability and bits by m and fixed m = 12 (t = 11/13) for the 2D system; the plane costs more bits per level than H³. Built in Phase 1 (lexicon/h2exact.py): every one of the 82,115 noun words decodes back exactly, at most 252-bit numerators over 142-bit denominators per coordinate (H³: 184 over 102); at t = 3/4 the same tree fails on 19,796 (L3).',
+        { id: 'h2', col: 1, row: 2.5, kind: 'math', status: 'both', label: 'Exact H² tree', sub: 't = 11/13 · τ = ln 12 · Pythagorean',
+          desc: 'New: six rational directions (1,0), (3/5,±4/5), (−7/25,±24/25), (−1,0) with a boost t = (m−1)/(m+1), so τ = ln m exactly. Spike S2 measured decodability and bits by m and fixed m = 12 (t = 11/13) for the 2D system; the plane costs more bits per level than H³. Built in Phase 1 (lexicon/h2exact.py): every one of the 82,115 noun words decodes back exactly, at most 252-bit numerators over 142-bit denominators per coordinate (H³: 184 over 102); at t = 3/4 the same tree fails on 19,796 (L3). Built again in Phase 2 in lexicon_core.js: Node’s H² points equal Python’s on every noun (L3(f), supported).',
           refs: 'D3 · spike S2 · L3', explainer: ARC + '#place' },
-        { id: 'rank', col: 1, row: 3.5, kind: 'math', status: 'built', label: 'Exact Lorentz ranking', sub: 'integer keys · pessimistic ties',
-          desc: 'Candidates ranked by the exact Lorentz inner product of exact points, compared as integers over a common denominator; ties are exact and counted against the query. Float64 ranks invert on deep words (spike S1), so MAP and mean rank are computed exactly (L4). Built in Phase 1 (lexicon/rank.py: keys, rank lists, pessimistic AP, MAP, mean rank, the bootstrap) and used for L5; L4(a, b), across engines, is decided in Phase 2.',
+        { id: 'rank', col: 1, row: 3.5, kind: 'math', status: 'both', label: 'Exact Lorentz ranking', sub: 'integer keys · pessimistic ties',
+          desc: 'Candidates ranked by the exact Lorentz inner product of exact points, compared as integers over a common denominator; ties are exact and counted against the query. Float64 ranks invert on deep words (spike S1), so MAP and mean rank are computed exactly (L4). Built in Phase 1 (lexicon/rank.py: keys, rank lists, pessimistic AP, MAP, mean rank, the bootstrap) and used for L5. Built again in Phase 2 in lexicon_core.js. L4(a) and (b) are supported: Python and Node give the same rank list for every query and the same MAP and mean rank as exact rationals (1,176 mammal and 200 noun queries, H³ and H²), while float64 ranking of the same points inverts an exactly ordered pair in 997 of 1,000 noun queries. L4(c) is Phase 4.',
           refs: 'L4 · spike S1', explainer: ARC + '#rank' },
         { id: 'rfc6962', col: 1, row: 4.5, kind: 'math', status: 'design', label: 'RFC 6962 manifest', sub: 'no duplication · consistency proofs',
           desc: 'The corpus manifest: a Certificate Transparency Merkle tree (0x00 leaf, 0x01 node, split at the largest power of two, no duplication) over the per-shard records, with inclusion and consistency proofs, so growth is append-only. The biochain rule duplicates the last node and is malleable; this one is not (L9).',
@@ -76,20 +77,20 @@
           desc: 'The LPS Ramanujan graphs: the tree reduced mod q, with 2,184, 4,896 and 12,180 vertices for q = 13, 17, 29. An address maps to a vertex; distinct short words map to distinct vertices. A shard key, never integrity: LPS Cayley hashes have known collision attacks. Built in Phase 1 (lexicon/lps.py); L7 is supported: girths 8, 8, 9, Ramanujan margins 0.2224, 0.1632, 0.0301, and SHD-CCP’s Hurwitz product, halved, equals the word quaternion.',
           refs: 'L7 · spike S5', explainer: SHD + '#lps' },
 
-        { id: 'norm', col: 2, row: 0, kind: 'comp', status: 'built', label: 'A · Normalise', sub: 'N_B on pinned Unicode 15.1 tables',
-          desc: 'BERT’s BasicTokenizer rules (controls, CJK spacing, lower-casing, NFD and accent stripping, punctuation splitting) on Unicode 15.1 tables exported from Python and pinned by hash, failing closed on unassigned code points. Node (Unicode 17.0) and Python (15.1) disagree, so the platform’s functions are never called (L1, spike S6). Built in Phase 1 (lexicon/normalise.py on golden/unicode_15_1_v1.json); an independent oracle agreed on every L1 instance and 6.7 million code-point contexts. L1 itself is decided in Phase 2.',
+        { id: 'norm', col: 2, row: 0, kind: 'comp', status: 'both', label: 'A · Normalise', sub: 'N_B on pinned Unicode 15.1 tables',
+          desc: 'BERT’s BasicTokenizer rules (controls, CJK spacing, lower-casing, NFD and accent stripping, punctuation splitting) on Unicode 15.1 tables exported from Python and pinned by hash, failing closed on unassigned code points. Node (Unicode 17.0) and Python (15.1) disagree, so the platform’s functions are never called (L1, spike S6). Built in Phase 1 (lexicon/normalise.py on golden/unicode_15_1_v1.json); an independent oracle agreed on every L1 instance and 6.7 million code-point contexts. Built again in Phase 2 in lexicon_core.js, on the same table and with a guard against platform Unicode calls. L1 is supported: Node and Chromium, both at Unicode 17.0, give the reference’s bytes on all 156,801 instances, while the platform’s own functions differ on 725 of the 20,520 stress cases (control 1). The table also equals the official UCD 15.1.0 files in every field.',
           refs: 'L1 · D5 · spike S6', explainer: ARC + '#normalise' },
-        { id: 'tok', col: 2, row: 1, kind: 'comp', status: 'built', label: 'B · Tokenize', sub: 'WordPiece · V0 frozen · V1 pinned',
-          desc: 'Greedy longest-match-first WordPiece with ## continuations. V0 “lex0” (8,192 entries after 8,059 merges, trained on WordNet glosses by the algorithm fixed in Amendment 1, and frozen) decides L1; V1 (bert-base-uncased, pinned) is its second cell. V0’s alphabet is 64 ASCII code points, so a word with a non-ASCII letter is [UNK] under V0. Built in Phase 1 (lexicon/wordpiece.py); an independent naive trainer rebuilt V0 byte for byte.',
+        { id: 'tok', col: 2, row: 1, kind: 'comp', status: 'both', label: 'B · Tokenize', sub: 'WordPiece · V0 frozen · V1 pinned',
+          desc: 'Greedy longest-match-first WordPiece with ## continuations. V0 “lex0” (8,192 entries after 8,059 merges, trained on WordNet glosses by the algorithm fixed in Amendment 1, and frozen) decides L1; V1 (bert-base-uncased, pinned) is its second cell. V0’s alphabet is 64 ASCII code points, so a word with a non-ASCII letter is [UNK] under V0. Built in Phase 1 (lexicon/wordpiece.py); an independent naive trainer rebuilt V0 byte for byte. Built again in Phase 2 in lexicon_core.js: the same pieces, ids and offsets on every L1 instance, for V0 and V1, in Node and Chromium (L1, supported).',
           refs: 'L1 · D4', explainer: ARC + '#tokenize' },
-        { id: 'ids', col: 2, row: 2, kind: 'comp', status: 'built', label: 'C · Ids', sub: 'id stream · engram/1 only a checksum',
-          desc: 'Token ids as a LEB128 stream with its SHA-256. engram/1 is computed only as a compatibility checksum for Owl Academy, never as an input: its 26 letter grids keep only letter-count parity, so anagrams collide and numbers share the zero key. L2 is supported: 52.6% of WordNet’s 147,305 lemma types share a key with another (a SHA-256-prefix key: 0 collisions), identically in Python and Node.',
+        { id: 'ids', col: 2, row: 2, kind: 'comp', status: 'both', label: 'C · Ids', sub: 'id stream · engram/1 only a checksum',
+          desc: 'Token ids as a LEB128 stream with its SHA-256. engram/1 is computed only as a compatibility checksum for Owl Academy, never as an input: its 26 letter grids keep only letter-count parity, so anagrams collide and numbers share the zero key. L2 is supported: 52.6% of WordNet’s 147,305 lemma types share a key with another (a SHA-256-prefix key: 0 collisions), identically in Python and Node. Phase 2: lexicon_core.js writes the same id streams, every id-stream SHA-256 equal in Node and Chromium (L1).',
           refs: 'L2 · D4', explainer: ANA + '#engram' },
-        { id: 'addr', col: 2, row: 3, kind: 'comp', status: 'built', label: 'D · Address', sub: 'L3 rule · 59/64-bit bijective id',
-          desc: 'A training-free address for every noun synset: the spanning parent is the first hypernym pointer; child k of a node with c children takes max(1, ⌈log₅ c⌉) letters, the base-5 digits of k. Ancestry equals prefix order. A bijective mixed-radix code gives 59-bit ids to words of length ≤ 25 (L3). Built in Phase 1 (lexicon/address.py): all 82,115 words are distinct, invertible and certified; up to 36 letters, mean 18.37; 90.88% fit id59 and 95.66% id64.',
+        { id: 'addr', col: 2, row: 3, kind: 'comp', status: 'both', label: 'D · Address', sub: 'L3 rule · 59/64-bit bijective id',
+          desc: 'A training-free address for every noun synset: the spanning parent is the first hypernym pointer; child k of a node with c children takes max(1, ⌈log₅ c⌉) letters, the base-5 digits of k. Ancestry equals prefix order. A bijective mixed-radix code gives 59-bit ids to words of length ≤ 25 (L3). Built in Phase 1 (lexicon/address.py): all 82,115 words are distinct, invertible and certified; up to 36 letters, mean 18.37; 90.88% fit id59 and 95.66% id64. Built again in Phase 2 in lexicon_core.js, which gives the same words in Node (L3(f), supported).',
           refs: 'L3 · D6', explainer: ARC + '#address' },
-        { id: 'place', col: 2, row: 4, kind: 'comp', status: 'built', label: 'E · Placement', sub: 'exact H³ and H² points',
-          desc: 'Every address becomes an exact point in H³ (the primary store) and in H² (the 2D system), both checked on the hyperboloid exactly and decoded back to the word (L3); ranked exactly (L4); compared with curvature-0 trees of the same construction (L5). Built in Phase 1 (lexicon/h3tree.py, h2exact.py, flat.py). L5 is supported: noun graph-edge MAP H³ 0.568, H² 0.590, against F3 0.007 and F3* 0.500.',
+        { id: 'place', col: 2, row: 4, kind: 'comp', status: 'both', label: 'E · Placement', sub: 'exact H³ and H² points',
+          desc: 'Every address becomes an exact point in H³ (the primary store) and in H² (the 2D system), both checked on the hyperboloid exactly and decoded back to the word (L3); ranked exactly (L4); compared with curvature-0 trees of the same construction (L5). Built in Phase 1 (lexicon/h3tree.py, h2exact.py, flat.py). L5 is supported: noun graph-edge MAP H³ 0.568, H² 0.590, against F3 0.007 and F3* 0.500. Phase 2: Node’s H³ points (decoder3d.js pointExact) and H² points (lexicon_core.js) equal Python’s on every noun, by the canonical point list’s SHA-256 and 2,000 sampled lines (L3(f), supported).',
           refs: 'L3 · L4 · L5', explainer: ARC + '#place' },
         { id: 'embed', col: 2, row: 5, kind: 'comp', status: 'planned', label: 'F · Static embeddings', sub: 'Lorentz vs Euclidean, float64',
           desc: 'Learned embeddings of the mammal hierarchy, Lorentz against Euclidean at matched dimension (2, 3, 50), in numpy float64, snapped to 2^−32 for certified storage and ranked exactly (L6, L4(c); Phase 4).',
@@ -108,24 +109,24 @@
           refs: 'D10', explainer: BEN },
 
         { id: 'pins', col: 3, row: 0, kind: 'artifact', status: 'done', label: 'Pins', sub: 'WordNet · EWT · Unicode · V0 · V1',
-          desc: 'Phase 0: make_wordnet_v1.cjs and make_ewt_v1.cjs fetch the data once into a cache outside git and record hashes and counts. Phase 1 added the Unicode 15.1 table (142,624 bytes, committed), V0 “lex0” (8,192 entries, committed and frozen), V1 (bert-base-uncased at revision 86b5e09, its hash committed, the file in the cache) and the order-sensitive digests of L1’s four instance lists. Every pin has --check.',
+          desc: 'Phase 0: make_wordnet_v1.cjs and make_ewt_v1.cjs fetch the data once into a cache outside git and record hashes and counts. Phase 1 added the Unicode 15.1 table (142,624 bytes, committed), V0 “lex0” (8,192 entries, committed and frozen), V1 (bert-base-uncased at revision 86b5e09, its hash committed, the file in the cache) and the order-sensitive digests of L1’s four instance lists. Phase 2 added the table and V0 as script files for the pages (data/*.js, make_js_data_v1.cjs), L1’s instance loaders in JS (l1_instances_v1.cjs), and a check of the Unicode table against the official UCD 15.1.0 files, equal in every field (check_ucd_v1.py). Every pin has --check.',
           refs: 'reference/golden/', explainer: EVI + '#pins' },
         { id: 'spikes', col: 3, row: 1, kind: 'artifact', status: 'done', label: 'Spikes S1-S7', sub: 'captured outputs · decide nothing',
           desc: 'Phase 0: seven measurement scripts run before the preregistration, on data disjoint from every registered instance: the H³ and H² trees, WordNet’s shape on verbs, a lexicon shard against Owl’s grower, the LPS overlay, Unicode across three runtimes, and ATTEST/1 in two languages.',
           refs: 'spikes/', explainer: EVI + '#spikes' },
-        { id: 'prereg', col: 3, row: 2, kind: 'artifact', status: 'done', label: 'Preregistration', sub: 'L1-L11 · D1-D12 · Amendments 1-2',
-          desc: 'Eleven claims with instances, controls that must fail, decision rules and predictions, committed alone, after the spikes and before any code that tests them. Amendment 1 fixed the open definitions before any Phase 1 code; Amendment 2, after the dry run and before the decisive run, recorded a disclosure, an erratum and the readings fixed in code.',
+        { id: 'prereg', col: 3, row: 2, kind: 'artifact', status: 'done', label: 'Preregistration', sub: 'L1-L11 · D1-D12 · Amendments 1-6',
+          desc: 'Eleven claims with instances, controls that must fail, decision rules and predictions, committed alone, after the spikes and before any code that tests them. Amendment 1 fixed the open definitions before any Phase 1 code; Amendment 2, after the dry run and before the decisive run, recorded a disclosure, an erratum and the readings fixed in code; Amendment 3 corrected it after the run. In Phase 2, Amendment 4 fixed how the engines are run and compared before any code, and Amendment 5, after the dry run and before the decisive run, the disclosures, readings, environment and review. Amendment 6 is an erratum to L6’s protocol attribution; no rule changed.',
           refs: 'PREREGISTRATION.md', explainer: EVI + '#claims' },
-        { id: 'reference', col: 3, row: 3, kind: 'artifact', status: 'done', label: 'Python reference', sub: 'Phase 1 · L2 L3 L5 L7 supported',
-          desc: 'The exact reference (reference/lexicon/): N_B on the pinned Unicode table, WordPiece with V0 and V1, L1’s instance loaders, WordNet, the address rule and id codec, exact H³ and H² points, the flat arms, exact ranking and X(5, q), with tests and the traces the browser core must reproduce. Its claims runner was committed after its dry run, fixed after the geometry review, dry-run again after both adversarial reviews, and, after Amendment 2, run once: L2, L5, L7 and L3’s Python side supported, every control failing as required.',
-          refs: 'reference/README.md · reference/results/claims.json', href: 'reference/README.md', explainer: 'explainers/reference.html' },
+        { id: 'reference', col: 3, row: 3, kind: 'artifact', status: 'done', label: 'Python reference', sub: 'Phases 1-2 · the authority',
+          desc: 'The exact reference (reference/lexicon/): N_B on the pinned Unicode table, WordPiece with V0 and V1, L1’s instance loaders, WordNet, the address rule and id codec, exact H³ and H² points, the flat arms, exact ranking and X(5, q), with tests and the traces the browser core must reproduce. Its claims runner was committed after its dry run, fixed after the geometry review, dry-run again after both adversarial reviews, and, after Amendment 2, run once: L2, L5, L7 and L3’s Python side supported, every control failing as required. In Phase 2 it ran the reference’s half once (run_claims.py --phase2, lexicon/phase2.py): L1’s per-instance records and digests, which Node and Chromium matched, the Hugging Face agreement (reported), L4(a)’s rank lists, and L4(b), which it decides: supported.',
+          refs: 'reference/README.md · reference/results/claims.json · reference/results/phase2-python.json', href: 'reference/README.md', explainer: 'explainers/reference.html' },
         { id: 'proposals', col: 3, row: 4, kind: 'artifact', status: 'done', label: 'Proposals', sub: 'SHD-CCP · BioChain-AI · Owl Academy',
           desc: 'Documents for the other repositories, never applied: the layout census, RFC 03 and LPS, a Lemma 15 note, kernel 0xA (passing the Ontology’s own lint), golden-vector suites, language biochains for BioChain-AI, and notes for Owl Academy.',
           refs: 'proposals/', explainer: SHD + '#proposals' },
-        { id: 'core', col: 3, row: 5, kind: 'artifact', status: 'next', label: 'lexicon_core.js', sub: 'Phase 2 · traces · L1, L3(f), L4',
-          desc: 'The browser core, on the shared cores unchanged, reproducing the reference’s traces (reference/traces/) line for line and deciding L1, L3(f) and L4(a, b) in Node and Chromium.',
-          refs: 'Phase 2', explainer: TRK + '#browser' },
-        { id: 'chains', col: 3, row: 6, kind: 'artifact', status: 'planned', label: 'Shards and manifests', sub: 'Phase 3 · L8-L11',
+        { id: 'core', col: 3, row: 5, kind: 'artifact', status: 'done', label: 'lexicon_core.js', sub: 'Phase 2 · parity 18,667/18,667 lines',
+          desc: 'The browser core (UMD), on orbital_core.js, hyperbolic_core.js and decoder3d.js unchanged: a strict UTF-8 decoder, N_B on the pinned Unicode 15.1 table alone (a guard forbids platform Unicode calls), WordPiece, the id stream and L1’s record; the L3 address rule and id codec, exact H³ points (decoder3d.js pointExact), the exact H² tree, exact ranking with pessimistic AP, and L4(b)’s float keys. A page gets the pinned data from data/*.js. tests/parity-lexicon.cjs passes 18,667 of 18,667 lines in Node, 18,578 of them reproducing the five Phase 1 traces. One decisive run: L1 supported in all four cells (V0 and V1, in Node 22 and Chromium 153; 0 of 156,801 instances differ), L3(f) supported (the canonical point list equals Python’s), L4(a, b) supported.',
+          refs: 'Phase 2 · tests/parity-lexicon.cjs · reference/results/claims-phase2.json', href: 'lexicon_core.js', explainer: 'explainers/browser-core.html' },
+        { id: 'chains', col: 3, row: 6, kind: 'artifact', status: 'next', label: 'Shards and manifests', sub: 'Phase 3 · L8-L11',
           desc: 'The synchronous grower in JS and Python, the records, RFC 6962 manifests, the exact weave and the hardened, attested importer.',
           refs: 'Phase 3', explainer: BIO },
         { id: 'pages', col: 3, row: 7, kind: 'artifact', status: 'planned', label: '2D and 3D pages', sub: 'Phase 5 · disk and ball',
@@ -145,6 +146,7 @@
         ['spikes', 'prereg'], ['pins', 'prereg'], ['prereg', 'reference'], ['pins', 'reference'], ['reference', 'core'],
         ['norm', 'reference'], ['tok', 'reference'], ['ids', 'reference'], ['addr', 'reference'], ['place', 'reference'],
         ['h2', 'reference'], ['rank', 'reference'], ['x5q', 'reference'], ['records', 'chains'], ['core', 'chains'], ['core', 'pages'], ['place', 'pages'],
+        ['ho', 'core'], ['orbital', 'core'], ['norm', 'core'], ['tok', 'core'], ['ids', 'core'], ['addr', 'core'], ['place', 'core'], ['h2', 'core'], ['rank', 'core'],
         ['prereg', 'summary'], ['proposals', 'summary']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
@@ -178,7 +180,7 @@
     }
     function detailHTML(n) {
         const link = target(n), list = arr => arr.length ? arr.map(m => `<a href="#" data-pick="${m.id}">${esc(m.label)}</a>`).join(' · ') : '—';
-        return `<h4><span class="dot" style="background:${KIND[n.kind].color}"></span>${esc(n.label)} <span class="status ${n.status === 'done' || n.status === 'built' ? 's-done' : n.status === 'next' ? 's-next' : n.status === 'existing' || n.status === 'source' ? 's-existing' : 's-planned'}">${STATUS[n.status]}</span></h4>
+        return `<h4><span class="dot" style="background:${KIND[n.kind].color}"></span>${esc(n.label)} <span class="status ${n.status === 'done' || n.status === 'built' || n.status === 'both' ? 's-done' : n.status === 'next' ? 's-next' : n.status === 'existing' || n.status === 'source' ? 's-existing' : 's-planned'}">${STATUS[n.status]}</span></h4>
             <p>${esc(n.desc)}</p>
             <p class="links">${esc(KIND[n.kind].name)} · ${esc(n.refs)}${link ? ` · <a href="${link}">${n.explainer ? 'Read the explainer' : 'Open'} →</a>` : ''}${n.explainer && n.href && !n.href.includes('#') ? ` · <a href="${url(n.href)}">Open →</a>` : ''}</p>
             <p class="links">Draws on: ${list(ins(n.id))}<br>Feeds: ${list(outs(n.id))}</p>`;
