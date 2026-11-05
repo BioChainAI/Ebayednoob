@@ -774,3 +774,49 @@ file); L3(f) on the verb forest; L4 on the verb forest with queries `Rng(4000).s
 (`reference/traces/*.txt`) line for line in Node (the common rule "Authority"), and the runners are committed after
 their dry runs.
 
+### Amendment 5 · 2026-11-05, Phase 2, after the dry run and before any decisive run
+
+Written after `lexicon_core.js` and the runners were built, reviewed and dry-run (`reference/results/dry/`), and
+before any decisive run of L1, L3(f) or L4. No result of these claims was known. Nothing registered is changed.
+
+**1. Disclosures.** While building, the text builder timed N_B and WordPiece over instance (a) in Node (a time
+only: nothing was compared or printed), and the geometry builder built all noun words and points in Node to time
+them (times only, no claim metric). Both builders and the reviewers compared the JS against Python on the Phase 1
+traces, the registered dry sets and strings from unregistered seeds (70000 + i), and hashed L1's instance lists
+against their pins; none of that is a decisive comparison.
+
+**2. Readings fixed in the code** (each marked `READING`):
+- *L1's record.* An empty normalised text is written `-`, as in the traces, so an instance with no words has the
+  record `-` TAB `-`. A list's digest is the SHA-256 of its per-instance hex digests, each followed by LF.
+- *L1's cells.* V0 and V1, each in Node and in Chromium. The decisive run refuses to start without V1, or if any
+  trace line is skipped. A cell that does not run leaves L1 inconclusive. A cell is void before it is refuted, as in
+  Phase 1.
+- *L1's control 1* runs on (c) and is decided, per runtime, against the reference's per-case SHA-256 of S6's
+  R(s) (the pinned table's lowercase, NFD and Mn removal of the whole string). The JS table pipeline's own per-case
+  list, which must equal the reference's, is reported. If control 1 passes in a runtime, that runtime's cells are
+  void.
+- *L1's Data line.* No UD EWT text enters a committed file: examples for (b) keep the instance, the offset of the
+  first difference, and each field's SHA-256 and length; the text goes to the cache.
+- *L3(f)* inherits Phase 1's L3 controls (all of which failed as required).
+- *L4's control 2.* The registration says a passing control 2 voids "the test" without naming a part; it voids
+  both L4(a) and L4(b).
+- *L4(b).* Float keys follow IEEE-754: an infinite key takes part in comparisons; a NaN key is neither an inversion
+  nor a tie; non-finite keys are counted and reported. A tree's first inversion is the first in exact order within
+  the first query, in sample order, that has one; its deeper word is the longer of the pair. Control 1 rounds to
+  float64, then to float32, and computes in numpy float32 (the JS reports the same with `Math.fround` after each
+  operation). Control 2 uses graph-edge AP from the float order, Python's `math.acosh`, and node indices in offset
+  order.
+- *Dry stand-in for the mammals:* the spanning subtree of change.v.01 (00126264), 1,700 verbs.
+- *Hugging Face agreement* compares token strings only (reported).
+- *L3's control 3 in JS* (reported only): `decoder3d.js`'s float `point` multiplies its frames right to left, while
+  hpstep's multiplies left to right, so the JS count is its own; the reference decides that control.
+
+**3. Environment of the dry run** (the decisive run records its own): Python 3.13.18 (Unicode 15.1.0), Node
+22.23.4 (ICU 78.3, Unicode 17.0), Chromium 153.0.8010.12 through Playwright 1.63.0, Hugging Face `tokenizers` 0.23.3.
+
+**4. The review.** Before this amendment, an adversarial review (three reviewers, two skeptics per finding)
+checked the core and the runners by independent probes on unregistered data and found no defect in N_B, WordPiece
+or the geometry. It confirmed three gaps, all fixed before this amendment: the guard against platform Unicode calls
+missed a call made through a computed name; L1 could be decided without its V1 cells; and UD EWT text could reach the
+committed JSON.
+
