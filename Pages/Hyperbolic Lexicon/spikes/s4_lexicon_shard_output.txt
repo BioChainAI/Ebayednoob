@@ -1,0 +1,273 @@
+S4 s4_lexicon_shard: WordNet verb and adjective gloss shards grown as shdccp/2 biochains by a spike-only synchronous grower, field for field against Owl Academy's growBiochain; their costs, the 0x80 packing divergence, the float-weave port, the verifier gap, RFC 6962 manifests and the exact weave
+Settles: the cost tables, D8, L8's Python prediction (weave agreement) and L11's expected range. Decides no claim. Data: WordNet verbs and adjectives, synthetic shards from Rng(90000+i), RFC 6962 leaves from Rng(91000).
+~ node v22.23.4, linux-x64, 4 cpus (Intel(R) Xeon(R) Processor @ 2.30GHz), 4 worker threads
+
+0. Sources (read only)
+  Owl-Academy scripts/biomesh.js: sha256 7ffd768ce8458345b912ed96e4f70db580b31f0b533faba1b880be4887743eb1; biochain_v1.js was generated from sha256 7ffd768ce8458345b912ed96e4f70db580b31f0b533faba1b880be4887743eb1: the same file
+  growSync's qconj (biochain_v1.js does not export it) is Owl's text verbatim: true
+  constants: CHUNK 720, SEGMENTS 7, MAX_GROW_BYTES 60000, STREAM_VERSION shdccp/2
+  BioChain-AI protocol/shdccp_kernel.py: sha256 1d15b54b42ea62f6f2c3142f4900d4529705771d5e362c781c0a1630ff07ccdd
+  WordNet 3.0 archive sha256 cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59 (10775600 B, checked by wordnet_v1.cjs)
+  orbital_core.sha256 against Node crypto, SHA-256 over UTF-8, on 1,000 strings of 0..999 characters, ASCII and U+0080..U+07FF (Rng(91001)): 1000/1000 equal
+
+1. Data
+  WordNet verb: 13767 synsets, 1,306,825 bytes joined, non-ASCII lines 0, 22 shards (last 47926 B)
+  WordNet adj: 18156 synsets, 1,925,404 bytes joined, non-ASCII lines 0, 33 shards (last 7913 B)
+  shard texts: sha256 over the 55 gloss shards' sha256s, one per line: 498371616959d8e85a6a5588f97ac297668431693e5251f8eb6b7822ca3578be
+  synthetic: 1000 shards from Rng(90000+i), 30,164,974 bytes; shards 0..7 (32311, 55476, 38793, 54938, 35018, 54305, 18283, 41584 B) are also grown
+  synthetic inputs digest (sha256 over the 1,000 shard sha256s, one per line): 655074773a44628e631e6784cd5185450c4c5a5a19cf4ff9cf4b4d2192b7969f
+~ data built in 2389.6 ms (WordNet load included)
+
+2. Field-for-field equality with Owl Academy's growBiochain (scripts/biomesh.js unchanged, name-grab, Node crypto SHA-256 over UTF-8)
+  fields compared: chainId, stream, streamVersion, leafHashes, merkleRoot, weaveChiral, weaveMirror, segCuts, segments, engramStream, engramCount, engramMeanJ, origBytes, shippedBytes, value (and key order)
+  verb shards, engrams off: 22/22 records identical; mismatching fields: none
+  verb shards, engrams on: 22/22 records identical; mismatching fields: none
+  adjective shards, engrams off: 33/33 records identical; mismatching fields: none
+  adjective shards, engrams on: 33/33 records identical; mismatching fields: none
+  synthetic shards, engrams off: 8/8 records identical; mismatching fields: none
+  synthetic shards, engrams on: 8/8 records identical; mismatching fields: none
+  Owl's verifyIntegrity accepts 63/63 engrams-off records; the decoded stream equals the shard's bytes on 63/63
+  the engram layer: engram_core engramStream (the grower's) equals biochain_v1 engramStreamFromText (verbatim) on verb 00: true (9482 tokens); on every shard through Owl's records above
+
+3. Per shard: bytes, synsets, chunks, stream hex, residual bytes, value (engrams off / on), engram tokens, 0x80 chunks, chainId
+  verb 00  59984 B  644 syn  84 ch  hex 107824  res 52904 B  value 1.0590 / 0.4527  eng  9482  0x80 1  BC-3988c9279e0b149f70539866
+  verb 01  59981 B  663 syn  84 ch  hex 105988  res 51986 B  value 1.0764 / 0.4626  eng  9244  0x80 0  BC-f4844f9b49782da64a43594b
+  verb 02  59963 B  641 syn  84 ch  hex 104724  res 51354 B  value 1.0885 / 0.4620  eng  9338  0x80 0  BC-c1a0547458dbc7200fcef74b
+  verb 03  59912 B  613 syn  84 ch  hex 103320  res 50652 B  value 1.1016 / 0.4711  eng  9100  0x80 0  BC-a2a06fb1970ee43992786b3b
+  verb 04  59790 B  575 syn  84 ch  hex 106452  res 52218 B  value 1.0686 / 0.4626  eng  9163  0x80 2  BC-0265a7cc4e41c9ba3ddde760
+  verb 05  59914 B  575 syn  84 ch  hex 108222  res 53103 B  value 1.0541 / 0.4568  eng  9290  0x80 0  BC-29c38c929d589eef9f84611e
+  verb 06  59940 B  557 syn  84 ch  hex 109538  res 53761 B  value 1.0425 / 0.4571  eng  9205  0x80 0  BC-804bcb783ba13098edc487fa
+  verb 07  59940 B  614 syn  84 ch  hex 108424  res 53204 B  value 1.0527 / 0.4569  eng  9281  0x80 1  BC-096130b06f934a19003506fb
+  verb 08  59991 B  673 syn  84 ch  hex 108476  res 53230 B  value 1.0531 / 0.4482  eng  9610  0x80 1  BC-7d2995ac0d9abb531e948ee9
+  verb 09  59934 B  697 syn  84 ch  hex 106700  res 52342 B  value 1.0688 / 0.4455  eng  9805  0x80 1  BC-fb37d6126db7f965cb5737d3
+  verb 10  59999 B  760 syn  84 ch  hex 102100  res 50042 B  value 1.1157 / 0.4490  eng  9980  0x80 1  BC-e477e1ee948f299d44dcf06f
+  verb 11  59930 B  672 syn  84 ch  hex 105008  res 51496 B  value 1.0851 / 0.4472  eng  9848  0x80 1  BC-92eece8da6591e7075d37d29
+  verb 12  59960 B  665 syn  84 ch  hex 106306  res 52145 B  value 1.0730 / 0.4493  eng  9696  0x80 0  BC-149916e9accc49337f4b0c13
+  verb 13  59937 B  646 syn  84 ch  hex 107694  res 52839 B  value 1.0594 / 0.4553  eng  9382  0x80 1  BC-dbb7492c7b597f60b73e5643
+  verb 14  59950 B  680 syn  84 ch  hex 107000  res 52492 B  value 1.0662 / 0.4439  eng  9855  0x80 3  BC-4feee5337f01fd0b9ab75d8c
+  verb 15  59976 B  666 syn  84 ch  hex 105560  res 51772 B  value 1.0805 / 0.4438  eng  9953  0x80 2  BC-a9928c34bcbf0de10029d41d
+  verb 16  59968 B  623 syn  84 ch  hex 107620  res 52802 B  value 1.0607 / 0.4455  eng  9760  0x80 0  BC-b04a5787abe52b220c1d1757
+  verb 17  59949 B  600 syn  84 ch  hex 109372  res 53678 B  value 1.0442 / 0.4426  eng  9755  0x80 2  BC-297a8a1898a6dd7f93459433
+  verb 18  59960 B  597 syn  84 ch  hex 108966  res 53475 B  value 1.0481 / 0.4498  eng  9512  0x80 2  BC-43735a6c9f74d04f864f6343
+  verb 19  59957 B  583 syn  84 ch  hex 109008  res 53496 B  value 1.0476 / 0.4514  eng  9448  0x80 1  BC-18aa3934e6727fe443398f1e
+  verb 20  59943 B  553 syn  84 ch  hex 110556  res 54270 B  value 1.0334 / 0.4438  eng  9634  0x80 2  BC-5a1a3eccd80ee53ccefeb2a8
+  verb 21  47926 B  470 syn  67 ch  hex  87692  res 43042 B  value 1.0412 / 0.4448  eng  7714  0x80 1  BC-3a3a8de1012619b967c99cf4
+  adj  00  59877 B  522 syn  84 ch  hex 103754  res 50869 B  value 1.0965 / 0.4861  eng  8572  0x80 1  BC-31443ef09773be27c79cb1bd
+  adj  01  59919 B  521 syn  84 ch  hex 102232  res 50108 B  value 1.1128 / 0.4891  eng  8584  0x80 2  BC-ed3df00b860e75d5159777aa
+  adj  02  59858 B  584 syn  84 ch  hex 100764  res 49374 B  value 1.1271 / 0.4846  eng  8802  0x80 1  BC-76f4eff5b10c218b1ecc1801
+  adj  03  59987 B  594 syn  84 ch  hex  96152  res 47068 B  value 1.1808 / 0.4932  eng  8854  0x80 0  BC-fa78b18984d6bac768408286
+  adj  04  59718 B  526 syn  83 ch  hex  99916  res 48962 B  value 1.1342 / 0.4913  eng  8613  0x80 2  BC-b3ce36a72731163d77883e43
+  adj  05  59898 B  492 syn  84 ch  hex 101798  res 49891 B  value 1.1169 / 0.4930  eng  8485  0x80 1  BC-88f8496bf3867e66e8419000
+  adj  06  59954 B  541 syn  84 ch  hex 102100  res 50042 B  value 1.1148 / 0.4947  eng  8428  0x80 0  BC-cdd72549292639e65f1f556e
+  adj  07  59798 B  475 syn  84 ch  hex 103542  res 50763 B  value 1.0972 / 0.4868  eng  8542  0x80 4  BC-f4c0eafbacb17df0abfc6a8b
+  adj  08  59998 B  508 syn  84 ch  hex 103236  res 50610 B  value 1.1040 / 0.4888  eng  8550  0x80 1  BC-c3c602b293abb9579bf74f46
+  adj  09  59928 B  523 syn  84 ch  hex 102490  res 50237 B  value 1.1103 / 0.4922  eng  8472  0x80 0  BC-71ce4b0731d7b6e6e8947a0a
+  adj  10  59955 B  533 syn  84 ch  hex 103654  res 50819 B  value 1.0990 / 0.4768  eng  8900  0x80 1  BC-cdf8d6df64b71e851b5ab7d9
+  adj  11  59923 B  527 syn  84 ch  hex 103828  res 50906 B  value 1.0966 / 0.4823  eng  8700  0x80 3  BC-fffe3847824687b3e4ef0017
+  adj  12  59955 B  536 syn  84 ch  hex 102294  res 50139 B  value 1.1129 / 0.4875  eng  8638  0x80 0  BC-d6e2ec5697ee4bb93fd5f1af
+  adj  13  59786 B  490 syn  84 ch  hex 104484  res 51234 B  value 1.0876 / 0.4928  eng  8295  0x80 1  BC-a6b8432b159c674c70692448
+  adj  14  59955 B  556 syn  84 ch  hex 101900  res 49942 B  value 1.1169 / 0.4837  eng  8783  0x80 0  BC-e65fdecd43f1507c73d8cf3d
+  adj  15  59975 B  582 syn  84 ch  hex 100592  res 49288 B  value 1.1311 / 0.4919  eng  8613  0x80 3  BC-8cab63dc4b407d7f37816fb1
+  adj  16  59940 B  487 syn  84 ch  hex 102050  res 50017 B  value 1.1151 / 0.4903  eng  8563  0x80 0  BC-f77021726c5488cddbd68265
+  adj  17  59956 B  545 syn  84 ch  hex 101114  res 49549 B  value 1.1252 / 0.4880  eng  8697  0x80 3  BC-8818514cd14152eaa98497a5
+  adj  18  59879 B  554 syn  84 ch  hex 101732  res 49858 B  value 1.1173 / 0.4967  eng  8369  0x80 0  BC-abd6143c06390ab5c989d4e0
+  adj  19  59871 B  503 syn  84 ch  hex 104428  res 51206 B  value 1.0897 / 0.4902  eng  8398  0x80 0  BC-c61de2eee4f5df2d3f6d8940
+  adj  20  59942 B  529 syn  84 ch  hex 102458  res 50221 B  value 1.1109 / 0.4967  eng  8339  0x80 2  BC-4b9678405540efbfea87db0a
+  adj  21  59991 B  536 syn  84 ch  hex 103502  res 50743 B  value 1.1012 / 0.4852  eng  8646  0x80 3  BC-d1c41c62cfc334d1a8745775
+  adj  22  59840 B  664 syn  84 ch  hex  89052  res 43518 B  value 1.2663 / 0.4954  eng  9191  0x80 2  BC-a975c97b3f12730158e76f85
+  adj  23  59998 B  576 syn  84 ch  hex 101554  res 49769 B  value 1.1214 / 0.4883  eng  8671  0x80 2  BC-c73ded43933589bdecfba940
+  adj  24  59944 B  543 syn  84 ch  hex 101794  res 49889 B  value 1.1178 / 0.4918  eng  8532  0x80 2  BC-16ec86410001bc5aa8efbf8e
+  adj  25  59909 B  580 syn  84 ch  hex 101638  res 49811 B  value 1.1188 / 0.4860  eng  8716  0x80 1  BC-813b7266500f6abe4769f3c6
+  adj  26  59982 B  649 syn  84 ch  hex  98764  res 48374 B  value 1.1511 / 0.4900  eng  8788  0x80 1  BC-cc8894fe39c7dfcc856ac9ab
+  adj  27  59978 B  741 syn  84 ch  hex  90272  res 44128 B  value 1.2531 / 0.5094  eng  8736  0x80 1  BC-482efb46151b5b7f35b4fc1a
+  adj  28  59972 B  690 syn  84 ch  hex  92962  res 45473 B  value 1.2187 / 0.5043  eng  8714  0x80 0  BC-053c3983e9877b9577a7cef1
+  adj  29  59899 B  651 syn  84 ch  hex  89450  res 43717 B  value 1.2623 / 0.5194  eng  8485  0x80 1  BC-949554f02b0b2854a46cc294
+  adj  30  59921 B  667 syn  84 ch  hex  86238  res 42111 B  value 1.3070 / 0.5156  eng  8795  0x80 1  BC-88d93aa1e8999d77bb04ac16
+  adj  31  59953 B  643 syn  84 ch  hex  89258  res 43621 B  value 1.2660 / 0.5124  eng  8706  0x80 2  BC-253738a0cc822fe3742fb3d1
+  adj  32   7913 B   88 syn  11 ch  hex  13492  res  6614 B  value 1.1086 / 0.4714  eng  1206  0x80 1  BC-619011df1d4c75a7de9a186e
+  syn  00  32311 B    0 syn  45 ch  hex  74586  res 36753 B  value 0.8333 / 0.3967  eng  5334  0x80 0  BC-57319dd87118d0bd71ee0b2b
+  syn  01  55476 B    0 syn  78 ch  hex 128030  res 63079 B  value 0.8336 / 0.3961  eng  9187  0x80 0  BC-5487b3595e4176cbb93cb1fd
+  syn  02  38793 B    0 syn  54 ch  hex  89492  res 44098 B  value 0.8340 / 0.3973  eng  6390  0x80 0  BC-376ad8df407954eaefb59918
+  syn  03  54938 B    0 syn  77 ch  hex 126748  res 62450 B  value 0.8339 / 0.3942  eng  9185  0x80 3  BC-1ce8d575c369e23b7b8069e1
+  syn  04  35018 B    0 syn  49 ch  hex  80868  res 39846 B  value 0.8329 / 0.3929  eng  5885  0x80 0  BC-6fbba49998355a42b9843065
+  syn  05  54305 B    0 syn  76 ch  hex 125350  res 61763 B  value 0.8336 / 0.3933  eng  9116  0x80 1  BC-d64951b07bb0bc6ede2d3df8
+  syn  06  18283 B    0 syn  26 ch  hex  42196  res 20786 B  value 0.8322 / 0.3948  eng  3043  0x80 1  BC-2199c20bec52d89f3821545b
+  syn  07  41584 B    0 syn  58 ch  hex  95922  res 47265 B  value 0.8341 / 0.3975  eng  6846  0x80 1  BC-ec00cfde0acad26b7b9a70eb
+  "~" per shard: ms of encode, decode, crystallize, leaves+root+chainId (orbital_core sha256), the same leaves (Node crypto), both weaves, engram layer (engram_core), Owl growBiochain engrams off (main thread) and on (worker, verbatim engram layer)
+~ verb 00  enc  39.1  dec  32.2  crys  7.2  hash   3.9  node  3.6  weave  9.6  eng 135.1  owl-off  69.0  owl-on 10449.8
+~ verb 01  enc  29.3  dec  22.5  crys  4.6  hash   4.0  node  2.4  weave 11.0  eng 137.6  owl-off  51.4  owl-on  9507.7
+~ verb 02  enc  25.3  dec  21.8  crys  4.2  hash   3.5  node  2.1  weave  8.4  eng 126.7  owl-off  50.0  owl-on  9386.0
+~ verb 03  enc  24.3  dec  22.3  crys  4.1  hash   3.4  node  2.1  weave  8.3  eng 128.5  owl-off  49.8  owl-on  8877.9
+~ verb 04  enc  24.8  dec  21.8  crys  4.1  hash   3.3  node  2.2  weave  8.2  eng 155.1  owl-off  57.1  owl-on  9452.9
+~ verb 05  enc  24.0  dec  21.7  crys  4.1  hash   3.3  node  2.7  weave  8.2  eng 126.0  owl-off  50.2  owl-on  8953.1
+~ verb 06  enc  24.5  dec  23.1  crys  4.1  hash   3.3  node  2.1  weave  7.7  eng 128.3  owl-off  58.0  owl-on  9755.6
+~ verb 07  enc  25.3  dec  22.6  crys  4.0  hash   3.4  node  2.1  weave  8.2  eng 129.2  owl-off  50.7  owl-on  9376.0
+~ verb 08  enc  25.6  dec  22.0  crys  4.3  hash   3.4  node  2.1  weave  8.3  eng 128.3  owl-off  49.6  owl-on  9194.4
+~ verb 09  enc  25.2  dec  21.9  crys  4.3  hash   3.4  node  2.0  weave  8.4  eng 122.9  owl-off  49.3  owl-on  8625.1
+~ verb 10  enc  23.6  dec  22.0  crys  4.2  hash   3.4  node  2.0  weave  8.3  eng 126.2  owl-off  50.2  owl-on  8788.7
+~ verb 11  enc  25.0  dec  22.7  crys  4.1  hash   3.3  node  2.2  weave  8.4  eng 127.1  owl-off  52.0  owl-on  9129.7
+~ verb 12  enc  25.4  dec  22.5  crys  4.4  hash   3.4  node  2.1  weave  8.5  eng 129.0  owl-off  49.9  owl-on  7878.9
+~ verb 13  enc  25.4  dec  22.1  crys  4.3  hash   3.4  node  2.1  weave  8.3  eng 124.0  owl-off  49.2  owl-on  8210.7
+~ verb 14  enc  24.5  dec  22.8  crys  4.3  hash   3.4  node  2.2  weave  8.3  eng 129.8  owl-off  51.6  owl-on  8019.4
+~ verb 15  enc  25.4  dec  22.3  crys  4.0  hash   4.0  node  2.7  weave  8.1  eng 128.5  owl-off  51.1  owl-on  7922.4
+~ verb 16  enc  25.7  dec  23.3  crys  4.2  hash   3.4  node  2.2  weave  8.0  eng 130.7  owl-off  51.8  owl-on  7148.5
+~ verb 17  enc  26.1  dec  23.7  crys  4.3  hash   3.5  node  2.1  weave  8.6  eng 130.1  owl-off  53.3  owl-on  7085.9
+~ verb 18  enc  25.8  dec  23.1  crys  4.3  hash   3.3  node  2.2  weave  8.4  eng 130.2  owl-off  52.7  owl-on  7086.3
+~ verb 19  enc  25.2  dec  22.5  crys  4.3  hash   3.4  node  2.8  weave  8.4  eng 129.1  owl-off  51.3  owl-on  7304.0
+~ verb 20  enc  25.8  dec  24.4  crys  4.4  hash   3.4  node  2.2  weave  7.9  eng 130.6  owl-off  51.4  owl-on  7427.9
+~ verb 21  enc  20.3  dec  18.3  crys  3.5  hash   2.7  node  2.0  weave  6.5  eng 103.2  owl-off  41.5  owl-on  5919.7
+~ adj  00  enc  25.4  dec  23.0  crys  4.3  hash   3.5  node  2.2  weave  8.4  eng 133.5  owl-off  51.0  owl-on  7331.5
+~ adj  01  enc  24.8  dec  22.1  crys  5.2  hash   3.6  node  2.1  weave  8.7  eng 144.3  owl-off  50.9  owl-on  7441.5
+~ adj  02  enc  24.4  dec  21.4  crys  4.2  hash   3.3  node  2.7  weave  8.3  eng 135.7  owl-off  50.2  owl-on  7288.7
+~ adj  03  enc  24.3  dec  20.9  crys  3.9  hash   4.3  node  2.1  weave  8.0  eng 125.9  owl-off  49.1  owl-on  7481.6
+~ adj  04  enc  23.6  dec  21.3  crys  4.1  hash   3.2  node  2.0  weave  8.1  eng 125.0  owl-off  48.9  owl-on  7282.4
+~ adj  05  enc  23.7  dec  21.9  crys  4.1  hash   3.2  node  2.2  weave  7.5  eng 127.2  owl-off  48.1  owl-on  7449.9
+~ adj  06  enc  24.5  dec  21.3  crys  4.3  hash   3.3  node  2.7  weave  8.1  eng 128.9  owl-off  48.5  owl-on  7483.5
+~ adj  07  enc  24.6  dec  22.0  crys  4.2  hash   3.3  node  2.1  weave  7.7  eng 128.5  owl-off  49.4  owl-on  7542.1
+~ adj  08  enc  24.5  dec  22.7  crys  4.3  hash   3.3  node  2.2  weave  8.3  eng 152.4  owl-off  53.4  owl-on  7490.7
+~ adj  09  enc  25.4  dec  22.7  crys  4.4  hash   3.4  node  2.2  weave  8.5  eng 134.9  owl-off  51.6  owl-on  7566.9
+~ adj  10  enc  25.6  dec  22.6  crys  4.4  hash   3.5  node  2.9  weave  8.2  eng 133.8  owl-off  51.7  owl-on  7216.8
+~ adj  11  enc  25.1  dec  22.0  crys  4.5  hash   3.8  node  2.9  weave  8.1  eng 132.1  owl-off  52.1  owl-on  7738.6
+~ adj  12  enc  25.2  dec  22.4  crys  4.0  hash   4.0  node  2.2  weave  8.0  eng 132.5  owl-off  54.4  owl-on  7530.9
+~ adj  13  enc  25.2  dec  22.6  crys  3.9  hash   4.2  node  3.0  weave  8.0  eng 133.9  owl-off  53.2  owl-on  7572.4
+~ adj  14  enc  25.2  dec  22.8  crys  4.0  hash   4.1  node  2.3  weave  8.1  eng 133.0  owl-off  52.8  owl-on  7263.2
+~ adj  15  enc  24.6  dec  22.3  crys  4.4  hash   3.4  node  2.1  weave  8.6  eng 132.5  owl-off  51.2  owl-on  7400.4
+~ adj  16  enc  24.9  dec  22.2  crys  4.3  hash   3.3  node  2.1  weave  8.4  eng 130.8  owl-off  49.4  owl-on  7452.2
+~ adj  17  enc  24.4  dec  22.3  crys  4.3  hash   3.4  node  2.1  weave  8.4  eng 128.8  owl-off  49.7  owl-on  7328.6
+~ adj  18  enc  24.7  dec  22.3  crys  4.3  hash   3.4  node  2.1  weave  8.5  eng 132.8  owl-off  51.5  owl-on  7515.5
+~ adj  19  enc  28.6  dec  22.4  crys  4.4  hash   3.3  node  2.0  weave  8.7  eng 135.3  owl-off  52.6  owl-on  7623.8
+~ adj  20  enc  24.8  dec  22.1  crys  4.4  hash   3.4  node  2.1  weave  8.4  eng 132.9  owl-off  51.2  owl-on  7817.6
+~ adj  21  enc  25.5  dec  22.5  crys  4.5  hash   3.4  node  2.0  weave  8.0  eng 171.8  owl-off  50.5  owl-on  7204.0
+~ adj  22  enc  23.4  dec  21.7  crys  4.2  hash   3.3  node  2.2  weave  7.8  eng 127.4  owl-off  50.1  owl-on  7275.1
+~ adj  23  enc  25.2  dec  22.1  crys  4.4  hash   3.4  node  2.2  weave 10.5  eng 128.1  owl-off  50.2  owl-on  7546.1
+~ adj  24  enc  25.6  dec  21.4  crys  4.5  hash   3.5  node  2.9  weave  8.0  eng 131.3  owl-off  50.2  owl-on  7345.1
+~ adj  25  enc  24.9  dec  21.9  crys  4.1  hash   4.1  node  2.1  weave  8.1  eng 128.4  owl-off  51.1  owl-on  7278.8
+~ adj  26  enc  23.6  dec  22.0  crys  4.4  hash   3.3  node  2.1  weave  8.8  eng 129.6  owl-off  51.0  owl-on  7468.6
+~ adj  27  enc  24.0  dec  21.6  crys  4.4  hash   3.3  node  2.1  weave  7.8  eng 130.5  owl-off  51.6  owl-on  7585.0
+~ adj  28  enc  23.6  dec  22.2  crys  4.4  hash   3.4  node  2.1  weave  8.5  eng 131.5  owl-off  49.8  owl-on  7661.7
+~ adj  29  enc  24.0  dec  22.5  crys  3.9  hash   4.1  node  2.2  weave  8.1  eng 133.2  owl-off  49.7  owl-on  7492.1
+~ adj  30  enc  24.3  dec  21.4  crys  4.0  hash   4.1  node  2.2  weave  8.0  eng 132.2  owl-off  49.8  owl-on  7581.9
+~ adj  31  enc  24.0  dec  21.6  crys  3.8  hash   4.1  node  2.2  weave  8.0  eng 134.9  owl-off  49.5  owl-on  7722.5
+~ adj  32  enc   4.0  dec   2.7  crys  0.5  hash   0.6  node  0.2  weave  1.0  eng  17.3  owl-off   6.3  owl-on   948.3
+~ syn  00  enc  10.3  dec   8.1  crys  2.7  hash   2.5  node  2.1  weave  4.6  eng  34.2  owl-off  23.6  owl-on  1860.0
+~ syn  01  enc  17.0  dec  14.5  crys  4.2  hash   3.9  node  2.4  weave  7.4  eng  59.8  owl-off  42.2  owl-on  3223.7
+~ syn  02  enc  12.5  dec   9.6  crys  3.1  hash   2.9  node  1.6  weave  5.4  eng  41.8  owl-off  27.9  owl-on  2166.8
+~ syn  03  enc  17.0  dec  14.0  crys  4.1  hash   4.0  node  2.3  weave  7.9  eng  59.9  owl-off  40.8  owl-on  3109.6
+~ syn  04  enc  10.0  dec   9.7  crys  3.0  hash   2.6  node  1.4  weave  4.9  eng  37.9  owl-off  26.3  owl-on  2028.0
+~ syn  05  enc  17.1  dec  14.4  crys  4.0  hash   3.9  node  2.3  weave  7.4  eng  58.1  owl-off  39.4  owl-on  3104.5
+~ syn  06  enc   5.8  dec   4.3  crys  1.1  hash   1.4  node  0.7  weave  3.3  eng  19.3  owl-off  13.7  owl-on  1053.1
+~ syn  07  enc  12.4  dec   9.9  crys  2.7  hash   3.7  node  1.6  weave  5.8  eng  44.8  owl-off  29.7  owl-on  2290.0
+  full gloss shards (53, all but the last of each part of speech): 3,176,337 B, mean 59930.9 B per shard (min 59718), chunks: 1 with 83, 52 with 84
+    stream hex 5,437,860 chars = 1.7120 per byte; residual 2,665,518 B = 6.7134 bits per byte (rank coder alone)
+    value: engrams off median 1.1016 (range 1.0334-1.3070), engrams on median 0.4860 (0.4426-0.5194)
+    record JSON: 1.8131 chars per text byte engrams off, 4.2144 on; 476,518 engram tokens = 6.7 B per token
+~   median ms per full shard: encode 24.9, decode 22.3, crystallize 4.3, leaves+root+chainId 3.4 (orbital_core) / 2.2 (Node crypto leaves), weaves 8.3, engram layer 130.5 (engram_core)
+~   median ms per full shard, Owl's growBiochain: engrams off 51.0, engrams on 7542.1 (in 4 parallel workers, slower if other jobs share the cores; the next line is the clean figure)
+~   verbatim engram layer measured alone on verb 00 (main thread): 6933.7 ms for 9482 tokens (731.2 us per token); engram_core's: 131.5 ms (52.7x faster)
+~   for context only (never claimed): gzip -9 3.1230 bits per byte on the same shards (zlib 1.3.1-e00f703)
+
+4. Chunks whose 32-bit crystal holds a 0x80 byte (Owl writes it raw; BioChain-AI's kernel would write 0x81)
+  analytic share 1 - (255/256)^4 = 66716671/4294967296 = 1.5534%; for an 84-chunk record, P(at least one) = 1 - (1-p)^84 = 73.1545%
+  verb shards: 22 of 1831 chunks = 1.2015% (z = -1.22 against the analytic share); shards with at least one: 15 of 22
+  adjective shards: 42 of 2698 chunks = 1.5567% (z = 0.01 against the analytic share); shards with at least one: 24 of 33
+  all gloss shards: 64 of 4529 chunks = 1.4131% (z = -0.76 against the analytic share); shards with at least one: 39 of 55
+  the 1,000 synthetic shards (counted in Python on the same bytes): 659 of 42384 chunks = 1.5548%; shards with at least one: 450 of 1000
+
+5. Packets normalised as BioChain-AI protocol/shdccp_kernel.py writes them (s4_python_pack.py, python3 -B -I, the kernel unchanged)
+  crystallize(bytes [75, 0, 7]): crystal codes [-72,-128,99,69]; JS 98B8806345000352, Python raw port 98B8806345000352, kernel 90B8816345000352
+  63 shards (55 gloss + 8 synthetic), 4992 packets:
+    kernel crystallize(chunk) equals kernel pack(the JS word's fields): 4992/4992; the Python raw port equals Owl's JS word: 4992/4992
+    kernel packets that differ from Owl's: 70; packets with a 0x80 crystal byte: 70; differing ones that have one: 70; differing only by -128 -> -127 codes and parity: 70
+    kernel.unpack accepts Owl's raw packets: 4992/4992, reading 71 codes of -128 (Owl wrote 71 bytes 0x80)
+    the normalised stream differs from Owl's on 43 of 63 shards (exactly those with a 0x80 chunk: true)
+    recomputed from the normalised stream (decode, leaves, root, weaves, chainId): merkleRoot unchanged 63/63, both weaves unchanged 63/63, chainId unchanged 63/63 (from Owl's own stream: 63/63)
+    Owl's verifyIntegrity accepts the record with its stream normalised: 63/63; EngramCore.verifyBiochain: 63/63
+    (leaves and the weave are computed from chunk bytes, never from packet words; so chainId and merkleRoot do not commit to the packets, and a verifier must re-crystallize to check them)
+~   Python 3.13.18: pack 1428 ms, synthetic generate 22578 ms, weave 4744 ms
+
+6. JS against Python weave strings on the 1,000 synthetic shards (Rng(90000+i); Python regenerates the bytes with hpstep.prng.Rng)
+  input bytes differ (sha256): 0 of 1000; chunks per shard: 8 with <= 1, 21 with <= 2, 120 with <= 10, 505 with <= 42, 1000 with <= 84
+  JS weave digest (sha256 over "chiral|mirror" lines; s4_python_pack_output.txt prints Python's): c0385cd2180eeac693171c1c4dce5e7d7b77b5ed1c6802fa34e4b2dcc9139bf7
+  faithful Python port (V8's Math.hypot algorithm, exact toFixed(12)): weaveChiral differs on 0, weaveMirror on 0; shards with any difference 0 of 1000
+  naive Python port (math.hypot, format(x, '.12f')): weaveChiral differs on 2, weaveMirror on 1; shards with any difference 2 of 1000
+  math.hypot differs from V8's Math.hypot on 39408 of 127152 calls; format(x, '.12f') differs from toFixed(12) on 0 of 8000 weave components
+~   JS synthetic weaves: 7983.3 ms (interleaved with the worker pool)
+
+7. What Owl's verifyIntegrity accepts (verb 00, engrams off); EngramCore.verifyBiochain beside it
+  T1 leafHashes and merkleRoot deleted: Owl ACCEPTS; EngramCore accepts; stream unchanged
+  T2 packet 0 crystal32 bit 0 flipped, parity re-fixed: Owl ACCEPTS; EngramCore accepts; stream sha256 changed
+  packet 0 checksum (freq bit 0) flipped, parity re-fixed: Owl ACCEPTS; EngramCore accepts; stream sha256 changed
+  T8 chainId altered (last hex digit): Owl ACCEPTS; EngramCore accepts; stream unchanged
+  one padding bit flipped (last residual byte of frame 2): Owl ACCEPTS; EngramCore accepts; stream sha256 changed
+  one bit of a raw-byte rank code flipped (frame 0, residual bit 30; decodes the same): Owl ACCEPTS; EngramCore accepts; stream sha256 changed
+  T7 frames 0 and 1 swapped (control: must be rejected): Owl rejects (leaf 0 mismatch); EngramCore rejects; stream sha256 changed
+  packet 0 parity bit flipped (control: must be rejected): Owl rejects (packet 0 parity failed); EngramCore rejects; stream sha256 changed
+  (the packet words changed above were re-parsed: T2 parity ok true, checksum change parity ok true)
+
+8. RFC 6962 Merkle tree (0x00 leaf, 0x01 node, split at the largest power of two below n, no duplication)
+  the certificate-transparency reference vector (8 entries, roots of every prefix n = 0..8): 9/9 roots equal
+  RFC 6962 section 2.1.3's worked examples (7 leaves): audit paths of d0, d3, d4, d6 = [b,h,l], [c,g,l], [f,j,k], [i,k] and consistency proofs PROOF(3), PROOF(4), PROOF(6) = [c,d,g,l], [l], [i,j,k]: 7/7 equal
+  N = 1000: root b42c3e921bbbbbf80ab881595922837032ca4691bdd23248ea035a5498861a5d (orbital_core's SHA-256 gives the same: true)
+    inclusion proofs: 1000/1000 verify; rejected for the next leaf's hash 1000/1000, at the next position 1000/1000; length 8-10 hashes (mean 9.9840), at most 320 B
+    consistency proofs from every m = 1..999: 999/999 verify; 11/11 sampled ones (m = 1, 98, 195, ...) rejected against the wrong old root; length 1-11 hashes (mean 9.9840), at most 352 B
+~   N = 1000: build 2.4 ms, all audit paths 1.3 ms, verify all 8.4 ms (8.4 us each), all consistency proofs made and verified 24.8 ms
+  N = 10000: root 385488f07c11c546206c2ca1869212d2f718fc49db44aa386624cfd5b017ab7d (orbital_core's SHA-256 gives the same: true)
+    inclusion proofs: 10000/10000 verify; rejected for the next leaf's hash 10000/10000, at the next position 10000/10000; length 8-14 hashes (mean 13.6320), at most 448 B
+    consistency proofs from every m = 1..9999: 9999/9999 verify; 104/104 sampled ones (m = 1, 98, 195, ...) rejected against the wrong old root; length 1-15 hashes (mean 13.6320), at most 480 B
+~   N = 10000: build 46.6 ms, all audit paths 17.5 ms, verify all 186.7 ms (18.7 us each), all consistency proofs made and verified 423.9 ms
+
+9. The shdccp/2 Merkle rule's duplicate-last ambiguity (pairwise SHA-256 over hex, odd last node duplicated; Node crypto)
+  a, b, c = verb 00's first three leaf hashes: root[a,b,c] = dd2c10b40d1da521..., root[a,b,c,c] = dd2c10b40d1da521...: EQUAL
+  K = 1..200, L and L + [last]: equal roots at K = 3, 5, 7, ..., 199 (99 values, step 2); exactly the odd K >= 3: true; K = 1: false
+    (K = 1 is safe because a one-leaf root is the leaf itself, never hashed; [a] and [a,a] differ)
+  L and L + [last two]: equal roots at K = 6, 10, 14, ..., 198 (49 values, step 4)
+  RFC 6962 roots of the same lists, L against L + [last]: equal at 0 of 200
+
+10. The exact norm-5 weave of verb 00 (engram_core chainQuaternion over the first 8 bytes of each leaf hash, as 64-bit values)
+  K = 84 leaves, 2352 letters; norm (sum of squares) = 5^(28K) = 5^2352 exactly: true (log2 = 5461.2; sqrt bound 2730.6 bits)
+  component bits: 2730, 2730, 2729, 2730; components sha256 (decimal, comma-joined): 00bc14596f3b161bdd1e749046a8c13464616a34007391428e16440e695e24c7
+  unfold(q, 84) returns the 84 values in order: true; the ordered product of the 7 segment sub-weaves (segCuts 0,12,24,36,48,60,72,84) equals it: true
+~   chainQuaternion 16.3 ms, unfold 27.2 ms, segment products 3.3 ms
+
+11. EngramCore.importBiochain on every verb shard
+  engrams off: accepted 22/22, text recreated byte for byte 22/22
+  engrams on (verbatim engram check inside, in the workers): accepted 22/22, text recreated byte for byte 22/22
+  one stream byte altered (frame 0's residual, middle byte, high nibble flipped): rejected 21/22; reasons: 16 x "decode failure: residual truncated"; 5 x "leaf k mismatch"
+    accepted: verb 21: residual hex 650 of 1300; decodes to the same 720 bytes: true; re-encoding them gives the stored residual: false, the original: true
+  every single-bit flip of frame 0's residual, verb 00-03: 689 of 19400 (3.5515%) decode to the same 720 bytes: 8 in the final byte's padding, 681 inside a rank code that reads a raw byte, 0 elsewhere
+    (decodeChunk reads a raw byte for ANY rank above the candidate count, so an escape code has aliases; leaves, root, weave and chainId commit to decoded bytes only, so such a stream verifies; the check below re-encodes the decoded chunk and compares it with the stored residual)
+    re-encode check on those flipped copies: rejects 689 of 689
+~   importBiochain engrams off: median 170.6 ms; engrams on: median 7128.6 ms (workers)
+
+12. The codec part of L11's hardened verification, per verb shard (3 timed runs, the first discarded): parity, decode, crystal re-check, leaves and root, weaves and chainId, the exact weave
+  every check passes on 22/22 verb shards
+~   median ms per shard: parse+parity 0.2, decode 21.3, crystal re-check 4.7, leaves+root 3.8 (orbital_core), weaves+chainId 9.0, exact weave 2.0; total 41.0 (range 33.0-43.4)
+  beyond L11's list: re-encoding each decoded chunk gives the stored residual on 22/22 verb shards (the check that closes residual aliasing)
+~   re-encode check: median 23.5 ms per shard more
+  not included (measured elsewhere or later): the V0 id stream and addrTableRoot, the LPREP/1 commitment, the ECDSA attestation (S7)
+
+13. Extrapolation to BabyLM (from the full gloss shards above; the text differs, so value and times are indicative)
+  strict-small, 55 MB: 918 shards at 59930.9 B; stream hex 94.2 MB; records (JSON, engrams off) 99.7 MB; manifest inclusion proofs <= 10 hashes (320 B)
+~   strict-small, 55 MB: encode 22.8 s, whole sync grow 37.5 s, decode 20.4 s, codec verification 37.6 s, engram layer verbatim 1.8 h / engram_core 119.8 s (single thread)
+  strict-small, 60 MB: 1,002 shards at 59930.9 B; stream hex 102.7 MB; records (JSON, engrams off) 108.8 MB; manifest inclusion proofs <= 10 hashes (320 B)
+~   strict-small, 60 MB: encode 24.9 s, whole sync grow 41.0 s, decode 22.3 s, codec verification 41.1 s, engram layer verbatim 1.9 h / engram_core 130.7 s (single thread)
+  strict, 550 MB: 9,178 shards at 59930.9 B; stream hex 941.6 MB; records (JSON, engrams off) 997.2 MB; manifest inclusion proofs <= 14 hashes (448 B)
+~   strict, 550 MB: encode 228.4 s, whole sync grow 375.3 s, decode 204.3 s, codec verification 376.2 s, engram layer verbatim 17.7 h / engram_core 1197.5 s (single thread)
+  strict, 600 MB: 10,012 shards at 59930.9 B; stream hex 1027.2 MB; records (JSON, engrams off) 1087.9 MB; manifest inclusion proofs <= 14 hashes (448 B)
+~   strict, 600 MB: encode 249.2 s, whole sync grow 409.4 s, decode 222.9 s, codec verification 410.4 s, engram layer verbatim 19.3 h / engram_core 1306.3 s (single thread)
+
+SETTLES:
+- D8 and L8(a) for JS: the spike-only synchronous grower (biochain_v1.js + orbital_core sha256) gives Owl's growBiochain record field for field on 126/126 records (55 gloss shards and 8 synthetic, engrams on and off); Owl's verifyIntegrity accepts every engrams-off record.
+- Cost table, WordNet glosses, per full 60 KB shard: 84 chunks, 1.7120 stream hex chars per byte, 6.7134 residual bits per byte, value 1.1016 engrams off and 0.4860 on; 6.7 B per engram token.
+~ Cost table times (median per full shard, this container): encode 24.9 ms, decode 22.3 ms, whole sync grow 40.9 ms, verbatim engram layer 6933.7 ms (verb 00, measured alone; engram_core's 130.5 ms).
+- 0x80: 1.4131% of gloss chunks (64 of 4529) against the analytic 1.5534%; 39 of 55 gloss shards have at least one.
+- Normalised (BioChain-AI kernel) packets change the stream of 43 of 63 shards and never merkleRoot, the weaves or chainId (63/63); Owl's verifyIntegrity accepts them (63/63).
+- L8's Python prediction: a faithful Python port (V8's hypot algorithm, exact toFixed) writes weave strings different from Owl's JS on 0 of 1000 synthetic shards; a naive port (math.hypot, '%.12f') on 2 of 1000 (math.hypot differs from V8's on 30.9928% of calls).
+- The gap: Owl's verifyIntegrity ACCEPTS T1 leafHashes and merkleRoot deleted; T2 packet 0 crystal32 bit 0 flipped, parity re-fixed; packet 0 checksum (freq bit 0) flipped, parity re-fixed; T8 chainId altered (last hex digit); one padding bit flipped (last residual byte of frame 2); one bit of a raw-byte rank code flipped (frame 0, residual bit 30; decodes the same). It rejects T7 frames 0 and 1 swapped; packet 0 parity bit flipped.
+- RFC 6962: inclusion proofs at most 10 hashes (320 B) at N = 1,000 and 14 (448 B) at 10,000; consistency proofs at most 11 and 15 hashes (352 and 480 B); every proof verifies, every wrong one is rejected and both SHA-256s agree: true; CT reference roots reproduced: 9/9; RFC 6962's worked proofs reproduced: 7/7.
+- The shdccp/2 Merkle rule gives L and L + [last] the same root at K = 3, 5, 7, ..., 199 (99 values, step 2) of 1..200 (so at every odd K >= 3: true, at K = 1: false); L + [last two] at K = 6, 10, 14, ..., 198 (49 values, step 4); RFC 6962 at 0 of 200.
+- The exact weave at K = 84: norm = 5^2352 exactly: true; components of 2729-2730 bits; unfold returns the leaf prefixes in order: true; the 7 segment products multiply to it: true.
+- EngramCore.importBiochain accepts every verb shard (22/22 engrams off, 22/22 on) and recreates its text byte for byte; it rejects 21/22 copies with one stream byte altered; the 1 it accepts decodes to the same bytes.
+- Residual aliasing: 3.5515% of single-bit flips of a residual (frame 0 of verb 00-03) leave the decode unchanged (681 in raw-byte rank codes, 8 in padding, 0 elsewhere), so Owl's checks accept them; a re-encode check rejects 689 of 689, at the cost of one encode per shard.
+~ L11's expected range: the codec part of the hardened verification takes 41.0 ms per 60 KB shard (median; 33.0-43.4), so a 1,000-shard corpus needs ~41.0 s for it single-threaded, before the id stream, commitment and ECDSA terms.
+~ total runtime 205.5 s (worker phase 151.1 s)

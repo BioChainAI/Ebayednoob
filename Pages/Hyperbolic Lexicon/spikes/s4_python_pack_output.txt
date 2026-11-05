@@ -1,0 +1,31 @@
+S4 s4_python_pack (Python side of S4): BioChain-AI shdccp_kernel packing and two Python ports of the biomesh.js float weave, on the 1,000 synthetic S4 shards
+Settles, with s4_lexicon_shard.cjs: L8's Python prediction (weave-string agreement) and the 0x80 packing divergence. Decides no claim. Synthetic data only (Rng(90000+i)).
+~ python 3.13.18, linux
+
+1. BioChain-AI protocol/shdccp_kernel.py (imported unchanged, python3 -B -I, explicit sys.path)
+  sha256 1d15b54b42ea62f6f2c3142f4900d4529705771d5e362c781c0a1630ff07ccdd
+  crystallize(bytes [75, 0, 7]): crystal int8 codes [-72, -128, 99, 69]
+    kernel crystallize (code -128 written as -127, parity recomputed): 90B8816345000352
+    raw port of Owl's JS crystallize (0x80 kept):                    98B8806345000352
+    they differ: True; kernel.unpack of the raw word reads codes [-72, -128, 99, 69]
+
+2. The 1,000 synthetic shards, regenerated from hpstep.prng.Rng(90000 + i)
+  bytes 30164974 (min 181, max 59990), chunks 42384, shards with 84 chunks 4
+  inputs digest (sha256 over the 1,000 shard sha256s, one per line): 655074773a44628e631e6784cd5185450c4c5a5a19cf4ff9cf4b4d2192b7969f
+  chunks whose crystal holds a 0x80 byte: 659 of 42384 = 1.5548% (analytic 1 - (255/256)^4 = 66716671/4294967296 = 1.5534%)
+  shards with at least one such chunk: 450 of 1000
+
+3. The float weave (weaveChiral, weaveMirror), two Python ports
+  weave digest, faithful port (sha256 over "chiral|mirror" lines): c0385cd2180eeac693171c1c4dce5e7d7b77b5ed1c6802fa34e4b2dcc9139bf7
+  weave digest, naive port:                                         b688237e7ffcf68aa9bebe978192362e961452441e8c6360d8f6ca821e73651b
+  s4_lexicon_shard.cjs prints the same digest of Owl's JS weaves; equal digests mean every string agrees
+  naive against faithful: weaveChiral differs on 2 of 1000 shards, weaveMirror on 1; either on 2
+  math.hypot against V8's Math.hypot algorithm: differ on 39408 of 127152 calls (on the faithful port's inputs)
+  format(x, '.12f') against toFixed(12): differ on 0 of 8000 weave components
+~ generate 18715 ms, weave 3905 ms
+
+SETTLES:
+- BioChain-AI's kernel writes 0x81 where Owl's JS writes 0x80 (e.g. [75, 0, 7]: 90B8816345000352 vs 98B8806345000352); a raw port reproduces the JS word.
+- On the synthetic shards 1.5548% of chunks have a 0x80 crystal byte (analytic 1.5534%).
+- A Python port with Python's own math.hypot and %.12f writes a different weave string on 2 of 1000 shards; with V8's hypot and exact toFixed see the digest comparison in s4_lexicon_shard_output.txt.
+~ total runtime 22.6 s
