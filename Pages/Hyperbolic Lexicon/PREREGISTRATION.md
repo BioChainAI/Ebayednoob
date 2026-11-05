@@ -820,3 +820,15 @@ or the geometry. It confirmed three gaps, all fixed before this amendment: the g
 missed a call made through a computed name; L1 could be decided without its V1 cells; and UD EWT text could reach the
 committed JSON.
 
+### Amendment 6 · 2026-11-05, an erratum to L6's protocol attribution
+
+Written after Phase 2's decisive run, while re-checking literature numbers once arxiv.org and github.com could be
+read. L6 has not run (Phase 4); nothing registered changes. L6's instances say "Training (Nickel & Kiela): softmax
+loss over 1 positive and 50 negatives ...; batch 50; 20 burn-in epochs at lr/10, 1,000 epochs in all". The paper
+(arXiv:1705.08039v2) samples 10 negatives per positive (Sec. 4.1) and uses a burn-in of 10 epochs at η/10 (Sec. 3.2),
+and states no batch size or epoch count. The 50 negatives, batch 50 and 20 burn-in epochs are those of the authors'
+released script (facebookresearch/poincare-embeddings@dff101b, `train-nouns.sh`), which also runs 1,500 epochs and
+its burn-in at lr × 0.01. The registered protocol is therefore this project's own, after the paper and the script,
+and it is kept exactly as registered: 1 positive and 50 negatives, batch 50, 20 burn-in epochs at lr/10, 1,000 epochs,
+float64. Pages that describe it say so.
+
