@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Hyperbolic BERT Front End in H&sup2; and H&sup3; - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 3 of Hyperbolic Lexicon, Phase 0: the front end stage by stage, from a normaliser on pinned Unicode 15.1 tables and WordPiece to LEB128 ids, the L3 address rule with its virtual letters and bijective 59/64-bit ids, exact points in the octahedral H3 tree and a new exact H2 tree, exact ranking, one sentence followed through every stage, the Stage-2 encoder, and a live lab that addresses a toy hierarchy and places it exactly in the disk and the ball.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 3 &middot; Phase 0</div>
+    <h1>A Hyperbolic BERT Front End in H&sup2; and H&sup3;</h1>
+    <p class="lede">A sentence goes in as bytes. Five exact stages turn it into token ids, a tree address for every word and an exact point in hyperbolic space, designed to come out the same in Python and in the browser. Three learned stages follow later, in floats. This page walks through all eight, with what the spikes measured, and ends with a lab that addresses a small hierarchy and places it exactly in the disk and the ball.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#lab">Try the tree, live</a>
+        <a class="btn btn-ghost" href="#pipeline">Stages A&ndash;H</a>
+        <a class="btn btn-ghost" href="#address">The address rule</a>
+        <a class="btn btn-ghost" href="#example">&ldquo;The cat sat.&rdquo;</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">stages A&ndash;E <b>exact</b> &middot; F&ndash;H float</span>
+        <span class="stat">exact H&sup2; tree: <b>500/500</b> decodes, every depth to 28</span>
+        <span class="stat">float64 ranking inverts from depth <b>10</b></span>
+        <span class="stat">verb addresses &le; 25 letters: <b>99.96%</b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#pipeline">2. Stages A&ndash;H</a></li>
+            <li><a href="#normalise">3. A &middot; Normalise</a></li>
+            <li><a href="#tokenize">4. B &middot; Tokenize</a></li>
+            <li><a href="#ids">5. C &middot; Ids</a></li>
+            <li><a href="#address">6. D &middot; Address</a></li>
+            <li><a href="#place">7. E &middot; Placement</a></li>
+            <li><a href="#rank">8. Exact ranking</a></li>
+            <li><a href="#lab">9. A toy tree, live</a></li>
+            <li><a href="#example">10. &ldquo;The cat sat.&rdquo;</a></li>
+            <li><a href="#encoder">11. F&ndash;H &middot; The learned stages</a></li>
+            <li><a href="#pages">12. The 2D and 3D pages</a></li>
+            <li><a href="#limits">13. Honest limits</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#pipeline">Stages A&ndash;H</a></li><li><a href="#normalise">A &middot; Normalise</a></li>
+            <li><a href="#tokenize">B &middot; Tokenize</a></li><li><a href="#ids">C &middot; Ids</a></li><li><a href="#address">D &middot; Address</a></li>
+            <li><a href="#place">E &middot; Placement</a></li><li><a href="#rank">Exact ranking</a></li><li><a href="#lab">A toy tree, live</a></li>
+            <li><a href="#example">&ldquo;The cat sat.&rdquo;</a></li><li><a href="#encoder">F&ndash;H &middot; The learned stages</a></li><li><a href="#pages">The 2D and 3D pages</a></li>
+            <li><a href="#limits">Honest limits</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">This page is the front end of the system map. Its focus node is stage D, the address: it takes the token ids and WordNet&rsquo;s hierarchy, uses the norm-5 tree, and feeds the exact placement and the records.</p>
+            <div data-hl-map="focus" data-node="addr"></div>
+            <p>Phase 0 is analysis, seven measurement spikes and a preregistration. No code for any stage exists yet, apart from the shared cores this page loads unchanged. The spikes S1&ndash;S7 have run; their scripts and captured outputs are in the <code>spikes/</code> folder (<a href="evidence.html#spikes">Explainer 8</a>), and this page links each output where it quotes it. They measured on data kept apart from every registered instance: WordNet verbs and adjectives, Owl Academy&rsquo;s canon tree, synthetic words and repository Markdown. They fixed facts the design depends on, and they decide no claim. The eleven claims L1&ndash;L11 in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> are registered and undecided <span class="tag t-OPEN">REGISTERED</span>.</p>
+            <div class="callout plain"><span class="label">How to read this page</span>
+                <p><span class="mark exact">exact</span>: integers, rationals or bytes, identical in every engine. <span class="mark float">float</span>: floating point, rounded at every step. A number called a <strong>spike result</strong> comes from a captured spike output, quoted as printed (&ldquo;spike S3 measured &hellip;&rdquo;). Lines that the spikes mark with &ldquo;~&rdquo; are timings or runtime versions on this container; they are labelled as such here. A value marked <strong>illustrative</strong> is made up to show the shape of a stage, because the thing it stands for does not exist yet.</p>
+            </div>
+            <dl class="gloss">
+                <dt>Synset</dt><dd>A WordNet set of synonyms naming one concept, such as cat.n.01. Each has an 8-digit offset. The pin holds 82,115 noun synsets.</dd>
+                <dt>Hypernym</dt><dd>The more general concept: mammal is a hypernym of cat. WordNet writes it as an <code>@</code> pointer, or <code>@i</code> for an instance.</dd>
+                <dt>Spanning tree</dt><dd>Keep one parent per synset, its first <code>@</code> or <code>@i</code> pointer, and WordNet&rsquo;s noun hierarchy becomes a tree with entity.n.01 at the root.</dd>
+                <dt>Word, letter</dt><dd>An address in the norm-5 tree. Letters 0&ndash;5 stand for the quaternions 1+2i, 1&minus;2i, 1+2j, 1&minus;2j, 1+2k, 1&minus;2k. A word is <em>reduced</em> when no letter is followed by its conjugate, so the root has six children and every other node five.</dd>
+                <dt>Virtual letter</dt><dd>A letter that stands for no synset. A node with more than five children needs two or more letters per child; the letters after the first on such an edge are virtual.</dd>
+                <dt>Lorentz product</dt><dd>&langle;x, y&rangle;<sub>L</sub> = &minus;x&#8320;y&#8320; + x&#8321;y&#8321; + &hellip;. For two points on the hyperboloid, &minus;&langle;x, y&rangle;<sub>L</sub> = cosh d(x, y), so it ranks by distance without a square root or a logarithm.</dd>
+                <dt>MAP</dt><dd>Mean average precision. Rank every other node by distance from a query node, score how early its true neighbours come, and average over the queries; 1 is perfect. <em>Graph-edge</em> MAP counts the parent and the children as neighbours; <em>closure</em> MAP counts all ancestors and descendants.</dd>
+            </dl>
+        </section>
+
+        <section class="chapter" id="pipeline">
+            <div class="chapter-num">02</div>
+            <h2>Stages A&ndash;H</h2>
+            <p class="chapter-intro">Eight stages take a sentence from bytes to a model&rsquo;s output. The first five are exact and need no training. The last three learn, in floats, and two of them wait until every Stage-1 claim is decided.</p>
+            <div class="pipeline">
+                <div class="exact"><b>A &middot; NORMALISE</b><span>BERT&rsquo;s cleaning rules on pinned Unicode 15.1 tables. Fails closed. (L1)</span></div>
+                <div class="exact"><b>B &middot; TOKENIZE</b><span>WordPiece on a pinned vocabulary: V0 &ldquo;lex0&rdquo; now, BERT&rsquo;s V1 later. (L1)</span></div>
+                <div class="exact"><b>C &middot; IDS</b><span>An LEB128 id stream with its SHA-256. engram/1 only as a checksum. (L1, L2)</span></div>
+                <div class="exact"><b>D &middot; ADDRESS</b><span>A norm-5 tree word per synset by the L3 rule; a bijective 59/64-bit id. (L3)</span></div>
+                <div class="exact"><b>E &middot; PLACEMENT</b><span>Exact points in H&sup3; and in a new exact H&sup2; tree; exact ranking. (L3&ndash;L5)</span></div>
+                <div class="float"><b>F &middot; STATIC EMBEDDINGS</b><span>Learned Lorentz and Euclidean tables, float64, snapped to 2<sup>&minus;32</sup>. (L6, Phase 4)</span></div>
+                <div class="later"><b>G &middot; ENCODER</b><span>Float. A Euclidean BERT-style encoder that reads the address. Stage 2.</span></div>
+                <div class="later"><b>H &middot; HEADS</b><span>Float, with exact assignment. Masked-LM and hierarchy heads. Stage 2.</span></div>
+            </div>
+            <p>Green stages are exact: the Python reference decides them, and the browser core must reproduce its traces line for line (the common rules of the preregistration). Gold is float, with exact snapshots. Grey dashed stages come after the <strong>Stage-1 gate</strong>: all of L1&ndash;L11 decided and reviewed with the project&rsquo;s owner before any encoder code.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Stage</th><th>Kind</th><th>Reused unchanged</th><th>New</th><th>Decided by</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>A</strong> Normalise</td><td><span class="mark exact">exact</span></td><td>Nothing: the repositories have only regex and whitespace splitters (<a href="analysis.html#missing">Explainer 1</a>)</td><td>N_B in <code>reference/lexicon/normalise.py</code> and <code>lexicon_core.js</code>, on a pinned table</td><td>L1 (Phase 2)</td></tr>
+                    <tr><td><strong>B</strong> Tokenize</td><td><span class="mark exact">exact</span></td><td>Nothing</td><td>WordPiece and the V0 trainer (<code>wordpiece.py</code>)</td><td>L1</td></tr>
+                    <tr><td><strong>C</strong> Ids</td><td><span class="mark exact">exact</span></td><td>engram/1 (<code>ttmpt_core_v1.js</code>, and <code>biochain_v1.js</code> <code>engramStreamFromText</code>)</td><td>The LEB128 id stream and its hash</td><td>L1, L2, L8(d)</td></tr>
+                    <tr><td><strong>D</strong> Address</td><td><span class="mark exact">exact</span></td><td>The norm-5 tree <code>P</code> (<code>children</code>, <code>wordQuaternion</code>, <code>rightDivide</code>, <code>isReduced</code>); <code>certifyWord</code></td><td>The L3 rule, the token map, the id codec (<code>address.py</code>)</td><td>L3 (Phase 1), L7</td></tr>
+                    <tr><td><strong>E</strong> Placement</td><td><span class="mark exact">exact</span></td><td><code>TreeEmbedding3D</code> (<code>pointExact</code>, <code>decodeExact</code>) and <code>nearestExact</code>; <code>Q</code> and <code>X</code></td><td>The exact H&sup2; tree (<code>h2exact.py</code>, <code>TreeEmbedding2DExact</code>); exact ranking (<code>rank.py</code>)</td><td>L3, L4, L5</td></tr>
+                    <tr><td><strong>F</strong> Static embeddings</td><td><span class="mark float">float</span></td><td><code>fence.js</code> <code>dyadic</code> and <code>lift</code> for snapping</td><td>A numpy float64 trainer (<code>embed.py</code>)</td><td>L6, L4(c) (Phase 4)</td></tr>
+                    <tr><td><strong>G</strong> Encoder</td><td><span class="mark float">float</span></td><td><code>H.logOrigin</code>; for browser demos, <code>softmaxWeights</code> and <code>H.lorentzCentroid</code></td><td>A small BERT-style encoder</td><td>Claims registered by amendment (Phases 6&ndash;7)</td></tr>
+                    <tr><td><strong>H</strong> Heads</td><td><span class="mark float">float</span> <span class="mark exact">exact</span></td><td><code>decodeExact</code>, <code>nearestExact</code>; <code>PolyStepH</code> for tiny heads</td><td>MLM and hierarchy heads</td><td>The same</td></tr>
+                </tbody>
+            </table></div>
+            <p>Every stage that produces a table also produces a record: <code>LVOCAB/1</code> for the vocabulary, <code>LADDR/1</code> for the address table, <code>LPREP/1</code> per shard, <code>LBENCH/1</code> for results (D7; <a href="biochains.html#records">Explainer 4</a>). Each commits its stage by SHA-256, so a reader can check that two runs used the same front end.</p>
+        </section>
+
+        <section class="chapter" id="normalise">
+            <div class="chapter-num">03</div>
+            <h2>A &middot; Normalise <span class="mark exact">exact</span></h2>
+            <p class="chapter-intro">Before text can be split into pieces it must be cleaned the same way everywhere. That sounds trivial. Spike S6 found that it is not: the three runtimes here do not carry the same version of Unicode.</p>
+            <p>The normaliser N_B follows the rules of BERT&rsquo;s BasicTokenizer, in BERT&rsquo;s order (D5 and the design):</p>
+            <ol class="steps">
+                <li>Read UTF-8 bytes; reject invalid UTF-8 and report its offset.</li>
+                <li>Drop U+0000, U+FFFD and control or format characters (categories Cc, Cf), except tab, line feed and carriage return, which become whitespace. Spaces (Zs) become a plain space.</li>
+                <li>Put spaces around CJK ideographs (BERT&rsquo;s ranges), then split on whitespace.</li>
+                <li>Lowercase each word as Python 3.13&rsquo;s <code>str.lower</code> does at Unicode 15.1: full mappings, so U+0130 &#304; becomes two code points, and the Final_Sigma rule, so &Sigma; becomes &sigmaf; at the end of a word and &sigma; elsewhere.</li>
+                <li>Decompose (NFD: canonical decomposition, canonical ordering, algorithmic Hangul), then drop the combining marks (Mn). This strips accents: caf&eacute; becomes cafe.</li>
+                <li>Split off punctuation (any P* category, and BERT&rsquo;s ASCII ranges).</li>
+            </ol>
+            <p><strong>Pinned tables.</strong> Every Unicode fact N_B uses comes from a table exported once from Python&rsquo;s <code>unicodedata</code> 15.1.0 and pinned by SHA-256 (<code>reference/golden/unicode_15_1_v1.json</code>, checked by <code>make_unicode_v1.py --check</code>). The JavaScript never calls <code>String.prototype.normalize</code>, <code>toLowerCase</code> or <code>\p{&hellip;}</code>. A word containing a code point that Unicode 15.1 does not assign <strong>fails closed</strong>: it becomes [UNK] and its byte offset is logged. The original bytes are never lost, because the <code>shdccp/2</code> stream keeps them losslessly (<a href="biochains.html">Explainer 4</a>).</p>
+
+            <h3>Why the tables are pinned: spike S6</h3>
+            <p>Spike S6 (<a href="../spikes/s6_unicode_wordpiece_output.txt">output</a>) swept every code point, 0 to 10FFFF without the surrogates (1,112,064 of them), through Node, Python and headless Chromium. On this container (a &ldquo;~&rdquo; line, the runtimes&rsquo; own versions): Node 22.23.4 reports Unicode 17.0 (ICU 78.3); Python 3.13.18 reports 15.1.0; Chrome for Testing 153 behaves as 17.0, inferred from its 159,801 assigned graphic and format code points. Node and Chromium agreed on every value. Node and Python differed on 9,990 code points, almost all of them unassigned in 15.1 and assigned since.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Case (spike S6)</th><th>Python 3.13 &middot; Unicode 15.1</th><th>Node 22 and Chromium &middot; Unicode 17.0</th></tr></thead>
+                <tbody>
+                    <tr><td>lowercase &Omicron;&Delta;&Omicron;&Sigma; (U+039F 0394 039F 03A3)</td><td class="mono">03BF 03B4 03BF 03C2: final &sigmaf;</td><td>the same, on all 52 fixed Final_Sigma cases</td></tr>
+                    <tr><td>lowercase &#304; (U+0130)</td><td class="mono">0069 0307: two code points</td><td>the same, on all 10 U+0130 cases</td></tr>
+                    <tr><td>lowercase A &#661; &Sigma; (U+0041 0295 03A3)</td><td class="mono">0061 0295 03C2: final &sigmaf;</td><td class="mono">0061 0295 03C3: not final. U+0295 changed from a cased letter (Ll) to Lo after 15.1</td></tr>
+                    <tr><td>lowercase, NFD, drop marks: U+0897 alone</td><td class="mono">0897: kept, it is unassigned</td><td>dropped: a combining mark (Mn) since Unicode 16.0</td></tr>
+                    <tr><td>the platform normaliser, <code>toLowerCase().normalize('NFD')</code> then remove <code>\p{Mn}</code>, on the 20,520-case stress set</td><td>the reference</td><td><strong>differs on 725</strong> in Node and 725 in Chromium: 143 of the 9,990 divergent code points alone and 143 in context, 392 of 444 Final_Sigma cases, 47 of 71 canonical-ordering cases, 0 of 10 U+0130, 0 of 15 Hangul</td></tr>
+                </tbody>
+            </table></div>
+            <p>N_B, reading the pinned 15.1 table, gives the Python column, except that a word containing U+0897, unassigned in 15.1, fails closed and becomes [UNK]. The last row is L1&rsquo;s first control, which must fail on at least one case of the stress set: it does, in both runtimes. The stress set itself is pinned: <code>spikes/s6_stress_set_v1.json</code>, 360,160 bytes, 20,520 cases, SHA-256 <code>bd1179ea&hellip;</code> (instance (c) of L1).</p>
+            <div class="callout deep"><span class="label">The table is small, and it is enough</span>
+                <p>Spike S6 built a prototype of the 15.1 table from Python&rsquo;s <code>unicodedata</code>: 4,009 category ranges, 2,061 single-step canonical decompositions, 388 combining-class ranges, 1,433 lowercase mappings, and two Final_Sigma sets of 437 and 150 ranges; 142,041 bytes as compact JSON. Driven by that table alone, lowercase, Final_Sigma, NFD and mark-dropping reproduced Python&rsquo;s own functions with 0 mismatches on all 1,112,064 code points, and 0 on 2,000 synthetic strings. One catch: Final_Sigma needs the Cased and Case_Ignorable sets, which <code>unicodedata</code> does not expose. S6 read them by probing <code>str.lower</code>, so the real export must include them. The prototype is not the pin; the pin is written in Phase 1.</p>
+            </div>
+            <p>L1 registers the test: on every WordNet gloss (117,659 strings), every UD English EWT sentence (16,622), the stress set and 2,000 synthetic strings, Python, Node and Chromium must give identical normalised bytes, tokens, ids, byte offsets and id-stream SHA-256. Its prediction names the risk points: Final_Sigma context, multi-code-point lowercase (U+0130) and canonical ordering. If L1 is refuted, a fallback N1 (bytes as given, BOM stripped, CRLF to LF, ASCII lowercase) is registered.</p>
+        </section>
+
+        <section class="chapter" id="tokenize">
+            <div class="chapter-num">04</div>
+            <h2>B &middot; Tokenize <span class="mark exact">exact</span></h2>
+            <p class="chapter-intro">WordPiece splits each normalised word into the longest pieces found in a fixed vocabulary. A rare word still gets ids; it just gets more of them.</p>
+            <p><strong>WordPiece</strong>, BERT&rsquo;s tokenizer, works greedily from the left: take the longest prefix that is in the vocabulary, then the longest piece of the rest, marked with <code>##</code> to say it continues a word. A word longer than 100 characters, or one with no matching piece, becomes [UNK]. The rule is deterministic, so once the normaliser and the vocabulary file are pinned, every engine should give the same pieces. L1 tests that it does.</p>
+            <div class="grid-2">
+                <div class="card"><h4>V0 &ldquo;lex0&rdquo; &middot; now</h4><p>8,192 entries, trained by the Python reference on the 117,659 WordNet gloss strings with an algorithm that Amendment 1 will fix, then frozen and hashed before the decisive run. The design puts [PAD], [UNK], [CLS], [SEP], [MASK] at ids 0&ndash;4, then the alphabet, then the merges in order. V0 decides L1.</p><div class="meta">D4 &middot; here</div></div>
+                <div class="card planned"><h4>V1 &middot; later</h4><p>bert-base-uncased&rsquo;s <code>vocab.txt</code>: 30,522 entries, Apache-2.0, with [UNK] = 100, [CLS] = 101, [SEP] = 102, [MASK] = 103. It lives on huggingface.co, which is blocked here, so it is a second L1 cell only if it is pinned by the decision date. Stage 2&rsquo;s tokenizer.</p><div class="meta">D4 &middot; <span class="mark net">net</span></div></div>
+            </div>
+            <h3>A toy WordPiece in three runtimes: spike S6</h3>
+            <p>S6 trained a 500-entry vocabulary on ten Markdown files of this repository (commit 7b10514, 114,397 bytes) and tokenized the same text in Python, Node and Chromium. All three built the same vocabulary (SHA-256 <code>57273a74&hellip;</code>) and the same 48,007-token id stream (<code>a64bec9f&hellip;</code>). A 500-entry vocabulary is tiny, so most words shatter:</p>
+            <div class="out">Hyperbolic Lexicon: pinned tables, tokenization and WordPiece.<br><span class="k">&rarr;</span> hyperbolic l ##ex ##ic ##on : p ##in ##ne ##d t ##a ##b ##les , token ##i ##z ##at ##ion and word ##p ##i ##e ##ce .<br><span class="k">ids</span> 143 54 454 338 311 30 58 355 316 86 62 83 84 361 16 260 91 108 367 315 110 193 98 91 87 313 18</div>
+            <p>That is a determinism check, not a tokenizer worth using. V0 is about 16 times larger and trained on glosses. L1 reports, without deciding on them, how well it splits: fertility (pieces per word), the share of words split at all, bytes per token, R&eacute;nyi efficiency at &alpha; = 2.5, the [UNK] rate and the fail-closed count, and its agreement with Hugging Face&rsquo;s <code>tokenizers</code> on the same vocabulary. Two more controls must fail: WordPiece with shortest-match-first must differ from the reference somewhere on the glosses, and N_B with accent stripping turned off somewhere on the glosses or the EWT sentences.</p>
+        </section>
+
+        <section class="chapter" id="ids">
+            <div class="chapter-num">05</div>
+            <h2>C &middot; Ids <span class="mark exact">exact</span></h2>
+            <p class="chapter-intro">Three different numbers attach to a token, and the design keeps them apart (D4): its token id, its tree address, and its engram/1 key. Only the first is the model&rsquo;s input.</p>
+            <p><strong>The id stream.</strong> A shard&rsquo;s token ids are written as LEB128 varints: seven bits per byte, with the top bit set on every byte but the last. An id below 128 takes one byte and an id below 16,384 takes two, so every V0 id fits in two bytes and every V1 id in three. The stream is hashed with SHA-256, and that hash is part of what L1 compares across engines and what L8(d) requires Python and JavaScript to agree on. Byte offsets back into the original text are optional.</p>
+            <div class="bits" role="img" aria-label="LEB128: the id 1907 written as two bytes, F3 then 0E">
+                <span style="flex:1;--c:#fbbf24">1</span><span style="flex:7;--c:#34d399">1110011 &rarr; F3</span><span style="flex:1;--c:#94a3b8">0</span><span style="flex:7;--c:#34d399">0001110 &rarr; 0E</span>
+            </div>
+            <p style="font-size:0.88rem;color:var(--muted)">The id 1,907 in LEB128: its low seven bits first, with the continuation bit set (F3), then the remaining bits (0E). The id is illustrative.</p>
+            <p><strong>engram/1, demoted.</strong> The engram/1 key, the XOR of one fixed 64-bit grid per letter, is computed only as a checksum layer that Owl Academy can read, through the verbatim <code>biochain_v1.js</code> <code>engramStreamFromText</code>. It is off by default for corpora and never an input. It keeps only which letters occur an odd number of times, so anagrams share a key and numerals sit on the zero key (<a href="analysis.html#engram">Explainer 1</a>). Claim L2 registers how often that bites: on the WordNet lemma types (147,306 before N_B), at least 1% must share their key with another type; the prediction is 2&ndash;10%. Spike S4 (<a href="../spikes/s4_lexicon_shard_output.txt">output</a>) also timed it: the verbatim engram layer took 6,933.7 ms on one full verb shard, against a median 40.9 ms for the whole synchronous grow of a shard (&ldquo;~&rdquo; timings on this container; Engram&rsquo;s <code>engram_core</code>: 130.5 ms). That cost is a second reason it is off by default.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Number</th><th>Comes from</th><th>Unique per entry?</th><th>Used for</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Token id</strong></td><td>The pinned vocabulary (stage B)</td><td>Yes, by construction</td><td>The model&rsquo;s input; the LEB128 stream</td></tr>
+                    <tr><td><strong>Address and its id</strong></td><td>The L3 rule on WordNet, and the token map (stage D)</td><td>Yes for synsets: claim L3</td><td>Exact geometry, the hierarchy factor, the record <code>LADDR/1</code></td></tr>
+                    <tr><td><strong>engram/1 key</strong></td><td>Letter parity (<code>ttmpt_core_v1.js</code>)</td><td>No: claim L2</td><td>An Owl-compatibility checksum, off by default</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="address">
+            <div class="chapter-num">06</div>
+            <h2>D &middot; Address <span class="mark exact">exact</span></h2>
+            <p class="chapter-intro">Every WordNet noun synset gets a word of the norm-5 tree. Nothing is trained: a fixed rule reads WordNet&rsquo;s own hierarchy and spells it out in letters.</p>
+            <h3>The rule (claim L3)</h3>
+            <ul>
+                <li>The spanning parent of a synset is the first <code>@</code> or <code>@i</code> pointer of its data line.</li>
+                <li>entity.n.01 sits at the word [0].</li>
+                <li>Children are ordered by synset offset.</li>
+                <li>Child k of a node with c children takes m = max(1, &lceil;log&#8325; c&rceil;) letters: the m base-5 digits of k, most significant first, each choosing <code>P.children(current word)[digit]</code>.</li>
+            </ul>
+            <p>Each node has five onward letters, so up to five children get one letter each. A sixth child forces two letters on every child: 25 slots. A 26th forces three. The max(1, &middot;) gives an only child one letter instead of none. A child&rsquo;s word extends its parent&rsquo;s, so an ancestor&rsquo;s word is always a prefix. L3(d) registers the full statement: <strong>u is a spanning-tree ancestor of v exactly when u&rsquo;s word is a proper prefix of v&rsquo;s</strong>. That turns the address prefix into a meaning: a prefix that two words share, if it is a synset&rsquo;s word, names a shared ancestor, not the base-5 accident of engram/1 addresses (<a href="analysis.html#engram">Explainer 1</a>).</p>
+            <h3>A worked example</h3>
+            <p>Take a node with the word W = 00000000 (in the lab&rsquo;s toy tree, mammal) and seven children. Seven is more than five, so m = &lceil;log&#8325; 7&rceil; = 2: each child writes k in two base-5 digits. After a word ending in 0, <code>P.children</code> allows [0, 2, 3, 4, 5] (1 would undo the 0); after a 2 it allows [0, 1, 2, 4, 5].</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">k</th><th>Digits</th><th>First letter</th><th>Second letter (virtual)</th><th>Child&rsquo;s word</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">0</td><td class="mono">0 0</td><td>[0,2,3,4,5][0] = 0</td><td>[0,2,3,4,5][0] = 0</td><td><span class="word">00000000&middot;0<b>0</b></span></td></tr>
+                    <tr><td class="num">1</td><td class="mono">0 1</td><td>0</td><td>[0,2,3,4,5][1] = 2</td><td><span class="word">00000000&middot;0<b>2</b></span></td></tr>
+                    <tr><td class="num">4</td><td class="mono">0 4</td><td>0</td><td>[0,2,3,4,5][4] = 5</td><td><span class="word">00000000&middot;0<b>5</b></span></td></tr>
+                    <tr><td class="num">5</td><td class="mono">1 0</td><td>[0,2,3,4,5][1] = 2</td><td>[0,1,2,4,5][0] = 0</td><td><span class="word">00000000&middot;2<b>0</b></span></td></tr>
+                    <tr><td class="num">6</td><td class="mono">1 1</td><td>2</td><td>[0,1,2,4,5][1] = 1</td><td><span class="word">00000000&middot;2<b>1</b></span></td></tr>
+                </tbody>
+            </table></div>
+            <p>The second letters (gold) are virtual: the prefixes 00000000&middot;0 and 00000000&middot;2 stand for no synset. Children 0&ndash;4 share the first, children 5 and 6 the second. That sharing is what costs MAP below. The words are reduced by construction, and each is an integer quaternion of norm exactly 5<sup>10</sup> that right division unfolds back into the word: <code>certifyWord</code>, L3(c). The lab below recomputes this table live.</p>
+
+            <h3>What WordNet asks of the rule</h3>
+            <p>The pinned noun tree (<a href="../reference/golden/wordnet_v1.meta.json">wordnet_v1.meta.json</a>) reaches depth 19 below entity.n.01. Of its 16,897 internal nodes, 6,162 have one child, 3,291 more than five and 396 more than 25; the largest has 659, so each of its children takes &lceil;log&#8325; 659&rceil; = 5 letters. Phase 0 counted the nouns but addressed none of them: they are registered instances. Spike S3 (<a href="../spikes/s3_wordnet_shape_output.txt">output</a>) ran the rule on the disjoint verb forest instead.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S3, the verb forest</th><th>Measured</th></tr></thead>
+                <tbody>
+                    <tr><td>Synsets; roots</td><td>13,767; 559 roots under a virtual verb root [1], 4 letters each (559 &le; 625 = 5<sup>4</sup>)</td></tr>
+                    <tr><td>Shape</td><td>Depth &le; 12 below the roots; 1,462 of 3,309 internal nodes (44.18%) have one child; 526 have more than 5, 41 more than 25; the largest family, change (00126264), has 399</td></tr>
+                    <tr><td>Letters</td><td>12,912 virtual letters; 1.9379 letters per edge on average</td></tr>
+                    <tr><td>Word lengths</td><td>5 to 26 letters. <strong>13,762 of 13,767 (99.96%) fit 25 letters</strong>, all fit 27; the 5 longest (26 letters, depth 10) are pick_up, wave_off, foreground, raise and soft-pedal</td></tr>
+                    <tr><td>Exact H&sup3; points</td><td>All 13,767 on the sheet exactly; numerators &le; 133 bits, denominators &le; 73 bits per coordinate</td></tr>
+                    <tr><td>Owl Academy&rsquo;s canon tree</td><td>169 nodes (canon &gt; 10 depts &gt; 13 artifacts &gt; 145 tomes): words of 1, 3, 4 and 6 letters</td></tr>
+                </tbody>
+            </table></div>
+            <figure>
+                <div class="map-wrap mini"><svg viewBox="0 0 640 230" role="img" aria-label="Spike S3: verb word lengths under the L3 rule, from 5 to 26 letters; 5 words are longer than the 25-letter id59 tile">
+                <g font-family="Fira Code, monospace" font-size="11" fill="#94a3b8">
+                <line x1="44" y1="186.0" x2="628" y2="186.0" stroke="#1e293b"/><text x="38" y="190.0" text-anchor="end">0</text>
+                <line x1="44" y1="145.0" x2="628" y2="145.0" stroke="#1e293b"/><text x="38" y="149.0" text-anchor="end">500</text>
+                <line x1="44" y1="104.0" x2="628" y2="104.0" stroke="#1e293b"/><text x="38" y="108.0" text-anchor="end">1,000</text>
+                <line x1="44" y1="63.0" x2="628" y2="63.0" stroke="#1e293b"/><text x="38" y="67.0" text-anchor="end">1,500</text>
+                <line x1="44" y1="22.0" x2="628" y2="22.0" stroke="#1e293b"/><text x="38" y="26.0" text-anchor="end">2,000</text>
+                <rect x="46.0" y="140.2" width="22.5" height="45.8" rx="2" fill="#22d3ee"/><text x="57.3" y="200" text-anchor="middle">5</text>
+                <rect x="72.5" y="149.5" width="22.5" height="36.5" rx="2" fill="#22d3ee"/><text x="83.8" y="200" text-anchor="middle">6</text>
+                <rect x="99.1" y="67.3" width="22.5" height="118.7" rx="2" fill="#22d3ee"/><text x="110.4" y="200" text-anchor="middle">7</text>
+                <rect x="125.6" y="56.7" width="22.5" height="129.3" rx="2" fill="#22d3ee"/><text x="136.9" y="200" text-anchor="middle">8</text>
+                <rect x="152.2" y="23.2" width="22.5" height="162.8" rx="2" fill="#22d3ee"/><text x="163.5" y="200" text-anchor="middle">9</text>
+                <rect x="178.7" y="50.7" width="22.5" height="135.3" rx="2" fill="#22d3ee"/><text x="190.0" y="200" text-anchor="middle">10</text>
+                <rect x="205.3" y="47.4" width="22.5" height="138.6" rx="2" fill="#22d3ee"/><text x="216.5" y="200" text-anchor="middle">11</text>
+                <rect x="231.8" y="73.2" width="22.5" height="112.8" rx="2" fill="#22d3ee"/><text x="243.1" y="200" text-anchor="middle">12</text>
+                <rect x="258.4" y="100.6" width="22.5" height="85.4" rx="2" fill="#22d3ee"/><text x="269.6" y="200" text-anchor="middle">13</text>
+                <rect x="284.9" y="126.2" width="22.5" height="59.8" rx="2" fill="#22d3ee"/><text x="296.2" y="200" text-anchor="middle">14</text>
+                <rect x="311.5" y="154.2" width="22.5" height="31.8" rx="2" fill="#22d3ee"/><text x="322.7" y="200" text-anchor="middle">15</text>
+                <rect x="338.0" y="161.4" width="22.5" height="24.6" rx="2" fill="#22d3ee"/><text x="349.3" y="200" text-anchor="middle">16</text>
+                <rect x="364.5" y="173.9" width="22.5" height="12.1" rx="2" fill="#22d3ee"/><text x="375.8" y="200" text-anchor="middle">17</text>
+                <rect x="391.1" y="175.2" width="22.5" height="10.8" rx="2" fill="#22d3ee"/><text x="402.4" y="200" text-anchor="middle">18</text>
+                <rect x="417.6" y="179.3" width="22.5" height="6.7" rx="2" fill="#22d3ee"/><text x="428.9" y="200" text-anchor="middle">19</text>
+                <rect x="444.2" y="178.6" width="22.5" height="7.4" rx="2" fill="#22d3ee"/><text x="455.5" y="200" text-anchor="middle">20</text>
+                <rect x="470.7" y="181.8" width="22.5" height="4.2" rx="2" fill="#22d3ee"/><text x="482.0" y="200" text-anchor="middle">21</text>
+                <rect x="497.3" y="184.1" width="22.5" height="1.9" rx="2" fill="#22d3ee"/><text x="508.5" y="200" text-anchor="middle">22</text>
+                <rect x="523.8" y="183.8" width="22.5" height="2.2" rx="2" fill="#22d3ee"/><text x="535.1" y="200" text-anchor="middle">23</text>
+                <rect x="550.4" y="184.5" width="22.5" height="1.5" rx="2" fill="#22d3ee"/><text x="561.6" y="200" text-anchor="middle">24</text>
+                <rect x="576.9" y="184.5" width="22.5" height="1.5" rx="2" fill="#22d3ee"/><text x="588.2" y="200" text-anchor="middle">25</text>
+                <rect x="603.5" y="184.5" width="22.5" height="1.5" rx="2" fill="#fb7185"/><text x="614.7" y="200" text-anchor="middle">26</text>
+                <line x1="601.5" y1="14" x2="601.5" y2="186" stroke="#f5c542" stroke-dasharray="4 3"/>
+                <text x="597.5" y="12" text-anchor="end" fill="#f5c542">id59 tile: 25 letters</text>
+                <text x="336" y="218" text-anchor="middle">word length (letters)</text>
+                </g></svg></div>
+                <figcaption>Spike S3: how many of the 13,767 verb words have each length under the L3 rule. Nouns are deeper and branch more, so a larger share may pass 25 or 27 letters; L3 reports that share.</figcaption>
+            </figure>
+
+            <h3>A 59- or 64-bit id for every word (D6)</h3>
+            <p>A word is not yet a fixed-width number. The design numbers all reduced words in one sequence: first by length, then, within a length, by reading the letters as digits, the first in base 6 and each later one in base 5 (its index among the five children <code>P.children</code> allows):</p>
+            <p class="out">id(w) = (number of reduced words shorter than w) + (rank of w among words of its length)<br><span class="k">words of length n:</span> 6&middot;5<sup>n&minus;1</sup> &nbsp; <span class="k">words shorter than n:</span> 1 + 6(5<sup>n&minus;1</sup> &minus; 1)/4</p>
+            <p>The code is a bijection: every id is one word and every word one id. Words of up to 25 letters number 1 + 6(5<sup>25</sup> &minus; 1)/4 &asymp; 4.47&middot;10<sup>17</sup> &lt; 2<sup>59</sup>, so they fit in <strong>59 bits</strong> (id59); up to 27 letters, about 1.12&middot;10<sup>19</sup> &lt; 2<sup>64</sup> (id64). L3(g) requires the code to round-trip every noun word it covers. The design does not reuse <code>engram_core.encode</code> for ids: it always writes 28 letters, never uses the sixth root letter and records no length.</p>
+            <p>The 59-bit form is what the proposed SHD-CCP kernel 0xA, the Hyperbolic Address Tile, carries: the Form header in bits 60&ndash;63, even parity in bit 59, the id in bits 0&ndash;58 (<a href="../proposals/SHD-CCP-kernel-hyperbolic-address.md">the proposal</a>; <a href="shdccp.html">Explainer 2</a>). Run read-only against SHD-CCP&rsquo;s own Kernel Ontology tooling, it passes <code>lint_kernel</code>, <code>layout_integrity</code> (3 fields tile bits 0&ndash;63 exactly once) and <code>glass_box_round_trip</code> (1,000 random round trips), and Form 0xA is free in that registry. Inside Owl Academy&rsquo;s and BioChain-AI&rsquo;s <code>shdccp/2</code> streams Form 10 is the ROT gate, so the kernel is never written there. On S3&rsquo;s verbs, 5 words of 13,767 would need a continuation tile; the kernel leaves that for a later version, once L3 has measured the nouns.</p>
+
+            <h3>What virtual letters cost: spike S3&rsquo;s MAP</h3>
+            <p>S3 placed every verb word in the exact H&sup3; tree and ranked all 13,766 other verbs for each of the 13,542 verbs that have a neighbour, exactly, with ties counted against the query.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S3, verbs, exact H&sup3;</th><th class="num">Queries</th><th class="num">Graph-edge MAP</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>All queries</strong></td><td class="num">13,542</td><td class="num"><strong>0.6309</strong></td></tr>
+                    <tr><td>Query&rsquo;s own edge has 1 letter</td><td class="num">5,357</td><td class="num">0.9974</td></tr>
+                    <tr><td>2 letters</td><td class="num">5,195</td><td class="num">0.4087</td></tr>
+                    <tr><td>3 letters</td><td class="num">1,928</td><td class="num">0.3217</td></tr>
+                    <tr><td>4 letters (the verb roots with children, and the children of the 3 families above 125)</td><td class="num">1,062</td><td class="num">0.4301</td></tr>
+                    <tr><td>Closure MAP, all queries</td><td class="num">13,542</td><td class="num">0.4206</td></tr>
+                </tbody>
+            </table></div>
+            <p>Where an edge has one letter, the exact tree reconstructs the hierarchy almost perfectly (0.9974). Where it has two to four, MAP falls to 0.32&ndash;0.43. The reason is geometric, and spike S1 measured it: with one letter per edge, every neighbour is 1.9459 away and the nearest non-neighbour 3.2375. A two-letter child is 3.2375 from its parent if its last letter bends and 3.8918 if it goes straight, the same distances as its siblings under the same virtual prefix. So siblings tie with the parent or come before it. 5,396 of the 13,542 queries have a neighbour tied exactly with a non-neighbour; counting ties in the query&rsquo;s favour instead would give 0.8149, shown for contrast only.</p>
+            <div class="callout note"><span class="label">A prediction this fixed</span>
+                <p>A rule fixed with the design sets the prediction for L6(c), which says the training-free exact H&sup3; tree has graph-edge MAP at least that of learned Lorentz embeddings at d = 3: supported if S3&rsquo;s verb MAP is at least 0.90, otherwise refuted. S3 measured 0.6309, exactly a 205-digit rational (SHA-256 <code>2e428dd7&hellip;</code>) that an independent Python recomputation reproduced. So the prediction registered for L6(c) reads <strong>refuted</strong>: the claim is expected to fail. That is a prediction, not a decision: L6 is decided in Phase 4 on the mammals.</p>
+            </div>
+            <p>One more reading of the same word comes later. Reduced mod a prime q, a word&rsquo;s quaternion lands on a vertex of the Ramanujan graph X(5, q), the overlay SHD-CCP&rsquo;s RFC 03 plans (claim L7; <a href="shdccp.html#lps">Explainer 2</a>). It is a shard key, never integrity: LPS Cayley hashes have known collision attacks.</p>
+        </section>
+
+        <section class="chapter" id="place">
+            <div class="chapter-num">07</div>
+            <h2>E &middot; Placement in H&sup3; and H&sup2; <span class="mark exact">exact</span></h2>
+            <p class="chapter-intro">An address becomes a point by walking it: each letter is one step of fixed length in a fixed direction, taken in the frame of the node before. With rational steps, every point has exact rational coordinates, and greedy decoding walks it back to the word.</p>
+            <h3>The octahedral tree in H&sup3;: the primary store</h3>
+            <p>Hyperbolic Oracles&rsquo; <code>decoder3d.js</code> (<code>TreeEmbedding3D</code>) already does this in H&sup3;. A node sees its parent along &minus;x in its own frame and its five children along +x (letter index 0, straight on) and &plusmn;y, &plusmn;z (90&deg; bends). Each step is a boost with t = 3/4, so cosh &tau; = 25/7, sinh &tau; = 24/7 and &tau; = ln 7 = 1.9459. A point at word length n is an integer vector over 7<sup>n</sup>. Hyperbolic Oracles proves that greedy decoding returns every node at every depth when t &gt; 1/&radic;2 (<a href="../../Hyperbolic%20Oracles/explainers/decoder-3d.html#tree">E2, proved</a>).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S1 (<a href="../spikes/s1_h3_tree_metrics_output.txt">output</a>), the H&sup3; tree</th><th>Measured</th></tr></thead>
+                <tbody>
+                    <tr><td>Distances</td><td>Parent&ndash;child 1.9459 (cosh 25/7); siblings at 90&deg; 3.2375 (cosh 625/49); siblings at 180&deg; and the straight grandchild 3.8918 (cosh 1201/49). One 90&deg; bend between two edges loses 0.6543, tending to ln 2 = 0.6931 on long edges</td></tr>
+                    <tr><td>Exactness</td><td>Every coordinate at depth n is an integer over 7<sup>n</sup>, and every Lorentz product of two points an integer over 7<sup>n<sub>a</sub>+n<sub>b</sub></sup>. <code>decodeExact</code> returned the word on 840/840 ranked words</td></tr>
+                    <tr><td>Bits at depth 28</td><td>Numerators &le; 139 bits on 20 random words, 157 on the straight word; denominators 79 bits (7<sup>28</sup>). At depth 60: 297, 336 and 169</td></tr>
+                    <tr><td>Floats</td><td>Float decoding of the float placement first fails at depth 13 on random words; exact decoding never failed</td></tr>
+                    <tr><td>Time (&ldquo;~&rdquo;)</td><td>About 1.63 ms per exact point at depth 28 on random words (0.37 ms on the straight word), against 3.0 &micro;s for a float point</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>A new exact tree in H&sup2;</h3>
+            <p>The plane had no exact tree: <code>hyperbolic_core.js</code>&rsquo;s H&sup2; <code>TreeEmbedding</code> uses <code>Math.cos</code> and <code>Math.sin</code>. The design builds one from directions whose coordinates are rational because they come from the Pythagorean triples 3&ndash;4&ndash;5 and 7&ndash;24&ndash;25 (D3):</p>
+            <ul>
+                <li>Root letters 0&ndash;5 go along (1, 0), (3/5, 4/5), (3/5, &minus;4/5), (&minus;7/25, 24/25), (&minus;7/25, &minus;24/25) and (&minus;1, 0): angles 0&deg;, &plusmn;53.13&deg;, &plusmn;106.26&deg; and 180&deg;.</li>
+                <li>Every later node&rsquo;s children k = 0&ndash;4 take the first five in its own frame; the parent lies along (&minus;1, 0).</li>
+                <li>A step is the rotation R(u) to the child&rsquo;s direction, then a boost with t = (m &minus; 1)/(m + 1). Then cosh &tau; + sinh &tau; = m exactly, so &tau; = ln m.</li>
+            </ul>
+            <p>The question was which m. Spike S2 (<a href="../spikes/s2_h2_exact_tree_output.txt">output</a>) decoded 500 random reduced words at each depth, exactly, for six values:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S2: exact decodes of 500</th><th class="num">2</th><th class="num">4</th><th class="num">8</th><th class="num">12</th><th class="num">16</th><th class="num">20</th><th class="num">28</th></tr></thead>
+                <tbody>
+                    <tr><td>m = 3, t = 1/2</td><td class="num">303</td><td class="num">105</td><td class="num">7</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+                    <tr><td>m = 5, t = 2/3</td><td class="num">375</td><td class="num">179</td><td class="num">54</td><td class="num">16</td><td class="num">5</td><td class="num">0</td><td class="num">0</td></tr>
+                    <tr><td>m = 7, t = 3/4 (H&sup3;&rsquo;s boost)</td><td class="num">500</td><td class="num">443</td><td class="num">311</td><td class="num">226</td><td class="num">148</td><td class="num">124</td><td class="num">55</td></tr>
+                    <tr><td><strong>m = 12, t = 11/13</strong></td><td class="num"><strong>500</strong></td><td class="num"><strong>500</strong></td><td class="num"><strong>500</strong></td><td class="num"><strong>500</strong></td><td class="num"><strong>500</strong></td><td class="num"><strong>500</strong></td><td class="num"><strong>500</strong></td></tr>
+                    <tr><td>m = 19, 20</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td></tr>
+                    <tr><td>H&sup3;, t = 3/4, for reference</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td class="num">500</td></tr>
+                </tbody>
+            </table></div>
+            <p>So the plane needs a longer step than H&sup3; does. The H&sup3; boost t = 3/4 decodes only 226 of 500 at depth 12 in the plane, because the plane&rsquo;s directions are only 53.13&deg; apart and a child&rsquo;s subtree spreads past the half-way line toward its sibling&rsquo;s direction; S2 measured that spread exactly. That failure is L3&rsquo;s fourth control, which must fail. <strong>t = 11/13 (m = 12) decoded 500/500 at every depth from 2 to 28</strong>, with no exact ties in 390,000 greedy decisions and the sheet identity x&#8320;&sup2; &minus; x&#8321;&sup2; &minus; x&#8322;&sup2; = 1 exact on all 30,000 points. So cosh &tau; = 145/24, sinh &tau; = 143/24 and &tau; = ln 12 = 2.4849 (D3).</p>
+            <p>S2 also looked past the design&rsquo;s six values. m = 10 and 11 decode every sampled word too; the threshold lies between 9 and 10. An exact measure of how far a subtree spreads, seven levels down, leaves m = 12 a margin of at most 8.72&deg; to the decision boundary (m = 10: 2.01&deg;; m = 11: 6.00&deg;). These are upper bounds: S2 measured the spread as a lower bound. On the depth-28 random words, m = 10, 11 and 12 cost 247/185, 235/167 and 225/152 bits, so m = 12 is also the cheapest of the three.</p>
+            <h3>What the plane costs in bits</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S2, depth 28, max numerator / denominator bits per coordinate</th><th class="num">H&sup2;, t = 11/13</th><th class="num">H&sup3;, t = 3/4</th><th class="num">Ratio</th></tr></thead>
+                <tbody>
+                    <tr><td>Random words (500)</td><td class="num">225 / 152</td><td class="num">142 / 79</td><td class="num">1.58&times; / 1.92&times;</td></tr>
+                    <tr><td>The straight word</td><td class="num">201 / 102</td><td class="num">157 / 79</td><td class="num">1.28&times; / 1.29&times;</td></tr>
+                    <tr><td>Most bent: always 106&deg; (H&sup2;) against always 90&deg; (H&sup3;)</td><td class="num">229 / 188</td><td class="num">133 / 79</td><td class="num">1.72&times; / 2.38&times;</td></tr>
+                    <tr><td>Bent at random, &plusmn;106&deg; against 90&deg;</td><td class="num">251 / 188</td><td class="num">133 / 79</td><td class="num">1.89&times; / 2.38&times;</td></tr>
+                </tbody>
+            </table></div>
+            <p>The plane costs 1.28&ndash;2.38 times H&sup3;&rsquo;s bits per coordinate, or 1.28&ndash;1.56 times for the whole point over one common denominator. The reason is the denominators: each H&sup2; step divides by 24 (the boost) times 1, 5 or 25 (the rotation), where each H&sup3; step divides by 7. (S1 and S2 sampled different random words, hence 139 and 142 bits for the same depth.) Floats give out early here too: the same H&sup2; construction in float64 decodes 500/500 only up to depth 8 and 0/500 at depth 20.</p>
+            <div class="callout deep"><span class="label">Why H&sup3; is the primary store</span>
+                <p>H&sup3; has six signed axes, exactly one per neighbour of a node, at 90&deg; or 180&deg; to each other; the plane must squeeze six directions into a circle. So the H&sup3; tree uses the shorter step (ln 7 against ln 12), smaller denominators and fewer bits, its decoding is proved for every depth, and its code already exists and is tested. The H&sup2; tree&rsquo;s decoding is measured, not proved: 500 words per depth to depth 28. That is why L3(e) checks every noun&rsquo;s point in both trees. The plane&rsquo;s tree is the 2D system&rsquo;s view and a two-number feature; the float <code>TreeEmbedding</code> is kept for drawing only.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="rank">
+            <div class="chapter-num">08</div>
+            <h2>Exact ranking <span class="mark exact">exact</span></h2>
+            <p class="chapter-intro">To score the tree against WordNet, every query ranks every candidate by distance. In floats, deep rankings come out wrong. In exact arithmetic they are integers.</p>
+            <p>Because every Lorentz product of two points at word lengths n<sub>a</sub> and n<sub>b</sub> is an integer over 7<sup>n<sub>a</sub>+n<sub>b</sub></sup> (spike S1), a ranking needs no fractions at all. Scale every point to one common power of 7, and the key &minus;&langle;X<sub>u</sub>, X<sub>v</sub>&rangle;<sub>L</sub> times that power is an integer: cosh d times a constant. Sorting integers is exact in BigInt and in Python&rsquo;s <code>int</code>. In S3 the verb keys were at most 257-bit integers. Distances (<code>acosh</code>) are used only for display.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S1: first depth where the order breaks</th><th class="num">Straight word</th><th class="num">Random words</th><th class="num">All 20 random words fail from</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="mark float">float64</span> placement (<code>point()</code>)</td><td class="num">10</td><td class="num">12</td><td class="num">15</td></tr>
+                    <tr><td><span class="mark float">float64</span> of the exact points</td><td class="num">10</td><td class="num">12</td><td class="num">15</td></tr>
+                    <tr><td><span class="mark float">float32</span></td><td class="num">5</td><td class="num">5</td><td class="num">7</td></tr>
+                    <tr><td><span class="mark exact">exact</span> integer keys</td><td colspan="3">the reference order itself; <code>decodeExact</code> also never failed (840/840)</td></tr>
+                </tbody>
+            </table></div>
+            <p>Here &ldquo;breaks&rdquo; means a float inversion: two candidates whose exact distances are strictly ordered come out in the wrong order. On the straight word floats mostly tie instead: from depth 10 its two growing coordinates, cosh n&tau; and sinh n&tau;, round to the same double, and products along its own line come out exactly 0 (from depth 12 with the float placement). Float32 products overflow from depth 23. Float <em>decoding</em> first fails at depth 13 on random words. The design concludes, and L4(b) registers, that float64 ranking is not certifiable at WordNet depth: the noun tree reaches spanning depth 19, so its deepest words have at least 20 letters, past these depths. L4(a) registers the converse: exact rank lists are identical in Python and JavaScript, and MAP and mean rank are equal as exact fractions, in both trees.</p>
+            <h3>Ties, counted against the query</h3>
+            <p>Exact arithmetic finds real ties, and virtual letters make many: a neighbour and a non-neighbour at exactly the same distance. The rule (common rules of the preregistration) is <strong>pessimistic</strong>: inside a tie, every non-neighbour ranks before every neighbour, and tied candidates are listed by synset offset. Spike S1 built small trees to see how much this matters:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S1 tree</th><th class="num">Letters per level</th><th class="num">MAP, pessimistic</th><th class="num">Optimistic (contrast)</th></tr></thead>
+                <tbody>
+                    <tr><td>Perfect 5-ary, depth 3 (156 nodes)</td><td class="num">1, 1, 1</td><td class="num">1 exactly</td><td class="num">1</td></tr>
+                    <tr><td>Root with 25 children, then 5, 5 (776 nodes)</td><td class="num">2, 1, 1</td><td class="num">0.995703</td><td class="num">0.999141</td></tr>
+                    <tr><td>Root with 125 children, then 5, 5 (3,876 nodes)</td><td class="num">3, 1, 1</td><td class="num">0.995276</td><td class="num">0.995351</td></tr>
+                    <tr><td>25-ary at every level, depth 2 (651 nodes)</td><td class="num">2, 2</td><td class="num">0.260362</td><td class="num">0.845473</td></tr>
+                </tbody>
+            </table></div>
+            <p>Neighbour/non-neighbour ties appeared only where virtual letters occur. There, a float evaluator that breaks ties by node index gave a different average precision from the pessimistic exact one on 562 queries; that is L4&rsquo;s second control. Hyperbolic distance is also not tree distance: on the 937 words of at most 4 letters (S1&rsquo;s radius-4 ball around the empty word), it reversed the order of two tree distances in 47,352 of 2,264,600 comparisons (2.09%), only where the tree distances differ by one or two hops.</p>
+            <p><strong>Cost.</strong> S3 ranked 13,542 verb queries against 13,766 candidates in Node in about 2.62 ms per query, 191 ns per pair (&ldquo;~&rdquo;). At that rate 1,000 noun queries against all 82,115 nouns take about 16 s or more, since noun words are longer. L4 uses the 1,000-query noun sample <code>Rng(1000).sample(82115, 1000)</code> and the 1,176-node mammal subtree, where every node is a query.</p>
+        </section>
+
+        <section class="chapter" id="lab">
+            <div class="chapter-num">09</div>
+            <h2>A toy tree, live</h2>
+            <p class="chapter-intro">This lab runs the L3 rule, the id code and both exact trees in your browser, on Hyperbolic Oracles&rsquo; cores loaded unchanged. The hierarchy is a small hand-made one in WordNet&rsquo;s style, not WordNet: nouns are registered instances, and Phase 0 addresses none of them.</p>
+            <div class="lab">
+                <div class="lab-title">Lab &middot; a toy hierarchy, addressed by the L3 rule and placed exactly</div>
+                <div class="lab-row" id="lab-presets">
+                    <button class="chip on" type="button" data-preset="5">mammal: 5 children</button>
+                    <button class="chip" type="button" data-preset="7">mammal: 7 children</button>
+                    <button class="chip" type="button" id="lab-zero" aria-pressed="false">control: an only child gets no letter</button>
+                </div>
+                <div class="lab-row">
+                    <label for="lab-node">Node <select id="lab-node" style="font:0.85rem var(--mono);padding:3px 6px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;max-width:62vw"></select></label>
+                    <label for="lab-centre"><input type="checkbox" id="lab-centre" checked> centre on it</label>
+                </div>
+                <div class="lab-row">
+                    <label for="lab-spread">Spread <input type="range" id="lab-spread" min="1" max="4" step="0.5" value="2"> <span id="lab-spread-v" class="mono">&times;2</span></label>
+                    <label for="lab-turn">Turn the ball <input type="range" id="lab-turn" min="0" max="360" step="1" value="326"></label>
+                </div>
+                <div class="lab-row">
+                    <label for="lab-name">New child <input id="lab-name" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="name" style="font:0.85rem var(--mono);padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;width:min(11em,48vw)"></label>
+                    <button class="chip" type="button" id="lab-add">add under the node</button>
+                    <button class="chip" type="button" id="lab-del">remove the node (a leaf)</button>
+                </div>
+                <div class="out" id="lab-sum">Loading the cores&hellip;</div>
+                <div class="duo" style="margin-top:10px">
+                    <div class="pane"><h5>H&sup2; &middot; Poincar&eacute; disk &middot; t = 11/13</h5><canvas class="lab-canvas" id="lab-cv2" width="480" height="480" aria-label="The toy tree placed exactly in the hyperbolic plane, drawn in the Poincaré disk"></canvas></div>
+                    <div class="pane"><h5>H&sup3; &middot; Poincar&eacute; ball &middot; t = 3/4</h5><canvas class="lab-canvas" id="lab-cv3" width="480" height="480" style="touch-action:pan-y" aria-label="The toy tree placed exactly in hyperbolic 3-space, drawn in the Poincaré ball"></canvas></div>
+                </div>
+                <p style="font-size:0.82rem;color:var(--muted);margin:6px 2px 10px">Cyan: one letter on the edge from the parent. Amber: two or more, so the edge carries virtual letters. Rose, under the control only: no letter at all. Gold: the path from entity to the selected node. &times;: the tree&rsquo;s origin, the empty word, which is no node. Hover or tap a node; tapping also selects it. Drag the ball sideways to turn it.</p>
+                <div class="out" id="lab-info">&nbsp;</div>
+                <details style="margin-top:10px"><summary style="cursor:pointer;font-size:0.9rem">Every node: word, id, exact bits, decoding, average precision</summary>
+                    <div class="table-wrap"><table>
+                        <thead><tr><th>Node</th><th>Word</th><th class="num">id</th><th class="num">H&sup3; bits</th><th class="num">H&sup2; bits</th><th>Decodes</th><th class="num">AP H&sup3;</th><th class="num">AP H&sup2;</th></tr></thead>
+                        <tbody id="lab-table"></tbody>
+                    </table></div>
+                </details>
+                <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0">How it is computed. Children are ordered as listed (WordNet orders them by offset). Words follow the L3 rule with <code>HPCore.P.children</code>. H&sup3; points are <code>HPDecode3D.TreeEmbedding3D</code> <code>pointExact</code>, decoded by <code>decodeExact</code>. H&sup2; points are built here exactly as spike S2 builds them, on <code>HPCore.Q</code> and <code>X</code> alone: the six Pythagorean directions, a step R(u)&middot;B(11/13), frames multiplied in exact rationals, greedy exact decoding. The id is D6&rsquo;s bijective code, decoded back to check. Average precision is graph-edge, ranked by exact Lorentz products with pessimistic ties. To draw, each point is moved by an exact isometry into the selected node&rsquo;s frame (so its parent lies to the left and its straight child to the right), then rounded to floats. At spread &times;1 the picture is the true Poincar&eacute; model; at &times;s every distance from the centre is drawn divided by s, directions kept, so the outer levels do not all crowd onto the rim.</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li><strong>mammal: 7 children.</strong> Every child of mammal grows from one letter to two, and the MAP drops below 1 in both trees. Tap dog: its parent is now 3.8918 away (two straight steps), while cat sits 3.2375 away, a sibling nearer than the parent.</li>
+                    <li><strong>Add children.</strong> Select bird (3 children) and add three more. At the sixth, every child of bird is re-addressed with two letters: the L3 rule renumbers siblings when a family grows.</li>
+                    <li><strong>The control.</strong> With &ldquo;an only child gets no letter&rdquo;, organism takes living thing&rsquo;s word and snake takes reptile&rsquo;s: distinct words fall below the node count. That is L3&rsquo;s first control, which must break injectivity on WordNet&rsquo;s 6,162 only children.</li>
+                    <li><strong>Spread &times;1.</strong> The true disk. With &tau; = ln 12 a node two straight steps from the centre is already at radius 0.986: the exponential room the tree lives in.</li>
+                    <li><strong>The bits.</strong> Compare a node&rsquo;s H&sup2; and H&sup3; bits: the plane costs more at every depth, as spike S2 measured. These words are short; S1 and S2 measured the same growth out to depth 28 and beyond.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="chapter" id="example">
+            <div class="chapter-num">10</div>
+            <h2>&ldquo;The cat sat.&rdquo;, stage by stage</h2>
+            <p class="chapter-intro">One sentence, followed through all eight stages. Some values are fixed by the rules and some are computed live; others cannot exist yet, because the V0 vocabulary is not trained and no noun has an address. Those are marked illustrative.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Stage</th><th>What happens to &ldquo;The cat sat.&rdquo;</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Bytes</strong></td><td class="mono">54 68 65 20 63 61 74 20 73 61 74 2E (12 bytes of UTF-8)</td><td>fixed</td></tr>
+                    <tr><td><strong>A</strong> Normalise</td><td>Lowercase, then split on whitespace and punctuation: <span class="word">the &middot; cat &middot; sat &middot; .</span> Everything is ASCII, so no table entry beyond ASCII is touched and nothing fails closed.</td><td>by the N_B rules</td></tr>
+                    <tr><td><strong>B</strong> Tokenize</td><td><span class="word">[CLS] the cat sat . [SEP]</span>, if each word is a whole entry of V0. A rarer word would split into <code>##</code> pieces, as in S6&rsquo;s toy.</td><td>illustrative: V0 is not trained</td></tr>
+                    <tr><td><strong>C</strong> Ids</td><td>[CLS] = 2 and [SEP] = 3 in the design; say the = 214, cat = 1907, sat = 3315, . = 18. The LEB128 stream is <span class="word">02 &middot; D6 01 &middot; F3 0E &middot; F3 19 &middot; 12 &middot; 03</span>, 9 bytes, and its SHA-256 goes into the shard&rsquo;s <code>LPREP/1</code> record.</td><td>specials by design; word ids illustrative; the bytes follow from them</td></tr>
+                    <tr><td><strong>C</strong> engram/1</td><td id="ex-keys">THE <span class="mono">c30fec4f40e96e68</span> &middot; CAT <span class="mono">f7b164a270b6804d</span> &middot; SAT <span class="mono">8f3abe44da397abc</span>. A checksum only: ACT and TAC have CAT&rsquo;s key, <span class="mono">f7b164a270b6804d</span>.</td><td id="ex-keys-status">computed with <code>ttmpt_core_v1.js</code></td></tr>
+                    <tr><td><strong>D</strong> Address</td><td>The token map (its details are fixed in Amendment 1) sends a whole-word lemma to its first-sense synset, in the part of speech with the larger WordNet tag count. For cat that should be cat.n.01, whose word starts with the nouns&rsquo; root letter 0. The design reserves root letter 1 for verbs, 2 for adjective and adverb lemmas, 3 for <code>##</code> pieces, 4 for other whole words and 5 for specials, digits and punctuation. Where &ldquo;the&rdquo; and the inflected &ldquo;sat&rdquo; land depends on the map&rsquo;s details. In the lab&rsquo;s toy tree, cat is <span class="word" id="ex-word">000000002</span>: <span id="ex-len">9</span> letters, id <span class="mono" id="ex-id">585938</span>.</td><td>cat.n.01&rsquo;s real word comes in Phase 1; the toy word is computed live</td></tr>
+                    <tr><td><strong>E</strong> Placement</td><td>The toy word&rsquo;s exact H&sup3; point: numerators &le; <span id="ex-h3n">49</span> bits over 7<sup><span id="ex-h3k">9</span></sup> (<span id="ex-h3d">26</span> bits); H&sup2;: <span id="ex-h2n">65</span> / <span id="ex-h2d">34</span> bits. Both lie on the sheet exactly and decode back to the word: <span id="ex-dec">checked live</span>.</td><td>computed live on the toy word</td></tr>
+                    <tr><td><strong>F</strong> Static embeddings</td><td>cat.n.01 is a mammal, so it is one of the 1,182 synsets of the mammal closure that L6 trains on. It will get learned Lorentz and Euclidean points at d = 2, 3 and 50 (5 and 10 reported), snapped to 2<sup>&minus;32</sup>.</td><td>Phase 4</td></tr>
+                    <tr><td><strong>G</strong> Encoder input</td><td>For cat: its token embedding, plus the sum of learned embeddings of its address&rsquo;s prefixes (length 1 to at most 12), plus the log coordinates of its exact point cut to at most 12 letters. For the toy cat these are <span class="mono" id="ex-log3">(16.840, 5.6e-6, 0)</span> in H&sup3; and <span class="mono" id="ex-log2">(22.143, 5.1e-8)</span> in H&sup2;; for the toy dog, <span class="mono" id="ex-log3d">(17.513, 0, 0)</span> and <span class="mono" id="ex-log2d">(22.364, 0)</span>. Seen from the origin, two words that share their first 8 letters point in almost the same direction, so these numbers mostly say how deep a word is. The prefix embeddings carry the rest.</td><td>Stage 2; the log coordinates are computed live on the toy words</td></tr>
+                    <tr><td><strong>H</strong> Heads</td><td>Masked: &ldquo;The [MASK] sat.&rdquo; The MLM head scores every vocabulary entry for the hidden slot. The hierarchy head scores pairs such as (feline, cat) as parent and child.</td><td>Stage 2, illustrative</td></tr>
+                </tbody>
+            </table></div>
+            <p>Three things are worth seeing in this table. The ids, the address and the engram key are different numbers with different jobs. Only stages A&ndash;E are fully determined by rules and pinned data, which is why L1 and L3 can be decided all-or-nothing. And the address of a function word or an inflected form carries spelling at best, not meaning: one address per token is one sense, without context.</p>
+        </section>
+
+        <section class="chapter" id="encoder">
+            <div class="chapter-num">11</div>
+            <h2>F&ndash;H &middot; The learned stages</h2>
+            <p class="chapter-intro">The exact tree has two or three coordinates. A language model works in 128 to 768. So the hyperbolic geometry enters the model as a factor, a head and a view, not as the main embedding.</p>
+            <h3>F &middot; Static embeddings <span class="mark float">float</span></h3>
+            <p>Phase 4 trains embeddings of the WordNet mammal hierarchy in Python float64 with a numpy reference trainer (D9): Riemannian SGD in the Lorentz model after Nickel and Kiela, and plain SGD for the Euclidean control, at d = 2, 3 and 50 (5 and 10 reported). The tables are then snapped to a 2<sup>&minus;32</sup> grid (<code>fence.js</code> <code>dyadic</code> and <code>lift</code>) and ranked exactly; L4(c) requires the snapped MAP to stay within 0.001 of float64 evaluation. L6 decides whether learned Lorentz beats learned Euclidean at low dimension and whether the advantage vanishes at d = 50 (<a href="alternatives.html#baselines">Explainer 5</a>). As an exploration, <code>decodeExact</code> can act as a codebook, sending a learned H&sup3; point to its nearest tree word, to compare learned and constructed addresses.</p>
+            <h3>G &middot; The encoder <span class="mark float">float</span></h3>
+            <p>Stage 2 is a Euclidean BERT-style encoder: 1&ndash;10M parameters on CPU in Phase 6, then BERT-mini and BERT-small on a GPU in Phase 7. It reads each token&rsquo;s address as a <strong>hierarchy factor</strong> added to its input:</p>
+            <ul>
+                <li><strong>Prefix embeddings.</strong> The sum of learned embeddings of the address&rsquo;s prefixes of length 1 to k, k &le; 12: a tree positional encoding in the style of Shiv and Quirk (NeurIPS 2019), applied to lexicon addresses.</li>
+                <li><strong>Log coordinates.</strong> A frozen factor: <code>H.logOrigin</code> of the exact point of the address cut to at most 12 letters, three numbers from H&sup3; or two from H&sup2;.</li>
+            </ul>
+            <p>Why the cut at 12: a deep exact point cannot enter a float network without loss. Spike S1 saw float decoding fail from depth 13 and float ranking invert from depth 10. The prefix embeddings carry the full depth instead, as discrete symbols. Two existing pieces are deliberately left out: Engram&rsquo;s register clock as a positional encoding (it is bookkeeping, not position) and its coupler as a binding of segments A and B (it gives integrity, not modelling). A fully Lorentz encoder (HyperCore) is a later, exploratory GPU arm.</p>
+            <h3>H &middot; The heads <span class="mark float">float</span> <span class="mark exact">exact</span></h3>
+            <ul>
+                <li><strong>Masked language model.</strong> A tied softmax over the vocabulary. An ablation replaces it with distance logits &minus;d(h, p<sub>token</sub>)/T against fixed truncated points.</li>
+                <li><strong>Hierarchy head</strong>, after HiT (<a href="alternatives.html#m2">Explainer 5</a>): a parent&ndash;child pair scores &minus;(d + w&middot;(&Vert;parent&Vert; &minus; &Vert;child&Vert;)), with feature clipping (Guo et al., CVPR 2022). Its weight w, threshold and temperature are a few numbers, so PolyStepH can tune them in the browser (D11 allows heads of at most a few hundred parameters), or Adam on CPU.</li>
+                <li><strong>Certified assignment.</strong> Outputs are snapped and sent to tree words by <code>decodeExact</code> or <code>nearestExact</code>: an exact answer to &ldquo;which synset is this?&rdquo;.</li>
+                <li><strong>Browser demos</strong> of tiny exported models can use <code>softmaxWeights</code> and <code>H.lorentzCentroid</code> as distance attention, for inference only. The fence and guard stay descriptors of stored tables.</li>
+            </ul>
+            <div class="callout limit"><span class="label">Registered later, and expected to be small</span>
+                <p>None of this is registered. The roadmap lists candidate claims for an amendment after the Stage-1 gate: the address factor against shuffled addresses and no factor on BLiMP, predicted a null result within &plusmn;1 point; hyperbolic against Euclidean hierarchy heads on HiT-style splits rebuilt from WordNet; a Poincar&eacute; probe against the Euclidean structural probe on UD English EWT; and PolyStep against MeZO and zeroth-order SGD on a fixed head at equal evaluations. Hyperbolic Oracles&rsquo; C1 found no hyperbolic advantage in optimisation (0 supported, 12 refuted, 1 inconclusive), and the literature&rsquo;s gains on general NLP are modest or unchecked (<a href="analysis.html#learning">Explainer 1</a>).</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="pages">
+            <div class="chapter-num">12</div>
+            <h2>The 2D and 3D pages</h2>
+            <p class="chapter-intro">Phase 5 builds two pages on the browser core, as Engram Mind&rsquo;s Eye has its <a href="../../Engram%20Minds%20Eye/mind-eye.html">2D</a> and <a href="../../Engram%20Minds%20Eye/mind-eye-3d.html">3D</a> pages. The lab above is a small preview, on the same cores.</p>
+            <div class="grid-2">
+                <div class="card planned"><h4><code>lexicon-2d.html</code></h4><p>The exact H&sup2; tree in the Poincar&eacute; disk. Type a sentence and see its tokens, ids, addresses and exact points; click a point to decode it exactly. A precision panel shows the bits per coordinate. Paths through the lowest common ancestor, the learned d = 2 cloud, and certified nearest neighbours.</p><div class="meta">Phase 5 &middot; planned</div></div>
+                <div class="card planned"><h4><code>lexicon-3d.html</code></h4><p>The exact H&sup3; tree in the ball. A frame per token from its quaternion (<code>twin3d.js</code> <code>rotOfQuat</code>). The learned d = 3 cloud, fence shells for display only, and each address&rsquo;s X(5, q) vertex.</p><div class="meta">Phase 5 &middot; planned</div></div>
+            </div>
+            <p>Both pages carry a shard panel that grows and verifies language biochains (<a href="biochains.html">Explainer 4</a>), and an Engram session import that shows each token&rsquo;s lexicon address beside its engram/1 key. Drawing uses floats: points convert to the disk and ball with <code>H.toPoincare</code>, and beyond depth 12 the view is a chart relative to the lowest common ancestor, re-centred as the lab does, because float positions of deep points are unreliable. The exact values stay exact underneath; only the picture is rounded. The pages will be checked in Chromium at 1440, 1024 and 390 px.</p>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">13</div>
+            <h2>Honest limits</h2>
+            <p class="chapter-intro">What this front end does not do, what it costs, and what is still open.</p>
+            <ul>
+                <li><strong>Nothing is decided.</strong> L1&ndash;L11 are registered, not tested. The spikes ran on verbs, a canon tree, synthetic words and Markdown; nouns may behave differently, and that is what the claims find out.</li>
+                <li><strong>Branching is fixed at five.</strong> Nodes with more children get virtual letters, siblings crowd the parent, and graph-edge MAP falls: 0.6309 on the verb forest (spike S3). On nouns, L5 reports it against a combinatorial embedding&rsquo;s 0.989 in 2 dimensions at about 500 bits (<a href="https://proceedings.mlr.press/v80/sala18a.html">Sala et al. 2018</a>) <span class="tag t-COMPUTED">verified</span> and predicts it falls short. Address variants that give heavy subtrees shorter words (Huffman-5), or that follow the tokenizer&rsquo;s merge forest for <code>##</code> pieces, come later, by amendment.</li>
+                <li><strong>One parent only.</strong> The spanning tree keeps the first hypernym; 2,213 noun synsets in the pin have several. Closure MAP keeps them, the address does not.</li>
+                <li><strong>Addresses belong to one WordNet.</strong> They depend on offset order and on family sizes. A new child renumbers the siblings after it, and a family passing 5, 25 or 125 children lengthens every sibling&rsquo;s word (try it in the lab). The table is committed by a Merkle root, <code>addrTableRoot</code>; another WordNet version is another table.</li>
+                <li><strong>One sense, no context.</strong> A token maps to its first-sense synset. Most <code>##</code> pieces have no synset and get spelling-based addresses that carry no meaning.</li>
+                <li><strong>Exactness costs bits.</strong> Depth-28 points take about 139-bit numerators in H&sup3; and up to 2.38 times as many bits per coordinate in H&sup2;. Exact ranking is quadratic in BigInt, so nouns are sampled (1,000 queries). Exactness moves the precision problem into integers; it does not remove it.</li>
+                <li><strong>The plane is measured, not proved.</strong> S2 decoded 500 words per depth to 28, with a margin of at most 8.72&deg; seven levels down; L3 checks every noun.</li>
+                <li><strong>Pinned Unicode is a choice.</strong> It makes the engines agree by making them all behave like Python&rsquo;s 15.1 tables, Final_Sigma included. Text using characters assigned after 15.1 becomes [UNK]. Every receipt records the runtime versions.</li>
+                <li><strong>The vocabulary is ours.</strong> V0 is trained here on glosses; BERT&rsquo;s V1 needs a blocked host. Results on V0 do not transfer to published BERT numbers.</li>
+                <li><strong>The encoder may not help.</strong> Stage 2 starts only after the gate, needs a wider network or a GPU, and is predicted small or null on general NLP.</li>
+                <li><strong>engram/1 and X(5, q) stay out of integrity.</strong> One is letter parity; the other has known collision attacks. SHA-256 and the records carry integrity.</li>
+            </ul>
+            <div class="callout note"><span class="label">What this page decides</span>
+                <p>Nothing. It describes a design and quotes spikes. Decisions are made by the claims in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>, on the instances and rules fixed there, and recorded in the <a href="../index.html#ledger">ledger</a>.</p>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="shdccp.html">&larr; SHD-CCP, three layers, eight layouts, one bridge</a>
+                <a class="btn btn-ghost" href="biochains.html">Growing Language Biochains &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 3 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a></footer>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+<script src="../../Engram%20Minds%20Eye/ttmpt_core_v1.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const good = s => `<span style="color:var(--emerald)">${s}</span>`, bad = s => `<span style="color:var(--rose)">${s}</span>`, k = s => `<span class="k">${s}</span>`;
+    const C = window.HPCore, D3 = window.HPDecode3D, TT = window.TTMPTv1;
+
+    // ------------------------------------------------------------ the example's engram/1 keys, recomputed
+    try {
+        if (TT) {
+            const hex = g => { let s = ''; for (let i = 0; i < 8; i++) { let b = 0; for (let j = 0; j < 8; j++) b |= g[i * 8 + j] << j; s += b.toString(16).padStart(2, '0'); } return s; };
+            const key = w => hex(TT.crystallize(w));
+            const K = { THE: key('THE'), CAT: key('CAT'), SAT: key('SAT'), ACT: key('ACT'), TAC: key('TAC') };
+            const same = K.ACT === K.CAT && K.TAC === K.CAT;
+            $('ex-keys').innerHTML = `THE <span class="mono">${K.THE}</span> &middot; CAT <span class="mono">${K.CAT}</span> &middot; SAT <span class="mono">${K.SAT}</span>. A checksum only: ACT and TAC ${same ? 'have CAT&rsquo;s key' : 'have keys'} <span class="mono">${K.ACT}</span>${same ? '' : ', ' + K.TAC}.`;
+            $('ex-keys-status').innerHTML = `computed live with <code>ttmpt_core_v1.js</code>`;
+        }
+    } catch (e) { /* the static values stay */ }
+
+    const sum = $('lab-sum');
+    if (!C || !C.Q || !C.X || !C.P || !D3 || !D3.TreeEmbedding3D) {
+        sum.innerHTML = bad('Hyperbolic Oracles&rsquo; cores (hyperbolic_core.js, decoder3d.js) did not load, so the lab cannot run. Open this page from its place in the site.');
+        return;
+    }
+    const { Q, X, P, H } = C;
+    const q = (n, d = 1) => new Q(BigInt(n), BigInt(d));
+    const absB = a => (a < 0n ? -a : a);
+    const bitLen = a => (a === 0n ? 0 : absB(a).toString(2).length);
+    const emb = new D3.TreeEmbedding3D();
+
+    // ------------------------------------------------------------ the exact H^2 tree, built as spike S2 builds it (m = 12, t = 11/13)
+    const DIRS = [[q(1), q(0)], [q(3, 5), q(4, 5)], [q(3, 5), q(-4, 5)], [q(-7, 25), q(24, 25)], [q(-7, 25), q(-24, 25)], [q(-1), q(0)]];
+    const O1 = Q.ONE, Z = Q.ZERO, T2 = q(11, 13), TT2 = T2.mul(T2);
+    const COSH2 = O1.add(TT2).div(O1.sub(TT2)), SINH2 = Q.TWO.mul(T2).div(O1.sub(TT2));
+    const BOOST2 = [[COSH2, SINH2, Z], [SINH2, COSH2, Z], [Z, Z, O1]];
+    const STEP2 = DIRS.map(([u1, u2]) => X.matmul([[O1, Z, Z], [Z, u1, u2.neg()], [Z, u2, u1]], BOOST2));
+    const STEP2INV = STEP2.map(X.lorentzInverse);
+    const slot2 = (prefix, g) => (prefix.length ? P.children(prefix).indexOf(g) : g);
+    const frame2 = word => { let M = X.eye(3); word.forEach((g, i) => { M = X.matmul(M, STEP2[slot2(word.slice(0, i), g)]); }); return M; };
+    const point2 = word => frame2(word).map(r => r[0]);
+    function decode2(y, L) {
+        const word = []; let local = y;
+        for (let level = 0; level < L; level++) {
+            const allowed = P.children(word);
+            let best = null, bk = 0;
+            allowed.forEach((g, i) => { const d = DIRS[word.length ? i : g], sc = d[0].mul(local[1]).add(d[1].mul(local[2])); if (best === null || sc.cmp(best) > 0) { best = sc; bk = i; } });
+            const g = allowed[bk];
+            local = X.matvec(STEP2INV[word.length ? bk : g], local);
+            word.push(g);
+        }
+        return word;
+    }
+
+    // ------------------------------------------------------------ the L3 rule (and its zero-letter control)
+    const lettersFor = (c, zero) => { let m = 0, p = 1; while (p < c) { p *= 5; m++; } return zero ? m : Math.max(1, m); };
+    function address(nodes, zero) {
+        const kids = nodes.map(() => []);
+        nodes.forEach((n, i) => { if (n.parent >= 0) kids[n.parent].push(i); });
+        const out = nodes.map(() => null), root = nodes.findIndex(n => n.parent < 0);
+        out[root] = { word: [0], edges: [[0]], mIn: 1 };
+        const stack = [root];
+        while (stack.length) {
+            const u = stack.pop(), m = lettersFor(kids[u].length, zero);
+            kids[u].forEach((v, kk) => {
+                const digits = []; let x = kk;
+                for (let i = 0; i < m; i++) { digits.unshift(x % 5); x = Math.floor(x / 5); }
+                const w = out[u].word.slice(), edge = [];
+                for (const dg of digits) { const g = P.children(w)[dg]; w.push(g); edge.push(g); }
+                out[v] = { word: w, edges: [...out[u].edges, edge], mIn: m };
+                stack.push(v);
+            });
+        }
+        return { out, kids };
+    }
+
+    // ------------------------------------------------------------ D6: the bijective id
+    const startOf = n => (n === 0 ? 0n : 1n + 6n * (5n ** BigInt(n - 1) - 1n) / 4n);
+    function idOf(w) {
+        if (!w.length) return 0n;
+        let r = BigInt(w[0]);
+        for (let i = 1; i < w.length; i++) r = r * 5n + BigInt(P.children(w.slice(0, i)).indexOf(w[i]));
+        return startOf(w.length) + r;
+    }
+    function wordOf(id) {
+        if (id === 0n) return [];
+        let n = 1; while (startOf(n + 1) <= id) n++;
+        let r = id - startOf(n); const idx = [];
+        for (let i = n - 1; i >= 1; i--) { idx.unshift(Number(r % 5n)); r /= 5n; }
+        const w = [Number(r)];
+        for (const j of idx) w.push(P.children(w)[j]);
+        return w;
+    }
+
+    // ------------------------------------------------------------ exact graph-edge AP, ties pessimistic
+    function rankAll(points, nbrs) {
+        const n = points.length, res = [];
+        for (let u = 0; u < n; u++) {
+            const N = nbrs[u];
+            if (!N.size) { res.push(null); continue; }
+            const cand = [];
+            for (let v = 0; v < n; v++) if (v !== u) cand.push({ v, key: X.lorentz(points[u], points[v]).neg(), nb: N.has(v) });
+            cand.sort((a, b) => a.key.cmp(b.key) || (a.nb - b.nb));
+            let hits = 0, s = Q.ZERO, far = null, near = null;
+            cand.forEach((c, i) => {
+                if (c.nb) { hits++; s = s.add(q(hits, i + 1)); if (!far || c.key.cmp(far.key) >= 0) far = c; }
+                else if (!near) near = c;
+            });
+            res.push({ ap: s.div(q(N.size)), far, near });
+        }
+        return res;
+    }
+    const meanAP = (rs, pick) => { const g = rs.filter((r, i) => r && pick(i)); return g.length ? g.reduce((a, r) => a.add(r.ap), Q.ZERO).div(q(g.length)) : null; };
+
+    // ------------------------------------------------------------ the toy hierarchy
+    const BASE = [
+        ['entity', null], ['physical entity', 'entity'], ['object', 'physical entity'], ['living thing', 'object'], ['organism', 'living thing'],
+        ['animal', 'organism'], ['vertebrate', 'animal'], ['mammal', 'vertebrate'], ['dog', 'mammal'], ['cat', 'mammal'], ['horse', 'mammal'], ['whale', 'mammal'], ['bat', 'mammal'],
+        ['bird', 'vertebrate'], ['sparrow', 'bird'], ['eagle', 'bird'], ['penguin', 'bird'], ['fish', 'vertebrate'], ['salmon', 'fish'], ['shark', 'fish'],
+        ['reptile', 'vertebrate'], ['snake', 'reptile'], ['invertebrate', 'animal'], ['insect', 'invertebrate'], ['ant', 'insect'], ['bee', 'insect'],
+        ['plant', 'organism'], ['tree', 'plant'], ['oak', 'tree'], ['pine', 'tree'], ['flower', 'plant'], ['rose', 'flower'],
+        ['artifact', 'object'], ['tool', 'artifact'], ['hammer', 'tool'], ['abstraction', 'entity'], ['communication', 'abstraction'], ['word', 'communication']];
+    const EXTRA7 = [['mouse', 'mammal'], ['monkey', 'mammal']];
+    const MAX_NODES = 90, MAX_KIDS = 30;
+    const fromRows = rows => { const names = rows.map(r => r[0]); return rows.map(([n, p]) => ({ name: n, parent: p === null ? -1 : names.indexOf(p) })); };
+
+    function analyse(nodes, zero) {
+        const { out, kids } = address(nodes, zero);
+        const depthOf = i => { let d = 0; for (let j = i; nodes[j].parent >= 0; j = nodes[j].parent) d++; return d; };
+        const info = nodes.map((nd, i) => {
+            const w = out[i].word, L = w.length;
+            const p3 = emb.pointExact(w), p2 = point2(w), qt = P.wordQuaternion(w), id = idOf(w);
+            const bits = p => [Math.max(...p.map(x => bitLen(x.n))), Math.max(...p.map(x => bitLen(x.d)))];
+            return {
+                i, name: nd.name, parent: nd.parent, kids: kids[i], depth: depthOf(i), word: w, edges: out[i].edges, mIn: out[i].mIn, L, p3, p2, qt, id,
+                idBack: wordOf(id).join() === w.join(), cert: D3.certifyWord(w, L),
+                sheet3: X.onSheet(p3), sheet2: X.onSheet(p2),
+                dec3: emb.decodeExact(p3, L).join() === w.join(), dec2: decode2(p2, L).join() === w.join(),
+                b3: bits(p3), b2: bits(p2)
+            };
+        });
+        const nbrs = info.map(nd => { const s = new Set(nd.kids); if (nd.parent >= 0) s.add(nd.parent); return s; });
+        const r3 = rankAll(info.map(n => n.p3), nbrs), r2 = rankAll(info.map(n => n.p2), nbrs);
+        info.forEach((nd, i) => { nd.r3 = r3[i]; nd.r2 = r2[i]; });
+        const one = i => info[i].mIn <= 1, many = i => info[i].mIn >= 2;
+        return {
+            info, nbrs,
+            map3: meanAP(r3, () => true), map2: meanAP(r2, () => true),
+            split3: [meanAP(r3, one), meanAP(r3, many)], split2: [meanAP(r2, one), meanAP(r2, many)],
+            distinct: new Set(info.map(n => n.word.join())).size
+        };
+    }
+
+    // ------------------------------------------------------------ formatting
+    const fmtQ = x => (x === null ? '&mdash;' : x.toNumber().toFixed(4));
+    const fracOrDec = x => { const s = x.toString(); return x.eq(O1) ? '1 exactly' : (s.length <= 28 ? `${x.toNumber().toFixed(6)} = ${s}` : `${x.toNumber().toFixed(6)} (an exact fraction)`); };
+    const cosh = x => `cosh d = ${x.d === 1n ? x.n : x.toString()} (d = ${Math.acosh(Math.max(1, x.toNumber())).toFixed(4)})`;
+    const wordHtml = nd => nd.edges.map(e => e.map((g, j) => (j ? `<b>${g}</b>` : String(g))).join('')).join('&middot;') || '(empty)';
+
+    // ------------------------------------------------------------ state
+    const st = { nodes: fromRows(BASE), zero: false, sel: 7, hover: -1, centre: true, spread: 2, yaw: 326 * Math.PI / 180, preset: '5', A: null, v: null };
+    const cv2 = $('lab-cv2'), cv3 = $('lab-cv3');
+    const hits = { 2: [], 3: [] };
+
+    function rebuild() {
+        try {
+            st.A = analyse(st.nodes, st.zero);
+        } catch (e) { sum.innerHTML = bad('The lab stopped: ' + esc((e && e.message) || e)); st.A = null; return false; }
+        if (st.sel >= st.nodes.length) st.sel = 0;
+        fillSelect(); recentre(); summary(); table(); draw(); infoPanel();
+        return true;
+    }
+    function fillSelect() {
+        const sel = $('lab-node');
+        sel.textContent = '';
+        st.A.info.forEach(nd => { const o = document.createElement('option'); o.value = String(nd.i); o.textContent = '  '.repeat(nd.depth) + nd.name; sel.appendChild(o); });
+        sel.value = String(st.sel);
+    }
+    // exact isometry into the selected node's frame, then floats for drawing
+    function recentre() {
+        const f = st.centre ? st.A.info[st.sel] : null;
+        const inv3 = f ? X.lorentzInverse(emb.frameExact(f.word)) : null, inv2 = f ? X.lorentzInverse(frame2(f.word)) : null;
+        const fl = v => v.map(x => x.toNumber());
+        st.v = st.A.info.map(nd => ({ v3: fl(inv3 ? X.matvec(inv3, nd.p3) : nd.p3), v2: fl(inv2 ? X.matvec(inv2, nd.p2) : nd.p2) }));
+        st.o3 = fl(inv3 ? inv3.map(r => r[0]) : [O1, Z, Z, Z]);
+        st.o2 = fl(inv2 ? inv2.map(r => r[0]) : [O1, Z, Z]);
+        // edge lengths, exactly (an isometry does not change them)
+        st.edgeD = st.A.info.map(nd => {
+            if (nd.parent < 0) return [Math.acosh(25 / 7), Math.acosh(145 / 24)];
+            const pa = st.A.info[nd.parent];
+            return [Math.acosh(Math.max(1, X.lorentz(nd.p3, pa.p3).neg().toNumber())), Math.acosh(Math.max(1, X.lorentz(nd.p2, pa.p2).neg().toNumber()))];
+        });
+    }
+
+    function summary() {
+        const A = st.A, n = A.info.length;
+        const cnt = f => A.info.filter(f).length;
+        const ok = (a, b) => (a === b ? good(`${a}/${b}`) : bad(`${a}/${b}`));
+        const maxB = key => [Math.max(...A.info.map(nd => nd[key][0])), Math.max(...A.info.map(nd => nd[key][1]))];
+        const b3 = maxB('b3'), b2 = maxB('b2'), longest = Math.max(...A.info.map(nd => nd.L));
+        const mapTxt = x => (x === null ? '&mdash;' : x.eq(O1) ? good('1 exactly') : `<span style="color:var(--amber)">${x.toNumber().toFixed(4)}</span>`);
+        sum.innerHTML = `${k('nodes')} ${n} &nbsp; ${k('rule')} ${st.zero ? bad('control: an only child gets 0 letters') : 'L3, max(1, &lceil;log&#8325; c&rceil;) letters per child'}` +
+            `<br>${k('distinct words')} ${ok(A.distinct, n)} &nbsp; ${k('certified')} ${ok(cnt(nd => nd.cert), n)} &nbsp; ${k('ids round-trip')} ${ok(cnt(nd => nd.idBack), n)}` +
+            `<br>${k('exact points on the sheet')} H&sup3; ${ok(cnt(nd => nd.sheet3), n)}, H&sup2; ${ok(cnt(nd => nd.sheet2), n)} &nbsp; ${k('decode back to the word')} H&sup3; ${ok(cnt(nd => nd.dec3), n)}, H&sup2; ${ok(cnt(nd => nd.dec2), n)}` +
+            `<br>${k('graph-edge MAP, exact, ties pessimistic')} H&sup3; ${mapTxt(A.map3)} &middot; H&sup2; ${mapTxt(A.map2)}` +
+            `<br>${k('by the letters on the query&rsquo;s own edge')} one: H&sup3; ${mapTxt(A.split3[0])}, H&sup2; ${mapTxt(A.split2[0])} &middot; two or more: H&sup3; ${mapTxt(A.split3[1])}, H&sup2; ${mapTxt(A.split2[1])}` +
+            `<br>${k('longest word')} ${longest} letters &nbsp; ${k('max bits per coordinate')} H&sup3; ${b3[0]}/${b3[1]}, H&sup2; ${b2[0]}/${b2[1]} ${k('(numerator/denominator)')}`;
+    }
+
+    function table() {
+        const A = st.A;
+        $('lab-table').innerHTML = A.info.map(nd => {
+            const dec = (nd.dec3 ? good('H&sup3;') : bad('H&sup3; no')) + ' ' + (nd.dec2 ? good('H&sup2;') : bad('H&sup2; no'));
+            return `<tr><td>${'&nbsp;&nbsp;'.repeat(nd.depth)}${esc(nd.name)}</td><td><span class="word">${wordHtml(nd)}</span></td><td class="num">${nd.id}</td>` +
+                `<td class="num">${nd.b3[0]}/${nd.b3[1]}</td><td class="num">${nd.b2[0]}/${nd.b2[1]}</td><td>${dec}</td><td class="num">${nd.r3 ? fmtQ(nd.r3.ap) : '&mdash;'}</td><td class="num">${nd.r2 ? fmtQ(nd.r2.ap) : '&mdash;'}</td></tr>`;
+        }).join('');
+    }
+
+    function infoPanel() {
+        const A = st.A; if (!A) return;
+        const i = st.hover >= 0 ? st.hover : st.sel, nd = A.info[i];
+        if (!nd) return;
+        const kidsN = nd.kids.length, m = lettersFor(kidsN, st.zero);
+        const pa = nd.parent >= 0 ? A.info[nd.parent] : null;
+        const twins = A.info.filter(o => o.i !== i && o.word.join() === nd.word.join()).map(o => esc(o.name));
+        const qn = nd.qt.reduce((s, c) => s + c * c, 0n);
+        const pt = (p, b, sheet, dec, label, base) => {
+            const x0 = p[0].toString();
+            return `${k(label)} x&#8320; = ${x0.length <= 44 ? x0 : '(' + b[0] + '-bit numerator)'} ${k('(cosh of the distance from the origin)')} &middot; numerators &le; ${b[0]} bits, denominators &le; ${b[1]} bits${base} &middot; ` +
+                `${sheet ? good('on the sheet') : bad('off the sheet')} &middot; ${dec ? good('decodes back to the word') : bad('does not decode back')}`;
+        };
+        const nearTxt = (r, which) => {
+            if (!r) return k('no neighbours');
+            const nm = r.near ? esc(A.info[r.near.v].name) : '&mdash;';
+            const cmp = r.near && r.far ? r.near.key.cmp(r.far.key) : 1;
+            const verdict = cmp > 0 ? good('every neighbour comes first') : cmp === 0 ? bad('a tie, counted against the query') : bad('a non-neighbour comes before a neighbour');
+            return `${k('farthest neighbour')} ${esc(A.info[r.far.v].name)}, ${cosh(r.far.key)} &middot; ${k('nearest non-neighbour')} ${nm}${r.near ? ', ' + cosh(r.near.key) : ''}: ${verdict} &middot; ${k('AP')} ${fracOrDec(r.ap)}`;
+        };
+        $('lab-info').innerHTML =
+            `<strong>${esc(nd.name)}</strong> ${k(st.hover >= 0 ? '(hovered)' : '(selected)')} &middot; ${k('level')} ${nd.depth} &middot; ${k('parent')} ${pa ? esc(pa.name) : '&mdash;'} &middot; ${k('children')} ${kidsN}${kidsN ? `, so each takes ${m} letter${m === 1 ? '' : 's'}` : ''}` +
+            `<br>${k('word')} <span class="word">${wordHtml(nd)}</span> ${k(`(${nd.L} letter${nd.L === 1 ? '' : 's'}; gold = virtual)`)}${twins.length ? ' ' + bad('the same word as ' + twins.join(', ')) : ''}` +
+            `<br>${k('quaternion')} (${nd.qt.join(', ')}) ${k('norm')} 5<sup>${nd.L}</sup> = ${qn} &middot; ${nd.cert ? good('certified: right division returns the word') : bad('not certified')}` +
+            `<br>${k('id (D6)')} ${nd.id} &middot; ${nd.L <= 25 ? 'fits id59' : nd.L <= 27 ? 'fits id64' : bad('needs more than 64 bits')} &middot; ${nd.idBack ? good('decodes back to the word') : bad('does not round-trip')}` +
+            `<br>${pt(nd.p3, nd.b3, nd.sheet3, nd.dec3, 'H&sup3;', ` (7<sup>${nd.L}</sup>)`)}` +
+            (pa ? `<br>${k('H&sup3; to the parent')} ${cosh(X.lorentz(nd.p3, pa.p3).neg())}` : '') +
+            `<br>${k('H&sup3;')} ${nearTxt(nd.r3)}` +
+            `<br>${pt(nd.p2, nd.b2, nd.sheet2, nd.dec2, 'H&sup2;', '')}` +
+            (pa ? `<br>${k('H&sup2; to the parent')} ${cosh(X.lorentz(nd.p2, pa.p2).neg())}` : '') +
+            `<br>${k('H&sup2;')} ${nearTxt(nd.r2)}`;
+    }
+
+    // ------------------------------------------------------------ drawing
+    const polar = (v, s) => {
+        const d = Math.acosh(Math.max(1, v[0])), sp = v.slice(1), h = Math.hypot(...sp);
+        if (!(h > 0) || !isFinite(h)) return sp.map(() => 0);
+        const r = Math.tanh(d / (2 * s));
+        return sp.map(c => r * c / h);
+    };
+    const geo = (a, b, f, d) => {
+        if (!(d > 1e-12)) return a;
+        const sd = Math.sinh(d), u = Math.sinh((1 - f) * d) / sd, w = Math.sinh(f * d) / sd;
+        return a.map((x, i) => u * x + w * b[i]);
+    };
+    function prep(cv) {
+        const W = Math.max(160, Math.round(cv.clientWidth || 360)), dpr = Math.min(2, window.devicePixelRatio || 1);
+        if (cv._w !== W || cv._dpr !== dpr) { cv._w = W; cv._dpr = dpr; cv.width = Math.round(W * dpr); cv.height = Math.round(W * dpr); }
+        const ctx = cv.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+        return { ctx, W };
+    }
+    const onPath = () => { const s = new Set(); for (let j = st.sel; j >= 0; j = st.A.info[j].parent) s.add(j); return s; };
+    const nodeColour = nd => (nd.parent < 0 ? '#f8fafc' : nd.mIn >= 2 ? '#fbbf24' : nd.mIn === 0 ? '#fb7185' : '#22d3ee');
+
+    function drawView(cv, dim) {
+        const { ctx, W } = prep(cv), R = W / 2 - 10, cx = W / 2, cy = W / 2, s = st.spread, A = st.A, path = onPath();
+        const yaw = st.yaw, pitch = 0.42, cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+        const proj = v => {                                            // display position [x, y, depth]
+            const p = polar(v, s);
+            if (dim === 2) return [cx + R * p[0], cy - R * p[1], 0];
+            const x = cyw * p[0] + syw * p[1], y1 = -syw * p[0] + cyw * p[1];
+            return [cx + R * x, cy - R * (cp * p[2] - sp * y1), sp * p[2] + cp * y1];
+        };
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+        const key = dim === 2 ? 'v2' : 'v3', items = [];
+        A.info.forEach(nd => {
+            if (nd.parent < 0) return;
+            const a = st.v[nd.parent][key], b = st.v[nd.i][key], d = st.edgeD[nd.i][dim === 2 ? 1 : 0];
+            const seg = Array.from({ length: 13 }, (_, j) => proj(geo(a, b, j / 12, d))), z = (seg[0][2] + seg[12][2]) / 2;
+            const gold = path.has(nd.i), col = gold ? '#f5c542' : nd.mIn >= 2 ? 'rgba(251,191,36,0.55)' : 'rgba(100,116,139,0.9)';
+            items.push([z - 0.001, () => { ctx.strokeStyle = col; ctx.globalAlpha = dim === 3 && z < 0 ? 0.55 : 1; ctx.lineWidth = gold ? 2.4 : 1.2; ctx.beginPath(); seg.forEach((p, j) => (j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke(); ctx.globalAlpha = 1; }]);
+        });
+        const o = proj(dim === 2 ? st.o2 : st.o3);
+        items.push([o[2], () => { ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(o[0] - 4, o[1] - 4); ctx.lineTo(o[0] + 4, o[1] + 4); ctx.moveTo(o[0] + 4, o[1] - 4); ctx.lineTo(o[0] - 4, o[1] + 4); ctx.stroke(); }]);
+        const pos = [];
+        A.info.forEach(nd => {
+            const p = proj(st.v[nd.i][key]), r = Math.hypot(p[0] - cx, p[1] - cy) / R;
+            pos.push([p[0], p[1], nd.i, r, p[2]]);
+            items.push([p[2], () => {
+                const rad = Math.max(1.6, 5.2 * (1 - 0.8 * r));
+                ctx.globalAlpha = dim === 3 && p[2] < 0 ? 0.6 : 1;
+                ctx.fillStyle = nodeColour(nd); ctx.beginPath(); ctx.arc(p[0], p[1], rad, 0, 2 * Math.PI); ctx.fill();
+                if (nd.i === st.sel) { ctx.strokeStyle = '#f5c542'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(p[0], p[1], rad + 3.5, 0, 2 * Math.PI); ctx.stroke(); }
+                if (nd.i === st.hover) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(p[0], p[1], rad + 6, 0, 2 * Math.PI); ctx.stroke(); }
+                ctx.globalAlpha = 1;
+            }]);
+        });
+        items.sort((a, b) => a[0] - b[0]).forEach(it => it[1]());
+        // labels: the selected and hovered nodes and their neighbours first, then anything with room
+        const sel = A.info[st.sel], first = new Set([st.sel, st.hover, ...(sel ? sel.kids : []), sel ? sel.parent : -1]);
+        const order = pos.slice().sort((a, b) => (first.has(b[2]) - first.has(a[2])) || (a[3] - b[3]));
+        const boxes = [];
+        ctx.font = '11px Inter, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+        order.forEach(([x, y, i, r]) => {
+            if (i < 0 || (!first.has(i) && r > 0.93)) return;
+            const t = A.info[i].name.length > 16 ? A.info[i].name.slice(0, 15) + '…' : A.info[i].name, w = ctx.measureText(t).width;
+            let bx = x + 7; if (bx + w > W - 2) bx = x - 7 - w;
+            const box = [bx - 2, y - 7, w + 4, 14];
+            if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + box[3] && box[1] < b[1] + b[3])) return;
+            boxes.push(box);
+            ctx.fillStyle = 'rgba(2,6,23,0.72)'; ctx.fillRect(box[0], box[1], box[2], box[3]);
+            ctx.fillStyle = i === st.sel ? '#f5c542' : i === st.hover ? '#ffffff' : '#cbd5e1'; ctx.fillText(t, bx, y);
+        });
+        hits[dim] = pos;
+    }
+    function draw() { if (!st.A) return; try { drawView(cv2, 2); drawView(cv3, 3); } catch (e) { sum.innerHTML += '<br>' + bad('Drawing stopped: ' + esc((e && e.message) || e)); } }
+
+    // ------------------------------------------------------------ interaction
+    function pick(cv, dim, e) {
+        const rect = cv.getBoundingClientRect(), sc = (cv._w || rect.width) / (rect.width || 1);
+        const x = (e.clientX - rect.left) * sc, y = (e.clientY - rect.top) * sc;
+        let best = -1, bd = 16 * 16;
+        hits[dim].forEach(([hx, hy, i]) => { const dd = (hx - x) * (hx - x) + (hy - y) * (hy - y); if (dd < bd) { bd = dd; best = i; } });
+        return best;
+    }
+    function select(i) {
+        if (!st.A || i < 0 || i >= st.A.info.length) return;
+        st.sel = i; st.hover = -1; $('lab-node').value = String(i);
+        recentre(); draw(); infoPanel();
+    }
+    [[cv2, 2], [cv3, 3]].forEach(([cv, dim]) => {
+        let drag = null;
+        cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, yaw: st.yaw, moved: false }; });
+        cv.addEventListener('pointermove', e => {
+            if (drag && dim === 3 && (e.buttons & 1 || e.pointerType === 'touch')) {
+                const dx = e.clientX - drag.x;
+                if (Math.abs(dx) > 5) drag.moved = true;
+                if (drag.moved) { st.yaw = drag.yaw + dx * 0.01; $('lab-turn').value = String(Math.round(((st.yaw * 180 / Math.PI) % 360 + 360) % 360)); draw(); return; }
+            }
+            if (e.pointerType === 'touch') return;
+            const h = pick(cv, dim, e);
+            if (h !== st.hover) { st.hover = h; draw(); infoPanel(); }
+        });
+        cv.addEventListener('pointerleave', () => { if (st.hover !== -1) { st.hover = -1; draw(); infoPanel(); } });
+        cv.addEventListener('pointerup', e => {
+            const moved = drag && drag.moved; drag = null;
+            if (moved) return;
+            const i = pick(cv, dim, e);
+            if (i >= 0) select(i);
+        });
+        cv.addEventListener('pointercancel', () => { drag = null; });
+    });
+    $('lab-node').addEventListener('change', e => select(+e.target.value));
+    $('lab-centre').addEventListener('change', e => { st.centre = e.target.checked; recentre(); draw(); });
+    $('lab-spread').addEventListener('input', e => { st.spread = +e.target.value; $('lab-spread-v').textContent = '×' + st.spread; draw(); });
+    $('lab-turn').addEventListener('input', e => { st.yaw = +e.target.value * Math.PI / 180; draw(); });
+    const presets = document.querySelectorAll('#lab-presets [data-preset]');
+    const markPresets = () => presets.forEach(b => b.classList.toggle('on', b.dataset.preset === st.preset));
+    presets.forEach(b => b.addEventListener('click', () => {
+        st.preset = b.dataset.preset;
+        st.nodes = fromRows(st.preset === '7' ? BASE.concat(EXTRA7) : BASE);
+        st.sel = st.nodes.findIndex(n => n.name === 'mammal'); st.hover = -1;
+        markPresets(); rebuild();
+    }));
+    $('lab-zero').addEventListener('click', e => {
+        st.zero = !st.zero; e.currentTarget.classList.toggle('on', st.zero); e.currentTarget.setAttribute('aria-pressed', String(st.zero)); rebuild();
+    });
+    $('lab-add').addEventListener('click', () => {
+        if (!st.A) return;
+        const parent = st.sel, kidsN = st.A.info[parent].kids.length;
+        if (st.nodes.length >= MAX_NODES) { sum.innerHTML += '<br>' + bad(`The lab keeps at most ${MAX_NODES} nodes.`); return; }
+        if (kidsN >= MAX_KIDS) { sum.innerHTML += '<br>' + bad(`The lab keeps at most ${MAX_KIDS} children per node.`); return; }
+        const raw = $('lab-name').value.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 24);
+        const name = raw || `child ${kidsN + 1}`;
+        st.nodes.push({ name, parent });
+        st.preset = ''; markPresets(); $('lab-name').value = '';
+        if (rebuild()) {
+            const c = kidsN + 1, m = lettersFor(c, st.zero);
+            sum.innerHTML += `<br>${k('added')} ${esc(name)} ${k('under')} ${esc(st.A.info[parent].name)}: ${c} children, so each takes ${m} letter${m === 1 ? '' : 's'}${m !== lettersFor(kidsN, st.zero) && kidsN ? ' ' + bad('(every sibling was re-addressed)') : ''}.`;
+        }
+    });
+    $('lab-del').addEventListener('click', () => {
+        if (!st.A) return;
+        const i = st.sel, nd = st.A.info[i];
+        if (nd.parent < 0 || nd.kids.length) { sum.innerHTML += '<br>' + bad('Only a leaf other than the root can be removed.'); return; }
+        const parent = nd.parent;
+        st.nodes.splice(i, 1);
+        st.nodes.forEach(n => { if (n.parent > i) n.parent--; });
+        st.sel = parent > i ? parent - 1 : parent; st.hover = -1; st.preset = ''; markPresets();
+        rebuild();
+    });
+    let rt = null;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(draw, 120); });
+
+    // ------------------------------------------------------------ the example: cat in the toy tree (the 5-children tree)
+    try {
+        const A0 = analyse(fromRows(BASE), false), cat = A0.info.find(nd => nd.name === 'cat');
+        $('ex-word').textContent = cat.word.join('');
+        $('ex-len').textContent = String(cat.L);
+        $('ex-id').textContent = cat.id.toString();
+        $('ex-h3n').textContent = String(cat.b3[0]); $('ex-h3k').textContent = String(cat.L); $('ex-h3d').textContent = String(cat.b3[1]);
+        $('ex-h2n').textContent = String(cat.b2[0]); $('ex-h2d').textContent = String(cat.b2[1]);
+        $('ex-dec').innerHTML = (cat.sheet3 && cat.sheet2 && cat.dec3 && cat.dec2) ? good('yes, checked live') : bad('no');
+        const fx = x => (x === 0 ? '0' : Math.abs(x) < 0.001 ? x.toExponential(1) : x.toFixed(3));
+        const logs = (w, id3, id2) => {
+            const cut = w.slice(0, 12);
+            $(id3).textContent = '(' + H.logOrigin(emb.pointExact(cut).map(x => x.toNumber())).map(fx).join(', ') + ')';
+            $(id2).textContent = '(' + H.logOrigin(point2(cut).map(x => x.toNumber())).map(fx).join(', ') + ')';
+        };
+        logs(cat.word, 'ex-log3', 'ex-log2');
+        logs(A0.info.find(nd => nd.name === 'dog').word, 'ex-log3d', 'ex-log2d');
+    } catch (e) { /* the static values stay */ }
+
+    rebuild();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD-CCP: Three Layers, Eight Layouts, One Bridge - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 2 of Hyperbolic Lexicon, Phase 0: SHD-CCP in its three layers that disagree (the specification, the working Blackwell word and shdccp/2 stream, and prose); the eight incompatible 64-bit layouts, with a live decoder; why every Form value is taken; the one bridge where the Lexicon speaks SHD-CCP; the LPS p = 5 link to X(5, q) with spike S5's numbers and the proposed kernel 0xA; where JavaScript and Python disagree and how each case is resolved; golden vectors; and the proposals.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 2 &middot; Phase 0</div>
+    <h1>SHD-CCP: Three Layers, Eight Layouts, One Bridge</h1>
+    <p class="lede">SHD-CCP is the 64-bit protocol in which Owl Academy and BioChain-AI write their text chains. It exists in three layers that disagree: a specification, the code that actually runs, and prose. This page sorts them out. It shows eight incompatible ways to read one 64-bit word, and lets you try them. It fixes the one place where the Lexicon speaks SHD-CCP. And it follows the one deep link: our address tree is the tree that SHD-CCP&rsquo;s planned Ramanujan overlay is built from.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#lab">Decode a word, live</a>
+        <a class="btn btn-ghost" href="#working">The working SHD-CCP</a>
+        <a class="btn btn-ghost" href="#boundary">The one bridge</a>
+        <a class="btn btn-ghost" href="#lps">LPS and X(5, q)</a>
+        <a class="btn btn-ghost" href="#divergences">JS against Python</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">64-bit layouts: <b>8</b>, incompatible</span>
+        <span class="stat">Form values still free: <b>0</b> of 16</span>
+        <span class="stat">0x80 crystals: <b>1.4131%</b> of gloss chunks (S4)</span>
+        <span class="stat">X(5, q) girths: <b>8 &middot; 8 &middot; 9</b> (S5)</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#layers">2. Three layers that disagree</a></li>
+            <li><a href="#working">3. The working SHD-CCP</a></li>
+            <li><a href="#layouts">4. Eight layouts, live</a></li>
+            <li><a href="#forms">5. Every Form value is taken</a></li>
+            <li><a href="#boundary">6. One bridge</a></li>
+            <li><a href="#lps">7. LPS p = 5 and X(5, q)</a></li>
+            <li><a href="#divergences">8. Where JS and Python part</a></li>
+            <li><a href="#vectors">9. Golden vectors</a></li>
+            <li><a href="#proposals">10. The proposals</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#layers">Three layers that disagree</a></li><li><a href="#working">The working SHD-CCP</a></li>
+            <li><a href="#layouts">Eight layouts, live</a></li><li><a href="#forms">Every Form value is taken</a></li><li><a href="#boundary">One bridge</a></li>
+            <li><a href="#lps">LPS p = 5 and X(5, q)</a></li><li><a href="#divergences">Where JS and Python part</a></li><li><a href="#vectors">Golden vectors</a></li>
+            <li><a href="#proposals">The proposals</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The focus node is the working SHD-CCP: the 64-bit word and the stream that Owl Academy and BioChain-AI actually write. It is the one part of SHD-CCP the Lexicon must match byte for byte, because every language shard it grows has to verify in their code.</p>
+            <div data-hl-map="focus" data-node="biomesh"></div>
+            <p>Phase 0 is analysis, measurement spikes and a preregistration; there is no model code. This page rests on a read-only survey of four repositories (Ebayednoob 7b10514, Owl Academy 7f45f35, BioChain-AI c975161, SHD-CCP 97d90ac) and on its adversarial cross-check, whose corrections win. It also uses the design spec, the documents in <a href="../proposals/README.md">proposals/</a> and the spikes.</p>
+            <p>The spikes S1&ndash;S7 have finished. They ran before the preregistration, on data disjoint from every registered instance, and they decide no claim. This page quotes their numbers exactly as the captured outputs print them, and calls them spike results; S4, S5, S6 and S7 matter most here (outputs: <a href="../spikes/s4_lexicon_shard_output.txt">S4</a>, <a href="../spikes/s5_lps_overlay_output.txt">S5</a>, <a href="../spikes/s6_unicode_wordpiece_output.txt">S6</a>, <a href="../spikes/s7_attestation_output.txt">S7</a>; <a href="evidence.html#spikes">Explainer 8</a> has all seven). Lines the outputs mark with &ldquo;~&rdquo; are timings or facts about this container (Node 22.23.4, Python 3.13.18, 4 CPU cores), and are quoted as such.</p>
+            <div class="callout plain"><span class="label">How to read the marks</span>
+                <p><span class="mark exact">exact</span>: integers, rationals or bytes, identical in every engine. <span class="mark float">float</span>: floating point, rounded at every step. Claims L1&ndash;L11 are registered in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> and <strong>none is decided yet</strong>. Where this page names one, it says what the claim will test, not what it found.</p>
+            </div>
+            <dl class="gloss">
+                <dt>SHD-CCP</dt><dd>The Symbolic High Dimensional Context Compression Protocol. Its repository calls it a hardware-level interface in which every token is one 64-bit word.</dd>
+                <dt>Word, tile</dt><dd>A 64-bit integer. SHD-CCP calls it an &ldquo;Einstein tile&rdquo;; the name refers to no tiling geometry in the code. Bit 0 is the least significant bit, so &ldquo;63..60&rdquo; means the top four bits.</dd>
+                <dt>Layout</dt><dd>Which bits mean what. The same 64 bits read under two layouts give two different sets of fields.</dd>
+                <dt>Form</dt><dd>A 4-bit field (a nibble: 16 values) meant to say what the rest of the word holds. Where it sits depends on the layout.</dd>
+                <dt>Parity bit</dt><dd>One bit set so that the word holds an even number of 1 bits. It catches any odd number of flipped bits, and no even number.</dd>
+                <dt>Biochain</dt><dd>Owl Academy&rsquo;s and BioChain-AI&rsquo;s record of one text of at most 60,000 bytes: an <code>shdccp/2</code> stream that rebuilds the text exactly, plus hashes that commit to it.</dd>
+                <dt>Merkle root</dt><dd>One hash that commits to a list: hash each item, then hash the hashes in pairs, level by level, down to one value.</dd>
+                <dt>LPS, Ramanujan</dt><dd>Lubotzky, Phillips and Sarnak built regular graphs that spread out as fast as a regular graph can. For a 6-regular graph, <em>Ramanujan</em> means every eigenvalue other than &plusmn;6 has size at most 2&radic;5 &asymp; 4.4721.</dd>
+            </dl>
+        </section>
+
+        <section class="chapter" id="layers">
+            <div class="chapter-num">02</div>
+            <h2>Three layers that disagree</h2>
+            <p class="chapter-intro">The SHD-CCP repository pitches a hardware-level interface in which every token is a single 64-bit word. In practice the name covers three layers. They do not agree with each other, and only one of them runs.</p>
+            <div class="grid-3">
+                <div class="card"><h4>1 &middot; The specification</h4><p>A spec scaffold. RFC 01 drafts the tile (Form at 36&ndash;39, &ldquo;layout NOT frozen&rdquo;) in six bindings: Python, JavaScript, C, Rust, Java, Elixir. The Kernel Ontology puts its Form header at 60&ndash;63 and records the clash as an open decision.</p><div class="meta">BioChainAI/SHD-CCP @ 97d90ac</div></div>
+                <div class="card"><h4>2 &middot; The working SHD-CCP</h4><p>The Blackwell 64-bit word inside the <code>shdccp/2</code> stream, with hashes and ECDSA attestations. Engram Mind&rsquo;s Eye pins it verbatim. None of this code is in the SHD-CCP repository; its manual only describes the word, as the &ldquo;Blackwell Block&rdquo;.</p><div class="meta">Owl &amp; BioChain-AI biomesh.js &middot; shdccp_kernel.py</div></div>
+                <div class="card planned"><h4>3 &middot; Prose only</h4><p>LPF-128 (a 32-bit header, the 64-bit core and a CRC32 footer), Falcon-512 chaining, and the Fokker&ndash;Planck sieve. No CRC32 or Falcon code exists; the manual itself flags the sieve as conjecture.</p><div class="meta">assets/explainer.js &middot; manual/</div></div>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>What</th><th>1 &middot; Specification</th><th>2 &middot; Working</th><th>3 &middot; Prose</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>The 64-bit word</strong></td><td>RFC 01 draft (Form 39..36); the Ontology&rsquo;s header (Form 63..60)</td><td>The Blackwell word (form 63..60)</td><td>Several diagrams</td></tr>
+                    <tr><td><strong>A chain or stream</strong></td><td>None</td><td><code>shdccp/2</code>, with GROWN/1 and GROWTH/1 commitments</td><td>LPF-128 frames chained by Falcon</td></tr>
+                    <tr><td><strong>Merkle integrity</strong></td><td>Lemma 15 is a TODO; the suite <code>03_merkle_collision</code> is pending</td><td>A binary SHA-256 Merkle tree</td><td>&mdash;</td></tr>
+                    <tr><td><strong>Signatures</strong></td><td>None</td><td>ECDSA P-256: ATTEST/1 in BioChain-AI, Minor Tome seals (SEAL/1) in Owl Academy</td><td>Falcon-512</td></tr>
+                    <tr><td><strong>Exact arithmetic</strong> <span class="mark exact">exact</span></td><td>Garner CRT over 881, 883, 887 (an index below 690,017,701); an integer Gram-TQF; <code>HurwitzQuaternion</code> in doubled coordinates</td><td>BigInt word packing; SHA-256</td><td>&mdash;</td></tr>
+                    <tr><td><strong>Proofs and vectors</strong></td><td>Lean proves the CRT constants only; SHDGEV01 vectors, 2,366 cases</td><td>The check word <code>9841D88D8B003CEA</code>, pinned by all three repositories</td><td>&mdash;</td></tr>
+                    <tr><td><strong>Language</strong></td><td>None. Forms 8&ndash;11, &ldquo;Codex_Semantics&rdquo;, are labelled &ldquo;LLM embeddings, latent concepts&rdquo;, but no such code exists</td><td>A lossy engram layer, 64 bits per word token</td><td>Hand-assigned concept seeds, stated to be &ldquo;not learned&rdquo;</td></tr>
+                </tbody>
+            </table></div>
+            <p>Much of the specification&rsquo;s code is still stubs. Quaternion chain compression (QCC), the 12-engine memory, the handshake and the calculators raise <code>NotImplementedError</code>. RFC 03&rsquo;s X(5,&nbsp;q) overlay, the hook this page follows in <a href="#lps">chapter 7</a>, is an outline with a TODO list.</p>
+            <div class="callout note"><span class="label">Governance against practice</span>
+                <p>SHD-CCP&rsquo;s ecosystem README calls <code>geometric-engine-spec</code> the &ldquo;single source of truth&rdquo; that BioChain consumes. The real BioChain-AI and Owl Academy code ignores it: it uses a different layout and no SHDGEV01 vectors. (A small BioChain-AI scaffold inside the SHD-CCP repository marks Merkle commitment as a TODO; the real BioChain-AI repository implements Merkle roots.) Nobody is named as the owner of the RFC 01 against Blackwell decision. The <a href="../proposals/SHD-CCP-RFC01-layout-census.md">layout census</a> asks SHD-CCP to settle it.</p>
+            </div>
+            <p><strong>What the Lexicon takes from each layer.</strong> From the specification: the Ontology&rsquo;s kernel pipeline (for kernel 0xA, <a href="#lps">chapter 7</a>), <code>HurwitzQuaternion</code> as a cross-check, SHDGEV01 for golden vectors, and RFC 03&rsquo;s X(5,&nbsp;q) slot. From the working layer: the Blackwell word and <code>shdccp/2</code>, unchanged, at the bridge only (<a href="#boundary">chapter 6</a>). From the prose: nothing.</p>
+        </section>
+
+        <section class="chapter" id="working">
+            <div class="chapter-num">03</div>
+            <h2>The working SHD-CCP</h2>
+            <p class="chapter-intro">What runs is the Blackwell word inside the <code>shdccp/2</code> stream. It lives in Owl Academy&rsquo;s <code>scripts/biomesh.js</code>, in BioChain-AI&rsquo;s <code>src/biomesh/biomesh.js</code> and <code>protocol/shdccp_kernel.py</code>, and in Engram Mind&rsquo;s Eye&rsquo;s verbatim pins.</p>
+
+            <h3>The Blackwell word, field by field</h3>
+            <div class="bits" role="img" aria-label="The Blackwell word: form 4 bits, parity 1, spin 3, quat32 32, payload16 16, freq 5, amp 3">
+                <span style="flex:4;--c:#f5c542" title="form, bits 63..60">form</span>
+                <span style="flex:1.6;--c:#fb7185" title="parity, bit 59">P</span>
+                <span style="flex:3;--c:#60a5fa" title="spin, bits 58..56">spin</span>
+                <span style="flex:32;--c:#34d399" title="quat32, bits 55..24">quat32 &middot; 55..24</span>
+                <span style="flex:16;--c:#60a5fa" title="payload16, bits 23..8">payload16</span>
+                <span style="flex:5;--c:#60a5fa" title="freq, bits 7..3">freq</span>
+                <span style="flex:3;--c:#60a5fa" title="amp, bits 2..0">amp</span>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Bits</th><th>Field</th><th>What it holds</th><th>In 9841D88D8B003CEA</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">63..60</td><td><strong>form</strong></td><td>What the word is. In Owl Academy&rsquo;s reading, 0&ndash;7 are geometry and 8&ndash;15 are gates; a data crystal is form 9 (<a href="#forms">chapter 5</a>).</td><td class="mono">9</td></tr>
+                    <tr><td class="mono">59</td><td><strong>parity</strong></td><td>Even parity over the other 63 bits, so the whole word holds an even number of 1s.</td><td class="mono">1</td></tr>
+                    <tr><td class="mono">58..56</td><td><strong>spin</strong></td><td>The spin class; in a codex, the model order.</td><td class="mono">0</td></tr>
+                    <tr><td class="mono">55..24</td><td><strong>quat32</strong></td><td>Four 8-bit codes w, x, y, z. BioChain-AI&rsquo;s Python reads each as code/127 and forbids &minus;128. In a crystal they are raw hash bits.</td><td class="mono">41D88D8B</td></tr>
+                    <tr><td class="mono">23..8</td><td><strong>payload16</strong></td><td>A raw 16-bit integer; in a crystal, the chunk length in bytes.</td><td class="mono">60</td></tr>
+                    <tr><td class="mono">7..3</td><td><strong>freq</strong></td><td>A selector; in a crystal, the top five bits of an 8-bit byte-sum checksum.</td><td class="mono">29</td></tr>
+                    <tr><td class="mono">2..0</td><td><strong>amp</strong></td><td>A selector; in a crystal, the low three bits of that checksum.</td><td class="mono">2</td></tr>
+                </tbody>
+            </table></div>
+            <p>The check word <code>9841D88D8B003CEA</code> is what <code>crystallize</code> gives for the 60 bytes 0, 1, &hellip;, 59. Owl Academy, BioChain-AI and Ebayednoob all pin it. Its fields read back as they should: a chunk length of 60, and a checksum of 29&middot;8 + 2 = 234, which is 0 + 1 + &hellip; + 59 = 1,770 modulo 256. The 32 middle bits are a 64-bit fold of the bytes, folded again to 32.</p>
+            <div class="callout deep"><span class="label">Three readings of the same 32 bits</span>
+                <p>SHD-CCP&rsquo;s manual calls the quaternion field &ldquo;FP4&rdquo;. BioChain-AI&rsquo;s Python kernel reads four int8 codes, value = code/127, with &minus;128 forbidden. A crystal packet holds raw hash bits, and the weave reads them again as a float quaternion (<code>crystalQuat</code>). All three readings live in the code. The second one causes the 0x80 divergence of <a href="#divergences">chapter 8</a>.</p>
+            </div>
+
+            <h3>The shdccp/2 stream</h3>
+            <ol class="steps">
+                <li><strong>Cut.</strong> UTF-8 text of at most 60,000 bytes (<code>MAX_GROW_BYTES</code>, the budget of one Firestore document) is cut into 720-byte chunks.</li>
+                <li><strong>Code.</strong> Each chunk goes through an order-2 rank coder that starts fresh for every chunk. Each byte is written as its rank, by frequency, among the bytes already seen after the same two bytes, in Elias-gamma code. A byte not seen there yet gets the next rank as an escape, followed by its 8 raw bits. It is lossless by construction.</li>
+                <li><strong>Crystallize.</strong> Each chunk also becomes one form-9 Blackwell word: payload16 holds the chunk length, freq and amp the checksum, and parity is set last.</li>
+                <li><strong>Frame.</strong> A frame is the 16-hex packet, an 8-hex (32-bit) residual length in bytes, and the residual. The frames are joined into one hex string, the stream, marked <code>streamVersion: "shdccp/2"</code>.</li>
+                <li><strong>Commit.</strong> Leaf i is SHA-256 of the string <code>i + "|" + SHA-256(chunk)</code>, both hashed over strings (the exact rule is in <a href="#d-leaf">chapter 8</a>). The leaves are hashed in pairs, level by level, into a Merkle root; on a level with an odd count the last node is duplicated.</li>
+                <li><strong>Weave.</strong> Each chunk&rsquo;s crystal also gives a unit quaternion. Their ordered product, renormalised after every step with <code>Math.hypot</code> and written with 12 decimals (<code>toFixed(12)</code>), is the chiral weave <span class="mark float">float</span>. A mirror weave runs over the conjugates in reverse order.</li>
+                <li><strong>Name.</strong> <code>chainId</code> = &ldquo;BC-&rdquo; and the first 24 hex digits of SHA-256(merkleRoot + &ldquo;|&rdquo; + weaveChiral). An optional engram layer adds 64 bits per word token.</li>
+                <li><strong>Sign.</strong> In BioChain-AI, publishing signs the commitment <code>GROWN/1|chainId|merkleRoot|weaveChiral|weaveMirror|origBytes</code> as an ATTEST/1 attestation: ECDSA P-256 over <code>ATTEST/1|keyId|keyVector|SHA256(commitment)|epochToken</code>, checked against a key registry. A new epoch also signs a GROWTH/1 commitment. Owl Academy signs the same commitments with a Minor Tome seal: ECDSA P-256 over <code>SEAL/1|sealId|sealVector|SHA256(commitment)|tickToken</code>.</li>
+            </ol>
+            <p>Codices travel in the same word: a codex stream opens with GEAR (form 1), carries PRIME entries (form 2) and closes with HALT (form 0), a closed instruction set.</p>
+            <p><strong>Measured.</strong> Spike S4 grew all 55 WordNet verb and adjective gloss shards, and 8 synthetic ones, with a spike-only synchronous grower built from <code>biochain_v1.js</code> and the orbital core&rsquo;s SHA-256. Field for field, it gave the record of Owl Academy&rsquo;s own <code>growBiochain</code> on <strong>126/126</strong> records, with engrams on and off. Owl&rsquo;s <code>verifyIntegrity</code> accepted every engrams-off record (63/63). Per full 60 KB gloss shard:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S4, per full gloss shard</th><th class="num">Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Chunks</td><td class="num">84</td></tr>
+                    <tr><td>Stream, hex characters per text byte</td><td class="num">1.7120</td></tr>
+                    <tr><td>Residual, bits per text byte (the rank coder alone)</td><td class="num">6.7134</td></tr>
+                    <tr><td>Value = text bytes / shipped bytes, engrams off / on (median)</td><td class="num">1.1016 / 0.4860</td></tr>
+                    <tr><td>Engram layer, bytes per word token</td><td class="num">6.7</td></tr>
+                    <tr><td>~ Encode, decode, whole synchronous grow (median, this container)</td><td class="num">24.9 / 22.3 / 40.9 ms</td></tr>
+                </tbody>
+            </table></div>
+            <p>&ldquo;Shipped bytes&rdquo; count what a record carries: the stream, 32 bytes per leaf hash, a small fixed overhead and, with engrams on, the engram layer. A value near 1 means the record is about as large as the text: the rank coder alone writes 6.7134 bits per text byte, against 8. For context only, and never claimed, the output&rsquo;s &ldquo;~&rdquo; line gives gzip -9 at 3.1230 bits per byte on the same shards.</p>
+
+            <h3>What verifyIntegrity checks, and what it does not</h3>
+            <p>Owl&rsquo;s <code>verifyIntegrity</code> checks, stopping at the first failure: packet parity, decoding, each leaf, the rebuilt Merkle root, the chiral weave, then the engram layer recomputed from the text. But leaves and root are checked only when present. A packet&rsquo;s crystal and checksum are never compared with the rebuilt chunk. <code>chainId</code> and the mirror weave are not recomputed. So it proves self-consistency, not authenticity.</p>
+            <p>Spike S4 saw it accept records with <code>leafHashes</code> and <code>merkleRoot</code> deleted, with a crystal bit flipped and parity re-fixed, with <code>chainId</code> altered, and with residual bit flips that decode to the same bytes (<strong>3.5515%</strong> of single-bit flips of a residual; a re-encode check rejected 689 of 689). It rejects swapped frames. The Lexicon&rsquo;s stricter importer is claim L10 (<a href="biochains.html">Explainer 4</a>).</p>
+
+            <h3>ATTEST/1 in two languages</h3>
+            <p>Spike S7 ran BioChain-AI&rsquo;s own attestation code in Node and checked it in Python. WebCrypto writes a signature as IEEE P1363 r&#8214;s (64 bytes); Python&rsquo;s <code>cryptography</code> expects DER. Python verified Node&rsquo;s signatures <strong>200/200</strong> after conversion and <strong>0/200</strong> raw; the way back must left-pad r and s to 32 bytes. The high-S twin (r, n &minus; s) also verifies, in WebCrypto, node:crypto and Python, so signatures are not unique and nothing may be keyed by signature bytes. (&ldquo;~&rdquo; timing: the whole attestation step, 0.2341 ms per shard in Node.)</p>
+
+            <h3>The 60 KB lineage cap</h3>
+            <p>A biochain grows by epochs. <code>extendBiochain</code> recreates the parent&rsquo;s text, appends the new text and regrows the whole through <code>growBiochain</code>, which throws above 60,000 bytes. So the cap holds for a whole lineage, not only for one step. Corpus-scale language data must therefore be many independent shards tied together by a manifest. WordNet&rsquo;s noun synsets make 148 shards (the registered set C0). Spike S4 extrapolates BabyLM strict-small (55 MB) to 918 shards and strict (550 MB) to 9,178. The manifest is an RFC 6962 Merkle tree (<a href="biochains.html#manifest">Explainer 4</a>).</p>
+        </section>
+
+        <section class="chapter" id="layouts">
+            <div class="chapter-num">04</div>
+            <h2>Eight layouts, live</h2>
+            <p class="chapter-intro">At least eight bit layouts are in use for &ldquo;the&rdquo; 64-bit SHD-CCP word. They are not compatible. The Form sits in four different places, and one layout has no Form at all.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>#</th><th>Layout</th><th>Where it lives</th><th>Form field</th><th class="num">Form of 9841D88D8B003CEA</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">1</td><td><strong>RFC 01 draft tile</strong>: South Halo 63..56, Form 39..36, 52 opaque payload bits</td><td><code>geometric-engine-spec/rfcs/01_einstein_tile_64bit.md</code>; all six bindings</td><td class="mono">39..36</td><td class="num">8</td></tr>
+                    <tr><td class="num">2</td><td><strong>Kernel Ontology header</strong></td><td><code>00_Ontology_Core/base_64bit_tile.json</code></td><td class="mono">63..60</td><td class="num">9</td></tr>
+                    <tr><td class="num">3</td><td><strong>Blackwell word</strong>: form 63..60, parity 59, spin 58..56, quat32 55..24, payload16 23..8, freq 7..3, amp 2..0</td><td>Owl <code>scripts/biomesh.js</code>; BioChain-AI <code>biomesh.js</code> and <code>shdccp_kernel.py</code>; Ebayednoob <code>biochain_v1.js</code> and <code>lattice_seed_v1.js</code> (verbatim pins)</td><td class="mono">63..60</td><td class="num">9</td></tr>
+                    <tr><td class="num">4</td><td><strong>genesis.js <code>BLACKWELL_SCHEMA</code></strong>: the same widths in another order (ST, PT, PL 58..48, CO 47..16, PL 15..11, FR 10..6, SP 5..3, AM 2..0)</td><td><code>genesis/assets/genesis.js</code></td><td class="mono">63..60</td><td class="num">9</td></tr>
+                    <tr><td class="num">5</td><td><strong>Explainer &ldquo;Z-slabs&rdquo;</strong>: four 16-bit slabs; in the toroidal mode Form sits at 47..44</td><td><code>assets/explainer.js</code></td><td class="mono">47..44</td><td class="num">13</td></tr>
+                    <tr><td class="num">6</td><td><strong>Geometric Calculator V2</strong>: Halo 63..56, Gate 55..48, Ctrl 47..32, Core 31..0</td><td><code>Geometric_calculator (V2).html</code></td><td>none</td><td class="num">&mdash; (gate 65)</td></tr>
+                    <tr><td class="num">7</td><td><strong>Ebayednoob orbital <code>packTile</code></strong>: step 63..61, wheel 60..58, struct 57..56, gate 55..48, mux 47..44, form 43..40, slot 39..36, scale 35..32, core 31..0</td><td><code>scripts/geometric-build/orbital_core.js</code></td><td class="mono">43..40</td><td class="num">8</td></tr>
+                    <tr><td class="num">8</td><td><strong>Owl <code>text_to_codex</code></strong>: FP16 scaler 63..48, freq 47..43, spin 42..40, form 39..36, amp 35..33, parity 32 (over the quaternion bytes only), W X Y Z as FP8 31..0</td><td>Owl <code>Ontological_Codex/text_to_codex.py</code></td><td class="mono">39..36</td><td class="num">8</td></tr>
+                </tbody>
+            </table></div>
+            <p>So the check word reads as Form 9 under three layouts (2, 3, 4), Form 8 under three (1, 7, 8) and Form 13 under one (5). Layout 6 has no Form; it reads bits 55..48 as a gate byte, 65. Seven readers, three different answers, and one that does not ask. In the Blackwell reading, the other fields are parity 1, spin 0, quat32 <code>41D88D8B</code>, payload16 60, freq 29 and amp 2.</p>
+
+            <div class="lab" id="lab">
+                <div class="lab-title">Lab &middot; one 64-bit word under eight layouts</div>
+                <div class="lab-row">
+                    <label for="hl-word">Word, hex <input id="hl-word" type="text" value="9841D88D8B003CEA" maxlength="40" autocomplete="off" spellcheck="false" style="font:0.9rem var(--mono);padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;width:min(14em,60vw)"></label>
+                </div>
+                <div class="lab-row" id="hl-presets">
+                    <button class="chip on" type="button" data-w="9841D88D8B003CEA">check word</button>
+                    <button class="chip" type="button" data-w="98B8806345000352">0x80 &middot; as JS writes it</button>
+                    <button class="chip" type="button" data-w="90B8816345000352">0x80 &middot; as Python writes it</button>
+                    <button class="chip" type="button" data-w="F80005004CC2C901">Engram Form 5 tile</button>
+                    <button class="chip" type="button" data-w="A800000000000001">kernel 0xA, id 1</button>
+                    <button class="chip" type="button" data-w="2B0102030412342E">packWord example</button>
+                </div>
+                <div class="lab-row" id="hl-make">
+                    <label for="hl-text">Crystallize <input id="hl-text" type="text" value="The cat sat." maxlength="400" autocomplete="off" spellcheck="false" style="font:0.9rem var(--mono);padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;width:min(14em,60vw)"></label>
+                    <button class="chip" type="button" id="hl-cryst">crystallize text</button>
+                    <button class="chip" type="button" data-bytes="seq60">bytes 0..59</button>
+                    <button class="chip" type="button" data-bytes="75,0,7">bytes 75, 0, 7</button>
+                </div>
+                <div class="out" id="hl-sum">Loading&hellip;</div>
+                <div id="hl-layouts"></div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">The decoder is plain JavaScript on BigInt. Each strip runs from bit 63 (left) to bit 0; the gold field is that layout&rsquo;s Form. The Crystallize row uses Engram&rsquo;s verbatim pin of Owl&rsquo;s codec, <code>biochain_v1.js</code>, to turn the first 720 bytes of your text into the packet a biochain of it would carry first. Presets: the check word; the chunk 75, 0, 7, whose crystal holds 0x80, as Owl&rsquo;s JavaScript and BioChain-AI&rsquo;s Python write it (spike S4); the first tile of an Engram memory word whose &alpha; cell is GEODESIC&rsquo;s engram/1 key (F = 24, address 0), from <code>engram_core.js</code>; kernel 0xA holding id 1, the word [0]; <code>packWord(2, 3, [1, 2, 3, 4], 0x1234, 5, 6)</code>.</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li><strong>check word</strong>: three Form values from seven readers. Only the Blackwell reading shows a valid crystal: 60 bytes, checksum 234.</li>
+                    <li><strong>0x80, as JS and as Python</strong>: one chunk, two packets. Under the Blackwell layout they differ only in one quaternion code (&minus;128 against &minus;127) and the parity bit; both pass parity.</li>
+                    <li><strong>Engram Form 5 tile</strong>: the orbital layout reads Form 5, the Blackwell layout Form 15 (Owl&rsquo;s LINK gate), RFC 01 Form 0. This is why Engram&rsquo;s tiles are never called SHD-CCP (<a href="#boundary">chapter 6</a>).</li>
+                    <li><strong>kernel 0xA</strong>: the Ontology reads Codex_Semantics; a Blackwell reader inside an Owl stream would read the ROT gate (<a href="#lps">chapter 7</a>).</li>
+                    <li>Change the check word&rsquo;s last digit from A to B: one bit flips and the Blackwell parity fails. Change it to 9 instead (two bits) and parity passes again, though the word is wrong. Most other layouts have no parity at all.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="chapter" id="forms">
+            <div class="chapter-num">05</div>
+            <h2>Every Form value is taken</h2>
+            <p class="chapter-intro">A Form nibble has 16 values. Each one already means something to at least one consumer. So a new kind of data, such as a language kernel, cannot be told apart by its Form.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">Form</th><th>Owl Academy (Blackwell word)</th><th>Also in the Blackwell word</th><th>Ontology domain and registry</th><th>genesis.js</th><th>RFC 01</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">0</td><td>0D point</td><td>codex HALT</td><td>Telemetry &middot; Base Route</td><td>Tetrahedron</td><td>standard scaling</td></tr>
+                    <tr><td class="num">1</td><td>Platonic solid</td><td>codex GEAR</td><td>Telemetry &middot; Hurwitz Core</td><td>Cube</td><td>standard scaling</td></tr>
+                    <tr><td class="num">2</td><td>Platonic solid</td><td>codex PRIME</td><td>Telemetry</td><td>Octahedron</td><td>standard scaling</td></tr>
+                    <tr><td class="num">3</td><td>Platonic solid</td><td>&mdash;</td><td>Telemetry &middot; Exact Scalar</td><td>Icosahedron</td><td>high-precision lossless correction</td></tr>
+                    <tr><td class="num">4</td><td>Platonic solid</td><td>&mdash;</td><td>Geometric Pointers &middot; Voxel Cube</td><td>Dodecahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">5</td><td>Platonic solid</td><td>&mdash; (Engram&rsquo;s tiles use 5 in the orbital layout)</td><td>Geometric Pointers</td><td>Truncated Tetrahedron</td><td>geometric pointer / codex amplification</td></tr>
+                    <tr><td class="num">6</td><td>4D hypercube</td><td>&mdash;</td><td>Geometric Pointers &middot; Stella Octangula</td><td>Cuboctahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">7</td><td>8D E8 lattice</td><td>&mdash;</td><td>Geometric Pointers</td><td>Truncated Icosahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">8</td><td>HALT gate</td><td>&mdash;</td><td>Codex Semantics &middot; Holographic Triplet [COMPUTED], Geodesic Icosahedron</td><td>Rhombicuboctahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">9</td><td>SEED gate</td><td>the data crystal of <code>crystallize</code></td><td>Codex Semantics</td><td>Icosidodecahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">10</td><td>ROT gate</td><td>&mdash; (kernel 0xA proposed for the Ontology)</td><td>Codex Semantics</td><td>Truncated Cuboctahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">11</td><td>XFOLD gate</td><td>&mdash;</td><td>Codex Semantics</td><td>Snub Cube</td><td>&mdash;</td></tr>
+                    <tr><td class="num">12</td><td>MIRROR gate</td><td>BioChain-AI Cocoon: ENTRAIN</td><td>Memory Offload &middot; 12-Engine Parity</td><td>Snub Dodecahedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">13</td><td>SPLIT gate</td><td>Cocoon: SYNC</td><td>Memory Offload</td><td>Cosmohedron</td><td>&mdash;</td></tr>
+                    <tr><td class="num">14</td><td>MERGE gate</td><td>Cocoon: BIOFRAME</td><td>Memory Offload</td><td>Undefined Form (void / overflow)</td><td>&mdash;</td></tr>
+                    <tr><td class="num">15</td><td>LINK gate</td><td>&mdash;</td><td>Memory Offload</td><td>Undefined Form (void / overflow)</td><td>&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <p>Sources: Owl&rsquo;s <code>BIOMESH_SYSTEM.md</code> (lines 295&ndash;302) splits the nibble by its top bit, geometry below 8 and gates from 8. The codex opcodes reuse 0&ndash;2. BioChain-AI&rsquo;s Nested Harmonic Cocoon claims 12&ndash;14. The Kernel Ontology splits the 16 values into four domains, and its registry holds kernels at 0x0, 0x1, 0x3, 0x4, 0x6, 0x8 (twice) and 0xC, all <code>[OPEN]</code> except the Holographic Triplet. genesis.js names all 16. RFC 01 gives meanings to Forms 0&ndash;3 and 5 so far. The explainer&rsquo;s slab modes add one more reading: 0&ndash;2 cymatic, 3 TTP mode A, 4&ndash;11 TTP mode B, 12&ndash;15 toroidal.</p>
+            <p>Even inside one layout the values are shared. In Owl&rsquo;s own Blackwell word, 0&ndash;2 are both geometry and codex opcodes, and 9 is both the SEED gate and the data crystal, told apart only by a flag kept outside the word (<code>r:1</code> in a seed). The Codex_Semantics forms 8, 10 and 11, which a language kernel might want, are Owl&rsquo;s HALT, ROT and XFOLD gates.</p>
+            <div class="callout note"><span class="label">What follows</span>
+                <p>A namespace has to live above the word: a kind field in the stream or record header. The <a href="../proposals/SHD-CCP-RFC01-layout-census.md">layout census</a> asks SHD-CCP for one, and notes that BioChain-AI&rsquo;s <code>publishBiochain</code> drops <code>meta.kind</code> today. The Lexicon does not wait: it names its data by record kind (<a href="#boundary">chapter 6</a>).</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="boundary">
+            <div class="chapter-num">06</div>
+            <h2>One bridge</h2>
+            <p class="chapter-intro">Decision D7: the Blackwell word only at the Owl/BioChain bridge. What a piece of data is lives in record kinds above the word, never in a Form nibble.</p>
+            <div class="pipeline">
+                <div class="exact"><b>Inside the Lexicon</b><span>No tiles. Addresses are variable-length norm-5 words, with 59- or 64-bit ids up to 25 or 27 letters; points are exact rationals; records are JSON plus SHA-256.</span></div>
+                <div class="exact"><b>Record kinds</b><span>LVOCAB/1, LADDR/1, LPREP/1, LCORPUS/1, LGROW/1, LBENCH/1: typed commitments, pipe-joined like GROWN/1, signable as ATTEST/1.</span></div>
+                <div><b>The bridge</b><span>Shards are unmodified <code>shdccp/2</code> streams: the Blackwell word exactly as the pinned codec writes it, form-9 crystals only. No new form ever appears inside.</span></div>
+                <div><b>Owl, BioChain-AI, Engram</b><span>Their own <code>verifyIntegrity</code> and Engram&rsquo;s <code>importBiochain</code> read the shards unchanged (claim L8).</span></div>
+            </div>
+            <p><strong>Why record kinds.</strong> No Form value is free (<a href="#forms">chapter 5</a>), and the biochain document itself has no type field. Each Lexicon record carries <code>{kind, spec: 'hyperbolic-lexicon/0.1', compat: 'biomesh-js'}</code>, so a reader knows what it holds before it decodes anything: a vocabulary, an address table, a pre-processed shard, a corpus manifest, its growth, or benchmark receipts (<a href="biochains.html#records">Explainer 4</a>).</p>
+            <h3>Versioning</h3>
+            <ul>
+                <li><strong>Shards keep <code>streamVersion: "shdccp/2"</code></strong> and the JavaScript codec&rsquo;s hashing (D8), so Owl&rsquo;s and BioChain-AI&rsquo;s verifiers accept them as they are.</li>
+                <li><strong>Anything that changes bytes is only proposed</strong>, under a future <code>shdccp/3</code>: how to write the 0x80 byte, binary RFC 6962 leaves, mandatory leaves, root and crystal checks, a recomputed <code>chainId</code>, the exact weave, and a kind field.</li>
+                <li><strong>The Lexicon&rsquo;s own versions</strong> are the <code>/1</code> of each record kind.</li>
+            </ul>
+            <p>Claim <strong>L8</strong> registers the bridge: language shards are Owl-valid biochains, field for field, in JS and Python. Owl Academy&rsquo;s and BioChain-AI&rsquo;s own JavaScript are the authority for compatibility (D9). Spike S4&rsquo;s 126/126 is a spike result on verbs and adjectives; L8 is decided on the 148 noun shards and 20 synthetic ones, after Phase 3 code exists.</p>
+
+            <h3>Engram&rsquo;s Form 5 tiles are not SHD-CCP</h3>
+            <p>Engram Mind&rsquo;s Eye sends each engram/1 cell as two Einstein tiles of Form 5 (its decision D3), packed with the orbital <code>packTile</code> layout, Form at 43..40. Its README calls Form 5 &ldquo;unused elsewhere in the repository&rdquo;, a statement about Ebayednoob alone. Outside it, RFC 01 makes Form 5 a geometric pointer, genesis.js a Truncated Tetrahedron, and Owl a Platonic solid. The same tile also reads differently:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Reader</th><th>Takes its Form from</th><th class="num">Form of F80005004CC2C901</th></tr></thead>
+                <tbody>
+                    <tr><td>Orbital <code>packTile</code> (what Engram meant)</td><td>bits 43..40</td><td class="num">5</td></tr>
+                    <tr><td>Blackwell word</td><td>bits 63..60, Engram&rsquo;s step and wheel bits</td><td class="num">15 (LINK)</td></tr>
+                    <tr><td>RFC 01 draft</td><td>bits 39..36, Engram&rsquo;s slot bits</td><td class="num">0</td></tr>
+                </tbody>
+            </table></div>
+            <p>(The tile is the high half of an &alpha; cell holding GEODESIC&rsquo;s engram/1 key, with F = 24 and address 0, as <code>engram_core.js</code> writes it; try it in the <a href="#lab">lab</a>.) So the Lexicon never calls Engram&rsquo;s internal tiles SHD-CCP-conformant. They stay inside Engram. What crosses to Owl Academy is the <code>shdccp/2</code> stream, through the pins that Engram&rsquo;s bridges already test (<a href="../../Engram%20Minds%20Eye/explainers/bridges.html#pinned">Engram&rsquo;s bridges</a>).</p>
+        </section>
+
+        <section class="chapter" id="lps">
+            <div class="chapter-num">07</div>
+            <h2>LPS p = 5: our tree is SHD-CCP&rsquo;s overlay</h2>
+            <p class="chapter-intro">The strongest link between the Lexicon and SHD-CCP is mathematical. The six generators of our address tree are exactly the Lubotzky&ndash;Phillips&ndash;Sarnak generators for p = 5. So the Ramanujan graphs X(5,&nbsp;q) that SHD-CCP&rsquo;s RFC 03 plans as its peer-to-peer overlay are finite quotients of the same tree. (RFC 03 does not yet name LPS or its generators; the proposal below asks it to.)</p>
+            <p>Hyperbolic Oracles&rsquo; <code>P.GENS</code> are the integer quaternions 1&plusmn;2i, 1&plusmn;2j, 1&plusmn;2k, each of norm 5. LPS take, for a prime p &equiv; 1 mod 4, the quaternions of norm p whose first coordinate is odd and positive and whose other three are even. For p = 5 the only solutions are a first coordinate of 1 and one other coordinate of &plusmn;2: exactly these six, p + 1 of them. A <em>reduced word</em> never follows a generator with its own conjugate; the root has 6 children and every other node 5. A word of length L multiplies out to one integer quaternion of norm exactly 5<sup>L</sup>, and right division by the generators reads the word back <span class="mark exact">exact</span>. The Lexicon uses these words as training-free addresses for WordNet synsets (<a href="architecture.html#address">Explainer 3</a>).</p>
+
+            <h3>X(5, q), measured by spike S5</h3>
+            <p>To build X(5,&nbsp;q), pick a prime q &equiv; 1 mod 4 and a number &iota; with &iota;&sup2; &equiv; &minus;1 mod q. Then each generator becomes a 2&times;2 matrix mod q of determinant 5, and a word becomes the product of its matrices, taken up to a scalar (projectively). The <em>Cayley graph</em> has those matrices as vertices and joins two whenever one generator carries one to the other. Spike S5 built it for the three q of claim L7, on synthetic words only:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S5</th><th class="num">q = 13</th><th class="num">q = 17</th><th class="num">q = 29</th></tr></thead>
+                <tbody>
+                    <tr><td>&iota;, with &iota;&sup2; &equiv; &minus;1 mod q</td><td class="num">5</td><td class="num">4</td><td class="num">12</td></tr>
+                    <tr><td>(5 | q), and the group</td><td class="num">&minus;1 &middot; PGL(2, F<sub>q</sub>)</td><td class="num">&minus;1 &middot; PGL(2, F<sub>q</sub>)</td><td class="num">+1 &middot; PSL(2, F<sub>q</sub>)</td></tr>
+                    <tr><td>Vertices</td><td class="num">2,184</td><td class="num">4,896</td><td class="num">12,180</td></tr>
+                    <tr><td>Bipartite</td><td class="num">yes</td><td class="num">yes</td><td class="num">no</td></tr>
+                    <tr><td>Diameter</td><td class="num">7</td><td class="num">9</td><td class="num">8</td></tr>
+                    <tr><td>Girth g (exact, three methods)</td><td class="num">8</td><td class="num">8</td><td class="num">9</td></tr>
+                    <tr><td>r = &lfloor;(g &minus; 1)/2&rfloor;</td><td class="num">3</td><td class="num">3</td><td class="num">4</td></tr>
+                    <tr><td>Largest |&lambda;| other than &plusmn;6</td><td class="num">4.249721</td><td class="num">4.308919</td><td class="num">4.442016</td></tr>
+                    <tr><td>Ramanujan margin to 2&radic;5 = 4.4721</td><td class="num">0.222415</td><td class="num">0.163217</td><td class="num">0.030120</td></tr>
+                    <tr><td>Reduction mod q = walk from the identity</td><td class="num">1000/1000</td><td class="num">1000/1000</td><td class="num">1000/1000</td></tr>
+                    <tr><td>Words of length &le; r on distinct vertices</td><td class="num">187 of 187</td><td class="num">187 of 187</td><td class="num">937 of 937</td></tr>
+                    <tr><td>Collisions at length &le; r + 1</td><td class="num">200</td><td class="num">72</td><td class="num">724</td></tr>
+                </tbody>
+            </table></div>
+            <p>Each graph is 6-regular, connected and inverse-closed. The <em>girth</em> is the length of the shortest cycle. Up to radius r the graph looks like the tree, so distinct reduced words of length at most r land on distinct vertices, and collisions begin at r + 1. The eigenvalues come from <code>numpy.linalg.eigvalsh</code> in float64 <span class="mark float">float</span>, cross-checked by exact power sums and by Lanczos; everything else is exact. The output reports &ldquo;64/64 checks pass&rdquo;. As &ldquo;~&rdquo; timings, <code>eigvalsh</code> took 2.6 s, 17.4 s and 161.2 s on this container, the last on a 1,131.8 MiB matrix.</p>
+
+            <h3>SHD-CCP&rsquo;s own arithmetic agrees</h3>
+            <p>SHD-CCP&rsquo;s <code>HurwitzQuaternion</code> works in doubled coordinates, so the generators are (2, &plusmn;4, 0, 0), (2, 0, &plusmn;4, 0) and (2, 0, 0, &plusmn;4). Spike S5 imported SHD-CCP&rsquo;s <code>hurwitz.py</code> read-only. Its product, halved, equalled <code>P.wordQuaternion</code> on <strong>1,000/1,000</strong> words, and its norm was 5<sup>len</sup> on all of them; without the halving it never matched. The registered controls failed as they must: a wrong &iota; = 2 broke the walk on 968/1000 words at every q, a 4-generator subset gave a 4-regular graph, and the unhalved product disagreed. Claim <strong>L7</strong> registers these checks, with these controls, on its own instances (one tree, three readings: address, H&sup3; point and X(5,&nbsp;q) vertex). It is decided in Phase 1, not by the spike.</p>
+
+            <h3>Exact Q<sub>h</sub> on the wire</h3>
+            <p>RFC 03 defines a Ghost map into H&sup3; with Q<sub>h</sub> = sinh&sup2; d, and lists an exact (integer or rational) representation of Q<sub>h</sub> on the wire as a TODO. For two points a, b on the hyperboloid, Q<sub>h</sub> = &lang;a,&nbsp;b&rang;<sub>L</sub>&sup2; &minus; 1, where &lang;&middot;,&middot;&rang;<sub>L</sub> is the Lorentz inner product; for rational points it is a rational number. For points of the octahedral H&sup3; tree, whose coordinates at depth n are integers over 7<sup>n</sup> (spike S1), it is N / 7<sup>2(n<sub>a</sub> + n<sub>b</sub>)</sup> for an integer N, so it can travel exactly as the pair (N, n<sub>a</sub> + n<sub>b</sub>). <span class="mark exact">exact</span> The proposal <a href="../proposals/SHD-CCP-RFC03-exact-Qh-and-LPS.md">SHD-CCP-RFC03-exact-Qh-and-LPS.md</a> asks RFC 03 to name LPS p = 5 and adopt this form.</p>
+            <div class="callout limit"><span class="label">A shard key, never integrity</span>
+                <p>Reducing an address mod q gives a deterministic shard key: it tells which of the 2,184, 4,896 or 12,180 vertices, and so which node of an overlay, holds a synset. It separates only words of at most r letters (3, 3 and 4 at these q). It is never an integrity check. Cayley hashes on LPS graphs have known collision attacks (Tillich and Z&eacute;mor, 2008; Petit, Lauter and Quisquater, 2008). SHA-256 stays the integrity primitive.</p>
+            </div>
+
+            <h3>Kernel 0xA: the Hyperbolic Address Tile</h3>
+            <p>The Lexicon proposes one kernel for the Ontology&rsquo;s registry, aimed at its incubator at status <code>[OPEN]</code> (<a href="../proposals/SHD-CCP-kernel-hyperbolic-address.md">the proposal</a>, <a href="../proposals/kernel_0xA_hyperbolic_address.json">the kernel file</a>). It holds one reduced word of the norm-5 tree as a 59-bit id.</p>
+            <div class="bits" role="img" aria-label="Kernel 0xA: Form_ID_Header 4 bits, Even_Parity 1 bit, Norm5_Address 59 bits">
+                <span style="flex:4;--c:#f5c542">0xA</span>
+                <span style="flex:1.6;--c:#fb7185">P</span>
+                <span style="flex:59;--c:#34d399">Norm5_Address &middot; 59 bits &middot; 58..0</span>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Bits</th><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">60&ndash;63</td><td><code>Form_ID_Header</code></td><td>multiplexer</td><td>0xA</td></tr>
+                    <tr><td class="mono">59</td><td><code>Even_Parity</code></td><td>bool</td><td>Even parity over the other 63 bits, as the Blackwell word&rsquo;s bit 59</td></tr>
+                    <tr><td class="mono">0&ndash;58</td><td><code>Norm5_Address</code></td><td>residual_array</td><td>The bijective mixed-radix id of a reduced word of length &le; 25: the number of reduced words shorter than it, plus its rank among words of its length (first letter in base 6, later letters in base 5)</td></tr>
+                </tbody>
+            </table></div>
+            <p>Words of length up to 25 number 1 + 6&middot;(5<sup>25</sup> &minus; 1)/4 &asymp; 4.47&middot;10<sup>17</sup>, fewer than 2<sup>59</sup>, so they fit. On the verb forest, spike S3 found that 13,762 of 13,767 verb words (99.96%) fit the 25-letter tile, and 5 would need a continuation tile; nouns are deeper, and claim L3 will report their lengths. <code>check_kernel.py</code> runs the Ontology&rsquo;s own linter and its two implemented suites on a copy of the kernel, read-only. Run here with <code>python3 -B -I "Pages/Hyperbolic Lexicon/proposals/check_kernel.py"</code>:</p>
+<pre class="spike">kernel Hyperbolic Address Tile (norm-5, LPS p=5) &middot; Form 0xA &middot; Domain Codex_Semantics &middot; Status [OPEN]
+lint_kernel: <span class="pass">pass</span>
+layout_integrity: <span class="pass">pass</span> (3 fields tile bits 0..63 exactly once)
+glass_box_round_trip: <span class="pass">pass</span> (1000 random round trips and 3 isolation checks)
+pending suites (block [PROVEN]): 01_tqf_parity_checks, 02_toda_kogame_stress, 03_merkle_collision
+Form IDs already used in the registry: 0x0, 0x1, 0x3, 0x4, 0x6, 0x8, 0xc; 0xA is FREE
+allocation hash: 1aefabb16b7b12c3559b19700efa999120537a5cfe2cc9769473dafed8654126
+kernel check: <span class="pass">pass</span></pre>
+            <p>Moved into the registry, it could reach <code>[COMPUTED]</code> through the validation bot. It cannot reach <code>[PROVEN]</code> until the three pending suites are defined and its dependency, Lemma 5, has a Lean proof. Two conflicts are declared. First, 0xA is free in the Ontology&rsquo;s registry but is the ROT gate inside Owl&rsquo;s and BioChain-AI&rsquo;s <code>shdccp/2</code> streams, so the kernel is never written into them (0xB would collide with XFOLD the same way). Second, the kernel follows the Ontology&rsquo;s header at 60&ndash;63; if RFC 01&rsquo;s Form position wins, it must be re-encoded.</p>
+        </section>
+
+        <section class="chapter" id="divergences">
+            <div class="chapter-num">08</div>
+            <h2>Where JavaScript and Python part</h2>
+            <p class="chapter-intro">The Lexicon&rsquo;s method needs Python and JavaScript to agree bit for bit. The working SHD-CCP does not always. Six cases follow: two where the deployed JavaScript and BioChain-AI&rsquo;s Python reference differ, a float weave that a Python port reproduces only with care, one name shared by two structures, one check that cannot fail, and the runtimes&rsquo; Unicode versions. Each gives what the spikes measured and how it is resolved.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Divergence</th><th>Measured</th><th>Resolution</th></tr></thead>
+                <tbody>
+                    <tr><td><a href="#d-0x80">1. crystallize and the byte 0x80</a></td><td>S4: 1.4131% of gloss chunks</td><td>JavaScript is normative for <code>shdccp/2</code></td></tr>
+                    <tr><td><a href="#d-leaf">2. Leaf and Merkle hashing</a></td><td>S4: 126/126 records with the JS rule</td><td>Shards keep the JS rule; manifests use RFC 6962</td></tr>
+                    <tr><td><a href="#d-weave">3. The float weave</a></td><td>S4: naive port differs on 2 of 1,000</td><td>A V8-faithful port now; an exact weave proposed</td></tr>
+                    <tr><td><a href="#d-merkle">4. Two structures called &ldquo;Merkle&rdquo;</a></td><td>S4: duplicate-last collides at every odd K &ge; 3</td><td>Named apart, never mixed</td></tr>
+                    <tr><td><a href="#d-parity">5. An always-true continuity check</a></td><td>Cannot fail by construction</td><td>Never reused</td></tr>
+                    <tr><td><a href="#d-unicode">6. Unicode versions</a></td><td>S6: 9,990 code points differ</td><td>Pinned Unicode 15.1 tables (D5)</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3 id="d-0x80">1 &middot; crystallize and the byte 0x80</h3>
+            <p>The JavaScript <code>crystallize</code> writes the 32-bit crystal raw, so a byte 0x80 stays, read as code &minus;128. BioChain-AI&rsquo;s Python <code>pack()</code> forbids &minus;128: it writes &minus;127 (0x81) and recomputes parity. For the bytes [75, 0, 7], with crystal codes [&minus;72, &minus;128, 99, 69], JavaScript writes <code>98B8806345000352</code> and the Python kernel <code>90B8816345000352</code>.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Spike S4</th><th class="num">Chunks with a 0x80 crystal byte</th></tr></thead>
+                <tbody>
+                    <tr><td>Analytic: 1 &minus; (255/256)<sup>4</sup></td><td class="num">1.5534%</td></tr>
+                    <tr><td>All 55 WordNet gloss shards</td><td class="num">64 of 4529 = 1.4131%</td></tr>
+                    <tr><td>1,000 synthetic shards (counted in Python)</td><td class="num">659 of 42384 = 1.5548%</td></tr>
+                    <tr><td>Analytic share of 84-chunk records with at least one</td><td class="num">73.1545%</td></tr>
+                </tbody>
+            </table></div>
+            <p>On 63 shards (4,992 packets), the kernel&rsquo;s packets differed from Owl&rsquo;s on exactly the 70 with a 0x80 byte, only by &minus;128 &rarr; &minus;127 and parity. The normalised stream differed on 43 of 63 shards, exactly those with such a chunk. But <code>merkleRoot</code>, both weaves and <code>chainId</code> were unchanged on 63/63, and Owl&rsquo;s <code>verifyIntegrity</code> accepted the normalised records 63/63. The reason: leaves and the weave are computed from chunk bytes, never from packet words. So <code>chainId</code> and <code>merkleRoot</code> do not commit to the packets, and a verifier must re-crystallize to check them.</p>
+            <p><strong>Resolution.</strong> JavaScript is normative for <code>shdccp/2</code>, since every deployed record was grown in JavaScript. The Lexicon&rsquo;s Python is to reproduce the raw word; spike S4&rsquo;s raw port already matched Owl&rsquo;s JS word on 4,992/4,992 packets. The <a href="../proposals/BioChain-AI-language-chains.md">BioChain-AI proposal</a> asks its Python to write crystals raw as well, and to settle the case for good under <code>shdccp/3</code>; since leaves and weaves come from chunk bytes, writing raw changes no deployed <code>chainId</code>. L8&rsquo;s first control is a Python grower with the kernel&rsquo;s normalisation, which must differ from Owl&rsquo;s record on at least one synthetic shard.</p>
+
+            <h3 id="d-leaf">2 &middot; Leaf and Merkle hashing</h3>
+            <p>The JavaScript hashes strings: leaf i = SHA-256(<code>i + "|" + sha256Hex(String.fromCharCode(...chunk))</code>), and a parent hashes its two children&rsquo;s hex strings joined; an empty list&rsquo;s root is SHA-256(&ldquo;empty&rdquo;). <code>String.fromCharCode</code> turns each byte into a code point, and SHA-256 then reads the UTF-8 of that string, so every byte from 0x80 up is hashed as two bytes. BioChain-AI&rsquo;s Python <code>codex_engine.py</code> hashes binary instead, SHA-256(4-byte index &#8214; SHA-256(chunk)), with 32 zero bytes for an empty root. Neither side can verify the other&rsquo;s chains.</p>
+            <p><strong>Resolution.</strong> Shards use the JavaScript rule (D8), and the Lexicon&rsquo;s Python is to reproduce its quirk exactly. Spike S4 found the orbital core&rsquo;s SHA-256 equal to Node&rsquo;s over UTF-8 on 1,000/1,000 strings, and the JS-rule grower equal to Owl&rsquo;s on 126/126 records. L8&rsquo;s second control, a grower that hashes leaves over binary bytes, must differ on every non-empty shard. Manifests use RFC 6962 instead, defined once and tested with vectors (L9).</p>
+
+            <h3 id="d-weave">3 &middot; The float weave</h3>
+            <p>The chiral weave renormalises with <code>Math.hypot</code> and prints with <code>toFixed(12)</code> <span class="mark float">float</span>. A one-ulp difference at a rounding edge changes the string, and so <code>chainId</code>. Spike S4 compared Python ports with Owl&rsquo;s JavaScript on 1,000 synthetic shards:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Python port of the weave</th><th class="num">Shards with any difference</th></tr></thead>
+                <tbody>
+                    <tr><td>Faithful: V8&rsquo;s <code>Math.hypot</code> algorithm, exact <code>toFixed(12)</code></td><td class="num">0 of 1000</td></tr>
+                    <tr><td>Naive: Python&rsquo;s <code>math.hypot</code>, <code>format(x, '.12f')</code></td><td class="num">2 of 1000</td></tr>
+                </tbody>
+            </table></div>
+            <p>The cause is <code>hypot</code>, not formatting: <code>math.hypot</code> differed from V8&rsquo;s on 39,408 of 127,152 calls (30.9928%), while <code>format</code> and <code>toFixed(12)</code> differed on 0 of 8,000 weave components.</p>
+            <p><strong>Resolution.</strong> The Lexicon&rsquo;s Python port is to reproduce V8&rsquo;s <code>Math.hypot</code> algorithm and <code>toFixed(12)</code> exactly, as L8 registers. For <code>shdccp/3</code> it proposes the exact norm-5 weave instead: <code>engram_core.chainQuaternion</code> over the first 8 bytes of each leaf hash <span class="mark exact">exact</span>. Spike S4 checked it on one verb shard of 84 leaves: its norm is exactly 5<sup>2352</sup>, its components have 2,729&ndash;2,730 bits, it unfolds to the leaf prefixes in order, and the 7 segment products multiply to it. Claim L9 tests it on every shard (<a href="biochains.html#weave">Explainer 4</a>).</p>
+
+            <h3 id="d-merkle">4 &middot; Two structures called &ldquo;Merkle&rdquo;</h3>
+            <p>The orbital core&rsquo;s &ldquo;Lemma 15 Merkle chain&rdquo; is a <strong>linear backward chain</strong>: &tau;<sub>N</sub> = H(G<sub>N</sub>), &tau;<sub>d</sub> = H(G<sub>d</sub> &#8214; &tau;<sub>d+1</sub>). Biochains use a <strong>binary tree</strong> with the last node duplicated on odd levels. They prove different things and are not interchangeable. The tree rule is also malleable: [a, b, c] and [a, b, c, c] build the same tree. Spike S4 showed this on real leaf hashes, and found that for K = 1..200 a list and the same list with its last element repeated have equal roots at every odd K &ge; 3 (99 values), but not at K = 1. RFC 6962 roots of the same lists were equal at 0 of 200.</p>
+            <p><strong>Resolution.</strong> The two are named apart and never mixed. The <a href="../proposals/SHD-CCP-Lemma15-note.md">Lemma 15 note</a> proposes an RFC 6962 statement of Lemma 15 for SHD-CCP. L9&rsquo;s first control is exactly this collision.</p>
+
+            <h3 id="d-parity">5 &middot; An always-true continuity check</h3>
+            <p>Owl Academy&rsquo;s Engram Mind Eye computes each packet&rsquo;s chained header as <code>(fold32(seed64) ^ rotl32(prevParity, 1)) &gt;&gt;&gt; 0</code> (line 872). Lines 889&ndash;890 then &ldquo;check&rdquo; it by recomputing the same expression from the same inputs and comparing. The check cannot fail, so it detects nothing.</p>
+            <p><strong>Resolution.</strong> It is never reused as an integrity check. Engram Mind&rsquo;s Eye does not rely on it; its integrity comes from SHA-256 and the Merkle chain. The <a href="../proposals/Owl-Academy-notes.md">Owl notes</a> describe a real check: recompute the header from the stored previous packet and compare it with the stored current header.</p>
+
+            <h3 id="d-unicode">6 &middot; Unicode versions</h3>
+            <p>Spike S6 swept every code point in three runtimes. Node 22.23.4 carries Unicode 17.0 (ICU 78.3), Chrome for Testing 153 behaves as Unicode 17.0, and Python 3.13.18 carries 15.1.0. Node and Python gave different general categories on 9,990 code points, and different lowercase, decomposition and combining-mark values on 55, 20 and 76; Node and Chromium agreed on all. On the 20,520 cases of the stress set, a normaliser built from the platform&rsquo;s <code>toLowerCase</code>, <code>normalize('NFD')</code> and <code>\p{Mn}</code> differed from Python&rsquo;s on 725, in Node and in Chromium alike. (These counts are &ldquo;~&rdquo; lines: they depend on the runtime versions.)</p>
+            <p><strong>Resolution.</strong> D5: the normaliser runs on Unicode 15.1 tables exported from Python and pinned by SHA-256, fails closed on code points unassigned in 15.1, and never calls the platform&rsquo;s functions. S6&rsquo;s prototype table (142,041 bytes as compact JSON) reproduced Python&rsquo;s lowercasing, Final_Sigma, decomposition and mark removal with 0 mismatches on all 1,112,064 code points alone and on 2,000 synthetic strings. Claim L1 tests the whole front end (<a href="architecture.html#normalise">Explainer 3</a>).</p>
+
+            <h3>Smaller ones</h3>
+            <ul>
+                <li><strong>Two engram hex conventions.</strong> Engram streams write a key&rsquo;s bytes least significant first (GEODESIC &rarr; <code>5C896A4801C9C24C</code>); Owl&rsquo;s Mind Eye packet writes <code>seed64</code> byte-reversed (<code>4CC2C901486A895C</code>). Streams use the first; the Lexicon&rsquo;s golden JSON is to pin both.</li>
+                <li><strong>Two engram tokenizers.</strong> &ldquo;don&rsquo;t&rdquo; becomes [DON, T] in Owl&rsquo;s Engram Mind Eye and [don&rsquo;t] in <code>biomesh.js</code>. The engram layer follows <code>biomesh.js</code>; the Lexicon&rsquo;s tokenizer is a third, pinned one.</li>
+                <li><strong><code>verifyIntegrity</code>&rsquo;s scope</strong> (<a href="#working">chapter 3</a>). The Lexicon&rsquo;s verifier is a strict superset, claim L10.</li>
+                <li><strong>The value laws</strong> differ between the JavaScript and the Python; they are reported only, never compared.</li>
+            </ul>
+            <p>One thing already agrees: the survey found the order-2 rank coder&rsquo;s unprimed residuals (no codex prior) bit-identical in the two languages.</p>
+        </section>
+
+        <section class="chapter" id="vectors">
+            <div class="chapter-num">09</div>
+            <h2>Golden vectors</h2>
+            <p class="chapter-intro">A golden vector is a fixed input together with its exact expected output, which every implementation must reproduce. SHD-CCP already has a format for them. The Lexicon proposes six suites in it.</p>
+            <p><strong>The format.</strong> SHD-CCP&rsquo;s golden vectors have two parts: a JSON envelope that validates against <code>schema.json</code> (suite, spec_version, rfc, status, description, generator, binary, cases), and a little-endian binary mirror: the magic <code>SHDGEV01</code>, a 32-bit field count F, a 32-bit record count N, then N&times;F 64-bit records. Values above 2<sup>53</sup> are strings in the JSON. The suites are regenerated byte for byte and CI fails on drift. Today they hold 2,366 cases:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>SHD-CCP suite</th><th>RFC</th><th>Status</th><th class="num">Cases</th></tr></thead>
+                <tbody>
+                    <tr><td><code>einstein_tiles_forms_0_15</code> (the RFC 01 layout)</td><td>01</td><td>draft</td><td class="num">66</td></tr>
+                    <tr><td><code>garner_crt_881_883_887</code></td><td>02</td><td>normative</td><td class="num">2,000</td></tr>
+                    <tr><td><code>gram_tqf_collinearity</code></td><td>02</td><td>normative</td><td class="num">300</td></tr>
+                    <tr><td><code>hurwitz_primes_and_s5</code>, <code>memory_erasure_cases</code>, <code>handshake_alignment</code></td><td>02, 04, 06</td><td>pending</td><td class="num">0</td></tr>
+                </tbody>
+            </table></div>
+            <p><strong>Two constraints.</strong> Every suite that is not pending needs a binary object, so only fixed-width records fit SHDGEV01. Variable-length data (tokenizer outputs, address words of varying length, whole shards, exact points with hundreds of bits) cannot go in the binary mirror. It stays in the Lexicon&rsquo;s own golden JSON, as Engram Mind&rsquo;s Eye keeps its E1 corpus, and enters SHDGEV01 only as the four 64-bit limbs of a SHA-256.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Proposed suite (draft, 0.1.0)</th><th>RFC</th><th>Binary fields</th><th>What it pins</th></tr></thead>
+                <tbody>
+                    <tr><td><code>lexicon_address_codec</code></td><td>03</td><td class="mono">len, id, q0..q3</td><td>A reduced norm-5 word: its 59-bit id (64-bit for lengths 26&ndash;27) and its integer quaternion</td></tr>
+                    <tr><td><code>blackwell_crystallize_compat</code></td><td>01</td><td class="mono">chunk_sha_0..3, js_word, py_word</td><td>A chunk&rsquo;s crystal as the JS codec writes it and as BioChain-AI&rsquo;s Python writes it, with at least 64 chunks whose crystal holds 0x80</td></tr>
+                    <tr><td><code>lps_x5q_reduction</code></td><td>03</td><td class="mono">q, id, a, b, c, d</td><td>A word&rsquo;s quaternion reduced to a projective 2&times;2 matrix mod q, for q &isin; {13, 17, 29}</td></tr>
+                    <tr><td><code>lexicon_h3_point_digest</code></td><td>03</td><td class="mono">id, depth, sha_0..3</td><td>SHA-256 of the canonical exact H&sup3; point; the full point in the JSON case</td></tr>
+                    <tr><td><code>lexicon_h2_point_digest</code></td><td>03</td><td class="mono">id, depth, sha_0..3</td><td>The same for the exact H&sup2; tree (t = 11/13)</td></tr>
+                    <tr><td><code>rfc6962_vectors</code></td><td>03</td><td class="mono">n, root_0..3</td><td>RFC 6962 roots of n synthetic leaves, n &isin; {1, 2, 3, 7, 84, 200, 1000, 1001}; the JSON adds proofs and the duplicate-last failing cases</td></tr>
+                </tbody>
+            </table></div>
+            <p>These suites are <strong>not generated yet</strong>. The Lexicon writes them in Phase 3, with its own generator (<code>reference/golden/make_shdgev_v1.py --check</code>), once claims L3, L7, L8 and L9 have code and pass. A test will validate every envelope against SHD-CCP&rsquo;s <code>schema.json</code>, read-only. The compatibility suite does not pick a winner for the 0x80 case; it documents the divergence so that every binding can test against it (<a href="../proposals/SHD-CCP-golden-vectors.md">the proposal</a>).</p>
+            <p><strong>Vectors the spikes already reproduced.</strong> Spike S4 reproduced the Certificate Transparency reference roots (9/9) and RFC 6962&rsquo;s worked proofs (7/7). Spike S7 produced a deterministic golden ATTEST/1 under RFC 6979&rsquo;s public test key (a known-answer vector, never a signing key): keyId <code>K-ba70de20e32549d49e6bd616</code>, verified in WebCrypto, node:crypto and Python, and through BioChain-AI&rsquo;s own <code>verifyAttestationAgainstContent</code>.</p>
+        </section>
+
+        <section class="chapter" id="proposals">
+            <div class="chapter-num">10</div>
+            <h2>The proposals</h2>
+            <p class="chapter-intro">Hyperbolic Lexicon reads SHD-CCP, BioChain-AI and Owl Academy, and never changes them. What it would like them to change is written down as proposals, to be sent after Phase 3, when they can carry measured numbers instead of estimates.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Document</th><th>For</th><th>In one line</th></tr></thead>
+                <tbody>
+                    <tr><td><a href="../proposals/README.md">README.md</a></td><td>all</td><td>These are proposals only; each cites the files and lines it rests on, from the read-only survey.</td></tr>
+                    <tr><td><a href="../proposals/SHD-CCP-RFC01-layout-census.md">SHD-CCP-RFC01-layout-census.md</a></td><td>SHD-CCP</td><td>Eight incompatible 64-bit layouts and every Form value claimed: settle RFC 01 against the Blackwell word, and carry kinds above the word.</td></tr>
+                    <tr><td><a href="../proposals/SHD-CCP-RFC03-exact-Qh-and-LPS.md">SHD-CCP-RFC03-exact-Qh-and-LPS.md</a></td><td>SHD-CCP</td><td>Name LPS p = 5 in RFC 03: our norm-5 tree is the tree X(5,&nbsp;q) is a quotient of; exact Q<sub>h</sub> on the wire; worked vertex counts and girths.</td></tr>
+                    <tr><td><a href="../proposals/SHD-CCP-Lemma15-note.md">SHD-CCP-Lemma15-note.md</a></td><td>SHD-CCP</td><td>Two structures called &ldquo;Merkle&rdquo;; the biochain rule is malleable; a Lemma 15 for RFC 6962 trees, and vectors for the pending <code>03_merkle_collision</code> suite.</td></tr>
+                    <tr><td><a href="../proposals/SHD-CCP-kernel-hyperbolic-address.md">SHD-CCP-kernel-hyperbolic-address.md</a>, <a href="../proposals/kernel_0xA_hyperbolic_address.json">kernel_0xA_hyperbolic_address.json</a>, <a href="../proposals/check_kernel.py">check_kernel.py</a></td><td>SHD-CCP</td><td>Kernel 0xA, the Hyperbolic Address Tile, at <code>[OPEN]</code>; it passes the Ontology&rsquo;s own lint and suites.</td></tr>
+                    <tr><td><a href="../proposals/SHD-CCP-golden-vectors.md">SHD-CCP-golden-vectors.md</a></td><td>SHD-CCP</td><td>SHDGEV01 suites for the address codec, the Blackwell compatibility case, the LPS reduction, exact points and RFC 6962 roots.</td></tr>
+                    <tr><td><a href="../proposals/BioChain-AI-language-chains.md">BioChain-AI-language-chains.md</a></td><td>BioChain-AI</td><td>Language pre-processing biochains: shards past the 60 KB lineage cap, typed records, a hardened verifier, two tiers for licences, and the <code>shdccp/3</code> decisions.</td></tr>
+                    <tr><td><a href="../proposals/Owl-Academy-notes.md">Owl-Academy-notes.md</a></td><td>Owl Academy</td><td>The always-true continuity check, a publish path that cannot succeed, HMAC certificates keyed by a public ID, <code>verifyIntegrity</code>&rsquo;s gaps, the tokenizer and hex mismatches, and an engram/2 key.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">What this page decides</span>
+                <p>Nothing. It sorts SHD-CCP&rsquo;s layers and fixes where the Lexicon meets them (D7, D8). Claims L1, L3 and L7&ndash;L10, which this page touches, are registered and undecided; they are decided by Phase 1&ndash;3 code on the instances fixed in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> (<a href="../index.html#ledger">ledger</a>). Whether SHD-CCP&rsquo;s maintainers adopt any proposal is outside what the preregistration decides.</p>
+            </div>
+            <div class="pager">
+                <a class="btn btn-ghost" href="analysis.html">&larr; What We Have Made, Measured</a>
+                <a class="btn btn-ghost" href="architecture.html">A Hyperbolic BERT Front End in H&sup2; and H&sup3; &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 2 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a></footer>
+<script src="../../Engram%20Minds%20Eye/biochain_v1.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const input = $('hl-word'), sum = $('hl-sum'), out = $('hl-layouts'), txt = $('hl-text');
+    if (!input || !sum || !out) return;
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const good = s => `<span style="color:var(--emerald)">${s}</span>`, bad = s => `<span style="color:var(--rose)">${s}</span>`;
+    if (typeof BigInt !== 'function') { sum.innerHTML = bad('This browser has no BigInt, so the lab cannot run.'); return; }
+
+    // ---- the eight readers: plain BigInt, nothing else ----
+    const bits = (w, hi, lo) => (w >> BigInt(lo)) & ((1n << BigInt(hi - lo + 1)) - 1n);
+    const num = (w, hi, lo) => Number(bits(w, hi, lo));
+    const hexN = (v, n) => v.toString(16).toUpperCase().padStart(n, '0');
+    const popc = v => { let c = 0; while (v) { c += Number(v & 1n); v >>= 1n; } return c; };
+    const s8 = v => (v >= 128 ? v - 256 : v);
+    const OWL = ['0D point', 'Platonic solid', 'Platonic solid', 'Platonic solid', 'Platonic solid', 'Platonic solid', '4D hypercube', '8D E8 lattice',
+        'HALT gate', 'SEED gate, or a data crystal', 'ROT gate', 'XFOLD gate', 'MIRROR gate', 'SPLIT gate', 'MERGE gate', 'LINK gate'];
+    const CODEX = ['HALT', 'GEAR', 'PRIME'];
+    const DOMAIN = ['Telemetry_Signals', 'Geometric_Pointers', 'Codex_Semantics', 'Memory_Offload'];
+    const REG = { 0: 'Base Route', 1: 'Hurwitz Core', 3: 'Exact Scalar', 4: 'Voxel Cube', 6: 'Stella Octangula', 8: 'Holographic Triplet, Geodesic Icosahedron', 12: '12-Engine Parity' };
+    const GEN = ['Tetrahedron', 'Cube', 'Octahedron', 'Icosahedron', 'Dodecahedron', 'Truncated Tetrahedron', 'Cuboctahedron', 'Truncated Icosahedron',
+        'Rhombicuboctahedron', 'Icosidodecahedron', 'Truncated Cuboctahedron', 'Snub Cube', 'Snub Dodecahedron', 'Cosmohedron', 'Undefined Form', 'Undefined Form'];
+    const RFC = f => (f <= 2 ? 'standard scaling' : f === 3 ? 'high-precision lossless correction' : f === 5 ? 'geometric pointer / codex amplification' : 'per-Form layout not yet specified');
+    const SLAB = f => (f >= 12 ? 'toroidal mode' : f === 3 ? 'TTP mode A' : f >= 4 ? 'TTP mode B' : 'cymatic cascade');
+    const STRUCT = ['System I', 'System II', 'System III', 'residual R'];
+    const ORBITAL_TAKEN = [0, 1, 2, 3, 4, 6, 12];
+    function f16(h) {   // text_to_codex.py f16_f, as written there
+        const sign = h & 0x8000 ? -1 : 1, e = ((h >> 10) & 0x1F) - 15, m = h & 0x3FF;
+        if (((h >> 10) & 0x1F) === 0) return sign * Math.pow(2, -14) * (m / 1024);
+        return sign * Math.pow(2, e) * (1 + m / 1024);
+    }
+    function e4m3(b) {  // text_to_codex.py e4m3_f32, as written there
+        const sign = (b >> 7) & 1 ? -1 : 1, e = ((b >> 3) & 0xF) - 7, m = b & 0x7;
+        if (((b >> 3) & 0xF) === 0) return sign * Math.pow(2, -6) * (m / 8);
+        return sign * Math.pow(2, e) * (1 + m / 8);
+    }
+    const fmt = x => String(+x.toPrecision(5));
+    const LAYOUTS = [
+        { name: 'RFC 01 draft tile', form: [39, 36],
+          seg: [['halo', 'South Halo', 63, 56], ['pay', 'payload', 55, 40], ['form', 'Form', 39, 36], ['pay', 'payload', 35, 0]],
+          read: w => [['South Halo', num(w, 63, 56)], ['Form ID', num(w, 39, 36)], ['payload (52 bits)', hexN(w & 0x00FFFF0FFFFFFFFFn, 16)]],
+          mean: f => 'RFC 01: ' + RFC(f) },
+        { name: 'Kernel Ontology header', form: [63, 60],
+          seg: [['form', 'Form', 63, 60], ['pay', 'per-kernel Bit_Allocation', 59, 0]],
+          read: w => [['Form_ID_Header', num(w, 63, 60)], ['bits 59..0', hexN(bits(w, 59, 0), 15)]],
+          mean: f => DOMAIN[f >> 2] + (REG[f] ? '; registry: ' + REG[f] : '') },
+        { name: 'Blackwell word', form: [63, 60],
+          seg: [['form', 'form', 63, 60], ['par', 'P', 59, 59], ['fld', 'spin', 58, 56], ['core', 'quat32', 55, 24], ['fld', 'payload16', 23, 8], ['fld', 'freq', 7, 3], ['fld', 'amp', 2, 0]],
+          read: w => {
+              const q = num(w, 55, 24), codes = [24, 16, 8, 0].map(s => s8((q >>> s) & 255));
+              return [['form', num(w, 63, 60)], ['parity', num(w, 59, 59) + (popc(w) % 2 === 0 ? ' ' + good('even, ok') : ' ' + bad('odd, fails'))], ['spin', num(w, 58, 56)],
+                  ['quat32', hexN(BigInt(q), 8) + ' = codes [' + codes.join(', ') + ']'], ['payload16', num(w, 23, 8)], ['freq', num(w, 7, 3)], ['amp', num(w, 2, 0)]];
+          },
+          mean: f => 'Owl: ' + OWL[f] + (f <= 2 ? ' (in a codex stream: ' + CODEX[f] + ')' : '') },
+        { name: 'genesis.js BLACKWELL_SCHEMA', form: [63, 60],
+          seg: [['form', 'ST', 63, 60], ['par', 'PT', 59, 59], ['fld', 'PL', 58, 48], ['core', 'CO', 47, 16], ['fld', 'PL', 15, 11], ['fld', 'FR', 10, 6], ['fld', 'SP', 5, 3], ['fld', 'AM', 2, 0]],
+          read: w => [['ST', num(w, 63, 60)], ['PT', num(w, 59, 59)], ['PL 58..48', num(w, 58, 48)], ['CO', hexN(bits(w, 47, 16), 8)], ['PL 15..11', num(w, 15, 11)], ['FR', num(w, 10, 6)], ['SP', num(w, 5, 3)], ['AM', num(w, 2, 0)]],
+          mean: f => 'genesis.js: ' + GEN[f] },
+        { name: 'Explainer Z-slabs', form: [47, 44],
+          seg: [['fld', 'slab 3', 63, 48], ['form', 'Form', 47, 44], ['fld', 'slab 2', 43, 32], ['fld', 'slab 1', 31, 16], ['fld', 'slab 0', 15, 0]],
+          read: w => [['slab 3', hexN(bits(w, 63, 48), 4)], ['slab 2', hexN(bits(w, 47, 32), 4)], ['Form 47..44', num(w, 47, 44)], ['slab 1', hexN(bits(w, 31, 16), 4)], ['slab 0', hexN(bits(w, 15, 0), 4)]],
+          mean: f => 'the explainer\u2019s ' + SLAB(f) },
+        { name: 'Geometric Calculator V2', form: null,
+          seg: [['halo', 'Halo', 63, 56], ['gate', 'Gate', 55, 48], ['fld', 'Ctrl', 47, 32], ['core', 'Core', 31, 0]],
+          read: w => [['Halo', num(w, 63, 56)], ['Gate', num(w, 55, 48)], ['Ctrl', hexN(bits(w, 47, 32), 4)], ['Core', hexN(bits(w, 31, 0), 8)]],
+          mean: () => 'no Form field' },
+        { name: 'Orbital packTile', form: [43, 40],
+          seg: [['fld', 'step', 63, 61], ['fld', 'wheel', 60, 58], ['fld', 'st', 57, 56], ['gate', 'gate', 55, 48], ['fld', 'mux', 47, 44], ['form', 'form', 43, 40], ['fld', 'slot', 39, 36], ['fld', 'scale', 35, 32], ['core', 'core', 31, 0]],
+          read: w => [['step', num(w, 63, 61) + 1], ['wheel', num(w, 60, 58)], ['struct', num(w, 57, 56) + ' (' + STRUCT[num(w, 57, 56)] + ')'], ['gate', num(w, 55, 48)], ['mux', num(w, 47, 44)], ['form', num(w, 43, 40)], ['slot', num(w, 39, 36)], ['scale', num(w, 35, 32)], ['core', hexN(bits(w, 31, 0), 8)]],
+          mean: f => (f === 5 ? 'Engram: an engram/1 half (its D3)' : ORBITAL_TAKEN.includes(f) ? 'taken in Ebayednoob (Engram\u2019s D3 lists 0\u20134, 6, 12)' : 'not among the forms Engram\u2019s D3 lists as taken') },
+        { name: 'Owl text_to_codex', form: [39, 36],
+          seg: [['fld', 'FP16 scaler', 63, 48], ['fld', 'freq', 47, 43], ['fld', 'spin', 42, 40], ['form', 'form', 39, 36], ['fld', 'amp', 35, 33], ['par', 'P', 32, 32], ['core', 'W', 31, 24], ['core', 'X', 23, 16], ['core', 'Y', 15, 8], ['core', 'Z', 7, 0]],
+          read: w => {
+              const by = [24, 16, 8, 0].map(s => num(w, s + 7, s)), p = popc(BigInt(by[0] ^ by[1] ^ by[2] ^ by[3])) & 1;
+              return [['scaler', fmt(f16(num(w, 63, 48)))], ['freq', num(w, 47, 43)], ['spin', num(w, 42, 40)], ['form', num(w, 39, 36)], ['amp', num(w, 35, 33)],
+                  ['parity', num(w, 32, 32) + ' ' + (num(w, 32, 32) === p ? good('ok') : bad('fails'))], ['W X Y Z (FP8)', by.map(b => fmt(e4m3(b))).join(', ')]];
+          },
+          mean: () => 'a packet of Owl\u2019s Ontological Codex' }
+    ];
+    const COLOR = { form: '#f5c542', par: '#fb7185', halo: '#c084fc', gate: '#22d3ee', core: '#34d399', pay: '#94a3b8', fld: '#60a5fa' };
+    const CHECK = '9841D88D8B003CEA';
+
+    function parse(s) {
+        const t = String(s).trim().replace(/^0x/i, '').replace(/[\s_]/g, '');
+        if (!t) return { err: 'Type a 64-bit word in hexadecimal: up to 16 digits.' };
+        if (!/^[0-9a-fA-F]+$/.test(t)) return { err: 'Use hexadecimal digits only (0&ndash;9, A&ndash;F); spaces, underscores and a leading 0x are ignored.' };
+        if (t.length > 16) return { err: `That is ${t.length} hex digits; a 64-bit word has at most 16.` };
+        return { w: BigInt('0x' + t), hex: t.toUpperCase().padStart(16, '0') };
+    }
+    function pythonPack(w) {   // what BioChain-AI's kernel writes: each 0x80 quaternion byte as 0x81, then parity again
+        let q = bits(w, 55, 24), nq = 0n;
+        for (const s of [24n, 16n, 8n, 0n]) { let b = (q >> s) & 0xFFn; if (b === 0x80n) b = 0x81n; nq |= b << s; }
+        let x = (w & ~(0xFFFFFFFFn << 24n) & ((1n << 64n) - 1n)) | (nq << 24n);
+        x &= ~(1n << 59n);
+        x |= BigInt(popc(x) & 1) << 59n;
+        return hexN(x, 16);
+    }
+    function strip(l, w) {
+        return '<div class="bits" style="margin:6px 0">' + l.seg.map(([k, label, hi, lo]) => {
+            const v = num(w, hi, lo), width = hi - lo + 1;
+            const text = k === 'form' ? `${label} ${v}` : label;
+            return `<span style="flex:${Math.max(width, 1.6)};--c:${COLOR[k]}" title="${esc(label)}, bits ${hi}..${lo} = ${v}">${esc(text)}</span>`;
+        }).join('') + '</div>';
+    }
+    function render() {
+        const p = parse(input.value);
+        if (p.err) { sum.innerHTML = bad(p.err); out.innerHTML = ''; return; }
+        const w = p.w, rows = LAYOUTS.map(l => ({ l, f: l.form ? num(w, l.form[0], l.form[1]) : null }));
+        const forms = rows.filter(r => r.f !== null).map(r => r.f), distinct = new Set(forms).size;
+        let s = `<span class="k">word</span> ${p.hex}` + (p.hex === CHECK ? ' &nbsp;' + good('the check word: crystallize(bytes 0..59)') : '') +
+            `<br><span class="k">Form by layout</span> ` + rows.map((r, i) => `${i + 1}:${r.f === null ? '&mdash;' : r.f}`).join(' &nbsp;') +
+            `<br><span class="k">different Form values</span> ${distinct === 1 ? good('1: every reader agrees') : bad(distinct + ' from ' + forms.length + ' readers')}`;
+        const bw = popc(w) % 2 === 0;
+        s += `<br><span class="k">Blackwell parity</span> ${bw ? good('even, passes') : bad('odd, fails')}`;
+        if (num(w, 63, 60) === 9) {
+            const csum = num(w, 7, 3) * 8 + num(w, 2, 0);
+            s += `<br><span class="k">as a data crystal (form 9)</span> chunk length ${num(w, 23, 8)} bytes, byte-sum checksum ${csum}`;
+        }
+        const q = num(w, 55, 24);
+        if ([24, 16, 8, 0].some(sh => ((q >>> sh) & 255) === 0x80)) {
+            s += `<br><span class="k">0x80</span> ${bad('a quaternion byte is 0x80 (code &minus;128)')}: Owl&rsquo;s JavaScript keeps it; BioChain-AI&rsquo;s Python kernel would write <span class="mono">${pythonPack(w)}</span>`;
+        }
+        sum.innerHTML = s;
+        out.innerHTML = rows.map((r, i) => {
+            const l = r.l, tag = r.f === null ? '<span class="mark float">no Form</span>' : `<span class="mark here">Form ${r.f}</span>`;
+            return `<div class="card" style="margin:10px 0;padding:10px 12px">` +
+                `<div style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline"><strong>${i + 1} &middot; ${esc(l.name)}</strong>${tag}` +
+                `<span style="color:var(--muted);font-size:0.86rem">${esc(l.mean(r.f === null ? 0 : r.f))}</span></div>` +
+                strip(l, w) +
+                `<div class="word" style="font-size:0.8rem;color:#cbd5e1">` + l.read(w).map(([k, v]) => `<span style="color:var(--muted)">${esc(k)}</span> ${v}`).join(' &middot; ') + `</div></div>`;
+        }).join('');
+    }
+
+    // ---- presets and typing ----
+    const presets = document.querySelectorAll('#hl-presets [data-w]');
+    const mark = () => { const p = parse(input.value); presets.forEach(b => b.classList.toggle('on', !p.err && b.dataset.w === p.hex)); };
+    let timer = null;
+    input.addEventListener('input', () => { mark(); clearTimeout(timer); timer = setTimeout(() => { try { render(); } catch (e) { sum.innerHTML = bad('The lab stopped: ' + esc((e && e.message) || e)); } }, 120); });
+    presets.forEach(b => b.addEventListener('click', () => { input.value = b.dataset.w; mark(); render(); }));
+
+    // ---- crystallize, with Engram's verbatim pin of Owl's codec (optional) ----
+    const B = window.BiochainV1, make = $('hl-make'), cbtn = $('hl-cryst');
+    let note = '';
+    function crystal(bytes, label) {
+        input.value = B.crystallizeBytes(bytes);
+        mark(); render();
+        sum.innerHTML += `<br><span class="k">made by</span> biochain_v1.js crystallize of ${label}`;
+    }
+    if (B && typeof B.crystallizeBytes === 'function' && make) {
+        cbtn.addEventListener('click', () => {
+            let all;
+            try { all = Array.from(new TextEncoder().encode(txt.value || '')); } catch (e) { all = []; }
+            if (!all.length) { sum.innerHTML = bad('Type some text to crystallize.'); out.innerHTML = ''; return; }
+            const chunk = all.slice(0, B.CHUNK || 720);
+            crystal(chunk, chunk.length === all.length ? `your text (${all.length} UTF-8 bytes, one chunk)` : `the first ${chunk.length} of your text&rsquo;s ${all.length} UTF-8 bytes (its first chunk)`);
+        });
+        make.querySelectorAll('[data-bytes]').forEach(b => b.addEventListener('click', () => {
+            const spec = b.dataset.bytes;
+            const bytes = spec === 'seq60' ? Array.from({ length: 60 }, (_, i) => i) : spec.split(',').map(Number);
+            crystal(bytes, spec === 'seq60' ? 'the bytes 0, 1, &hellip;, 59' : 'the bytes ' + bytes.join(', '));
+        }));
+    } else if (make) {
+        make.querySelectorAll('button').forEach(b => { b.disabled = true; });
+        if (txt) txt.disabled = true;
+        note = '<br><span class="k">crystallize</span> biochain_v1.js did not load, so the Crystallize row is off; the decoder works without it.';
+    }
+    try { render(); sum.innerHTML += note; } catch (e) { sum.innerHTML = bad('The lab stopped: ' + esc((e && e.message) || e)); }
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

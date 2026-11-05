@@ -132,7 +132,10 @@
           refs: 'Phase 6 · tests/bridges.cjs', explainer: 'explainers/bridges.html', href: 'mind-eye.html#p-bridge' },
         { id: 'site', col: 3, row: 9, kind: 'artifact', status: 'done', label: 'Integration', sub: 'Phase 8 · menus · catalog · cross-links',
           desc: 'Built in Phase 8: the system reached from the rest of the site, through its card in the site catalog, the Hyperbolic Oracles and Geometric Calculator menus, and the Hyperbolic Oracles hub, whose map shows it among the systems built on those cores. tests/links.cjs checks every link and way in (31 checks, three of them controls). tests/all.cjs runs every Node check of the system and of the cores it loads in one command, 15 of 15.',
-          refs: 'Phase 8 · tests/links.cjs · tests/all.cjs', explainer: 'explainers/integration.html' }
+          refs: 'Phase 8 · tests/links.cjs · tests/all.cjs', explainer: 'explainers/integration.html' },
+        { id: 'lexicon', col: 3, row: 10, kind: 'existing', status: 'design', label: 'Hyperbolic Lexicon', sub: 'built on this system · Phase 0',
+          desc: 'A staged hyperbolic BERT front end built on this system and Hyperbolic Oracles. It keeps engram/1 only as a compatibility checksum, grows language data as shdccp/2 shards with the pinned codec (biochain_v1.js), which import here through importBiochain, and offers its exact norm-5 address as the engram/2 candidate, to be registered here by amendment.',
+          refs: 'Pages/Hyperbolic Lexicon', href: '../Hyperbolic%20Lexicon/index.html' }
     ];
     const EDGES = [
         ['owlEye', 'keym'], ['owlEye', 'L3'], ['owlEye', 'golden'], ['owlEye', 'bridges'], ['owlCodec', 'L5'], ['owl3d', 'L6'], ['owl3d', 'bridges'],
@@ -145,7 +148,8 @@
         ['L0', 'golden'], ['golden', 'prereg'], ['spikes', 'prereg'], ['golden', 'ref'], ['prereg', 'ref'], ['ocore', 'ref'],
         ['ref', 'jscore'], ['jscore', 'page2d'], ['jscore', 'page3d'], ['L1', 'page2d'], ['L3', 'page2d'], ['L4', 'page2d'], ['L5', 'page2d'],
         ['L4', 'page3d'], ['L6', 'page3d'], ['L7', 'page3d'], ['L2', 'bridges'],
-        ['page2d', 'site'], ['page3d', 'site'], ['bridges', 'site'], ['engine', 'site'], ['hps', 'site']
+        ['page2d', 'site'], ['page3d', 'site'], ['bridges', 'site'], ['engine', 'site'], ['hps', 'site'],
+        ['L0', 'lexicon'], ['jscore', 'lexicon'], ['bridges', 'lexicon']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);

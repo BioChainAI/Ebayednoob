@@ -142,7 +142,10 @@
         // ---- used by: systems elsewhere on the site built on these cores (used: true draws its band)
         { id: 'engram', used: true, col: 3, row: 15.5, kind: 'artifact', status: 'done', label: 'Engram Mind’s Eye', sub: 'another system · 2D and 3D pages',
           desc: 'Owl Academy’s engram memory and mind’s eye, rebuilt as its own system on these cores, which it loads unchanged: hyperbolic_core.js for the norm-5 tree (its reduced words are the exact addresses) and the zero-point clock, decoder3d.js for the memory tree in H³, twin3d.js for the exact quaternion product of the coupler’s mirror law (B = q₂q₁ never changes), and fence.js for the 0.7 fence and the ln 2 four-point guard that watch its registers. It has its own Python reference, preregistration, claims ledger and browser parity check.',
-          refs: 'Pages/Engram Minds Eye', href: '../Engram%20Minds%20Eye/index.html' }
+          refs: 'Pages/Engram Minds Eye', href: '../Engram%20Minds%20Eye/index.html' },
+        { id: 'lexicon', used: true, col: 3, row: 16.5, kind: 'artifact', status: 'design', label: 'Hyperbolic Lexicon', sub: 'another system · Phase 0 · analysis and claims',
+          desc: 'A staged hyperbolic BERT front end on these cores, loaded unchanged: hyperbolic_core.js for the norm-5 tree (its reduced words become exact, training-free addresses of WordNet concepts; the generators are the LPS p = 5 set) and the shared Rng; decoder3d.js for exact placement and decoding in H³ (TreeEmbedding3D, nearestExact, certifyWord); fence.js for dyadic snapping of learned tables. Phase 0 holds the analysis, seven measurement spikes and eleven preregistered claims; no code tests a claim yet.',
+          refs: 'Pages/Hyperbolic Lexicon', href: '../Hyperbolic%20Lexicon/index.html' }
     ];
     const EDGES = [
         ['paper', 'clock'], ['paper', 'pump'], ['paper', 'ghost'], ['paper', 'klein'], ['paper', 'rapidity'], ['paper', 'tracks'], ['paper', 'limits'],
@@ -159,7 +162,8 @@
         ['coupler', 'twin'], ['channels', 'twin'], ['memory', 'twin'], ['decoder3d', 'twin'], ['twin', 'sim3d'], ['coupler', 'sim3d'], ['jscore', 'sim3d'],
         ['ghost', 'fencecore'], ['fencelemmas', 'fencecore'], ['fencelemmas', 'guard'], ['fencecore', 'fencecode'], ['guard', 'fencecode'],
         ['decoder3d', 'fencecode'], ['jscore', 'fencecode'], ['fencecode', 'fencepage'], ['fencecode', 'fence3d'], ['twin', 'fence3d'],
-        ['jscore', 'engram'], ['decoder3d', 'engram'], ['twin', 'engram'], ['coupler', 'engram'], ['fencecode', 'engram'], ['guard', 'engram']
+        ['jscore', 'engram'], ['decoder3d', 'engram'], ['twin', 'engram'], ['coupler', 'engram'], ['fencecode', 'engram'], ['guard', 'engram'],
+        ['jscore', 'lexicon'], ['decoder3d', 'lexicon'], ['fencecode', 'lexicon']
     ];
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
     const ins = id => EDGES.filter(e => e[1] === id).map(e => byId[e[0]]);

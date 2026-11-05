@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Compute Tracks - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 6 of Hyperbolic Lexicon, Phase 0: the browser, CPU Python and GPU Python tracks; what each builds and runs; the seven rules that keep their results comparable; where each stage runs while some hosts are blocked and there is no GPU; and receipts classed reproducible or attested.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 6 &middot; Phase 0</div>
+    <h1>Three Compute Tracks</h1>
+    <p class="lede">One design runs in three places. The browser runs every exact stage and re-checks the other two. A CPU Python track holds the reference, the static-embedding trainer and small models. A GPU Python track, on your hardware, trains the BERT-sized models. Seven rules keep their numbers comparable, and every result comes back as a receipt that can be checked here.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#why">Why three tracks</a>
+        <a class="btn btn-ghost" href="#comparable">Seven rules</a>
+        <a class="btn btn-ghost" href="#where-runs">Where each stage runs</a>
+        <a class="btn btn-ghost" href="#receipts">Receipts</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">here: 4 CPU cores &middot; 15 GB &middot; <b>no GPU</b></span>
+        <span class="stat">browser heads: <b>~10&ndash;300</b> parameters</span>
+        <span class="stat">comparability rules: <b>7</b></span>
+        <span class="stat">receipts: <b>reproducible</b> or <b>attested</b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#why">2. Why three tracks</a></li>
+            <li><a href="#browser">3. The browser track</a></li>
+            <li><a href="#cpu">4. The CPU Python track</a></li>
+            <li><a href="#gpu">5. The GPU Python track</a></li>
+            <li><a href="#comparable">6. Seven rules for comparable results</a></li>
+            <li><a href="#where-runs">7. Where each stage runs</a></li>
+            <li><a href="#receipts">8. Receipts</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#why">Why three tracks</a></li><li><a href="#browser">The browser track</a></li>
+            <li><a href="#cpu">The CPU Python track</a></li><li><a href="#gpu">The GPU Python track</a></li><li><a href="#comparable">Seven rules for comparable results</a></li>
+            <li><a href="#where-runs">Where each stage runs</a></li><li><a href="#receipts">Receipts</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The focus is the Python reference, the first thing the CPU track builds (Phase 1). It is the authority for every exact stage: the browser core must match it line for line, and a CPU twin re-evaluates what the GPU track sends back.</p>
+            <div data-hl-map="focus" data-node="ref"></div>
+            <p>Phase 0 is analysis, measurement spikes and a preregistration. No model code exists yet, on any track. This page says what each track will build, in which phase, and on what machine. Its sources are the read-only survey of four repositories and the literature (with its adversarial cross-check, whose corrections win), the design spec, the two Phase 0 pins (WordNet 3.0 and UD English EWT) and the existing systems&rsquo; own pages. Run times are planning figures, marked as estimates. The spikes S1&ndash;S7 are still running, and nothing here quotes them (see <a href="evidence.html#spikes">Explainer 8</a>).</p>
+            <div class="callout plain"><span class="label">How to read the marks</span>
+                <p><span class="mark here">here</span> runs in this container: 4 CPU cores, 15 GB RAM, no GPU, with PyPI and GitHub raw reachable. <span class="mark net">net</span> needs a host that is blocked here. <span class="mark gpu">gpu</span> needs a GPU, on your hardware or in the cloud. <span class="mark exact">exact</span> means integers, rationals or bytes, identical in every engine. <span class="mark float">float</span> means floating point, rounded at every step.</p>
+                <p>Numbers from the literature carry the survey&rsquo;s grade. <span class="tag t-COMPUTED">verified</span>: read from the paper&rsquo;s own page or its official repository. <span class="tag t-HEURISTIC">likely</span>: from a search snippet of the primary source, which the survey could not open because arxiv.org and aclanthology.org are blocked here. <span class="tag t-OPEN">secondary</span>: from someone else&rsquo;s summary. <span class="tag t-DESIGN">estimate</span> marks a planning cost, not a measurement.</p>
+            </div>
+            <dl class="gloss">
+                <dt>Track</dt><dd>One place where code runs: the browser (JavaScript), the CPU (Python on this machine) or the GPU (Python on a machine with a graphics processor).</dd>
+                <dt>Authority</dt><dd>The implementation whose output decides a claim. For every exact stage it is the Python reference; the others must reproduce it. One exception: for compatibility with Owl Academy and BioChain-AI, their own JavaScript is the authority (claim L8).</dd>
+                <dt>Trace line, parity</dt><dd>A trace line is one recorded value, such as a token id, a rank list or a hash. Two implementations are at parity when every trace line matches byte for byte.</dd>
+                <dt>float64</dt><dd>64-bit floating point. Each operation rounds, so two engines, or two orders of the same sum, can disagree in the last bits.</dd>
+                <dt>Hyperboloid</dt><dd>The sheet x<sub>0</sub>&sup2; &minus; x<sub>1</sub>&sup2; &minus; &hellip; &minus; x<sub>d</sub>&sup2; = 1 with x<sub>0</sub> &gt; 0, which holds hyperbolic space in numbers (the Lorentz model). The Lorentz inner product of two points fixes their distance, so ranking by it ranks by distance.</dd>
+                <dt>MAP</dt><dd>Mean average precision. For each query node, rank every other node by distance and score how high its true neighbours come. MAP is the mean over queries; 1.0 means the true neighbours always rank first.</dd>
+                <dt>FLOP</dt><dd>One floating-point operation. The spec estimates training cost as about 6&middot;N&middot;T FLOPs for N parameters and T training tokens.</dd>
+            </dl>
+        </section>
+
+        <section class="chapter" id="why">
+            <div class="chapter-num">02</div>
+            <h2>Why three tracks</h2>
+            <p class="chapter-intro">Two reasons. To compare what exactness buys against learned float models, at matched budgets. And to keep every result re-checkable in a browser, whoever ran it and wherever.</p>
+            <div class="pipeline">
+                <div class="exact"><b>Browser &middot; exact</b><span>Normaliser, WordPiece, addresses, exact points and ranking, shards and proofs. Re-evaluates what the other tracks produce.</span></div>
+                <div class="float"><b>CPU Python &middot; reference</b><span>The authority for every exact stage. Float64 static embeddings. MLMs of 1&ndash;10M parameters in Phase 6.</span></div>
+                <div class="later"><b>GPU Python &middot; scale</b><span>BERT-mini and BERT-small, BabyLM strict, GLUE, HiT, an exploratory HyperCore arm. Phase 7, on your hardware.</span></div>
+                <div class="exact"><b>Back in the browser</b><span>Every result returns as an LBENCH/1 receipt. Snapped tables and heads are re-ranked exactly.</span></div>
+            </div>
+
+            <h3>What exactness buys, and what it costs</h3>
+            <p>This system bets on representation and certification, not on optimisation. Exact arithmetic is meant to give addresses that decode back without error, rank lists identical in Python, Node and Chromium, and metrics equal as exact fractions; claims L3 and L4 test this. Floats cannot promise it. Engram Mind&rsquo;s Eye&rsquo;s <a href="../../Engram%20Minds%20Eye/explainers/evidence.html#spike-b">spike B</a> found that float placement in H&sup3; decodes cleanly to depth 12 (50/50) and fails from depth 14 (36/50 at 14, 0/50 at 18). A planning check found that float64 ranking inverts straight paths at depth 11&ndash;12; spike S1 measures this properly.</p>
+            <p>Exactness has its own price. The survey measured exact H&sup3; points at depth 28 with numerators of about 138 bits and denominators of about 79. A planning check found the exact H&sup2; tree costs 1.5&ndash;2.4 times as many bits. Exactness moves Sala et al.&rsquo;s precision problem into BigInt arithmetic. It does not remove it (<a href="analysis.html#precision">Explainer 1</a>).</p>
+            <p>Learned float models are the other side. A Lorentz table trained in float64, or a BERT that takes in the addresses, may beat the exact tree or lose to it. The only way to know is to measure both with the same tokenizer, data, seeds and metric code, at matched parameters, dimension, bits or evaluations. No single machine here can run all of that; the <a href="#comparable">seven rules</a> let three machines act as one experiment.</p>
+            <div class="callout limit"><span class="label">The honest prior</span>
+                <p>Hyperbolic geometry clearly helps on explicit hierarchies, such as WordNet at low dimension. On general NLP it helps modestly or not at all, and some of the reported gains are unchecked. HELM&rsquo;s authors report gains of up to 4% for fully hyperbolic models at about a billion parameters <span class="tag t-HEURISTIC">likely</span>: its repository states no percentage, and the figure rests on the paper&rsquo;s abstract, which the cross-check did not fetch. The Hyperbolic Pre-Trained Language Model claims gains on GLUE, SuperGLUE and extractive QA tasks, but the survey could not see its numbers <span class="tag t-HEURISTIC">likely</span>.</p>
+                <p>Hyperbolic Oracles&rsquo; own claim C1, &ldquo;hyperbolic beats flat&rdquo;, was <a href="../../Hyperbolic%20Oracles/explainers/proofs-and-results.html#results">refuted</a>: 0 supported, 12 refuted and 1 inconclusive of 13 cells. On B4, hyper3 scored 0.325 against flat3&rsquo;s 0.334. So every hyperbolic arm on every track has a matched Euclidean control, and the encoder claims planned for Phases 6 and 7 are expected to come out small or null.</p>
+            </div>
+
+            <h3>Re-checkable by anyone</h3>
+            <p>The browser cannot train a model. It can do something that matters more for trust: recompute. Every exact stage runs in plain JavaScript, on the cores of Hyperbolic Oracles and the orbital core, loaded unchanged. Engram Mind&rsquo;s Eye showed the method: its browser core matches its Python reference on 849 of 849 parity lines, and the check <a href="../../Engram%20Minds%20Eye/explainers/browser-core.html">runs in the page</a>. The Lexicon goes one step further: tables and heads trained on the CPU or GPU are snapped to exact numbers and re-evaluated exactly in the browser. To trust a score, a reader need not trust the machine that trained the table.</p>
+        </section>
+
+        <section class="chapter" id="browser">
+            <div class="chapter-num">03</div>
+            <h2>The browser track</h2>
+            <p class="chapter-intro">JavaScript only, with no CDN. Here it runs in Node 22.23.4 and in headless Chromium 153 (Chrome for Testing, driven by Playwright 1.63 from <code>/opt/pw-browsers/chromium</code>); elsewhere, in any browser. Its core, <code>lexicon_core.js</code>, arrives in Phase 2.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Job</th><th>What it does</th><th>Kind</th><th>Claim</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Normaliser N_B</strong></td><td>BERT-uncased rules on pinned Unicode 15.1 tables, never the runtime&rsquo;s own functions. It fails closed: a code point unassigned in 15.1 turns its word into <code>[UNK]</code> and the offset is logged (<a href="architecture.html#normalise">stage A</a>).</td><td><span class="mark exact">exact</span></td><td>L1</td></tr>
+                    <tr><td><strong>WordPiece</strong></td><td>Inference from a pinned vocabulary JSON. WordPiece splits each word, left to right, into the longest pieces in the vocabulary; pieces after the first carry a <code>##</code> prefix. V0 &ldquo;lex0&rdquo; (8,192 entries) decides L1; V1, bert-base-uncased (30,522), is a second cell once its file is here (<a href="architecture.html#tokenize">stage B</a>).</td><td><span class="mark exact">exact</span></td><td>L1</td></tr>
+                    <tr><td><strong>Address tables and id codec</strong></td><td>A word of the norm-5 tree for every WordNet noun synset and vocabulary token, and a bijective id: 59 bits for words of up to 25 letters, 64 bits up to 27 (<a href="architecture.html#address">stage D</a>).</td><td><span class="mark exact">exact</span></td><td>L3</td></tr>
+                    <tr><td><strong>Exact placement</strong></td><td>Exact rational points of those words in H&sup3; (t = 3/4) and H&sup2; (t = 11/13) (<a href="architecture.html#place">stage E</a>).</td><td><span class="mark exact">exact</span></td><td>L3</td></tr>
+                    <tr><td><strong>Exact ranking and metrics</strong></td><td>Candidates sorted by the exact Lorentz inner product; MAP and mean rank as exact fractions, ties counted pessimistically. Mammals live in the page; noun samples in Node (<a href="architecture.html#rank">ranking</a>).</td><td><span class="mark exact">exact</span></td><td>L4, L5</td></tr>
+                    <tr><td><strong>Shards</strong></td><td>The synchronous shard grower, and the hardened verifier with ECDSA signatures checked through WebCrypto (<a href="biochains.html#records">Explainer 4</a>).</td><td><span class="mark exact">exact</span></td><td>L8, L10, L11</td></tr>
+                    <tr><td><strong>Manifests and the weave</strong></td><td>RFC 6962 manifests with their inclusion and consistency proofs, and the exact norm-5 weave (<a href="biochains.html#manifest">manifest</a>, <a href="biochains.html#weave">weave</a>).</td><td><span class="mark exact">exact</span></td><td>L9</td></tr>
+                    <tr><td><strong>The X(5,&nbsp;q) walk</strong></td><td>Walking a word through the LPS graph modulo q (<a href="shdccp.html#lps">Explainer 2</a>).</td><td><span class="mark exact">exact</span></td><td>L7(b)</td></tr>
+                    <tr><td><strong>Exact re-evaluation</strong></td><td>Every snapped table the CPU or GPU track produces, re-ranked exactly.</td><td><span class="mark exact">exact</span></td><td>L4(c)</td></tr>
+                    <tr><td><strong>PolyStepH heads</strong></td><td>Gradient-free tuning of heads of about 10&ndash;300 parameters, such as the hierarchy head&rsquo;s weight, threshold and temperature.</td><td><span class="mark float">float</span></td><td>later</td></tr>
+                    <tr><td><strong>Distance attention</strong></td><td>Inference only, for tiny exported models of up to about 1M parameters: softmax weights of minus the distance, then a Lorentz centroid.</td><td><span class="mark float">float</span></td><td>demos</td></tr>
+                    <tr><td><strong>The 2D and 3D pages</strong></td><td>The exact H&sup2; tree in the Poincar&eacute; disk and the exact H&sup3; tree in the ball (<a href="architecture.html#pages">Phase 5</a>).</td><td>view</td><td>&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">What the browser does not do</span>
+                <p>It never trains embeddings or encoders. <a href="https://github.com/huggingface/transformers.js">transformers.js</a> runs BERT models in a browser through ONNX Runtime, but it does not train <span class="tag t-COMPUTED">verified</span>. A BERT-Tiny ONNX latency baseline comes later, as a vendored, hash-pinned copy, because huggingface.co and cdn.jsdelivr.net are blocked here.</p>
+            </div>
+
+            <h3>Why PolyStepH stays small</h3>
+            <p>PolyStepH is Hyperbolic Oracles&rsquo; gradient-free optimizer on products of hyperbolic and flat factors (<a href="analysis.html#learning">Explainer 1</a>). It needs no gradients, so it runs in plain JavaScript; the survey measured about 2,900 evaluations per second in Node. Its largest model so far had 48 parameters (B4, 2&times;10<sup>5</sup> evaluations), and there it did no better than flat. Gradient-free methods in the literature, such as <a href="https://github.com/princeton-nlp/MeZO">MeZO</a> <span class="tag t-COMPUTED">verified</span>, fine-tune pretrained models; none pretrains from scratch. So the browser tunes heads of tens to a few hundred parameters. A candidate claim for Phase 6, L15, would compare PolyStep with MeZO-style zeroth-order SGD on a fixed head at equal evaluations.</p>
+            <div class="callout deep"><span class="label">Why the Unicode tables are data</span>
+                <p>Node 22.23.4 ships Unicode 17.0 (ICU 78.3); Python 3.13.18&rsquo;s <code>unicodedata</code> is 15.1.0. Code points assigned after 15.1 are known to Node and not to Python, so the two can disagree on their category, case or decomposition. The normaliser therefore reads tables exported from <code>unicodedata</code> 15.1.0 and pinned by SHA-256, and its JavaScript never calls <code>String.prototype.normalize</code>, <code>toLowerCase</code> or <code>\p{}</code> classes. The platform&rsquo;s own functions are kept as a control that must fail L1. Spike S6 lists where the three runtimes disagree; this page does not quote it.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="cpu">
+            <div class="chapter-num">04</div>
+            <h2>The CPU Python track</h2>
+            <p class="chapter-intro">Python 3.13.18 on this machine: 4 cores, 15 GB RAM, 22 GB of free disk. It is the authority for every exact stage, and the place where float64 learning happens until a GPU is in play.</p>
+            <h3>What it builds</h3>
+            <ul>
+                <li><strong>The reference</strong> (Phase 1 on): normaliser, WordPiece and the V0 trainer, the WordNet reader, addresses and id codec, the exact H&sup2; tree, exact ranking, the flat arms, the LPS overlay; in Phase 3 the shard grower, manifests, records and attestation. Phase 1 decides L2, L3 (Python side), L5 and L7. See <a href="../reference/README.md">reference/README.md</a> for the modules and the authority rule.</li>
+                <li><strong>The static-embedding trainer</strong> (Phase 4): numpy float64, in the Lorentz model (Nickel &amp; Kiela&rsquo;s Riemannian SGD) and in flat space (plain SGD), at d &isin; {2, 3, 5, 10, 50}. A Riemannian step projects the gradient onto the hyperboloid&rsquo;s tangent plane and walks back onto the sheet with the exponential map. It decides L6 and L4(c) (<a href="alternatives.html#b1">baseline B1</a>).</li>
+                <li><strong>Tokenizer metrics</strong>: fertility, bytes per token, R&eacute;nyi efficiency and the <code>[UNK]</code> rate, used as gates, not goals (<a href="benchmarks.html#stage0">Stage 0</a>).</li>
+                <li><strong>Brown clusters</strong>, later.</li>
+                <li><strong>Small MLMs of 1&ndash;10M parameters</strong> (Phase 6, after the Stage-1 gate). A masked language model (MLM) is trained the way BERT is: hide some tokens and predict them.</li>
+            </ul>
+
+            <h3>What it has</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Package</th><th>Status here</th><th>Used for</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">numpy 2.5.3</td><td>present</td><td>the exact helpers, the LPS overlay, the static-embedding trainer</td></tr>
+                    <tr><td class="mono">cryptography 50.0.1</td><td>present</td><td>ECDSA P-256 verification for L10</td></tr>
+                    <tr><td class="mono">PyYAML</td><td>present</td><td>&mdash;</td></tr>
+                    <tr><td class="mono">pytest</td><td>from PyPI in build sessions</td><td>the reference&rsquo;s tests</td></tr>
+                    <tr><td class="mono">tokenization-scorer, tokenizers</td><td>from PyPI in build sessions</td><td>tokenizer metrics; agreement with the Hugging Face tokenizer, reported only</td></tr>
+                    <tr><td class="mono">torch, geoopt</td><td>only if decision D9&rsquo;s cross-check is wanted</td><td>PyPI has torch 2.15.0, but its Linux wheel brings the CUDA libraries, and download.pytorch.org is blocked</td></tr>
+                </tbody>
+            </table></div>
+            <p>That is why decision D9 recommends a numpy float64 trainer as the authority: it is deterministic and needs nothing else. If torch installs, <a href="https://github.com/geoopt/geoopt">geoopt</a>&rsquo;s Riemannian optimizers become a reported cross-check.</p>
+
+            <h3>Data it can reach</h3>
+            <ul>
+                <li><strong>WordNet 3.0</strong>, from nltk_data on raw.githubusercontent.com (10,775,600 bytes), pinned in Phase 0: 82,115 noun synsets, 13,767 verbs, 18,156 adjectives and 3,621 adverbs; 743,241 hypernym-closure edges among nouns; the mammal closure, 1,182 nodes and 6,542 edges. C0, one line per noun synset (its lemmas and gloss), is 148 shards of at most 60,000 bytes.</li>
+                <li><strong>UD English EWT</strong> at commit <code>4a4d77f</code> (GitHub, CC BY-SA 4.0): 12,544 / 2,001 / 2,077 sentences in train, dev and test. Its text is not committed.</li>
+                <li><strong><a href="https://github.com/alexwarstadt/blimp">BLiMP</a></strong> (GitHub, CC BY): 67 paradigms of 1,000 sentence pairs each.</li>
+            </ul>
+            <p>Blocked from here: BabyLM (osf.io), Hugging Face datasets and models, zenodo.org, mattmahoney.net (enwik8) and the SimLex host (<a href="#where-runs">chapter 7</a>).</p>
+
+            <h3>What it costs</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Job</th><th>Size</th><th>Planning figure</th></tr></thead>
+                <tbody>
+                    <tr><td>L6, one run</td><td>the mammal hierarchy, about 1,180 nodes, numpy float64</td><td>about 1 minute <span class="tag t-DESIGN">estimate</span></td></tr>
+                    <tr><td>L6, all runs</td><td>about 290, tuning included</td><td>about 1&ndash;5 h; roughly 1 h spread over 4 cores <span class="tag t-DESIGN">estimate</span></td></tr>
+                    <tr><td>Stage 1 on nouns</td><td>1,000 sampled queries per arm</td><td>minutes per arm <span class="tag t-DESIGN">estimate</span></td></tr>
+                    <tr><td>L7, dense eigenvalues</td><td>12,180 vertices (q = 29)</td><td>minutes; spike S5 times it <span class="tag t-DESIGN">estimate</span></td></tr>
+                    <tr><td>Phase 6 MLM</td><td>N = 5M parameters, T &asymp; 1.3&times;10<sup>8</sup> tokens: &asymp; 3.9&times;10<sup>15</sup> FLOPs</td><td>about 11&ndash;22 h on 4 cores at an effective 50&ndash;100 GFLOP/s <span class="tag t-DESIGN">estimate</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>None of these is measured. For Phase 6, a calibration spike measures real throughput first, and the decisive strict-small runs are better made on your machine.</p>
+        </section>
+
+        <section class="chapter" id="gpu">
+            <div class="chapter-num">05</div>
+            <h2>The GPU Python track</h2>
+            <p class="chapter-intro">Your own hardware or a cloud GPU, with Hugging Face and OSF reachable. It starts in Phase 7, and only after every Stage-1 claim has been decided and reviewed with you. Nothing on it is registered yet: each claim comes by a dated amendment before any code.</p>
+            <h3>What it builds</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Run</th><th>What it is</th><th>Compared with</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>BERT-mini and BERT-small</strong> with the hierarchy factor</td><td>BERT-mini has 4 layers of width 256 (L4/H256); BERT-small has 4 of width 512 (L4/H512). The <em>hierarchy factor</em> feeds each token&rsquo;s address into the encoder as an extra input (<a href="architecture.html#encoder">the encoder</a>).</td><td>Four controls at matched parameters: shuffled addresses (the same tree, words permuted), content-hash addresses (hash-like words), no factor, and a byte-level encoder that reads bytes with no tokenizer</td></tr>
+                    <tr><td><strong>BabyLM strict</strong></td><td>Pretraining on at most 100M words</td><td>The BabyLM 2024 baselines <span class="tag t-COMPUTED">verified</span> (<a href="benchmarks.html#stage3">Stage 3</a>)</td></tr>
+                    <tr><td><strong>GLUE</strong></td><td>The pinned BabyLM evaluation-pipeline-2025 subset, plus GLUE dev</td><td><a href="https://github.com/google-research/bert">BERT-Tiny 64.2 to BERT-Medium 73.5</a>, <a href="https://github.com/google-research/electra">ELECTRA-Small 77.4</a> <span class="tag t-COMPUTED">verified</span> (<a href="alternatives.html#b4">B4</a>)</td></tr>
+                    <tr><td><strong>MTEB(eng, v2) subset; SentEval</strong></td><td>The cheap part of MTEB (similarity, classification, pair classification, a hierarchical clustering task; no retrieval), and SentEval&rsquo;s TreeDepth and TopConst probes</td><td>&mdash;</td></tr>
+                    <tr><td><strong>HiT on MiniLM</strong></td><td><a href="https://github.com/KRR-Oxford/HierarchyTransformers">Hierarchy Transformers</a> <span class="tag t-COMPUTED">verified</span>: a Poincar&eacute; head on a small encoder, which the survey gives as all-MiniLM-L12-v2 (about 33M parameters); the repository README does not name it</td><td>A baseline for the Lexicon&rsquo;s own hierarchy head (<a href="alternatives.html#b3">B3</a>)</td></tr>
+                    <tr><td><strong>HyperCore arm</strong></td><td>An exploratory, fully Lorentz encoder through <a href="https://github.com/Graph-and-Geometric-Learning/HyperCore">HyperCore</a> (MIT), which pins torch 2.6 with CUDA 12.4</td><td>Exploratory only (<a href="alternatives.html#la">L-a</a>)</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>Two anchors to plan by</h3>
+            <div class="grid-2">
+                <div class="card"><h4>ELECTRA-Small, 14M parameters</h4><p>About 4 days on one V100 for a full run; decent after about 200k steps, roughly 10 hours. GLUE test 77.4. <span class="tag t-COMPUTED">verified</span></p><div class="meta">the most useful compute anchor for a tiny encoder</div></div>
+                <div class="card"><h4>BERT-small, 29M parameters</h4><p>On 1.3&times;10<sup>9</sup> tokens: &asymp; 2.3&times;10<sup>17</sup> FLOPs, roughly 0.5&ndash;2 h on one A100. <span class="tag t-DESIGN">estimate</span></p><div class="meta">6&middot;N&middot;T, from the spec</div></div>
+            </div>
+            <p>A decision for you: where this track runs. The recommendation is your own GPU, or a rented single A100 or L4, from Phase 7 and only after the Stage-1 gate. Results come back as LBENCH/1 and LMODEL/1 receipts and are verified here, with a CPU twin re-evaluation (<a href="#receipts">chapter 8</a>).</p>
+            <div class="callout limit"><span class="label">What to expect</span>
+                <p>The first encoder claim planned, L12 in Phase 6, pits the address factor against shuffled addresses and against no factor, at matched parameters and tokens, on BLiMP. It predicts an equivalence band of &plusmn;1 point: a null result. The GPU track repeats such comparisons at BERT-mini and BERT-small size, where published baselines exist. It is not where a hyperbolic win is expected.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="comparable">
+            <div class="chapter-num">06</div>
+            <h2>Seven rules for comparable results</h2>
+            <p class="chapter-intro">A number from the browser, one from the CPU and one from a GPU can stand side by side only if they share everything except the thing being compared. These seven rules fix the rest.</p>
+            <ol class="steps">
+                <li><strong>One tokenizer.</strong> A single LVOCAB/1 record names it: the vocabulary&rsquo;s SHA-256, the hash of the N_B specification, the hash of the Unicode 15.1 tables, the algorithm id and the special tokens. Every track loads the same record. L1 tests that Python, Node and Chromium agree byte for byte on the normalised text, the token strings, the ids, the byte offsets and the SHA-256 of the id stream.</li>
+                <li><strong>One data identity.</strong> Every corpus and split is named by its LCORPUS/1 root. That root is a <em>Merkle root</em>: one 32-byte hash at the top of a tree of hashes over every shard record (RFC 6962). Change any shard and the root changes, and a short proof shows that a given shard is included. Splits and MLM masks are drawn from one shared generator, <code>Rng</code>: xoshiro128** seeded by splitmix32, the same generator in <code>hyperbolic_core.js</code> and in Python&rsquo;s <code>hpstep/prng.py</code>. So every track masks identically, and anyone can replay the draws. Gated evaluation sets appear by hash only.</li>
+                <li><strong>One seed scheme.</strong> Every random draw takes its seed from one table (below).</li>
+                <li><strong>One metric implementation.</strong> Python is the authority. For exact metrics, the JavaScript reproduces its traces line for line. Float metrics carry registered tolerances and a hash of every item&rsquo;s output.</li>
+                <li><strong>Matched budgets.</strong> Gradient-free runs are matched on evaluations. Gradient runs record parameters, tokens seen, FLOPs (reported the ELUE way <span class="tag t-HEURISTIC">likely</span>), hardware, library versions, thread count and wall-clock time. Exact representations are compared at matched dimension, and also at matched bits, in the sense of <a href="https://proceedings.mlr.press/v80/sala18a.html">Sala et al.&rsquo;s precision&ndash;dimension trade-off</a>: their combinatorial embedding reaches WordNet MAP 0.989 in 2 dimensions, but needs about 500 bits <span class="tag t-COMPUTED">verified</span> (from the abstract, confirmed by the cross-check).</li>
+                <li><strong>Pinned scorers.</strong> Masked LMs are scored on BLiMP by PLL-word-l2r (<a href="https://arxiv.org/abs/2305.10588">Kauf &amp; Ivanova 2023</a> <span class="tag t-HEURISTIC">likely</span>) at a pinned <a href="https://github.com/babylm/evaluation-pipeline-2025">babylm/evaluation-pipeline-2025</a> commit. A pseudo-log-likelihood (PLL) masks each token in turn and adds up the log-probabilities the model gives the hidden tokens. Plain PLL inflates the scores of words split into several pieces; the word-l2r variant also masks the rest of the word to the right. The GLUE fine-tuning recipe is fixed before any decisive run. The pin is needed because the numbers disagree: the 2024 pipeline gives LTG-BERT 60.6 on BLiMP strict-small <span class="tag t-COMPUTED">verified</span>, while figures near 80 quoted for LTG-BERT and ELC-BERT <span class="tag t-HEURISTIC">likely</span> come from 2023 entries under a different pipeline. The 2024 README itself flags its strict-small LTG-BERT score as lower than expected, possibly from too few training epochs.</li>
+                <li><strong>Cross-track anchors.</strong> The browser exactly re-evaluates every table and head trained on the CPU or GPU. A fixed BLiMP subsample, 67 &times; 100 pairs drawn with Rng(1000+i), is scored on both CPU and GPU within a registered tolerance. A CPU twin re-evaluates each GPU checkpoint. Receipts are classed reproducible or attested (<a href="#receipts">chapter 8</a>).</li>
+            </ol>
+
+            <h3>The seed scheme</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Use</th><th>Seeds</th></tr></thead>
+                <tbody>
+                    <tr><td>Registered instances</td><td class="mono">1000+i</td></tr>
+                    <tr><td>Secondary draws</td><td class="mono">2000+i</td></tr>
+                    <tr><td>Dry runs, before any decisive run</td><td class="mono">the registered seed +3000</td></tr>
+                    <tr><td>Tuning</td><td class="mono">9000&ndash;9023</td></tr>
+                    <tr><td>Spikes (data disjoint from every instance)</td><td class="mono">90000+i</td></tr>
+                    <tr><td>Bootstrap intervals</td><td class="mono">10,000 resamples, seed 7</td></tr>
+                    <tr><td>Training</td><td class="mono">0&ndash;4</td></tr>
+                </tbody>
+            </table></div>
+
+            <div class="lab" id="seed-lab">
+                <div class="lab-title">One seed, the same draws on every track</div>
+                <div class="lab-row" id="seed-roles">
+                    <button class="chip on" type="button" data-role="instance">instance</button>
+                    <button class="chip" type="button" data-role="secondary">secondary</button>
+                    <button class="chip" type="button" data-role="dry">dry run</button>
+                    <button class="chip" type="button" data-role="tuning">tuning</button>
+                    <button class="chip" type="button" data-role="spike">spike</button>
+                    <button class="chip" type="button" data-role="training">training</button>
+                    <button class="chip" type="button" data-role="bootstrap">bootstrap</button>
+                </div>
+                <div class="lab-row">
+                    <label for="seed-i">i <input id="seed-i" type="range" min="0" max="999" value="0"></label>
+                    <span class="mono" id="seed-i-out">0</span>
+                </div>
+                <div class="out" id="seed-out"><span class="k">This box needs JavaScript and Hyperbolic Oracles&rsquo; <code>hyperbolic_core.js</code>.</span></div>
+            </div>
+            <p>The box runs Hyperbolic Oracles&rsquo; own <code>Rng</code>, loaded unchanged. The Python reference uses the same generator, so the same seed gives the same 32-bit draws there. The masked sentence is a toy, not the masking rule, which Phase 6 registers; it shows only that a seed fixes the draws wherever they are made.</p>
+        </section>
+
+        <section class="chapter" id="where-runs">
+            <div class="chapter-num">07</div>
+            <h2>Where each stage runs</h2>
+            <p class="chapter-intro">Several hosts are blocked here, and there is no GPU. Stages 0 and 1 run here in full. Stage 2 mostly waits for a wider network, Stage 3&rsquo;s decisive runs wait for osf.io or your machine, and Stage 4 waits for a GPU.</p>
+            <div class="bits" aria-label="Phases by where they run: 0 to 5 here, 6 on CPU with osf.io or your machine, 7 on a GPU, 8 integration">
+                <span style="flex:6;--c:#22d3ee">Phases 0&ndash;5 &middot; here, browser + CPU</span>
+                <span style="flex:2;--c:#fbbf24">6 &middot; CPU + osf.io</span>
+                <span style="flex:2;--c:#c4b5fd">7 &middot; GPU</span>
+                <span style="flex:1;--c:#34d399">8</span>
+            </div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Stage and job</th><th>Browser</th><th>CPU</th><th>GPU</th><th>Phase</th></tr></thead>
+                <tbody>
+                    <tr><td>Stage 0 &middot; L1, the front end with V0 &ldquo;lex0&rdquo; (8,192 entries)</td><td><span class="mark here">here</span> Node and Chromium</td><td><span class="mark here">here</span> authority</td><td>&mdash;</td><td>1&ndash;2</td></tr>
+                    <tr><td>Stage 0 &middot; L1&rsquo;s second cell, V1 bert-base-uncased (30,522)</td><td><span class="mark net">net</span></td><td><span class="mark net">net</span></td><td>&mdash;</td><td>when the file arrives from huggingface.co, or from you</td></tr>
+                    <tr><td>Stage 0 &middot; L2, the engram/1 collision share on WordNet lemmas</td><td><span class="mark here">here</span> Node</td><td><span class="mark here">here</span></td><td>&mdash;</td><td>1</td></tr>
+                    <tr><td>Stage 0 &middot; tokenizer descriptors</td><td>&mdash;</td><td><span class="mark here">here</span></td><td>&mdash;</td><td>1&ndash;2</td></tr>
+                    <tr><td>Stage 1 &middot; L3&ndash;L5, addresses, exact points, exact ranking</td><td><span class="mark here">here</span> mammals in seconds; noun samples in Node</td><td><span class="mark here">here</span> 1,000 noun queries, minutes per arm</td><td>&mdash;</td><td>1&ndash;2</td></tr>
+                    <tr><td>Stage 1 &middot; L6, learned static embeddings; L4(c)</td><td><span class="mark here">here</span> exact re-evaluation of snapped tables</td><td><span class="mark here">here</span> numpy trainer</td><td>&mdash;</td><td>4</td></tr>
+                    <tr><td>L7, the X(5,&nbsp;q) overlay</td><td><span class="mark here">here</span> the walk</td><td><span class="mark here">here</span> the graph and its eigenvalues</td><td>&mdash;</td><td>1</td></tr>
+                    <tr><td>L8&ndash;L11, shards, manifests, attestation, verification cost</td><td><span class="mark here">here</span> Node, WebCrypto</td><td><span class="mark here">here</span> Python, cryptography</td><td>&mdash;</td><td>3</td></tr>
+                    <tr><td>Stage 2 &middot; HiT-protocol splits rebuilt from WordNet</td><td>&mdash;</td><td><span class="mark here">here</span></td><td>&mdash;</td><td>4, by amendment</td></tr>
+                    <tr><td>Stage 2 &middot; HyperLex, hypernymysuite, SimLex, WordSim, MEN</td><td>&mdash;</td><td><span class="mark net">net</span> most hosts</td><td>&mdash;</td><td>4, by amendment</td></tr>
+                    <tr><td>Stage 3 &middot; dry runs on WordNet glosses and UD EWT</td><td>&mdash;</td><td><span class="mark here">here</span></td><td>&mdash;</td><td>6</td></tr>
+                    <tr><td>Stage 3 &middot; 1&ndash;10M MLMs on BabyLM strict-small (10M words), scored on BLiMP</td><td>&mdash;</td><td><span class="mark net">net</span> osf.io, or your machine</td><td>&mdash;</td><td>6</td></tr>
+                    <tr><td>Stage 3 &middot; BabyLM strict (100M words)</td><td>&mdash;</td><td>&mdash;</td><td><span class="mark gpu">gpu</span> <span class="mark net">net</span></td><td>7</td></tr>
+                    <tr><td>Stage 4 &middot; GLUE, the MTEB subset, SentEval, HiT on MiniLM, HyperCore</td><td>&mdash;</td><td>&mdash;</td><td><span class="mark gpu">gpu</span> <span class="mark net">net</span></td><td>7</td></tr>
+                    <tr><td>Checking GPU results: CPU twin, BLiMP subsample, exact re-ranking</td><td><span class="mark here">here</span> snapped tables and heads</td><td><span class="mark here">here</span> the twin</td><td><span class="mark gpu">gpu</span> the original run</td><td>7</td></tr>
+                    <tr><td>Browser latency against a BERT-Tiny ONNX baseline</td><td><span class="mark net">net</span> once, for a vendored, hash-pinned copy</td><td>&mdash;</td><td>&mdash;</td><td>later</td></tr>
+                </tbody>
+            </table></div>
+            <p>L2 sits in Stage 0 for a reason. engram/1, the key inherited from Engram Mind&rsquo;s Eye, keeps only the parity of each letter&rsquo;s count (GF(2) rank 26). So LISTEN = SILENT, and numbers and words with every letter an even number of times land on the zero key. Engram&rsquo;s own E9 found Hamming recall at chance after a one-letter substitution (<a href="analysis.html#engram">Explainer 1</a>). L2 measures how often keys collide on real lemmas, before anything treats the key as more than a checksum.</p>
+
+            <h3>What the blocked hosts hold</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Host</th><th>What it holds</th><th>What waits for it</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">huggingface.co</td><td>The V1 vocabulary, HiT and MiniLM, BERT-Tiny ONNX, the GLUE datasets</td><td>L1&rsquo;s V1 cell; Stage 4; HiT</td></tr>
+                    <tr><td class="mono">osf.io</td><td>The BabyLM corpora</td><td>Stage 3&rsquo;s decisive runs</td></tr>
+                    <tr><td class="mono">zenodo.org</td><td>HiT&rsquo;s datasets</td><td>Comparison on HiT&rsquo;s own splits (until then, splits are rebuilt from WordNet and labelled indicative)</td></tr>
+                    <tr><td class="mono">arxiv.org, aclanthology.org</td><td>The primary papers</td><td>Turning <span class="tag t-HEURISTIC">likely</span> numbers into <span class="tag t-COMPUTED">verified</span> ones</td></tr>
+                    <tr><td class="mono">cdn.jsdelivr.net</td><td>Hosted builds of browser libraries</td><td>The transformers.js baseline, which comes as a vendored, hash-pinned copy instead</td></tr>
+                    <tr><td class="mono">download.pytorch.org</td><td>CPU-only torch wheels</td><td>The optional geoopt cross-check</td></tr>
+                    <tr><td class="mono">mattmahoney.net, the SimLex host</td><td>enwik8 and text8; SimLex-999</td><td>Bits-per-byte checks, later; a Stage-2 relatedness control</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout tryit"><span class="label">A decision for you</span>
+                <p>The spec recommends widening the network before Phase 4: allow huggingface.co, osf.io, zenodo.org, arxiv.org and aclanthology.org. Until then, Stages 0 and 1 run on WordNet, UD EWT and BLiMP from GitHub, which are reachable now. The full list of decisions is on the <a href="../index.html">hub</a> and in the <a href="../README.md">README</a>.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="receipts">
+            <div class="chapter-num">08</div>
+            <h2>Receipts: reproducible or attested</h2>
+            <p class="chapter-intro">A result here is not a number in a log. It is a record that says exactly what was measured and how, so that someone who did not run it can check it.</p>
+            <h3>LBENCH/1, the benchmark receipt</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Field</th><th>What it holds</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">claimId</td><td>The claim the result belongs to: one of L1&ndash;L11, or one added by amendment</td></tr>
+                    <tr><td class="mono">subjectSha</td><td>The SHA-256 of what was evaluated: an address map, a table or a model</td></tr>
+                    <tr><td class="mono">evalSetSha</td><td>The evaluation set&rsquo;s hash; gated sets appear by hash only</td></tr>
+                    <tr><td class="mono">scorer@version</td><td>For example PLL-word-l2r at the pinned pipeline commit</td></tr>
+                    <tr><td class="mono">seeds</td><td>From the one seed scheme</td></tr>
+                    <tr><td class="mono">per-item output hash</td><td>A hash over every item&rsquo;s output, so two runs can be compared item by item</td></tr>
+                    <tr><td class="mono">metricsSha</td><td>The hash of the metric results</td></tr>
+                    <tr><td class="mono">hardware, libraries</td><td>The machine and the library versions that produced it</td></tr>
+                    <tr><td class="mono">class</td><td><em>reproducible</em> or <em>attested</em></td></tr>
+                    <tr><td class="mono">twinSha</td><td>The output hash of the twin run</td></tr>
+                </tbody>
+            </table></div>
+            <p>A <em>twin</em>, here, is a second run of the same evaluation in another engine or on another machine: the browser beside the Python reference, or the CPU beside a GPU. (It is not Hyperbolic Oracles&rsquo; twin system, two tri-channels in H&sup3; on one clock.) Records are SHA-256 hashed and can be signed in BioChain-AI&rsquo;s ATTEST/1 format, with ECDSA P-256 (<a href="biochains.html#records">Explainer 4</a>).</p>
+            <div class="grid-2">
+                <div class="card"><h4><span class="mark exact">reproducible</span></h4><p>The twin&rsquo;s output is bit-identical. Exact stages are built to land here: the browser recomputes them from the same inputs and must match the reference line for line.</p></div>
+                <div class="card"><h4><span class="mark float">attested</span></h4><p>A float result from a single run. The receipt says who ran it, on what machine and with which libraries, and holds every item&rsquo;s output hash. It does not prove the number is right, and it is labelled so.</p></div>
+            </div>
+
+            <h3>How a GPU result comes home</h3>
+            <ol class="steps">
+                <li><strong>The run</strong>, on your GPU, writes an LBENCH/1 receipt and an LMODEL/1 record. LMODEL/1 is a per-file hash manifest of the model in the style of sigstore&rsquo;s model-transparency, with the training seed, the LCORPUS root, the mask-schedule seed and checkpoint hashes by training step (a light form of proof of learning).</li>
+                <li><strong>The records are verified here</strong>: the hashes are recomputed from the files they name.</li>
+                <li><strong>A CPU twin re-evaluates the checkpoint.</strong> It scores the fixed BLiMP subsample within the registered tolerance.</li>
+                <li><strong>The browser re-ranks exactly</strong> any table or head that was snapped to exact numbers.</li>
+                <li><strong>The receipt is classed</strong>: reproducible if the twin&rsquo;s output is bit-identical, attested if it is not.</li>
+            </ol>
+
+            <h3>The contamination receipt</h3>
+            <p>A score means little if the test sentences were in the training data. So each corpus carries a contamination receipt: the SHA-256 of every 13-gram (run of 13 tokens) in the evaluation items, intersected with the training id streams. Only the counts are published, never the text.</p>
+            <div class="callout limit"><span class="label">What a receipt does not prove</span>
+                <p>A signature proves who committed a record. It does not prove that the record&rsquo;s licence holds or that its data is correct. An attested number is one float run&rsquo;s output. A record with no valid attestation is never called verified, and language shards keep the same split: their verdicts are reported separately as <em>self-consistent</em> and <em>authentic</em>.</p>
+            </div>
+            <p>The <a href="benchmarks.html">benchmark ladder</a> sets out what each stage measures, with every baseline and its grade. The registered claims, and the spikes that must not be read as results, are in <a href="evidence.html#claims">Explainer 8</a>, in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> and on the <a href="../index.html#ledger">claims ledger</a>.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="alternatives.html">&larr; The Alternatives, Each With a Role</a>
+                <a class="btn btn-ghost" href="benchmarks.html">The Benchmark Ladder &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 6 &middot; <a href="../index.html">Hub</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a> &middot; <a href="../README.md">README</a></footer>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const good = s => `<span class="good">${s}</span>`, bad = s => `<span class="bad">${s}</span>`;
+    // One seed scheme, drawn with Hyperbolic Oracles' Rng (xoshiro128** seeded by splitmix32).
+    const C = window.HPCore, seedOut = $('seed-out'), slider = $('seed-i'), iOut = $('seed-i-out');
+    const ROLES = {
+        instance: { max: 999, seed: i => 1000 + i, rule: '1000 + i' },
+        secondary: { max: 999, seed: i => 2000 + i, rule: '2000 + i' },
+        dry: { max: 999, seed: i => 4000 + i, rule: '(1000 + i) + 3000, the dry run of instance i' },
+        tuning: { max: 23, seed: i => 9000 + i, rule: '9000 + i, i = 0..23' },
+        spike: { max: 999, seed: i => 90000 + i, rule: '90000 + i' },
+        training: { max: 4, seed: i => i, rule: 'i, i = 0..4' },
+        bootstrap: { max: 0, seed: () => 7, rule: '7, for 10,000 resamples' }
+    };
+    const SENT = ['the', 'cat', 'sat', 'on', 'the', 'mat', '.'];
+    let role = 'instance';
+    function seedLab() {
+        const r = ROLES[role];
+        slider.max = String(r.max); slider.disabled = r.max === 0;
+        if (Number(slider.value) > r.max) slider.value = String(r.max);
+        const i = Number(slider.value); iOut.textContent = r.max === 0 ? 'fixed' : String(i);
+        const seed = r.seed(i);
+        if (!C || !C.Rng) { seedOut.innerHTML = `<span class="k">seed</span> ${seed} &nbsp; ` + bad('hyperbolic_core.js did not load, so no draws are shown. Open this page from its place in the site.'); return; }
+        const g = new C.Rng(seed), u = [0, 1, 2, 3].map(() => g.nextU32().toString(16).padStart(8, '0'));
+        const m = new C.Rng(seed).sample(SENT.length, 2);
+        const masked = SENT.map((w, k) => (m.includes(k) ? '<b>[MASK]</b>' : w)).join(' ');
+        seedOut.innerHTML = `<span class="k">role</span> ${role} &nbsp; <span class="k">rule</span> ${r.rule} &nbsp; <span class="k">seed</span> ${good(String(seed))}` +
+            `<br><span class="k">first four 32-bit draws</span> <span class="mono">${u.join(' ')}</span>` +
+            `<br><span class="k">toy mask, 2 of 7 positions</span> <span class="word">${masked}</span>`;
+    }
+    document.querySelectorAll('#seed-roles .chip').forEach(btn => btn.addEventListener('click', () => {
+        role = btn.dataset.role;
+        document.querySelectorAll('#seed-roles .chip').forEach(b => b.classList.toggle('on', b === btn));
+        seedLab();
+    }));
+    slider.addEventListener('input', seedLab);
+    seedLab();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

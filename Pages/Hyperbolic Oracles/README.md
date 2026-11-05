@@ -67,6 +67,16 @@ under "Used by".
 | `twin3d.js` | `qmul`, `qconj`, `qnormExact`, `qnormFloat`, `rotOfQuat` (the coupler's mirror law and the frames) |
 | `fence.js` | `fence`, `guardCheck`, `defect`, `distanceMatrix`, `centrePoint`, `generate`, `corrupt`, `treeWords`, `LN2` (the watch layer) |
 
+[Hyperbolic Lexicon](../Hyperbolic%20Lexicon/README.md) (`Pages/Hyperbolic Lexicon/`) uses the same files, unchanged.
+In Phase 0 only its spikes load them; the browser core arrives in its Phase 2.
+
+| File | What Hyperbolic Lexicon uses |
+| --- | --- |
+| `hyperbolic_core.js` | `P.GENS`, `P.INV`, `P.children`, `P.wordQuaternion`, `P.rightDivide`, `P.isReduced`, `P.treeDistance` (the norm-5 tree: exact, training-free addresses); `Q` (exact rationals); `Rng`; `X.ghost`, `X.snap`; `H.toPoincare`, `H.logOrigin`, `H.lorentzCentroid`; `softmaxWeights`; `PolyStepH` (small heads only) |
+| `decoder3d.js` | `TreeEmbedding3D`, `decodeExact`, `nearestExact`, `certifyWord` (exact placement and decoding in H³) |
+| `twin3d.js` | `rotOfQuat` (a frame per token on the 3D page) |
+| `fence.js` | `dyadic`, `lift` (snapping learned tables for certified storage); `fence`, `guardCheck` (descriptors only) |
+
 A change to any of these names or to their results must keep Engram's checks green as well as this folder's:
 
 ```
