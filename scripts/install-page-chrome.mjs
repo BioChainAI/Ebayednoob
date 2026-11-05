@@ -58,7 +58,10 @@ function chromeBlock(file, { position = "top", extra = null, compact = false, me
 
 function inject(html, block) {
     const clean = html.replace(BLOCK_RE, "").replace(BARE_TAG_RE, "");
-    const at = clean.toLowerCase().lastIndexOf("</body>");
+    // the last </body>, matched case-insensitively on the page itself: lowercasing first would shift every index
+    // after a character whose lowercase is longer (U+0130 becomes two code units)
+    let at = -1;
+    for (const m of clean.matchAll(/<\/body>/gi)) at = m.index;
     return at === -1 ? `${clean.replace(/\s*$/, "\n")}${block}` : `${clean.slice(0, at)}${block}${clean.slice(at)}`;
 }
 
