@@ -716,3 +716,61 @@ decided anything: L1 is decided in Phase 2. It is recorded under the rule "Repor
 header of `reference/results/claims.json` reads "PREREGISTRATION.md with Amendment 1", the runner's fixed label; the
 run used the code at 88e63f7, which includes Amendment 2.
 
+### Amendment 4 · 2026-11-05, Phase 2, before any code for its claims
+
+Written at the start of Phase 2, before `lexicon_core.js` or any Phase 2 runner existed. No result of L1, L3(f) or
+L4 was known. It fixes how the engines are run and compared; nothing registered is changed.
+
+**1. Engines.** Python is the Phase 1 reference (Python 3.13, the authority). Node is Node 22 running
+`lexicon_core.js` (new, UMD, in this folder) on the shared cores loaded unchanged by relative path
+(`hyperbolic_core.js`, `decoder3d.js`, `orbital_core.js`). Chromium is the Playwright Chromium installed on the
+build machine, headless, loading `lexicon_core.js`, the cores and the pinned data from a page served over HTTP from
+the repository root. Every result records the versions (Python, Node, Chromium, ICU and Unicode).
+
+**2. L1, the comparison.** For an instance (its UTF-8 bytes) and a vocabulary, the *record* is the normalised text
+as hex, a tab, then the pieces separated by single spaces, each `id,start,end,hex` (the piece's UTF-8 hex; `-` for
+none), as in `traces/wordpiece_v1.txt`. An instance *differs* in a runtime when the SHA-256 of its record differs
+from Python's (the records themselves are compared when a digest differs, and kept as counterexamples). The id-stream
+SHA-256 is Amendment 1 item 2's, per instance set and vocabulary. Node loads the four instance lists itself, with
+JavaScript loaders (the WordNet archive through `golden/wordnet_v1.cjs`, the EWT files, the stress set, and
+`Rng(1000 + i)` with the pool of Amendment 2), and must match `golden/l1_instances_v1.meta.json` before it runs;
+Chromium receives Node's bytes. The cells are V0 and V1, each in Node and in Chromium.
+
+**3. L1's controls.** (1) As spike S6 implemented it: for each case of (c), the platform's
+`s.toLowerCase().normalize('NFD')` with every `\p{Mn}` removed, against the reference's lowercase, NFD and Mn removal
+of the same string (the pinned table's, as S6 compared them); run in Node and in Chromium. (2) Shortest-match-first
+WordPiece and (3) N_B without accent stripping, in the reference, against the registered pipeline on (a) and on (a)
+or (b). Reported, not decisive: agreement with Hugging Face `tokenizers` (`BertWordPieceTokenizer` on the same vocab,
+lowercase, accents stripped, text cleaned, CJK handled; the version recorded), and the tokenizer metrics of
+Amendment 2, per instance set and vocabulary, from the reference.
+
+**4. L3(f).** Node builds the noun words with `lexicon_core.js`'s address rule from the archive read by
+`golden/wordnet_v1.cjs`, the H³ points with `decoder3d.js` `pointExact` (t = 3/4) and the H² points with
+`lexicon_core.js`'s exact H² tree (D3). Its canonical point list (Amendment 1 item 6) must have the SHA-256 that
+`reference/results/claims.json` records, and its lines for the 2,000 sampled nodes must equal
+`reference/results/l3f-python.txt` line for line (word, H³ line, H² line).
+
+**5. L4(a).** Rank lists (Amendment 1 item 5) in Python and Node, in H³ and H², for every query of the mammal
+spanning subtree (candidates: the other 1,175) and for queries 0–199 of the noun query sample (candidates: the other
+82,114 nouns). Equal means every rank list's SHA-256 is equal and the graph-edge and closure MAP and mean rank
+(pooled, Amendment 2) are equal as exact rationals. The mammal part is also run in Chromium and reported.
+
+**6. L4(b) and its controls**, decided by the reference (Node's counts are reported). *Float64 ranking:* each
+coordinate of an exact point is rounded to the nearest float64 (correct rounding of the rational), and the key is
+x0·y0 − x1·y1 − x2·y2 (− x3·y3) evaluated left to right in IEEE-754 double, without fused multiply-add. For each of
+the 1,000 noun queries, the candidates are taken in exact order (item 5 of Amendment 1); an *inversion* is an
+adjacent pair whose exact keys are strictly increasing and whose float keys are strictly decreasing. A query counts
+if it has at least one, in H³ or in H²; per-tree counts, float ties of strictly ordered pairs, and the word length of
+the deeper word in each tree's first inversion are reported. *Control 1:* the mammal points rounded to float64, then
+to float32, the key computed in float32 arithmetic (numpy), over every mammal query in H³; at least one inversion,
+or (b) is void. *Control 2:* for each mammal query in H³ with an exact tie between a graph-edge neighbour and a
+non-neighbour, a float evaluator that sorts by float64 `acosh(max(1, key))` and then by node index gives an AP; it
+must differ from the pessimistic exact AP on at least one such query (N/A, not void, if there is none).
+
+**7. Dry runs** (+3000): L1 on `Rng(4000 + i)` strings and on the repository Markdown spike S6 used (one instance per
+file); L3(f) on the verb forest; L4 on the verb forest with queries `Rng(4000).sample(13767, 200)`.
+
+**8. Order.** Before any decisive run, `tests/parity-lexicon.cjs` must reproduce every Phase 1 trace
+(`reference/traces/*.txt`) line for line in Node (the common rule "Authority"), and the runners are committed after
+their dry runs.
+
