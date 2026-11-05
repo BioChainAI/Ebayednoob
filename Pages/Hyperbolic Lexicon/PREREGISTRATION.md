@@ -832,3 +832,82 @@ its burn-in at lr × 0.01. The registered protocol is therefore this project's o
 and it is kept exactly as registered: 1 positive and 50 negatives, batch 50, 20 burn-in epochs at lr/10, 1,000 epochs,
 float64. No page describes the protocol yet; Phase 4's write-up will give it as this project's own.
 
+### Amendment 7 · 2026-11-05, Phase 3, before any code for its claims
+
+Written at the start of Phase 3, before any record, grower port, manifest, verifier or runner for L8–L11 existed. No
+result of these claims was known. It fixes the definitions the registration left open; nothing registered is changed.
+
+**1. Code and authorities.** The JS grower, records, manifest and hardened verifier are a new section of
+`lexicon_core.js` (on `biochain_v1.js`, `engram_core.js` and `orbital_core.js`, unchanged); the Python port is
+`reference/lexicon/chain.py`, `records.py`, `manifest.py` and `attest.py`. Owl Academy's `scripts/biomesh.js` at
+7f45f35 and BioChain-AI's `src/biomesh/biomesh.js` at c975161 (and its `src/identity/*.js` for ATTEST/1) run unchanged
+in Node by name-grab, as spikes S4 and S7 ran them. Owl's code is the authority for L8(a, b); the Python reference
+for L8(d), L9 and L10's verdicts, which the JS must equal.
+
+**2. L8's synthetic shards.** Shard i (i = 0..19) is drawn from one `Rng(1000 + i)`: a target length 20,000 +
+`below(40,001)` UTF-8 bytes, then code points until the next would pass the target, each from a class chosen by
+`below(100)`: < 40 an ASCII letter, < 50 a space, < 55 ASCII punctuation (S4's set), < 85 a two-byte code point
+(U+0080 + `below(0x780)`), < 95 a three-byte one (U+0800 + `below(0xF000)`, skipping the surrogates as S4 does), else
+a four-byte one (U+10000 + `below(0x100000)`). If no chunk of the grown shard has a crystal containing the byte 0x80,
+the same generator draws the shard again, and the number of draws is reported. Every shard has at least 25% two-byte
+characters by count, which the run checks. Each shard, and each C0 shard, is grown with engrams on and off.
+
+**3. The records** (each a pipe-joined UTF-8 string, its hash the lowercase hex SHA-256 of those bytes; `-` for an
+empty field):
+- `LVOCAB/1|vocabSha256|normaliserSpecSha|unicodeTablesSha|wordpiece-greedy/1|lex0-bpe/1|trainSetSha|-|specials` with
+  normaliserSpecSha the SHA-256 of `reference/golden/nb_spec_v1.txt` (Amendment 1 item 1 with Amendment 2's readings,
+  written once and pinned), trainSetSha instance (a)'s digest in `l1_instances_v1.meta.json`, and specials the five
+  special entries with their ids, `[PAD]=0,...`.
+- `LADDR/1|vocabSha256|wordnetZipSha256|L3/1|addrTableRoot|3/4|11/13|D3` with addrTableRoot the RFC 6962 root (item 5)
+  over the UTF-8 rows `id|token|word|len|h3PointSha|h2PointSha` of map A in id order (word as digits; a point's hash is
+  the SHA-256 of its canonical text, Amendment 1 item 6).
+- `LPREP/1|corpusId|shardIndex|chainId|merkleRoot|byteLen|rawSha256|spdx|sourceUrlSha|lvocabHash|idStreamSha256|laddrHash|weave3Sha|engramStreamSha|tier`
+  with corpusId `wordnet30-c0` (C0) or `lexicon-synth-v1` (the synthetic shards), spdx `LicenseRef-WordNet-3.0` or
+  `CC0-1.0`, sourceUrlSha the SHA-256 of the archive's URL (C0) or of `rng:1000+i`, idStreamSha256 the SHA-256 of the
+  V0 id stream of the whole shard text as one instance (Amendment 1 item 2), weave3Sha the SHA-256 of the exact
+  weave's components in decimal joined by `,`, engramStreamSha the SHA-256 of the record's engramStream (or `-` with
+  engrams off), tier `S`. A Tier-P record writes chainId `-` and appends `|saltedRoot` with saltedRoot =
+  SHA-256(`LPREP-SALT/1|` + salt hex + `|` + merkleRoot + `|` + chainId); the test salt of shard j is the SHA-256 of
+  `lexicon-test-salt/1|j`.
+- `LCORPUS/1|corpusId|N|root|spdxSetSha|-|-|-|-` (root as item 5; the evaluation-set, contamination and Croissant
+  fields are empty until Phase 6). `LGROW/1|corpusId|N_old|root_old|N_new|root_new|proofSha` with proofSha the SHA-256
+  of the consistency proof's hashes concatenated. LBENCH/1 is defined when Phase 4 first uses it.
+
+**4. The exact weave.** For a record of K chunks: v_k = the first 8 bytes (16 hex digits) of leafHashes[k], read
+big-endian; the weave is `engram_core.chainQuaternion(v_0..v_{K-1})`; its segment sub-weaves are the products of
+`packetQuaternions` over the record's segCuts, as spike S4 computed them.
+
+**5. RFC 6962.** Leaf hash SHA-256(0x00 ‖ data), node hash SHA-256(0x01 ‖ left ‖ right), split at the largest power of
+two below n, RFC 9162's inclusion and consistency algorithms. LCORPUS leaves are the 32-byte SHA-256 digests of the
+LPREP/1 strings. L9's synthetic lists: for the j-th K in (1, 2, 3, 7, 84, 200, 1000, 1001), K leaves of 32 bytes from
+`Rng(1000 + j)` (eight `next_u32` each, big-endian). An alteration is detected when the root of the altered list (with
+the old size kept for truncation) differs from the original root. For each leaf, its proof must verify for its own
+leaf and position, and fail for leaf (i + 1) mod K at position i and for its own leaf at position (i + 1) mod K
+(K ≥ 2). L9's controls use these lists (control 1 at K = 3, 7, 1001; control 2 by adjacent swaps).
+
+**6. L10's packages and verdicts.** A package is a JSON object holding the biochain record (Owl's fields), its LPREP/1
+string (and for Tier P its salt), an ATTEST/1 block (keyId, keyVector, contentHash, epochToken, sig as P1363 hex), the
+LCORPUS/1 string, the inclusion proof, and an LGROW/1 string with its consistency proof from N − 1 shards. The
+verifier runs the checks in the registered order and returns `{selfConsistent, authentic, failed}` (the name of the
+first check that failed, or `-`). Clean packages are attested by an active key; T4's by a key the registry marks
+revoked. Keys: P-256 pairs made per run in WebCrypto; identity and keyVector by BioChain's own `computeIdentityId` and
+`deriveKeyVector` on the seed string `hyperbolic-lexicon/phase3` and uid `lexicon`; epochToken
+`EPOCH-OFFLINE-<UTC date>`; the registry snapshot (keyId, public JWK, keyVector, status) is written with the run and
+pinned by its SHA-256. The 50 clean shards are `Rng(1000 + i).below(148)` for i = 0, 1, … until 50 distinct indices.
+Class k's (T1..T9 as k = 1..9) record j draws from `Rng(2000 + 50(k − 1) + j)`: the clean package it alters
+(`below(50)`), and the place of the alteration; T5 copies the attestation of the next clean package, T6 checks a Tier-P
+version with the salt of shard j + 1, T7 swaps two adjacent frames, T9 flips a residual bit chosen among those that
+leave the chunk's decode unchanged (S4's search).
+
+**7. L11.** Per shard, the time of the full hardened verification of its package in Node, single-threaded: the mean of
+repetitions 2 and 3. The addrTableRoot depends on the vocabulary and WordNet only, not on the shard, and recomputing it
+needs the WordNet archive: it is recomputed once per verification session, its time reported and counted once in the
+corpus estimate, and each shard's verification checks its LADDR hash against that value. The literal alternative,
+recomputing it inside each shard's timed verification, is also measured and reported (it decides nothing). The
+interval is the 95% percentile bootstrap of the median (numpy `default_rng(7)`, 10,000 resamples of the shard times).
+The control times the same verifications with the attestation step skipped.
+
+**8. Dry runs** (+3000): L8 on `Rng(4000 + i)` synthetic shards and the verb and adjective gloss shards (spike S4's
+cut); L9 on `Rng(4000 + j)` leaf lists and the verb shards' weaves, tampers from `Rng(5000 + i)`; L10 on verb shards
+(`Rng(4000 + i)`), tampers from `Rng(5000 + ...)`; L11 on the verb shards of at least 59,000 bytes.
+
