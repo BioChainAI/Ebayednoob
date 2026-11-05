@@ -12,7 +12,7 @@ string i from Rng(8000 + i) with L1 (d)'s pool (lexicon.l1.trace_string). Seeds 
 no claim uses them. Each file documents its own format in its '#' header. The output depends only on the pinned
 table, the pinned vocabularies and this file: V1 lines are written when V1 is cached (golden/make_vocab_v1.py), and
 the header says which vocabularies a file holds. --check exits 0 equal, 1 different, 2 "skipped" when the
-committed wordpiece trace holds V1 and V1 is not cached.
+committed wordpiece trace holds V1 and V1 is not cached (after the normaliser trace and the V0 lines matched).
 """
 import hashlib
 import os
@@ -90,7 +90,8 @@ def normalise_trace():
         '# one line per case, fields separated by TAB:',
         '#   case   E<k> or S<i>',
         "#   input  the input bytes as lower-case hex ('-' when empty)",
-        "#   result 'ok', or 'invalid@<offset>' (rejected; the offset of the first bad byte; then text and words are '-')",
+        "#   result 'ok', or 'invalid@<offset>' (rejected: the offset where the first ill-formed sequence starts, by",
+        "#          Unicode Table 3-7, as Python's UnicodeDecodeError.start; then text and words are '-')",
         "#   text   the normalised text (the words joined by U+0020) as UTF-8 hex ('-' when empty)",
         '#   words  the words separated by single spaces, each <start>,<end>,<UTF-8 hex>, or <start>,<end>,! when it',
         "#          failed closed (written [UNK]); [start, end) is its byte span in the input ('-' when no word)",
@@ -115,12 +116,14 @@ def wordpiece_trace(vocabs):
     for tag, v in vocabs:
         lines.append('# vocab %s: %d entries, sha256 %s' % (tag, len(v), v.sha256))
     lines += [
-        '# one line per valid case and vocabulary (invalid UTF-8 cases are left out), fields separated by TAB:',
+        '# one line per valid case and vocabulary (invalid UTF-8 cases are left out), fields separated by TAB; lines',
+        '# are ordered by case, then by vocabulary in the order of the "# vocab" lines above:',
         '#   case   as in normalise_v1.txt',
         '#   vocab  ' + ' or '.join(t for t, _ in vocabs),
         '#   pieces the pieces separated by single spaces, each <id>,<start>,<end>,<UTF-8 hex of the piece>',
         "#          ([UNK] is 5b554e4b5d); [start, end) is the piece's byte span in the input ('-' when none)",
-        '# then one line per vocabulary: idstream TAB vocab TAB <instances> TAB <id-stream bytes> TAB <sha256>, the',
+        '# then one line per vocabulary, in the same order: idstream TAB vocab TAB <number of cases> TAB <length of the',
+        '# id stream in bytes, decimal> TAB <its sha256>, the',
         '# id stream (LEB128(number of ids), then LEB128 of each id, per case in order) over the valid cases',
     ]
     streams = {t: [] for t, _ in vocabs}
@@ -146,14 +149,26 @@ def main():
     vocabs = available_vocabs()
     texts = {NORMALISE: normalise_trace(), WORDPIECE: wordpiece_trace(vocabs)}
     if check:
-        if os.path.exists(WORDPIECE) and len(vocabs) == 1 and '# vocab V1:' in open(WORDPIECE, encoding='utf-8').read():
-            print('skipped: wordpiece_v1.txt holds V1, which is not cached (run golden/make_vocab_v1.py)',
-                  file=sys.stderr)
+        def same(p, t):
+            return os.path.exists(p) and open(p, 'rb').read() == t.encode('utf-8')
+
+        def v0_lines(text):
+            return [x for x in text.split('\n') if x and not x.startswith('#') and x.split('\t')[1] == 'V0']
+        # the normaliser trace uses no vocabulary: it is always compared
+        if not same(NORMALISE, texts[NORMALISE]):
+            print('MISMATCH: normalise_v1.txt', file=sys.stderr)
+            return 1
+        committed_v1 = os.path.exists(WORDPIECE) and '# vocab V1:' in open(WORDPIECE, encoding='utf-8').read()
+        if committed_v1 and len(vocabs) == 1:
+            # V1 is not cached: the V0 lines (and V0's id stream) are still compared; only the V1 lines are skipped
+            if v0_lines(open(WORDPIECE, encoding='utf-8').read()) != v0_lines(texts[WORDPIECE]):
+                print('MISMATCH: wordpiece_v1.txt (V0 lines)', file=sys.stderr)
+                return 1
+            print('normalise_v1.txt and the V0 lines of wordpiece_v1.txt match; skipped: its V1 lines need V1, which '
+                  'is not cached (run golden/make_vocab_v1.py)', file=sys.stderr)
             return 2
-        bad = [os.path.basename(p) for p, t in texts.items()
-               if not os.path.exists(p) or open(p, 'rb').read() != t.encode('utf-8')]
-        if bad:
-            print('MISMATCH: ' + ', '.join(bad), file=sys.stderr)
+        if not same(WORDPIECE, texts[WORDPIECE]):
+            print('MISMATCH: wordpiece_v1.txt', file=sys.stderr)
             return 1
         print('traces match: ' + ', '.join('%s (%d lines, sha256 %s)' % (
             os.path.basename(p), t.count('\n'), hashlib.sha256(t.encode('utf-8')).hexdigest()[:16])

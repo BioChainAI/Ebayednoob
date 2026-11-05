@@ -1,8 +1,10 @@
-"""The test oracle for N_B: BERT's BasicTokenizer steps (google-research/bert tokenization.py), written with Python's
-own Unicode functions (str.lower, unicodedata.normalize('NFD'), unicodedata.category, str.split) and nothing from
-lexicon/. It carries the one rule Amendment 1 item 1 adds to BERT: Cn is kept by step 1 and a whitespace token
-holding a Cn code point fails closed as one '[UNK]'. Under Python 3.13 (unicodedata 15.1.0) N_B must give the same
-words on every string.
+"""The test oracle for N_B: PREREGISTRATION.md Amendment 1 item 1, written with Python's own Unicode functions
+(str.lower, unicodedata.normalize('NFD'), unicodedata.category, str.split) and nothing from lexicon/. It follows the
+steps of BERT's BasicTokenizer in BERT's order. On control characters it follows Amendment 1, not google-research/bert:
+google's _is_control drops only Cc and Cf, while Amendment 1 drops every C category but Cn (as Hugging Face
+transformers' copy does, which drops Cn too), and a whitespace token holding a Cn code point fails closed as one
+'[UNK]' (Amendment 2 records this erratum). Under Python 3.13 (unicodedata 15.1.0) N_B must give the same words on
+every string.
 """
 import unicodedata
 
@@ -31,7 +33,7 @@ def _clean_text(text):
         if ch in '\t\n\r':
             out.append(' ')
             continue
-        if cat.startswith('C') and cat != 'Cn':   # BERT's _is_control, with Cn kept for failing closed
+        if cat.startswith('C') and cat != 'Cn':   # Amendment 1 step 1: every C category but Cn (kept to fail closed)
             continue
         out.append(' ' if cat == 'Zs' else ch)
     return ''.join(out)

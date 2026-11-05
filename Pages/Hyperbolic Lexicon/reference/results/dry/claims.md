@@ -1,13 +1,13 @@
 # Hyperbolic Lexicon, Phase 1 claims (dry run)
 
-Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
+Run 2026-11-05 12:38:51 UTC with PREREGISTRATION.md with Amendment 1.
 
 | Claim | Decision | Cases | Seconds |
 | --- | --- | --- | --- |
 | L2 | supported | 2275 | 0.2 |
-| L3 | supported | 13767 | 8.7 |
-| L5 | supported | 200 | 7.9 |
-| L7 | supported | 13364 | 12.8 |
+| L3 | supported | 13767 | 8.5 |
+| L5 | supported | 200 | 5.9 |
+| L7 | supported | 13364 | 1.4 |
 
 ## L2
 
@@ -435,14 +435,14 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
   "canonical_point_list_sha256": "890033598260f7faadd17f377c62e6242a9832a39ac70b1976c839d2efbb4472",
   "f_sample_file": "results/dry/l3f-python.txt",
   "~ms": {
-   "h3_points_all": 48,
-   "h2_points_all": 64,
-   "h3_point_exact_hpstep_per_point": 0.549,
-   "h3_decode_exact_hpstep_all": 4801,
-   "h2_decode_all": 242
+   "h3_points_all": 49,
+   "h2_points_all": 66,
+   "h3_point_exact_hpstep_per_point": 0.547,
+   "h3_decode_exact_hpstep_all": 4674,
+   "h2_decode_all": 218
   }
  },
- "seconds": 8.7
+ "seconds": 8.5
 }
 ```
 
@@ -478,7 +478,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "mean": 222.09733420498293,
       "max": 589
      },
-     "seconds": 0.6
+     "seconds": 0.5
     },
     "H2": {
      "graph_map": {
@@ -502,7 +502,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "mean": 258.51608919880874,
       "max": 613
      },
-     "seconds": 0.7
+     "seconds": 0.6
     },
     "F3": {
      "graph_map": {
@@ -526,7 +526,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "mean": 5.818842158785501,
       "max": 11
      },
-     "seconds": 0.4
+     "seconds": 0.3
     },
     "F2": {
      "graph_map": {
@@ -550,7 +550,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "mean": 32.701169463209126,
       "max": 123
      },
-     "seconds": 0.5
+     "seconds": 0.4
     },
     "F3*": {
      "graph_map": {
@@ -573,7 +573,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "mean": 66.04532577903683,
       "max": 190
      },
-     "seconds": 0.5
+     "seconds": 0.4
     },
     "F2*": {
      "graph_map": {
@@ -615,7 +615,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "exact": "21432520/2941",
       "float": 7287.494049642979
      },
-     "seconds": 0.5
+     "seconds": 0.4
     },
     "S3#1": {
      "graph_map": {
@@ -634,7 +634,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "exact": "21665217/2941",
       "float": 7366.615776946617
      },
-     "seconds": 0.6
+     "seconds": 0.4
     },
     "S3#2": {
      "graph_map": {
@@ -653,7 +653,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "exact": "21440361/2941",
       "float": 7290.160149608976
      },
-     "seconds": 0.7
+     "seconds": 0.4
     },
     "S3#3": {
      "graph_map": {
@@ -672,7 +672,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "exact": "21098255/2941",
       "float": 7173.837130227814
      },
-     "seconds": 0.7
+     "seconds": 0.4
     },
     "S3#4": {
      "graph_map": {
@@ -691,7 +691,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "exact": "21052864/2941",
       "float": 7158.403264195852
      },
-     "seconds": 0.7
+     "seconds": 0.4
     },
     "K3": {
      "graph_map": {
@@ -710,7 +710,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
       "exact": "18622694/2941",
       "float": 6332.095885753145
      },
-     "seconds": 1.1
+     "seconds": 0.8
     },
     "S3 (mean over permutations)": {
      "graph_map": {
@@ -775,7 +775,7 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
  "control": {
   "verbs H3 - S3 and H3 - K3 intervals above 0": true
  },
- "seconds": 7.9
+ "seconds": 5.9
 }
 ```
 
@@ -833,13 +833,13 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
      "n_minus6": 1,
      "top": 5.999999999999979,
      "bottom": -6.000000000000007,
-     "seconds": 11.669849255999907
+     "seconds": 0.3287695219996749
     },
     "spread of the verb addresses": {
      "distinct_vertices": 2177,
      "largest_load": 16
     },
-    "seconds": 12.2
+    "seconds": 0.9
    }
   },
   "words_b": "10,000 random words Rng(4000 + i) and the first 1,182 verb-forest words (dry run)",
@@ -847,6 +847,6 @@ Run 2026-11-05 11:59:59 UTC with PREREGISTRATION.md with Amendment 1.
   "hurwitz_py_sha256": "cecb6dccb4f3757dcdb7ec96994e30a5d6c2fc2f973234b51e7e86ecf1b244e9",
   "(e) counterexamples": []
  },
- "seconds": 12.8
+ "seconds": 1.4
 }
 ```

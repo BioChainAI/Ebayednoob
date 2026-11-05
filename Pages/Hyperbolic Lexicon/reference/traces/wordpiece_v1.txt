@@ -2,12 +2,14 @@
 # WordPiece and the id stream = PREREGISTRATION.md Amendment 1 item 2, on N_B (normalise_v1.txt, same cases)
 # vocab V0: 8192 entries, sha256 df22705601de2e425cd090edc5df05619ce4a08df336f40bf92a1ed59f9ca1ff
 # vocab V1: 30522 entries, sha256 07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
-# one line per valid case and vocabulary (invalid UTF-8 cases are left out), fields separated by TAB:
+# one line per valid case and vocabulary (invalid UTF-8 cases are left out), fields separated by TAB; lines
+# are ordered by case, then by vocabulary in the order of the "# vocab" lines above:
 #   case   as in normalise_v1.txt
 #   vocab  V0 or V1
 #   pieces the pieces separated by single spaces, each <id>,<start>,<end>,<UTF-8 hex of the piece>
 #          ([UNK] is 5b554e4b5d); [start, end) is the piece's byte span in the input ('-' when none)
-# then one line per vocabulary: idstream TAB vocab TAB <instances> TAB <id-stream bytes> TAB <sha256>, the
+# then one line per vocabulary, in the same order: idstream TAB vocab TAB <number of cases> TAB <length of the
+# id stream in bytes, decimal> TAB <its sha256>, the
 # id stream (LEB128(number of ids), then LEB128 of each id, per case in order) over the valid cases
 E0	V0	-
 E0	V1	-

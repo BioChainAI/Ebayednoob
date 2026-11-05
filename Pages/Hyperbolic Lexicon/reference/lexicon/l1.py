@@ -84,14 +84,16 @@ def instance_c():
 # (d)'s pool, as registered in L1 (d) plus Amendment 1 item 2(d): one list in code-point order.
 # READING: each named class is a whole Unicode block or the range given: ASCII U+0000-007F, Latin-1 Supplement
 # U+0080-00FF, Latin Extended-A U+0100-017F, combining marks U+0300-036F, Greek as the Greek and Coptic block
-# U+0370-03FF (its 9 code points unassigned in 15.1 included, so they fail closed like the post-15.1 ones; U+03A3
-# and the Greek letters give the final-sigma contexts), Cyrillic U+0400-04FF, Hangul syllables U+AC00-D7A3, CJK
+# U+0370-03FF (its 9 code points unassigned in 15.1 included, so they fail closed like the post-15.1 ones),
+# Cyrillic U+0400-04FF, Hangul syllables U+AC00-D7A3, CJK
 # U+4E00-4FFF, emoji U+1F600-1F64F, C0 controls U+0000-001F, U+200B and U+FEFF. "One list" is their union without
 # repeats (C0 lies inside ASCII), so the draw is uniform over distinct code points.
 # READING: "the code points of the stress set assigned after Unicode 15.1" are the 64 of the stress set's
 # post151First64 list: spike S6 wrote them as "the first 64 code points assigned in Node but unassigned in Python
 # 15.1.0" and labels them "L1(d)'s pool" in s6_unicode_wordpiece.cjs and its output. (The stress set holds 9,988
 # such code points in all, in divergentAlone; taking all of them would make them 9,988 of a 22,650-code-point pool.)
+# NOTE: uniform draws from this pool, 88% Hangul syllables, give U+03A3 rarely and practically never in a final-sigma
+# context; L1's Final_Sigma risk point is covered by (c)'s 444 Final_Sigma cases (Amendment 2 records this).
 POOL_RANGES = ((0x0000, 0x007F), (0x0080, 0x00FF), (0x0100, 0x017F), (0x0300, 0x036F), (0x0370, 0x03FF),
                (0x0400, 0x04FF), (0xAC00, 0xD7A3), (0x4E00, 0x4FFF), (0x1F600, 0x1F64F), (0x0000, 0x001F),
                (0x200B, 0x200B), (0xFEFF, 0xFEFF))
@@ -147,3 +149,14 @@ def instances(wn):
     out['c'] = instance_c()
     out['d'] = instance_d()
     return out
+
+
+def digest(strings):
+    """The pin of an instance list (golden/l1_instances_v1.meta.json): SHA-256 over, for each string in order, its
+    UTF-8 length as 8 bytes big-endian, then its UTF-8 bytes. Unambiguous for any strings and easy to reproduce in JS."""
+    h = hashlib.sha256()
+    for x in strings:
+        b = x.encode('utf-8')
+        h.update(len(b).to_bytes(8, 'big'))
+        h.update(b)
+    return h.hexdigest()

@@ -31,7 +31,7 @@ EDGE = [
     'ΟΔΟΣ', 'ΟΔΟΣ ΟΔΟΣ', 'ΑΣ.', 'ΑΣΒ', 'ΑΣ́', 'Σ', 'ΣΣ', 'ΑΣ\'Β', 'ΆΣ', 'ΑΣ​Β', 'ΑΣ­x',
     'İ', 'aİb', 'İSTANBUL', 'İ', 'ẞ', 'ǅ', 'KΩÅ', 'ﬁ',
     '한국어', '가힣', '각', 'ạ́', 'ạ́', 'ḍ̇', '̈́',
-    'q̣̇', 'क़', '中文abc字', '日本語', '\U00020000x', 'x⮁ey', '豈',
+    'q̣̇', 'क़', '中文abc字', '日本語', '\U00020000x', 'x\U0002B81Ey', '豈',
     'a\x00b', 'a\x7fb', 'a\x85b', '﻿abc', 'a​b', 'a­b', 'a b c', 'a b　c',
     'abc', 'x\U000F0000', 'a͸b c', 'ࢗ', 'x\U000E0080y z', 'café naïve résumé',
     ';·', '¿Qué?', '«»‐—', '\U0001F600\U0001F64F', 'a' * 101,
@@ -201,22 +201,44 @@ def test_instance_a_matches_oracle(wn):
 
 
 def test_nb_reads_no_platform_unicode():
-    """D5: N_B and the table module import neither unicodedata nor re, and never call str.lower or similar."""
+    """D5: N_B, the table module and WordPiece import neither unicodedata nor re, and never use a Unicode-dependent
+    str method (as a call, an attribute reference such as map(str.lower, ...), or getattr by name). The only
+    exception is N1's bytes.lower (ASCII A-Z), inside n1."""
     import ast
     import lexicon.normalise
     import lexicon.unicode_tables
-    for mod in (lexicon.normalise, lexicon.unicode_tables):
+    import lexicon.wordpiece
+    UNICODE_METHODS = {'lower', 'upper', 'casefold', 'swapcase', 'title', 'capitalize', 'normalize', 'category',
+                       'isalpha', 'isalnum', 'isdecimal', 'isdigit', 'isnumeric', 'isidentifier', 'islower',
+                       'isupper', 'istitle', 'isspace', 'isprintable', 'split', 'rsplit', 'strip', 'lstrip', 'rstrip',
+                       'splitlines'}
+    for mod in (lexicon.normalise, lexicon.unicode_tables, lexicon.wordpiece):
         tree = ast.parse(open(mod.__file__, encoding='utf-8').read())
         names = {a.name for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))
                  for a in node.names} | {node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)}
-        assert not names & {'unicodedata', 're', 'regex'}, mod.__name__
-        calls = {node.func.attr for node in ast.walk(tree)
-                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)}
-        assert not calls & {'casefold', 'upper', 'isspace', 'normalize', 'category', 'isalpha', 'split', 'strip'}, \
-            mod.__name__
-        if mod is lexicon.normalise:
-            # the only .lower() is N1's bytes.lower (ASCII A-Z), inside n1
-            lowers = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
-                      for c in ast.walk(node) if isinstance(c, ast.Call) and isinstance(c.func, ast.Attribute)
-                      and c.func.attr == 'lower' and node.name != 'n1']
-            assert lowers == []
+        assert not names & {'unicodedata', 're', 'regex', 'importlib'}, mod.__name__
+        consts = {n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)}
+        assert not any(isinstance(n, ast.Name) and n.id in ('__import__', 'getattr') for n in ast.walk(tree)) or \
+            not consts & (UNICODE_METHODS | {'unicodedata', 're'}), mod.__name__
+        allowed = set()
+        for fn in ast.walk(tree):
+            if isinstance(fn, ast.FunctionDef) and fn.name == 'n1' and mod is lexicon.normalise:
+                allowed |= {id(c) for c in ast.walk(fn)}
+        bad = sorted({(node.attr, node.lineno) for node in ast.walk(tree)
+                      if isinstance(node, ast.Attribute) and node.attr in UNICODE_METHODS and id(node) not in allowed
+                      # a separator argument makes split/strip ASCII-exact: allowed only with an explicit argument
+                      and not _explicit_separator(tree, node)})
+        assert bad == [], (mod.__name__, bad)
+
+
+def _explicit_separator(tree, attr):
+    """True when attr is .split/.rsplit/.strip/.lstrip/.rstrip called with an explicit string argument (then the
+    method does not consult Unicode whitespace)."""
+    import ast
+    if attr.attr not in ('split', 'rsplit', 'strip', 'lstrip', 'rstrip'):
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and node.func is attr:
+            return bool(node.args) and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value,
+                                                                                               (str, bytes))
+    return False

@@ -59,9 +59,21 @@ def test_pool_and_instance_d():
 
 
 def test_traces_are_current():
-    with open(os.path.join(REFERENCE, 'traces', 'wordpiece_v1.txt'), encoding='utf-8') as f:
-        if '# vocab V1:' in f.read() and not wordpiece.v1_available():
-            pytest.skip('the committed wordpiece trace holds V1, which is not cached')
+    """The committed traces equal a rebuild. Without V1 in the cache the normaliser trace and the V0 lines are still
+    compared (exit 2 only for the V1 lines), so the N_B pin never goes unchecked."""
     out = subprocess.run([sys.executable, '-B', os.path.join(REFERENCE, 'traces_text.py'), '--check'],
                          capture_output=True, text=True)
+    if out.returncode == 2:
+        assert 'V0 lines of wordpiece_v1.txt match' in out.stderr
+        pytest.skip('the V1 lines need V1, which is not cached (the normaliser trace and V0 lines matched)')
     assert out.returncode == 0, out.stderr
+
+
+def test_instance_lists_are_pinned():
+    """golden/l1_instances_v1.meta.json pins every L1 instance list's count and order-sensitive digest."""
+    out = subprocess.run([sys.executable, '-B', os.path.join(REFERENCE, 'golden', 'make_l1_instances_v1.py'), '--check'],
+                         capture_output=True, text=True)
+    if out.returncode == 2:
+        pytest.skip(out.stderr.strip())
+    assert out.returncode == 0, out.stderr
+    assert l1.digest(['ab', 'c']) != l1.digest(['a', 'bc']) != l1.digest(['c', 'ab'])

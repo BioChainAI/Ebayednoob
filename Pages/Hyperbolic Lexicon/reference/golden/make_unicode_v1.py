@@ -204,7 +204,8 @@ def main():
         committed = open(TABLE, 'rb').read()
         meta = json.load(open(META)) if os.path.exists(META) else {}
         ok = (committed == blob and hashlib.sha256(committed).hexdigest() == digest
-              and meta.get('sha256') == digest and meta.get('bytes') == len(blob) and meta.get('counts') == counts)
+              and {k: v for k, v in meta.items() if k != 'generatedWith'}
+              == {k: v for k, v in meta_for(blob, counts).items() if k != 'generatedWith'})
         if ok:
             print('unicode_15_1_v1.json matches unicodedata %s: %d B, sha256 %s' % (VERSION, len(blob), digest))
             return 0
