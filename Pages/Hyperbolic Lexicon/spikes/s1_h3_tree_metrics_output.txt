@@ -1,0 +1,251 @@
+S1 s1_h3_tree_metrics: distances, order reversals, MAP with virtual letters, float inversions and exact cost in the octahedral H^3 tree (TreeEmbedding3D, t = 3/4, tau = ln 7)
+Settles: why ranking must be exact; the bit budget; L4's float-inversion controls; the virtual-letter tie effect behind L6(c)'s doubt. Decides no claim. Synthetic words only.
+~ node v22.23.4, HPCore 2.0.0, HPDecode3D 2.0-a, linux-x64
+
+1. Distances in the octahedral tree (exact cosh d = -<x,y>_L; d = acosh, 4 decimals)
+  t = 3/4, cosh tau = 25/7, sinh tau = 24/7, tau = 2 atanh(3/4) = ln 7 = 1.9459 (|tau - ln 7| < 1e-15: true)
+  P.children([0]) = [0,2,3,4,5]: child 0 is straight (local +x), children 1-4 are local +y, -y, +z, -z
+  parent-child                               [0] [0,0]: cosh d = 25/7, d = 1.9459
+  siblings at 90 deg (straight vs bent)      [0,0] [0,2]: cosh d = 625/49, d = 3.2375 (law of cosines with cos theta = 0: equal)
+  siblings at 90 deg (bent +y vs bent +z)    [0,2] [0,4]: cosh d = 625/49, d = 3.2375 (law of cosines with cos theta = 0: equal)
+  siblings at 180 deg (bent +y vs bent -y)   [0,2] [0,3]: cosh d = 1201/49, d = 3.8918 (law of cosines with cos theta = -1: equal)
+  root children at 90 deg                    [0] [2]: cosh d = 625/49, d = 3.2375 (law of cosines with cos theta = 0: equal)
+  root children at 180 deg                   [0] [1]: cosh d = 1201/49, d = 3.8918 (law of cosines with cos theta = -1: equal)
+  straight grandchild (no bend)              [0] [0,0,0]: cosh d = 1201/49, d = 3.8918 (law of cosines with cos theta = -1: equal)
+  bent grandchild (one 90 deg bend)          [0] [0,0,2]: cosh d = 625/49, d = 3.2375 (law of cosines with cos theta = 0: equal)
+  bend then straight                         [0] [0,2,0]: cosh d = 1201/49, d = 3.8918 (law of cosines with cos theta = -1: equal)
+  all 936 edges of the radius-4 ball: cosh d = 25/7 exactly on 936/936
+  bend loss of one 90 deg bend between two edges: 2 tau - acosh(625/49) = 3.8918 - 3.2375 = 0.6543
+  the loss grows to ln 2 = 0.6931 for long edges (asymptotically 2 tau - d -> -2 ln sin(90 deg / 2) = ln 2):
+    in this tree, one bend between straight runs of k edges, loss 2k tau - d: k = 1: 0.6543, k = 2: 0.6923, k = 3: 0.6931, k = 4: 0.6931, k = 8: 0.6931, k = 16: 0.6931
+    one bend between single edges of length tau, t = (m-1)/(m+1) with m = 7^e: tau = 1 ln 7: 0.6543, tau = 2 ln 7: 0.6923, tau = 4 ln 7: 0.6931, tau = 8 ln 7: 0.6931
+    a word that bends at every step (always P.children(w)[1]), length 40: n tau - d = 23.9150, 0.6132 per bend
+    the 20 random words of length 40 (Rng(90040)): 641 bends, total loss 446.0305, 0.6958 per bend
+~ item 1: 163 ms
+
+2. Order reversals: hyperbolic against tree distance, 937-word ball of radius 4 around the root
+  sources (Rng(90000).sample(937, 10)): [0,3,3,0] [2,0,5,1] [5,5,0,2] [3,4,0,3] [1,5,0,0] [3,5,2,0] [0,2,4,0] [5,3,0,4] [0,0,2,4] [2,4,1,1]
+  comparisons (b, c) with d_T(a,b) < d_T(a,c), binned by hops (d_T(a,b), d_T(a,c)); reversed: d_H(a,b) > d_H(a,c); tied: d_H equal
+    hops 1 < 2:       50 comparisons,       0 reversed (0.00%),      0 tied
+    hops 1 < 3:       50 comparisons,       0 reversed (0.00%),      0 tied
+    hops 1 < 4:      250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 1 < 5:      250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 1 < 6:     1250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 1 < 7:     1250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 1 < 8:     6250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 2 < 3:      250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 2 < 4:     1250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 2 < 5:     1250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 2 < 6:     6250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 2 < 7:     6250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 2 < 8:    31250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 3 < 4:     1250 comparisons,       5 reversed (0.40%),      0 tied
+    hops 3 < 5:     1250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 3 < 6:     6250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 3 < 7:     6250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 3 < 8:    31250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 4 < 5:     6250 comparisons,     126 reversed (2.02%),      0 tied
+    hops 4 < 6:    31250 comparisons,       6 reversed (0.02%),      0 tied
+    hops 4 < 7:    31250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 4 < 8:   156250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 5 < 6:    31250 comparisons,     862 reversed (2.76%),      0 tied
+    hops 5 < 7:    31250 comparisons,       4 reversed (0.01%),      0 tied
+    hops 5 < 8:   156250 comparisons,       0 reversed (0.00%),      0 tied
+    hops 6 < 7:   156250 comparisons,    5986 reversed (3.83%),      0 tied
+    hops 6 < 8:   781250 comparisons,     561 reversed (0.07%),      0 tied
+    hops 7 < 8:   781250 comparisons,   39802 reversed (5.09%),      0 tied
+  by hop difference d_T(a,c) - d_T(a,b):
+    +1:   976550 comparisons,   46781 reversed (4.79%),      0 tied
+    +2:   846300 comparisons,     571 reversed (0.07%),      0 tied
+    +3:   195250 comparisons,       0 reversed (0.00%),      0 tied
+    +4:   169000 comparisons,       0 reversed (0.00%),      0 tied
+    +5:    38750 comparisons,       0 reversed (0.00%),      0 tied
+    +6:    32500 comparisons,       0 reversed (0.00%),      0 tied
+    +7:     6250 comparisons,       0 reversed (0.00%),      0 tied
+  total: 2264600 comparisons, 47352 reversed (2.09%), 0 tied (0.00%); first source recounted with direct Q comparisons: equal
+  tau * d_T - d_H over the 10 x 936 (source, word) pairs, by hops (min .. max):
+    1 hops: 0.0000 .. 0.0000
+    2 hops: 0.0000 .. 0.6543
+    3 hops: 0.0000 .. 1.6244
+    4 hops: 0.0000 .. 2.7245
+    5 hops: 0.0000 .. 3.8819
+    6 hops: 0.0000 .. 5.0654
+    7 hops: 0.6931 .. 4.6620
+    8 hops: 0.6931 .. 5.8486
+    all: 0.0000 .. 5.8486; exactly 0 (cosh d_H = cosh(d_T tau), a geodesic tree path) on 32 of 9360 pairs
+~ item 2: 312 ms
+
+3. Graph-edge MAP, exact Lorentz ranking, ties pessimistic (subtree root [0]; neighbours = parent and children; candidates = all other nodes)
+  (a)  perfect 5-ary, depth 3: 156 nodes, words of up to 4 letters, letters per level [1,1,1]
+    MAP (pessimistic ties) = 1.000000 = 1/1; queries with AP < 1: 0/156
+    MAP (optimistic ties, contrast only) = 1.000000
+    farthest neighbour of any query: d = 1.9459 (cosh 25/7); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 0/156
+    exact ties between a neighbour and a non-neighbour: 0/156 queries, 0 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 156/156
+    AP recomputed with Q Lorentz products and an explicit sort on 156 queries: equal
+~   109 ms
+  (b)  root with 25 children, m = 2, then 5, 5: 776 nodes, words of up to 5 letters, letters per level [2,1,1]
+    MAP (pessimistic ties) = 0.995703 = 941107/945168; queries with AP < 1: 25/776
+    MAP (optimistic ties, contrast only) = 0.999141
+    farthest neighbour of any query: d = 3.8918 (cosh 1201/49); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 25/776
+    exact ties between a neighbour and a non-neighbour: 25/776 queries, 485 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 776/776
+    AP recomputed with Q Lorentz products and an explicit sort on 111 queries: equal
+~   524 ms
+  (b)  root with 125 children, m = 3, then 5, 5: 3876 nodes, words of up to 6 letters, letters per level [3,1,1]
+    MAP (pessimistic ties) = 0.995276 = (54-digit / 54-digit rational); queries with AP < 1: 126/3876
+    MAP (optimistic ties, contrast only) = 0.995351
+    farthest neighbour of any query: d = 5.8377 (cosh 58825/343); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 126/3876
+    exact ties between a neighbour and a non-neighbour: 120/3876 queries, 580 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 3876/3876
+    AP recomputed with Q Lorentz products and an explicit sort on 126 queries: equal
+~   6107 ms
+  (b') 25-ary at every level, m = 2, depth 2: 651 nodes, words of up to 5 letters, letters per level [2,2]
+    MAP (pessimistic ties) = 0.260362 = 9869264220139/37905932634570; queries with AP < 1: 650/651
+    MAP (optimistic ties, contrast only) = 0.845473
+    farthest neighbour of any query: d = 3.8918 (cosh 1201/49); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 650/651
+    exact ties between a neighbour and a non-neighbour: 525/651 queries, 3260 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 651/651
+    AP recomputed with Q Lorentz products and an explicit sort on 131 queries: equal
+~   541 ms
+  why (item 1 distances): with one letter per child every neighbour is 1.9459 away and the nearest non-neighbour 3.2375. With m = 2,
+  a child is 3.2375 from its parent if its last letter bends and 3.8918 if it is straight: the same distances as its own grandchildren
+  (bent or straight last step) and its siblings under the same virtual prefix (90 or 180 deg), which therefore tie with the parent or
+  come before it. With m = 3 the parent can be 3 tau = 5.8377 away.
+~ item 3: 7281 ms
+
+4. Float against exact, by depth n = 1..40: 20 random words from Rng(90000+n) and the straight word [0,...,0]
+  ranking: 21-26 candidates per word (parent, grandparent, siblings, uncles, children, children of the straight child, children of the first sibling),
+  ordered by the Lorentz product with the word: exact (Q), f64 point() (float placement), f64 exact (Q.toNumber), f32 (Math.fround throughout)
+  a float order: inv = some pair of consecutive exact levels inverts; tie = no inversion, but two exact levels meet in a float tie;
+  nf = a non-finite float32 product (and no inversion); fail = any of the three
+  decoding: decode(point(w), n) and decode of the rounded exact point, on all 50 words of Rng(90000+n); decodeExact(pointExact(w), n) on every ranked word
+  per depth: random = inv/fail counts of the 20 words, f64 point() | f64 exact | f32; straight = status, same order; decode = point() | rounded exact
+    n= 1  random  0/ 0 |  0/ 0 |  0/ 0   straight ok  | ok  | ok    decode random 50/50 | 50/50, straight ok | ok
+    n= 2  random  0/ 0 |  0/ 0 |  0/ 0   straight ok  | ok  | ok    decode random 50/50 | 50/50, straight ok | ok
+    n= 3  random  0/ 0 |  0/ 0 |  0/ 0   straight ok  | ok  | ok    decode random 50/50 | 50/50, straight ok | ok
+    n= 4  random  0/ 0 |  0/ 0 |  0/ 0   straight ok  | ok  | ok    decode random 50/50 | 50/50, straight ok | ok
+    n= 5  random  0/ 0 |  0/ 0 |  6/ 6   straight ok  | ok  | inv   decode random 50/50 | 50/50, straight ok | ok
+    n= 6  random  0/ 0 |  0/ 0 | 18/18   straight ok  | ok  | inv   decode random 50/50 | 50/50, straight ok | ok
+    n= 7  random  0/ 0 |  0/ 0 | 20/20   straight ok  | ok  | inv   decode random 50/50 | 50/50, straight ok | ok
+    n= 8  random  0/ 0 |  0/ 0 | 20/20   straight ok  | ok  | inv   decode random 50/50 | 50/50, straight ok | ok
+    n= 9  random  0/ 0 |  0/ 0 | 20/20   straight ok  | ok  | inv   decode random 50/50 | 50/50, straight ok | ok
+    n=10  random  0/ 0 |  0/ 0 | 20/20   straight inv | inv | tie   decode random 50/50 | 50/50, straight ok | ok
+    n=11  random  0/ 0 |  0/ 0 | 20/20   straight inv | inv | tie   decode random 50/50 | 50/50, straight ok | ok
+    n=12  random  3/ 4 |  1/ 2 | 20/20   straight inv | tie | tie   decode random 50/50 | 50/50, straight ok | ok
+    n=13  random 14/15 | 13/14 | 20/20   straight tie | tie | tie   decode random 49/50 | 49/50, straight ok | ok
+    n=14  random 19/19 | 19/19 | 20/20   straight tie | tie | tie   decode random 32/50 | 34/50, straight ok | ok
+    n=15  random 20/20 | 20/20 | 20/20   straight tie | tie | tie   decode random 24/50 | 29/50, straight ok | ok
+    n=16  random 20/20 | 20/20 | 20/20   straight tie | tie | tie   decode random  8/50 |  6/50, straight ok | ok
+    n=17  random 20/20 | 20/20 | 20/20   straight tie | inv | tie   decode random  2/50 |  3/50, straight ok | ok
+    n=18  random 20/20 | 20/20 | 20/20   straight tie | inv | tie   decode random  0/50 |  1/50, straight ok | ok
+    n=19  random 20/20 | 20/20 | 20/20   straight tie | inv | tie   decode random  0/50 |  0/50, straight ok | FAIL
+    n=20  random 20/20 | 20/20 | 20/20   straight tie | inv | tie   decode random  0/50 |  0/50, straight ok | ok
+    n=21  random 20/20 | 20/20 | 20/20   straight tie | inv | tie   decode random  0/50 |  0/50, straight ok | ok
+    n=22  random 20/20 | 20/20 | 20/20   straight tie | tie | tie   decode random  0/50 |  0/50, straight ok | ok
+    n=23  random 20/20 | 20/20 | 20/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=24  random 20/20 | 20/20 | 20/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=25  random 20/20 | 20/20 | 20/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=26  random 20/20 | 20/20 | 20/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=27  random 20/20 | 20/20 | 19/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=28  random 20/20 | 20/20 | 20/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=29  random 20/20 | 20/20 | 18/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=30  random 20/20 | 20/20 | 18/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=31  random 20/20 | 20/20 | 17/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=32  random 20/20 | 20/20 |  3/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=33  random 20/20 | 20/20 |  4/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=34  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=35  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=36  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=37  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=38  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=39  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+    n=40  random 20/20 | 20/20 |  0/20   straight tie | tie | nf    decode random  0/50 |  0/50, straight ok | ok
+  first depth with an inversion, random words: f64 point() 12, f64 exact 12, f32 5
+  first depth with an inversion, straight word: f64 point() 10, f64 exact 10, f32 5
+  first depth at which the float order fails (inv, tie or nf), random words: f64 point() 12, f64 exact 12, f32 5
+  first depth at which the float order fails (inv, tie or nf), straight word: f64 point() 10, f64 exact 10, f32 5
+  all 20 random words fail at every depth from: f64 point() 15, f64 exact 15, f32 7
+  first depth with a non-finite float32 product: 23
+  why the straight word mostly ties instead of inverting: [0]^n sits at (cosh n tau, sinh n tau, 0, 0), and the two coordinates are different
+  doubles only at depths 1-9, 19 (rounded exact) and 1-9 (point()), for n = 1..42; at depth 19, 7^19 / 2 lies exactly halfway between two doubles (checked), so cosh rounds up and sinh down.
+  Where both points have equal coordinates the float product is exactly 0: the products with all 4 candidates on the word's own line (exactly -25/7 or -1201/49)
+  are 0 at every depth from 12 with point() and from 22 with the rounded exact points, so those exact levels meet in float ties.
+  first depth at which float decode fails, random words: point() 13, rounded exact 13
+  first depth at which float decode fails, straight word: point() none to 40, rounded exact 19
+  decodeExact(pointExact(w), n) returned the word on 840/840 ranked words; the adjacent-level and all-pairs inversion tests agreed on every ranking
+~ item 4: 34110 ms
+
+5. Exact point cost by depth n = 1..60 (pointExact; max over the 4 coordinates and the 20 random words, or the straight word)
+  every coordinate is an integer over 7^k, k <= n; columns: max numerator bits / max denominator bits
+    n= 1  random   5/  3   straight   5/  3   log2 7^n = 2.8
+    n= 2  random  11/  6   straight  11/  6   log2 7^n = 5.6
+    n= 3  random  15/  9   straight  16/  9   log2 7^n = 8.4
+    n= 4  random  21/ 12   straight  22/ 12   log2 7^n = 11.2
+    n= 5  random  28/ 15   straight  28/ 15   log2 7^n = 14.0
+    n= 6  random  31/ 17   straight  33/ 17   log2 7^n = 16.8
+    n= 8  random  41/ 23   straight  44/ 23   log2 7^n = 22.5
+    n=10  random  52/ 29   straight  56/ 29   log2 7^n = 28.1
+    n=12  random  60/ 34   straight  67/ 34   log2 7^n = 33.7
+    n=14  random  71/ 40   straight  78/ 40   log2 7^n = 39.3
+    n=16  random  81/ 45   straight  89/ 45   log2 7^n = 44.9
+    n=18  random  91/ 51   straight 101/ 51   log2 7^n = 50.5
+    n=20  random 101/ 57   straight 112/ 57   log2 7^n = 56.1
+    n=22  random 111/ 62   straight 123/ 62   log2 7^n = 61.8
+    n=24  random 119/ 68   straight 134/ 68   log2 7^n = 67.4
+    n=26  random 131/ 73   straight 145/ 73   log2 7^n = 73.0
+    n=27  random 134/ 76   straight 151/ 76   log2 7^n = 75.8
+    n=28  random 139/ 79   straight 157/ 79   log2 7^n = 78.6
+    n=30  random 149/ 85   straight 168/ 85   log2 7^n = 84.2
+    n=32  random 159/ 90   straight 179/ 90   log2 7^n = 89.8
+    n=36  random 182/102   straight 202/102   log2 7^n = 101.1
+    n=40  random 197/113   straight 224/113   log2 7^n = 112.3
+    n=44  random 220/124   straight 247/124   log2 7^n = 123.5
+    n=48  random 240/135   straight 269/135   log2 7^n = 134.8
+    n=52  random 259/146   straight 291/146   log2 7^n = 146.0
+    n=56  random 275/158   straight 314/158   log2 7^n = 157.2
+    n=60  random 297/169   straight 336/169   log2 7^n = 168.4
+  numerator growth, depth 20 -> 60: random 4.90 bits per letter, straight 5.60 (2 log2 7 = 5.61); denominators 2.80 (log2 7 = 2.81)
+  nonzero coordinates whose reduced denominator is exactly 7^n: 2520/4821; every denominator divides 7^n: true
+  every Lorentz product checked in items 1-4 is an integer over 7^(n_a + n_b): 31269 products
+~   n=10: 0.25 ms per exact point (random), 0.13 ms (straight); float point(): 1.3 us
+~   n=20: 0.91 ms per exact point (random), 0.33 ms (straight); float point(): 2.4 us
+~   n=28: 1.79 ms per exact point (random), 0.40 ms (straight); float point(): 3.5 us
+~   n=40: 4.36 ms per exact point (random), 0.68 ms (straight); float point(): 5.4 us
+~   n=60: 11.76 ms per exact point (random), 1.01 ms (straight); float point(): 9.5 us
+~ item 5: 4515 ms
+
+6. Exact ties
+  item 2: comparisons with d_T(a,b) < d_T(a,c) and d_H(a,b) = d_H(a,c) exactly: 0 of 2264600
+  item 4: rankings with an exact tie among distinct candidates: 840/840 (5052 tie groups; 20937 candidates in 5993 exact levels);
+    rankings whose nearest exact level is exactly the parent and the 5 children, all at cosh d = 25/7: 0/840
+  item 3 [5,5,5]: queries with an exact tie among candidates 156/156; with a neighbour/non-neighbour tie 0/156;
+    a float evaluator (acosh of the float64 product of the rounded exact points, ties broken by node index) gives a different AP
+    from the pessimistic exact evaluator on 0/156 queries (0 of them have a neighbour/non-neighbour tie)
+  item 3 [25,5,5]: queries with an exact tie among candidates 776/776; with a neighbour/non-neighbour tie 25/776;
+    a float evaluator (acosh of the float64 product of the rounded exact points, ties broken by node index) gives a different AP
+    from the pessimistic exact evaluator on 25/776 queries (25 of them have a neighbour/non-neighbour tie)
+  item 3 [125,5,5]: queries with an exact tie among candidates 3876/3876; with a neighbour/non-neighbour tie 120/3876;
+    a float evaluator (acosh of the float64 product of the rounded exact points, ties broken by node index) gives a different AP
+    from the pessimistic exact evaluator on 104/3876 queries (104 of them have a neighbour/non-neighbour tie)
+  item 3 [25,25]: queries with an exact tie among candidates 651/651; with a neighbour/non-neighbour tie 525/651;
+    a float evaluator (acosh of the float64 product of the rounded exact points, ties broken by node index) gives a different AP
+    from the pessimistic exact evaluator on 433/651 queries (433 of them have a neighbour/non-neighbour tie)
+
+SETTLES:
+- Distances at t = 3/4: parent-child tau = ln 7 = 1.9459 (cosh 25/7); siblings at 90 deg 3.2375 (cosh 625/49); siblings at 180 deg
+  and the straight grandchild 2 tau = 3.8918 (cosh 1201/49). One 90 deg bend between two edges loses 0.6543; the loss tends to
+  ln 2 = 0.6931 for long edges; on long paths it is 0.6132 per bend when every step bends and 0.6958 on random words.
+- Hyperbolic distance reverses tree-distance order in 47352 of 2264600 comparisons (2.09%) on the radius-4 ball, only at hop
+  differences +1 and +2; tau * d_T - d_H ranges from 0 to 5.8486.
+- Ranking must be exact. Float64 Lorentz ranking of the rounded exact points (L4(b)) first inverts an exactly strict order at depth 10
+  on the straight word and 12 on random words, and fails (inversion or float tie) on all 20 random words at every depth from 15; with the
+  float placement point() the depths are 10, 12 and 15. Float32 first inverts at depth 5 (straight) and 5 (random);
+  its products overflow from depth 23. Float decode(point(w)) first fails at depth 13 on random words (none to 40 on the straight
+  word); decodeExact never failed (840/840).
+- Bit budget: at depth 28, <= 139-bit numerators (random), 157 (straight) and 79-bit denominators (7^28); at depth 60,
+  297 / 336 / 169. Every coordinate at depth n is an integer over 7^n and every Lorentz product an integer over 7^(n_a + n_b),
+  so ranking by an integer key is exact.
+- Graph-edge MAP with pessimistic ties: perfect 5-ary subtree of depth 3 = 1/1 (0 neighbour/non-neighbour ties);
+  root with 25 children (m = 2) = 0.995703; root with 125 children (m = 3) = 0.995276; 25-ary at every level (m = 2) = 0.260362
+  (optimistic 0.845473). Neighbour/non-neighbour exact ties appear only with virtual letters (25, 120 and 525 queries):
+  the virtual-letter tie effect behind the doubt in L6(c).
+- L4 controls: float32 already inverts at depth 5; exact neighbour/non-neighbour ties exist in virtual-letter trees, and there a float evaluator
+  with index tie-breaking differs from the pessimistic exact AP on 562 queries (0 in the perfect 5-ary tree).
+~ total runtime 46.4 s
