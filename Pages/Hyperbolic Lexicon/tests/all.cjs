@@ -6,8 +6,9 @@
 // Runs, in order: the cores this system loads unchanged (orbital_core.js; Hyperbolic Oracles' hyperbolic_core.js,
 // decoder3d.js, twin3d.js and fence.js against their Python traces; Engram Mind's Eye's browser core and bridges),
 // this folder's links and spike reruns, the site bar, the WordNet and EWT pins, the Python reference (its fast pytest
-// suite; the Unicode 15.1 table, V0 retrained, V1 and the L1 instance lists against their pins; the text and
-// geometry traces rebuilt and compared byte for byte), and the 0xA kernel against SHD-CCP's own Ontology tooling.
+// suite; the Unicode 15.1 table, V0 retrained, V1 and the L1 instance lists against their pins, the Unicode table
+// against the official UCD 15.1.0 files; the text and geometry traces rebuilt and compared byte for byte), and the
+// 0xA kernel against SHD-CCP's own Ontology tooling.
 // A check whose data or checkout is missing exits 2 and is reported as skipped, never as passed; pytest's own exit 2
 // (interrupted, or an error while collecting) counts as a failure. Exits 1 if any check fails.
 'use strict';
@@ -36,6 +37,8 @@ const RUNS = [
     ['reference', 'pytest (fast suite)', [...PY, '-m', 'pytest', '-q', '-p', 'no:cacheprovider',
         '--rootdir', L + 'reference', L + 'reference/tests'], { skips: false }],
     ['pins', 'Unicode 15.1 table', [...PY, L + 'reference/golden/make_unicode_v1.py', '--check']],
+    ['pins', 'Unicode 15.1 table vs the UCD files', ['python3', '-B', '-I', L + 'reference/golden/check_ucd_v1.py',
+        '--check']],
     ['pins', 'V0 lex0 (retrained)', [...PY, L + 'reference/golden/make_vocab_v0.py', '--check']],
     ['pins', 'V1 bert-base-uncased', [...PY, L + 'reference/golden/make_vocab_v1.py', '--check']],
     ['pins', 'L1 instance lists', [...PY, L + 'reference/golden/make_l1_instances_v1.py', '--check']],
