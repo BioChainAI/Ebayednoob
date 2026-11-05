@@ -830,5 +830,5 @@ and states no batch size or epoch count. The 50 negatives, batch 50 and 20 burn-
 released script (facebookresearch/poincare-embeddings@dff101b, `train-nouns.sh`), which also runs 1,500 epochs and
 its burn-in at lr × 0.01. The registered protocol is therefore this project's own, after the paper and the script,
 and it is kept exactly as registered: 1 positive and 50 negatives, batch 50, 20 burn-in epochs at lr/10, 1,000 epochs,
-float64. Pages that describe it say so.
+float64. No page describes the protocol yet; Phase 4's write-up will give it as this project's own.
 
