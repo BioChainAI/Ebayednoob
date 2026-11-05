@@ -513,4 +513,135 @@ re-encode adds about 25 ms; spike S7 measured ECDSA verification at about 0.12�
 
 ## Amendments
 
-None yet.
+### Amendment 1 · 2026-11-05, Phase 1, before any code for the claims
+
+Written at the start of Phase 1, after the network was widened and before any module of `reference/lexicon/`, any
+vocabulary or any runner existed. No result of any claim was known when it was written. It fixes the definitions
+that the registration left open (the V0 trainer, the token map A, the tie listing) and the readings that each
+claim needs before code can be written. Nothing registered above is changed: where a reading below could be
+read as a change, the reason is given.
+
+**1. N_B, exactly.** The input is a UTF-8 byte string; invalid UTF-8 is rejected and its first bad byte offset
+reported. The steps are BERT's `BasicTokenizer` (google-research/bert `tokenization.py`), on the pinned table:
+1. Drop U+0000, U+FFFD and every code point whose 15.1 category starts with C (Cc, Cf, Co; Cs cannot occur in valid
+   UTF-8), except tab, line feed and carriage return; Cn is kept for step 4. Tab, LF, CR and Zs become U+0020.
+   (BERT drops every C category. Explainer 3 listed Cc and Cf only; BERT's rule, which also drops Co, is the one
+   used. Cn is not dropped because D5 makes it fail closed.)
+2. Put U+0020 before and after every code point in BERT's CJK ranges: 4E00–9FFF, 3400–4DBF, 20000–2A6DF,
+   2A700–2B73F, 2B740–2B81F, 2B820–2CEAF, F900–FAFF, 2F800–2FA1F.
+3. Split on whitespace as Python's `str.split()` does after step 1: U+0020, U+2028 and U+2029 (the only code points
+   that `str.isspace` holds for and that survive step 1). Each piece is a *whitespace token*.
+4. A whitespace token that contains a code point unassigned in 15.1 (category Cn) **fails closed**: it becomes one
+   word written `[UNK]`, its byte span is logged, and steps 5–6 skip it.
+5. Lowercase the token as CPython 3.13's `str.lower` does at 15.1 (full mappings; Final_Sigma decided inside the
+   token, from the table's Case_Ignorable and cased-not-ignorable sets), then NFD (recursive canonical
+   decomposition, algorithmic Hangul, stable canonical ordering by combining class), then drop every code point of
+   category Mn.
+6. Split off punctuation: each code point in BERT's ASCII ranges 21–2F, 3A–40, 5B–60, 7B–7E, or of a 15.1 category
+   starting with P, becomes a word of its own; the runs between them are words. Empty words are dropped.
+
+N_B returns the words in order, each with its byte span `[start, end)` in the input: the smallest start and largest
+end of the input code points its code points came from (a code point made by lowercasing or decomposition comes
+from the one it was made from). The *normalised text* is the words joined by single U+0020, as UTF-8. N1 (the
+registered fallback) is unchanged.
+
+**2. Tokenization and the id stream.** WordPiece is BERT's greedy longest-match-first on each N_B word, counting
+characters as code points: a word of more than 100 code points, or one with no complete match, is one `[UNK]`; a
+fail-closed word is one `[UNK]`. A piece's byte span is that of its code points, as in N_B. L1's control 2 is the
+same loop taking the shortest matching piece first. An instance's ids are its pieces' ids, without [CLS] or [SEP].
+The *id stream* of an instance set is, over its instances in order, LEB128(number of ids) followed by LEB128 of each
+id; its SHA-256 is the one L1 compares. L1's instance strings: (a) the gloss field after ` | `, trimmed, as in
+`golden/wordnet_v1.cjs`; (b) the rest of each `# text = ` line, without its line ending; (c) each case's string;
+(d) as registered, code points drawn uniformly from the pool listed in L1 as one list in code-point order.
+
+**3. The V0 "lex0" trainer** (the HF WordPiece trainer's family: byte-pair merges with `##` continuations):
+1. Corpus: L1 instance (a) through N_B; the words, fail-closed words and words of more than 100 code points left
+   out, counted by frequency.
+2. Each word is a sequence of symbols: its first code point c, then `##` + each later code point.
+3. Entries 0–4 are `[PAD]`, `[UNK]`, `[CLS]`, `[SEP]`, `[MASK]`. Then the alphabet: for every code point seen in
+   the counted words, in code-point order, the entry c; then, in the same order, `##` + c (both forms for every code
+   point, so a character seen only at a word's start still tokenizes inside a word).
+4. Repeat: count every adjacent symbol pair, weighted by word frequency (a pair twice in a word counts twice); take
+   the pair with the largest count, ties to the smallest (left, right) in code-point string order; replace it in
+   every word, left to right without overlap, by the merged symbol (left + right without its `##`); append the
+   merged symbol as a new entry unless it is already one.
+5. Stop at 8,192 entries, or when the largest count is below 2 (then V0 is smaller, and that is reported).
+The file is one entry per line, LF after each, id = line number; `golden/make_vocab_v0.py --check` retrains and
+compares its SHA-256. V0 is frozen when that file is committed, before any decisive run. V1 is
+`bert-base-uncased`'s `vocab.txt` at a pinned Hugging Face revision, SHA-256 in `golden/vocab_v1.meta.json`; it is
+pinned now, so L1's second cell is in force.
+
+**4. The token map A** (Stage D; used from Phase 3, fixed now). Each vocabulary entry gets one reduced word:
+- Root 5: the specials (`[PAD]`, `[UNK]`, `[CLS]`, `[SEP]`, `[MASK]`, and V1's `[unused…]`) and every whole-word entry
+  made only of digits 0–9 or only of N_B punctuation; the j-th such entry in id order gets [5] followed by j in
+  max(1, ⌈log₅ n₅⌉) base-5 digits, most significant first, each choosing `P.children(word so far)[digit]`.
+- Root 0 (nouns) and root 1 (verbs): a whole-word entry equal to a WordNet lemma (index files, single words) takes
+  the part of speech with the largest `tagsense_cnt` among those whose index lists it (ties in the order noun, verb,
+  adjective, adverb). For a noun, its address is the L3 word of the first synset that `index.noun` lists for it; for
+  a verb, the verb-forest word (item 6) of the first synset in `index.verb`.
+- Root 2: entries whose part of speech chosen that way is adjective or adverb; root 3: every `##` entry (the `##`
+  removed); root 4: every other whole-word entry. Each gets [root] followed by its characters, each written as its
+  index in the vocabulary's trie alphabet (the distinct code points of all entries outside root 5, `##` removed, in
+  code-point order) in max(1, ⌈log₅ A⌉) base-5 digits, A the alphabet's size, chosen the same way.
+- A is not injective: synonyms whose first senses coincide share an address. The number of shared addresses is
+  reported.
+
+**5. Ties and rank lists** (the tie listing the registration named). The ranking key is exact: for the hyperbolic
+arms −⟨x, y⟩ in the Lorentz form (larger is farther), for the flat arms the squared Euclidean distance. A query's
+*rank list* is its candidates sorted by key, then by synset offset, each written `offset g` (g the 0-based index of
+its exact tie class), lines joined by LF; L4(a) hashes it. AP is computed on the order (key; non-neighbours before
+neighbours inside a tie class; offset), which is the registered pessimistic rule. A neighbour's *rank* (for mean
+rank) is 1 + the number of non-neighbours whose key is at most its own.
+
+**6. L3 readings.**
+- The Python twins of the named JS functions decide the Python side: `hpstep.decode3d.TreeEmbedding3D` (t = 3/4)
+  `point_exact` and `decode_exact` for H³; `hpstep.problems` `word_quaternion`, `right_divide` and `is_reduced` for
+  `certifyWord`'s three checks. The H² tree is D3's, as spike S2 built it: root letters 0–5 take the six root
+  directions in the order D3 lists them; exact greedy decoding carries the point into each frame with J Mᵀ J and
+  takes the allowed child direction with the largest exact dot product with the spatial part, ties to the lower
+  index.
+- (d) is checked on every node: walking its word through a trie of all words, the synsets met at proper prefixes
+  must be exactly its spanning ancestors.
+- (f): node i of the 2,000 is `Rng(1000 + i).below(82115)` in offset order. The canonical point list is one line
+  per noun in offset order, `offset tree c0 c1 c2 [c3]`, H³ lines then H² lines, each coordinate in lowest terms as
+  `p/q` (q ≥ 1, written even when 1).
+- (g): a word longer than 25 (id59) or 27 (id64) letters is reported as not covered, not as a failure.
+- Control 3 runs on every noun word longer than 12 letters; control 4 on every noun word.
+
+**7. L5 readings.**
+- *Flat arms.* F3 and F2 keep the trees' frames and directions without the boost: a node is an affine frame (R, p);
+  its child along the direction u (the one the hyperbolic tree uses) gets R' = R·R(u) and p' = p + ℓ·R'·e₁, with
+  R(u) the same rotation (`rot_to` in R³; the rotation taking (1, 0) to u in R²). F uses ℓ = 1 for every edge; F\*
+  uses ℓ = (1/4)^k for the edge into a word of length k + 1 (the first letter's edge has length 1).
+- *S3.* Permutation i draws from `Rng(2000 + i)`: for each word length in increasing order, the words of the
+  instance set's synsets of that length, in offset order, are permuted by `shuffle`. A query's S3 AP is the mean of
+  its APs over the permutations.
+- *K3.* The word is `engram.address.encode(v)` (= `engram_core.encode`), v the first 8 bytes of SHA-256 of the
+  first lemma of the synset's data line (as stored, UTF-8) read big-endian: 28 letters from the root.
+- *Instance sets.* Mammals: the 1,176 spanning-subtree synsets, each a query against the other 1,175; graph-edge
+  neighbours are its spanning parent (when inside the set) and children; closure neighbours are its closure ancestors
+  and descendants inside the set. Nouns: queries `Rng(1000).sample(82115, 1000)` (indices in offset order) against
+  the other 82,114; neighbours as above over all nouns.
+- *Reported metrics.* Distortion is the mean of |d/(τ·d_T) − 1| over the mammal pairs, and over each noun query
+  against the nouns whose offset-order index is a multiple of 82, with d the geodesic (H) or Euclidean (F) distance
+  in float64, d_T the word tree distance (`P.treeDistance`), τ = ln 7 (H³), ln 12 (H²), 1 (F); not computed for F\*.
+  Bits per node: the point over one common denominator, numerator bits plus denominator bits, mean and maximum.
+- *Intervals.* The mean of the per-query paired AP differences (exact APs, differenced in float64), with the 95%
+  percentile bootstrap of Hyperbolic Oracles' `ci_mean`: numpy `default_rng(7)`, 10,000 resamples of the queries,
+  `percentile` 2.5 and 97.5.
+
+**8. L2 readings.** A type is a lemma string with `_` read as a space, through N_B, its words joined by single
+spaces; types are deduplicated after N_B (a lemma with a fail-closed word is left out and counted). The engram/1
+key is `hex_lsb(crystallize(type))` in `engram.ttmpt`, and the same packing of `crystallize(type)` from
+`ttmpt_core_v1.js` in Node. The control key is the first 8 bytes of SHA-256 of the type's UTF-8, big-endian. The key
+table is the lines `type TAB key`, types sorted by code point, joined by LF, and is compared by SHA-256.
+
+**9. L7 readings.** A random reduced word from a generator: length 1 + `below(60)`, root letter `below(6)`, then
+`P.children(w)[below(5)]` each time. (b)'s mammal addresses and (e)'s are the L3 words of the 1,182 closure-set
+synsets.
+
+**10. Dry runs** (+3000 on every seed, per the common rules): L3 and L5 on the verb forest (verbs' first `@`
+pointer; the 559 roots are the children of a virtual root at [1], with the L3 rule), L5's queries
+`Rng(4000).sample(13767, 200)`, S3 from `Rng(5000 + i)`; L2 on the words of the repository Markdown spike S6 used;
+L7 with `Rng(4000 + i)` and `Rng(5000 + i)` words and q = 13 only. Traces for the browser core use seeds 8000 + i,
+which no claim uses.
