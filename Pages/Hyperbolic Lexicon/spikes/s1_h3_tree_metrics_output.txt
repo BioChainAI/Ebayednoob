@@ -21,7 +21,7 @@ Settles: why ranking must be exact; the bit budget; L4's float-inversion control
     one bend between single edges of length tau, t = (m-1)/(m+1) with m = 7^e: tau = 1 ln 7: 0.6543, tau = 2 ln 7: 0.6923, tau = 4 ln 7: 0.6931, tau = 8 ln 7: 0.6931
     a word that bends at every step (always P.children(w)[1]), length 40: n tau - d = 23.9150, 0.6132 per bend
     the 20 random words of length 40 (Rng(90040)): 641 bends, total loss 446.0305, 0.6958 per bend
-~ item 1: 163 ms
+~ item 1: 154 ms
 
 2. Order reversals: hyperbolic against tree distance, 937-word ball of radius 4 around the root
   sources (Rng(90000).sample(937, 10)): [0,3,3,0] [2,0,5,1] [5,5,0,2] [3,4,0,3] [1,5,0,0] [3,5,2,0] [0,2,4,0] [5,3,0,4] [0,0,2,4] [2,4,1,1]
@@ -73,7 +73,7 @@ Settles: why ranking must be exact; the bit budget; L4's float-inversion control
     7 hops: 0.6931 .. 4.6620
     8 hops: 0.6931 .. 5.8486
     all: 0.0000 .. 5.8486; exactly 0 (cosh d_H = cosh(d_T tau), a geodesic tree path) on 32 of 9360 pairs
-~ item 2: 312 ms
+~ item 2: 330 ms
 
 3. Graph-edge MAP, exact Lorentz ranking, ties pessimistic (subtree root [0]; neighbours = parent and children; candidates = all other nodes)
   (a)  perfect 5-ary, depth 3: 156 nodes, words of up to 4 letters, letters per level [1,1,1]
@@ -82,33 +82,33 @@ Settles: why ranking must be exact; the bit budget; L4's float-inversion control
     farthest neighbour of any query: d = 1.9459 (cosh 25/7); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 0/156
     exact ties between a neighbour and a non-neighbour: 0/156 queries, 0 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 156/156
     AP recomputed with Q Lorentz products and an explicit sort on 156 queries: equal
-~   109 ms
+~   97 ms
   (b)  root with 25 children, m = 2, then 5, 5: 776 nodes, words of up to 5 letters, letters per level [2,1,1]
     MAP (pessimistic ties) = 0.995703 = 941107/945168; queries with AP < 1: 25/776
     MAP (optimistic ties, contrast only) = 0.999141
     farthest neighbour of any query: d = 3.8918 (cosh 1201/49); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 25/776
     exact ties between a neighbour and a non-neighbour: 25/776 queries, 485 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 776/776
     AP recomputed with Q Lorentz products and an explicit sort on 111 queries: equal
-~   524 ms
+~   522 ms
   (b)  root with 125 children, m = 3, then 5, 5: 3876 nodes, words of up to 6 letters, letters per level [3,1,1]
     MAP (pessimistic ties) = 0.995276 = (54-digit / 54-digit rational); queries with AP < 1: 126/3876
     MAP (optimistic ties, contrast only) = 0.995351
     farthest neighbour of any query: d = 5.8377 (cosh 58825/343); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 126/3876
     exact ties between a neighbour and a non-neighbour: 120/3876 queries, 580 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 3876/3876
     AP recomputed with Q Lorentz products and an explicit sort on 126 queries: equal
-~   6107 ms
+~   5305 ms
   (b') 25-ary at every level, m = 2, depth 2: 651 nodes, words of up to 5 letters, letters per level [2,2]
     MAP (pessimistic ties) = 0.260362 = 9869264220139/37905932634570; queries with AP < 1: 650/651
     MAP (optimistic ties, contrast only) = 0.845473
     farthest neighbour of any query: d = 3.8918 (cosh 1201/49); nearest non-neighbour of any query: d = 3.2375 (cosh 625/49); queries whose nearest non-neighbour is as near as or nearer than their farthest neighbour: 650/651
     exact ties between a neighbour and a non-neighbour: 525/651 queries, 3260 (neighbour, non-neighbour) pairs; queries with any exact tie among candidates: 651/651
     AP recomputed with Q Lorentz products and an explicit sort on 131 queries: equal
-~   541 ms
+~   457 ms
   why (item 1 distances): with one letter per child every neighbour is 1.9459 away and the nearest non-neighbour 3.2375. With m = 2,
   a child is 3.2375 from its parent if its last letter bends and 3.8918 if it is straight: the same distances as its own grandchildren
   (bent or straight last step) and its siblings under the same virtual prefix (90 or 180 deg), which therefore tie with the parent or
   come before it. With m = 3 the parent can be 3 tau = 5.8377 away.
-~ item 3: 7281 ms
+~ item 3: 6381 ms
 
 4. Float against exact, by depth n = 1..40: 20 random words from Rng(90000+n) and the straight word [0,...,0]
   ranking: 21-26 candidates per word (parent, grandparent, siblings, uncles, children, children of the straight child, children of the first sibling),
@@ -170,7 +170,7 @@ Settles: why ranking must be exact; the bit budget; L4's float-inversion control
   first depth at which float decode fails, random words: point() 13, rounded exact 13
   first depth at which float decode fails, straight word: point() none to 40, rounded exact 19
   decodeExact(pointExact(w), n) returned the word on 840/840 ranked words; the adjacent-level and all-pairs inversion tests agreed on every ranking
-~ item 4: 34110 ms
+~ item 4: 30902 ms
 
 5. Exact point cost by depth n = 1..60 (pointExact; max over the 4 coordinates and the 20 random words, or the straight word)
   every coordinate is an integer over 7^k, k <= n; columns: max numerator bits / max denominator bits
@@ -204,17 +204,17 @@ Settles: why ranking must be exact; the bit budget; L4's float-inversion control
   numerator growth, depth 20 -> 60: random 4.90 bits per letter, straight 5.60 (2 log2 7 = 5.61); denominators 2.80 (log2 7 = 2.81)
   nonzero coordinates whose reduced denominator is exactly 7^n: 2520/4821; every denominator divides 7^n: true
   every Lorentz product checked in items 1-4 is an integer over 7^(n_a + n_b): 31269 products
-~   n=10: 0.25 ms per exact point (random), 0.13 ms (straight); float point(): 1.3 us
-~   n=20: 0.91 ms per exact point (random), 0.33 ms (straight); float point(): 2.4 us
-~   n=28: 1.79 ms per exact point (random), 0.40 ms (straight); float point(): 3.5 us
-~   n=40: 4.36 ms per exact point (random), 0.68 ms (straight); float point(): 5.4 us
-~   n=60: 11.76 ms per exact point (random), 1.01 ms (straight); float point(): 9.5 us
-~ item 5: 4515 ms
+~   n=10: 0.25 ms per exact point (random), 0.23 ms (straight); float point(): 1.4 us
+~   n=20: 0.77 ms per exact point (random), 0.26 ms (straight); float point(): 2.5 us
+~   n=28: 1.63 ms per exact point (random), 0.37 ms (straight); float point(): 3.0 us
+~   n=40: 4.30 ms per exact point (random), 0.61 ms (straight); float point(): 4.8 us
+~   n=60: 11.19 ms per exact point (random), 1.00 ms (straight); float point(): 6.8 us
+~ item 5: 4266 ms
 
 6. Exact ties
   item 2: comparisons with d_T(a,b) < d_T(a,c) and d_H(a,b) = d_H(a,c) exactly: 0 of 2264600
   item 4: rankings with an exact tie among distinct candidates: 840/840 (5052 tie groups; 20937 candidates in 5993 exact levels);
-    rankings whose nearest exact level is exactly the parent and the 5 children, all at cosh d = 25/7: 0/840
+    rankings whose nearest exact level is exactly the parent and the 5 children, all at cosh d = 25/7: 840/840
   item 3 [5,5,5]: queries with an exact tie among candidates 156/156; with a neighbour/non-neighbour tie 0/156;
     a float evaluator (acosh of the float64 product of the rounded exact points, ties broken by node index) gives a different AP
     from the pessimistic exact evaluator on 0/156 queries (0 of them have a neighbour/non-neighbour tie)
@@ -248,4 +248,4 @@ SETTLES:
   the virtual-letter tie effect behind the doubt in L6(c).
 - L4 controls: float32 already inverts at depth 5; exact neighbour/non-neighbour ties exist in virtual-letter trees, and there a float evaluator
   with index tie-breaking differs from the pessimistic exact AP on 562 queries (0 in the perfect 5-ary tree).
-~ total runtime 46.4 s
+~ total runtime 42.0 s

@@ -463,7 +463,7 @@ function rankWord(w) {
     // candidates on the word's own geodesic line (all letters 0), for the straight word
     const onLine = cs.map((v, i) => i).filter(i => cs[i].every(g => g === 0));
     return {
-        nCand: cs.length, nLevels: groups.length, tieGroups: groups.filter(g => g.length > 1).length,
+        nCand: cs.length, nLevels: groups.length, tieGroups: groups.filter(g => g.length > 1).length, topOk: top === want,
         lineZeroE: onLine.length === 4 && onLine.every(i => f64e[i] === 0), lineZeroP: onLine.length === 4 && onLine.every(i => f64p[i] === 0),
         p: orderFlags(groups, f64p, ex), e: orderFlags(groups, f64e, ex), s: orderFlags(groups, f32, ex),
     };
