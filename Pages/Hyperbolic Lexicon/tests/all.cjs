@@ -29,6 +29,7 @@ const RUNS = [
     ['cores', 'Engram bridges (biochain codec)', ['node', E + 'tests/bridges.cjs']],
     ['lexicon', 'browser core parity (traces)', ['node', L + 'tests/parity-lexicon.cjs', '--quiet']],
     ['lexicon', 'JS data wrappers', ['node', L + 'reference/golden/make_js_data_v1.cjs', '--check']],
+    ['lexicon', 'L6 view data (Explainer 12)', [...PY, L + 'reference/golden/make_l6_view_v1.py', '--check']],
     ['lexicon', 'chain: records, tampers, signing', ['node', L + 'tests/chain-lexicon.cjs']],
     ['lexicon', 'Engram imports Lexicon shards', ['node', L + 'tests/bridges-lexicon.cjs']],
     ['pins', 'Owl and BioChain-AI growers (compat)', ['node', L + 'reference/golden/make_biomesh_compat_v1.cjs', '../Owl-Academy', '../BioChain-AI', '--check']],

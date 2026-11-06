@@ -22,18 +22,35 @@ Python port), L9, L10 and L11 are supported, every control showing its weakness 
 with engrams off, a reading Amendment 8 fixed after dry runs had put the engrams-on median near the bar.
 Explainer 11, [`../explainers/chains.html`](../explainers/chains.html), tells Phase 3's story.
 
+In Phase 4, the reference gained the numpy float64 trainer and the modules of L6 and L4(c) (below). Amendment 10
+fixed their definitions before any code (`43265cf`). They were built on synthetic graphs and unregistered seeds
+(`272a50d`), fixed after an adversarial review (`e0477fb`), and dry-run on the solid.n.01 closure set (`78c661d`,
+`a780bb5`); registered tuning followed (`7c1806c`), then Amendment 11, which froze the rates in `settings.json`
+(`515a4a1`). Then `run_claims_phase4.py --measure` ran once at that commit (`b6f3b9d`, 3,051 s on 4 workers). L6 is
+supported in all four parts, (c) against its registered prediction of refuted, and L4(c) is supported, which
+completes L4; every control showed its weakness, and L6 is not void. Amendment 12 (`5c846c5`) is an erratum to
+Amendment 11 that changes no result, and `run_l6_node.cjs` (`09a8afa`) re-ranked the measured tables in Node with
+every value equal. With Phase 4 all eleven registered claims are supported. Explainer 12,
+[`../explainers/learned.html`](../explainers/learned.html), tells Phase 4's story.
+
 ## The authority rule
 
 - **Exact stages:** the Python reference decides the claims for the exact stages (normaliser, tokenizer, ids, addresses,
   exact points, exact ranking and metrics, the LPS overlay, records and manifests). The browser core
-  (`lexicon_core.js`, Phases 2 and 3) must reproduce its traces line for line, and does: `../tests/parity-lexicon.cjs`
+  (`lexicon_core.js`, Phases 2 to 4) must reproduce its traces line for line, and does: `../tests/parity-lexicon.cjs`
   passes 22,586 of 22,586 lines in Node, 18,578 of them from the five Phase 1 traces, 1,323 from the chain trace
-  (Phase 3) and 2,584 from the L6 trace of snapped toy tables (Phase 4, `traces/l6_v1.txt`). In Phase 3 the reference decided L8(d), L9 and L10's verdicts, and the JS equalled it on every record,
-  root, proof and verdict.
+  (Phase 3) and 2,585 from the L6 trace of snapped toy tables (Phase 4, `traces/l6_v1.txt`). In Phase 3 the reference
+  decided L8(d), L9 and L10's verdicts, and the JS equalled it on every record, root, proof and verdict. In Phase 4
+  the reference decided L6 and L4(c), and Node, with `lexicon_core.js` unchanged, re-ranked the 50 measured snapped
+  tables and the exact arm with every exact MAP, LBENCH/1 hash, mean rank and tie count equal (`run_l6_node.cjs`,
+  reported).
 - **Compatibility with Owl Academy and BioChain-AI:** their own JavaScript is the authority (claim L8(a, b)), run
   unchanged from their checkouts by name-grab (Owl Academy at `7f45f35`, BioChain-AI at `c975161`).
-- **Learned embeddings (Phase 4):** a numpy float64 trainer is the authority. geoopt is a reported cross-check if
-  torch is installed.
+- **Learned embeddings (Phase 4):** the numpy float64 trainer (`lexicon/embed.py`) is the authority for the learned
+  tables (D9), and the reference's exact ranking of their snaps decides. geoopt, the reported cross-check, was not
+  run: torch could not be installed through the proxy (download.pytorch.org refused; PyPI's wheel pulls more than
+  1 GB of CUDA wheels), and the tests carry a 60-digit decimal recomputation of one step and finite-difference
+  gradients in its place.
 
 ## Pins
 
@@ -51,6 +68,7 @@ Explainer 11, [`../explainers/chains.html`](../explainers/chains.html), tells Ph
 | `golden/nb_spec_v1.txt` | N_B's specification as Amendment 1 item 1 wrote it, with Amendment 2's readings, verbatim: the file whose SHA-256 is `LVOCAB/1`'s normaliserSpecSha (Amendment 7 item 3). `lexicon/records.py` and `lexicon_core.js` refuse it unless its hash is the pinned one. (Phase 3) |
 | `golden/make_biomesh_compat_v1.cjs`, `golden/biomesh_compat_v1.json` | `lexicon_core.js`'s `growSync` against Owl Academy's and BioChain-AI's own `growBiochain` (run unchanged by name-grab from their checkouts), engrams off and on, on 13 unregistered texts: `Rng(8000 + i)` synthetic shards, seven edge texts and the first two verb gloss shards. All 26 records equal both growers' in all fifteen fields, and both `verifyIntegrity`s accept them. `node golden/make_biomesh_compat_v1.cjs <Owl-Academy> <BioChain-AI> --check` recomputes (about 2 minutes) and exits 2 when a checkout is missing. (Phase 3) |
 | `golden/check_ucd_v1.py`, `golden/ucd_15_1_v1.meta.json` | The pinned table checked field by field against the official UCD 15.1.0 files (UnicodeData, SpecialCasing, DerivedCoreProperties, DerivedAge), pinned at unicode-org/unicodetools `b9144701` and fetched from GitHub, since unicode.org is blocked here: equal in every field (categories, decompositions, combining classes, lowercase, both Final_Sigma sets, whitespace, Hangul). Without `--check` it fetches once into the cache and writes the meta; `--check` compares. Run as `python3 -B -I`. (After Phase 2's run, `5e1681c`) |
+| `golden/l6_protocol_v1.txt` | Amendment 10 verbatim, from its heading, with LF line ends and a final LF (A10.12): the file whose SHA-256, `1267ebb2…`, every `LBENCH/1` record carries as its protocolSha. `tests/test_l6.py` pins it against `../PREREGISTRATION.md`. (Phase 4) |
 
 Every check exits 0 on a match, 1 on a mismatch and 2 "skipped" when its data is not cached. Fetch the data once:
 
@@ -85,7 +103,7 @@ Built in Phase 1, in `lexicon/` (with `phase2.py` in Phase 2, and the chain modu
 | `lexicon/attest.py` | Phase 3 (L10; Amendment 7 item 6): ATTEST/1 with `cryptography`: BioChain-AI's identity, key vector and key id, ported; P1363 to DER and back with r and s left-padded; the high-S twin; the key-registry snapshot pinned by its SHA-256; L10's control 2 (the conversion skipped) |
 | `lexicon/verify.py` | Phase 3 (L10, L11): packages; the hardened verifier, its checks in the registered order (parity, canonical, crystal, leaves, weaves, derived, commitment, attestation, inclusion, consistency) and its two verdicts, self-consistent and authentic (Amendment 8 item 3); the session (V0, `LVOCAB/1`, `LADDR/1` recomputed once, the registry); the tamper helpers of T1-T9 |
 
-Phase 4 (L6 and L4(c); Amendment 10, cited A10.n), in progress:
+Built in Phase 4 (L6 and L4(c); Amendment 10, cited A10.n):
 
 | Module | Holds |
 | --- | --- |
@@ -215,19 +233,27 @@ python3 -B fractional_ties.py                          # A10.17: Phase 1's and 2
   rank-list and AP-list digests match). It repeats Phase 1's and 2's own draws (`Rng(1000)`, `Rng(2000 + i)`), ranks
   nothing of L6, records the commit and the SHA-256 of each code file it used, and decides nothing.
 
-## Phase 4: L6 and L4(c) (in progress)
+## Phase 4: L6 and L4(c)
 
-`run_claims_phase4.py` runs the order of A10.14. Nothing has run on the mammal sets yet; results to come.
+`run_claims_phase4.py` runs the order of A10.14, and ran in it (the commits are listed in `../README.md`): the
+self-test while building; the registered dry run on the solid.n.01 closure set, tuning at `e0477fb` (5,867 s) and
+the measure step at `78c661d` (2,833 s), every dry verdict supported; registered tuning on the mammal closure set at
+`a780bb5` (240 runs, 6,089 s); `--write-settings`, whose output Amendment 11 froze; and the decisive `--measure` at
+`515a4a1` (3,051 s), which supported L6, all four parts, and L4(c). The decisions are under "Results" below.
 
 ```
 python3 -B run_claims_phase4.py --selftest --out <dir>   # the whole pipeline on a synthetic DAG, unregistered seeds 80600+,
                                                          # 2 cells, 2 rates, 3 epochs (about 1 minute; decides nothing;
                                                          # writes only under <dir>, never under results/)
 python3 -B run_claims_phase4.py --tune --dry             # dry tuning (A10.13, solid.n.01): results/dry/tuning.json, settings.json
-python3 -B run_claims_phase4.py --measure --dry          # the dry measured run: results/dry/claims-phase4.*
+                                                         # (5,867 s)
+python3 -B run_claims_phase4.py --measure --dry          # the dry measured run: results/dry/claims-phase4.* (2,833 s)
 python3 -B run_claims_phase4.py --tune                   # registered tuning: results/tuning.json, phase4-tuning-console.txt
+                                                         # (6,089 s)
 python3 -B run_claims_phase4.py --write-settings         # settings.json from tuning.json; prints its SHA-256 for the lr freeze
-python3 -B run_claims_phase4.py --measure                # the decisive run of L6 and L4(c)
+python3 -B run_claims_phase4.py --measure                # the decisive run of L6 and L4(c) (3,051 s)
+node run_l6_node.cjs                                     # the Node re-evaluation of the 50 measured tables (about 2 minutes;
+                                                         # reported, deciding nothing)
 ```
 
 - **Rules.** `--workers W` (default 4): one single-threaded spawn process per job (the five thread variables are set
@@ -253,10 +279,20 @@ python3 -B run_claims_phase4.py --measure                # the decisive run of L
   `.md`, `phase4-console.txt`, `lbench-phase4.txt` (every `LBENCH/1` record) and `l6-tables/` (gzipped snapped texts
   of the 100 measured and edge-shuffled tables, the float bytes of L4(c)'s 40, the exact arm's lines); the same names
   under `results/dry/`. The tuning tables (about 80 MB) stay in the cache.
-- **Cost** on 4 workers here: one run 32–276 s Euclidean and 48–358 s Lorentz (d = 2 to 50); about 1.9 h for
-  registered tuning (240 runs), 1.7 h dry, and about 1 h for each measured step (100 runs, 50 floors, 340 relabelled
-  evaluations, the replays and the intervals).
-- **The Node re-evaluation** (A10.11; reported, deciding nothing): `node run_l6_node.cjs` (about 2 minutes) checks the L6 trace, rebuilds S in Node and ranks the 50 committed measured snapped texts and the exact arm's lines with `lexicon_core.js` (`SnapArm`, `evaluateSnapped`, unchanged), comparing every exact MAP (p/q), LBENCH/1 MAP hash, mean rank, tie count and per-query AP with `results/claims-phase4.json`, into `results/l6-node.json` and `.md`.
+- **Cost** on 4 workers here, as measured. One run is single-threaded: in the decisive run 45–350 s Lorentz and
+  30–273 s Euclidean (d = 2 to 50; in tuning up to 358 s and 275 s). Registered tuning took 6,089 s (240 runs), dry
+  tuning 5,867 s, the dry measure step 2,833 s, and the decisive measure step 3,051 s: 2,893 s in the pool of 153
+  jobs (the 100 measured and edge-shuffled tables and the 50 floors, each built and evaluated in its worker, the
+  replay and the two pre-flight retrains), 137 s for control 1 on 316 tables, 12 s for the 360 intervals.
+- **The Node re-evaluation** (A10.11; reported, deciding nothing): `node run_l6_node.cjs` (about 2 minutes; 117 s in
+  its run) checks the L6 trace, rebuilds S in Node and ranks the 50 committed measured snapped texts and the exact
+  arm's lines with `lexicon_core.js` (`SnapArm`, `evaluateSnapped`, unchanged), comparing every exact MAP (p/q),
+  LBENCH/1 MAP hash, mean rank, tie count and per-query AP with `results/claims-phase4.json`, into
+  `results/l6-node.json` and `.md`. Every value was equal: 50 of 50 tables and the exact arm, 0 of 118,200 per-query
+  APs different. Its runner was uncommitted when it ran, as the record says, and was committed with its results
+  (`09a8afa`).
+- **Registered steps repeat only from their commits.** `--measure` refuses unless the only paths changed since
+  tuning's commit are the four A10.14 names, so a repeat of the decisive run starts from `515a4a1`.
 
 ## Results
 
@@ -272,8 +308,15 @@ python3 -B run_claims_phase4.py --measure                # the decisive run of L
 | `results/claims-phase3.json`, `.md` | Phase 3's decisive run (2026-11-06, on the code at `6da04be`, committed as `865791f`): L8 per shard, mode and grower, L8(d), L9 per list with every proof and alteration counted and the exact weaves, L10 per class with the tamper places, L11 per shard and by step, every control, the readings of the runner, and the timings; counterexamples (none) |
 | `results/phase3-console.txt` | The run's console output and timing (50 min 44 s) |
 | `results/phase3-registry.json` | The key-registry snapshot L10 and L11 verified against (SHA-256 `36cbc21d…`): key ids, public JWKs, key vector and status. No private key |
+| `results/tuning.json`, `results/phase4-tuning-console.txt` | Phase 4's registered tuning (2026-11-06, on the code at `a780bb5`, committed as `7c1806c`): 240 runs on the mammal closure set, each with its exact snapped closure MAP, float and snapped SHA-256s, generator state and diagnostics; the 24 diverged runs (all at rate 10); each cell's choice; the replay check; the console output (6,089 s). The tuning tables stay in the cache |
+| `settings.json` (beside the runner) | The frozen rates of Amendment 11 (SHA-256 `058e1900…`), written by `--write-settings` from `results/tuning.json`: Lorentz 1 at every d; Euclidean 0.1 at d = 2, 3, 5, 1 at d = 10, 3 at d = 50 |
+| `results/claims-phase4.json`, `.md` | Phase 4's decisive run (2026-11-06, on the code at `515a4a1`, committed as `b6f3b9d`): every measured, edge-shuffled and floor table with its exact MAPs (p/q) and diagnostics, the exact arm, the 360 intervals, controls 1–3 with control 1's diagnostics, L4(c) per table (the coarse snap, displacement, ties), the decisions with their reasons, prediction (a)'s gap, the reported values, the environment, the pre-flight and replay checks, the readings of the runner and the timings |
+| `results/phase4-console.txt` | The decisive run's console output and timing (3,051 s) |
+| `results/lbench-phase4.txt` | All 367 `LBENCH/1` records of the run, 216 of them tuning's (SHA-256 `2505bfd6…`) |
+| `results/l6-tables/` | 141 files: the gzipped snapped texts of the 50 measured and 50 edge-shuffled tables, the float64 bytes of L4(c)'s 40, and the exact arm's lines |
+| `results/l6-node.json`, `.md` | The Node re-evaluation (A10.11; 2026-11-06, `lexicon_core.js` as committed at `b6f3b9d`, committed as `09a8afa`; reported, deciding nothing): the L6 trace first, then every measured table's and the exact arm's exact MAPs, LBENCH/1 hashes, mean ranks, ties and per-query APs against the record; no difference |
 | `results/fractional-ties.json`, `.md` | A10.17 (Phase 4, deciding nothing): the fractional-tie MAPs of Phase 1's L5 arms and Phase 2's L4(a) rank lists, beside the pessimistic MAPs those phases published, which every recomputed value equals; from `fractional_ties.py`, with the commit and code SHA-256s it ran on |
-| `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5; and Phase 3's last (`claims-phase3.*`, `phase3-console.txt`, `phase3-registry.json`, Amendment 7 item 8, committed as `25b48b3`), before Amendment 8 |
+| `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5; and Phase 3's last (`claims-phase3.*`, `phase3-console.txt`, `phase3-registry.json`, Amendment 7 item 8, committed as `25b48b3`), before Amendment 8; and Phase 4's on the solid.n.01 closure set (A10.13: `tuning.json`, `settings.json`, `phase4-tuning-console.txt`, committed as `78c661d`; `claims-phase4.*`, `phase4-console.txt`, `lbench-phase4.txt`, `l6-tables/`, committed as `a780bb5`), before registered tuning |
 
 | Claim | Decision | Key numbers |
 | --- | --- | --- |
@@ -299,5 +342,21 @@ Phase 3 (`results/claims-phase3.json`):
 | L9 | supported | The manifest over the 148 `LPREP/1` hashes (root `f567700d…`) and lists of K = 1 to 1,001: every root and proof equal in JS and Python, every alteration detected, every wrong proof rejected; 148/148 exact weaves exact. Controls: the `shdccp/2` rule collides at K = 3, 7, 1,001; XOR misses swaps |
 | L10 | supported | 50 clean and 450 tampered packages: 0 false accepts, 0 false rejects in JS and in Python, verdicts identical; Owl's `verifyIntegrity` accepts 50/50 of each of T1, T2, T8, T9; without the P1363-to-DER conversion Python accepts 0 of 126 signatures |
 | L11 | supported, on packages grown with engrams off (Amendment 8) | Median 155.4 ms per full C0 shard, interval [154.2, 156.0], bar 250 ms; the step check holds 441/441. Amendment 8 fixed engrams off after dry runs had put the engrams-on median at 243.5-265.5 ms (decisive run, reported: 243.6 ms). Python 195.9 ms (reported) |
+
+Phase 4 (`results/claims-phase4.json`):
+
+| Claim | Decision | Key numbers |
+| --- | --- | --- |
+| L6(a) | supported | Lorentz − Euclidean closure AP: every interval above 0 in all five seeds at d = 2 (means +0.716 to +0.752) and d = 3 (+0.728 to +0.752). Closure MAP 0.88–0.91 against 0.16–0.17 (d = 2) and 0.95–0.97 against 0.22–0.23 (d = 3); the predicted gap of at least 0.2 holds (0.7256 and 0.7424) |
+| L6(b) | supported | At d = 50 every interval lies entirely below 0 (about −0.032), which the rule counts as support: Euclidean is ahead, 0.99997 against Lorentz's 0.968 |
+| L6(c) | supported, against its registered prediction (refuted) | Exact H³ graph-edge MAP 0.690653 against learned Lorentz d = 3's 0.458–0.477; every (exact − learned) interval's lower end at least 0.19. The prediction came from spike S3's rule, which assumed learned embeddings keep graph edges; trained on the closure, the Lorentz tables rank ancestors and descendants alike |
+| L6(d) | supported | Learned Lorentz d = 3 closure MAP 0.950–0.971 against the exact tree's 0.305408; lower ends at least 0.63 |
+| L4(c) | supported, so L4 is supported in full | Largest \|ΔMAP\| over the 40 tables 9.37 × 10^−6 (bar 0.001); largest snap displacement 1.565 × 10^−3. Reported: a coarse 2^−8 snap moves the Lorentz tables' closure MAP by 0.40–0.60 |
+
+L6's controls: control 1 (label shuffle, P = `Rng(7)`, computed first in the decisive run) gives a largest
+relabelled closure MAP of 0.018803 over 316 tables (the bar is 1/20); control 2 (edge-shuffled training) holds in all
+50 cells and seeds, for closure and graph-edge; control 3's floors are reported, beside a random ranking's 0.014957
+(closure) and 0.007320 (graph-edge). L6 is not void. Reported, deciding nothing: the exact arm's fractional-tie MAP
+(graph-edge 0.7701 against the pessimistic 0.6907, closure 0.3305 against 0.3054); geoopt not run (above).
 
 `../README.md` has the full tables, the commits in order, and what went against prediction or was disclosed.
