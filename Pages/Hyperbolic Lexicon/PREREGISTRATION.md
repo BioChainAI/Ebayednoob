@@ -1464,3 +1464,107 @@ prototype trainers and evaluators in a scratch folder; none is in the repository
 the pessimistic values; Phase 3 ranked nothing. No decision changes, since those values decide nothing. Phase 4
 computes them with item 11's formula for Phase 1's L5 arms and Phase 2's L4(a) rank lists, on the code and data those
 runs used, and reports them in `reference/results/fractional-ties.json` and `.md`, deciding nothing.
+
+### Amendment 11 · 2026-11-06, Phase 4, the learning rates frozen before any measured run
+
+Written after registered tuning and before any measured run of L6 or L4(c). Tuning ran at a780bb5 on a clean tree,
+and its results were committed in 7c1806c. This is the lr-freeze amendment of A10.8: it fixes the rates in
+`reference/settings.json` and gives every tuning run. It changes no definition. Items 3 and 4 record what ran before
+tuning and the readings fixed in the code. Tuning previews part of L6's outcome, as A10.14 says: Lorentz against
+Euclidean closure MAP on the mammals, at the tuning seeds 9000–9023. Nothing else was computed on the mammal closure
+set. The measured runs use seeds 0–4 and have not run.
+
+**1. The frozen rates.** `reference/settings.json` has SHA-256
+058e1900e778f0aedb0a4f0c683360d60343e5ca212ac56889774b419803631a. It was written by
+`run_claims_phase4.py --write-settings` from `reference/results/tuning.json`, whose SHA-256 is
+`9290c01e4161b814357d2a34fcac1032ff4fc877893848f74865c251c5aca4e9`.
+
+| Geometry | d = 2 | d = 3 | d = 5 | d = 10 | d = 50 |
+| --- | --- | --- | --- | --- | --- |
+| Lorentz | 1 | 1 | 1 | 1 | 1 |
+| Euclidean | 0.1 | 0.1 | 0.1 | 1 | 3 |
+
+- Every cell has a rate, so no cell is left without measured or edge-shuffled runs.
+- No cell chose an end of the grid (0.03 or 10).
+- The closest choice is Lorentz d = 2: rate 1 had mean 0.884987 and rate 3 had 0.884130, a difference of 0.000857.
+
+**2. Every tuning run.**
+- *Values.* Each cell gives the exact snapped closure MAP of each run, to four decimals, in seed order.
+- *Seeds.* Rate k of the grid ran on seeds 9000 + 4k to 9003 + 4k: 0.03 on 9000–9003, 0.1 on 9004–9007, 0.3 on
+  9008–9011, 1 on 9012–9015, 3 on 9016–9019 and 10 on 9020–9023.
+- *Means.* The bold figure is the mean of the four runs (A10.8), which chooses the rate. A dash marks an ineligible
+  rate.
+- *Diverged runs* ("div. e" gives the epoch). There are 24, all at rate 10: every Euclidean cell at epoch 23, and
+  Lorentz d = 2 at epochs 375, 295, 327 and 505.
+- *Where the exact values are.* Each run's exact MAP, float and snapped SHA-256, generator state and diagnostics
+  are in `tuning.json`.
+- *The replay.* `tuning-lorentz-d3-lr0.03-s9000` was replayed with `hpstep.prng.Rng` over 1,000 epochs. It ended in
+  the run's state, [2383527128, 2429151609, 2242904360, 1163253655].
+- *Time.* Tuning took 6,089 s on 4 workers.
+
+| Cell | lr 0.03 | lr 0.1 | lr 0.3 | lr 1 | lr 3 | lr 10 | Frozen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| lorentz 2 | **0.227940**<br>0.2263, 0.2229, 0.2330, 0.2296 | **0.296830**<br>0.2963, 0.2963, 0.2971, 0.2975 | **0.573959**<br>0.5755, 0.5948, 0.5833, 0.5423 | **0.884987**<br>0.8922, 0.8867, 0.8851, 0.8760 | **0.884130**<br>0.8603, 0.8982, 0.8892, 0.8889 | —<br>div. 375, div. 295, div. 327, div. 505 | `1` |
+| lorentz 3 | **0.252473**<br>0.2538, 0.2509, 0.2502, 0.2550 | **0.422143**<br>0.3983, 0.4271, 0.4349, 0.4283 | **0.916422**<br>0.9195, 0.9138, 0.9124, 0.9201 | **0.961827**<br>0.9553, 0.9657, 0.9591, 0.9672 | **0.927831**<br>0.9185, 0.9333, 0.9258, 0.9338 | **0.848202**<br>0.8428, 0.8348, 0.8531, 0.8621 | `1` |
+| lorentz 5 | **0.275444**<br>0.2755, 0.2719, 0.2719, 0.2824 | **0.649637**<br>0.6297, 0.6688, 0.6290, 0.6710 | **0.941990**<br>0.9424, 0.9404, 0.9433, 0.9419 | **0.967564**<br>0.9690, 0.9706, 0.9633, 0.9674 | **0.931211**<br>0.9326, 0.9279, 0.9334, 0.9309 | **0.856591**<br>0.8579, 0.8407, 0.8630, 0.8647 | `1` |
+| lorentz 10 | **0.314710**<br>0.3188, 0.3132, 0.3042, 0.3227 | **0.726946**<br>0.7145, 0.7308, 0.7314, 0.7311 | **0.948738**<br>0.9486, 0.9482, 0.9510, 0.9472 | **0.967804**<br>0.9688, 0.9698, 0.9665, 0.9661 | **0.933893**<br>0.9340, 0.9322, 0.9329, 0.9365 | **0.861726**<br>0.8569, 0.8645, 0.8640, 0.8614 | `1` |
+| lorentz 50 | **0.374534**<br>0.3715, 0.3783, 0.3751, 0.3733 | **0.760018**<br>0.7595, 0.7624, 0.7582, 0.7600 | **0.947487**<br>0.9482, 0.9463, 0.9479, 0.9475 | **0.967860**<br>0.9672, 0.9678, 0.9671, 0.9693 | **0.937506**<br>0.9383, 0.9376, 0.9369, 0.9373 | **0.868199**<br>0.8627, 0.8708, 0.8678, 0.8715 | `1` |
+| euclid 2 | **0.108615**<br>0.1143, 0.1029, 0.1156, 0.1016 | **0.166889**<br>0.1719, 0.1729, 0.1607, 0.1620 | **0.156837**<br>0.1551, 0.1534, 0.1618, 0.1572 | **0.156116**<br>0.1583, 0.1564, 0.1537, 0.1561 | **0.139754**<br>0.1442, 0.1363, 0.1340, 0.1445 | —<br>div. 23, div. 23, div. 23, div. 23 | `0.1` |
+| euclid 3 | **0.168306**<br>0.1659, 0.1641, 0.1719, 0.1713 | **0.218726**<br>0.2200, 0.2146, 0.2229, 0.2174 | **0.206724**<br>0.2061, 0.2055, 0.2092, 0.2061 | **0.206521**<br>0.2074, 0.2056, 0.2055, 0.2075 | **0.193973**<br>0.1883, 0.1900, 0.1996, 0.1981 | —<br>div. 23, div. 23, div. 23, div. 23 | `0.1` |
+| euclid 5 | **0.256342**<br>0.2610, 0.2589, 0.2565, 0.2489 | **0.294311**<br>0.2918, 0.2952, 0.2959, 0.2943 | **0.288973**<br>0.2917, 0.2873, 0.2909, 0.2859 | **0.289414**<br>0.2883, 0.2899, 0.2869, 0.2926 | **0.277995**<br>0.2778, 0.2751, 0.2793, 0.2798 | —<br>div. 23, div. 23, div. 23, div. 23 | `0.1` |
+| euclid 10 | **0.374314**<br>0.3726, 0.3781, 0.3727, 0.3739 | **0.463161**<br>0.4630, 0.4627, 0.4620, 0.4649 | **0.492301**<br>0.4914, 0.4894, 0.4967, 0.4917 | **0.496754**<br>0.4982, 0.4959, 0.4967, 0.4963 | **0.417665**<br>0.4166, 0.4176, 0.4176, 0.4189 | —<br>div. 23, div. 23, div. 23, div. 23 | `1` |
+| euclid 50 | **0.780164**<br>0.7809, 0.7816, 0.7768, 0.7813 | **0.999290**<br>0.9995, 0.9993, 0.9991, 0.9992 | **0.999694**<br>0.9996, 0.9994, 0.9999, 0.9999 | **0.999840**<br>0.9999, 0.9995, 0.9999, 0.9999 | **0.999973**<br>1.0000, 1.0000, 1.0000, 1.0000 | —<br>div. 23, div. 23, div. 23, div. 23 | `3` |
+
+**3. What ran between Amendment 10 and registered tuning** (Common rules, "Reporting"; A10.14 steps 2–3).
+- *The code* (272a50d), built on synthetic DAGs and unregistered seeds 80000 + i. Its tests include the generator
+  equality of A10.1 (4 seeds × 10⁶ outputs; mixed calls with `below` bounds that reject about half the time), a second
+  slow trainer equal to `embed.train` bit for bit, a 60-digit decimal oracle, finite-difference gradients, and
+  bitwise reproducibility across four concurrent processes.
+- *The A10.17 supplement* ran during the build, at 43265cf (and again at 272a50d after a fix to `learned.py`, every
+  value unchanged), before registered tuning. As A10.17 asked, it rebuilt Phase 1's L5 arms and Phase 2's L4(a) rank
+  lists with those runs' own code. That repeated their draws of the shared generator, `Rng(1000).sample(82115, 1000)`
+  and `Rng(2000 + i).shuffle` (S3's permutations, i < 20 on the mammals, i < 5 on the nouns), and ranked L5's arms on
+  the mammal spanning subtree (1,176 nodes) and the noun sample. A10.14 says nothing may be ranked on the mammal sets
+  before registered tuning; A10.17 required this computation and set no time for it, so the two items conflicted and
+  the supplement ran first. It trained nothing, evaluated no L6 table, did not rank the closure set S, and did not
+  compute P. Its values were all published in Phases 1 and 2 except the fractional-tie ones, which decide nothing.
+- *An adversarial review* (four reviewers, two skeptics per finding; synthetic data and the dry set with seeds
+  85000 + i): an independent reimplementation of A10.3–5 matched `embed.train` bit for bit, including full
+  1,000-epoch runs; an independent evaluator matched `learned.evaluate`; 200,000 crafted inputs matched A10.7's
+  rules. Seven minor findings were confirmed and fixed (e0477fb): the Euclidean snap is now exactly ⌊2^32·x + 1/2⌋
+  (a float shortcut was one unit off at one double per K); the environment is recorded per run and per start; the
+  clean-tree check covers the Hyperbolic Oracles and Engram Mind's Eye reference folders, sees through renames and
+  repeats before each pool and each write; a real test that tuning computes the closure MAP only; the L6 trace check
+  in `tests/all.cjs`; the self-test refuses any output folder in the repository; the binary64 diagnostic MAPs are a
+  recorded reading. A10.7's comparisons were also pinned by a test (`COMP_SPEC`).
+- *The dry run* (A10.13) on the committed code: tuning at e0477fb (78c661d, 5,867 s) and the measure step at 78c661d
+  (a780bb5, 2,833 s). Dry verdicts: L6 (a)–(d) supported, L4(c) supported; dry data, deciding nothing.
+- *An independent check of the dry record* (two verifiers, their own ranking, intervals and A10.7 rules, about
+  29,700 comparisons) found every exact MAP, interval, verdict, control, tuning choice, receipt and table hash equal
+  to the record; two dry runs retrained from scratch matched bit for bit, and two replays with `hpstep.prng.Rng`
+  reached the recorded states. The only differences were 77 summary values of the reported diagnostic permutations,
+  off by at most 2 ulps, which the binary64 reading (runner-11) accounts for exactly.
+
+**4. Readings fixed in the code** (each marked `READING`; the runner also records its own in the results):
+- *Trainer.* At a guard hit the terms g·c and g·u are taken as signed zeros, so the nodes count as met and step by
+  nothing; a NaN z (from an overflow) is a guard hit; "the largest distance from the origin" is over the initial
+  table and every finite end-of-epoch table; the Euclidean "norm of η·A" is √Σ_seq((η·A_k)²); the epoch loss is the
+  Σ_seq over the epoch's rows in permutation order, divided by E.
+- *Evaluator.* The Lorentz key κ_u(v) is used as its exact order-isomorphic integer image; the Euclidean snap is the
+  exact ⌊2^K·x + 1/2⌋ of the float read exactly; a NaN float key is refused; a tie count is candidates minus distinct
+  keys, summed over queries; distortion's median is numpy's.
+- *Decisions.* "Established" for control 2 is "both runs exist"; the both-conditions rule of A10.7 is applied to (a)
+  as a whole; LBENCH/1's literal `32` is a field that the exact arm writes `-`; the lr-freeze amendment is found by
+  the SHA-256 of `settings.json`, which must occur in exactly one amendment after Amendment 10.
+- *Runner* (runner-1 to runner-12 in the results): the clean-tree scope and its repetitions; resumption only at the
+  same HEAD and configuration with cached files unchanged; the pool size as the number of concurrent processes; the
+  replay of the designated run over every epoch; the exact arm's and floors' LBENCH/1 fields; the pre-flight retrains
+  (euclid, 2) and (lorentz, 2) at the grid's first rate and its block's first seed; the diagnostic labels (the root
+  and the node with the most closure neighbours after it); the 200 diagnostic MAPs in binary64; the environment per
+  run.
+
+**5. Environment of tuning.**
+- Software: Python 3.13.18, numpy 2.5.3, numba 0.68.1, llvmlite 0.50.0 and glibc 2.39.
+- numpy's SIMD dispatch: X86_V3, X86_V4, AVX512_ICL and AVX512_SPR.
+- Machine: Linux 6.18.44 on 4 CPUs.
+- The dry run ran in the same environment (environment SHA prefix db8e470c21e5).
