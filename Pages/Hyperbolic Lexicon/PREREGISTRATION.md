@@ -960,3 +960,34 @@ per finding) confirmed one finding, L11's control (item 2); the others were not 
 **6. Environment of the dry run:** Node 22.23.4, Python 3.13.18 with `cryptography` 50.0.1, Owl Academy at 7f45f35,
 BioChain-AI at c975161.
 
+### Amendment 9 · 2026-11-06, Phase 3 write-up: errata to the decisive record
+
+Written after the decisive run of L8–L11 (commit 865791f), while writing it up; it changes no rule and no result. As
+Amendment 3 did for Phase 1, it records three things in the Phase 3 records that are out of date or easy to misread.
+
+**1. The label.** The decisive and dry result files (`reference/results/claims-phase3.*` and
+`reference/results/dry/claims-phase3.*`) read "PREREGISTRATION.md with Amendments 1-7", a label fixed in the runner
+and not updated when Amendment 8 was added. The decisive run records HEAD 6da04be, which holds Amendment 8, and one
+uncommitted path, its own console file. The runner now takes the label from PREREGISTRATION.md when it starts.
+
+**2. Two readings describe the replaced control.** In the decisive record, READING runner-11 says "the control
+compares the two medians", and READING runner-13 says "The registered comparison of the two medians still decides the
+control" and that a comparison powered against the noise "needs an amendment". Both texts predate Amendment 8 item 2
+and were not updated with it. The code decided L11's control as item 2 says: the record's rule, its `control.what`
+and the decision read the step check alone (`step_check.holds`: 441 of 441 timed full verifications ran the
+attestation step inside the timed window with a time above 0, and 441 of 441 attestation-skipped ones recorded it as
+skipped with every other check passed). The comparison of the medians is reported and decided nothing
+(`median_comparison_faster`: true, 153.527 ms skipped against 155.387 ms full). Had the old reading decided, the
+outcome would be the same. The runner's texts now say what the code does.
+
+**3. The dry run's HEAD.** The dry run committed in 25b48b3 (`reference/results/dry/`) started at 03:56:57 UTC. It
+records HEAD b822237 and uncommitted changes to six files (`lexicon_core.js`, `reference/lexicon/verify.py`,
+`reference/run_claims_phase3.cjs`, `reference/traces/chain_v1.txt`, `tests/all.cjs` and `tests/chain-lexicon.cjs`), as
+well as its own outputs. These are the six files commit 8c51e08 holds, committed at 03:57:26 UTC, 29 s after the run
+started. The record cannot show that they did not change in those 29 s. Dry runs decide nothing.
+
+Two comments were out of date in the same way, and are corrected without any change to code. One is in
+`lexicon_core.js`'s notes on the verifier, which still gave the old verdict split. The other is in the header of
+`tests/chain-lexicon.cjs`, which said the control "reports authentic null"; it reports the attestation check skipped,
+which does not count against authentic.
+
