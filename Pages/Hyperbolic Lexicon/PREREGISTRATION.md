@@ -1568,3 +1568,13 @@ set. The measured runs use seeds 0–4 and have not run.
 - numpy's SIMD dispatch: X86_V3, X86_V4, AVX512_ICL and AVX512_SPR.
 - Machine: Linux 6.18.44 on 4 CPUs.
 - The dry run ran in the same environment (environment SHA prefix db8e470c21e5).
+
+### Amendment 12 · 2026-11-06, Phase 4 write-up: an erratum to Amendment 11
+
+Written after the decisive run of L6 and L4(c) (b6f3b9d), while checking it. It changes no rule and no result. Amendment
+11 item 1 says "The closest choice is Lorentz d = 2: rate 1 had mean 0.884987 and rate 3 had 0.884130, a difference
+of 0.000857." By that measure, the absolute difference of the two best means, the closest choice is Euclidean d = 50:
+rate 3 had mean 0.999973 and rate 1 had 0.999840, a difference of 0.000133. Lorentz d = 2 comes next. The sentence
+decides nothing: A10.8 chooses each cell's rate by the larger exact mean alone, and every printed value of Amendment
+11's tables and the file hashes are right. An independent check of the decisive record found this, and found no
+other difference among the record's decisions, intervals, controls, tuning choices, receipts and table hashes.
