@@ -26,10 +26,19 @@
 //                 trace's seeds 8000 + i, its fixed test keys (RFC 6979 signatures computed here) and the first two verb
 //                 gloss shards (WordNet; without it those lines are skipped). When the file is absent the section is
 //                 reported as skipped, never passed. Plus a control: one changed trace line fails exactly one line.
+//   l6            reference/traces/l6_v1.txt (Phase 4, reference/traces_l6.py), every line, header included, regenerated
+//                 by lexicon_core.js's l6TraceLines from the trace's seeds 8000 + i: 18 toy DAGs and tables, their
+//                 snapped texts, and the snapped tables ranked exactly (kappa by BigInt cross-multiplication, Euclidean
+//                 |n_u - n_v|^2): per-query APs, ranks and rank-list hashes, both MAPs as p/q. Then hand checks (kappa
+//                 against the exact Lorentz product of the lifted points, the reference's integer key, the core's
+//                 Euclidean Arm, fence.js's dyadic, the parser's refusals) and the controls: a binary64 kappa (and a
+//                 binary64 squared distance) in place of the exact key must change an AP on a tie, and one changed
+//                 trace line must fail exactly one line.
 // Implements PREREGISTRATION.md Amendment 4 item 8 (every Phase 1 trace reproduced line for line in Node before any
-// decisive run), for Phase 3 the same for the chain trace (Amendment 7), and the common rule "Authority". Exits 1 if any line fails; skipped lines are counted, never passed.
+// decisive run), for Phase 3 the same for the chain trace (Amendment 7), for Phase 4 the traces that Amendment 10 item 11
+// asks for before the Node re-evaluation, and the common rule "Authority". Exits 1 if any line fails; skipped lines are counted, never passed.
 // Uses only trace data (seeds 8000 + i and the traces' hand-picked cases), seeds 70000 + i, exhaustive short words and
-// the verb forest: no registered L1 instance is touched, and no noun word or point is built.
+// the verb forest: no registered L1 instance is touched, and no noun word or point is built; no mammal (L6) data is read.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -45,7 +54,7 @@ const readTrace = name => { const p = path.join(REF, 'traces', name); return fs.
 const traces = {
     normalise: readTrace('normalise_v1.txt'), wordpiece: readTrace('wordpiece_v1.txt'),
     address: readTrace('address_v1.txt'), points: readTrace('points_v1.txt'), rank: readTrace('rank_v1.txt'),
-    chain: readTrace('chain_v1.txt'),
+    chain: readTrace('chain_v1.txt'), l6: readTrace('l6_v1.txt'),
 };
 // WordNet (reference/golden/wordnet_v1.cjs, the archive in the cache): the verb forest for address_v1.txt and
 // rank_v1.txt. Without it those lines are reported as skipped, never passed.
@@ -686,6 +695,121 @@ const chainSections = got => [
     } },
 ];
 
+// ------------------------------------------------------------------ L6 (Phase 4): snapped tables
+// reference/traces/l6_v1.txt line for line is LC.l6ParitySections (in the run list below), on one l6TraceLines() run
+// shared with the checks here. Then what reference/tests/test_learned.py checks by hand, in the core's terms, and the
+// controls of the trace check. Amendment 10 items 6 and 11; nothing here reads mammal data or decides a claim.
+let L6_RUN = null;
+const l6Run = () => L6_RUN || (L6_RUN = LC.l6TraceLines());
+const Fz = require(path.join(SYS, '..', 'Hyperbolic Oracles', 'fence.js'));
+// dense class indices of keys under a comparator (equal keys, one class)
+const classesBy = (keys, cmp) => { const o = keys.map((_, i) => i).sort((i, j) => cmp(keys[i], keys[j])), out = new Array(keys.length); let g = -1; o.forEach((i, j) => { if (!j || cmp(keys[o[j - 1]], keys[i]) !== 0) g++; out[i] = g; }); return out; };
+// the exact lifted point of a dyadic Poincare point n / 2^K: ((4^K + |n|^2), 2^(K+1) n) / (4^K - |n|^2) (fence.lift)
+const liftQ = (n, K) => { const four = 1n << BigInt(2 * K), s = n.reduce((a, t) => a + t * t, 0n), den = four - s; return [new Q(four + s, den), ...n.map(t => new Q(t << BigInt(K + 1), den))]; };
+const lneg = (x, y) => x.slice(1).reduce((acc, a, k) => acc.sub(a.mul(y[k + 1])), x[0].mul(y[0]));   // -<x, y>_L
+// a binary64 key in place of the exact one (the controls): kappa as Number(a) / Number(b), |n_u - n_v|^2 as Number
+class FloatSnapArm {
+    constructor(N, geometry, K, which) { this.x = new LC.SnapArm(N, geometry, K); this.n = this.x.n; this.g = geometry; this.which = which; }
+    keys(u) {
+        if (this.g !== this.which) return this.x.keys(u);
+        const a = this.x.sq(u);
+        return this.g === 'lorentz' ? a.map((s, v) => Number(s) / Number(this.x.b[v])) : a.map(Number);
+    }
+}
+// whether query u of a case has a neighbour/non-neighbour pair that one key ties and the other orders strictly
+function tieFlip(c, u, ek, fk) {
+    for (const nbs of [c.closure[u], c.graph[u]]) {
+        const s = new Set(nbs);
+        for (const v of nbs) for (let w = 0; w < c.n; w++) if (w !== u && !s.has(w) && (ek[v] === ek[w]) !== (fk[v] === fk[w])) return true;
+    }
+    return false;
+}
+const l6Section = { name: 'L6: snapped tables by hand (test_learned.py) and controls of the trace check', run() {
+    const out = [], run = l6Run(), lor = run.cases.filter(c => c.geometry === 'lorentz'), euc = run.cases.filter(c => c.geometry === 'euclid');
+    // kappa's classes against the exact Lorentz product of the lifted points (fence.lift), ties included, and A10.6's
+    // identity -<lift_u, lift_v> = 1 + 2 4^K kappa_u(v) / (4^K - |n_u|^2), exactly
+    let qs = 0, qOk = 0, tied = 0;
+    for (const c of lor) {
+        const arm = new LC.SnapArm(c.N, 'lorentz', c.K), L = c.N.map(n => liftQ(n, c.K)), four = new Q(1n << BigInt(2 * c.K));
+        for (let u = 0; u < c.n; u++) {
+            const ln = L.map(y => lneg(L[u], y)), kap = arm.kappa(u), cls = arm.keys(u).map(Number), bu = new Q(arm.b[u]);
+            const ident = ln.every((x, v) => x.eq(Q.ONE.add(Q.TWO.mul(four).mul(kap[v]).div(bu))));
+            qs++; if (ident && same(classesBy(ln, (x, y) => x.cmp(y)), cls)) qOk++;
+            if (new Set(cls).size < c.n) tied++;
+        }
+    }
+    out.push(line('L6', 'kappa classes = the order of the exact -<lift_u, lift_v>_L (fence.lift as Q), and A10.6\'s identity', qOk === qs && tied > 0, `${qOk}/${qs} queries of ${lor.length} Lorentz cases; exact ties in ${tied}`));
+    // the Python reference's integer key floor(a 2^(4K) / b) (learned.DyadicLorentzArm, its READING) gives the same classes
+    let iq = 0, iOk = 0;
+    for (const c of lor) {
+        const arm = new LC.SnapArm(c.N, 'lorentz', c.K), sh = BigInt(4 * c.K);
+        for (let u = 0; u < c.n; u++) { const a = arm.sq(u), k = a.map((x, v) => (x << sh) / arm.b[v]); iq++; if (same(classesBy(k, (x, y) => (x < y ? -1 : x > y ? 1 : 0)), arm.keys(u).map(Number))) iOk++; }
+    }
+    out.push(line('L6', 'the reference\'s integer key floor(a 2^(4K) / b) has the same classes as kappa', iOk === iq, `${iOk}/${iq} queries`));
+    // a tie by cross-multiplication between different fractions, by hand (K = 2, 4^K = 16). Query u = (-3, -2):
+    // x = (-2, -3) has kappa 2/(16 - 13) = 2/3, y = (0, -1) has 10/(16 - 1) = 10/15, z = (1, 1) has 25/14. With
+    // neighbours {y}, y ties with x and ranks after it: AP 1/2, rank 2; with {x, z}: AP (1/2 + 2/3)/2 = 7/12, ranks 2
+    // and 2. Ties: query u (x, y) and query z (u and x, both 25/3): 2.
+    const hand = new LC.SnapArm([[-3n, -2n], [-2n, -3n], [0n, -1n], [1n, 1n]], 'lorentz', 2), hk = hand.kappa(0);
+    const hev = LC.evaluateSnapped(hand, { a: [[2], [], [], []], b: [[1, 3], [], [], []] });
+    out.push(line('L6', 'a tie between different fractions (2/3 and 10/15), counted pessimistically, by hand', hk[1].eq(new Q(2n, 3n)) && hk[2].eq(new Q(2n, 3n)) && hk[3].eq(new Q(25n, 14n)) &&
+        LC.kappaCmp(2n, 3n, 10n, 15n) === 0 && LC.kappaCmp(2n, 3n, 25n, 14n) === -1 && same(hand.keys(0), [0n, 1n, 1n, 2n]) && hev.aps.a[0].eq(new Q(1n, 2n)) && same(hev.ranks.a[0], [2]) &&
+        hev.aps.b[0].eq(new Q(7n, 12n)) && same(hev.ranks.b[0], [2, 2]) && hev.aps.a[1] === null && hev.map.a.eq(new Q(1n, 2n)) && hev.meanRank.b.eq(Q.TWO) && hev.ties === 2,
+        'AP 1/2 (rank 2), AP 7/12 (ranks 2, 2), 2 ties'));
+    // the Euclidean key |n_u - n_v|^2 against the core's Arm over 2^K (learned.dyadic_euclid_arm: |Y|^2 - 2 X.Y)
+    let eOk = 0;
+    for (const c of euc) {
+        const cols = Array.from({ length: c.d }, (_, k) => c.N.map(r => r[k])), arm = new LC.Arm('dyadic', 'euclid', cols, 1n << BigInt(c.K));
+        const ev = LC.evaluateSnapped(arm, { closure: c.closure, graph: c.graph }, c.offsets, 'sha');
+        if (same(ev.aps.closure.map(LC.qOrDash), c.ev.aps.closure.map(LC.qOrDash)) && same(ev.aps.graph.map(LC.qOrDash), c.ev.aps.graph.map(LC.qOrDash)) &&
+            same(ev.ranks, c.ev.ranks) && same(ev.shas, c.ev.shas) && ev.ties === c.ev.ties) eOk++;
+    }
+    out.push(line('L6', 'Euclidean |n_u - n_v|^2 = the core\'s Arm over 2^K: APs, ranks, rank lists, ties', eOk === euc.length, `${eOk}/${euc.length} cases`));
+    // snapTable against fence.js's own dyadic (Hyperbolic Oracles) on the trace's float Lorentz tables
+    let sRows = 0, sOk = 0;
+    for (const c of lor.filter(x => x.kind === 'float')) c.X.forEach((x, i) => {
+        const f = Fz.dyadic(LC.poincareRow(x), c.K), sc = 1n << BigInt(c.K);
+        sRows++; if (same(f.map(q => q.n * (sc / q.d)), LC.snapTable([x], 'lorentz', c.K)[0])) sOk++;
+    });
+    out.push(line('L6', 'snapTable (Lorentz) = fence.js dyadic of the Poincare point, rim steps included', sOk === sRows && sRows > 0, `${sOk}/${sRows} rows`));
+    // the parser and the arm fail closed
+    const t = 'a 1 -2\nb 0 3';
+    out.push(line('L6', 'parseSnapText: round trip; refuses a final LF, a ragged row, a non-integer, offsets out of order; SnapArm refuses the rim',
+        same(LC.parseSnapText(t), { offsets: ['a', 'b'], N: [[1n, -2n], [0n, 3n]], d: 2 }) && LC.snapText(['a', 'b'], LC.parseSnapText(t).N) === t &&
+        throws(() => LC.parseSnapText(t + '\n')) && throws(() => LC.parseSnapText('a 1 2\nb 3')) && throws(() => LC.parseSnapText('a 1 2.5')) && throws(() => LC.parseSnapText('a 1 +2')) &&
+        throws(() => LC.parseSnapText('b 1 2\na 3 4')) && throws(() => LC.parseSnapText('a 1\na 2')) && throws(() => LC.parseSnapText('a')) && throws(() => LC.parseSnapText('')) &&
+        throws(() => new LC.SnapArm([[3n, 0n]], 'lorentz', 1)) && !throws(() => new LC.SnapArm([[1n, 0n]], 'lorentz', 1)) && !throws(() => new LC.SnapArm([[3n, 0n]], 'euclid', 1)) &&
+        throws(() => LC.snapTable([[NaN, 0]], 'euclid')), 'refused'));
+    // controls: a binary64 key in place of the exact one must change an AP of the trace on a tie (a neighbour and a
+    // non-neighbour that one key ties and the other orders strictly), for kappa and for the squared distance
+    const want = traces.l6 ? traces.l6.split('\n').slice(0, -1) : [];   // the text ends with one LF
+    for (const which of ['lorentz', 'euclid']) {
+        const fl = LC.l6TraceLines((N, g, K) => new FloatSnapArm(N, g, K, which));
+        let apDiff = 0, onTie = 0, other = 0, first = '';
+        want.forEach((w, j) => {
+            const f = w.split(' ');
+            if (f[1] !== 'ap') { if (fl.lines[j] !== w && f[1] !== 'ranks' && f[1] !== 'map' && f[1] !== 'meanrank' && f[1] !== 'ties') other++; return; }
+            const g = (fl.lines[j] || '').split(' ');
+            if (g[3] === f[3] && g[4] === f[4]) return;
+            apDiff++;
+            const c = run.cases[Number(f[0])], u = c.offsets.indexOf(f[2]);
+            const ek = new LC.SnapArm(c.N, c.geometry, c.K).keys(u), fk = new FloatSnapArm(c.N, c.geometry, c.K, which).keys(u);
+            if (tieFlip(c, u, ek, fk)) { onTie++; if (!first) first = `${f[0]} ap ${f[2]}: ${f[3]} ${f[4]} vs ${g[3]} ${g[4]}`; }
+        });
+        const what = which === 'lorentz' ? 'a binary64 kappa, Number(a) / Number(b),' : 'a binary64 |n_u - n_v|^2';
+        out.push(line('control', `${what} in place of the exact key changes an AP on a tie`, onTie > 0 && other === 0, `${apDiff} AP lines differ, ${onTie} on a tie the float key makes or breaks; first ${first.length > 90 ? first.slice(0, 90) + '…' : first}`));
+    }
+    // one changed trace line fails exactly one line
+    if (traces.l6) {
+        const ls = traces.l6.split('\n'), k = ls.findIndex(x => /^1[2-7] ap /.test(x)), bent = ls.slice(), f = bent[k].split(' ');
+        f[3] = f[3] === '1/1' ? '1/2' : '1/1';
+        bent[k] = f.join(' ');
+        const bad = LC.l6ParitySections({ l6: bent.join('\n') }, run)[0].run().filter(l => !l.ok);
+        out.push(line('control', 'a trace with one AP changed fails exactly one line', k > 0 && bad.length === 1 && bad[0].label === ls[k].split(' ').slice(0, 3).join(' '), bad.map(l => l.label).join(', ')));
+    } else out.push(line('control', 'a trace with one AP changed fails exactly one line', false, 'reference/traces/l6_v1.txt is missing'));
+    return out;
+} };
+
 // ------------------------------------------------------------------ run
 function runAll(sections) {
     let pass = 0, fail = 0, skip = 0;
@@ -709,7 +833,7 @@ function runAll(sections) {
     if (traces.chain !== null) {
         try { chainGot = await LC.chainTraceLines(wn); } catch (e) { chainGot = { lines: [], complete: true, error: e }; console.log(`FAIL  chainTraceLines threw: ${e.stack.split('\n').slice(0, 3).join(' | ')}`); }
     }
-    const r = runAll([...pinSections, ...LC.paritySections(traces, vocabs, wn), decoderSection, behaviourSection, guardSection, ...geometrySections, ...chainSections(chainGot)]);
+    const r = runAll([...pinSections, ...LC.paritySections(traces, vocabs, wn), decoderSection, behaviourSection, guardSection, ...geometrySections, ...chainSections(chainGot), ...LC.l6ParitySections(traces, l6Run()), l6Section]);
     const bad = r.fail + (chainGot && chainGot.error ? 1 : 0);
     console.log(`\nParity: ${r.pass}/${r.pass + bad} lines pass${bad ? `, ${bad} FAIL` : ''}${r.skip ? `, ${r.skip} skipped` : ''}  (${Date.now() - t0} ms, ${LC.version}, Node ${process.versions.node})`);
     process.exit(bad ? 1 : 0);

@@ -31,6 +31,12 @@
 // runParity(traces, vocabs, wn) checks this module against reference/traces/*.txt, one line per trace line
 // (normalise_v1, wordpiece_v1, address_v1, points_v1, rank_v1). tests/parity-lexicon.cjs runs it in Node.
 //
+// Phase 4 adds, at the end of the geometry half and called by nothing above it, the twin of reference/lexicon/learned.py's
+// snapping and exact ranking of learned tables (Amendment 10 items 6 and 11): snapTable, snapText and parseSnapText,
+// SnapArm (Lorentz kappa_u(v) compared by BigInt cross-multiplication; Euclidean |n_u - n_v|^2), evaluateSnapped
+// (APs, ranks and MAPs through rankQuery and mapExact unchanged), and l6TraceLines / l6ParitySections for
+// reference/traces/l6_v1.txt, which tests/parity-lexicon.cjs runs after the other sections.
+//
 // The section "chain" (Phase 3, L8-L11, Amendment 7) is the twin of reference/lexicon/chain.py, records.py,
 // manifest.py, attest.py and verify.py: growSync (Owl Academy's growBiochain, synchronous, field for field), the
 // synthetic and gloss shards, the records LVOCAB/1, LADDR/1, LPREP/1 (Tier S and P), LCORPUS/1 and LGROW/1, RFC 6962
@@ -1563,6 +1569,266 @@ function geometryParitySections(traces, wn = null) {
         section('rank_v1.txt', 'rank', 3, () => rankTraceLines(wn)),
     ];
 }
+
+// ------------------------------------------------------------------ L6 and L4(c): snapped learned tables (Phase 4)
+// The twin of reference/lexicon/learned.py's snapping and exact ranking (PREREGISTRATION.md Amendment 10 item 6), for
+// the Node re-evaluation of the measured snapped tables (item 11; the Common rules, "Authority"). New in Phase 4: no
+// function above calls anything here. A table is an array of rows of doubles in offset order (a Lorentz row
+// (x0, x1, ..., xd), a Euclidean row (x1, ..., xd)); a snapped table is its dyadic integers n, BigInt rows; its text
+// is 'offset n_1 ... n_d' per node (for Lorentz, the integers of the Poincare point), LF-joined, with no final LF.
+// Keys against a query u, ascending = nearer:
+//   lorentz  kappa_u(v) = |n_u - n_v|^2 / (4^K - |n_v|^2): an exact rational, compared with another by BigInt
+//            cross-multiplication (a e against c b; both denominators are positive), so it orders and ties the
+//            candidates exactly as -<lift_u, lift_v>_L = 1 + 2 4^K kappa_u(v) / (4^K - |n_u|^2) does (A10.6);
+//   euclid   |n_u - n_v|^2, a BigInt (4^K times the squared distance of the dyadic points).
+// READING (A10.6, "the key kappa_u(v), an exact Fraction"): rankQuery and apAndRanks (rank.py's _ap_and_ranks), used
+// here unchanged, compare keys with < and ===, which a pair (a, b) does not support. So SnapArm.keys(u) hands them, for
+// Lorentz, the index of each node's exact kappa class (0 for the smallest kappa), found by one stable sort by
+// cross-multiplication with ties decided by it too. AP, neighbour ranks and rank lists use only the order and the ties
+// of the keys, so they are kappa's own; the Python reference's integer key floor(a 2^(4K) / b) is another image of
+// the same order, and tests/parity-lexicon.cjs checks that both give the same classes.
+const SNAP_K = 32;
+const floorDivB = (a, b) => { const q = a / b; return a % b !== 0n && (a < 0n) !== (b < 0n) ? q - 1n : q; };   // Python's //
+// learned.poincare: x_k / (1 + x0) in binary64, 1 + x0 rounded first
+function poincareRow(x) { const s = 1 + x[0], out = []; for (let k = 1; k < x.length; k++) out.push(x[k] / s); return out; }
+// floor(2^K x + 1/2) of the double x read exactly: the float formula below 2^(52 - K) (exact there: scaling by 2^K
+// is exact and so is adding 1/2), else from x's exact rational (learned.snap's Fraction path)
+function snapCoord(x, K = SNAP_K) {
+    if (!Number.isFinite(x)) throw new Error('a table with a non-finite entry has no snap (A10.5: the run diverged)');
+    if (Math.abs(x) < Math.pow(2, 52 - K)) return BigInt(Math.floor(x * Math.pow(2, K) + 0.5));
+    const f = Q.fromDouble(x);
+    return floorDivB(2n * f.n * (1n << BigInt(K)) + f.d, 2n * f.d);
+}
+// A10.6's snap, row by row (learned.snap). lorentz: fence.dyadic(poincare(x), K), i.e. n_k = floor(2^K p_k + 1/2),
+// then one unit in, coordinatewise, while |n|^2 >= 4^K (hyperbolic_core.js's fence.js rule, written again here because
+// the geometry half does not load fence.js); euclid: floor(2^K x + 1/2) of each coordinate, with no rim rule.
+function snapTable(X, geometry, K = SNAP_K) {
+    if (geometry !== 'lorentz' && geometry !== 'euclid') throw new Error(`unknown geometry ${geometry}`);
+    const lim = 1n << BigInt(2 * K), s = Math.pow(2, K);
+    return X.map(row => {
+        const x = Array.from(row);
+        if (!x.every(Number.isFinite)) throw new Error('a table with a non-finite entry has no snap (A10.5: the run diverged)');
+        if (geometry === 'euclid') return x.map(v => snapCoord(v, K));
+        let n = poincareRow(x).map(v => BigInt(Math.floor(v * s + 0.5)));
+        while (n.reduce((a, t) => a + t * t, 0n) >= lim) n = n.map(t => (t > 0n ? t - 1n : t < 0n ? t + 1n : 0n));
+        return n;
+    });
+}
+function snapText(offsets, N) {
+    if (offsets.length !== N.length) throw new Error('offsets and rows differ in number');
+    return N.map((row, i) => `${offsets[i]} ${row.join(' ')}`).join('\n');
+}
+// learned.parse_snap_text, failing closed: every line 'offset n_1 ... n_d' with one d >= 1, integers in decimal, the
+// offsets strictly increasing (A10.6: rows in offset order), and no final LF (an empty line is refused).
+// READING (A10.6): "rows in offset order" and "with no final LF" are taken as conditions a stored text must meet, so a
+// text that breaks either is refused rather than repaired (the Python parser assumes them).
+const SNAP_INT = /^-?(?:0|[1-9][0-9]*)$/;
+function parseSnapText(text) {
+    if (typeof text !== 'string' || !text.length) throw new Error('an empty snapped text');
+    const offsets = [], N = [];
+    let d = -1;
+    for (const ln of text.split('\n')) {
+        const f = ln.split(' ');
+        if (f.length < 2 || !f[0].length) throw new Error(`a snapped text line needs an offset and at least one integer: "${short(ln, 60)}"`);
+        if (d < 0) d = f.length - 1;
+        else if (f.length - 1 !== d) throw new Error(`a ragged snapped text: ${f.length - 1} integers where the first line has ${d}`);
+        if (offsets.length && !(offsets[offsets.length - 1] < f[0])) throw new Error(`offsets out of order at ${f[0]}`);
+        const row = f.slice(1);
+        if (!row.every(t => SNAP_INT.test(t))) throw new Error(`not a decimal integer in the line of ${f[0]}`);
+        offsets.push(f[0]);
+        N.push(row.map(t => BigInt(t)));
+    }
+    return { offsets, N, d };
+}
+// A10.6's float table bytes: little-endian float64, row-major (a Lorentz row with x0 first); their SHA-256 names it
+function floatTableBytes(X) {
+    const w = X.length ? X[0].length : 0, dv = new DataView(new ArrayBuffer(8 * w * X.length));
+    X.forEach((row, i) => { if (row.length !== w) throw new Error('ragged table'); for (let k = 0; k < w; k++) dv.setFloat64(8 * (i * w + k), row[k], true); });
+    return new Uint8Array(dv.buffer);
+}
+const floatTableSha = X => sha256Hex(floatTableBytes(X));
+// the sign of a/b - c/e for b, e > 0, by cross-multiplication
+function kappaCmp(a, b, c, e) { const l = a * e, r = c * b; return l < r ? -1 : l > r ? 1 : 0; }
+// the exact class index of every a[v]/b[v] (b[v] > 0): equal ratios share one, smaller ratios get smaller ones
+function kappaClasses(a, b) {
+    const order = a.map((_, i) => i).sort((i, j) => kappaCmp(a[i], b[i], a[j], b[j]));   // stable: ties in index order
+    const out = new Array(a.length);
+    let g = -1, prev = -1;
+    for (const i of order) { if (prev < 0 || kappaCmp(a[prev], b[prev], a[i], b[i]) !== 0) g++; out[i] = BigInt(g); prev = i; }
+    return out;
+}
+// A snapped table as an arm for rankQuery (duck-typed as there: .n and .keys(u)). N: BigInt rows (snapTable or
+// parseSnapText). A Lorentz point on or past the rim (|n|^2 >= 4^K) is no snap and is refused, as learned.py refuses it.
+class SnapArm {
+    constructor(N, geometry, K = SNAP_K) {
+        if (geometry !== 'lorentz' && geometry !== 'euclid') throw new Error(`unknown geometry ${geometry}`);
+        this.geometry = geometry; this.kind = `snap-${geometry}`; this.K = K;
+        this.N = N.map(row => Array.from(row, t => BigInt(t)));
+        this.n = this.N.length; this.dim = this.n ? this.N[0].length : 0;
+        if (!this.n || !this.dim || this.N.some(row => row.length !== this.dim)) throw new Error('a snapped table needs rows of one length d >= 1');
+        this.b = null;
+        if (geometry === 'lorentz') {
+            const four = 1n << BigInt(2 * K);
+            this.b = this.N.map(row => four - row.reduce((s, t) => s + t * t, 0n));
+            if (this.b.some(x => x <= 0n)) throw new Error('a dyadic Lorentz point on or past the rim (|n|^2 >= 4^K): not a fence.dyadic snap');
+        }
+    }
+    sq(u) {                                    // |n_u - n_v|^2 for every v, exact
+        const a = this.N[u], d = this.dim, out = new Array(this.n);
+        for (let v = 0; v < this.n; v++) { const r = this.N[v]; let s = 0n; for (let k = 0; k < d; k++) { const t = a[k] - r[k]; s += t * t; } out[v] = s; }
+        return out;
+    }
+    kappa(u) { const a = this.sq(u); return a.map((x, v) => new Q(x, this.b[v])); }   // Lorentz: kappa_u(v) as Q
+    keys(u) { const a = this.sq(u); return this.geometry === 'lorentz' ? kappaClasses(a, this.b) : a; }
+}
+// the number of query u's candidates tied with an earlier candidate: candidates minus distinct keys among them
+function candidateTies(keys, u) { const seen = new Set(); for (let v = 0; v < keys.length; v++) if (v !== u) seen.add(keys[v]); return keys.length - 1 - seen.size; }
+// learned.evaluate's twin: every node ranked against all the others by rankQuery (pessimistic ties), for each named
+// neighbour table of nbSets ({ closure, graph }, nb[u] the neighbour indices of u). Returns, per name, the APs (Q, null
+// for a query without neighbours) and neighbour ranks in query order, the exact MAP (mapExact, queries without
+// neighbours left out; null if none has any) and the pooled mean rank (meanRank; null without neighbours); ties (as
+// candidateTies, summed); and with offsets and rankList = 'sha' the rank-list SHA-256 of every query.
+function evaluateSnapped(arm, nbSets, offsets = null, rankList = null) {
+    const names = Object.keys(nbSets), tables = names.map(k => nbSets[k]);
+    tables.forEach((t, k) => { if (t.length !== arm.n) throw new Error(`neighbour set ${names[k]} has ${t.length} entries for ${arm.n} nodes`); });
+    let last = null;
+    const memo = { n: arm.n, keys: u => (last = arm.keys(u)) };
+    const aps = tables.map(() => []), ranks = tables.map(() => []), shas = [];
+    let ties = 0;
+    for (let u = 0; u < arm.n; u++) {
+        const r = rankQuery(memo, u, tables, offsets, rankList);
+        r.ap.forEach((a, k) => aps[k].push(a));
+        r.ranks.forEach((x, k) => ranks[k].push(x));
+        if (rankList) shas.push(r.sha);
+        ties += candidateTies(last, u);
+    }
+    const out = { aps: {}, ranks: {}, map: {}, meanRank: {}, ties, shas: rankList ? shas : null };
+    names.forEach((name, k) => {
+        out.aps[name] = aps[k]; out.ranks[name] = ranks[k];
+        out.map[name] = aps[k].some(a => a !== null) ? mapExact(aps[k]) : null;
+        out.meanRank[name] = ranks[k].some(r => r.length) ? meanRank(ranks[k]) : null;
+    });
+    return out;
+}
+// The MAP as LBENCH/1 writes it (A10.12): 'p/q' in lowest terms and that text's SHA-256
+const mapText = m => qOrDash(m);
+const mapSha = m => sha256Hex(textBytes(qOrDash(m)));
+
+// ---- the L6 trace (reference/traces_l6.py): 18 toy cases, case i from Rng(8000 + i); its docstring gives the draws
+const L6_HEAD = [
+    '# l6_v1: snapped toy tables ranked exactly (Amendment 10 items 6 and 11). Case i from Rng(8000 + i), i = 0..17:',
+    '# float (i < 6: K = 32; i < 12: K = 8) or grid (K = 32), lorentz for even i, d = 2, 3, 5 by (i mod 6) div 2.',
+    '# "<i> case <kind> <geometry> <d> <K> <n>"; "<i> node <offset> <spanning parent: index, x outside, - root>',
+    '# <parents> <closure neighbours> <graph neighbours>" (indices; "-" if none); "<i> floatsha <sha256>" (float',
+    '# cases: the table\'s little-endian bytes); "<i> snap <offset> <n_1 ... n_d>" (the snapped text) and',
+    '# "<i> snapsha <sha256>"; "<i> ap <offset> <closure AP> <graph AP> <rank-list sha256>" and "<i> ranks <offset>',
+    '# <closure ranks> <graph ranks>" (pessimistic ties); "<i> map closure|graph <p/q> <sha256 of p/q>";',
+    '# "<i> meanrank <closure> <graph>" (pooled); "<i> ties <candidates minus distinct keys, summed over queries>"',
+];
+const L6_CASES = 18, L6_SEED = 8000;
+const L6_SCALES = { lorentz: [1e-3, 0.1, 1, 4, 30, 1e4, 1e11], euclid: [1e-3, 0.1, 1, 4, 30, 1e4, 1e7] };
+const l6CaseSpec = i => ({ kind: i < 12 ? 'float' : 'grid', geometry: i % 2 ? 'euclid' : 'lorentz', d: [2, 3, 5][Math.floor((i % 6) / 2)], K: i >= 6 && i < 12 ? 8 : 32 });
+const intsText = xs => xs.join(',') || '-';
+function l6Dag(rng) {
+    const n = 20 + rng.below(25), offsets = [];
+    for (let j = 0; j < n; j++) offsets.push(String(10000000 + 1000 * j + rng.below(1000)).padStart(8, '0'));
+    const span = [null], parents = [[]];
+    for (let j = 1; j < n; j++) {
+        const p1 = rng.below(j), p2 = rng.below(j), o = rng.below(10), s = rng.below(4), q = rng.below(j), p = Math.min(p1, p2);
+        parents.push((s === 0 && q !== p ? [p, q] : [p]).sort((x, y) => x - y));
+        span.push(j >= 2 && o === 0 ? 'x' : p);
+    }
+    return { n, offsets, span, parents };
+}
+function l6NeighbourSets(offsets, span, parents) {
+    const n = offsets.length, anc = [];
+    for (let j = 0; j < n; j++) { const s = new Set(); for (const p of parents[j]) { s.add(p); for (const a of anc[p]) s.add(a); } anc.push(s); }
+    const ancM = new Map(), descM = new Map(offsets.map(o => [o, new Set()]));
+    offsets.forEach((o, j) => { ancM.set(o, new Set([...anc[j]].map(a => offsets[a]))); for (const a of anc[j]) descM.get(offsets[a]).add(o); });
+    const parent = new Map(offsets.map((o, j) => [o, span[j] === null ? null : span[j] === 'x' ? 'outside' : offsets[span[j]]])), children = new Map();
+    for (const [o, p] of parent) if (p !== null && p !== 'outside') { if (!children.has(p)) children.set(p, []); children.get(p).push(o); }
+    return { closure: closureNeighbours(offsets, ancM, descM), graph: graphNeighbours(offsets, parent, children) };
+}
+function l6FloatTable(rng, n, geometry, d) {
+    const rows = [];
+    for (let j = 0; j < n; j++) {
+        const t = rng.below(6), src = rng.below(j + 1);
+        if (t === 0 && src < j) { rows.push(rows[src].slice()); continue; }
+        const scale = L6_SCALES[geometry][rng.below(7)], xs = [];
+        for (let k = 0; k < d; k++) xs.push((2 * rng.random() - 1) * scale);
+        if (geometry === 'lorentz') { let acc = 0; for (const x of xs) acc = acc + x * x; xs.unshift(Math.sqrt(1 + acc)); }
+        rows.push(xs);
+    }
+    return rows;
+}
+function l6GridTable(rng, n, d) {
+    const m = BigInt(3037000000 + rng.below(400)), rows = [];
+    for (let j = 0; j < n; j++) {
+        const t = rng.below(10), src = rng.below(j + 1);
+        if (t === 0 && src < j) rows.push(rows[src].slice());
+        else if (t === 1 && src < j) {
+            const perm = rng.shuffle(Array.from({ length: d }, (_, k) => k)), signs = [];
+            for (let k = 0; k < d; k++) signs.push(rng.below(2));
+            rows.push(perm.map((pk, k) => (signs[k] ? -rows[src][pk] : rows[src][pk])));
+        } else if (t === 2) rows.push(new Array(d).fill(0n));
+        else if (t === 3 || t === 4) rows.push([m, BigInt(rng.below(4))].concat(new Array(d - 2).fill(0n)));
+        else { const r = []; for (let k = 0; k < d; k++) r.push(BigInt(rng.below(2147483649) - 1073741824)); rows.push(r); }
+    }
+    return rows;
+}
+// One case of the trace: its lines and its data. armOf(N, geometry, K) makes the arm the case is ranked with (default
+// SnapArm: the controls in tests/parity-lexicon.cjs pass a float key instead). The arm ranks the PARSED snapped text,
+// as the re-evaluation of a stored table does.
+function l6Case(i, armOf = (N, g, K) => new SnapArm(N, g, K)) {
+    const { kind, geometry, d, K } = l6CaseSpec(i), rng = new C.Rng(L6_SEED + i);
+    const { n, offsets, span, parents } = l6Dag(rng), nb = l6NeighbourSets(offsets, span, parents);
+    const lines = [`${i} case ${kind} ${geometry} ${d} ${K} ${n}`];
+    for (let j = 0; j < n; j++) lines.push(`${i} node ${offsets[j]} ${span[j] === null ? '-' : span[j]} ${intsText(parents[j])} ${intsText(nb.closure[j])} ${intsText(nb.graph[j])}`);
+    let X = null, N;
+    if (kind === 'float') {
+        X = l6FloatTable(rng, n, geometry, d);
+        lines.push(`${i} floatsha ${floatTableSha(X)}`);
+        N = snapTable(X, geometry, K);
+    } else N = l6GridTable(rng, n, d);
+    const text = snapText(offsets, N), parsed = parseSnapText(text);
+    if (parsed.offsets.join('\n') !== offsets.join('\n')) throw new Error('the snapped text did not parse back');
+    for (const ln of text.split('\n')) lines.push(`${i} snap ${ln}`);
+    lines.push(`${i} snapsha ${sha256Hex(textBytes(text))}`);
+    const ev = evaluateSnapped(armOf(parsed.N, geometry, K), { closure: nb.closure, graph: nb.graph }, offsets, 'sha');
+    for (let u = 0; u < n; u++) {
+        lines.push(`${i} ap ${offsets[u]} ${qOrDash(ev.aps.closure[u])} ${qOrDash(ev.aps.graph[u])} ${ev.shas[u]}`);
+        lines.push(`${i} ranks ${offsets[u]} ${intsText(ev.ranks.closure[u])} ${intsText(ev.ranks.graph[u])}`);
+    }
+    for (const name of ['closure', 'graph']) lines.push(`${i} map ${name} ${mapText(ev.map[name])} ${mapSha(ev.map[name])}`);
+    lines.push(`${i} meanrank ${qOrDash(ev.meanRank.closure)} ${qOrDash(ev.meanRank.graph)}`);
+    lines.push(`${i} ties ${ev.ties}`);
+    return { i, kind, geometry, d, K, n, offsets, span, parents, closure: nb.closure, graph: nb.graph, X, N: parsed.N, text, ev, lines };
+}
+// reference/traces/l6_v1.txt as traces_l6.py writes it, comments included
+function l6TraceLines(armOf = undefined) {
+    const lines = L6_HEAD.slice(), cases = [];
+    for (let i = 0; i < L6_CASES; i++) { const c = l6Case(i, armOf); cases.push(c); lines.push(...c.lines); }
+    return { lines, complete: true, cases };
+}
+// One line per trace line, comments included, regenerated from the trace's seeds (nothing is read from the trace but
+// the expected text); traces.l6 = the file's text. got: an l6TraceLines() result to compare against (default: computed).
+function l6ParitySections(traces, got = null) {
+    return [{ name: 'l6_v1.txt', run() {
+        const text = traces.l6, out = [], line = (label, ok, detail = '') => ({ section: 'l6', label, ok: !!ok, detail });
+        if (typeof text !== 'string') return [line('file', false, 'reference/traces/l6_v1.txt is missing (reference/traces_l6.py writes it)')];
+        const want = text.split('\n');
+        out.push(line('file', want[want.length - 1] === '' && (want.length < 2 || want[want.length - 2] !== ''), 'ends with one LF'));
+        want.pop();
+        const g = (got || l6TraceLines()).lines;
+        want.forEach((w, j) => {
+            const label = w.startsWith('#') ? `comment ${j + 1}` : w.split(' ').slice(0, 3).join(' ');
+            if (j >= g.length) { out.push(line(label, false, 'the core wrote no such line')); return; }
+            out.push(line(label, g[j] === w, g[j] === w ? short(w.split(' ').slice(3).join(' '), 60) : firstDiff(w, g[j])));
+        });
+        if (g.length > want.length) out.push(line('extra lines', false, `the core wrote ${g.length - want.length} lines more than the trace`));
+        return out;
+    } }];
+}
 // ===== end of geometry
 
 // ================================================================== chain (Phase 3: L8-L11, Amendment 7)
@@ -2905,6 +3171,11 @@ return {
     floatCols, floatKeys, exactOrder, adjacentFlags, floatQuery, exactTie, apOfOrder, acoshOrder, acoshAp, textBytes,
     // L3(f), map A, the geometry traces
     canonicalPointLines, canonicalPointList, l3fLine, isSpecial, nbPunct, mapA, wordOf, addressTraceLines, pointsTraceLines, pointsTraceWords, rankTraceLines,
+    // L6 and L4(c) (Phase 4, Amendment 10 items 6 and 11): snapping, the snapped text, exact kappa and squared-distance
+    // ranking of snapped tables, and the L6 trace (reference/traces/l6_v1.txt)
+    SNAP_K, floorDivB, poincareRow, snapCoord, snapTable, snapText, parseSnapText, floatTableBytes, floatTableSha, kappaCmp, kappaClasses, SnapArm,
+    candidateTies, evaluateSnapped, mapText, mapSha, L6_HEAD, L6_CASES, L6_SEED, L6_SCALES, l6CaseSpec, l6Dag, l6NeighbourSets, l6FloatTable, l6GridTable,
+    l6Case, l6TraceLines, l6ParitySections,
     // chain (Phase 3): the grower, the stream, the synthetic and gloss shards (L8)
     chainCores, CHAIN_PINS, CHAIN_SOURCES, OWL_FIELDS, strBytes, sha256Str, latin1Utf8, concatBytes, bytesEq, isHex, leafHash, merkleShdccp2, weavesOf, segCutsOf,
     chunksOf, shardText, kernelCrystallize, leafHashBinary, engramLayer, growSync, recordDiff, framesStrict, frameOffsets, frameHex, swapFrames, refixParity, word16, crystalHas80,

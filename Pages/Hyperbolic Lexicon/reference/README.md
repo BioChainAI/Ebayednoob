@@ -85,12 +85,15 @@ Built in Phase 1, in `lexicon/` (with `phase2.py` in Phase 2, and the chain modu
 | `lexicon/attest.py` | Phase 3 (L10; Amendment 7 item 6): ATTEST/1 with `cryptography`: BioChain-AI's identity, key vector and key id, ported; P1363 to DER and back with r and s left-padded; the high-S twin; the key-registry snapshot pinned by its SHA-256; L10's control 2 (the conversion skipped) |
 | `lexicon/verify.py` | Phase 3 (L10, L11): packages; the hardened verifier, its checks in the registered order (parity, canonical, crystal, leaves, weaves, derived, commitment, attestation, inclusion, consistency) and its two verdicts, self-consistent and authentic (Amendment 8 item 3); the session (V0, `LVOCAB/1`, `LADDR/1` recomputed once, the registry); the tamper helpers of T1-T9 |
 
-Still planned:
+Phase 4 (L6 and L4(c); Amendment 10, cited A10.n), in progress:
 
-| Module | Phase | Holds |
-| --- | --- | --- |
-| `lexicon/embed.py` | 4 | Lorentz and Euclidean static embeddings in numpy float64 |
-| `LBENCH/1` in `lexicon/records.py` | 4 | Benchmark receipts, defined when Phase 4 first uses them (Amendment 7 item 3) |
+| Module | Holds |
+| --- | --- |
+| `lexicon/stream.py` | The training stream: `hpstep.prng`'s xoshiro128\*\* and splitmix32 copied line for line into numba kernels (numba 0.68.1 pinned, `cache=False`); used by the trainer only (A10.1) |
+| `lexicon/pystream.py` | The same calls on `hpstep.prng.Rng` itself, without numba; `replay_states`, the replay check of A10.1 |
+| `lexicon/embed.py` | The closure sets and training instances (A10.2, control 2's pairs), the initial table, the schedule and the float64 trainer of A10.3–5: no BLAS, sequential sums, the Lorentz guard and step |
+| `lexicon/learned.py` | Snapping to 2^−32 (A10.6), exact ranking of snapped tables through `rank._ap_and_ranks`, float64 ranking (A10.10), fractional-tie AP, the rank structure, displacement, bits and the distances for distortion (A10.11) |
+| `lexicon/l6.py` | Seeds, tuning jobs and the lr choice, control 1's relabelling, control 2's pairs, the floors, intervals, presence, the decisions of L6 and L4(c), `LBENCH/1` (A10.12), the protocol pin (`golden/l6_protocol_v1.txt`) and the lr-freeze lookup |
 
 The exact modules of Hyperbolic Oracles (`hpstep.prng`, `hpstep.problems`, `hpstep.decode3d`) and of Engram Mind's
 Eye (`engram.ttmpt`, `engram.address`) are imported in place, unchanged, from their reference folders.
@@ -141,9 +144,10 @@ Its per-instance data (Python's records, the packages, the L11 times) go to `~/.
 From this folder (`Pages/Hyperbolic Lexicon/reference/`), with the data cached:
 
 ```
-python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (189 tests, about a minute)
-python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 8 slow checks (full corpora; the Phase 2 dry run;
-                                                       # Phase 3's large lists, LADDR/1 over map A, the chain trace)
+python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (297 tests, about two minutes)
+python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 12 slow checks (full corpora; the Phase 2 dry run;
+                                                       # Phase 3's large lists, LADDR/1 over map A, the chain trace;
+                                                       # Phase 4's bitwise reproducibility and the runner's self-test)
 python3 -B run_claims.py --dry                         # the registered dry run (Amendment 1, item 10) into results/dry/
 python3 -B run_claims.py                               # the Phase 1 claims L2, L3, L5, L7 into results/ (about 5 minutes)
 python3 -B run_claims.py L3 L7                         # only these claims (results/claims-L3-L7.json and .md)
@@ -191,6 +195,39 @@ python3 -B traces_chain.py                             # rewrite the chain trace
   verdicts on clean and tampered packages. Each `--check` rebuilds in memory and compares bytes: exit 0 equal, 1
   different, 2 skipped when the data it needs is not cached. Each file
   documents its format in its `#` header. Nothing in them decides a claim.
+
+## Phase 4: L6 and L4(c) (in progress)
+
+`run_claims_phase4.py` runs the order of A10.14. Nothing has run on the mammal sets yet; results to come.
+
+```
+python3 -B run_claims_phase4.py --selftest --out <dir>   # the whole pipeline on a synthetic DAG, unregistered seeds 80600+,
+                                                         # 2 cells, 2 rates, 3 epochs (about 1 minute; decides nothing;
+                                                         # writes only under <dir>, never under results/)
+python3 -B run_claims_phase4.py --tune --dry             # dry tuning (A10.13, solid.n.01): results/dry/tuning.json, settings.json
+python3 -B run_claims_phase4.py --measure --dry          # the dry measured run: results/dry/claims-phase4.*
+python3 -B run_claims_phase4.py --tune                   # registered tuning: results/tuning.json, phase4-tuning-console.txt
+python3 -B run_claims_phase4.py --write-settings         # settings.json from tuning.json; prints its SHA-256 for the lr freeze
+python3 -B run_claims_phase4.py --measure                # the decisive run of L6 and L4(c)
+```
+
+- **Rules.** `--workers W` (default 4): one single-threaded spawn process per job (the five thread variables are set
+  to 1 before numpy is imported; the main process never imports numba). Registered `--tune` and `--measure` refuse
+  uncommitted changes in this folder and in hpstep (their own outputs aside), and `--allow-dirty` is refused outside
+  a dry run. `--measure` also refuses unless the only paths changed since tuning's commit are `PREREGISTRATION.md`,
+  `settings.json`, `results/tuning.json` and tuning's console, and the lr-freeze amendment holds `settings.json`'s
+  SHA-256. Each step replays one run's draws with `hpstep.prng.Rng` and writes nothing if the states differ.
+  P (`Rng(7)`, control 1) is computed only in registered `--measure`.
+- **Resume.** Each finished job is a line of `runs.jsonl` in `~/.cache/hyperbolic-lexicon/phase4/<mode>/` (`HL_CACHE`
+  overrides the root), with its float table, snapped text and per-query APs. A restart at the same HEAD reuses them;
+  the record lists every start, and the console file is appended to.
+- **Files.** `results/tuning.json` and `phase4-tuning-console.txt`; `settings.json`; `results/claims-phase4.json` and
+  `.md`, `phase4-console.txt`, `lbench-phase4.txt` (every `LBENCH/1` record) and `l6-tables/` (gzipped snapped texts
+  of the 100 measured and edge-shuffled tables, the float bytes of L4(c)'s 40, the exact arm's lines); the same names
+  under `results/dry/`. The tuning tables (about 80 MB) stay in the cache.
+- **Cost** on 4 workers here: one run 32–276 s Euclidean and 48–358 s Lorentz (d = 2 to 50); about 1.9 h for
+  registered tuning (240 runs), 1.7 h dry, and about 1 h for each measured step (100 runs, 50 floors, 340 relabelled
+  evaluations, the replays and the intervals).
 
 ## Results
 

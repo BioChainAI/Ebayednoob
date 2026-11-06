@@ -28,6 +28,19 @@ Modules (Phase 3, Amendment 7):
     attest          ATTEST/1 with `cryptography`: P1363 <-> DER, the registry snapshot, BioChain's identity port (L10)
     verify          packages, the hardened verifier and the T1-T9 tamper helpers (L10, L11)
 
+Modules (Phase 4, Amendment 10; in progress):
+    stream          the training stream: hpstep.prng's xoshiro128** and splitmix32 copied line for line into numba
+                    kernels (next_u32, random, below, shuffle; init draws, epoch shuffles, negatives), numba pinned
+    pystream        the same calls on hpstep.prng.Rng itself (no numba), and replay_states (item 1's replay check)
+    embed           L6's closure sets and training instances (items 2 and 9), the initial table, the schedule and the
+                    float64 trainer of items 3-5 (no BLAS, sequential sums, the Lorentz guard and step)
+    learned         snapping to 2^-32 (item 6), exact ranking of snapped tables through rank._ap_and_ranks, float64
+                    ranking (item 10), fractional-tie AP, the rank structure, displacement, bits, distortion (item 11)
+    l6              seeds, tuning jobs and the lr choice, controls 1-3, intervals, presence, the decisions of L6 and
+                    L4(c), LBENCH/1, the protocol pin and the lr-freeze lookup (items 7-9, 12)
+    (../run_claims_phase4.py is the runner: --tune, --write-settings, --measure, --dry, --selftest; numba is
+    imported only in its worker processes)
+
 Hyperbolic Oracles' exact modules (hpstep: prng, problems, decode3d) and Engram Mind's Eye's (engram: ttmpt,
 address) are imported in place, unchanged, from their reference folders.
 """
