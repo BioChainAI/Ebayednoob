@@ -2,7 +2,7 @@
 
 **This decides nothing.** Common rules, "Ties": fractional-tie values are reported, never used to decide. L5 and L4(a) stay decided as Phases 1 and 2 recorded them, on pessimistic ties.
 
-Run 2026-11-06 12:28:30 UTC (311.4 s, 4 workers) at 43265cffcad1, with `reference/fractional_ties.py` (uncommitted then: fractional_ties.py, lexicon/learned.py; their SHA-256s are in the JSON).
+Run 2026-11-06 14:42:18 UTC (318.2 s, 4 workers) at 272a50debd12, with `reference/fractional_ties.py` (uncommitted then: lexicon/learned.py; their SHA-256s are in the JSON).
 
 **Formula.** Amendment 10 item 11: each query's AP averaged over all orders inside each exact tie class, computed exactly. Walking the tie classes in key order, with lo candidates before a class and h neighbours already passed, a class of m candidates holding k >= 1 neighbours adds sum_{j=1..m} (k/m) (h + 1 + (j - 1)(k - 1)/(m - 1)) / (lo + j) ((h + 1)/(lo + 1) when m = 1); the AP is the total over the number of neighbours.
 

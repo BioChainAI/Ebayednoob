@@ -6,10 +6,17 @@ Euclidean row (x1, ..., xd) (A10.3).
 
 Snapping (A10.6).
     Lorentz    p = x_s / (1 + x0) in binary64 (1 + x0 rounded first), then hpstep.fence.dyadic(p, K): n = floor(2^K p
-               + 1/2) coordinatewise, stepped in by one unit while |n|^2 >= 4^K. The exact point is fence.lift(p, K).
+               + 1/2) coordinatewise in fence.dyadic's own binary64 arithmetic (math.floor(v * 2.0^K + 0.5)), stepped
+               in by one unit while |n|^2 >= 4^K. The exact point is fence.lift(p, K).
     Euclidean  n = floor(2^K x + 1/2) of the float read exactly, without dyadic's rim rule (which belongs to the
                Poincare ball and never ends on a vector of norm 1 or more).
     The snapped text is 'offset n_1 ... n_d' per node, LF-joined, no final LF; its SHA-256 names the snapped table.
+READING (A10.6, Euclidean: "n_k = floor(2^32 x_k + 1/2) of the float read exactly. This is fence.dyadic's rounding
+without its rim rule"; A10.10's coarse snap the same with 8): the formula, exact, is taken, as the more literal of
+the two. fence.dyadic's binary64 sum fl(2^K x + 0.5) differs from it at one double per K, x = 2^-(K+1) - 2^-(K+54)
+(2^K x = 1/2 - 2^-54, where the sum rounds up to 1 and the exact floor is 0), and above 2^(52 - K), where the sum
+drops x's low bits (x = 2^20 + 3 2^-32: 2^52 + 4, exactly 2^52 + 3). The Lorentz snap is fence.dyadic by name (A10.6,
+and L4(c)'s "fence.js dyadic and lift"), so it keeps fence.dyadic's arithmetic at that one double.
 
 The exact Lorentz key (A10.6). For a query u and a candidate v,
     -<lift_u, lift_v>_L = 1 + 2 4^K kappa_u(v) / (4^K - |n_u|^2),   kappa_u(v) = |n_u - n_v|^2 / (4^K - |n_v|^2),
@@ -87,12 +94,17 @@ def _check_finite(X):
 def snap(X, geometry, K=K):
     """The dyadic integers n (2^K times the snapped coordinates) of every row: a list of int tuples.
 
-    lorentz: exactly [int(f * 2^K) for f in fence.dyadic(p, K)] for p = poincare(X) row by row. The float formula
-             floor(p 2^K + 0.5) is exact when |p| 2^K < 2^52 (scaling by 2^K is exact, and so is adding 1/2 below
-             2^52), so it is used there, and the rim loop is fence.dyadic's own, on Python ints; any other row goes
-             through fence.dyadic itself.
-    euclid:  floor(2^K x + 1/2) of each float read exactly: the float formula when |x| < 2^(52 - K), else
-             floor(Fraction(x) 2^K + 1/2). No rim rule."""
+    lorentz: exactly [int(f * 2^K) for f in fence.dyadic(p, K)] for p = poincare(X) row by row. numpy's
+             floor(p * 2.0^K + 0.5) is fence.dyadic's own binary64 arithmetic (math.floor(v * s + 0.5): one exact
+             scaling by a power of two, then one rounded addition), so it gives fence.dyadic's integers bit for bit;
+             it is used when |p| 2^K < 2^52, and the rim loop is fence.dyadic's own, on Python ints. Any other row
+             goes through fence.dyadic itself.
+    euclid:  floor(2^K x + 1/2) of each float read exactly (the module's READING). When |x| < 2^(52 - K):
+             y = x * 2.0^K is exact and t = floor(fl(y + 0.5)) is computed in binary64. Rounding is monotone and
+             every integer of magnitude at most 2^53 is a double, so t is never below the exact floor, and the
+             rounding error is below one unit, so t exceeds it by at most one; that happens at one double only,
+             y = 1/2 - 2^-54 (fl(y + 0.5) = 1). t - 0.5 is exact there (|t| <= 2^52), so t - 0.5 > y finds every
+             such t, which then steps down by one. Otherwise floor(Fraction(x) 2^K + 1/2). No rim rule."""
     _check_geometry(geometry)
     X = np.ascontiguousarray(X, dtype=np.float64)
     _check_finite(X)
@@ -114,7 +126,9 @@ def snap(X, geometry, K=K):
             out.append(tuple(n))
         return out
     with np.errstate(over='ignore', invalid='ignore'):
-        Nf = np.floor(X * s + 0.5)
+        Y = X * s
+        Nf = np.floor(Y + 0.5)
+        Nf = np.where(Nf - 0.5 > Y, Nf - 1.0, Nf)      # fl(y + 0.5) rounded up across an integer: one unit down
     small = np.abs(X) < lim
     if small.all():
         return [tuple(int(t) for t in row) for row in Nf.tolist()]

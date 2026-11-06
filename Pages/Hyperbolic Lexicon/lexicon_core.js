@@ -1591,15 +1591,21 @@ const SNAP_K = 32;
 const floorDivB = (a, b) => { const q = a / b; return a % b !== 0n && (a < 0n) !== (b < 0n) ? q - 1n : q; };   // Python's //
 // learned.poincare: x_k / (1 + x0) in binary64, 1 + x0 rounded first
 function poincareRow(x) { const s = 1 + x[0], out = []; for (let k = 1; k < x.length; k++) out.push(x[k] / s); return out; }
-// floor(2^K x + 1/2) of the double x read exactly: the float formula below 2^(52 - K) (exact there: scaling by 2^K
-// is exact and so is adding 1/2), else from x's exact rational (learned.snap's Fraction path)
+// floor(2^K x + 1/2) of the double x read exactly (learned.snap's Euclidean snap and its READING). Below 2^(52 - K):
+// y = x 2^K is exact and t = floor(y + 0.5) in binary64 is never below the exact floor and at most one above it, which
+// happens at one double only (y = 1/2 - 2^-54, where y + 0.5 rounds to 1); t - 0.5 is exact, so t - 0.5 > y finds it
+// and t steps down by one. Otherwise from x's exact rational (learned.snap's Fraction path).
 function snapCoord(x, K = SNAP_K) {
     if (!Number.isFinite(x)) throw new Error('a table with a non-finite entry has no snap (A10.5: the run diverged)');
-    if (Math.abs(x) < Math.pow(2, 52 - K)) return BigInt(Math.floor(x * Math.pow(2, K) + 0.5));
+    if (Math.abs(x) < Math.pow(2, 52 - K)) {
+        const y = x * Math.pow(2, K), t = Math.floor(y + 0.5);
+        return BigInt(t - 0.5 > y ? t - 1 : t);
+    }
     const f = Q.fromDouble(x);
     return floorDivB(2n * f.n * (1n << BigInt(K)) + f.d, 2n * f.d);
 }
-// A10.6's snap, row by row (learned.snap). lorentz: fence.dyadic(poincare(x), K), i.e. n_k = floor(2^K p_k + 1/2),
+// A10.6's snap, row by row (learned.snap). lorentz: fence.dyadic(poincare(x), K), i.e. n_k = floor(2^K p_k + 1/2) in
+// fence.js's own binary64 arithmetic (Math.floor(v * s + 0.5)),
 // then one unit in, coordinatewise, while |n|^2 >= 4^K (hyperbolic_core.js's fence.js rule, written again here because
 // the geometry half does not load fence.js); euclid: floor(2^K x + 1/2) of each coordinate, with no rim rule.
 function snapTable(X, geometry, K = SNAP_K) {

@@ -7,7 +7,7 @@
 // decoder3d.js, twin3d.js and fence.js against their Python traces; Engram Mind's Eye's browser core and bridges),
 // this folder's links and spike reruns, the site bar, the WordNet and EWT pins, the Python reference (its fast pytest
 // suite; the Unicode 15.1 table, V0 retrained, V1 and the L1 instance lists against their pins, the Unicode table
-// against the official UCD 15.1.0 files; the text and geometry traces rebuilt and compared byte for byte), and the
+// against the official UCD 15.1.0 files; the text, geometry and L6 traces rebuilt and compared byte for byte), and the
 // 0xA kernel against SHD-CCP's own Ontology tooling.
 // A check whose data or checkout is missing exits 2 and is reported as skipped, never as passed; pytest's own exit 2
 // (interrupted, or an error while collecting) counts as a failure. Exits 1 if any check fails.
@@ -47,6 +47,7 @@ const RUNS = [
     ['pins', 'L1 instance lists', [...PY, L + 'reference/golden/make_l1_instances_v1.py', '--check']],
     ['traces', 'text (normaliser, WordPiece)', [...PY, L + 'reference/traces_text.py', '--check']],
     ['traces', 'geometry (address, points, rank)', [...PY, L + 'reference/traces_geometry.py', '--check']],
+    ['traces', 'L6 (snapped toy tables, exact ranks)', [...PY, L + 'reference/traces_l6.py', '--check']],
     ['shdccp', 'kernel 0xA with SHD-CCP\'s tooling', ['python3', '-B', '-I', L + 'proposals/check_kernel.py']],
 ];
 

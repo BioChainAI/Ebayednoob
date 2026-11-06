@@ -27,8 +27,8 @@ Explainer 11, [`../explainers/chains.html`](../explainers/chains.html), tells Ph
 - **Exact stages:** the Python reference decides the claims for the exact stages (normaliser, tokenizer, ids, addresses,
   exact points, exact ranking and metrics, the LPS overlay, records and manifests). The browser core
   (`lexicon_core.js`, Phases 2 and 3) must reproduce its traces line for line, and does: `../tests/parity-lexicon.cjs`
-  passes 19,991 of 19,991 lines in Node, 18,578 of them from the five Phase 1 traces and 1,323 from the chain trace
-  (Phase 3). In Phase 3 the reference decided L8(d), L9 and L10's verdicts, and the JS equalled it on every record,
+  passes 22,586 of 22,586 lines in Node, 18,578 of them from the five Phase 1 traces, 1,323 from the chain trace
+  (Phase 3) and 2,584 from the L6 trace of snapped toy tables (Phase 4, `traces/l6_v1.txt`). In Phase 3 the reference decided L8(d), L9 and L10's verdicts, and the JS equalled it on every record,
   root, proof and verdict.
 - **Compatibility with Owl Academy and BioChain-AI:** their own JavaScript is the authority (claim L8(a, b)), run
   unchanged from their checkouts by name-grab (Owl Academy at `7f45f35`, BioChain-AI at `c975161`).
@@ -95,6 +95,10 @@ Phase 4 (L6 and L4(c); Amendment 10, cited A10.n), in progress:
 | `lexicon/learned.py` | Snapping to 2^−32 (A10.6), exact ranking of snapped tables through `rank._ap_and_ranks`, float64 ranking (A10.10), fractional-tie AP, the rank structure, displacement, bits and the distances for distortion (A10.11) |
 | `lexicon/l6.py` | Seeds, tuning jobs and the lr choice, control 1's relabelling, control 2's pairs, the floors, intervals, presence, the decisions of L6 and L4(c), `LBENCH/1` (A10.12), the protocol pin (`golden/l6_protocol_v1.txt`) and the lr-freeze lookup |
 
+Beside them, `traces_l6.py` writes `traces/l6_v1.txt`, the L6 trace the browser core must reproduce before it
+re-evaluates the measured snapped tables (A10.11), and `fractional_ties.py` writes `results/fractional-ties.json` and
+`.md`, A10.17's fractional-tie values for Phases 1 and 2 (both under "How to run" below).
+
 The exact modules of Hyperbolic Oracles (`hpstep.prng`, `hpstep.problems`, `hpstep.decode3d`) and of Engram Mind's
 Eye (`engram.ttmpt`, `engram.address`) are imported in place, unchanged, from their reference folders.
 `js_engram_keys.cjs` is L2's Node half: the engram/1 key of each type from `ttmpt_core_v1.js`, loaded unchanged.
@@ -144,10 +148,11 @@ Its per-instance data (Python's records, the packages, the L11 times) go to `~/.
 From this folder (`Pages/Hyperbolic Lexicon/reference/`), with the data cached:
 
 ```
-python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (297 tests, about two minutes)
-python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 12 slow checks (full corpora; the Phase 2 dry run;
+python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (309 tests, about two minutes)
+python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 13 slow checks (full corpora; the Phase 2 dry run;
                                                        # Phase 3's large lists, LADDR/1 over map A, the chain trace;
-                                                       # Phase 4's bitwise reproducibility and the runner's self-test)
+                                                       # Phase 4's bitwise reproducibility and the runner's self-test,
+                                                       # resumed and under another numpy SIMD dispatch)
 python3 -B run_claims.py --dry                         # the registered dry run (Amendment 1, item 10) into results/dry/
 python3 -B run_claims.py                               # the Phase 1 claims L2, L3, L5, L7 into results/ (about 5 minutes)
 python3 -B run_claims.py L3 L7                         # only these claims (results/claims-L3-L7.json and .md)
@@ -167,6 +172,10 @@ python3 -B traces_geometry.py --check                  # rebuild the address, po
 python3 -B traces_geometry.py                          # rewrite the address, point and rank traces
 python3 -B traces_chain.py --check                     # rebuild the chain trace and compare (about 20 s)
 python3 -B traces_chain.py                             # rewrite the chain trace
+python3 -B traces_l6.py --check                        # rebuild the L6 trace (snapped toy tables, ranked exactly) and compare
+python3 -B traces_l6.py                                # rewrite the L6 trace
+python3 -B fractional_ties.py                          # A10.17: Phase 1's and 2's fractional-tie MAPs into
+                                                       # results/fractional-ties.json and .md (about 5 minutes; decides nothing)
 ```
 
 - **Tests.** `pytest.ini` deselects the slow tests unless `-m` selects them (`-m "slow or not slow"` runs both).
@@ -192,9 +201,19 @@ python3 -B traces_chain.py                             # rewrite the chain trace
   `traces/address_v1.txt`, `traces/points_v1.txt` and `traces/rank_v1.txt`; `traces_chain.py` (Phase 3) writes
   `traces/chain_v1.txt`: the codec, V8's float functions, synthetic and verb shards grown both ways, the records,
   RFC 6962 vectors and lists, ATTEST/1 under two fixed test keys with deterministic signatures, and the verifier's
-  verdicts on clean and tampered packages. Each `--check` rebuilds in memory and compares bytes: exit 0 equal, 1
-  different, 2 skipped when the data it needs is not cached. Each file
+  verdicts on clean and tampered packages. `traces_l6.py` (Phase 4) writes `traces/l6_v1.txt`: 18 toy DAGs and
+  tables, case i from `Rng(8000 + i)`, float tables snapped at 2^−32 and at A10.10's coarse 2^−8 and integer tables
+  with planted exact ties and binary64 near-ties, ranked exactly by `lexicon/learned.py` (APs, ranks, rank-list
+  SHA-256s, MAPs, mean ranks, ties); `../tests/parity-lexicon.cjs` regenerates it in `lexicon_core.js` line for line,
+  and `test_learned.py` and `../tests/all.cjs` run its `--check`. Each `--check` rebuilds in memory and compares bytes:
+  exit 0 equal, 1 different, 2 skipped when the data it needs is not cached (the L6 trace needs none). Each file
   documents its format in its `#` header. Nothing in them decides a claim.
+- **Fractional ties** (A10.17). `fractional_ties.py` computes the fractional-tie MAPs (A10.11's formula) that Phase 1
+  (L5's arms on the mammal spanning subtree and the noun sample) and Phase 2 (L4(a)'s rank lists) left out, on the
+  code and data those runs used, and writes them beside the published pessimistic values. It stops, writing nothing,
+  unless every recomputed pessimistic MAP and mean rank equals the published exact rational (and, for L4(a), the
+  rank-list and AP-list digests match). It repeats Phase 1's and 2's own draws (`Rng(1000)`, `Rng(2000 + i)`), ranks
+  nothing of L6, records the commit and the SHA-256 of each code file it used, and decides nothing.
 
 ## Phase 4: L6 and L4(c) (in progress)
 
@@ -213,14 +232,23 @@ python3 -B run_claims_phase4.py --measure                # the decisive run of L
 
 - **Rules.** `--workers W` (default 4): one single-threaded spawn process per job (the five thread variables are set
   to 1 before numpy is imported; the main process never imports numba). Registered `--tune` and `--measure` refuse
-  uncommitted changes in this folder and in hpstep (their own outputs aside), and `--allow-dirty` is refused outside
-  a dry run. `--measure` also refuses unless the only paths changed since tuning's commit are `PREREGISTRATION.md`,
-  `settings.json`, `results/tuning.json` and tuning's console, and the lr-freeze amendment holds `settings.json`'s
-  SHA-256. Each step replays one run's draws with `hpstep.prng.Rng` and writes nothing if the states differ.
-  P (`Rng(7)`, control 1) is computed only in registered `--measure`.
+  uncommitted changes (their own outputs aside; a rename counts both its paths) in this system folder and in the
+  reference folders of Hyperbolic Oracles and Engram Mind's Eye, whose `hpstep` and `engram` are imported in place,
+  and a `sys.path` entry or working directory inside the repository outside those folders (run them from this
+  folder); they check again, with HEAD, before each worker pool and before writing. `--allow-dirty` is refused
+  outside a dry run. `--measure` also refuses unless the only paths changed since tuning's commit are
+  `PREREGISTRATION.md`, `settings.json`, `results/tuning.json` and tuning's console, and the lr-freeze amendment holds
+  `settings.json`'s SHA-256. Each step replays one run's draws with `hpstep.prng.Rng` and writes nothing if the
+  states differ. P (`Rng(7)`, control 1) is computed only in registered `--measure`. `--selftest --out <dir>` refuses
+  a `<dir>` inside the repository.
 - **Resume.** Each finished job is a line of `runs.jsonl` in `~/.cache/hyperbolic-lexicon/phase4/<mode>/` (`HL_CACHE`
   overrides the root), with its float table, snapped text and per-query APs. A restart at the same HEAD reuses them;
   the record lists every start, and the console file is appended to.
+- **Environments** (A10.4). Every job record holds the environment of the worker that ran it (Python, numpy, numba,
+  llvmlite, libc, platform, numpy's SIMD features and dispatch targets, the CPU), and every start its own; the JSON
+  gives each run an `environment_sha` and lists the environments once (`run_environments`). A job finished under
+  another environment is still reused on a restart (the same run, A10.14), and the reuse is logged and counted
+  (`environments_summary`).
 - **Files.** `results/tuning.json` and `phase4-tuning-console.txt`; `settings.json`; `results/claims-phase4.json` and
   `.md`, `phase4-console.txt`, `lbench-phase4.txt` (every `LBENCH/1` record) and `l6-tables/` (gzipped snapped texts
   of the 100 measured and edge-shuffled tables, the float bytes of L4(c)'s 40, the exact arm's lines); the same names
@@ -243,6 +271,7 @@ python3 -B run_claims_phase4.py --measure                # the decisive run of L
 | `results/claims-phase3.json`, `.md` | Phase 3's decisive run (2026-11-06, on the code at `6da04be`, committed as `865791f`): L8 per shard, mode and grower, L8(d), L9 per list with every proof and alteration counted and the exact weaves, L10 per class with the tamper places, L11 per shard and by step, every control, the readings of the runner, and the timings; counterexamples (none) |
 | `results/phase3-console.txt` | The run's console output and timing (50 min 44 s) |
 | `results/phase3-registry.json` | The key-registry snapshot L10 and L11 verified against (SHA-256 `36cbc21d…`): key ids, public JWKs, key vector and status. No private key |
+| `results/fractional-ties.json`, `.md` | A10.17 (Phase 4, deciding nothing): the fractional-tie MAPs of Phase 1's L5 arms and Phase 2's L4(a) rank lists, beside the pessimistic MAPs those phases published, which every recomputed value equals; from `fractional_ties.py`, with the commit and code SHA-256s it ran on |
 | `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5; and Phase 3's last (`claims-phase3.*`, `phase3-console.txt`, `phase3-registry.json`, Amendment 7 item 8, committed as `25b48b3`), before Amendment 8 |
 
 | Claim | Decision | Key numbers |

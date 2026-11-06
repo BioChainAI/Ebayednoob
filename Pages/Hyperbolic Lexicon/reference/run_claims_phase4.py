@@ -22,7 +22,8 @@ of Phases 1 and 2 are fractional_ties.py's.)
                                                                        a synthetic DAG with unregistered seeds 80600+
                                                                        and a reduced budget (2 cells, 2 rates, 3
                                                                        epochs, burn-in 1). Written under DIR only,
-                                                                       never under results/; it decides nothing
+                                                                       which must lie outside the repository; it
+                                                                       decides nothing
 
 Options: --dry (the registered dry run of A10.13: solid.n.01, every seed + 3000, the bootstrap's 7 kept);
 --workers W (default 4: one single-threaded process per job); --allow-dirty (dry only: run on a tree with other
@@ -34,11 +35,14 @@ How it runs (build spec sections 2.5, 4, 5; A10.1, A10.14):
   first. Every result is a function of its job alone and outputs are sorted by job, never by completion.
 - Each finished job appends one line to runs.jsonl in the cache (lexicon.CACHE/phase4/<mode>/; the self-test's is
   DIR/cache), with its tables beside it. A run restarted at the same HEAD reuses the lines whose cached table still
-  has its SHA-256; every start is listed, and the console file is appended to, never overwritten.
+  has its SHA-256; every start is listed with its environment, and the console file is appended to, never
+  overwritten. Every job record holds the environment its worker ran under (A10.4).
 - Registered tuning and the decisive run refuse a tree with uncommitted changes (their own outputs aside, so that
-  an interrupted run resumes). The decisive run also refuses unless the only paths changed since the commit tuning
-  ran on are PREREGISTRATION.md, reference/settings.json, reference/results/tuning.json and tuning's console file,
-  and unless the lr-freeze amendment holds settings.json's SHA-256.
+  an interrupted run resumes) in the system folder and in the reference folders of Hyperbolic Oracles and Engram
+  Mind's Eye, which lexicon imports in place; they check again, HEAD included, before each worker pool and before
+  writing. The decisive run also refuses unless the only paths changed since the commit tuning ran on (renames
+  counted as both paths) are PREREGISTRATION.md, reference/settings.json, reference/results/tuning.json and
+  tuning's console file, and unless the lr-freeze amendment holds settings.json's SHA-256.
 - Each step replays one run's draws with hpstep.prng.Rng itself (lexicon.pystream.replay_states): the replay's
   state must equal the run's final state, or the step writes no result (A10.1).
 - P = Rng(7).shuffle(list(range(1182))) is computed only in registered --measure, once, in the main process, after
@@ -92,7 +96,12 @@ TESTS = os.path.join(HERE, 'tests')
 REL_SYS = os.path.relpath(SYSTEM, REPO).replace(os.sep, '/')          # Pages/Hyperbolic Lexicon
 REL_REF = REL_SYS + '/reference'
 REL_HPSTEP = os.path.relpath(os.path.join(lexicon.HPSTEP_REFERENCE, 'hpstep'), REPO).replace(os.sep, '/')
-GIT_SCOPE = (REL_SYS, REL_HPSTEP)
+# the clean-tree check (A10.14 steps 4 and 6): the system folder, and the two reference folders lexicon puts on sys.path
+# ahead of the standard library and imports in place (Hyperbolic Oracles': hpstep; Engram Mind's Eye's: engram), whole,
+# since any file at their top level is importable by the run (a numba.py there would shadow numba)
+REL_HO_REF = os.path.relpath(lexicon.HPSTEP_REFERENCE, REPO).replace(os.sep, '/')
+REL_ENGRAM_REF = os.path.relpath(lexicon.ENGRAM_REFERENCE, REPO).replace(os.sep, '/')
+GIT_SCOPE = (REL_SYS, REL_HO_REF, REL_ENGRAM_REF)
 
 # A10.2: the six graph-edge queries without an AP, and the registered counts
 GRAPHLESS = ('01322508', '01322604', '01322898', '01322983', '01323068', '01862399')
@@ -231,11 +240,10 @@ def git(*args):
     return r.returncode, r.stdout.decode('utf-8', 'surrogateescape')
 
 
-def git_state():
-    """HEAD and the changed paths (git status --porcelain, untracked files listed one by one) of the system and of
-    hpstep (which the reference imports in place)."""
-    code, head = git('rev-parse', 'HEAD')
-    code2, out = git('status', '--porcelain', '-z', '--untracked-files=all', '--', *GIT_SCOPE)
+def porcelain_paths(out):
+    """Every path of `git status --porcelain -z` output. A rename or copy entry (R or C in either column) is followed
+    by its source path, which is listed too: a tracked file moved onto an allowed output is still a changed path.
+    (git_state passes --no-renames, so git lists a rename as a deletion and an addition; this is the second guard.)"""
     entries = out.split('\0')
     paths, i = [], 0
     while i < len(entries):
@@ -244,10 +252,48 @@ def git_state():
         if not e:
             continue
         paths.append(e[3:])
-        if e[0] in 'RC':                       # -z: the rename's source path follows
+        if 'R' in e[:2] or 'C' in e[:2]:          # -z: the source path follows as an entry of its own
+            if i < len(entries) and entries[i]:
+                paths.append(entries[i])
             i += 1
+    return sorted(set(paths))
+
+
+def _inside(path, folder):
+    return path == folder or path.startswith(folder.rstrip(os.sep) + os.sep)
+
+
+def sys_path_outside_scope():
+    """sys.path entries inside the repository but outside GIT_SCOPE: code the run could import that the clean-tree
+    check would not see. The working directory counts as an entry ('') always: a spawn worker starts as `python -c`,
+    with it first on sys.path, and imports multiprocessing from there before it takes this process's sys.path."""
+    repo = os.path.realpath(REPO)
+    scope = [os.path.realpath(os.path.join(REPO, *s.split('/'))) for s in GIT_SCOPE]
+    out = []
+    for p in list(sys.path) + ['']:
+        rp = os.path.realpath(p or os.getcwd())
+        if _inside(rp, repo) and not any(_inside(rp, s) for s in scope):
+            out.append(os.path.relpath(rp, repo).replace(os.sep, '/'))
+    return sorted(set(out))
+
+
+def git_state():
+    """HEAD and the changed paths (git status --porcelain --no-renames, untracked files listed one by one) of
+    GIT_SCOPE: the system folder and the reference folders of Hyperbolic Oracles and Engram Mind's Eye, which the
+    reference imports in place from sys.path; and the sys.path entries inside the repository outside that scope."""
+    code, head = git('rev-parse', 'HEAD')
+    code2, out = git('status', '--porcelain', '-z', '--untracked-files=all', '--no-renames', '--', *GIT_SCOPE)
+    paths = porcelain_paths(out) if code2 == 0 else []
     return {'head': head.strip() if code == 0 else None, 'status_ok': code2 == 0, 'scope': list(GIT_SCOPE),
-            'changed': sorted(paths), 'clean': code2 == 0 and not paths}
+            'changed': paths, 'clean': code2 == 0 and not paths,
+            'sys_path_outside_scope': sys_path_outside_scope()}
+
+
+def changed_between(a, b):
+    """(exit code, sorted paths) of `git diff --name-only --no-renames -z a b`: with renames off, a moved file lists
+    its old path as well as its new one, whatever diff.renames says."""
+    code, out = git('diff', '--name-only', '--no-renames', '-z', a, b)
+    return code, sorted(x for x in out.split('\0') if x)
 
 
 def results_rel(mode):
@@ -283,11 +329,32 @@ def check_tree(mode, step, gs, allow_dirty):
     if not gs['status_ok'] or gs['head'] is None:
         raise Refused('git status failed: the runner needs a git checkout')
     bad = [p for p in gs['changed'] if not _allowed(p, own_outputs(mode, step))]
-    if not bad:
+    outside = gs.get('sys_path_outside_scope') or []
+    if not bad and not outside:
         return None
     if allow_dirty:
         return 'development run: not a registered run'
-    raise Refused(f'{len(bad)} uncommitted path(s) (A10.14: a clean, committed tree): ' + '; '.join(bad[:10]))
+    if bad:
+        raise Refused(f'{len(bad)} uncommitted path(s) (A10.14: a clean, committed tree): ' + '; '.join(bad[:10]))
+    raise Refused('sys.path holds folder(s) inside the repository that the clean-tree check does not cover: '
+                  + '; '.join(outside))
+
+
+def recheck_tree(cfg, ctx, where):
+    """The clean-tree check again (A10.14 steps 4 and 6), before each worker pool starts (spawn workers import the code
+    from disk afresh) and before the step writes its record: HEAD must be the start's and check_tree must pass. A
+    dry --allow-dirty run that turns dirty is marked instead. Each check is listed in the record (ctx['git_checks'])."""
+    if cfg.mode == 'selftest':
+        return
+    gs = git_state()
+    ctx['git_checks'].append({'where': where, 'time': utc_now(), 'head': gs['head'], 'changed': gs['changed'],
+                              'sys_path_outside_scope': gs['sys_path_outside_scope']})
+    if gs['head'] != ctx['git']['head']:
+        raise Refused(f'HEAD moved during the run ({where}): {ctx["git"]["head"]} at the start, {gs["head"]} now')
+    mark = check_tree(cfg.mode, ctx['step'], gs, cfg.allow_dirty)
+    if mark and not ctx['mark']:
+        ctx['mark'] = mark
+        ctx['log'](f'{where}: the tree changed during the run; the record is marked "{mark}"')
 
 
 def cpu_model():
@@ -301,18 +368,30 @@ def cpu_model():
     return platform.processor() or None
 
 
-def environment(workers):
+def run_environment():
+    """What A10.4 has each run record (numpy, numba and libc versions, numpy's SIMD features and dispatch), with
+    Python, llvmlite, the platform and the CPU model: computed in every worker for the jobs it runs, and in the main
+    process for every start."""
     env = EM.environment()
+    env.update(cpu=cpu_model(), implementation=platform.python_implementation())
+    return env
+
+
+def env_sha(env):
+    return sha256(json.dumps(env, sort_keys=True, separators=(',', ':')))
+
+
+def environment(workers):
+    env = run_environment()
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
         try:
             np.show_runtime()
         except Exception as e:                          # pragma: no cover
             print(f'np.show_runtime failed: {e}')
-    env.update({'cpu': cpu_model(), 'cpu_count': os.cpu_count(), 'workers': workers,
+    env.update({'cpu_count': os.cpu_count(), 'workers': workers,
                 'thread_variables': {v: os.environ.get(v) for v in THREAD_VARS},
-                'numpy_show_runtime': buf.getvalue(), 'engine': l6.engine_string(),
-                'implementation': platform.python_implementation()})
+                'numpy_show_runtime': buf.getvalue(), 'engine': l6.engine_string()})
     return env
 
 
@@ -479,13 +558,13 @@ def append_run(cache, line):
         os.fsync(fh.fileno())
 
 
-def record_start(cfg, step, head, mark):
-    """Every start of a step is listed in the cache and in the record (A10.14: an interrupted run resumes; the
-    record lists every start)."""
+def record_start(cfg, step, head, mark, env):
+    """Every start of a step is listed in the cache and in the record, with the environment it ran under (A10.14: an
+    interrupted run resumes, and the record lists every start; A10.4: what each run records)."""
     path = os.path.join(cfg.cache, f'starts-{step}.jsonl')
     os.makedirs(cfg.cache, exist_ok=True)
     entry = {'time': utc_now(), 'head': head, 'argv': sys.argv[1:], 'workers': cfg.workers, 'mark': mark,
-             'pid': os.getpid()}
+             'pid': os.getpid(), 'environment_sha': env_sha(env), 'environment': env}
     with open(path, 'a', encoding='utf-8') as fh:
         fh.write(json.dumps(entry) + '\n')
     with open(path, encoding='utf-8') as fh:
@@ -520,7 +599,8 @@ def _init_worker(wcfg, cs):
     from lexicon import stream as S          # numba: in the workers only
     S.compile_kernels()
     _W.clear()
-    _W.update(cfg=wcfg, cs=cs, inst=EM.training_instance(cs), dT=None)
+    env = run_environment()                  # A10.4: each run records the environment that trained it
+    _W.update(cfg=wcfg, cs=cs, inst=EM.training_instance(cs), dT=None, env=env, env_sha=env_sha(env))
 
 
 def _run_job(job):
@@ -528,7 +608,8 @@ def _run_job(job):
         t0, c0 = time.perf_counter(), time.process_time()
         rec = JOBS[job['kind']](job)
         rec.update(key=job['key'], kind=job['kind'], job_wall_s=time.perf_counter() - t0,
-                   job_cpu_s=time.process_time() - c0, pid=os.getpid())
+                   job_cpu_s=time.process_time() - c0, pid=os.getpid(), environment_sha=_W['env_sha'],
+                   environment=_W['env'])
         return job['key'], rec, None
     except Exception:
         return job['key'], None, traceback.format_exc()
@@ -552,7 +633,7 @@ def _run_fields(run):
             'loss': {str(e): loss[e] for e in LOSS_EPOCHS if e < len(loss)},
             'final_state': list(run.final_state), 'float_sha': run.table_sha, 'wall_s': run.wall_s,
             'cpu_s': run.cpu_s, 'wall_ms': int(round(run.wall_s * 1000)), 'stream': run.stream,
-            'concurrent_processes': _W['cfg']['workers']}
+            'concurrent_processes': _W['cfg']['pool_size']}
 
 
 def _lbench(arm, geometry, d, seed, lr, *, settings_sha, budget, float_sha, snap_bits, snap_sha, cmap, gmap,
@@ -657,7 +738,10 @@ def _dT():
 
 def _diag_maps(arm, nb):
     """A10.9's reported diagnostics: the relabelled closure MAP under each permutation Rng(diag_base + j), j < 200,
-    in float64 from the table's rank structure (learned.rank_structure, map_float_structure)."""
+    in float64 from the table's rank structure (learned.rank_structure, map_float_structure).
+    READING (runner-11; A10.9 "reported, deciding nothing"): binary64, not exact rationals; the order and ties are the
+    snapped table's exact ones, and only the AP sums and the mean are floats. P's own relabelled MAP (control 1) is
+    exact (job_relabel)."""
     lt, le = L.rank_structure(arm)
     n = len(nb)
     return [L.map_float_structure(lt, le, l6.relabel(nb, l6.label_permutation(s, n))) for s in _W['cfg']['diag_seeds']]
@@ -855,28 +939,40 @@ def est_seconds(job, cfg):
     return ev
 
 
-def run_pool(cfg, jobs, wcfg, cs, log, head, sig, phase):
+def pool_size(cfg, todo):
+    """The pool's size: the most worker processes that run at once (A10.11's "number of concurrent processes")."""
+    return min(cfg.workers, max(1, len(todo)))
+
+
+def run_pool(cfg, jobs, wcfg, cs, log, head, sig, phase, env_now=None):
     """Runs the jobs not already done (a runs.jsonl line at this HEAD and configuration whose cached files still
-    have their SHA-256s), longest first, one single-threaded spawn process per job; returns {key: record}."""
+    have their SHA-256s), longest first, one single-threaded spawn process per job; returns {key: record}. A reused
+    line trained under an environment other than this start's (env_now, its SHA-256) is reused all the same (A10.14:
+    the run resumes from its finished jobs) and counted in the log; every record carries its own environment."""
     done = load_runs(cfg.cache)
-    results, todo, stale = {}, [], 0
+    results, todo, stale, other_env = {}, [], 0, 0
     for job in jobs:
         line = done.get(job['key'])
         if line and line.get('head') == head and line.get('sig') == sig and cached_ok(cfg.cache, line['record']):
             results[job['key']] = dict(line['record'], resumed=True)
+            other_env += env_now is not None and line['record'].get('environment_sha') != env_now
         else:
             stale += 1 if line else 0
             todo.append(job)
     todo.sort(key=lambda j: (-est_seconds(j, cfg), j['key']))
+    size = pool_size(cfg, todo)
     log(f'{phase}: {len(jobs)} jobs, {len(jobs) - len(todo)} done before (runs.jsonl), {len(todo)} to run'
         + (f' ({stale} cached line(s) at another HEAD or configuration, or with a changed file, rerun)' if stale else '')
-        + f', {min(cfg.workers, max(1, len(todo)))} worker process(es)')
+        + f', {size} worker process(es)')
+    if other_env:
+        log(f'NOTE: {other_env} reused job(s) of {phase} ran under an environment other than this start\'s '
+            f'(numpy, numba, libc, SIMD or CPU); each record keeps its own (A10.4)')
     if not todo:
         return results
     t0 = time.perf_counter()
     ctx = multiprocessing.get_context('spawn')
-    with ProcessPoolExecutor(max_workers=min(cfg.workers, len(todo)), mp_context=ctx, initializer=_init_worker,
-                             initargs=(wcfg, cs)) as ex:
+    with ProcessPoolExecutor(max_workers=size, mp_context=ctx, initializer=_init_worker,
+                             initargs=(dict(wcfg, pool_size=size), cs)) as ex:
         futs = {ex.submit(_run_job, j): j for j in todo}
         k = 0
         for f in as_completed(futs):
@@ -892,6 +988,19 @@ def run_pool(cfg, jobs, wcfg, cs, log, head, sig, phase):
             log(f'  [{k}/{len(todo)}] {key}: {job_summary(rec)} ({rec["job_wall_s"]:.1f} s; '
                 f'{time.perf_counter() - t0:.0f} s in)')
     return results
+
+
+def environments_of(records, env_now):
+    """The environments the step's job records ran under (A10.4), once each by SHA-256, and how many records each
+    holds, beside this start's (env_now, its SHA-256)."""
+    envs, counts = {}, {}
+    for r in records:
+        s = r.get('environment_sha') or 'not recorded'
+        counts[s] = counts.get(s, 0) + 1
+        if s != 'not recorded' and s not in envs:
+            envs[s] = r.get('environment')
+    return envs, {'this_start': env_now, 'records_by_environment': dict(sorted(counts.items())),
+                  'all_this_start': set(counts) <= {env_now}}
 
 
 def job_summary(rec):
@@ -927,15 +1036,30 @@ class Readings:
 
 
 def common_readings(rd):
-    rd('runner-1', 'A10.14 step 4 and 6, "refuses uncommitted changes": git status --porcelain (untracked files '
-       'listed one by one) over the system folder and hpstep (imported in place) must be empty, except the step\'s '
-       'own outputs (so that an interrupted run resumes at the same HEAD). --allow-dirty is refused in registered '
-       'mode; in a dry run it marks the record "development run: not a registered run".')
+    rd('runner-1', 'A10.14 step 4 and 6, "refuses uncommitted changes": git status --porcelain --no-renames '
+       '(untracked files listed one by one; a rename or copy counts both its paths) over the system folder and the '
+       'reference folders of Hyperbolic Oracles and Engram Mind\'s Eye, whole (lexicon puts both on sys.path ahead of '
+       'the standard library and imports hpstep and engram from them in place), must be empty, except the step\'s own '
+       'outputs (so that an interrupted run resumes at the same HEAD); a sys.path entry inside the repository outside '
+       'these folders is refused too. The check, with HEAD unchanged, is repeated before each worker pool starts '
+       '(spawn workers import the code from disk afresh) and before the step writes its record; each check is listed '
+       '(git_checks). "The only paths changed since the commit tuning ran on" (step 6) is git diff --name-only '
+       '--no-renames, so a moved file names its old path too. --allow-dirty is refused in registered mode; in a dry '
+       'run it marks the record "development run: not a registered run".')
     rd('runner-2', 'A10.14 "it resumes ... from its finished jobs": a runs.jsonl line is reused only at the same '
        'HEAD and configuration (mode, instance, epochs, burn-in, budget), and only while its cached float table, '
-       'snapped text and per-query APs still have their recorded SHA-256s; anything else is rerun.')
+       'snapped text and per-query APs still have their recorded SHA-256s; anything else is rerun. A line trained '
+       'under another environment is reused all the same ("that is the same run"): A10.4 has each run record its '
+       'environment, so every job record carries the one its worker ran under (environment_sha, with the '
+       'environments in run_environments), every start carries its own, and a reuse across environments is logged '
+       'and counted (environments_summary).')
     rd('runner-3', 'A10.11 "wall-clock per run ... with the number of concurrent processes": time.perf_counter and '
-       'time.process_time of the training, with the pool size (the most worker processes that run at once).')
+       'time.process_time of the training, with the size of the pool that ran it (min(--workers, the jobs it ran): '
+       'the most worker processes that run at once).')
+    rd('runner-12', 'A10.4 "each run records the numpy, numba and libc versions and numpy\'s SIMD features": each job '
+       'record holds the environment of the worker that ran it (Python, numpy, numba, llvmlite, libc, platform, '
+       'numpy\'s CPU features and dispatch targets, the CPU model), computed inside the worker; the outputs give each '
+       'run its environment_sha and list the environments once (run_environments).')
     rd('runner-4', 'A10.1 and A10.14, the replay check: the designated run\'s draws (tuning: (lorentz, 3, 0.03, '
        'first tuning seed); measure: measured (lorentz, 3, first training seed)) are replayed for every epoch of the '
        'budget with hpstep.prng.Rng, and the state after the run\'s last epoch (the epoch it diverged at, if it did) '
@@ -982,7 +1106,8 @@ def step_tune(cfg, ctx):
     log(f'tuning: {len(jobs)} runs ({len(cfg.cells)} cells x {len(cfg.grid)} rates x 4 seeds of the rate\'s block, '
         f'A10.8), and the replay of {target["key"]} with hpstep.prng.Rng')
     t0 = time.perf_counter()
-    res = run_pool(cfg, jobs + [rjob], worker_cfg(cfg, info), cs, log, head, sig, 'tuning')
+    recheck_tree(cfg, ctx, 'before the tuning pool')
+    res = run_pool(cfg, jobs + [rjob], worker_cfg(cfg, info), cs, log, head, sig, 'tuning', env_now=ctx['env_sha'])
     pool_s = time.perf_counter() - t0
     # the replay check (A10.1)
     tr, rp = res[target['key']], res[rjob['key']]
@@ -1027,11 +1152,17 @@ def step_tune(cfg, ctx):
              'closure_map': None if r.get('closure_map') is None else Fraction(r['closure_map']),
              'guard_hits': r['guard_hits'], 'max_step': r['max_step'], 'max_radius': r['max_radius'],
              'loss': r['loss'], 'final_state': r['final_state'], 'wall_s': r['wall_s'], 'cpu_s': r['cpu_s'],
-             'concurrent_processes': r['concurrent_processes'], 'resumed': bool(r.get('resumed')),
-             'lbench': r.get('lbench'), 'lbench_sha': r.get('lbench_sha')}
+             'concurrent_processes': r['concurrent_processes'], 'environment_sha': r.get('environment_sha'),
+             'resumed': bool(r.get('resumed')), 'lbench': r.get('lbench'), 'lbench_sha': r.get('lbench_sha')}
         runs.append(e)
+    recheck_tree(cfg, ctx, 'before writing tuning.json')
+    envs, env_summary = environments_of(list(res.values()), ctx['env_sha'])
+    if not env_summary['all_this_start']:
+        log(f'NOTE: the tuning jobs ran under {len(env_summary["records_by_environment"])} environment(s), not all '
+            f'this start\'s: {env_summary["records_by_environment"]}')
     tuning = {'label': ctx['label'], 'mode': cfg.mode, 'step': 'tune', 'head': head, 'git': ctx['git'],
-              'development_run': ctx['mark'], 'starts': ctx['starts'], 'environment': ctx['env'],
+              'git_checks': ctx['git_checks'], 'development_run': ctx['mark'], 'starts': ctx['starts'],
+              'environment': ctx['env'], 'run_environments': envs, 'environments_summary': env_summary,
               'instance': info, 'readings': rd.items, 'grid': list(cfg.grid), 'cells_run': [list(c) for c in cfg.cells],
               'seeds': {'tuning': list(cfg.seeds.tuning),
                         'blocks': {lr: list(cfg.seeds.block(l6.GRID.index(lr))) for lr in cfg.grid}},
@@ -1174,8 +1305,7 @@ def preflight_settings(cfg, ctx):
     head = ctx['git']['head']
     if cfg.mode in ('registered', 'dry'):
         code, _ = git('merge-base', '--is-ancestor', tuning['head'], head)
-        code2, names = git('diff', '--name-only', tuning['head'], head)
-        changed = sorted(x for x in names.split('\n') if x)
+        code2, changed = changed_between(tuning['head'], head)      # renames off: a moved file names both paths
         out['changed_since_tuning'] = changed
         out['tuning_head_is_ancestor'] = code == 0
         if cfg.mode == 'registered':
@@ -1292,6 +1422,13 @@ def diag_summary(vals, p_map):
             'at_or_above_P': int(np.count_nonzero(v >= p))}
 
 
+
+# A10.7's comparisons, X - Y per seed: (metric, X, Y); 'exact' is the exact H3 arm. Pinned by
+# tests/test_runner_phase4.py::test_comparisons_are_amendment_10_item_7, so a rewiring cannot pass unnoticed.
+COMP_SPEC = {'a2': ('closure', ('lorentz', 2), ('euclid', 2)), 'a3': ('closure', ('lorentz', 3), ('euclid', 3)),
+             'b': ('closure', ('lorentz', 50), ('euclid', 50)), 'c': ('graph', 'exact', ('lorentz', 3)),
+             'd': ('closure', ('lorentz', 3), 'exact')}
+
 def step_measure(cfg, ctx):
     log, rd = ctx['log'], ctx['readings']
     cs, info, head, sig = ctx['cs'], ctx['info'], ctx['git']['head'], ctx['sig']
@@ -1348,7 +1485,9 @@ def step_measure(cfg, ctx):
     if not learned_jobs:
         log('no cell has a frozen lr: no measured or edge-shuffled run')
     sig = sig + '-S' + ssha[:12]          # measured jobs carry settingsSha: reused only under the same settings
-    res = run_pool(cfg, jobs, wcfg, cs, log, head, sig, 'measure (training, floors, replay, pre-flight)')
+    recheck_tree(cfg, ctx, 'before the training pool')
+    res = run_pool(cfg, jobs, wcfg, cs, log, head, sig, 'measure (training, floors, replay, pre-flight)',
+                   env_now=ctx['env_sha'])
     T['pool_a_s'] = time.perf_counter() - T['start'] - T['exact_s']
     # 4. the replay check
     replay = None
@@ -1370,7 +1509,9 @@ def step_measure(cfg, ctx):
         eq = t is not None and r['float_sha'] == t['float_sha'] and r['diverged_epoch'] == t['diverged_epoch']
         preflight['reproducibility'].append({'job': pj['target'], 'float_sha_tuning': None if t is None else
                                              t['float_sha'], 'float_sha_now': r['float_sha'], 'equal': eq,
-                                             'wall_s': r['wall_s']})
+                                             'wall_s': r['wall_s'], 'environment_sha_tuning': None if t is None else
+                                             t.get('environment_sha'),
+                                             'environment_sha_now': r.get('environment_sha')})
         log(f'pre-flight retraining {pj["target"]}: float SHA-256 {"equal" if eq else "DIFFERS (disclosed)"}')
     # 5. control 1: P, once, in the main process (registered: Rng(7), its first and only computation)
     t1 = time.perf_counter()
@@ -1398,7 +1539,8 @@ def step_measure(cfg, ctx):
                               'seed': j['seed'], 'snap_sha': r['snap_sha'], 'float_sha': r['float_sha']})
     wcfg_b = dict(wcfg, relabelled=relabelled)
     psig = sig + '-P' + sha256(','.join(map(str, P)))[:12]
-    res_b = run_pool(cfg, rjobs, wcfg_b, cs, log, head, psig, 'control 1 (the label shuffle)')
+    recheck_tree(cfg, ctx, 'before the control-1 pool')
+    res_b = run_pool(cfg, rjobs, wcfg_b, cs, log, head, psig, 'control 1 (the label shuffle)', env_now=ctx['env_sha'])
     T['control1_s'] = time.perf_counter() - t1
     # 6. assemble the runs
     t2 = time.perf_counter()
@@ -1445,9 +1587,7 @@ def step_measure(cfg, ctx):
             if (g, d, s) in have and (g, d, s) in have_s:
                 c2_names[(g, d, s)] = (task(f'c2|{g}|{d}|{s}|closure', lkey[(g, d, s)], skey[(g, d, s)], 'closure'),
                                        task(f'c2|{g}|{d}|{s}|graph', lkey[(g, d, s)], skey[(g, d, s)], 'graph'))
-    comp_spec = {'a2': ('closure', ('lorentz', 2), ('euclid', 2)), 'a3': ('closure', ('lorentz', 3), ('euclid', 3)),
-                 'b': ('closure', ('lorentz', 50), ('euclid', 50)), 'c': ('graph', 'exact', ('lorentz', 3)),
-                 'd': ('closure', ('lorentz', 3), 'exact')}
+    comp_spec = COMP_SPEC
 
     def side(x, s):
         return 'exact' if x == 'exact' else lkey.get((x[0], x[1], s))
@@ -1540,6 +1680,13 @@ def step_measure(cfg, ctx):
        'point of row Q[L]" (Q = P^-1). Per measured table, the 200 diagnostic MAPs (float64, from the rank '
        'structure) give min, median, 99th percentile (numpy, linear), max and the share above 0.05; P\'s rank is 1 + '
        'the number of diagnostic MAPs strictly above P\'s exact relabelled closure MAP.')
+    rd('runner-11', 'A10.9\'s reported "relabelled closure MAP of each measured table under 200 further permutations '
+       'Rng(2100 + j)": computed in binary64, not as exact rationals. The order and the ties are the snapped table\'s '
+       'exact ones (learned.rank_structure from the exact keys, the ranking control 1 evaluates); only each AP\'s sum '
+       '(rank._ap_and_ranks\'s pessimistic ranks, added in binary64) and the mean (math.fsum) are floats '
+       '(learned.map_float_structure). A10.9 says "computed exactly" of P\'s relabelled MAP, which decides control 1 '
+       'and is exact here; the 200 decide nothing, and A10.9 reads them only for where P sits among them (their '
+       'summary, and P\'s rank, compare floats).')
     diag = {}
     for (g, d, s), r in learned.items():
         if ok(r) and r.get('diag') is not None and lkey[(g, d, s)] in control1:
@@ -1592,6 +1739,11 @@ def step_measure(cfg, ctx):
     gap = l6.prediction_gap(maps_l, maps_e, pflags, decision['parts']['a']['verdict'])
     T['decide_s'] = time.perf_counter() - t2 - T['intervals_s']
     # 9. outputs
+    recheck_tree(cfg, ctx, 'before writing claims-phase4.json')
+    envs, env_summary = environments_of(list(res.values()) + list(res_b.values()), ctx['env_sha'])
+    if not env_summary['all_this_start']:
+        log(f'NOTE: the jobs of this step ran under {len(env_summary["records_by_environment"])} environment(s), not '
+            f'all this start\'s: {env_summary["records_by_environment"]}')
     record = assemble_measure(cfg, ctx, locals())
     write_measure(cfg, ctx, record, paths, ex, learned, shuffled, tuning)
     return 0
@@ -1602,8 +1754,8 @@ def run_entry(kind, key, r, have_aps=True):
     e = {'kind': kind, 'key': key}
     for k in ('geometry', 'd', 'lr', 'seed', 'i', 'floor_seed', 'instance', 'pairs', 'diverged_epoch', 'epochs_run',
               'guard_hits', 'max_step', 'max_radius', 'loss', 'final_state', 'float_sha', 'snap_sha', 'wall_s',
-              'cpu_s', 'concurrent_processes', 'ties', 'displacement', 'bits', 'distortion', 'aps_sha', 'lbench',
-              'lbench_sha', 'eval_s', 'resumed'):
+              'cpu_s', 'concurrent_processes', 'environment_sha', 'ties', 'displacement', 'bits', 'distortion',
+              'aps_sha', 'lbench', 'lbench_sha', 'eval_s', 'resumed'):
         if k in r:
             e[k] = r[k]
     # written whole: the snapped MAPs, the mean ranks (small), and L4(c)'s float64 MAPs and |dMAP| (its 40 tables);
@@ -1657,7 +1809,8 @@ def assemble_measure(cfg, ctx, v):
                        'concurrent_processes': r.get('concurrent_processes')} for r in runs if 'wall_s' in r}
     out = {
         'label': ctx['label'], 'mode': cfg.mode, 'step': 'measure', 'head': ctx['git']['head'], 'git': ctx['git'],
-        'development_run': ctx['mark'], 'starts': ctx['starts'], 'environment': ctx['env'],
+        'git_checks': ctx['git_checks'], 'development_run': ctx['mark'], 'starts': ctx['starts'],
+        'environment': ctx['env'], 'run_environments': v['envs'], 'environments_summary': v['env_summary'],
         'readings': ctx['readings'].items,
         'instance': info,
         'settings': {'path': v['pre']['settings_path'], 'sha256': v['ssha'], 'rates': v['pre']['rates'],
@@ -1902,6 +2055,11 @@ def measure_md(cfg, rec):
     md += [f'- {env.get("platform")}; {env.get("cpu")}; Python {env.get("python")}, numpy {env.get("numpy")}, numba '
            f'{env.get("numba")}, llvmlite {env.get("llvmlite")}, libc {" ".join(env.get("libc") or [])}; '
            f'{env.get("workers")} workers; numpy SIMD {", ".join(env.get("numpy_cpu_features") or [])}.']
+    es = j['environments_summary']
+    md.append('- Run environments (A10.4; each job record holds the one its worker ran under): '
+              + '; '.join(f'`{k[:12]}` {n} record(s)' for k, n in es['records_by_environment'].items())
+              + ('; all this start\'s.' if es['all_this_start']
+                 else f'; this start\'s is `{str(es["this_start"])[:12]}`.'))
     pf = j['preflight']
     md.append('- Pre-flight reproducibility: ' + '; '.join(
         f'{x["job"]} {"equal" if x["equal"] else "DIFFERS (disclosed: " + str(x["float_sha_tuning"]) + " vs " + str(x["float_sha_now"]) + ")"}'
@@ -1912,7 +2070,11 @@ def measure_md(cfg, rec):
     if rc:
         md.append(f'- Replay check ({rc["job"]}, after epoch {rc["epoch_compared"]}): '
                   f'{"equal" if rc["equal"] else "DIFFERENT"}.')
-    md.append('- Starts: ' + '; '.join(f'{s["time"]} at {str(s["head"])[:12]}' for s in j['starts']) + '.')
+    md.append('- Starts: ' + '; '.join(f'{s["time"]} at {str(s["head"])[:12]} (environment '
+                                       f'`{str(s.get("environment_sha"))[:12]}`)' for s in j['starts']) + '.')
+    if j.get('git_checks'):
+        md.append(f'- Clean-tree checks during the run: {len(j["git_checks"])} ('
+                  + ', '.join(x['where'] for x in j['git_checks']) + '), HEAD unchanged.')
     md += ['', '### READINGs of this runner', '']
     md += [f'- **{x["id"]}.** {x["text"]}' for x in j['readings']]
     md += ['', 'The modules\' own READINGs are marked in reference/lexicon/{stream,pystream,embed,learned,l6}.py.', '']
@@ -1969,13 +2131,18 @@ def start(cfg, step, console_path):
     log(f'HEAD {gs["head"]}; ' + ('the tree is clean' if not gs['changed'] else
                                   f'{len(gs["changed"])} changed path(s): {"; ".join(gs["changed"][:6])}')
         + (f'; {mark}' if mark else ''))
-    starts = record_start(cfg, step, gs['head'], mark)
+    renv = run_environment()
+    esha = env_sha(renv)
+    starts = record_start(cfg, step, gs['head'], mark, renv)
+    log(f'environment {esha[:12]}: Python {renv["python"]}, numpy {renv["numpy"]}, numba {renv["numba"]}, libc '
+        f'{" ".join(renv["libc"] or [])}, numpy SIMD dispatch {", ".join(renv["numpy_cpu_dispatch"] or [])}')
     if len(starts) > 1:
         log(f'start {len(starts)} of this step in this cache (earlier: '
-            + '; '.join(f'{s["time"]} at {str(s["head"])[:12]}' for s in starts[:-1]) + ')')
+            + '; '.join(f'{s["time"]} at {str(s["head"])[:12]}, environment {str(s.get("environment_sha"))[:12]}'
+                        for s in starts[:-1]) + ')')
     env = environment(cfg.workers)
     return {'log': log, 'readings': rd, 'label': label, 'git': gs, 'mark': mark, 'starts': starts, 'env': env,
-            't0': time.perf_counter()}
+            'env_sha': esha, 'step': step, 'git_checks': [], 't0': time.perf_counter()}
 
 
 def run_step(cfg, step, console_path, data=None):
@@ -2019,7 +2186,7 @@ def main(argv=None):
     ap.add_argument('--dry', action='store_true', help='the registered dry run (A10.13)')
     ap.add_argument('--workers', type=int, default=4, help='worker processes (default 4)')
     ap.add_argument('--allow-dirty', action='store_true', help='dry only: run on a tree with other changes')
-    ap.add_argument('--out', help='--selftest: the output folder (never under reference/results)')
+    ap.add_argument('--out', help='--selftest: the output folder (outside the repository)')
     a = ap.parse_args(argv)
 
     def refuse(msg):
@@ -2036,10 +2203,10 @@ def main(argv=None):
     if a.selftest:
         if not a.out:
             return refuse('--selftest needs --out DIR')
-        out = os.path.abspath(a.out)
-        res = os.path.join(HERE, 'results')
-        if out == res or out.startswith(res + os.sep):
-            return refuse('the self-test never writes under reference/results')
+        out = os.path.realpath(a.out)
+        if _inside(out, os.path.realpath(REPO)):
+            return refuse('the self-test never writes inside the repository (reference/results included): give '
+                          '--out a folder outside it')
         cfg = make_cfg('selftest', a.workers, False, out)
         rc, data = run_step(cfg, 'tune', os.path.join(out, 'phase4-tuning-console.txt'))
         if rc:

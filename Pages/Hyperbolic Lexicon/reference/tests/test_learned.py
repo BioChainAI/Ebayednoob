@@ -109,6 +109,28 @@ def test_euclid_rounding():
         L.snap(np.array([[np.inf, 0.0]]), 'euclid')
 
 
+@pytest.mark.parametrize('K', [32, 8])
+def test_euclid_rounding_near_halves(K):
+    """The exact floor(2^K x + 1/2) at every double within 4 ulps of (k + 1/2) / 2^K, both signs, for many k. At
+    x = 2^-(K+1) - 2^-(K+54) the binary64 sum 2^K x + 0.5 rounds up to 1 (fence.dyadic's arithmetic); the exact
+    value, and the snap, is 0 (learned's READING of A10.6)."""
+    edge = float(np.nextafter(2.0 ** -(K + 1), 0.0))
+    assert edge == 2.0 ** -(K + 1) - 2.0 ** -(K + 54)
+    assert math.floor(edge * 2.0 ** K + 0.5) == 1 and math.floor(F(edge) * 2 ** K + F(1, 2)) == 0
+    assert L.snap(np.array([[edge, -edge]]), 'euclid', K) == [(0, 0)]
+    vals = []
+    for k in list(range(40)) + [2 ** m + j for m in range(5, 51) for j in (-1, 0, 1)]:
+        v = (k + 0.5) / 2.0 ** K
+        for _ in range(4):
+            v = float(np.nextafter(v, -np.inf))
+        for _ in range(9):
+            vals += [v, -v]
+            v = float(np.nextafter(v, np.inf))
+    X = np.array(vals).reshape(-1, 2)
+    got = [t for row in L.snap(X, 'euclid', K) for t in row]
+    assert got == [math.floor(F(x) * 2 ** K + F(1, 2)) for x in vals]
+
+
 def test_snap_text_roundtrip_and_shas():
     X = lorentz_table(80021, 7, 3)
     N = L.snap(X, 'lorentz')
@@ -563,3 +585,16 @@ def test_no_registered_seed_calls():
                     isinstance(a, ast.Constant) and isinstance(a.value, int) and l6_synth.guarded(a.value):
                 bad.append((os.path.basename(path), node.lineno, a.value))
     assert bad == []
+
+
+def test_l6_trace_is_current():
+    """traces/l6_v1.txt, which tests/parity-lexicon.cjs makes the browser core reproduce line for line, equals a
+    rebuild from the current reference (traces_l6.py --check), so a change to learned.py cannot leave the browser's
+    parity line passing against a stale trace."""
+    import os
+    import subprocess
+    import sys
+    ref = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out = subprocess.run([sys.executable, '-B', os.path.join(ref, 'traces_l6.py'), '--check'], capture_output=True,
+                         text=True)
+    assert out.returncode == 0, out.stdout + out.stderr

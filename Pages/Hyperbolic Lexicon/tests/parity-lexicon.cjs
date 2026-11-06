@@ -772,6 +772,25 @@ const l6Section = { name: 'L6: snapped tables by hand (test_learned.py) and cont
         sRows++; if (same(f.map(q => q.n * (sc / q.d)), LC.snapTable([x], 'lorentz', c.K)[0])) sOk++;
     });
     out.push(line('L6', 'snapTable (Lorentz) = fence.js dyadic of the Poincare point, rim steps included', sOk === sRows && sRows > 0, `${sOk}/${sRows} rows`));
+    // snapCoord (Euclidean, A10.6 and its coarse 2^-8) against floor(2^K x + 1/2) of the double read exactly, in BigInt
+    // from x's exact rational, at every double within 4 ulps of (k + 1/2) / 2^K, both signs, for K = 32 and 8 (as
+    // test_learned.py). At x = 2^-(K+1) - 2^-(K+54) the binary64 sum x 2^K + 0.5 rounds up to 1; the exact value is 0
+    const dv6 = new DataView(new ArrayBuffer(8));
+    const ulp = (x, up) => { dv6.setFloat64(0, x); dv6.setBigUint64(0, dv6.getBigUint64(0) + (up ? 1n : -1n)); return dv6.getFloat64(0); };   // x > 0
+    const exactSnap = (x, K) => { const f = Q.fromDouble(x); return LC.floorDivB(2n * f.n * (1n << BigInt(K)) + f.d, 2n * f.d); };
+    let cN = 0, cOk = 0;
+    for (const K of [32, 8]) {
+        const ks = Array.from({ length: 40 }, (_, k) => k);
+        for (let m = 5; m < 51; m++) ks.push(2 ** m - 1, 2 ** m, 2 ** m + 1);
+        for (const k of ks) {
+            let v = (k + 0.5) / 2 ** K;
+            for (let s = 0; s < 4; s++) v = ulp(v, false);
+            for (let s = 0; s < 9; s++, v = ulp(v, true)) for (const x of [v, -v]) { cN++; if (LC.snapCoord(x, K) === exactSnap(x, K)) cOk++; }
+        }
+    }
+    const e32 = 2 ** -33 - 2 ** -86, e8 = 2 ** -9 - 2 ** -62;
+    const edge = LC.snapCoord(e32, 32) === 0n && LC.snapCoord(e8, 8) === 0n && Math.floor(e32 * 2 ** 32 + 0.5) === 1 && Math.floor(e8 * 2 ** 8 + 0.5) === 1;
+    out.push(line('L6', 'snapCoord (Euclidean) = floor(2^K x + 1/2) of the double read exactly; 0 at 2^-(K+1) - 2^-(K+54), where the binary64 sum gives 1', cOk === cN && edge, `${cOk}/${cN} doubles near (k + 1/2)/2^K, K = 32 and 8`));
     // the parser and the arm fail closed
     const t = 'a 1 -2\nb 0 3';
     out.push(line('L6', 'parseSnapText: round trip; refuses a final LF, a ragged row, a non-integer, offsets out of order; SnapArm refuses the rim',
