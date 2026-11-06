@@ -911,3 +911,52 @@ The control times the same verifications with the attestation step skipped.
 cut); L9 on `Rng(4000 + j)` leaf lists and the verb shards' weaves, tampers from `Rng(5000 + i)`; L10 on verb shards
 (`Rng(4000 + i)`), tampers from `Rng(5000 + ...)`; L11 on the verb shards of at least 59,000 bytes.
 
+### Amendment 8 · 2026-11-06, Phase 3, after the dry runs and before any decisive run
+
+Written after the Phase 3 code was built, reviewed and dry-run (`reference/results/dry/claims-phase3.*`), and before
+any decisive run of L8–L11. No result on a registered instance was known. Items 1–3 change how two things are run
+and read; the reasons, and what the dry runs showed first, are stated so a reader can judge them.
+
+**1. The packages are grown with engrams off.** L10's packages, L11's timed packages and L9(a)'s manifest use each
+shard's record grown with engrams off; L8 still grows every shard both ways. The registration does not say which.
+The Lexicon registered engram/1 as a compatibility checksum, never an input (D4); its design, published in Phase 0
+before any measurement, has the engram layer "off by default for corpora" (Explainer 3); and L11's prediction (about
+50–150 ms) was built from spike S4's codec-only timing, which has no engram layer. Disclosure: the runner first read
+it the other way (Owl's `growBiochain` defaults to engrams on), and in those dry runs L11's median on engrams-on
+packages was 243.5–265.5 ms, near the 250 ms bar, against 157–182 ms with engrams off. This reading was fixed after
+seeing that. The decisive run times the same shards' engrams-on packages too and reports them beside the decision.
+
+**2. L11's control is replaced.** The registered control ("a run with the attestation step skipped must be faster;
+otherwise the step is not being timed and the test is void") was read as a comparison of the two medians. In the dry
+runs the attestation step cost 0.7–0.8 ms against a per-verification spread of 10–28 ms: with correct code the
+comparison failed by chance (voiding L11), and with the skip deliberately ignored, so that both arms did the same
+work, it passed. It cannot show whether the step is timed. As Engram Mind's Eye's Amendment 1 replaced a control that
+could not fail, it is replaced by the verifier's own record: every timed full verification must record the
+attestation check as run and passed inside the timed window with a time above 0, and every attestation-skipped one
+must record it as skipped with every other check passed; otherwise L11 is void. The comparison of the medians and the
+paired difference with its interval are reported.
+
+**3. The two verdicts follow Explainer 4.** Explainer 4 (Phase 0) defined *self-consistent* as steps 1–6 and 8 (the
+record, its derived layers and its place in the manifest) and *authentic* as step 7 (the signature). The code as
+first built counted the inclusion and consistency checks as authenticity; both languages were changed identically
+before this amendment (commit 8c51e08). The name of the first failing check, which L10's verdicts also compare, is
+unchanged; eight verdict lines of `traces/chain_v1.txt` changed.
+
+**4. Readings fixed in the code** (each marked `READING`): the checks run in the registered order (parity, canonical,
+crystal, leaves, weaves, derived, commitment, attestation, inclusion, consistency), the first seven stopping at the
+first failure and the last three always running; `failed` names the first failing check. A Tier-P record writes `P`
+in its tier field and keeps merkleRoot, only chainId becoming `-`. A point's canonical text in LADDR rows is its
+coordinates alone. spdxSetSha is the SHA-256 of the distinct SPDX identifiers, sorted and joined by `,`. A synthetic
+shard's sourceUrlSha hashes `rng:<base>+<i>`. T6 checks a Tier-P package with the salt of the shard after its own; T7's
+swap of the last two frames can fail at canonical (a short last frame) rather than leaves. A consistency proof from
+N_old = 0 is accepted only when empty, with the old root the hash of the empty tree. In L11, a clean package that
+fails a check while timed voids L11.
+
+**5. Disclosures.** A container restart cut the first build off during its dry run; the work on disk was kept and
+committed (b822237), and the dry run was redone. The builders timed verb shards (dry data) and hashed C0's shard texts
+against their pins; no C0 shard was grown, verified or timed. An adversarial review (three reviewers, two skeptics
+per finding) confirmed one finding, L11's control (item 2); the others were not confirmed.
+
+**6. Environment of the dry run:** Node 22.23.4, Python 3.13.18 with `cryptography` 50.0.1, Owl Academy at 7f45f35,
+BioChain-AI at c975161.
+
