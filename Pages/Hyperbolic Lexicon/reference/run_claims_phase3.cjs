@@ -50,8 +50,11 @@
 //      every valid signature made here.
 //   6. L11 (nothing else running): a timed session (LADDR/1 recomputed from WordNet once), then every corpus shard of
 //      >= 59,000 bytes verified 3 times with process.hrtime.bigint, the first discarded, the attestation-skipped
-//      control interleaved; the literal per-shard LADDR variant and the engrams-off packages reported; Python's time;
-//      the median's bootstrap interval (numpy default_rng(7), 10,000 resamples) from the Python half.
+//      control interleaved and decided, under Amendment 8 item 2, by each timed verification's own record of its
+//      checks (the attestation step run inside the timed window, or skipped in the control: READING runner-13), the
+//      comparison of the two medians reported; packages grown with engrams off (Amendment 8 item 1); the literal
+//      per-shard LADDR variant and the engrams-on packages reported; Python's time; the median's bootstrap interval (numpy
+//      default_rng(7), 10,000 resamples) and the paired difference's from the Python half.
 //   7. Decisions exactly as registered; results[/dry]/claims-phase3.json and .md, results[/dry]/phase3-registry.json.
 // Exits 1 when it refuses or fails; 0 when the results are written, whatever they decide.
 'use strict';
@@ -128,15 +131,28 @@ async function l11Child(reqPath, resPath) {
     if (session.laddrHash !== req.laddrHash) throw new Error('the session\'s LADDR/1 is not the committed one');
     say(`session ${sessionMs.toFixed(1)} ms (LADDR/1 ${session.timings.laddr.toFixed(1)} ms)`);
     const timed = async (pkg, o = {}) => { const t = hr(), v = await LC.verifyPackage(session, pkg, { clock: clockMs, ...o }); return { ms: msSince(t), v }; };
+    // READING (runner 13): whether the attestation step is inside the timed window, read from the verifier's own record
+    // of each timed verification (L11: "otherwise the step is not being timed"): a full one must hold one record of
+    // every check, each passed, the attestation check's time > 0 ('timed'); an attestation-skipped one must hold the
+    // attestation check as skipped (ok null, 0 ms) and every other check passed ('skipped'). Anything else is named.
+    const stepState = (kind, v) => {
+        const by = new Map(v.checks.map(c => [c.name, c])), att = by.get('attestation');
+        if (v.checks.length !== LC.CHECKS.length || by.size !== LC.CHECKS.length || !att) return `${v.checks.length} check records`;
+        const notPassed = LC.CHECKS.filter(n => n !== 'attestation' && by.get(n).ok !== true);
+        if (notPassed.length) return `not passed: ${notPassed.join(', ')}`;
+        if (kind === 'full') return att.ok === true && att.ms > 0 ? 'timed' : `attestation ok ${att.ok}, ${+att.ms.toFixed(3)} ms`;
+        return att.ok === null && att.detail === 'skipped' && att.ms === 0 ? 'skipped' : `attestation ok ${att.ok}, ${att.detail}, ${+att.ms.toFixed(3)} ms`;
+    };
     const seconds = {};
     let t0 = hr();
-    const rows = req.shards.map(x => ({ ...x, full: [], skip: [], checks: [], failed: [], skipFailed: [] }));
+    const rows = req.shards.map(x => ({ ...x, full: [], skip: [], checks: [], failed: [], skipFailed: [], fullStep: [], skipStep: [] }));
     for (let rep = 0; rep < req.reps; rep++) {
         for (let b = 0; b < rows.length; b++) {
             const row = rows[b];
             for (const kind of ((rep + b) % 2 === 0 ? ['full', 'skip'] : ['skip', 'full'])) {
                 const { ms, v } = await timed(pkgs[b], kind === 'skip' ? { skip: ['attestation'] } : {});
                 row[kind].push(ms);
+                row[kind === 'full' ? 'fullStep' : 'skipStep'].push(stepState(kind, v));
                 if (kind === 'full') { row.checks.push(Object.fromEntries(v.checks.map(c => [c.name, c.ms]))); row.failed.push(v.failed); } else row.skipFailed.push(v.failed);
             }
         }
@@ -189,10 +205,10 @@ async function main() {
     const N_CLEAN = SMOKE ? 3 : 50, PER_CLASS = SMOKE ? 2 : 50, CLEAN_BASE = 1000 + OFF, TAMPER_BASE = 2000 + OFF;
     const REPS = 3, L11_MIN_BYTES = 59000, L11_BAR = 250, L11_REFUTE = 500;
     const KEEP = 20;                               // counterexamples kept in the JSON (as run_claims.py)
-    // READING (runner 1): the packages of L10 and L11, and the corpus manifest of L9(a), are grown with engrams on.
-    // L10 packages "the biochain record (Owl's fields)", and L8 lists Owl's fields as fifteen, the engram trio among
-    // them; growBiochain's opts.engrams defaults to true. L11's time on engrams-off packages is reported, deciding nothing.
-    const PACKAGE_MODE = 'on';
+    // Amendment 8 item 1: the packages of L10 and L11, and the corpus manifest of L9(a), are grown with engrams off, the
+    // Lexicon's default for corpora (engram/1 is a compatibility layer, off by default and never an input: D4, Explainer
+    // 3); L11's time on the same shards' engrams-on packages is reported, deciding nothing.
+    const PACKAGE_MODE = 'off', ALT_MODE = 'on';
     const CORPUS_SET = DRY ? 'verb' : 'c0';
     const SETS = DRY
         ? [{ set: 'synth', corpusId: LC.CHAIN_PINS.synthCorpusId, spdx: LC.CHAIN_PINS.synthSpdx, sourceBase: SYNTH_BASE, kernel: true },
@@ -225,6 +241,14 @@ async function main() {
     const readings = [];
     const reading = (id, text) => { readings.push({ id, text }); };
     log(`Phase 3: L8-L11${DRY ? ' (dry run)' : ''}${SMOKE ? ' (SMOKE: a development run, decides nothing)' : ''}; results to ${SMOKE ? RESULTS : rel(RESULTS)}, per-instance data to ${CACHE_DIR}`);
+    // the repository's state as the run starts (later the run's own outputs, results/[dry/]phase3-registry.json and
+    // claims-phase3.*, would show as changes): HEAD and the system's uncommitted paths (git status --porcelain)
+    const GIT = (() => {
+        const run = args => { const r = spawnSync('git', ['-C', ROOT, ...args], { encoding: 'utf8' }); return r.status === 0 ? r.stdout.replace(/\s+$/, '') : null; };
+        const st = run(['status', '--porcelain', '--', SYS]), paths = st ? st.split('\n').filter(Boolean) : [];
+        return { git_head: run(['rev-parse', 'HEAD']), system_uncommitted_changes: paths.length > 0, system_changed_paths: paths.slice(0, 20), system_changed_count: paths.length };
+    })();
+    log(`   repository ${GIT.git_head ? GIT.git_head.slice(0, 12) : '?'}; the system ${GIT.system_uncommitted_changes ? `has ${GIT.system_changed_count} uncommitted path(s): ${GIT.system_changed_paths.slice(0, 5).join('; ')}` : 'is clean'}`);
 
     // ============================================================== 1. the gate
     function gate() {
@@ -340,7 +364,7 @@ async function main() {
     const corpus = shards.filter(s => s.set === CORPUS_SET);
     timings.inputs = secs(t);
     log(`   ${SETS.map(sp => `${sp.set} ${shards.filter(s => s.set === sp.set).length}`).join(', ')} shards (${sum(shards.map(s => s.bytes))} B); corpus ${CORPUS_SET} (${corpus.length}); synthetic draws ${shards.filter(s => s.synth).map(s => s.synth.draws).join(',')}`);
-    reading('runner-1', 'The packages of L10 and L11 and the corpus manifest of L9(a) use the records grown with engrams on: L10 packages "the biochain record (Owl\'s fields)", L8 lists Owl\'s fields as fifteen with the engram trio among them, and growBiochain\'s opts.engrams defaults to true. L11 on engrams-off packages is reported and decides nothing.');
+    reading('runner-1', 'Amendment 8 item 1: the packages of L10 and L11 and the corpus manifest of L9(a) use the records grown with engrams off, the Lexicon\'s default for corpora (D4; Explainer 3: off by default for corpora and never an input). L11 on the same shards\' engrams-on packages is reported and decides nothing.');
     if (DRY) reading('runner-2', 'Dry-run corpora: the verb shards are corpus "wordnet30-verb" and the adjective shards "wordnet30-adj" (spdx LicenseRef-WordNet-3.0 and sourceUrlSha of the archive URL, as C0); the Rng(4000 + i) synthetic shards keep "lexicon-synth-v1" with sourceUrlSha of "rng:4000+i". The verb shards stand in for C0 in L9(a), L9(b), L10 and L11.');
 
     // ============================================================== 3. L8 in JS: growSync and the controls
@@ -903,13 +927,14 @@ async function main() {
     t = performance.now();
     const big = corpus.map((s, j) => ({ s, j })).filter(x => x.s.bytes >= L11_MIN_BYTES);
     if (!DRY && big.length !== 147) refuse(`L11 has ${big.length} shards of >= 59,000 bytes, not 147`);
-    const p11 = path.join(CACHE_DIR, 'l11-packages.jsonl'), p11off = path.join(CACHE_DIR, 'l11-packages-engrams-off.jsonl');
+    const p11 = path.join(CACHE_DIR, 'l11-packages.jsonl'), p11off = path.join(CACHE_DIR, `l11-packages-engrams-${ALT_MODE}.jsonl`);
     fs.writeFileSync(p11, big.map(({ j }) => JSON.stringify(packages[j])).join('\n') + '\n');
-    // the engrams-off packages (reported): the same shards' engrams-off records, their own corpus manifest, attested alike
-    const lpOff = corpus.map(s => s.lprep.off), treeO = LC.corpusTree(lpOff), LCOo = LC.lcorpus({ corpusId: corpus[0].corpusId, tree: treeO, spdxSha: LC.spdxSetSha(corpus.map(s => s.spdx)) });
+    // the other mode's packages (reported, Amendment 8 item 1): the same shards' engrams-on records, their own corpus
+    // manifest, attested alike (variable names keep "off" from before Amendment 8: they hold the ALT_MODE packages)
+    const lpOff = corpus.map(s => s.lprep[ALT_MODE]), treeO = LC.corpusTree(lpOff), LCOo = LC.lcorpus({ corpusId: corpus[0].corpusId, tree: treeO, spdxSha: LC.spdxSetSha(corpus.map(s => s.spdx)) });
     const consO = N > 1 ? treeO.consistency(N - 1) : [], LGO = LC.lgrow({ corpusId: corpus[0].corpusId, nOld: N - 1, rootOld: LC.hex(treeO.mth(0, N - 1)), nNew: N, rootNew: LCOo.root, proof: consO });
     const offPk = [];
-    for (const { s, j } of big) offPk.push(JSON.stringify(LC.makePackage({ record: s.js.off, lprep: lpOff[j], attestation: await LC.attestSign(kA.privateKey, { keyId: kA.keyId, keyVector, epochToken: EPOCH }, lpOff[j]),
+    for (const { s, j } of big) offPk.push(JSON.stringify(LC.makePackage({ record: s.js[ALT_MODE], lprep: lpOff[j], attestation: await LC.attestSign(kA.privateKey, { keyId: kA.keyId, keyVector, epochToken: EPOCH }, lpOff[j]),
         lcorpus: LCOo.text, inclusion: treeO.path(j), lgrow: LGO.text, consistency: consO })));
     fs.writeFileSync(p11off, offPk.join('\n') + '\n');
     const q11 = path.join(CACHE_DIR, 'l11-request.json'), a11 = path.join(CACHE_DIR, 'l11-node.json');
@@ -920,31 +945,42 @@ async function main() {
     if (child.status !== 0 || !fs.existsSync(a11)) refuse(`the L11 timing process exited ${child.status}`);
     const N11 = JSON.parse(fs.readFileSync(a11, 'utf8'));
     const rows11 = N11.rows, literal = N11.literal, offRows = N11.off, sessionMs = N11.session.ms, session11 = N11.session;
-    timings.l11_node = r1(N11.seconds.protocol); timings.l11_literal = r1(N11.seconds.literal); timings.l11_engrams_off = r1(N11.seconds.engrams_off); timings.l11_child_total = secs(t);
+    timings.l11_node = r1(N11.seconds.protocol); timings.l11_literal = r1(N11.seconds.literal); timings.l11_other_mode = r1(N11.seconds.engrams_off); timings.l11_child_total = secs(t);
     // Python: its time (reported) and the bootstrap intervals
     t = performance.now();
     let PT;
     try {
         PT = await runPython('time', { packagesPath: p11, registry: REG.text, registrySha256: REG.sha256, reps: REPS,
-            bootstrap: { node_full: rows11.map(r => r.ms), node_attestation_skipped: rows11.map(r => r.msSkip), node_literal_laddr: literal.map(r => r.ms), node_engrams_off: offRows.map(r => r.ms) } }, 'time');
+            bootstrap: { node_full: rows11.map(r => r.ms), node_attestation_skipped: rows11.map(r => r.msSkip), node_paired_full_minus_skipped: rows11.map(r => r.ms - r.msSkip),
+                node_literal_laddr: literal.map(r => r.ms), node_other_mode: offRows.map(r => r.ms) } }, 'time');
     } catch (e) { refuse(`the Python half failed: ${e.message}`); }
     timings.l11_python = secs(t);
     const B = PT.bootstrap.node_full, Bs = PT.bootstrap.node_attestation_skipped;
     const nodeMedian = median(rows11.map(r => r.ms));
     if (Math.abs(B.median - nodeMedian) > 1e-9) refuse(`numpy's median ${B.median} is not the runner's ${nodeMedian}`);
     const notAccepted = rows11.filter(r => r.failed.some(f => f !== '-') || r.skipFailed.some(f => f !== '-')).map(r => ({ shard: r.shard, failed: r.failed, skipFailed: r.skipFailed }));
-    const ctl11 = { what: 'the same verifications with the attestation step skipped must be faster (median of the per-shard times); otherwise the step is not being timed and the test is void',
+    const ctl11 = { what: 'Amendment 8 item 2: the control is decided by each timed verification\'s own record of its checks (step_check below); the registered comparison of the medians with the attestation step skipped is reported (median_comparison_faster) and decides nothing, since a ~1 ms step cannot be resolved against the run-to-run noise',
         median_full: r3(B.median), median_skipped: r3(Bs.median), difference_ms: r3(B.median - Bs.median), interval_skipped: Bs.interval.map(r3),
         attestation_step_ms_median: r3(median(rows11.map(r => r.byCheck.attestation))), shards_where_skipped_is_faster: rows11.filter(r => r.msSkip < r.ms).length, shards: rows11.length,
-        paired: { what: 'reported, decides nothing: per shard, full minus skipped (means of repetitions 2 and 3)', median_difference_ms: r3(median(rows11.map(r => r.ms - r.msSkip))),
+        paired: { what: 'reported, decides nothing: per shard, full minus skipped (means of repetitions 2 and 3); the interval is the 95% bootstrap interval of their median (numpy default_rng(7))', median_difference_ms: r3(median(rows11.map(r => r.ms - r.msSkip))),
+            interval_ms: PT.bootstrap.node_paired_full_minus_skipped.interval.map(r3), interval_includes_0: PT.bootstrap.node_paired_full_minus_skipped.interval[0] <= 0,
             positive: rows11.filter(r => r.ms > r.msSkip).length, of: rows11.length, per_verification_sd_ms: r3(Math.sqrt(median(rows11.map(r => { const xs = r.full.slice(1), m = sum(xs) / xs.length; return sum(xs.map(x => (x - m) ** 2)) / Math.max(1, xs.length - 1); })))) },
-        shows_its_weakness: Bs.median < B.median };
+        median_comparison_faster: Bs.median < B.median };
+    // the step check (runner-13): every timed verification's own record says the attestation step ran inside the timed
+    // window (full) or was skipped (control); a full verification without it, or a "skipped" one that ran it, voids L11
+    const stepOdd = rows11.flatMap(r => [...r.fullStep.map((s, k) => ({ shard: r.shard, kind: 'full', rep: k + 1, state: s })).filter(x => x.state !== 'timed'),
+        ...r.skipStep.map((s, k) => ({ shard: r.shard, kind: 'attestation skipped', rep: k + 1, state: s })).filter(x => x.state !== 'skipped')]);
+    ctl11.step_check = { what: 'every timed full verification ran every check, each passed, the attestation check inside the timed window with a time > 0; every timed attestation-skipped verification recorded the attestation check as skipped (0 ms) and passed every other check (READING runner-13)',
+        full_timed: rows11.reduce((a, r) => a + r.fullStep.filter(s => s === 'timed').length, 0), full: rows11.reduce((a, r) => a + r.fullStep.length, 0),
+        skipped_skipped: rows11.reduce((a, r) => a + r.skipStep.filter(s => s === 'skipped').length, 0), skipped: rows11.reduce((a, r) => a + r.skipStep.length, 0),
+        exceptions: stepOdd.slice(0, KEEP), holds: stepOdd.length === 0 && rows11.every(r => r.fullStep.length === REPS && r.skipStep.length === REPS) };
+    ctl11.shows_its_weakness = ctl11.step_check.holds;
     const lo = B.interval[0], hi = B.interval[1];
     if (notAccepted.length) reading('runner-12', 'A clean package that failed a check while being timed was not verified "with every hardened check", so its times are not L11\'s measurement: L11 is then void (not registered; it happened here).');
-    const L11decision = !ctl11.shows_its_weakness ? 'void' : notAccepted.length ? 'void' : hi <= L11_BAR ? 'supported' : lo > L11_REFUTE ? 'refuted' : 'inconclusive';
+    const L11decision = !ctl11.step_check.holds ? 'void' : notAccepted.length ? 'void' : hi <= L11_BAR ? 'supported' : lo > L11_REFUTE ? 'refuted' : 'inconclusive';
     const L11out = {
         decision: L11decision,
-        rule: `supported if the upper end of the 95% bootstrap interval of the median per-shard time is <= ${L11_BAR} ms; refuted if its lower end exceeds ${L11_REFUTE} ms; inconclusive otherwise; void if the attestation-skipped control is not faster`,
+        rule: `supported if the upper end of the 95% bootstrap interval of the median per-shard time is <= ${L11_BAR} ms; refuted if its lower end exceeds ${L11_REFUTE} ms; inconclusive otherwise; void if a timed verification's own record does not show the attestation step run inside the timed window (full) or skipped (control) — Amendment 8 item 2; the comparison of the medians with the step skipped is reported`,
         shards: rows11.length, median_ms: r3(B.median), interval_ms: B.interval.map(r3), bootstrap: { seed: B.seed, resamples: B.resamples, n: B.n, by: 'numpy default_rng(7) in run_claims_phase3.py (rank.ci_mean\'s procedure, the median)' },
         session: { ms: r1(sessionMs), laddr_ms: r1(session11.timings.laddr), lvocab_ms: r1(session11.timings.lvocab), registry_ms: r3(session11.timings.registry) },
         corpus_estimate_1000_shards_s: r1((sessionMs + 1000 * B.median) / 1000),
@@ -954,25 +990,25 @@ async function main() {
         reported: {
             literal_laddr_per_shard: { what: 'LADDR/1 recomputed inside each verification (Amendment 7 item 7\'s literal alternative; decides nothing)', shards: literal.length,
                 median_ms: r3(median(literal.map(r => r.ms))), interval_ms: PT.bootstrap.node_literal_laddr ? PT.bootstrap.node_literal_laddr.interval.map(r3) : null, failed: literal.filter(r => r.failed.some(f => f !== '-')).length },
-            engrams_off_packages: { what: 'the same shards\' engrams-off records, packaged and attested the same way (decides nothing)', shards: offRows.length, median_ms: r3(median(offRows.map(r => r.ms))),
-                interval_ms: PT.bootstrap.node_engrams_off ? PT.bootstrap.node_engrams_off.interval.map(r3) : null, failed: offRows.filter(r => r.failed.some(f => f !== '-')).length },
+            other_mode_packages: { mode: `engrams ${ALT_MODE}`, what: `the same shards' engrams-${ALT_MODE} records, packaged and attested the same way (Amendment 8 item 1; decides nothing)`, shards: offRows.length, median_ms: r3(median(offRows.map(r => r.ms))),
+                interval_ms: PT.bootstrap.node_other_mode ? PT.bootstrap.node_other_mode.interval.map(r3) : null, failed: offRows.filter(r => r.failed.some(f => f !== '-')).length },
             python: { shards: PT.rows.length, median_ms: r3(PT.bootstrap.python_full.median), interval_ms: PT.bootstrap.python_full.interval.map(r3), session_laddr_ms: r1(PT.laddr_ms),
                 by_step_median_ms: Object.fromEntries(LC.CHECKS.map(c => [c, r3(median(PT.rows.map(r => r.checks[c])))])), not_accepted: PT.rows.filter(r => r.failed.some(f => f !== '-')).length },
         },
         per_shard: rows11.map(r => ({ shard: r.shard, bytes: r.bytes, ms: r3(r.ms), reps: r.full.map(r3), skipped_ms: r3(r.msSkip), skipped_reps: r.skip.map(r3) })),
     };
     reading('runner-11', 'L11 protocol: repetition-major passes over the shards; in each pass a shard\'s full verification and its attestation-skipped verification run back to back, the order alternating, so drift affects both alike; a shard\'s time is the mean of its repetitions 2 and 3, the median is over shards, and the control compares the two medians. The package is passed as the parsed object (JSON parsing is not one of the hardened checks). The session (LVOCAB/1, LADDR/1 recomputed from WordNet, the registry snapshot loaded) is timed once and counted once in the 1,000-shard estimate.');
+    reading('runner-13', 'L11\'s control, "otherwise the step is not being timed and the test is void", is also read from each timed verification\'s own record of its checks: every full verification must hold every check passed with the attestation check\'s time > 0 inside the timed window, and every attestation-skipped one the attestation check recorded as skipped (0 ms) with every other check passed; otherwise L11 is void (not registered: it can only void, never support). The registered comparison of the two medians still decides the control. '
+        + `In this run the attestation step measures ${ctl11.attestation_step_ms_median} ms against a single verification's spread of about ${ctl11.paired.per_verification_sd_ms} ms, and the paired interval (full minus skipped) is [${ctl11.paired.interval_ms.join(', ')}] ms${ctl11.paired.interval_includes_0 ? ', which includes 0: the comparison of the medians is within the noise, so it can fail by chance with the step timed (L11 void) and pass by chance with the step not run (which the step check catches)' : ''}. The registration fixes no power for the comparison; a comparison powered against the noise needs an amendment.`);
     fs.writeFileSync(path.join(CACHE_DIR, 'l11-times.json'), JSON.stringify({ rows: rows11, literal, engramsOff: offRows, python: PT.rows }));
-    log(`   L11 ${L11decision}: median ${r1(B.median)} ms, interval [${r1(lo)}, ${r1(hi)}]; skipped ${r1(Bs.median)} ms (control ${ctl11.shows_its_weakness ? 'shows its weakness' : 'FAILS'}); session ${r1(sessionMs)} ms; literal ${r1(L11out.reported.literal_laddr_per_shard.median_ms)} ms; engrams off ${r1(L11out.reported.engrams_off_packages.median_ms)} ms; Python ${r1(PT.bootstrap.python_full.median)} ms`);
+    log(`   L11 ${L11decision}: median ${r1(B.median)} ms, interval [${r1(lo)}, ${r1(hi)}]; skipped ${r1(Bs.median)} ms (medians: skipped ${ctl11.median_comparison_faster ? 'faster' : 'not faster'}, reported; paired ${r1(ctl11.paired.median_difference_ms)} ms [${ctl11.paired.interval_ms.map(r1).join(', ')}]; control (step check, Amendment 8) ${ctl11.step_check.holds ? 'shows the step timed' : 'FAILS'} ${ctl11.step_check.full_timed}/${ctl11.step_check.full} timed, ${ctl11.step_check.skipped_skipped}/${ctl11.step_check.skipped} skipped); session ${r1(sessionMs)} ms; literal ${r1(L11out.reported.literal_laddr_per_shard.median_ms)} ms; engrams ${ALT_MODE} ${r1(L11out.reported.other_mode_packages.median_ms)} ms; Python ${r1(PT.bootstrap.python_full.median)} ms`);
 
     // ============================================================== write
-    const gitInfo = () => { const run = args => { const r = spawnSync('git', ['-C', ROOT, ...args], { encoding: 'utf8' }); return r.status === 0 ? r.stdout.trim() : null; };
-        return { git_head: run(['rev-parse', 'HEAD']), system_uncommitted_changes: !!run(['status', '--porcelain', '--', SYS]) }; };
     const R = {
         preregistration: 'PREREGISTRATION.md with Amendments 1-7', phase: 3, dry: DRY, smoke: SMOKE || undefined,
         started: new Date(Date.now() - (performance.now() - T0)).toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
         environment: { node: { version: process.version, v8: process.versions.v8, openssl: process.versions.openssl, platform: `${os.platform()} ${os.release()} ${os.arch()}`, cpus: os.cpus().length,
-            cpu: (os.cpus()[0] || {}).model, workers: N_WORKERS, core: LC.version }, python: PY.environment, owl: EXT.owl, biochain: EXT.biochain, ...gitInfo() },
+            cpu: (os.cpus()[0] || {}).model, workers: N_WORKERS, core: LC.version }, python: PY.environment, owl: EXT.owl, biochain: EXT.biochain, ...GIT },
         cache: { root: '~/.cache/hyperbolic-lexicon (HL_CACHE overrides)', dir: SMOKE ? CACHE_DIR : path.basename(CACHE_DIR) },
         instances: { sets: SETS.map(sp => ({ set: sp.set, corpusId: sp.corpusId, spdx: sp.spdx, shards: shards.filter(s => s.set === sp.set).length, ...(sp.seeds ? { seeds: `${sp.seeds[0]}..${sp.seeds[sp.seeds.length - 1]}` } : {}),
             sha256_of_shard_sha256s: nodeSha(shards.filter(s => s.set === sp.set).map(s => s.sha256).join('\n')) })), corpus: CORPUS_SET, package_mode: PACKAGE_MODE,
@@ -995,7 +1031,7 @@ async function main() {
         const yes = b => (b ? 'yes' : 'NO');
         md.push(`# Hyperbolic Lexicon, Phase 3: L8-L11${R.dry ? ' (dry run)' : ''}${R.smoke ? ' (SMOKE: development run, decides nothing)' : ''}`, '',
             `Run ${R.started} with ${R.preregistration} by \`reference/run_claims_phase3.cjs${R.dry ? ' --dry' : ''}\`. Node ${e.node.version} (V8 ${e.node.v8}, ${e.node.cpus} CPUs, ${e.node.workers} worker threads); `
-            + `Python ${e.python.python} (cryptography ${e.python.cryptography}, numpy ${e.python.numpy}); Owl Academy ${e.owl.commit.slice(0, 7)}, BioChain-AI ${e.biochain.commit.slice(0, 7)}; repository ${e.git_head ? e.git_head.slice(0, 7) : '?'}${e.system_uncommitted_changes ? ' (with uncommitted changes in the system)' : ''}. `
+            + `Python ${e.python.python} (cryptography ${e.python.cryptography}, numpy ${e.python.numpy}); Owl Academy ${e.owl.commit.slice(0, 7)}, BioChain-AI ${e.biochain.commit.slice(0, 7)}; repository ${e.git_head ? e.git_head.slice(0, 7) : '?'}${e.system_uncommitted_changes ? ` (with ${e.system_changed_count} uncommitted path(s) in the system when the run started: ${e.system_changed_paths.join('; ')})` : ' (the system clean when the run started)'}. `
             + `Gate: ${R.parity.pass}/${R.parity.total} lines of tests/parity-lexicon.cjs pass, none skipped (${R.parity.chain_sections.join('; ')}).`, '',
             `Instances: ${R.instances.sets.map(x => `${x.set} ${x.shards} shards (${x.corpusId}${x.seeds ? `, Rng(${x.seeds})` : ''})`).join('; ')}; the corpus of L9(a), L10 and L11 is ${R.instances.corpus}, packaged with engrams ${R.instances.package_mode}.`, '',
             '| Claim | Decision | What decided it |', '| --- | --- | --- |',
@@ -1041,8 +1077,9 @@ async function main() {
         md.push('## L11 · Verification is cheap enough for corpora', '', `${L11.shards} shards of at least 59,000 bytes, ${REPS} repetitions with process.hrtime.bigint, the first discarded: median **${L11.median_ms} ms**, 95% bootstrap interval [${L11.interval_ms.join(', ')}] (${L11.bootstrap.by}). `
             + `Session ${L11.session.ms} ms (LADDR/1 ${L11.session.laddr_ms} ms), once; 1,000 shards ≈ ${L11.corpus_estimate_1000_shards_s} s.`, '',
             `By step (median ms): ${Object.entries(L11.by_step_median_ms).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
-            `Control (attestation skipped): median ${L11.control.median_skipped} ms against ${L11.control.median_full} ms (difference ${L11.control.difference_ms} ms; the attestation step measures ${L11.control.attestation_step_ms_median} ms; skipped faster on ${L11.control.shards_where_skipped_is_faster}/${L11.control.shards} shards; paired, full minus skipped, median ${L11.control.paired.median_difference_ms} ms; a single verification's spread is about ${L11.control.paired.per_verification_sd_ms} ms): ${L11.control.shows_its_weakness ? 'shows its weakness' : 'FAILS: the test is void'}.`, '',
-            `Reported: LADDR/1 recomputed in each verification ${L11.reported.literal_laddr_per_shard.median_ms} ms (${L11.reported.literal_laddr_per_shard.shards} shards); engrams-off packages ${L11.reported.engrams_off_packages.median_ms} ms [${(L11.reported.engrams_off_packages.interval_ms || []).join(', ')}]; Python ${L11.reported.python.median_ms} ms [${L11.reported.python.interval_ms.join(', ')}] (by step: ${Object.entries(L11.reported.python.by_step_median_ms).map(([k, v]) => `${k} ${v}`).join(', ')}).`, '');
+            `Control (attestation skipped): median ${L11.control.median_skipped} ms against ${L11.control.median_full} ms (difference ${L11.control.difference_ms} ms; the attestation step measures ${L11.control.attestation_step_ms_median} ms; skipped faster on ${L11.control.shards_where_skipped_is_faster}/${L11.control.shards} shards; paired, full minus skipped, median ${L11.control.paired.median_difference_ms} ms, 95% interval [${L11.control.paired.interval_ms.join(', ')}]${L11.control.paired.interval_includes_0 ? ', which includes 0: the comparison is within the noise' : ''}; a single verification's spread is about ${L11.control.paired.per_verification_sd_ms} ms): skipped ${L11.control.median_comparison_faster ? 'faster' : 'not faster'} (reported; decides nothing under Amendment 8 item 2). `
+            + `The control, the step check (Amendment 8 item 2; READING runner-13): ${L11.control.step_check.full_timed}/${L11.control.step_check.full} full verifications ran the attestation check inside the timed window, ${L11.control.step_check.skipped_skipped}/${L11.control.step_check.skipped} attestation-skipped ones recorded it skipped: ${L11.control.step_check.holds ? 'holds' : `FAILS: the test is void (${JSON.stringify(L11.control.step_check.exceptions).slice(0, 500)})`}.`, '',
+            `Reported: LADDR/1 recomputed in each verification ${L11.reported.literal_laddr_per_shard.median_ms} ms (${L11.reported.literal_laddr_per_shard.shards} shards); ${L11.reported.other_mode_packages.mode} packages ${L11.reported.other_mode_packages.median_ms} ms [${(L11.reported.other_mode_packages.interval_ms || []).join(', ')}]; Python ${L11.reported.python.median_ms} ms [${L11.reported.python.interval_ms.join(', ')}] (by step: ${Object.entries(L11.reported.python.by_step_median_ms).map(([k, v]) => `${k} ${v}`).join(', ')}).`, '');
         if (L11.not_accepted.length) md.push(`Not accepted while timed: ${JSON.stringify(L11.not_accepted).slice(0, 1000)}`, '');
         md.push('## READINGs of this runner', '', ...R.readings.map(x => `- **${x.id}.** ${x.text}`), '',
             'The core\'s and the reference\'s own READINGs are marked in lexicon_core.js (chain section) and reference/lexicon/{chain,records,manifest,attest,verify}.py; run_claims_phase3.py marks the L9 draws and control 2\'s swaps.', '',

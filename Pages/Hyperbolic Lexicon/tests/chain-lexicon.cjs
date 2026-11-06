@@ -117,7 +117,7 @@ const athrows = async f => { try { await f(); return false; } catch (e) { return
     check('the Tier-P packages with their own salts are accepted', (await LC.verifyPackage(session, CP.packages[1])).failed === '-');
     for (const [name, want, p] of T) { const v = await LC.verifyPackage(session, p); check(`${name}: ${want}`, LC.verdictText(v) === want, LC.verdictText(v)); }
     const ctl = await LC.verifyPackage(session, base, { skip: ['attestation'] });
-    check('L11\'s control: with the attestation skipped the other checks run, authentic counts only inclusion and consistency, and the check is reported skipped',
+    check('L11\'s control: with the attestation skipped the other checks run and pass, and the attestation check is reported skipped (not run, so it does not count against authentic)',
         ctl.failed === '-' && ctl.checks.find(c => c.name === 'attestation').ok === null && ctl.checks.filter(c => c.ok === true).length === 9);
     check('a package given as JSON text verifies as the object does', LC.verdictText(await LC.verifyPackage(session, JSON.stringify(base))) === 'true true -');
     check('a session refuses a registry snapshot that is not the pinned one', await athrows(() => LC.chainSession({ lvocab: 'x', laddr: 'y', registry: reg.text, registrySha256: '0'.repeat(64) })));

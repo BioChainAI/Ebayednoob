@@ -37,10 +37,11 @@ The checks, in order:
     consistency  LGROW/1 parses, names the same corpus, grows from N - 1 to N ending in the LCORPUS root, its
                  proofSha is the proof's, and the consistency proof verifies (RFC 9162)
 
-READING: selfConsistent is "parity .. commitment all pass" and authentic is "attestation, inclusion and consistency
-all pass"; the two are computed separately (the self-consistency checks stop at the first failure, the
-authenticity checks always run), so a record that does not match an attested commitment is not self-consistent
-while the commitment itself can still be authentic. A package is accepted when both hold, i.e. failed is '-'.
+The verdicts (Amendment 8 item 3, Explainer 4's definition from Phase 0): selfConsistent is "parity .. commitment,
+inclusion and consistency all pass" (the record, its derived layers and its place in the manifest agree: steps 1-6
+and 8) and authentic is "the attestation passes" (step 7). The checks run in the registered order: parity ..
+commitment stop at the first failure; attestation, inclusion and consistency always run. A package is accepted when
+both hold, i.e. failed is '-'.
 The record's other fields (beyond Owl's) are ignored.
 
 The session (Session) holds what a holder pins: the vocabulary (V0), the LVOCAB/1 string, the LADDR/1 string (its
@@ -260,8 +261,8 @@ def verify(package, session, skip=(), times=None):
         run(name, fn)
     by = {n: ok for n, ok, _ in checks}
     failed = next((n for n, ok, _ in checks if ok is False), '-')
-    return {'selfConsistent': all(by[n] is not False for n in SELF_CHECKS),
-            'authentic': all(by[n] is not False for n in AUTH_CHECKS),
+    return {'selfConsistent': all(by[n] is not False for n in SELF_CHECKS + ('inclusion', 'consistency')),
+            'authentic': by['attestation'] is not False,
             'failed': failed, 'checks': checks, 'signer': st.get('signer')}
 
 

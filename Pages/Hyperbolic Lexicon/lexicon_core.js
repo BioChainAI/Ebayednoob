@@ -2534,7 +2534,8 @@ async function verifyPackage(session, pkgIn, opts = {}) {
     });
     const by = new Map(checks.map(c => [c.name, c.ok])), first = checks.find(c => c.ok === false);
     return {
-        selfConsistent: SELF_CHECKS.every(n => by.get(n) !== false), authentic: AUTH_CHECKS.every(n => by.get(n) !== false),
+        // verdicts, Amendment 8 item 3 (Explainer 4): self-consistent = steps 1-6 and 8, authentic = step 7
+        selfConsistent: [...SELF_CHECKS, 'inclusion', 'consistency'].every(n => by.get(n) !== false), authentic: by.get('attestation') !== false,
         failed: first ? first.name : '-', checks, signer,
     };
 }
