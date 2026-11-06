@@ -256,6 +256,7 @@ python3 -B run_claims_phase4.py --measure                # the decisive run of L
 - **Cost** on 4 workers here: one run 32–276 s Euclidean and 48–358 s Lorentz (d = 2 to 50); about 1.9 h for
   registered tuning (240 runs), 1.7 h dry, and about 1 h for each measured step (100 runs, 50 floors, 340 relabelled
   evaluations, the replays and the intervals).
+- **The Node re-evaluation** (A10.11; reported, deciding nothing): `node run_l6_node.cjs` (about 2 minutes) checks the L6 trace, rebuilds S in Node and ranks the 50 committed measured snapped texts and the exact arm's lines with `lexicon_core.js` (`SnapArm`, `evaluateSnapped`, unchanged), comparing every exact MAP (p/q), LBENCH/1 MAP hash, mean rank, tie count and per-query AP with `results/claims-phase4.json`, into `results/l6-node.json` and `.md`.
 
 ## Results
 
