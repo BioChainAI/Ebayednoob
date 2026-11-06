@@ -13,14 +13,25 @@ the reference's half of L1 and L4, then Node and Chromium against it. L1, L3(f) 
 control failing as required. Explainer 10, [`../explainers/browser-core.html`](../explainers/browser-core.html),
 tells Phase 2's story.
 
+In Phase 3, the reference gained the chain modules: the Python port of the shard grower, the records, the RFC 6962
+manifest, ATTEST/1 and the hardened verifier, twins of `lexicon_core.js`'s chain section. Amendment 7 fixed their
+definitions before any code. It was built and reviewed, saved after a container restart (`b822237`), changed for
+Amendment 8 (`8c51e08`) and dry-run (`25b48b3`); Amendment 8 followed (`6da04be`). Then `run_claims_phase3.cjs`, with its
+Python half `run_claims_phase3.py`, ran once on that code (`865791f`, 50 min 44 s). L8 (for the JS grower and the
+Python port), L9, L10 and L11 are supported, every control showing its weakness as required; L11 on packages grown
+with engrams off, a reading Amendment 8 fixed after dry runs had put the engrams-on median near the bar.
+Explainer 11, [`../explainers/chains.html`](../explainers/chains.html), tells Phase 3's story.
+
 ## The authority rule
 
 - **Exact stages:** the Python reference decides the claims for the exact stages (normaliser, tokenizer, ids, addresses,
   exact points, exact ranking and metrics, the LPS overlay, records and manifests). The browser core
-  (`lexicon_core.js`, Phase 2) must reproduce its traces line for line, and does: `../tests/parity-lexicon.cjs`
-  passes 18,667 of 18,667 lines in Node, 18,578 of them from the five traces.
-- **Compatibility with Owl Academy and BioChain-AI:** their own JavaScript is the authority (claim L8), run
-  unchanged from their checkouts.
+  (`lexicon_core.js`, Phases 2 and 3) must reproduce its traces line for line, and does: `../tests/parity-lexicon.cjs`
+  passes 19,991 of 19,991 lines in Node, 18,578 of them from the five Phase 1 traces and 1,323 from the chain trace
+  (Phase 3). In Phase 3 the reference decided L8(d), L9 and L10's verdicts, and the JS equalled it on every record,
+  root, proof and verdict.
+- **Compatibility with Owl Academy and BioChain-AI:** their own JavaScript is the authority (claim L8(a, b)), run
+  unchanged from their checkouts by name-grab (Owl Academy at `7f45f35`, BioChain-AI at `c975161`).
 - **Learned embeddings (Phase 4):** a numpy float64 trainer is the authority. geoopt is a reported cross-check if
   torch is installed.
 
@@ -37,6 +48,8 @@ tells Phase 2's story.
 | `golden/make_l1_instances_v1.py`, `golden/l1_instances_v1.meta.json` | The content and order of L1's four instance lists, by count and an order-sensitive digest: (a) 117,659, (b) 16,622, (c) 20,520, (d) 2,000 strings. `--check` recomputes. (Phase 1) |
 | `golden/l1_instances_v1.cjs` | The same four lists loaded in Node, each string as its UTF-8 bytes, the twin of `lexicon/l1.py` (loaders only; the dry-run and trace strings too). `loadAll()` throws unless every count and digest is the meta's; `--check` compares them, exit 2 when the WordNet or UD EWT cache is missing. `run_claims_js.cjs` reads its instances through it. (Phase 2) |
 | `golden/make_js_data_v1.cjs` | Writes `../data/unicode_15_1_v1.js` and `../data/vocab_v0_lex0.js`, the pinned table and V0 as ASCII script files that register each file's exact text, so a page reaches them without fetch; each source is checked against its pin first, and `lexicon_core.js` checks the SHA-256 again. `--check` rebuilds in memory and compares bytes. (Phase 2) |
+| `golden/nb_spec_v1.txt` | N_B's specification as Amendment 1 item 1 wrote it, with Amendment 2's readings, verbatim: the file whose SHA-256 is `LVOCAB/1`'s normaliserSpecSha (Amendment 7 item 3). `lexicon/records.py` and `lexicon_core.js` refuse it unless its hash is the pinned one. (Phase 3) |
+| `golden/make_biomesh_compat_v1.cjs`, `golden/biomesh_compat_v1.json` | `lexicon_core.js`'s `growSync` against Owl Academy's and BioChain-AI's own `growBiochain` (run unchanged by name-grab from their checkouts), engrams off and on, on 13 unregistered texts: `Rng(8000 + i)` synthetic shards, seven edge texts and the first two verb gloss shards. All 26 records equal both growers' in all fifteen fields, and both `verifyIntegrity`s accept them. `node golden/make_biomesh_compat_v1.cjs <Owl-Academy> <BioChain-AI> --check` recomputes (about 2 minutes) and exits 2 when a checkout is missing. (Phase 3) |
 | `golden/check_ucd_v1.py`, `golden/ucd_15_1_v1.meta.json` | The pinned table checked field by field against the official UCD 15.1.0 files (UnicodeData, SpecialCasing, DerivedCoreProperties, DerivedAge), pinned at unicode-org/unicodetools `b9144701` and fetched from GitHub, since unicode.org is blocked here: equal in every field (categories, decompositions, combining classes, lowercase, both Final_Sigma sets, whitespace, Hangul). Without `--check` it fetches once into the cache and writes the meta; `--check` compares. Run as `python3 -B -I`. (After Phase 2's run, `5e1681c`) |
 
 Every check exits 0 on a match, 1 on a mismatch and 2 "skipped" when its data is not cached. Fetch the data once:
@@ -49,7 +62,7 @@ python3 -B "Pages/Hyperbolic Lexicon/reference/golden/make_vocab_v1.py"
 
 ## Modules
 
-Built in Phase 1, in `lexicon/` (and `phase2.py` in Phase 2):
+Built in Phase 1, in `lexicon/` (with `phase2.py` in Phase 2, and the chain modules in Phase 3):
 
 | Module | Holds |
 | --- | --- |
@@ -66,13 +79,18 @@ Built in Phase 1, in `lexicon/` (and `phase2.py` in Phase 2):
 | `lexicon/rank.py` | Exact ranking keys, rank lists, pessimistic AP, MAP and mean rank as exact rationals, distortion, bits, the bootstrap |
 | `lexicon/lps.py` | X(5, q) for q ∈ {13, 17, 29}: L7's checks (a)–(e) and controls |
 | `lexicon/phase2.py` | Phase 2 (Amendment 4): L1's per-instance record and digests, S6's R(s) from the pinned table (L1 control 1's reference side), the Hugging Face wrapper; L4(b)'s float64 rounding, left-to-right float key, inversions and float ties, and control 2's acosh evaluator |
+| `lexicon/chain.py` | Phase 3 (L8; Amendment 7 items 1, 2 and 4): Owl Academy's `growBiochain` step for step, synchronously, with the JavaScript's quirks kept (leaves hashed over the chunk's bytes read as code units, the `shdccp/2` Merkle rule, V8's `Math.hypot` and `toFixed(12)` exactly); the rank coder, packets and BioChain-AI's kernel normalisation (L8's control 1); the exact weave and its segment sub-weaves; S4's search for residual flips that decode the same (T9); Amendment 7 item 2's synthetic shards and the gloss cut; JavaScript's number and JSON text |
+| `lexicon/records.py` | Phase 3 (Amendment 7 item 3): `LVOCAB/1`, `LADDR/1` with `addrTableRoot` over map A's rows, `LPREP/1` (Tier S, and Tier P with a salted root), `LCORPUS/1` and `LGROW/1`, and the derived layers (the V0 id stream of a whole shard) |
+| `lexicon/manifest.py` | Phase 3 (L9(a); Amendment 7 item 5): RFC 6962 trees, audit paths and consistency proofs, verified with RFC 9162's algorithms; the synthetic leaf lists and the alteration classes; L9's controls, the `shdccp/2` Merkle rule and an XOR summary |
+| `lexicon/attest.py` | Phase 3 (L10; Amendment 7 item 6): ATTEST/1 with `cryptography`: BioChain-AI's identity, key vector and key id, ported; P1363 to DER and back with r and s left-padded; the high-S twin; the key-registry snapshot pinned by its SHA-256; L10's control 2 (the conversion skipped) |
+| `lexicon/verify.py` | Phase 3 (L10, L11): packages; the hardened verifier, its checks in the registered order (parity, canonical, crystal, leaves, weaves, derived, commitment, attestation, inclusion, consistency) and its two verdicts, self-consistent and authentic (Amendment 8 item 3); the session (V0, `LVOCAB/1`, `LADDR/1` recomputed once, the registry); the tamper helpers of T1-T9 |
 
 Still planned:
 
 | Module | Phase | Holds |
 | --- | --- | --- |
-| `lexicon/chain.py`, `manifest.py`, `records.py`, `attest.py` | 3 | The synchronous shard grower (with the JavaScript codec's quirks), RFC 6962 manifests, LVOCAB/LADDR/LPREP/LCORPUS/LGROW/LBENCH, ATTEST/1 |
 | `lexicon/embed.py` | 4 | Lorentz and Euclidean static embeddings in numpy float64 |
+| `LBENCH/1` in `lexicon/records.py` | 4 | Benchmark receipts, defined when Phase 4 first uses them (Amendment 7 item 3) |
 
 The exact modules of Hyperbolic Oracles (`hpstep.prng`, `hpstep.problems`, `hpstep.decode3d`) and of Engram Mind's
 Eye (`engram.ttmpt`, `engram.address`) are imported in place, unchanged, from their reference folders.
@@ -96,13 +114,36 @@ ones:
 
 Its own per-instance lists go to `~/.cache/hyperbolic-lexicon/phase2/js/`.
 
+`run_claims_phase3.cjs` (Phase 3) decides L8, L9, L10 and L11, with its Python half `run_claims_phase3.py`, which it
+starts with one JSON request at a time (`l8l9`, `verify`, `time`) and which decides nothing itself. In order, each step
+refusing to go on when its inputs are not the registered ones:
+1. The gate: `../tests/parity-lexicon.cjs` must pass with no line skipped, the chain trace included; the Owl Academy
+   and BioChain-AI checkouts must be at `7f45f35` and `c975161`, their files unchanged.
+2. The inputs: C0's 148 shard texts (checked against `golden/wordnet_v1.meta.json`) and Amendment 7 item 2's 20
+   synthetic shards; Python regenerates every text, and its SHA-256 must be the runner's.
+3. L8: every shard grown with engrams off and on by `growSync`, by Owl's and BioChain-AI's growers (in worker
+   threads) and by the Python port; the fields that differ; both `verifyIntegrity`s and Engram's `importBiochain` on
+   every distinct record; (d) in Python against JS; the three controls.
+4. L9: the corpus manifest and the synthetic lists in JS and in Python, with every proof and alteration; the exact
+   weaves; the two controls.
+5. L10: keys made in WebCrypto, identity and key vector by BioChain-AI's own code, the registry snapshot; the clean
+   and tampered packages verified in JS and in Python; the two controls.
+6. L11, in a fresh Node process with nothing else running: the session, then three timed repetitions of every full C0
+   shard with the attestation-skipped control interleaved; the engrams-on packages, the literal `LADDR/1` reading and
+   Python's times, reported; the bootstrap intervals from the Python half.
+7. The decisions, written to `results/claims-phase3.json` and `.md`, and the registry snapshot to
+   `results/phase3-registry.json`.
+
+Its per-instance data (Python's records, the packages, the L11 times) go to `~/.cache/hyperbolic-lexicon/phase3/`.
+
 ## How to run
 
 From this folder (`Pages/Hyperbolic Lexicon/reference/`), with the data cached:
 
 ```
-python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (127 tests, about a minute)
-python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 5 slow checks (full corpora; the Phase 2 dry run)
+python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (189 tests, about a minute)
+python3 -B -m pytest -q -p no:cacheprovider -m slow    # only the 8 slow checks (full corpora; the Phase 2 dry run;
+                                                       # Phase 3's large lists, LADDR/1 over map A, the chain trace)
 python3 -B run_claims.py --dry                         # the registered dry run (Amendment 1, item 10) into results/dry/
 python3 -B run_claims.py                               # the Phase 1 claims L2, L3, L5, L7 into results/ (about 5 minutes)
 python3 -B run_claims.py L3 L7                         # only these claims (results/claims-L3-L7.json and .md)
@@ -112,10 +153,16 @@ python3 -B run_claims.py --phase2                      # the reference's half of
 node run_claims_js.cjs --dry                           # Phase 2's dry run in Node and Chromium, against results/dry/phase2-python.json
 node run_claims_js.cjs                                 # parity, then L1 in Node and Chromium, L3(f), L4; the decisions into
                                                        # results/claims-phase2.json (about 7 minutes; after --phase2)
+node run_claims_phase3.cjs --dry                       # Phase 3's dry run (Amendment 7 item 8) into results/dry/ (about 18 minutes)
+node run_claims_phase3.cjs                             # L8-L11: gate, Python half, decisions into results/claims-phase3.json
+                                                       # (about 51 minutes); per-instance data in ~/.cache/hyperbolic-lexicon/phase3/
+node golden/make_biomesh_compat_v1.cjs <owl> <biochain> --check   # growSync against Owl's and BioChain-AI's growers
 python3 -B -I golden/check_ucd_v1.py --check           # the pinned Unicode table against the official UCD 15.1.0 files
 python3 -B traces_text.py --check                      # rebuild the normaliser and WordPiece traces and compare
 python3 -B traces_geometry.py --check                  # rebuild the address, point and rank traces and compare
 python3 -B traces_geometry.py                          # rewrite the address, point and rank traces
+python3 -B traces_chain.py --check                     # rebuild the chain trace and compare (about 20 s)
+python3 -B traces_chain.py                             # rewrite the chain trace
 ```
 
 - **Tests.** `pytest.ini` deselects the slow tests unless `-m` selects them (`-m "slow or not slow"` runs both).
@@ -130,10 +177,19 @@ python3 -B traces_geometry.py                          # rewrite the address, po
   `require('playwright')` with its Chromium; Hugging Face `tokenizers` is optional (reported only).
   UD EWT text is not committed (L1 Data): for set (b) the JSON keeps only indices, offsets, lengths and SHA-256s of
   its examples and counterexamples; the text goes to the cache beside the per-instance records.
+- **Phase 3** (`node run_claims_phase3.cjs`): it needs Node 22 (WebCrypto, worker threads), python3 with
+  `cryptography` and numpy, the WordNet archive in the cache, and the Owl Academy and BioChain-AI checkouts at their
+  pinned commits, only read (beside this repository by default, or `--owl` and `--biochain`). `<owl>` and `<biochain>`
+  above are those checkouts (`../../../../Owl-Academy` and `../../../../BioChain-AI` from this folder when they sit
+  beside the repository). The keys are made per run and never written; the registry snapshot holds public JWKs only.
+  `--dry --smoke --out <dir>` is a development run that decides nothing.
 - **Traces** use seeds 8000 + i, which no claim uses. `traces_text.py` writes `traces/normalise_v1.txt` and
   `traces/wordpiece_v1.txt` (with V1 lines when V1 is cached); `traces_geometry.py` writes
-  `traces/address_v1.txt`, `traces/points_v1.txt` and `traces/rank_v1.txt`. Both `--check`s rebuild in memory and
-  compare bytes: exit 0 equal, 1 different, 2 skipped when the data they need is not cached. Each file
+  `traces/address_v1.txt`, `traces/points_v1.txt` and `traces/rank_v1.txt`; `traces_chain.py` (Phase 3) writes
+  `traces/chain_v1.txt`: the codec, V8's float functions, synthetic and verb shards grown both ways, the records,
+  RFC 6962 vectors and lists, ATTEST/1 under two fixed test keys with deterministic signatures, and the verifier's
+  verdicts on clean and tampered packages. Each `--check` rebuilds in memory and compares bytes: exit 0 equal, 1
+  different, 2 skipped when the data it needs is not cached. Each file
   documents its format in its `#` header. Nothing in them decides a claim.
 
 ## Results
@@ -147,7 +203,10 @@ python3 -B traces_geometry.py                          # rewrite the address, po
 | `results/phase2-python.json`, `.md` | Phase 2, the reference's half (2026-11-05, on the code at `a1fe9a8`, committed as `648a6b6`): L1's record-list and id-stream digests per set and vocabulary, controls 2 and 3, control 1's reference side, the reported metrics and Hugging Face agreement; L4(a)'s rank-list digests and exact MAPs and mean ranks; L4(b)'s inversions, float ties and both controls, with per-query lists. No UD EWT text |
 | `results/claims-phase2.json`, `.md` | Phase 2's comparisons and decisions from `run_claims_js.cjs`: parity, the environments (Node, Chromium, Python, their Unicode), L1 per cell, L3(f), L4(a) and L4(b), with counterexamples (none), controls and timings |
 | `results/phase2-console.txt` | Both Phase 2 runs' console output and timing (Python 2 min 15 s, then Node and Chromium 6 min 52 s) |
-| `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; and Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5 |
+| `results/claims-phase3.json`, `.md` | Phase 3's decisive run (2026-11-06, on the code at `6da04be`, committed as `865791f`): L8 per shard, mode and grower, L8(d), L9 per list with every proof and alteration counted and the exact weaves, L10 per class with the tamper places, L11 per shard and by step, every control, the readings of the runner, and the timings; counterexamples (none) |
+| `results/phase3-console.txt` | The run's console output and timing (50 min 44 s) |
+| `results/phase3-registry.json` | The key-registry snapshot L10 and L11 verified against (SHA-256 `36cbc21d…`): key ids, public JWKs, key vector and status. No private key |
+| `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5; and Phase 3's last (`claims-phase3.*`, `phase3-console.txt`, `phase3-registry.json`, Amendment 7 item 8, committed as `25b48b3`), before Amendment 8 |
 
 | Claim | Decision | Key numbers |
 | --- | --- | --- |
@@ -164,5 +223,14 @@ Phase 2 (`results/claims-phase2.json`, `results/phase2-python.json`):
 | L3(f) | supported, so L3 is supported in full | Node's canonical point list equals Python's (`eb22bf00…`); 2,000/2,000 sampled lines equal `results/l3f-python.txt` |
 | L4(a) | supported | Every rank list and exact MAP and mean rank equal in Python and Node: 1,176 mammal queries and noun queries 0–199, H³ and H²; the mammals also in Chromium (reported) |
 | L4(b) | supported (decided here) | 997 of 1,000 noun queries invert an exactly ordered adjacent pair in float64 (H³ 990, H² 993); Node reproduces the counts. Control 1 (float32): 1,137/1,176 mammal queries invert; control 2: 487 of 488 tied queries give a different AP |
+
+Phase 3 (`results/claims-phase3.json`):
+
+| Claim | Decision | Key numbers |
+| --- | --- | --- |
+| L8 | supported, for the JS grower and the Python port | 0 of 336 records (148 C0 and 20 synthetic shards, engrams off and on) differ from Owl Academy's own `growBiochain` in any of the fifteen fields; BioChain-AI's grower the same; both `verifyIntegrity`s accept every record, and `importBiochain` recreates every text; (d) identical in Python and JS (`addrTableRoot` `30b17bc3…`). Controls 1-3 show their weakness |
+| L9 | supported | The manifest over the 148 `LPREP/1` hashes (root `f567700d…`) and lists of K = 1 to 1,001: every root and proof equal in JS and Python, every alteration detected, every wrong proof rejected; 148/148 exact weaves exact. Controls: the `shdccp/2` rule collides at K = 3, 7, 1,001; XOR misses swaps |
+| L10 | supported | 50 clean and 450 tampered packages: 0 false accepts, 0 false rejects in JS and in Python, verdicts identical; Owl's `verifyIntegrity` accepts 50/50 of each of T1, T2, T8, T9; without the P1363-to-DER conversion Python accepts 0 of 126 signatures |
+| L11 | supported, on packages grown with engrams off (Amendment 8) | Median 155.4 ms per full C0 shard, interval [154.2, 156.0], bar 250 ms; the step check holds 441/441. Amendment 8 fixed engrams off after dry runs had put the engrams-on median at 243.5-265.5 ms (decisive run, reported: 243.6 ms). Python 195.9 ms (reported) |
 
 `../README.md` has the full tables, the commits in order, and what went against prediction or was disclosed.

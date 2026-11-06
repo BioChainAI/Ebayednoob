@@ -1,13 +1,15 @@
 # Hyperbolic Lexicon · SHD-CCP integration and a staged hyperbolic BERT front end
 
-**Status: Phase 2 done (the browser core); Phase 3 (records and biochains) is next.** Of the eleven claims
+**Status: Phase 3 done (records and biochains); Phase 4 (learned embeddings) is next.** Of the eleven claims
 registered in `PREREGISTRATION.md`, Phase 1's one decisive run supported L2, L5 and L7, and L3 on its Python side
-(parts (a)–(e) and (g)). Phase 2's one decisive run supported L1, L3(f), which completes L3, and L4(a) and (b). So
-L1, L2, L3, L5 and L7 are supported in full and L4 in part. L8–L11 are still open, to be decided in Phase 3, and L6
-and L4(c) in Phase 4. No learned model or encoder exists yet.
+(parts (a)–(e) and (g)). Phase 2's one decisive run supported L1, L3(f), which completes L3, and L4(a) and (b).
+Phase 3's one decisive run supported L8 (for the JS grower and for the Python port), L9, L10 and L11. L11 was decided
+on packages grown with engrams off, a reading Amendment 8 fixed before the run but after dry runs had put the
+engrams-on median near the 250 ms bar (below). So ten claims are supported: nine in full, and L4 in its decided parts
+(a) and (b). L4(c) and L6 are still open, to be decided in Phase 4. No learned model or encoder exists yet.
 
 Open [`index.html`](index.html) for the hub: the system map, the explainer library, the roadmap, the claims ledger
-with the results of Phases 1 and 2, and the decisions. [`summary.html`](summary.html) is the whole analysis on one page.
+with the results of Phases 1, 2 and 3, and the decisions. [`summary.html`](summary.html) is the whole analysis on one page.
 
 ## The question
 
@@ -51,7 +53,9 @@ help such a system develop?
    - See `explainers/alternatives.html`.
 5. **Language biochains: yes, as many 60 KB shards under an RFC 6962 manifest.** A single growing chain cannot work,
    because a whole lineage is capped at 60 KB. The design adds typed records, two privacy tiers, and a hardened,
-   attested importer that closes what `verifyIntegrity` misses. See `explainers/biochains.html`.
+   attested importer that closes what `verifyIntegrity` misses. See `explainers/biochains.html`. Phase 3 built it,
+   and its one decisive run supported L8–L11; the Phase 3 section below has the numbers and Amendment 8's
+   disclosure, and `explainers/chains.html` (Explainer 11) the whole story.
 6. **Benchmarks form a ladder.** Every hyperbolic claim gets a matched Euclidean control.
 
    | Stage | Benchmarks | Where it runs |
@@ -151,7 +155,7 @@ What went against prediction, and what was disclosed:
 From `Pages/Hyperbolic Lexicon/reference/`, with the data fetched once (below):
 
 ```
-python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (127 tests, about a minute)
+python3 -B -m pytest -q -p no:cacheprovider            # the fast suite (189 tests, about a minute)
 python3 -B -m pytest -q -p no:cacheprovider -m slow    # the slow full-corpus checks
 python3 -B golden/make_unicode_v1.py --check           # each pin rebuilt or re-read and compared
 python3 -B golden/make_vocab_v0.py --check
@@ -281,12 +285,159 @@ node reference/run_claims_js.cjs                       # parity, Node, Chromium 
 
 `reference/README.md` lists every module, pin and results file.
 
+## Phase 3: records and biochains, and their decisive run
+
+Phase 3 built the language shards as unmodified SHD-CCP (`shdccp/2`) biochains, their records, the corpus manifest,
+the exact weave and the hardened, attested verifier, in JS and in Python, and decided the four claims registered for
+them, each by its registered rule. [`explainers/chains.html`](explainers/chains.html) (Explainer 11) tells the whole
+story. Every number from the decisive run below is in
+[`reference/results/claims-phase3.json`](reference/results/claims-phase3.json), and the run's console output is in
+[`reference/results/phase3-console.txt`](reference/results/phase3-console.txt); the dry run's numbers are in
+[`reference/results/dry/claims-phase3.json`](reference/results/dry/claims-phase3.json), Amendment 8's in
+[`PREREGISTRATION.md`](PREREGISTRATION.md), and the test counts come from the suites themselves.
+
+### What was built
+
+- **The chain section of the browser core.** `lexicon_core.js` gained a section on Engram Mind's Eye's
+  `biochain_v1.js` (Owl's codec, verbatim) and `engram_core.js`, and the orbital core's SHA-256, all loaded
+  unchanged:
+  - `growSync`, Owl Academy's `growBiochain` made synchronous, field for field; Amendment 7's synthetic-shard
+    generator and the gloss cut;
+  - the records `LVOCAB/1`, `LADDR/1` (with `addrTableRoot`), `LPREP/1` (Tier S, and Tier P with a salted root),
+    `LCORPUS/1` and `LGROW/1`;
+  - RFC 6962 roots, inclusion and consistency proofs, verified with RFC 9162's algorithms; the `shdccp/2` Merkle rule
+    and an XOR summary, L9's two controls;
+  - the exact weave and its segment sub-weaves;
+  - ATTEST/1 in WebCrypto and the hardened verifier (`verifyPackage`). It runs the registered checks in order and
+    returns `selfConsistent`, `authentic` and the first failing check.
+- **The Python port.** `reference/lexicon/chain.py` (with V8's `Math.hypot` and `toFixed(12)` reproduced exactly),
+  `records.py`, `manifest.py`, `attest.py` (`cryptography`, across the P1363/DER boundary) and `verify.py`; the
+  reference is the authority for L8(d), L9 and L10's verdicts. [`reference/README.md`](reference/README.md) lists them.
+- **Pins.**
+  - `reference/golden/nb_spec_v1.txt`: N_B's specification, whose SHA-256 `LVOCAB/1` carries.
+  - `reference/golden/biomesh_compat_v1.json`, written by `make_biomesh_compat_v1.cjs`: `growSync` against Owl Academy's and
+    BioChain-AI's own growers, run unchanged by name-grab, on 13 unregistered texts, engrams off and on. All 26 records
+    are equal to both, and both `verifyIntegrity`s accept them.
+- **The trace and the tests.**
+  - `reference/traces/chain_v1.txt` (`traces_chain.py`, seeds 8000 + i), which the core reproduces line for line:
+    `tests/parity-lexicon.cjs` now passes 19,991 of 19,991 lines, 1,323 of them for the chain trace.
+  - `tests/chain-lexicon.cjs` (30 checks): the pins, the shard cut, keys made in WebCrypto, and the verifier on
+    unregistered packages.
+  - `tests/bridges-lexicon.cjs` (40 checks): Engram Mind's Eye's `importBiochain` takes `growSync`'s records.
+  - In the reference, 62 fast and 3 slow tests for the chain modules; the fast suite is now 189 tests.
+- **The runner.** `reference/run_claims_phase3.cjs`, with its Python half `run_claims_phase3.py`, in order:
+  - the gate: parity, with no line skipped, and the Owl Academy and BioChain-AI checkouts at their pinned commits,
+    unchanged;
+  - the inputs;
+  - L8, with Owl's and BioChain-AI's growers in worker threads;
+  - L9 and L10 in JS and in Python;
+  - L11 in a fresh Node process with nothing else running;
+  - the decisions.
+
+### How it was checked
+
+- **Before any code.** Amendment 7 fixed the definitions: the code and its authorities, L8's synthetic shards, the
+  exact record strings and Tier-P salted roots, the exact weave, the RFC 6962 conventions and L9's lists, L10's
+  packages, keys, registry, draws and verdicts, L11's timing, and the dry runs.
+- **The dry runs** (Amendment 7 item 8): `Rng(4000 + i)` synthetic shards and the verb and adjective gloss shards, the
+  verb shards standing in for C0. A container restart cut the first build off during its dry run. The work on disk was
+  committed as it stood (`b822237`) and the dry run redone. The last dry run, on the code at `8c51e08`, supported all
+  four claims (`25b48b3`).
+- **The review.** Three reviewers, with two skeptics per finding, probed the code. They confirmed one finding: L11's
+  control could not show whether the attestation step was timed. Amendment 8 records it.
+- **Amendment 8,** after the dry runs and before any decisive run, changed three things and fixed the readings in the
+  code (below).
+
+### The commits, in order
+
+| Commit | What |
+| --- | --- |
+| `1ad40d0` | Amendment 7: the definitions, before any record, grower port, manifest, verifier or runner existed |
+| `b822237` | The build in progress, saved after a container restart cut the first build off during its dry run: the JS chain section, the Python port, the pins, the chain trace, the tests and the runner |
+| `8c51e08` | The runner and verdict changes for Amendment 8, before any decisive run |
+| `25b48b3` | The registered dry run on the final code (17 min 46 s): L8, L9, L10 and L11 supported; L11 156.2 ms with engrams off, 229.4 ms with engrams on (reported) |
+| `6da04be` | Amendment 8: the packages grown with engrams off (disclosed as fixed after the dry runs), L11's control replaced by the verifier's own step record, the verdicts as Explainer 4 defined them, the readings in the code, the restart, the review and the environment |
+| `865791f` | The decisive results: one run of `run_claims_phase3.cjs` on the code at `6da04be`, 50 min 44 s |
+| `5222cdf` | Amendment 9, an erratum written with the write-up: the results' stale label, two READING texts that predate Amendment 8 item 2, and the dry run's HEAD; it changes no rule and no result |
+
+### The decisions
+
+The engines were Node 22.23.4 and Python 3.13.18, with `cryptography` 50.0.1 and numpy 2.5.3. Owl Academy was at
+`7f45f35` and BioChain-AI at `c975161`. Parity passed 19,991 of 19,991 lines first. All four claims are supported, and
+every control showed its weakness, as required.
+
+| Claim | Decision | Key numbers |
+| --- | --- | --- |
+| L8 | supported, for the JS grower and for the Python port | 148 C0 shards and 20 synthetic shards (`Rng(1000 + i)`, about 30% two-byte characters, each with a chunk whose crystal holds 0x80), each grown with engrams off and on: 0 of 336 records differ from Owl Academy's own `growBiochain` (`scripts/biomesh.js` at `7f45f35`) in any of the fifteen fields, for `growSync` and for the Python port; BioChain-AI's grower (`src/biomesh/biomesh.js` at `c975161`) gives the same. Owl's and BioChain-AI's `verifyIntegrity` accept every record; Engram's `importBiochain` recreates every text byte for byte. (d): the V0 id streams, `LVOCAB/1`, `LADDR/1` (`addrTableRoot` `30b17bc3…`, 8,192 rows) and every `LPREP/1` string are identical in Python and JS. Controls: BioChain-AI's packet normalisation differs from Owl's record on 20 of 20 synthetic shards; leaves over binary bytes differ on 168 of 168 and Owl rejects all 168; one byte altered changes the leaf and the root on 168 of 168. Reported: the crystal holds 0x80 in 1.527% of C0's chunks (189 of 12,378); median value 1.095 (engrams off), 0.466 (on); median `growSync` 56 ms (off) and 119.1 ms (on) per shard. Owl's grower with its own engram layer (a median 9.3 s a shard with engrams on, in four contended worker threads) made the worker pool take 1,837.6 s. |
+| L9 | supported | (a) The corpus manifest over the SHA-256 of C0's 148 `LPREP/1` strings (root `f567700d…`) and synthetic lists of K = 1, 2, 3, 7, 84, 200, 1,000 and 1,001: every root and proof equal in JS and Python, every alteration detected (739 on the manifest; every one for K ≤ 200, 2,000 drawn above), every inclusion proof rejected for a wrong leaf or position, every consistency proof verified; at most 10 hashes per inclusion proof. (b) All 148 exact weaves exact: norm 5^(28K), unfolding in order, the product of 7 segment sub-weaves, components identical in JS and Python (971–2,731 bits). Controls: the `shdccp/2` rule collides at K = 3, 7 and 1,001 (a duplicated last leaf keeps the root); an XOR summary misses every adjacent swap tested that the weave detects. |
+| L10 | supported | 50 clean and 450 tampered attested packages (T1–T9, 50 each): 0 false accepts and 0 false rejects in JS and in Python, every verdict (self-consistent, authentic, failing check) identical. Every tampered package is rejected at a named check: T1 leaves, T2 crystal, T3 and T6 commitment, T4 and T5 attestation, T7 leaves or canonical, T8 weaves, T9 canonical. Controls: Owl's `verifyIntegrity` accepts 50 of 50 of each of T1, T2, T8 and T9, the gaps only the hardened checks close; Python without the P1363-to-DER conversion accepts 0 of 126 valid signatures. Keys were made per run in WebCrypto; the registry snapshot, `results/phase3-registry.json`, holds public JWKs only. |
+| L11 | supported, on packages grown with engrams off (Amendment 8) | The hardened verification of the 147 full C0 shards takes a median 155.4 ms per shard in Node, 95% interval [154.2, 156.0], against a bar of 250 ms; 1,000 shards take about 156.7 s with the 1.3 s session. The step check (Amendment 8's control) holds 441/441. Reported: the same shards' engrams-on packages 243.6 ms [240.2, 246.7]; `LADDR/1` recomputed inside each verification (the literal reading) 1,350.2 ms; the session (`LADDR/1` once) 1,303.1 ms; Python 195.9 ms. The registered comparison with the attestation skipped, reported: skipped faster, 153.5 ms; paired difference 1.9 ms [0.4, 3.0]. |
+
+What went against prediction, and what was disclosed:
+- **L11's median is just above its predicted band.** The registration predicted about 50–150 ms; the median is
+  155.4 ms. The canonical-encoding check (78.9 ms) and the derived layers (46.4 ms) take most of it. The decision needs
+  the interval's upper end at or below 250 ms, so the miss does not change it.
+- **Amendment 8, item 1: the packages are grown with engrams off.** The registration did not say which records L10's
+  and L11's packages and L9(a)'s manifest use. Amendment 8 chose engrams off, the Lexicon's default for corpora (D4;
+  Explainer 3). Disclosed plainly: the runner had first read it the other way (Owl's `growBiochain` defaults to
+  engrams on). Those dry runs put L11's engrams-on median at 243.5–265.5 ms, near the bar, against 157–182 ms with
+  engrams off, and the reading was fixed after seeing that. The decisive run reports the engrams-on packages beside
+  the decision: 243.6 ms, interval [240.2, 246.7], under the bar by 3.3 ms at the interval's upper end, where the
+  engrams-off packages leave 94 ms.
+- **Amendment 8, item 2: L11's control is replaced.** The registered control ("a run with the attestation step
+  skipped must be faster") was read as a comparison of the two medians. In the dry runs it could not resolve a
+  0.7–0.8 ms step against 10–28 ms of noise: it failed by chance with correct code, and passed with the skip ignored.
+  It is replaced by the verifier's own record of its steps (the attestation check run inside the timed window, or
+  recorded as skipped). The comparison is still reported.
+- **Amendment 8, item 3: the two verdicts follow Explainer 4.** Self-consistent is steps 1–6 and 8, authentic is
+  step 7 (the signature), as Phase 0 defined them. The code as first built counted the inclusion and consistency
+  checks as authenticity; both languages were changed identically in `8c51e08`.
+- **Amendment 8's disclosures.** The builders timed verb shards (dry data) and hashed C0's shard texts against their
+  pins; no C0 shard was grown, verified or timed before the decisive run.
+- **Amendment 9: errata to the decisive record.** Written with this write-up; it changes no rule and no result. The
+  results read "PREREGISTRATION.md with Amendments 1-7", the runner's fixed label; they record HEAD `6da04be`, which
+  includes Amendment 8, and one uncommitted path, the run's own console file. READING runner-11 and runner-13 in the
+  record predate Amendment 8 item 2 (the decision read the step check, 441/441 and 441/441; the comparison of the
+  medians, reported, would have agreed). The dry run in `25b48b3` recorded HEAD `b822237` with the six files `8c51e08`
+  commits, because it started 29 s before that commit. The runner now takes its label from `PREREGISTRATION.md`.
+
+### How to run Phase 3
+
+From `Pages/Hyperbolic Lexicon/`, with the WordNet archive cached (below), Node 22, and python3 with `cryptography`
+and numpy:
+
+```
+node tests/parity-lexicon.cjs                          # the browser core against every trace line, the chain trace included (about 26 s)
+node tests/chain-lexicon.cjs                           # the chain section: pins, the shard cut, WebCrypto keys, the verifier (30 checks)
+node tests/bridges-lexicon.cjs                         # Engram Mind's Eye imports growSync's records (40 checks)
+node reference/golden/make_biomesh_compat_v1.cjs <owl> <biochain> --check   # growSync against Owl's and BioChain-AI's growers (about 2 minutes)
+python3 -B reference/traces_chain.py --check           # the chain trace rebuilt and compared (about 20 s)
+node reference/run_claims_phase3.cjs --dry             # the registered dry run into results/dry/ (about 18 minutes)
+node reference/run_claims_phase3.cjs                   # L8-L11 into results/ (about 51 minutes)
+```
+
+- **The checkouts.** `<owl>` and `<biochain>` are the Owl Academy and BioChain-AI checkouts, only read
+  (`../../../Owl-Academy` and `../../../BioChain-AI` from this folder when they sit beside this repository). The
+  runner finds them there by default, or takes `--owl` and `--biochain`. It refuses unless they are at `7f45f35` and
+  `c975161` with the files it runs unchanged.
+- **Refusals.** The runner refuses to go on if any parity line fails or is skipped, or if an input is not the
+  registered one.
+- **Output.** Per-instance data (Python's records, the packages, the L11 times) goes to
+  `~/.cache/hyperbolic-lexicon/phase3/` (`phase3-dry/` for the dry run; `HL_CACHE` overrides the root), never into git.
+  No private key is written anywhere.
+- **Options.** `--workers <n>` sets the worker threads (default min(4, cores)). `--dry --smoke --out <dir>` is a
+  development run on a few shards that decides nothing.
+
+`reference/README.md` lists every module, pin and results file.
+
 ### What is next
 
-- **Phase 3, records and biochains:** the synchronous shard grower in JS and Python, the records, RFC 6962
-  manifests, the exact weave and the hardened, attested importer, deciding L8–L11. The proposals are finalised then,
-  with measured numbers.
-- **Phase 4:** L6 and L4(c).
+- **Phase 4, learned embeddings:** the numpy trainer, the tuning amendment, and L6 and L4(c), the two claims still
+  open; Stage-2 lexical claims by amendment.
+- **Carried over from Phase 3's plan:** the SHDGEV01 golden-vector suites of
+  [`proposals/SHD-CCP-golden-vectors.md`](proposals/SHD-CCP-golden-vectors.md) (`make_shdgev_v1.py`). They decide no
+  claim and were not written. The proposals are to be sent with Phase 3's measured numbers
+  ([`proposals/README.md`](proposals/README.md)).
 
 ## Roadmap
 
@@ -295,8 +446,8 @@ node reference/run_claims_js.cjs                       # parity, Node, Chromium 
 | 0 · Analysis | This folder: pins, spikes S1–S7, `PREREGISTRATION.md` (L1–L11, D1–D12), eight explainers, proposals, hub and summary | here · **done** |
 | 1 · Python reference | N_B, WordPiece with V0 and V1, WordNet, addresses, the H² tree, exact ranking, flat arms, LPS, traces; Amendments 1 and 2; two reviews; a dry run, then one decisive run: L2, L3 (Python side), L5, L7 supported | here · **done** |
 | 2 · Browser core | `lexicon_core.js` at line-for-line trace parity; the data files; the Python and Node/Chromium runners; Amendments 4 and 5; a review; a dry run, then one decisive run: L1, L3(f), L4(a, b) supported | here · **done** |
-| 3 · Records and biochains | Shards, records, RFC 6962 manifests, the exact weave, the hardened importer, golden vectors; L8–L11 | here · next |
-| 4 · Learned embeddings | The numpy trainer; tuning amendment; L6 and L4(c); Stage-2 lexical claims by amendment | here; Stage 2 on the network widened in Phase 1 |
+| 3 · Records and biochains | The grower in JS and Python, the records, the RFC 6962 manifest, the exact weave, the hardened, attested verifier, the chain trace; Amendments 7 and 8; a review; dry runs, then one decisive run: L8, L9, L10, L11 supported. The SHDGEV01 golden-vector suites were not written and are carried over | here · **done** |
+| 4 · Learned embeddings | The numpy trainer; tuning amendment; L6 and L4(c); Stage-2 lexical claims by amendment | here · next; Stage 2 on the network widened in Phase 1 |
 | 5 · The 2D and 3D pages | `lexicon-2d.html`, `lexicon-3d.html`, shard panel, Engram import; then the Stage-1 gate, reviewed before any encoder code | here |
 | 6 · CPU encoder | 1–10M parameters; claims L12–L15 by amendment; BabyLM strict-small | here (BabyLM from Hugging Face; osf.io's file downloads are blocked), or your machine |
 | 7 · GPU track | BERT-mini/small, BabyLM 100M, GLUE, HiT | your hardware |
@@ -344,6 +495,16 @@ Open choices with defaults:
   (L4(b)). It covers one Node release and one Chromium build on one Linux machine, not other browsers or platforms;
   L3(f) and the noun part of L4(a) ran in Node only, as registered. It shows nothing about learned embeddings
   (L4(c), L6) or about a language model.
+- **What Phase 3 shows.** On the registered shards (WordNet 3.0's noun glosses, and 20 synthetic shards for the
+  multi-byte cases), the Lexicon's grower, in JS and in Python, writes Owl Academy's own biochains field for field,
+  which both projects' verifiers and Engram's importer accept (L8). The shards tie under an RFC 6962 manifest with
+  identical roots and proofs in both languages, and each shard's exact weave is exact (L9). The hardened, attested
+  verifier rejects every registered tamper, identically in both languages, including four classes Owl's
+  `verifyIntegrity` accepts (L10). It verifies a full shard, grown with engrams off, in a median 155.4 ms in Node
+  (L11; engrams off is Amendment 8's reading, fixed after the dry runs). It covers Owl Academy and BioChain-AI at the
+  pinned commits, one Node release and one Python build on one Linux container, nine registered tamper classes (not
+  an adversary's search) and keys made for the run. It shows nothing about learned embeddings or about a language
+  model.
 - **What Hyperbolic Oracles already found.** Its C1 ("hyperbolic beats flat" for PolyStep optimisation) was refuted.
   The literature finds clear gains only on explicit hierarchies, and modest or none on general NLP.
 - **What this system bets on.** Representation of hierarchies in low dimensions, and certification: exactness,
@@ -360,14 +521,14 @@ Open choices with defaults:
 | `index.html` | The hub |
 | `summary.html` | The analysis on one page (also the shareable page) |
 | `PREREGISTRATION.md` | L1–L11, D1–D12, common rules, shared instances |
-| `explainers/` | 1 analysis · 2 shdccp · 3 architecture · 4 biochains · 5 alternatives · 6 tracks · 7 benchmarks · 8 evidence · 9 reference · 10 browser-core |
-| `lexicon_core.js` | The browser core (Phase 2), on the shared cores unchanged |
+| `explainers/` | 1 analysis · 2 shdccp · 3 architecture · 4 biochains · 5 alternatives · 6 tracks · 7 benchmarks · 8 evidence · 9 reference · 10 browser-core · 11 chains |
+| `lexicon_core.js` | The browser core (Phase 2) and its chain section (Phase 3), on the shared cores unchanged |
 | `data/` | The pinned Unicode 15.1 table and V0 as script files, for the pages (`reference/golden/make_js_data_v1.cjs`) |
 | `assets/hl.css`, `assets/hl-map.js` | Shared style; the system map (Hyperbolic Oracles' renderer, renamed) |
-| `reference/` | The Python reference (Phase 1): pins (`golden/`), modules (`lexicon/`), tests, traces, `run_claims.py`, the Phase 2 runner `run_claims_js.cjs`, and their results; see `reference/README.md` |
+| `reference/` | The Python reference (Phase 1; the chain modules, Phase 3): pins (`golden/`), modules (`lexicon/`), tests, traces, `run_claims.py`, the Phase 2 runner `run_claims_js.cjs`, the Phase 3 runner `run_claims_phase3.cjs` (with `run_claims_phase3.py`), and their results; see `reference/README.md` |
 | `spikes/` | S1–S7 with captured outputs, and the L1 stress set |
 | `proposals/` | Documents for SHD-CCP, BioChain-AI and Owl Academy, never applied; the kernel check |
-| `tests/` | `parity-lexicon.cjs` (the browser core against the traces), `links.cjs`, `spikes.cjs`, `all.cjs`; `l1-harness.html`, the page the Phase 2 runner opens in Chromium |
+| `tests/` | `parity-lexicon.cjs` (the browser core against the traces), `chain-lexicon.cjs` (the chain section's checks beyond the trace), `bridges-lexicon.cjs` (Engram Mind's Eye imports the Lexicon's shards), `links.cjs`, `spikes.cjs`, `all.cjs`; `l1-harness.html`, the page the Phase 2 runner opens in Chromium |
 
 ## How to check
 
@@ -377,7 +538,10 @@ node "Pages/Hyperbolic Lexicon/tests/all.cjs"
 
 It runs:
 - the shared cores' checks and Engram's parity and bridges;
-- the browser core's parity (`tests/parity-lexicon.cjs`) and the data files' check;
+- the browser core's parity (`tests/parity-lexicon.cjs`, the chain trace included) and the data files' check;
+- the chain section's checks (`tests/chain-lexicon.cjs`), Engram's import of the Lexicon's shards
+  (`tests/bridges-lexicon.cjs`), and the Owl Academy and BioChain-AI compatibility pin
+  (`make_biomesh_compat_v1.cjs --check`, skipped without those checkouts beside this repository);
 - this folder's links and spike reruns;
 - the site bar;
 - the WordNet and EWT pins;
@@ -385,8 +549,8 @@ It runs:
   UCD 15.1.0 files, V0 retrained, V1, the L1 instance lists) and both trace checks;
 - the kernel check. Checks are reported as skipped, never passed, without the data cache or an SHD-CCP checkout.
 
-It does not run `run_claims.py`, `run_claims_js.cjs` or the slow tests; see "How to run the reference" and "How to
-run Phase 2" above, and `reference/README.md`.
+It does not run `run_claims.py`, `run_claims_js.cjs`, `run_claims_phase3.cjs` or the slow tests; see "How to run
+the reference", "How to run Phase 2" and "How to run Phase 3" above, and `reference/README.md`.
 
 Fetch the data once:
 

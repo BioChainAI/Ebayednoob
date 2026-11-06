@@ -13,7 +13,7 @@
 //            when an entry's keyId is not its JWK's; P1363 to DER and back with r or s short
 //   verifier packages of six unregistered texts (Rng(8000 + i) synthetic shards, engrams off and on) under a fresh
 //            key: every clean one accepted; T1-T9 (one each, made as Amendment 7 item 6 describes) rejected by the
-//            check the reference names; L11's control (the attestation skipped) runs and reports authentic null
+//            check the reference names; L11's control (the attestation skipped) runs, the check reported skipped (not counted against authentic)
 // The session's LADDR/1 here is a stand-in (the hash of a fixed string): the real addrTableRoot is L8(d)'s.
 // Exit code 1 if any check fails.
 'use strict';

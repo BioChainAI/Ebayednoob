@@ -71,6 +71,12 @@ const ROOT = path.resolve(SYS, '..', '..');
 const EME = path.join(SYS, '..', 'Engram Minds Eye');
 const F_OWL = 'scripts/biomesh.js', F_BIO = 'src/biomesh/biomesh.js', F_CC = 'src/identity/crypto-core.js', F_IR = 'src/identity/identity-registry.js';
 const PINNED = { owl: '7f45f35', biochain: 'c975161' };
+// the label the results carry: the amendments PREREGISTRATION.md holds when the run starts (a fixed string went stale
+// once: Amendment 9)
+const PREREG_LABEL = (() => {
+    const n = [...fs.readFileSync(path.join(SYS, 'PREREGISTRATION.md'), 'utf8').matchAll(/^### Amendment (\d+) /gm)].map(m => +m[1]);
+    return n.length ? `PREREGISTRATION.md with Amendments 1-${Math.max(...n)}` : 'PREREGISTRATION.md';
+})();
 const nodeSha = b => crypto.createHash('sha256').update(typeof b === 'string' ? Buffer.from(b, 'utf8') : b).digest('hex');   // comparisons and files only
 
 // ---- Owl Academy's / BioChain-AI's growBiochain and verifyIntegrity, run as written (spike S4's loadOwl,
@@ -997,15 +1003,15 @@ async function main() {
         },
         per_shard: rows11.map(r => ({ shard: r.shard, bytes: r.bytes, ms: r3(r.ms), reps: r.full.map(r3), skipped_ms: r3(r.msSkip), skipped_reps: r.skip.map(r3) })),
     };
-    reading('runner-11', 'L11 protocol: repetition-major passes over the shards; in each pass a shard\'s full verification and its attestation-skipped verification run back to back, the order alternating, so drift affects both alike; a shard\'s time is the mean of its repetitions 2 and 3, the median is over shards, and the control compares the two medians. The package is passed as the parsed object (JSON parsing is not one of the hardened checks). The session (LVOCAB/1, LADDR/1 recomputed from WordNet, the registry snapshot loaded) is timed once and counted once in the 1,000-shard estimate.');
-    reading('runner-13', 'L11\'s control, "otherwise the step is not being timed and the test is void", is also read from each timed verification\'s own record of its checks: every full verification must hold every check passed with the attestation check\'s time > 0 inside the timed window, and every attestation-skipped one the attestation check recorded as skipped (0 ms) with every other check passed; otherwise L11 is void (not registered: it can only void, never support). The registered comparison of the two medians still decides the control. '
-        + `In this run the attestation step measures ${ctl11.attestation_step_ms_median} ms against a single verification's spread of about ${ctl11.paired.per_verification_sd_ms} ms, and the paired interval (full minus skipped) is [${ctl11.paired.interval_ms.join(', ')}] ms${ctl11.paired.interval_includes_0 ? ', which includes 0: the comparison of the medians is within the noise, so it can fail by chance with the step timed (L11 void) and pass by chance with the step not run (which the step check catches)' : ''}. The registration fixes no power for the comparison; a comparison powered against the noise needs an amendment.`);
+    reading('runner-11', 'L11 protocol: repetition-major passes over the shards; in each pass a shard\'s full verification and its attestation-skipped verification run back to back, the order alternating, so drift affects both alike; a shard\'s time is the mean of its repetitions 2 and 3, the median is over shards; the two medians are compared and reported (Amendment 8 item 2). The package is passed as the parsed object (JSON parsing is not one of the hardened checks). The session (LVOCAB/1, LADDR/1 recomputed from WordNet, the registry snapshot loaded) is timed once and counted once in the 1,000-shard estimate.');
+    reading('runner-13', 'L11\'s control, "otherwise the step is not being timed and the test is void", is read (Amendment 8 item 2) from each timed verification\'s own record of its checks: every full verification must hold every check passed with the attestation check\'s time > 0 inside the timed window, and every attestation-skipped one the attestation check recorded as skipped (0 ms) with every other check passed; otherwise L11 is void. The comparison of the two medians is reported and decides nothing. '
+        + `In this run the attestation step measures ${ctl11.attestation_step_ms_median} ms against a single verification's spread of about ${ctl11.paired.per_verification_sd_ms} ms, and the paired interval (full minus skipped) is [${ctl11.paired.interval_ms.join(', ')}] ms${ctl11.paired.interval_includes_0 ? ', which includes 0: the comparison of the medians is within the noise' : ''}. A step this small cannot be resolved by comparing medians, which is why Amendment 8 item 2 replaced that comparison by the step check.`);
     fs.writeFileSync(path.join(CACHE_DIR, 'l11-times.json'), JSON.stringify({ rows: rows11, literal, engramsOff: offRows, python: PT.rows }));
     log(`   L11 ${L11decision}: median ${r1(B.median)} ms, interval [${r1(lo)}, ${r1(hi)}]; skipped ${r1(Bs.median)} ms (medians: skipped ${ctl11.median_comparison_faster ? 'faster' : 'not faster'}, reported; paired ${r1(ctl11.paired.median_difference_ms)} ms [${ctl11.paired.interval_ms.map(r1).join(', ')}]; control (step check, Amendment 8) ${ctl11.step_check.holds ? 'shows the step timed' : 'FAILS'} ${ctl11.step_check.full_timed}/${ctl11.step_check.full} timed, ${ctl11.step_check.skipped_skipped}/${ctl11.step_check.skipped} skipped); session ${r1(sessionMs)} ms; literal ${r1(L11out.reported.literal_laddr_per_shard.median_ms)} ms; engrams ${ALT_MODE} ${r1(L11out.reported.other_mode_packages.median_ms)} ms; Python ${r1(PT.bootstrap.python_full.median)} ms`);
 
     // ============================================================== write
     const R = {
-        preregistration: 'PREREGISTRATION.md with Amendments 1-7', phase: 3, dry: DRY, smoke: SMOKE || undefined,
+        preregistration: PREREG_LABEL, phase: 3, dry: DRY, smoke: SMOKE || undefined,
         started: new Date(Date.now() - (performance.now() - T0)).toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
         environment: { node: { version: process.version, v8: process.versions.v8, openssl: process.versions.openssl, platform: `${os.platform()} ${os.release()} ${os.arch()}`, cpus: os.cpus().length,
             cpu: (os.cpus()[0] || {}).model, workers: N_WORKERS, core: LC.version }, python: PY.environment, owl: EXT.owl, biochain: EXT.biochain, ...GIT },

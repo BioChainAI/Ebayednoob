@@ -2402,9 +2402,9 @@ function parseLgrow(s) {
 //                verifies against its root (RFC 9162)
 //   consistency  LGROW/1 parses, names the same corpus, grows from N - 1 to N ending at the LCORPUS root, its proofSha
 //                is the proof's, and the proof verifies (RFC 9162; from N_old = 0, an empty proof and SHA-256(''))
-// READING (the reference's): selfConsistent is "parity .. commitment all pass" and authentic is "attestation,
-// inclusion and consistency all pass", computed separately: the self-consistency checks stop at the first failure
-// (the rest are reported not run, ok null), the authenticity checks always run. failed: the first check that
+// Verdicts (Amendment 8 item 3, Explainer 4's definition): selfConsistent is "parity .. commitment, inclusion and
+// consistency all pass" (steps 1-6 and 8) and authentic is "the attestation passes" (step 7). parity .. commitment
+// stop at the first failure (the rest are reported not run, ok null); attestation, inclusion and consistency always run. failed: the first check that
 // failed, in this order, or '-'; a package is accepted when failed is '-'. skip: names of checks not run (L11's
 // control skips 'attestation'); a skipped check (ok null) does not count against either verdict. Fields of the record
 // beyond Owl's are ignored. The engram text is the bytes read as Latin-1: its tokens (runs of [A-Za-z0-9']) are the

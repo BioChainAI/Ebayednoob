@@ -2,7 +2,9 @@
 
 **Status:** proposal only. The kernel file `kernel_0xA_hyperbolic_address.json` sits in this folder. It is aimed at
 the Kernel Ontology's `01_Incubator_Experimental/proposed_codex/` at status `[OPEN]`, and nothing was added to the
-SHD-CCP repository.
+SHD-CCP repository. Finalised after the Lexicon's Phase 3: results of its claims L3 and L7, decided since this was
+written, are marked **measured** with their source. The kernel and its place in the registry are still
+**proposed**.
 
 ## What it carries
 
@@ -22,8 +24,10 @@ the six octahedral directions with the rational boost t = 3/4 (cosh = 25/7, sinh
 length n becomes an integer vector over 7^n, and `decodeExact` returns the word from the point.
 
 Hyperbolic Lexicon uses these words as exact, training-free addresses for WordNet synsets and vocabulary tokens.
-Its claims L3 and L7 test that the addresses are distinct, invertible and certified, and that address, point and
-X(5, q) vertex agree.
+Its claims L3 and L7 tested that the addresses are distinct, invertible and certified, and that address, point and
+X(5, q) vertex agree. **Measured:** both are supported. L3 was decided in Phase 1 (`reference/results/claims.json`,
+commit 6af2a83), and L3(f), where Python and JavaScript give the same words and points, in Phase 2
+(`reference/results/claims-phase2.json`, commit 648a6b6). L7 was decided in Phase 1.
 
 ## Bit allocation
 
@@ -35,9 +39,10 @@ X(5, q) vertex agree.
 
 The id: id(w) = (number of reduced words shorter than w) + (rank of w among words of its length, with the first
 letter in base 6 and later letters in base 5). Words of length ≤ 25 number 1 + 6·(5²⁵ − 1)/4 ≈ 4.47·10¹⁷ < 2⁵⁹, so
-they fit in 59 bits. Longer words need continuation tiles; that is left for a version 0.2. Hyperbolic Lexicon's L3
-has since reported how long WordNet's noun addresses are: 74,630 of 82,115 (90.88%) have at most 25 letters, 78,550
-(95.66%) at most 27, and the longest has 36 (`reference/results/claims.json`).
+they fit in 59 bits. Longer words need continuation tiles; that is left for a version 0.2. **Measured (L3, Phase
+1):** of WordNet's 82,115 noun addresses, 74,630 (90.88%) have at most 25 letters, 78,550 (95.66%) at most 27, and
+the longest has 36 (`reference/results/claims.json`). L3(g) found that the id code round-trips every one of the words
+it covers, with no failure.
 
 ## Checked with SHD-CCP's own tooling
 
@@ -66,5 +71,5 @@ the three pending suites are defined and Lemma 5 has a Lean proof.
 - **Dependencies.** `Lemma_5` (Layer II: 4D Hurwitz completeness and the Ghost map) is a suggestion; the
   maintainers should set the list.
 - **Hurwitz arithmetic already exists.** SHD-CCP's `HurwitzQuaternion` multiplies these generators exactly in doubled
-  coordinates, (2, ±4, 0, 0) and so on. Hyperbolic Lexicon's claim L7(e) tests that its products, halved, equal the
-  tree's quaternions.
+  coordinates, (2, ±4, 0, 0) and so on. **Measured (L7(e), Phase 1):** its products, halved, equal the tree's
+  quaternions on all 2,182 words tested; without the halving, all 2,182 differ.
