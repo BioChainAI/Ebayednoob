@@ -1,4 +1,4 @@
-// Hyperbolic Lexicon: the browser core (Phase 2).
+// Hyperbolic Lexicon: the browser core (Phase 2; the chain section, Phase 3).
 //
 // One module that runs the lexicon's exact front end and geometry in a page or in Node, on the shared cores loaded
 // unchanged (D1):
@@ -31,9 +31,18 @@
 // runParity(traces, vocabs, wn) checks this module against reference/traces/*.txt, one line per trace line
 // (normalise_v1, wordpiece_v1, address_v1, points_v1, rank_v1). tests/parity-lexicon.cjs runs it in Node.
 //
+// The section "chain" (Phase 3, L8-L11, Amendment 7) is the twin of reference/lexicon/chain.py, records.py,
+// manifest.py, attest.py and verify.py: growSync (Owl Academy's growBiochain, synchronous, field for field), the
+// synthetic and gloss shards, the records LVOCAB/1, LADDR/1, LPREP/1 (Tier S and P), LCORPUS/1 and LGROW/1, RFC 6962
+// with RFC 9162's proofs, the exact weave, ATTEST/1 (WebCrypto ECDSA P-256), the hardened verifier (verifyPackage) and
+// chainTraceLines (reference/traces/chain_v1.txt). It runs on Engram Mind's Eye's biochain_v1.js (Owl's codec,
+// verbatim) and engram_core.js, unchanged, which it looks up lazily: a page that does not load them (with twin3d.js,
+// fence.js and ttmpt_core_v1.js, which engram_core.js needs) runs everything else as before.
+//
 // Load order in a page: orbital_core.js, hyperbolic_core.js, decoder3d.js, data/unicode_15_1_v1.js,
 // data/vocab_v0_lex0.js, lexicon_core.js (the data files may also come after the core: they are read on first use).
-// In Node: require('./lexicon_core.js').
+// For the chain section also twin3d.js, fence.js (Hyperbolic Oracles), ttmpt_core_v1.js, engram_core.js and
+// biochain_v1.js (Engram Mind's Eye), before the first chain call. In Node: require('./lexicon_core.js').
 (function (root, factory) {
     if (typeof module === 'object' && module.exports) {
         const fs = require('fs'), path = require('path'), os = require('os');
@@ -43,10 +52,13 @@
             const p = src.golden ? path.join(__dirname, 'reference', 'golden', src.golden) : path.join(cache, src.cache);
             return fs.existsSync(p) ? fs.readFileSync(p) : null;
         };
+        // the chain section's cores, required on first use (Engram Mind's Eye: biochain_v1.js, engram_core.js)
+        const chainNode = () => ({ BC: require('../Engram Minds Eye/biochain_v1.js'), EC: require('../Engram Minds Eye/engram_core.js') });
         module.exports = factory(require('../../scripts/geometric-build/orbital_core.js'), require('../Hyperbolic Oracles/hyperbolic_core.js'),
-            require('../Hyperbolic Oracles/decoder3d.js'), nodeData);
-    } else root.LexiconCore = factory(root.OrbitalCore, root.HPCore, root.HPDecode3D, name => (root.LexiconData || {})[name]);
-})(typeof self !== 'undefined' ? self : this, function (O, C, D3, dataSource) {
+            require('../Hyperbolic Oracles/decoder3d.js'), nodeData, chainNode);
+    } else root.LexiconCore = factory(root.OrbitalCore, root.HPCore, root.HPDecode3D, name => (root.LexiconData || {})[name],
+        () => ({ BC: root.BiochainV1, EC: root.EngramCore }));
+})(typeof self !== 'undefined' ? self : this, function (O, C, D3, dataSource, chainSource) {
 'use strict';
 if (!O || !C || !D3) throw new Error('lexicon_core.js needs orbital_core.js, hyperbolic_core.js and decoder3d.js first');
 
@@ -1553,6 +1565,1307 @@ function geometryParitySections(traces, wn = null) {
 }
 // ===== end of geometry
 
+// ================================================================== chain (Phase 3: L8-L11, Amendment 7)
+// Language shards as Owl-valid biochains, the records, the RFC 6962 manifest, the exact weave and the hardened,
+// attested import. On biochain_v1.js (Owl's codec, verbatim) and engram_core.js (chainQuaternion, packetQuaternions,
+// unfold, qprod, the engram layer), both unchanged, with orbital_core.js's synchronous SHA-256 and WebCrypto ECDSA.
+// The section is lazy: those two cores (and the ones engram_core.js needs: twin3d.js, fence.js, ttmpt_core_v1.js) are
+// looked up on the first call of a chain function, so a page that loads only the text and geometry cores still works.
+// In a page: twin3d.js, fence.js, ttmpt_core_v1.js, engram_core.js and biochain_v1.js, before or after lexicon_core.js
+// but before the first chain call. In Node they are required from ../Engram Minds Eye/ on that call.
+//
+// Implements, in PREREGISTRATION.md: D7, D8; L8 with Amendment 7 items 1-3 (growSync: Owl's growBiochain's steps in
+// its order and its record field for field, spike S4's grower; the synthetic shards; the records LVOCAB/1, LADDR/1,
+// LPREP/1 with Tier P, LCORPUS/1, LGROW/1); L9 with items 4-5 (RFC 6962 with RFC 9162's proof algorithms, the exact
+// weave and its segment sub-weaves, control 1's shdccp/2 Merkle rule, control 2's XOR summary); L10 with item 6 (the
+// package and the hardened verifier, checks in the registered order) and L11 with item 7 (the LADDR value recomputed
+// once per session; per-check times).
+let CHAIN_CORES = null;
+function chainCores() {
+    if (!CHAIN_CORES) {
+        const x = chainSource ? chainSource() : null;
+        if (!x || !x.BC || !x.EC) throw new Error('the chain section needs biochain_v1.js and engram_core.js (with twin3d.js, fence.js and ttmpt_core_v1.js) loaded first');
+        CHAIN_CORES = x;
+    }
+    return CHAIN_CORES;
+}
+// Values the browser cannot read from reference/golden; tests/chain-lexicon.cjs checks them against the meta files.
+const CHAIN_PINS = {
+    trainSetSha: 'bc86a44d55ee251c718eeb28ecd729396f82e4bca0d530097595cee9794e287f',   // l1_instances_v1.meta.json instances.a
+    wordnetZipSha256: 'cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59', // wordnet_v1.meta.json source.sha256
+    wordnetUrl: 'https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/wordnet.zip',
+    c0Spdx: 'LicenseRef-WordNet-3.0', synthSpdx: 'CC0-1.0', c0CorpusId: 'wordnet30-c0', synthCorpusId: 'lexicon-synth-v1',
+    nbSpec: 'nb_spec_v1',                      // reference/golden/nb_spec_v1.txt: normaliserSpecSha is its SHA-256
+    nbSpecSha256: '4ceb92c48d9cbe92204931da3ab2ef1133f74bfb2bd53af26d482af7e69316fd', nbSpecBytes: 2601,   // records.py's pin
+};
+const CHAIN_SOURCES = { nb_spec_v1: { golden: 'nb_spec_v1.txt' } };
+
+// ---- bytes and hashes. Owl hashes JS strings as UTF-8 (seal-crypto's sha256Hex over TextEncoder); every string
+// hashed here is ASCII except a leaf's inner string, which is a chunk's bytes as Latin-1 characters.
+function strBytes(s) {                         // the UTF-8 of a JS string; an ASCII string byte for byte
+    const n = s.length, out = new Uint8Array(n);
+    for (let i = 0; i < n; i++) { const c = s.charCodeAt(i); if (c > 0x7F) return utf8(s); out[i] = c; }
+    return out;
+}
+const sha256Str = s => sha256Hex(strBytes(s));
+// the UTF-8 of String.fromCharCode(...bytes): bytes 0x80-0xFF become two bytes
+function latin1Utf8(bytes) {
+    let n = bytes.length;
+    for (let i = 0; i < bytes.length; i++) if (bytes[i] > 0x7F) n++;
+    const out = new Uint8Array(n);
+    let o = 0;
+    for (let i = 0; i < bytes.length; i++) {
+        const b = bytes[i];
+        if (b < 0x80) out[o++] = b; else { out[o++] = 0xC0 | (b >> 6); out[o++] = 0x80 | (b & 0x3F); }
+    }
+    return out;
+}
+function concatBytes(parts) {
+    let n = 0;
+    for (const p of parts) n += p.length;
+    const out = new Uint8Array(n);
+    let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+}
+const bytesEq = (a, b) => { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+function isHex(s, n = -1, lower = true) {      // a string of hex digits (lower case only, by default), of length n if n >= 0
+    if (typeof s !== 'string' || (n >= 0 && s.length !== n)) return false;
+    for (let i = 0; i < s.length; i++) {
+        const c = s.charCodeAt(i);
+        if (!((c >= 48 && c <= 57) || (c >= 97 && c <= 102) || (!lower && c >= 65 && c <= 70))) return false;
+    }
+    return true;
+}
+const isDecimal = s => typeof s === 'string' && s.length > 0 && (s === '0' || s.charCodeAt(0) !== 48) && [...s].every(c => c >= '0' && c <= '9');
+
+// ---- Owl's grower, synchronous (spike S4's growSync; scripts/biomesh.js growBiochain at 7f45f35, step for step)
+const qconj = a => [a[0], -a[1], -a[2], -a[3]];   // biomesh.js's qconj, which biochain_v1.js does not export
+// a leaf: sha256Hex(i + "|" + sha256Hex(String.fromCharCode(...chunk))), both over UTF-8
+const leafHash = (i, chunk) => sha256Str(i + '|' + sha256Hex(latin1Utf8(chunk)));
+// the shdccp/2 Merkle rule (L9 control 1): pairwise SHA-256 over the two hex strings joined, an odd last node
+// duplicated; '' for no leaves (the grower then writes sha256Hex("empty"))
+function merkleShdccp2(leaves) {
+    let level = leaves.slice();
+    while (level.length > 1) {
+        if (level.length & 1) level.push(level[level.length - 1]);
+        const next = [];
+        for (let i = 0; i < level.length; i += 2) next.push(sha256Str(level[i] + level[i + 1]));
+        level = next;
+    }
+    return level.length ? level[0] : '';
+}
+function weavesOf(chunks) {                     // [chiral, mirror] float weaves (biomesh.js, as Owl writes them)
+    const { BC } = chainCores();
+    const cq = chunks.map(c => BC.crystalQuat(c));
+    let wf = [1, 0, 0, 0], wm = [1, 0, 0, 0];
+    for (const q of cq) wf = BC.qn(BC.qmul(q, wf));
+    for (let k = cq.length - 1; k >= 0; k--) wm = BC.qn(BC.qmul(qconj(cq[k]), wm));
+    return [wf, wm];
+}
+const segCutsOf = (K, S) => Array.from({ length: S + 1 }, (_, i) => Math.round(i * K / S));
+const chunksOf = (data, size) => { const out = []; for (let i = 0; i < data.length; i += size) out.push(data.subarray(i, i + size)); return out; };
+const shipOf = (streamHexLen, engramHexLen, K) => streamHexLen / 2 + engramHexLen / 2 + K * 32 + 40;
+// The text of a shard as a JS string and as UTF-8: a string is encoded as Owl's TextEncoder encodes it (a lone
+// surrogate written as U+FFFD, as the reference's chain.js_utf8), and the engram layer reads the string as given;
+// bytes must be valid UTF-8 (strict decoding, as the reference's bytes.decode('utf-8')).
+function shardText(input) {
+    if (typeof input !== 'string') { const data = toBytes(input); return { text: fromCps(decodeUtf8(data).cps), data }; }
+    const cps = [];
+    for (let i = 0; i < input.length; i++) {
+        const u = input.charCodeAt(i);
+        if (u >= 0xD800 && u <= 0xDBFF && i + 1 < input.length) {
+            const v = input.charCodeAt(i + 1);
+            if (v >= 0xDC00 && v <= 0xDFFF) { cps.push(0x10000 + ((u - 0xD800) << 10) + (v - 0xDC00)); i++; continue; }
+        }
+        cps.push(u >= 0xD800 && u <= 0xDFFF ? 0xFFFD : u);
+    }
+    return { text: input, data: utf8FromCps(cps) };
+}
+// BioChain-AI protocol/shdccp_kernel.py's packet (L8 control 1, the reference's chain.kernel_crystallize): as
+// crystallize, but each crystal byte 0x80 (int8 code -128) written as 0x81 (-127), parity recomputed
+function kernelCrystallize(bytes) {
+    const { BC } = chainCores();
+    const w = BigInt('0x' + BC.crystallizeBytes(bytes));
+    let q = (w >> 24n) & 0xFFFFFFFFn, k = 0n;
+    for (const sh of [24n, 16n, 8n, 0n]) { const v = (q >> sh) & 0xFFn; k = (k << 8n) | (v === 0x80n ? 0x81n : v); }
+    return refixParity(word16((w & ~(0xFFFFFFFFn << 24n)) | (k << 24n)));
+}
+// L8 control 2, a grower that hashes leaves over binary bytes (the reference's chain.leaf_hash_binary and its
+// READING): SHA-256(ASCII(i + '|') followed by the 32 raw bytes of SHA-256(chunk)), lowercase hex
+const leafHashBinary = (i, chunk) => sha256Hex(concatBytes([strBytes(i + '|'), O.sha256(chunk)]));
+// The engram layer (biomesh.js engramStreamFromText) as engram_core.js engramStream computes it, token for token
+// (tokenizeBiomesh, crystallize, hexLsb upper-cased, computeJ, the mean J to 4 places), with each distinct token's
+// packet computed once: the same stream, count and mean J (tests/chain-lexicon.cjs checks it against engramStream),
+// about twice as fast on glosses, whose tokens repeat.
+function engramLayer(text) {
+    const { EC } = chainCores();
+    const tokens = EC.tokenizeBiomesh(text), memo = new Map();
+    let stream = '', jsum = 0;
+    for (const t of tokens) {
+        let m = memo.get(t);
+        if (!m) { const g = EC.crystallize(t); m = [hexUpper(EC.hexLsb(g)), EC.computeJ(g)]; memo.set(t, m); }
+        stream += m[0]; jsum += m[1];
+    }
+    return { stream, count: tokens.length, meanJ: tokens.length ? +(jsum / tokens.length).toFixed(4) : 0 };
+}
+const hexUpper = h => { let s = ''; for (let i = 0; i < h.length; i++) { const c = h.charCodeAt(i); s += c >= 97 && c <= 102 ? String.fromCharCode(c - 32) : h.charAt(i); } return s; };
+// growSync(text, { engrams, packets, leaves }) -> Owl's record: chainId, stream, streamVersion, leafHashes,
+// merkleRoot, weaveChiral, weaveMirror, segCuts, segments, [engramStream, engramCount, engramMeanJ], origBytes,
+// shippedBytes, value, in that key order (the reference's chain.grow). The engram layer is engramLayer (engram_core.js
+// engramStream's, ~50x faster than biomesh.js engramStreamFromText; make_biomesh_compat_v1.cjs and
+// tests/bridges-lexicon.cjs check it against Owl's own). packets: 'owl' (default) or 'kernel' (control 1); leaves: 'owl' (default) or 'binary'
+// (control 2). T (optional) accumulates ms per stage.
+function growSync(input, opts = {}, T = null) {
+    const { BC, EC } = chainCores();
+    const withEngrams = opts.engrams !== false;
+    const pack = opts.packets === 'kernel' ? kernelCrystallize : opts.packets === undefined || opts.packets === 'owl' ? BC.crystallizeBytes : null;
+    const leafOf = opts.leaves === 'binary' ? leafHashBinary : opts.leaves === undefined || opts.leaves === 'owl' ? leafHash : null;
+    if (!pack || !leafOf) throw new Error('packets is owl or kernel; leaves is owl or binary');
+    const { text, data } = shardText(input);
+    if (!data.length) throw new Error('Nothing to grow.');
+    if (data.length > BC.MAX_GROW_BYTES) throw new Error(`Grow input capped at ${BC.MAX_GROW_BYTES} bytes (got ${data.length}).`);
+    const clock = T ? (T.clock || nowMs) : null;
+    let t = clock ? clock() : 0;
+    const lap = k => { if (T) { const u = clock(); T[k] = (T[k] || 0) + u - t; t = u; } };
+    const chunks = chunksOf(data, BC.CHUNK);
+    const residuals = chunks.map(c => BC.encodeChunk(c));
+    lap('encode');
+    const packets = chunks.map(c => pack(c));
+    lap('crystal');
+    const leafHashes = chunks.map((c, i) => leafOf(i, c));
+    const root = merkleShdccp2(leafHashes);
+    lap('hash');
+    const stream = BC.frameStream(packets, residuals);
+    const segCuts = segCutsOf(chunks.length, BC.SEGMENTS);
+    const [wf, wm] = weavesOf(chunks);
+    lap('weave');
+    const merkleRoot = root || sha256Str('empty');
+    const chainId = 'BC-' + sha256Str(merkleRoot + '|' + BC.quatHex(wf)).slice(0, 24);
+    lap('hash');
+    const eng = withEngrams ? engramLayer(text) : null;
+    lap('engram');
+    const ship = shipOf(stream.length, eng ? eng.stream.length : 0, leafHashes.length);
+    const rec = { chainId, stream, streamVersion: BC.STREAM_VERSION, leafHashes, merkleRoot,
+        weaveChiral: BC.quatHex(wf), weaveMirror: BC.quatHex(wm), segCuts, segments: BC.SEGMENTS };
+    if (eng) { rec.engramStream = eng.stream; rec.engramCount = eng.count; rec.engramMeanJ = eng.meanJ; }
+    rec.origBytes = data.length; rec.shippedBytes = Math.round(ship); rec.value = +(data.length / ship).toFixed(4);
+    return rec;
+}
+const nowMs = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+// L8's fields, in Owl's order, and the fields of two records that differ (JSON text of each value; key order last)
+const OWL_FIELDS = ['chainId', 'stream', 'streamVersion', 'leafHashes', 'merkleRoot', 'weaveChiral', 'weaveMirror', 'segCuts', 'segments',
+    'engramStream', 'engramCount', 'engramMeanJ', 'origBytes', 'shippedBytes', 'value'];
+function recordDiff(a, b) {
+    const ka = Object.keys(a), kb = Object.keys(b), keys = [...new Set([...OWL_FIELDS, ...ka, ...kb])];
+    const bad = keys.filter(k => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
+    if (ka.join() !== kb.join()) bad.push('(key order)');
+    return bad;
+}
+
+// ---- the stream, frame by frame (strict, as the reference's chain.frames): 16 hex digits of packet, 8 hex digits of
+// residual length n, then exactly n hex digit pairs, frame after frame to the end of the string. Owl's
+// parseBiochainStream reads the length with parseInt (a sign, spaces, a prefix of hex digits) and a short last
+// residual without complaint; a well-formed stream parses the same both ways. Either case is read here; the
+// verifier's 'canonical' check then requires the stream to be exactly what frameStream writes.
+function framesStrict(stream) {
+    const { BC } = chainCores();
+    if (typeof stream !== 'string' || !stream.length) throw new Error('no stream');
+    const frames = [];
+    let p = 0;
+    while (p < stream.length) {
+        if (p + 24 > stream.length) throw new Error(`frame ${frames.length}: truncated header`);
+        const packet = stream.slice(p, p + 16), len = stream.slice(p + 16, p + 24);
+        if (!isHex(packet, 16, false) || !isHex(len, 8, false)) throw new Error(`frame ${frames.length}: malformed header`);
+        const n = parseInt(len, 16) * 2;
+        if (p + 24 + n > stream.length) throw new Error(`frame ${frames.length}: residual truncated`);
+        const residual = stream.slice(p + 24, p + 24 + n);
+        if (!isHex(residual, -1, false)) throw new Error(`frame ${frames.length}: malformed residual`);
+        frames.push({ at: p, packet, lenField: len, residual, ...BC.unpackPacket(packet) });
+        p += 24 + n;
+    }
+    return frames;
+}
+// [packet offset, residual offset, residual hex length] of each frame (spike S4's frameOffsets)
+function frameOffsets(stream) {
+    const out = [];
+    let p = 0;
+    while (p < stream.length) { const r = parseInt(stream.slice(p + 16, p + 24), 16) * 2; out.push([p, p + 24, r]); p += 24 + r; }
+    return out;
+}
+const frameHex = (stream, i) => { const [p, rp, r] = frameOffsets(stream)[i]; return stream.slice(p, rp + r); };
+// T7: frames i and i + 1 swapped (whole frames, so each stays well formed)
+function swapFrames(stream, i) {
+    const fo = frameOffsets(stream), a = fo[i], b = fo[i + 1];
+    return stream.slice(0, a[0]) + stream.slice(b[0], b[1] + b[2]) + stream.slice(a[0], a[1] + a[2]) + stream.slice(b[1] + b[2]);
+}
+// a packet word with its parity bit set again (T2: crystal32 changed, parity re-fixed)
+function refixParity(packetHex) {
+    const { BC } = chainCores();
+    let w = BigInt('0x' + packetHex) & ~(1n << 59n);
+    w |= BC.popcountEven(w) << 59n;
+    return word16(w);
+}
+// a 64-bit word as 16 upper-case hex digits, as Owl writes packets (without the platform's case mapping)
+function word16(w) {
+    let s = '';
+    for (let k = 60n; k >= 0n; k -= 4n) s += '0123456789ABCDEF'.charAt(Number((w >> k) & 15n));
+    return s;
+}
+// the crystal's four bytes hold 0x80 (Owl writes it raw; BioChain-AI's kernel would write 0x81)
+const crystalHas80 = packetHex => [2, 4, 6, 8].some(k => packetHex.slice(k, k + 2) === '80');
+// decodeChunk's loop (biochain_v1.js) with bit positions recorded (spike S4's decodeTraced): the bytes, the bits
+// used, the bits in all and the escapes [start bit, end bit, candidates]
+function decodeTraced(hexStr, len) {
+    const d = [];
+    for (let i = 0; i < hexStr.length; i += 2) d.push(parseInt(hexStr.slice(i, i + 2), 16));
+    let p = 0;
+    const r = n => { let v = 0; for (let i = 0; i < n; i++) { if (p >= d.length * 8) throw new Error('residual truncated'); v = (v << 1) | ((d[p >> 3] >> (7 - (p & 7))) & 1); p++; } return v; };
+    const g = () => { let z = 0; while (r(1) === 0) z++; return z ? ((1 << z) | r(z)) : 1; };
+    const t = new Map(), out = [], escapes = [];
+    let c = [0, 0], ctx = '0,0';
+    for (let k = 0; k < len; k++) {
+        const m = t.get(ctx), cs = m ? [...m.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).map(e => e[0]) : [];
+        const p0 = p, n = g();
+        let b;
+        if (n - 1 < cs.length) b = cs[n - 1]; else { escapes.push([p0, p, cs.length]); b = r(8); }
+        out.push(b);
+        let mm = t.get(ctx); if (!mm) { mm = new Map(); t.set(ctx, mm); } mm.set(b, (mm.get(b) || 0) + 1);
+        c = [c[1], b]; ctx = c.join(',');
+    }
+    return { out, used: p, bits: d.length * 8, escapes };
+}
+// Every single-bit flip of a residual after which the chunk still decodes to the same bytes (spike S4's silentFlips;
+// T9), in S4's order (hex digit i, then bit 0..3 of that digit): [{ i, bit, alt, kind }], kind 'padding' (after the
+// last code), 'escape' (inside a raw-byte rank code) or 'other'; q is the bit's position from the residual's start.
+function silentFlips(residual, chunk, limit = Infinity) {
+    const { BC } = chainCores();
+    const tr = decodeTraced(residual, chunk.length);
+    if (tr.out.length !== chunk.length || tr.out.some((v, j) => v !== chunk[j])) throw new Error('the residual does not decode to the chunk');
+    const same = [];
+    for (let i = 0; i < residual.length; i++) for (let bit = 0; bit < 4; bit++) {
+        const alt = residual.slice(0, i) + (parseInt(residual.charAt(i), 16) ^ (1 << bit)).toString(16) + residual.slice(i + 1);
+        let ok = false;
+        try { const x = BC.decodeChunk(alt, chunk.length); ok = x.length === chunk.length && x.every((v, j) => v === chunk[j]); } catch (e) { ok = false; }
+        if (ok) {
+            const q = 4 * i + (3 - bit);
+            same.push({ i, bit, alt, kind: q >= tr.used ? 'padding' : tr.escapes.some(([a, b]) => q >= a && q < b) ? 'escape' : 'other', q });
+            if (same.length >= limit) return same;
+        }
+    }
+    return same;
+}
+
+// ---- L8's synthetic shards (Amendment 7 item 2)
+const SYNTH_LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const SYNTH_PUNCT = '0123456789.,;:\'!?-()"\n\t/&%#*+=';   // spike S4's PUNCT
+// One draw: a target of 20,000 + below(40,001) UTF-8 bytes, then code points until the next would pass it (that draw is
+// spent), each from a class chosen by below(100). READING: "an ASCII letter" is SYNTH_LETTERS[below(52)] and "ASCII
+// punctuation (S4's set)" is S4's PUNCT[below(30)] (S4 drew both from the same 32-bit value as the class; the
+// amendment gives each class its own below(), so letters and punctuation take one as well).
+function synthDraw(rng) {
+    const target = 20000 + rng.below(40001), cps = [];
+    let n = 0, two = 0;
+    for (;;) {
+        const cls = rng.below(100);
+        let cp;
+        if (cls < 40) cp = SYNTH_LETTERS.charCodeAt(rng.below(SYNTH_LETTERS.length));
+        else if (cls < 50) cp = 32;
+        else if (cls < 55) cp = SYNTH_PUNCT.charCodeAt(rng.below(SYNTH_PUNCT.length));
+        else if (cls < 85) cp = 0x80 + rng.below(0x780);
+        else if (cls < 95) { cp = 0x800 + rng.below(0xF000); if (cp >= 0xD800) cp += 0x800; }
+        else cp = 0x10000 + rng.below(0x100000);
+        const len = cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+        if (n + len > target) break;
+        cps.push(cp); n += len;
+        if (len === 2) two++;
+    }
+    return { target, cps, bytes: n, twoByte: two };
+}
+// shard i of seed base: drawn from one Rng(seed) until a chunk's crystal holds 0x80. Returns the text, its UTF-8,
+// the number of draws, the code point and two-byte counts and the 0x80 chunks.
+function synthShard(seed) {
+    const { BC } = chainCores();
+    const rng = new C.Rng(seed);
+    for (let draws = 1; ; draws++) {
+        const d = synthDraw(rng), data = utf8FromCps(d.cps);
+        const has80 = chunksOf(data, BC.CHUNK).map((c, k) => (crystalHas80(BC.crystallizeBytes(c)) ? k : -1)).filter(k => k >= 0);
+        if (has80.length) return { seed, text: fromCps(d.cps), data, draws, target: d.target, codePoints: d.cps.length, twoByte: d.twoByte, chunks80: has80 };
+        if (draws > 1000) throw new Error('no 0x80 crystal in 1000 draws');
+    }
+}
+
+// ---- gloss shards: C0 (nouns), and the dry runs' verb and adjective shards, cut as spike S4 cut them
+// one line per synset in offset order: offset TAB lemmas ('_' read as a space) joined by ', ' TAB gloss
+function glossLines(wn, pos) {
+    const m = asMap(wn.synsets[pos]);
+    return [...m.keys()].sort().map(off => { const s = m.get(off); return off + '\t' + s.lemmas.map(l => l.split('_').join(' ')).join(', ') + '\t' + s.gloss; });
+}
+// lines joined by LF and cut greedily at line boundaries into shards of at most max UTF-8 bytes (the LF at a cut
+// belongs to neither shard), as wordnet.py c0_shards
+function cutShards(lines, max = 60000) {
+    const out = [];
+    let cur = [], b = 0;
+    for (const l of lines) {
+        const n = strBytes(l).length;
+        if (n > max) throw new Error('a line longer than a shard');
+        if (cur.length && b + 1 + n > max) { out.push(cur.join('\n')); cur = []; b = 0; }
+        b += (cur.length ? 1 : 0) + n; cur.push(l);
+    }
+    if (cur.length) out.push(cur.join('\n'));
+    return out;
+}
+const glossShards = (wn, pos) => cutShards(glossLines(wn, pos));
+
+// ---- RFC 6962 (Amendment 7 item 5): leaf SHA-256(0x00 || data), node SHA-256(0x01 || left || right), split at the
+// largest power of two below n, no duplication; RFC 9162's inclusion and consistency proofs and their verification.
+// Hashes are Uint8Array(32); entries are Uint8Arrays.
+const B00 = Uint8Array.of(0), B01 = Uint8Array.of(1);
+const rfcLeafHash = data => O.sha256(concatBytes([B00, data]));
+const rfcNodeHash = (l, r) => O.sha256(concatBytes([B01, l, r]));
+const RFC_EMPTY_ROOT = () => O.sha256(new Uint8Array(0));
+const largestPow2Below = n => { let k = 1; while (k * 2 < n) k *= 2; return k; };
+class RfcTree {
+    constructor(entries) { this.D = entries; this.n = entries.length; this.memo = new Map(); }
+    mth(lo = 0, hi = this.n) {                 // MTH(D[lo:hi])
+        if (hi === lo) return RFC_EMPTY_ROOT();
+        const key = lo * 4194304 + hi;
+        let x = this.memo.get(key);
+        if (x) return x;
+        if (hi - lo === 1) x = rfcLeafHash(this.D[lo]);
+        else { const k = largestPow2Below(hi - lo); x = rfcNodeHash(this.mth(lo, lo + k), this.mth(lo + k, hi)); }
+        this.memo.set(key, x);
+        return x;
+    }
+    root() { return this.mth(0, this.n); }
+    leaf(m) { return this.mth(m, m + 1); }
+    path(m, lo = 0, hi = this.n) {             // PATH(m, D[lo:hi]): the audit path of leaf m
+        const n = hi - lo;
+        if (n === 1) return [];
+        const k = largestPow2Below(n);
+        return m < k ? [...this.path(m, lo, lo + k), this.mth(lo + k, hi)] : [...this.path(m - k, lo + k, hi), this.mth(lo, lo + k)];
+    }
+    subproof(m, lo, hi, b) {
+        const n = hi - lo;
+        if (m === n) return b ? [] : [this.mth(lo, hi)];
+        const k = largestPow2Below(n);
+        return m <= k ? [...this.subproof(m, lo, lo + k, b), this.mth(lo + k, hi)] : [...this.subproof(m - k, lo + k, hi, false), this.mth(lo, lo + k)];
+    }
+    consistency(m, n = this.n) { return this.subproof(m, 0, n, true); }   // PROOF(m, D[0:n])
+}
+// RFC 9162 section 2.1.3.2
+function rfcVerifyInclusion(index, size, leafHash, proof, root) {
+    if (!(Number.isSafeInteger(index) && Number.isSafeInteger(size)) || index < 0 || index >= size) return false;
+    let fn = index, sn = size - 1, r = leafHash;
+    for (const p of proof) {
+        if (sn === 0) return false;
+        if ((fn & 1) || fn === sn) { r = rfcNodeHash(p, r); if (!(fn & 1)) while (!(fn & 1) && fn !== 0) { fn = Math.floor(fn / 2); sn = Math.floor(sn / 2); } }
+        else r = rfcNodeHash(r, p);
+        fn = Math.floor(fn / 2); sn = Math.floor(sn / 2);
+    }
+    return sn === 0 && bytesEq(r, root);
+}
+// RFC 9162 section 2.1.4.2; m = n with an empty proof and equal roots is accepted (spike S4's reading); m < 1 fails
+function rfcVerifyConsistency(m, n, rootM, rootN, proof) {
+    if (!(Number.isSafeInteger(m) && Number.isSafeInteger(n)) || m < 1 || m > n) return false;
+    if (m === n) return proof.length === 0 && bytesEq(rootM, rootN);
+    const c = (m & (m - 1)) === 0 ? [rootM, ...proof] : proof.slice();
+    if (!c.length) return false;
+    let fn = m - 1, sn = n - 1;
+    while (fn & 1) { fn = Math.floor(fn / 2); sn = Math.floor(sn / 2); }
+    let fr = c[0], sr = c[0];
+    for (const x of c.slice(1)) {
+        if (sn === 0) return false;
+        if ((fn & 1) || fn === sn) { fr = rfcNodeHash(x, fr); sr = rfcNodeHash(x, sr); if (!(fn & 1)) while (!(fn & 1) && fn !== 0) { fn = Math.floor(fn / 2); sn = Math.floor(sn / 2); } }
+        else sr = rfcNodeHash(sr, x);
+        fn = Math.floor(fn / 2); sn = Math.floor(sn / 2);
+    }
+    return bytesEq(fr, rootM) && bytesEq(sr, rootN) && sn === 0;
+}
+const rfcRoot = entries => new RfcTree(entries).root();
+// L9's synthetic leaf lists (Amendment 7 item 5): K leaves of 32 bytes, eight next_u32 each, big-endian
+function rfcLeaves(seed, K) {
+    const rng = new C.Rng(seed);
+    return Array.from({ length: K }, () => {
+        const b = new Uint8Array(32);
+        for (let k = 0; k < 8; k++) { const x = rng.nextU32(); b[4 * k] = x >>> 24; b[4 * k + 1] = (x >>> 16) & 255; b[4 * k + 2] = (x >>> 8) & 255; b[4 * k + 3] = x & 255; }
+        return b;
+    });
+}
+// L9's control 2: an order-blind summary, the XOR of the 64-bit prefixes (16 hex digits)
+function xorSummary(hexLeaves) {
+    let x = 0n;
+    for (const h of hexLeaves) x ^= BigInt('0x' + h.slice(0, 16));
+    return x.toString(16).padStart(16, '0');
+}
+
+// ---- the exact norm-5 weave (Amendment 7 item 4)
+const weaveValues = leafHashes => leafHashes.map(h => { if (!isHex(h, 64)) throw new Error('a leaf hash is 64 lower-case hex digits'); return BigInt('0x' + h.slice(0, 16)); });
+const exactWeave = leafHashes => chainCores().EC.chainQuaternion(weaveValues(leafHashes));
+const weaveText = q => q.map(String).join(',');           // the components in decimal joined by ','
+const weave3Sha = q => sha256Str(weaveText(q));
+// the segment sub-weaves: the products of packetQuaternions over segCuts, as spike S4 computed them
+function segmentWeaves(leafHashes, segCuts) {
+    const { EC } = chainCores();
+    const pq = EC.packetQuaternions(weaveValues(leafHashes));
+    return segCuts.slice(0, -1).map((lo, s) => EC.qprod(pq.slice(lo, segCuts[s + 1])));
+}
+// L9(b) on one record: norm 5^(28K), unfold to the prefixes in order, the ordered product of the segment sub-weaves
+function weaveReport(leafHashes, segCuts) {
+    const { EC } = chainCores();
+    const vals = weaveValues(leafHashes), K = vals.length, q = EC.chainQuaternion(vals);
+    const back = EC.unfold(q, K), segs = segmentWeaves(leafHashes, segCuts);
+    return {
+        q, K, text: weaveText(q), sha256: weave3Sha(q),
+        normOk: EC.qnorm(q) === 5n ** (BigInt(EC.L) * BigInt(K)),
+        unfoldOk: !!back && back.length === K && back.every((v, i) => v === vals[i]),
+        segmentsOk: EC.qeq(EC.qprod(segs), q),
+        bits: q.map(x => (x < 0n ? -x : x).toString(2).length), segments: segs,
+    };
+}
+
+// ---- the records (Amendment 7 item 3): pipe-joined UTF-8 strings, '-' for an empty field, hashed as lowercase hex
+// SHA-256 of their bytes
+const recordOf = fields => { const text = fields.map(f => (f === '' || f === null || f === undefined ? '-' : String(f))).join('|'); return { text, sha256: sha256Hex(utf8(text)) }; };
+const SPECIAL_LIST = vocab => SPECIALS.map(s => { if (!vocab.ids.has(s)) throw new Error('no ' + s); return `${s}=${vocab.ids.get(s)}`; }).join(',');
+// normaliserSpecSha: the SHA-256 of reference/golden/nb_spec_v1.txt, the pinned value (CHAIN_PINS.nbSpecSha256).
+// Where the file can be read (Node), it is refused unless its SHA-256 and size are the pin; a page uses the pin.
+function nbSpecShaOf(bytes) { verifyPin(toBytes(bytes), { sha256: CHAIN_PINS.nbSpecSha256, bytes: CHAIN_PINS.nbSpecBytes }, 'nb_spec_v1.txt'); return CHAIN_PINS.nbSpecSha256; }
+function nbSpecSha() {
+    const x = dataSource(CHAIN_PINS.nbSpec, CHAIN_SOURCES.nb_spec_v1);
+    return x !== undefined && x !== null ? nbSpecShaOf(x) : CHAIN_PINS.nbSpecSha256;
+}
+// LVOCAB/1|vocabSha256|normaliserSpecSha|unicodeTablesSha|wordpiece-greedy/1|lex0-bpe/1|trainSetSha|-|specials
+function lvocab({ vocab = loadV0(), normaliserSpecSha = nbSpecSha(), unicodeTablesSha = PINS.unicode.sha256, trainSetSha = CHAIN_PINS.trainSetSha } = {}) {
+    return recordOf(['LVOCAB/1', vocab.sha256, normaliserSpecSha, unicodeTablesSha, 'wordpiece-greedy/1', 'lex0-bpe/1', trainSetSha, '-', SPECIAL_LIST(vocab)]);
+}
+// The rows of map A in id order: id|token|word|len|h3PointSha|h2PointSha (word as digits; a point's hash is the
+// SHA-256 of its canonical text). READING: a point's canonical text is its coordinates as the canonical point list
+// (Amendment 1 item 6) writes them after "offset tree ": c0 c1 c2 [c3], each p/q in lowest terms, joined by single
+// spaces (h3: this core's integer frames over 7^len, equal to decoder3d.js pointExact; h2: D3's tree).
+function addrRows(entries, words) {
+    if (entries.length !== words.length) throw new Error('one word per entry');
+    const h3 = h3Points(words), h2 = H2_TREE.points(words);
+    return words.map((w, id) => [id, entries[id], wordStr(w), w.length,
+        sha256Str(coordsText(h3[id], h3Den(w.length))), sha256Str(coordsText(h2[id], H2_TREE.den(w.length)))].join('|'));
+}
+function laddrRows(vocab, wn) {
+    const [words, report] = mapA(vocab.entries, wn, nounWords(wn), verbWords(wn));
+    return { rows: addrRows(vocab.entries, words), words, report };
+}
+// addrTableRoot: the RFC 6962 root over the rows' UTF-8, lowercase hex
+const addrTableRoot = rows => O.toHex(rfcRoot(rows.map(r => utf8(r))));
+// LADDR/1|vocabSha256|wordnetZipSha256|L3/1|addrTableRoot|3/4|11/13|D3
+const laddr = ({ vocab = loadV0(), root, wordnetZipSha256 = CHAIN_PINS.wordnetZipSha256 }) =>
+    recordOf(['LADDR/1', vocab.sha256, wordnetZipSha256, 'L3/1', root, '3/4', '11/13', 'D3']);
+function laddrOf(vocab, wn) { const { rows } = laddrRows(vocab, wn), root = addrTableRoot(rows); return { ...laddr({ vocab, root }), root, rows: rows.length }; }
+// the V0 id stream of a whole shard as one instance (Amendment 1 item 2) and its SHA-256
+const shardIdStream = (data, vocab = loadV0()) => idStream([encode(toBytes(data), vocab).ids]);
+const shardIdStreamSha = (data, vocab = loadV0()) => sha256Hex(shardIdStream(data, vocab));
+// sourceUrlSha: C0's is the SHA-256 of the archive's URL; synthetic shard i's of 'rng:<base>+<i>'. READING: the
+// amendment's 'rng:1000+i' is written with i replaced by the shard's index and '1000+' kept ('rng:1000+3'); dry runs
+// write their own base ('rng:4000+3').
+const synthSource = (i, base = 1000) => `rng:${base}+${i}`;
+const sourceUrlSha = src => sha256Str(src);
+// Tier P (Amendment 7 item 3): saltedRoot = SHA-256('LPREP-SALT/1|' + salt hex + '|' + merkleRoot + '|' + chainId);
+// the test salt of shard j is the SHA-256 of 'lexicon-test-salt/1|j' (its hex is the salt hex)
+const testSalt = j => sha256Str(`lexicon-test-salt/1|${j}`);
+const saltedRoot = (saltHex, merkleRoot, chainId) => sha256Str(`LPREP-SALT/1|${saltHex}|${merkleRoot}|${chainId}`);
+// The LPREP/1 fields of a record, from the record and its text. tier 'S' (the default) or 'P' (salt required).
+// LPREP/1|corpusId|shardIndex|chainId|merkleRoot|byteLen|rawSha256|spdx|sourceUrlSha|lvocabHash|idStreamSha256|
+// laddrHash|weave3Sha|engramStreamSha|tier, and for Tier P chainId '-' and |saltedRoot appended.
+// READING: Tier P writes 'P' in the tier field, keeps merkleRoot (only chainId is named as withheld), and the salted
+// root takes the record's real chainId.
+function lprepFields({ record, text, corpusId, shardIndex, spdx, sourceSha, lvocabHash, laddrHash, tier = 'S', salt = null, vocab = loadV0(), idSha = null, weaveSha = null }) {
+    const data = typeof text === 'string' ? utf8(text) : toBytes(text);
+    if (tier !== 'S' && tier !== 'P') throw new Error('tier is S or P');
+    if (tier === 'P' && !isHex(salt)) throw new Error('Tier P needs a salt (lower-case hex)');
+    const f = ['LPREP/1', corpusId, String(shardIndex), tier === 'P' ? '-' : record.chainId, record.merkleRoot, String(data.length), sha256Hex(data), spdx, sourceSha,
+        lvocabHash, idSha || shardIdStreamSha(data, vocab), laddrHash, weaveSha || weave3Sha(exactWeave(record.leafHashes)),
+        typeof record.engramStream === 'string' ? sha256Str(record.engramStream) : '-', tier];
+    if (tier === 'P') f.push(saltedRoot(salt, record.merkleRoot, record.chainId));
+    return f;
+}
+const lprep = opts => recordOf(lprepFields(opts));
+// L10's T3 (and the like): field k of a pipe-joined record replaced
+const LPREP_FIELDS = ['format', 'corpusId', 'shardIndex', 'chainId', 'merkleRoot', 'byteLen', 'rawSha256', 'spdx', 'sourceUrlSha', 'lvocabHash',
+    'idStreamSha256', 'laddrHash', 'weave3Sha', 'engramStreamSha', 'tier', 'saltedRoot'];
+const withField = (text, name, value) => { const f = text.split('|'), k = LPREP_FIELDS.indexOf(name); if (k < 0 || k >= f.length) throw new Error('no field ' + name); f[k] = value; return f.join('|'); };
+// spdxSetSha. READING (the amendment names the field and not its rule): the SHA-256 of the corpus's distinct SPDX
+// identifiers in code-point order, joined by ','.
+const spdxSetSha = list => sha256Str([...new Set(list)].sort().join(','));
+// A corpus manifest over LPREP/1 strings in shard order: its leaves are the 32-byte SHA-256 digests of the strings.
+function corpusTree(lpreps) { return new RfcTree(lpreps.map(s => O.sha256(utf8(s)))); }
+// LCORPUS/1|corpusId|N|root|spdxSetSha|-|-|-|-
+const lcorpus = ({ corpusId, lpreps, spdxSha, tree = null }) => {
+    const t = tree || corpusTree(lpreps);
+    return { ...recordOf(['LCORPUS/1', corpusId, String(t.n), O.toHex(t.root()), spdxSha, '-', '-', '-', '-']), root: O.toHex(t.root()), tree: t };
+};
+// LGROW/1|corpusId|N_old|root_old|N_new|root_new|proofSha, proofSha the SHA-256 of the proof's hashes concatenated
+const proofSha = proof => sha256Hex(concatBytes(proof));
+const lgrow = ({ corpusId, nOld, rootOld, nNew, rootNew, proof }) =>
+    recordOf(['LGROW/1', corpusId, String(nOld), rootOld, String(nNew), rootNew, proofSha(proof)]);
+const hexList = hashes => hashes.map(h => O.toHex(h));
+const bytesList = list => list.map(h => { if (!isHex(h, 64)) throw new Error('a proof hash is 64 lower-case hex digits'); return fromHex(h); });
+
+// ---- ATTEST/1 (BioChain-AI src/identity: crypto-core.js attestationPayload, keyIdFromPublic; signing-key.js
+// verifyAttestation's order: registry entry, status, key vector, signature). ECDSA P-256 over SHA-256 of the UTF-8
+// payload in WebCrypto; signatures are IEEE P1363 r||s, 64 bytes, as hex.
+const ECDSA_KEY = { name: 'ECDSA', namedCurve: 'P-256' }, ECDSA_SIGN = { name: 'ECDSA', hash: 'SHA-256' };
+function subtle() {
+    const c = typeof globalThis !== 'undefined' ? globalThis.crypto : null;
+    if (!c || !c.subtle) throw new Error('WebCrypto (crypto.subtle) is not available');
+    return c.subtle;
+}
+const attestPayload = ({ keyId, keyVector, contentHash, epochToken }) => ['ATTEST/1', keyId, keyVector, contentHash, epochToken].join('|');
+const keyIdOf = jwk => 'K-' + sha256Str(`${jwk.x}|${jwk.y}`).slice(0, 24);
+const publicJwkOf = jwk => ({ kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y });
+const importPublic = jwk => subtle().importKey('jwk', publicJwkOf(jwk), ECDSA_KEY, false, ['verify']);
+async function newKeyPair() {                  // a P-256 pair in WebCrypto (per run, Amendment 7 item 6)
+    const kp = await subtle().generateKey(ECDSA_KEY, true, ['sign', 'verify']);
+    const publicJwk = publicJwkOf(await subtle().exportKey('jwk', kp.publicKey));
+    return { privateKey: kp.privateKey, publicKey: kp.publicKey, publicJwk, keyId: keyIdOf(publicJwk) };
+}
+// an ATTEST/1 block over a commitment string: contentHash = SHA-256 of the commitment; sig over the payload
+async function attestSign(privateKey, { keyId, keyVector, epochToken }, commitment) {
+    const contentHash = sha256Str(commitment);
+    const sig = new Uint8Array(await subtle().sign(ECDSA_SIGN, privateKey, strBytes(attestPayload({ keyId, keyVector, contentHash, epochToken }))));
+    return { keyId, keyVector, contentHash, epochToken, sig: hex(sig) };
+}
+// ---- ECDSA P-256 in BigInt, with RFC 6979 deterministic nonces (HMAC-SHA-256 on orbital_core's SHA-256): for the
+// trace and its fixed test keys only (the reference's attest.TRACE_KEYS, signed with cryptography's
+// deterministic_signing), so a trace's signatures are the same on every run and in both languages. Registered runs
+// sign with keys made in WebCrypto (newKeyPair, attestSign), and every verification is WebCrypto's.
+const P256 = {
+    p: 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFn,
+    n: 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551n,
+    b: 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604Bn,
+    gx: 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296n,
+    gy: 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5n,
+};
+const modP = (a, m) => { const r = a % m; return r < 0n ? r + m : r; };
+function modInv(a, m) {                         // extended Euclid; a coprime to m
+    let r0 = modP(a, m), r1 = m, s0 = 1n, s1 = 0n;
+    while (r1) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; }
+    return modP(s0, m);
+}
+// Jacobian coordinates [X, Y, Z] (null: the point at infinity); a = -3
+function jDouble(P) {
+    if (!P || P[1] === 0n) return null;
+    const p = P256.p, [X, Y, Z] = P, d = Z * Z % p, g = Y * Y % p, be = X * g % p;
+    const al = 3n * modP(X - d, p) * (X + d) % p;
+    const X3 = modP(al * al - 8n * be, p), Z3 = modP((Y + Z) * (Y + Z) - g - d, p), Y3 = modP(al * (4n * be - X3) - 8n * g * g, p);
+    return [X3, Y3, Z3];
+}
+function jAdd(P, Q) {
+    if (!P) return Q;
+    if (!Q) return P;
+    const p = P256.p, [X1, Y1, Z1] = P, [X2, Y2, Z2] = Q;
+    const z1 = Z1 * Z1 % p, z2 = Z2 * Z2 % p, u1 = X1 * z2 % p, u2 = X2 * z1 % p, s1 = Y1 * Z2 % p * z2 % p, s2 = Y2 * Z1 % p * z1 % p;
+    if (u1 === u2) return s1 === s2 ? jDouble(P) : null;
+    const h = modP(u2 - u1, p), i = 4n * h * h % p, j = h * i % p, r = 2n * modP(s2 - s1, p) % p, v = u1 * i % p;
+    const X3 = modP(r * r - j - 2n * v, p), Y3 = modP(r * (v - X3) - 2n * s1 * j, p), Z3 = modP(((Z1 + Z2) * (Z1 + Z2) - z1 - z2) % p * h, p);
+    return [X3, Y3, Z3];
+}
+let P256_G2 = null;                             // 2^i G, i = 0..255, for a fixed-base product
+function p256Mul(k) {                           // k G, affine [x, y]
+    if (!P256_G2) { P256_G2 = [[P256.gx, P256.gy, 1n]]; for (let i = 1; i < 256; i++) P256_G2.push(jDouble(P256_G2[i - 1])); }
+    let R = null;
+    for (let i = 0; k > 0n; i++, k >>= 1n) if (k & 1n) R = jAdd(R, P256_G2[i]);
+    if (!R) throw new Error('k G is the point at infinity');
+    const zi = modInv(R[2], P256.p), z2 = zi * zi % P256.p;
+    return [R[0] * z2 % P256.p, R[1] * z2 % P256.p * zi % P256.p];
+}
+const bigBytes = (x, n) => { const out = new Uint8Array(n); for (let i = n - 1; i >= 0; i--) { out[i] = Number(x & 255n); x >>= 8n; } if (x) throw new RangeError('does not fit'); return out; };
+const bytesBig = b => { let x = 0n; for (const v of b) x = (x << 8n) | BigInt(v); return x; };
+function hmacSha256(key, msg) {
+    const k = key.length > 64 ? O.sha256(key) : key, ip = new Uint8Array(64), op = new Uint8Array(64);
+    for (let i = 0; i < 64; i++) { const v = i < k.length ? k[i] : 0; ip[i] = v ^ 0x36; op[i] = v ^ 0x5C; }
+    return O.sha256(concatBytes([op, O.sha256(concatBytes([ip, msg]))]));
+}
+// RFC 6979 section 3.2 for P-256 and SHA-256 (qlen = hlen = 256): the nonces k in order (a generator)
+function* rfc6979Nonces(d, h1) {
+    const n = P256.n, x = bigBytes(d, 32), hb = bigBytes(modP(bytesBig(h1), n), 32);
+    let V = new Uint8Array(32).fill(1), K = new Uint8Array(32);
+    K = hmacSha256(K, concatBytes([V, Uint8Array.of(0), x, hb])); V = hmacSha256(K, V);
+    K = hmacSha256(K, concatBytes([V, Uint8Array.of(1), x, hb])); V = hmacSha256(K, V);
+    for (;;) {
+        V = hmacSha256(K, V);
+        const k = bytesBig(V);
+        if (k >= 1n && k < n) yield k;
+        K = hmacSha256(K, concatBytes([V, Uint8Array.of(0)])); V = hmacSha256(K, V);
+    }
+}
+// deterministic ECDSA P-256 / SHA-256 over a message's bytes: { r, s } (s as computed, not normalised to low-S)
+function ecdsaSignDet(d, msg) {
+    const n = P256.n, h1 = O.sha256(msg), e = modP(bytesBig(h1), n);
+    for (const k of rfc6979Nonces(d, h1)) {
+        const r = modP(p256Mul(k)[0], n);
+        if (r === 0n) continue;
+        const s = modInv(k, n) * (e + r * d) % n;
+        if (s !== 0n) return { r, s };
+    }
+    return null;
+}
+// the encodings: IEEE P1363 r || s (each 32 bytes), DER SEQUENCE { INTEGER r, INTEGER s }, and the unpadded P1363
+// that L10's encoding control exposes (r and s in minimal length)
+const p1363Of = ({ r, s }) => concatBytes([bigBytes(r, 32), bigBytes(s, 32)]);
+const rsOfP1363 = sig => ({ r: bytesBig(sig.subarray(0, 32)), s: bytesBig(sig.subarray(32, 64)) });
+function derInt(x) {
+    let b = [];
+    for (let y = x; y > 0n; y >>= 8n) b.unshift(Number(y & 255n));
+    if (!b.length) b = [0];
+    if (b[0] & 0x80) b.unshift(0);
+    return [0x02, b.length, ...b];
+}
+function derOf({ r, s }) { const body = [...derInt(r), ...derInt(s)]; return Uint8Array.from([0x30, body.length, ...body]); }
+const minBytes = x => { const b = []; for (let y = x; y > 0n; y >>= 8n) b.unshift(Number(y & 255n)); return Uint8Array.from(b); };
+const p1363Unpadded = ({ r, s }) => concatBytes([minBytes(r), minBytes(s)]);
+const highSTwin = sig => { const { r, s } = rsOfP1363(sig); return p1363Of({ r, s: P256.n - s }); };
+// base64url without padding, and a test key's public JWK and keyId
+const B64U = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+function b64u(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 3) {
+        const n = (bytes[i] << 16) | ((bytes[i + 1] || 0) << 8) | (bytes[i + 2] || 0), left = bytes.length - i;
+        s += B64U.charAt(n >> 18) + B64U.charAt((n >> 12) & 63) + (left > 1 ? B64U.charAt((n >> 6) & 63) : '') + (left > 2 ? B64U.charAt(n & 63) : '');
+    }
+    return s;
+}
+function testJwk(d) { const [x, y] = p256Mul(d); return { kty: 'EC', crv: 'P-256', x: b64u(bigBytes(x, 32)), y: b64u(bigBytes(y, 32)) }; }
+// an ATTEST/1 block signed deterministically with the test key d (the reference's attest.attest, deterministic)
+function attestDet(d, keyVector, content, epochToken) {
+    const keyId = keyIdOf(testJwk(d)), contentHash = sha256Str(content);
+    const sig = p1363Of(ecdsaSignDet(d, strBytes(attestPayload({ keyId, keyVector, contentHash, epochToken }))));
+    return { keyId, keyVector, contentHash, epochToken, sig: hex(sig) };
+}
+// The trace's fixed keys (the reference's attest.TRACE_KEYS; never a registered key): A is RFC 6979 A.2.5's published
+// P-256 key, B and C are SHA-256 of a label mod (n - 1) + 1
+const traceKey = label => bytesBig(O.sha256(strBytes(label))) % (P256.n - 1n) + 1n;
+const TRACE_KEYS = () => ({ A: 0xC9AFA9D845BA75166B5C215767B1D6934E50C3DB36E89B127B8A622B120F6721n,
+    B: traceKey('hyperbolic-lexicon trace key B'), C: traceKey('hyperbolic-lexicon trace key C') });
+
+// ---- BioChain-AI's identity and key vector, ported (identity-registry.js computeIdentityId; crypto-core.js
+// deriveKeyVector, canonicalParams, expandHolographic, shdccpCompress's 64-bit accumulator), as the reference's
+// attest.identity_id and key_vector. READING: computeIdentityId trims the seed; the registered seed
+// 'hyperbolic-lexicon/phase3' has no surrounding white space, so it is used as given (this core never trims).
+const IDENTITY_SEED = 'hyperbolic-lexicon/phase3', IDENTITY_UID = 'lexicon';
+const CANONICAL_PARAMS = '{"lattice":"E8","hilbertDim":64,"modulus":240,"manifold":"clifford","coherency":0.75,"torsion":0.5}';
+const holographic = b32 => concatBytes([b32, b32.map(b => 0xFF ^ b)]);
+function vector64(b64) {
+    let acc = 0n;
+    for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) for (let z = 0; z < 4; z++)
+        acc = (acc * 31n + BigInt(b64[x * 16 + y * 4 + z] * (x + 1) * (y + 1) * (z + 1))) & 0xFFFFFFFFFFFFFFFFn;
+    return word16(acc);
+}
+function identityIdOf(seed = IDENTITY_SEED, uid = IDENTITY_UID) {
+    if (!seed) throw new Error('Identity seed is empty');
+    const geo = BigInt('0x' + vector64(holographic(O.sha256(utf8(seed))))), u8 = bytesBig(O.sha256(utf8(uid)).subarray(0, 8));
+    return '0x' + word16(geo ^ u8);
+}
+const keyVectorOf = (identityId, epochToken) => vector64(holographic(O.sha256(utf8(`${identityId}|${CANONICAL_PARAMS}|${epochToken}`))));
+// 'EPOCH-OFFLINE-<UTC date>' with the date as YYYY-MM-DD (the reference's attest.epoch_token)
+const epochTokenOf = date => 'EPOCH-OFFLINE-' + date;
+// The key-registry snapshot (Amendment 7 item 6: keyId, public JWK, keyVector, status), written with a run and
+// pinned by the SHA-256 of its UTF-8. As the reference's attest.snapshot_text: a JSON array without spaces of
+// {keyId, publicJwk: {kty, crv, x, y}, keyVector, status}, in that key order, entries sorted by keyId; keyId is
+// keyIdFromPublic of the JWK, status one of active, revoked, retired.
+const KEY_STATUSES = ['active', 'revoked', 'retired'];
+function registryEntry(jwk, keyVector, status) {
+    if (!KEY_STATUSES.includes(status)) throw new Error('unknown key status ' + status);
+    if (jwk.kty !== 'EC' || jwk.crv !== 'P-256') throw new Error('not a P-256 EC JWK');
+    return { keyId: keyIdOf(jwk), publicJwk: { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y }, keyVector, status };
+}
+function registrySnapshot(entries) {
+    const rows = entries.map(e => registryEntry(e.publicJwk, e.keyVector, e.status)).sort((a, b) => (a.keyId < b.keyId ? -1 : a.keyId > b.keyId ? 1 : 0));
+    if (new Set(rows.map(r => r.keyId)).size !== rows.length) throw new Error('two registry entries share a keyId');
+    const text = JSON.stringify(rows);
+    return { text, sha256: sha256Hex(utf8(text)) };
+}
+// { keyId: entry } from a snapshot text, refused unless its SHA-256 is the pin and every entry is exactly
+// registryEntry(its JWK, keyVector, status) (so its keyId is its JWK's)
+function loadSnapshot(text, pinnedSha) {
+    if (typeof text !== 'string' || sha256Hex(utf8(text)) !== pinnedSha) throw new Error('the registry snapshot is not the pinned one');
+    const out = new Map();
+    for (const e of JSON.parse(text)) {
+        if (JSON.stringify(registryEntry(e.publicJwk, e.keyVector, e.status)) !== JSON.stringify(e)) throw new Error('a malformed registry entry: ' + e.keyId);
+        out.set(e.keyId, e);
+    }
+    return out;
+}
+// a signature's hex (either case, as the reference reads it) as bytes, or null
+function sigBytes(s) {
+    if (!isHex(s, 128, false)) return null;
+    const out = new Uint8Array(64);
+    for (let i = 0; i < 64; i++) out[i] = parseInt(s.slice(2 * i, 2 * i + 2), 16);
+    return out;
+}
+// An ATTEST/1 block against a commitment string and the registry (BioChain's verifyAttestationAgainstContent with
+// the snapshot for Firestore; the reference's attest.verify_attestation, reason for reason): [ok, reason, entry]. The
+// signer is the registry's entry for block.keyId; the payload is rebuilt with the registry's keyVector; only an
+// active key verifies. Public keys are imported once per keyId and JWK (never keyed by anything the package holds).
+async function verifyAttestation(block, content, registry, keyCache = new Map()) {
+    const names = ['keyId', 'keyVector', 'contentHash', 'epochToken', 'sig'];
+    if (!block || typeof block !== 'object' || !names.every(k => typeof block[k] === 'string')) return [false, 'malformed attestation block', null];
+    const entry = registry.get(block.keyId);
+    if (!entry) return [false, 'unknown key', null];
+    if (entry.status !== 'active') return [false, `key ${entry.status}`, entry];
+    if (block.keyVector !== entry.keyVector) return [false, 'key-vector mismatch', entry];
+    if (block.contentHash !== sha256Str(content)) return [false, 'content does not match attestation', entry];
+    const sig = sigBytes(block.sig);
+    if (!sig) return [false, 'signature is not 128 hex digits', entry];
+    const ck = `${entry.keyId}|${entry.publicJwk.x}|${entry.publicJwk.y}`;
+    if (!keyCache.has(ck)) keyCache.set(ck, await importPublic(entry.publicJwk));
+    const payload = attestPayload({ keyId: block.keyId, keyVector: entry.keyVector, contentHash: block.contentHash, epochToken: block.epochToken });
+    let ok = false;
+    try { ok = await subtle().verify(ECDSA_SIGN, keyCache.get(ck), sig, strBytes(payload)); } catch (e) { ok = false; }
+    return ok ? [true, 'verified', entry] : [false, 'signature invalid', entry];
+}
+
+// ---- the hardened verifier (L10, Amendment 7 items 6-7): the twin of the reference's lexicon/verify.py
+// A package (keys in this order): record (Owl's fields), lprep (its LPREP/1 string), salt (Tier P only, 64
+// lower-case hex digits), attestation {keyId, keyVector, contentHash, epochToken, sig (P1363, 128 hex digits)},
+// lcorpus (the LCORPUS/1 string), inclusion (the audit path of SHA-256(lprep) at shardIndex, 64-hex-digit hashes),
+// lgrow (an LGROW/1 string from N - 1 shards to N), consistency (its proof, 64-hex-digit hashes).
+const PACKAGE_KEYS = ['record', 'lprep', 'salt', 'attestation', 'lcorpus', 'inclusion', 'lgrow', 'consistency'];
+const CHECKS = ['parity', 'canonical', 'crystal', 'leaves', 'weaves', 'derived', 'commitment', 'attestation', 'inclusion', 'consistency'];
+const SELF_CHECKS = CHECKS.slice(0, 7), AUTH_CHECKS = CHECKS.slice(7);
+// A verification session: what a holder pins once (the reference's verify.Session). The vocabulary (V0); the LVOCAB/1
+// string (or hash); the LADDR/1 string or hash, or WordNet (wn) to recompute it here once (Amendment 7 item 7, timed in
+// session.timings.laddr); the registry snapshot text and its pinned SHA-256.
+async function chainSession({ vocab = loadV0(), wn = null, lvocab: lvocabText = null, lvocabHash = null, laddr: laddrText = null, laddrHash = null,
+    registry, registrySha256, clock = nowMs } = {}) {
+    const timings = {};
+    let t = clock();
+    const lv = lvocabHash || (lvocabText ? sha256Hex(utf8(lvocabText)) : lvocab({ vocab }).sha256);
+    timings.lvocab = clock() - t; t = clock();
+    let la = laddrHash || (laddrText ? sha256Hex(utf8(laddrText)) : null), laddrInfo = null;
+    if (wn) {
+        laddrInfo = laddrOf(vocab, wn);
+        if (la && la !== laddrInfo.sha256) throw new Error('the LADDR/1 recomputed from WordNet is not the one given');
+        la = laddrInfo.sha256;
+    }
+    if (!la) throw new Error('a session needs the LADDR/1 string or hash, or WordNet to recompute it');
+    timings.laddr = clock() - t; t = clock();
+    const keys = loadSnapshot(registry, registrySha256);
+    timings.registry = clock() - t;
+    return { vocab, wn, lvocabHash: lv, laddrHash: la, laddr: laddrInfo, registry: keys, registrySha256, keyCache: new Map(), timings, clock };
+}
+const numEq = (a, b) => typeof a === 'number' && typeof b === 'number' && a === b;
+const proofList = p => {
+    if (!Array.isArray(p) || !p.every(h => isHex(h, 64))) throw new Error('a proof is a list of 64-hex-digit hashes');
+    return p.map(h => fromHex(h));
+};
+// The pieces of an LPREP/1 string as the reference's records.parse_lprep reads them: [fields (15), saltedRoot or
+// null]; an Error unless it has the registered shape (15 fields and tier S, or 16 with tier P, chainId '-' and a
+// 64-hex-digit salted root; shardIndex a canonical decimal)
+function parseLprep(s) {
+    if (typeof s !== 'string') throw new Error('an LPREP/1 record is a string');
+    const parts = s.split('|');
+    if ((parts.length !== 15 && parts.length !== 16) || parts[0] !== 'LPREP/1') throw new Error('not an LPREP/1 record');
+    const f = parts.slice(0, 15);
+    if (parts.length === 16) {
+        if (f[14] !== 'P' || f[3] !== '-' || !isHex(parts[15], 64)) throw new Error('a 16-field LPREP/1 record is Tier P with chainId "-" and a salted root');
+    } else if (f[14] !== 'S') throw new Error('a 15-field LPREP/1 record is Tier S');
+    if (!isDecimal(f[2])) throw new Error('not a canonical decimal: ' + f[2]);
+    return [f, parts.length === 16 ? parts[15] : null];
+}
+function parseLcorpus(s) {
+    const p = typeof s === 'string' ? s.split('|') : [];
+    if (p.length !== 9 || p[0] !== 'LCORPUS/1' || !isHex(p[3], 64) || !p.slice(5).every(x => x === '-') || !isDecimal(p[2])) throw new Error('not an LCORPUS/1 record');
+    return { corpusId: p[1], N: Number(p[2]), root: p[3], spdxSetSha: p[4] };
+}
+function parseLgrow(s) {
+    const p = typeof s === 'string' ? s.split('|') : [];
+    if (p.length !== 7 || p[0] !== 'LGROW/1' || ![3, 5, 6].every(k => isHex(p[k], 64)) || !isDecimal(p[2]) || !isDecimal(p[4])) throw new Error('not an LGROW/1 record');
+    return { corpusId: p[1], N_old: Number(p[2]), root_old: p[3], N_new: Number(p[4]), root_new: p[5], proofSha: p[6] };
+}
+// verifyPackage(session, package, { skip, recomputeAddr }) -> { selfConsistent, authentic, failed, checks: [{ name, ok,
+// detail, ms }], signer }. The checks, in the registered order (the reference's verify.py, check for check):
+//   parity       the record is shdccp/2 (streamVersion), its stream parses strictly (framesStrict), at least one
+//                frame, every packet's parity holds
+//   canonical    the chunk lengths are the 720-byte cut (every frame 720 but the last, 1..720; at most 60,000 in
+//                all); each residual decodes, and re-encoding the chunk gives the stored residual byte for byte; the
+//                stream re-framed from its packets and residuals is the stored stream
+//   crystal      crystallize(chunk) is the stored packet, for every frame
+//   leaves       leafHashes and merkleRoot present, equal to the values recomputed with the JS rules
+//   weaves       weaveChiral, weaveMirror, segCuts, segments and chainId equal the recomputed ones
+//   derived      the engram layer (when the record has any of its three fields: engramStream, engramCount and
+//                engramMeanJ recomputed from the text), origBytes, shippedBytes and value; the V0 id stream and the
+//                exact weave recomputed (norm 5^(28K), unfold to the leaf prefixes, the segCuts sub-weaves multiply
+//                to it)
+//   commitment   the LPREP/1 string equals the one rebuilt from the recomputed fields, the session's LVOCAB/1 and
+//                LADDR/1 hashes and the string's own corpusId, shardIndex, spdx and sourceUrlSha (Tier P: the
+//                salted root recomputed with the package's salt)
+//   attestation  the ATTEST/1 block against SHA-256(lprep) and the pinned registry (verifyAttestation)
+//   inclusion    LCORPUS/1 parses, names the LPREP's corpus, and the audit path of SHA-256(lprep) at shardIndex
+//                verifies against its root (RFC 9162)
+//   consistency  LGROW/1 parses, names the same corpus, grows from N - 1 to N ending at the LCORPUS root, its proofSha
+//                is the proof's, and the proof verifies (RFC 9162; from N_old = 0, an empty proof and SHA-256(''))
+// READING (the reference's): selfConsistent is "parity .. commitment all pass" and authentic is "attestation,
+// inclusion and consistency all pass", computed separately: the self-consistency checks stop at the first failure
+// (the rest are reported not run, ok null), the authenticity checks always run. failed: the first check that
+// failed, in this order, or '-'; a package is accepted when failed is '-'. skip: names of checks not run (L11's
+// control skips 'attestation'); a skipped check (ok null) does not count against either verdict. Fields of the record
+// beyond Owl's are ignored. The engram text is the bytes read as Latin-1: its tokens (runs of [A-Za-z0-9']) are the
+// same as those of the bytes decoded as UTF-8 with replacement, which the reference reads.
+async function verifyPackage(session, pkgIn, opts = {}) {
+    const { BC, EC } = chainCores();
+    const clock = opts.clock || session.clock || nowMs, skip = new Set(opts.skip || []);
+    const pkg = typeof pkgIn === 'string' ? JSON.parse(pkgIn) : pkgIn;
+    const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+    const rec = isObj(pkg) && isObj(pkg.record) ? pkg.record : null, lp = isObj(pkg) ? pkg.lprep : undefined;
+    const st = {}, checks = [];
+    const run = async (name, fn) => {
+        if (skip.has(name)) { checks.push({ name, ok: null, detail: 'skipped', ms: 0 }); return true; }
+        const t = clock();
+        let ok = false, detail = '';
+        try { [ok, detail] = await fn(); } catch (e) { ok = false; detail = e && e.message ? e.message : String(e); }
+        checks.push({ name, ok: !!ok, detail, ms: clock() - t });
+        return !!ok;
+    };
+    const self = [
+        ['parity', () => {
+            if (!rec || rec.streamVersion !== BC.STREAM_VERSION) return [false, 'no shdccp/2 record'];
+            const frames = framesStrict(rec.stream);
+            if (!frames.length) return [false, 'no frames'];
+            st.frames = frames;
+            const bad = frames.findIndex(f => !f.parityOk);
+            return bad < 0 ? [true, `${frames.length} frames`] : [false, `packet ${bad} parity failed`];
+        }],
+        ['canonical', () => {
+            const frames = st.frames, lens = frames.map(f => f.chunkLen), K = lens.length;
+            if (lens.slice(0, -1).some(n => n !== BC.CHUNK) || !(lens[K - 1] >= 1 && lens[K - 1] <= BC.CHUNK) || lens.reduce((a, b) => a + b, 0) > BC.MAX_GROW_BYTES)
+                return [false, 'the chunk lengths are not the 720-byte cut'];
+            const chunks = [];
+            for (let i = 0; i < K; i++) {
+                const d = BC.decodeChunk(frames[i].residual, frames[i].chunkLen);
+                if (d.some(b => !(b >= 0 && b <= 255))) throw new Error(`frame ${i}: a rank code that decodes to no byte`);
+                const c = Uint8Array.from(d);
+                if (BC.encodeChunk(c) !== frames[i].residual) return [false, `frame ${i}: the residual is not the canonical encoding of its chunk`];
+                chunks.push(c);
+            }
+            if (BC.frameStream(frames.map(f => f.packet), frames.map(f => f.residual)) !== rec.stream) return [false, 'the stream is not canonically framed'];
+            st.chunks = chunks; st.data = concatBytes(chunks);
+            return [true, `${K} chunks, ${st.data.length} B`];
+        }],
+        ['crystal', () => {
+            const bad = st.chunks.findIndex((c, i) => BC.crystallizeBytes(c) !== st.frames[i].packet);
+            return bad < 0 ? [true, 'every packet'] : [false, `packet ${bad} is not crystallize(chunk)`];
+        }],
+        ['leaves', () => {
+            const lh = rec.leafHashes;
+            if (!Array.isArray(lh) || !('merkleRoot' in rec)) return [false, 'leafHashes and merkleRoot are mandatory'];
+            const leaves = st.chunks.map((c, i) => leafHash(i, c)), root = merkleShdccp2(leaves) || sha256Str('empty');
+            st.leaves = leaves; st.root = root;
+            if (lh.length !== leaves.length || leaves.some((h, i) => lh[i] !== h)) return [false, 'leafHashes differ from the recomputed leaves'];
+            return rec.merkleRoot === root ? [true, 'merkleRoot'] : [false, 'merkleRoot mismatch'];
+        }],
+        ['weaves', () => {
+            const [wf, wm] = weavesOf(st.chunks), chiral = BC.quatHex(wf), mirror = BC.quatHex(wm), cuts = segCutsOf(st.chunks.length, BC.SEGMENTS);
+            const cid = 'BC-' + sha256Str(st.root + '|' + chiral).slice(0, 24);
+            st.chainId = cid;
+            const bad = [['weaveChiral', rec.weaveChiral === chiral], ['weaveMirror', rec.weaveMirror === mirror],
+                ['segCuts', Array.isArray(rec.segCuts) && rec.segCuts.length === cuts.length && cuts.every((c, i) => numEq(rec.segCuts[i], c))],
+                ['segments', numEq(rec.segments, BC.SEGMENTS)], ['chainId', rec.chainId === cid]].filter(([, ok]) => !ok).map(([n]) => n);
+            return bad.length ? [false, bad.join(', ') + ' mismatch'] : [true, 'weaves and chainId'];
+        }],
+        ['derived', () => {
+            const data = st.data, bad = [];
+            let elen = 0;
+            if ('engramStream' in rec || 'engramCount' in rec || 'engramMeanJ' in rec) {
+                const eng = engramLayer(fromCharCodes(data));
+                if (!(rec.engramStream === eng.stream && numEq(rec.engramCount, eng.count) && numEq(rec.engramMeanJ, eng.meanJ))) bad.push('engram layer');
+                elen = eng.stream.length;
+            }
+            const ship = shipOf(rec.stream.length, elen, st.leaves.length);
+            if (!numEq(rec.origBytes, data.length)) bad.push('origBytes');
+            if (!numEq(rec.shippedBytes, Math.round(ship))) bad.push('shippedBytes');
+            if (!numEq(rec.value, +(data.length / ship).toFixed(4))) bad.push('value');
+            const w = weaveReport(st.leaves, segCutsOf(st.leaves.length, BC.SEGMENTS));
+            if (!(w.normOk && w.unfoldOk && w.segmentsOk)) bad.push('exact weave');
+            st.weave3 = w.sha256;
+            st.idStreamSha256 = shardIdStreamSha(data, session.vocab);
+            // Amendment 7 item 7's literal alternative (reported, decides nothing): the LADDR/1 recomputed inside this
+            // verification from the session's WordNet (a fresh wn object, so no cached forest words are reused)
+            if (opts.recomputeAddr) { if (!session.wn) throw new Error('recomputeAddr needs the session\'s WordNet'); st.laddrHash = laddrOf(session.vocab, { ...session.wn }).sha256; }
+            return bad.length ? [false, bad.join(', ') + ' mismatch'] : [true, 'engram layer, sizes, id stream, exact weave'];
+        }],
+        ['commitment', () => {
+            const [f] = parseLprep(lp);
+            let tier = 'S', salt = null;
+            if (f[14] === 'P') {
+                salt = pkg.salt;
+                if (!isHex(salt, 64)) return [false, 'a Tier-P record needs its salt'];
+                tier = 'P';
+            }
+            const want = lprepFields({ record: { ...rec, chainId: st.chainId, merkleRoot: st.root }, text: st.data, corpusId: f[1], shardIndex: f[2], spdx: f[7],
+                sourceSha: f[8], lvocabHash: session.lvocabHash, laddrHash: st.laddrHash || session.laddrHash, tier, salt, vocab: session.vocab,
+                idSha: st.idStreamSha256, weaveSha: st.weave3 }).join('|');
+            if (want === lp) return [true, 'LPREP/1 recomputed'];
+            const w = want.split('|'), diff = LPREP_FIELDS.slice(0, 15).filter((n, k) => w[k] !== f[k]);
+            return [false, 'LPREP/1 differs in ' + (diff.length ? diff.join(', ') : 'saltedRoot')];
+        }],
+    ];
+    for (const [name, fn] of self) if (!(await run(name, fn))) break;
+    for (const name of SELF_CHECKS.slice(checks.length)) checks.push({ name, ok: null, detail: 'not run', ms: 0 });
+    let signer = null, lc = null;
+    await run('attestation', async () => {
+        const [ok, reason, entry] = await verifyAttestation(pkg.attestation, lp, session.registry, session.keyCache);
+        if (ok) signer = entry.keyId;
+        return [ok, reason];
+    });
+    await run('inclusion', () => {
+        const [f] = parseLprep(lp), c = parseLcorpus(pkg.lcorpus);
+        if (c.corpusId !== f[1]) return [false, 'LCORPUS names another corpus'];
+        const idx = Number(f[2]), leaf = rfcLeafHash(O.sha256(utf8(lp)));
+        const ok = rfcVerifyInclusion(idx, c.N, leaf, proofList(pkg.inclusion), fromHex(c.root));
+        lc = c;
+        return [ok, `shard ${idx} of ${c.N}`];
+    });
+    await run('consistency', () => {
+        const c = lc || parseLcorpus(pkg.lcorpus), g = parseLgrow(pkg.lgrow), proof = proofList(pkg.consistency);
+        if (g.corpusId !== c.corpusId || g.N_new !== c.N || g.root_new !== c.root) return [false, 'LGROW does not end at the LCORPUS root'];
+        if (g.N_old !== c.N - 1) return [false, 'LGROW does not grow from N - 1'];
+        if (g.proofSha !== proofSha(proof)) return [false, 'proofSha mismatch'];
+        const ok = g.N_old === 0 ? proof.length === 0 && g.root_old === O.toHex(RFC_EMPTY_ROOT())
+            : rfcVerifyConsistency(g.N_old, g.N_new, fromHex(g.root_old), fromHex(g.root_new), proof);
+        return [ok, `${g.N_old} -> ${g.N_new}`];
+    });
+    const by = new Map(checks.map(c => [c.name, c.ok])), first = checks.find(c => c.ok === false);
+    return {
+        selfConsistent: SELF_CHECKS.every(n => by.get(n) !== false), authentic: AUTH_CHECKS.every(n => by.get(n) !== false),
+        failed: first ? first.name : '-', checks, signer,
+    };
+}
+// 'selfConsistent authentic failed', as the reference's verify.verdict_text writes a verdict
+const verdictText = v => `${v.selfConsistent ? 'true' : 'false'} ${v.authentic ? 'true' : 'false'} ${v.failed}`;
+// a JS string of the bytes as code units 0-255 (String.fromCharCode(...bytes), in pieces)
+function fromCharCodes(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, Array.prototype.slice.call(bytes, i, i + 8192));
+    return s;
+}
+// a package with its keys in PACKAGE_KEYS order (salt only for Tier P); proofs as lists of hex strings
+function makePackage({ record, lprep: lprepText, salt = null, attestation, lcorpus: lcorpusText, inclusion, lgrow: lgrowText, consistency }) {
+    const p = { record, lprep: lprepText };
+    if (salt !== null) p.salt = salt;
+    const hx = list => list.map(h => (typeof h === 'string' ? h : O.toHex(h)));
+    Object.assign(p, { attestation, lcorpus: lcorpusText, inclusion: hx(inclusion), lgrow: lgrowText, consistency: hx(consistency) });
+    return p;
+}
+// Packages for a corpus (the reference's verify.corpus_packages): shards [{ record, text }] in shard order; one LPREP/1
+// each (Tier S, or Tier P with salts[j]), LCORPUS/1 over all, LGROW/1 from N - 1 (from 0: an empty proof), each LPREP
+// attested by privateKey. Returns { packages, lpreps, lcorpus, lgrow }.
+async function corpusPackages({ shards, corpusId, spdx, sourceShas, session, privateKey, keyId, keyVector, epochToken, tier = 'S', salts = null }) {
+    const lpreps = shards.map((s, j) => lprep({ record: s.record, text: s.text, corpusId, shardIndex: j, spdx, sourceSha: sourceShas[j],
+        lvocabHash: session.lvocabHash, laddrHash: session.laddrHash, tier, salt: tier === 'P' ? salts[j] : null, vocab: session.vocab }).text);
+    const tree = corpusTree(lpreps), N = tree.n, lc = lcorpus({ corpusId, tree, spdxSha: spdxSetSha(lpreps.map(() => spdx)) });
+    const proof = N > 1 ? tree.consistency(N - 1) : [];
+    const lg = lgrow({ corpusId, nOld: N - 1, rootOld: O.toHex(tree.mth(0, N - 1)), nNew: N, rootNew: lc.root, proof });
+    const packages = [];
+    for (let j = 0; j < N; j++) {
+        packages.push(makePackage({ record: shards[j].record, lprep: lpreps[j], salt: tier === 'P' ? salts[j] : null,
+            attestation: await attestSign(privateKey, { keyId, keyVector, epochToken }, lpreps[j]), lcorpus: lc.text, inclusion: tree.path(j), lgrow: lg.text, consistency: proof }));
+    }
+    return { packages, lpreps, lcorpus: lc.text, lgrow: lg.text, tree };
+}
+// ---- the chain trace (reference/traces_chain.py writes traces/chain_v1.txt; Python is the authority). chainTraceLines
+// regenerates every line, header included, from the trace's own seeds (8000 + i) and fixed inputs; wn (WordNet) gives
+// the two verb shards (without it the lines from 'shard V0' on are not written and are reported skipped). Async: the
+// verdicts come from verifyPackage (WebCrypto). The signatures are RFC 6979's, computed here (ecdsaSignDet).
+const CHAIN_HEAD = [
+    "# chain_v1: the chain track (lexicon.chain, records, manifest, attest, verify). Python is the authority; every line",
+    "# below must be regenerated by lexicon_core.js. Hex is lowercase except packets (16 upper hex digits, as Owl writes",
+    "# them). sha256(x) is of x's UTF-8. A list is written comma-joined, '-' when empty. Numbers are JS Number::toString.",
+    "# codec <name> <bytes> <packet> <kernelPacket> <has80> <quatHex(crystalQuat)> <leaf_hash(0, bytes)> <residual hex",
+    "#   length> <residual, or sha256:<hex> when longer than 128 digits>  (the cases: C0 'a', C1 'Hello, world!', C2",
+    "#   [75,0,7], C3 bytes 0..255, C4 720 zero bytes, C5 720 bytes Rng(8050).below(256), C6 720 bytes 97 +",
+    "#   Rng(8051).below(4), C7 'é' x 150 as UTF-8)",
+    "# decode <name> <decode_chunk(residual, bytes) equals the bytes>",
+    "# silent <name> <count of single-bit residual flips that decode the same> <first 8 as i:bit:kind>  (S4's order: hex",
+    "#   digit i ascending, then bit 0..3 of that digit; kind padding / escape / other)",
+    "# hypot <i> <a0> <a1> <a2> <a3> <Math.hypot(a0..a3)> <quatHex(qn(a))>: doubles as 16 hex digits of their IEEE-754",
+    "#   bits; from one Rng(8060), each component is (2 random() - 1) * [1e-6, 1e-5, ..., 1e6][below(13)], then 0 when",
+    "#   below(8) == 0, then -0 in place of a 0 when below(16) == 0",
+    "# fixed <i> <x as 16 hex digits> <x.toFixed(12)> <x.toFixed(4)> <String(x)>: x from the same Rng after the hypot cases",
+    "# synth <seed> <draws> <bytes> <code points> <two-byte code points> <chunks> <chunks with a 0x80 crystal byte>",
+    "#   <sha256 of the UTF-8>  (Amendment 7 item 2's generator, Rng(seed))",
+    "# shard <name> <bytes> <sha256 of the UTF-8>: S0-S2 the synthetic shards of seeds 8000-8002, V0 and V1 the first two",
+    "#   verb gloss shards (spike S4's cut, lexicon.chain.gloss_shards)",
+    "# rec <shard> <off|on> <field> <value>: every field of grow(text, engrams) in Owl's key order; stream and",
+    "#   engramStream as <length> <sha256>, leafHashes as <count> <sha256(JSON.stringify(leafHashes))>, segCuts as JSON",
+    "# recjson <shard> <off|on> <sha256(JSON.stringify(record))>",
+    "# chunk <shard> <k> <packet> <kernelPacket> <residual hex length> <sha256(residual)> <leafHash>  (engrams off)",
+    "# kernel <shard> <sha256(stream)> <stream differs from Owl's> <chainId equal> <merkleRoot equal>: L8 control 1's",
+    "#   grower (BioChain-AI's normalisation, 0x80 -> 0x81)",
+    "# binary <shard> <leaf 0> <merkleRoot> <chainId> <every leaf differs>: L8 control 2's grower (leaves over binary)",
+    "# weave3 <shard> <K> <bit lengths of |q0|..|q3|> <weave3Sha> <norm = 5^(28K)> <unfold gives the prefixes> <the",
+    "#   segment product equals it>",
+    "# seg <shard> <s> <lo> <hi> <sha256 of the segment sub-weave's components in decimal, comma-joined>",
+    "# weave3full <name> <q0> <q1> <q2> <q3>: the exact weave of codec case C1's one-chunk record",
+    "# ids <shard> <number of V0 ids> <idStreamSha256> <first 12 ids>",
+    "# lvocab <LVOCAB/1 string>, lvocabHash <hash>",
+    "# addrrow <row>: 12 trace rows id|token|word|len|h3PointSha|h2PointSha (word r from Rng(8200 + r): 1 + below(12)",
+    "#   letters, the root letter below(6), then children(word)[below(5)]); addrTableRoot <hex>; laddr <LADDR/1 string",
+    "#   with V0's hash and the trace table's root>; laddrHash <hash>",
+    "# lprep <shard> <off|on> <LPREP/1 Tier S>; lprepHash <shard> <off|on> <hash>; lprepP <shard> <off|on> <salt> <Tier P>",
+    "#   (corpusId lexicon-trace-v1, shardIndex 0..4 in the order S0 S1 S2 V0 V1, spdx CC0-1.0 for S, the WordNet ref for",
+    "#   V, sourceUrlSha of 'rng:8000+i' or the WordNet URL; the salt of shard j is the test salt of j)",
+    "# ct <n> <root>: the Certificate Transparency reference vector's roots, n = 0..8",
+    "# rfcpath <m> <names>, rfcproof <m> <names>: RFC 6962 2.1.3's audit paths of d0, d3, d4, d6 and PROOF(3), (4), (6)",
+    "#   over its 7 leaves, the hashes named a..l as the RFC names them",
+    "# rfc <j> <K> <root>: K leaves of 32 bytes from Rng(8100 + j), eight next_u32 big-endian each",
+    "# incl <j> <i> <proof> <verifies> <rejected for leaf i+1 mod K> <rejected at position i+1 mod K> ('-' when K = 1)",
+    "# cons <j> <m> <proof> <verifies> <rejected with the old root's first byte flipped>, m = 1..K",
+    "# alter <j> <class> <i> <root changed>: replace (first byte of entry i flipped), delete i, insert 32 zero bytes",
+    "#   before i, swap i and i+1, duplicate-last, truncate to the first i (i = 1..K-1)",
+    "# shdccp2 <j> <K> <root of the hex leaves> <root with the last duplicated> <equal>",
+    "# xor <j> <K> <XOR of the 64-bit prefixes, 16 hex digits>; swap <j> <i> <XOR unchanged> <exact weave changed>",
+    "# identity <identityId> | epoch <token> | keyVector <hex> | key <A|B> <keyId> <x> <y> <status>",
+    "# registry <sha256> <snapshot JSON>",
+    "# attest <package> <payload> <signature P1363> <signature DER>  (RFC 6979 deterministic ECDSA, P-256, SHA-256; a",
+    "#   port without RFC 6979 reads the signatures from these lines, and from short lines the DER, as input)",
+    "# twin <package> <high-S twin P1363>",
+    "# short <r|s> <n> <DER> <P1363, r and s left-padded> <P1363 unpadded>: the first n with r (or s) < 2^248 among",
+    "#   key A's deterministic signatures of 'hyperbolic-lexicon trace short <n>'",
+    "# lcorpus <corpus> <string> | lgrow <corpus> <string> | inclproof <corpus> <j> <proof> | consproof <corpus> <proof>",
+    "#   corpora: lexicon-trace-v1 (engrams on, Tier S; packages PS0..PV1), lexicon-trace-off-v1 (engrams off; OS0..OV1),",
+    "#   lexicon-trace-p-v1 (engrams on, Tier P with the test salts; QS0..QV1); every LPREP attested by key A",
+    "# pkg <name> <sha256(JSON.stringify(package))>: keys record, lprep, salt (Tier P), attestation, lcorpus, inclusion,",
+    "#   lgrow, consistency; proofs as lists of hex strings",
+    "# tampers of PS0 and PV0 (<package>.<case>): T1 leafHashes and merkleRoot deleted; T2 packet 2's crystal32 bit 0",
+    "#   (word bit 24) flipped, parity re-fixed; T3 the LPREP's lvocabHash with its last hex digit changed (S4's rule: '0'",
+    "#   becomes '1', anything else '0'); T4 the LPREP attested by key B (revoked); T5 the next package's attestation; T6",
+    "#   the Tier-P package Q of the same shard with the next shard's salt; T7 frames 0 and 1 swapped; T7last the last two",
+    "#   frames swapped; T8 chainId's last hex digit changed; T9 frame 0's residual with the first silent flip (line flip);",
+    "#   twin the high-S twin signature; unknown attested by key C (SHA-256('hyperbolic-lexicon trace key C') mod (n - 1)",
+    "#   + 1, not in the registry); keyVector the block's keyVector with its last digit changed; sig the signature's last",
+    "#   hex digit changed; engramCount + 1; value + 0.0001 (toFixed(4)); shardIndex + 1 in the LPREP; inclusion the first",
+    "#   proof hash's last digit changed; consistency the last proof hash's; lcorpusRoot the LCORPUS root's",
+    "# flip <package> <frame> <i:bit:kind>: the T9 flip used",
+    "# verdict <name> <selfConsistent> <authentic> <failed>",
+    "# checks <name> <one letter per check, in order: P pass, F fail, - not run>",
+    "#   checks: parity canonical crystal leaves weaves derived commitment attestation inclusion consistency",
+];
+const tf = b => (b ? 'true' : 'false');
+const lst = xs => (xs.length ? xs.map(String).join(',') : '-');
+const lastDigit = s => s.slice(0, -1) + (s.endsWith('0') ? '1' : '0');   // S4's T8 rule
+function dhex(x) { const b = new Uint8Array(8); new DataView(b.buffer).setFloat64(0, x); return hex(b); }
+const bitLen = x => (x === 0n ? 0 : (x < 0n ? -x : x).toString(2).length);
+const clone = o => JSON.parse(JSON.stringify(o));
+function chainCodecCases() {
+    const r5 = new C.Rng(8050), r6 = new C.Rng(8051);
+    return [['C0', strBytes('a')], ['C1', strBytes('Hello, world!')], ['C2', Uint8Array.of(75, 0, 7)], ['C3', Uint8Array.from({ length: 256 }, (_, i) => i)],
+        ['C4', new Uint8Array(720)], ['C5', Uint8Array.from({ length: 720 }, () => r5.below(256))], ['C6', Uint8Array.from({ length: 720 }, () => 97 + r6.below(4))],
+        ['C7', utf8('é'.repeat(150))]];
+}
+const CHAIN_TRACE_TOKENS = ['[PAD]', '[UNK]', 'the', '##ing', 'cat', '##s', '|', 'é', '中', 'run', '42', '...'];
+const chainTraceWords = () => Array.from({ length: 12 }, (_, r) => { const g = new C.Rng(8200 + r), n = 1 + g.below(12), w = [g.below(6)]; while (w.length < n) w.push(P.children(w)[g.below(5)]); return w; });
+async function chainTraceLines(wn = null) {
+    const { BC, EC } = chainCores();
+    const out = CHAIN_HEAD.slice(), say = l => out.push(l), v0 = loadV0();
+    // ---- the codec
+    for (const [name, b] of chainCodecCases()) {
+        const res = BC.encodeChunk(b), rtxt = res.length <= 128 ? res : 'sha256:' + sha256Str(res), pk = BC.crystallizeBytes(b);
+        say(`codec ${name} ${b.length} ${pk} ${kernelCrystallize(b)} ${tf(crystalHas80(pk))} ${BC.quatHex(BC.crystalQuat(b))} ${leafHash(0, b)} ${res.length} ${rtxt}`);
+        const dd = BC.decodeChunk(res, b.length);
+        say(`decode ${name} ${tf(dd.length === b.length && dd.every((v, i) => v === b[i]))}`);
+    }
+    for (const [name, b] of chainCodecCases()) {
+        if (name !== 'C1' && name !== 'C6') continue;
+        const fl = silentFlips(BC.encodeChunk(b), b);
+        say(`silent ${name} ${fl.length} ` + lst(fl.slice(0, 8).map(x => `${x.i}:${x.bit}:${x.kind}`)));
+    }
+    // ---- V8's Math.hypot and toFixed
+    const g = new C.Rng(8060), SCALES = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6];
+    const draw = () => { let x = (2 * g.random() - 1) * SCALES[g.below(13)]; if (g.below(8) === 0) x = 0; if (g.below(16) === 0) x = x === 0 ? -0 : x; return x; };
+    for (let i = 0; i < 40; i++) { const a = [draw(), draw(), draw(), draw()]; say(`hypot ${i} ${a.map(dhex).join(' ')} ${dhex(Math.hypot(...a))} ${BC.quatHex(BC.qn(a))}`); }
+    for (let i = 0; i < 40; i++) { const x = draw(); say(`fixed ${i} ${dhex(x)} ${x.toFixed(12)} ${x.toFixed(4)} ${String(x)}`); }
+    // ---- the shards
+    const shards = [];
+    for (let i = 0; i < 3; i++) {
+        const s = synthShard(8000 + i), K = Math.ceil(s.data.length / BC.CHUNK);
+        say(`synth ${8000 + i} ${s.draws} ${s.data.length} ${s.codePoints} ${s.twoByte} ${K} ${s.chunks80.length} ${sha256Hex(s.data)}`);
+        shards.push({ name: `S${i}`, text: s.text, data: s.data, spdx: CHAIN_PINS.synthSpdx, src: sourceUrlSha(synthSource(i, 8000)) });
+    }
+    if (!wn) return { lines: out, complete: false };
+    glossShards(wn, 'verb').slice(0, 2).forEach((t, k) => shards.push({ name: `V${k}`, text: t, data: utf8(t), spdx: CHAIN_PINS.c0Spdx, src: sourceUrlSha(CHAIN_PINS.wordnetUrl) }));
+    for (const s of shards) say(`shard ${s.name} ${s.data.length} ${sha256Hex(s.data)}`);
+    const recs = new Map();
+    for (const s of shards) for (const mode of ['off', 'on']) {
+        const rec = growSync(s.text, { engrams: mode === 'on' });
+        recs.set(s.name + mode, rec);
+        for (const [k, v] of Object.entries(rec)) {
+            const val = k === 'stream' || k === 'engramStream' ? `${v.length} ${sha256Str(v)}` : k === 'leafHashes' ? `${v.length} ${sha256Str(JSON.stringify(v))}`
+                : k === 'segCuts' ? JSON.stringify(v) : String(v);
+            say(`rec ${s.name} ${mode} ${k} ${val}`);
+        }
+        say(`recjson ${s.name} ${mode} ${sha256Str(JSON.stringify(rec))}`);
+    }
+    for (const s of shards) {
+        const rec = recs.get(s.name + 'off');
+        framesStrict(rec.stream).forEach((f, k) => {
+            const ch = s.data.subarray(k * BC.CHUNK, (k + 1) * BC.CHUNK);
+            say(`chunk ${s.name} ${k} ${f.packet} ${kernelCrystallize(ch)} ${f.residual.length} ${sha256Str(f.residual)} ${rec.leafHashes[k]}`);
+        });
+        const kr = growSync(s.text, { engrams: false, packets: 'kernel' });
+        say(`kernel ${s.name} ${sha256Str(kr.stream)} ${tf(kr.stream !== rec.stream)} ${tf(kr.chainId === rec.chainId)} ${tf(kr.merkleRoot === rec.merkleRoot)}`);
+        const br = growSync(s.text, { engrams: false, leaves: 'binary' });
+        say(`binary ${s.name} ${br.leafHashes[0]} ${br.merkleRoot} ${br.chainId} ${tf(br.leafHashes.every((h, i) => h !== rec.leafHashes[i]))}`);
+    }
+    for (const s of shards) {
+        const rec = recs.get(s.name + 'off'), w = weaveReport(rec.leafHashes, rec.segCuts);
+        say(`weave3 ${s.name} ${rec.leafHashes.length} ${w.q.map(bitLen).join(' ')} ${w.sha256} ${tf(w.normOk)} ${tf(w.unfoldOk)} ${tf(w.segmentsOk)}`);
+        w.segments.forEach((sw, k) => say(`seg ${s.name} ${k} ${rec.segCuts[k]} ${rec.segCuts[k + 1]} ${weave3Sha(sw)}`));
+    }
+    say('weave3full C1 ' + exactWeave(growSync(strBytes('Hello, world!'), { engrams: false }).leafHashes).map(String).join(' '));
+    for (const s of shards) { const ids = encode(s.data, v0).ids; say(`ids ${s.name} ${ids.length} ${shardIdStreamSha(s.data, v0)} ${lst(ids.slice(0, 12))}`); }
+    // ---- the records
+    const lv = lvocab({ vocab: v0 });
+    say(`lvocab ${lv.text}`); say(`lvocabHash ${lv.sha256}`);
+    const rows = addrRows(CHAIN_TRACE_TOKENS, chainTraceWords());
+    rows.forEach(r => say(`addrrow ${r}`));
+    const root = addrTableRoot(rows), la = laddr({ vocab: v0, root });
+    say(`addrTableRoot ${root}`); say(`laddr ${la.text}`); say(`laddrHash ${la.sha256}`);
+    const CORPUS = 'lexicon-trace-v1';
+    shards.forEach((s, j) => {
+        for (const mode of ['off', 'on']) {
+            const o = { record: recs.get(s.name + mode), text: s.data, corpusId: CORPUS, shardIndex: j, spdx: s.spdx, sourceSha: s.src, lvocabHash: lv.sha256, laddrHash: la.sha256, vocab: v0 };
+            const S = lprep(o);
+            say(`lprep ${s.name} ${mode} ${S.text}`); say(`lprepHash ${s.name} ${mode} ${S.sha256}`);
+            const salt = testSalt(j);
+            say(`lprepP ${s.name} ${mode} ${salt} ${lprep({ ...o, tier: 'P', salt }).text}`);
+        }
+    });
+    // ---- RFC 6962
+    const CT = ['', '00', '10', '2021', '3031', '40414243', '5051525354555657', '606162636465666768696a6b6c6d6e6f'].map(h => (h ? fromHex(h) : new Uint8Array(0)));
+    const ctLog = new RfcTree(CT);
+    for (let n = 0; n <= 8; n++) say(`ct ${n} ${O.toHex(ctLog.mth(0, n))}`);
+    const L7 = new RfcTree(CT.slice(0, 7)), nm = { a: L7.mth(0, 1), b: L7.mth(1, 2), c: L7.mth(2, 3), d: L7.mth(3, 4), e: L7.mth(4, 5), f: L7.mth(5, 6), j: L7.mth(6, 7),
+        g: L7.mth(0, 2), h: L7.mth(2, 4), i: L7.mth(4, 6), k: L7.mth(0, 4), l: L7.mth(4, 7) };
+    const nameOf = new Map(Object.entries(nm).map(([k, v]) => [O.toHex(v), k])), names = hs => hs.map(h => nameOf.get(O.toHex(h)) || '?').join('');
+    for (const m of [0, 3, 4, 6]) say(`rfcpath ${m} ${names(L7.path(m))}`);
+    for (const m of [3, 4, 6]) say(`rfcproof ${m} ${names(L7.consistency(m))}`);
+    [1, 2, 3, 4, 5, 7, 8, 13].forEach((K, j) => {
+        const D = rfcLeaves(8100 + j, K), lg = new RfcTree(D), rt = lg.root(), hx = list => lst(list.map(h => O.toHex(h)));
+        say(`rfc ${j} ${K} ${O.toHex(rt)}`);
+        for (let i = 0; i < K; i++) {
+            const p = lg.path(i), ok = rfcVerifyInclusion(i, K, rfcLeafHash(D[i]), p, rt);
+            if (K >= 2) {
+                const o = (i + 1) % K;
+                say(`incl ${j} ${i} ${hx(p)} ${tf(ok)} ${tf(!rfcVerifyInclusion(i, K, rfcLeafHash(D[o]), p, rt))} ${tf(!rfcVerifyInclusion(o, K, rfcLeafHash(D[i]), p, rt))}`);
+            } else say(`incl ${j} ${i} ${hx(p)} ${tf(ok)} - -`);
+        }
+        for (let m = 1; m <= K; m++) {
+            const p = lg.consistency(m), rm = lg.mth(0, m), bad = Uint8Array.from(rm);
+            bad[0] ^= 1;
+            say(`cons ${j} ${m} ${hx(p)} ${tf(rfcVerifyConsistency(m, K, rm, rt, p))} ${tf(!rfcVerifyConsistency(m, K, bad, rt, p))}`);
+        }
+        const changed = list => tf(!bytesEq(rfcRoot(list), rt));
+        for (let i = 0; i < K; i++) {
+            const rep = Uint8Array.from(D[i]); rep[0] ^= 1;
+            say(`alter ${j} replace ${i} ${changed(D.map((x, k) => (k === i ? rep : x)))}`);
+            say(`alter ${j} delete ${i} ${changed(D.filter((_, k) => k !== i))}`);
+            say(`alter ${j} insert ${i} ${changed([...D.slice(0, i), new Uint8Array(32), ...D.slice(i)])}`);
+            if (i + 1 < K) say(`alter ${j} swap ${i} ${changed([...D.slice(0, i), D[i + 1], D[i], ...D.slice(i + 2)])}`);
+            if (i >= 1) say(`alter ${j} truncate ${i} ${changed(D.slice(0, i))}`);
+        }
+        say(`alter ${j} duplicate-last ${K - 1} ${changed([...D, D[K - 1]])}`);
+        const hxl = D.map(d => hex(d)), a = merkleShdccp2(hxl), b = merkleShdccp2([...hxl, hxl[K - 1]]);
+        say(`shdccp2 ${j} ${K} ${a} ${b} ${tf(a === b)}`);
+        say(`xor ${j} ${K} ${xorSummary(hxl)}`);
+        const vals = D.map(d => bytesBig(d.subarray(0, 8))), q0 = EC.chainQuaternion(vals);
+        for (let i = 0; i + 1 < K; i++) {
+            const sw = vals.slice(); [sw[i], sw[i + 1]] = [sw[i + 1], sw[i]];
+            const xs = sw.reduce((x, v) => x ^ v, 0n) === vals.reduce((x, v) => x ^ v, 0n);
+            say(`swap ${j} ${i} ${tf(xs)} ${tf(!EC.qeq(EC.chainQuaternion(sw), q0))}`);
+        }
+    });
+    // ---- the attestation
+    const EPOCH = epochTokenOf('2000-01-01'), ident = identityIdOf(), kv = keyVectorOf(ident, EPOCH), K3 = TRACE_KEYS();
+    say(`identity ${ident}`); say(`epoch ${EPOCH}`); say(`keyVector ${kv}`);
+    const status = { A: 'active', B: 'revoked' }, entries = [];
+    for (const k of ['A', 'B']) { const jwk = testJwk(K3[k]); say(`key ${k} ${keyIdOf(jwk)} ${jwk.x} ${jwk.y} ${status[k]}`); entries.push({ publicJwk: jwk, keyVector: kv, status: status[k] }); }
+    const snap = registrySnapshot(entries);
+    say(`registry ${snap.sha256} ${snap.text}`);
+    const session = await chainSession({ vocab: v0, lvocab: lv.text, laddr: la.text, registry: snap.text, registrySha256: snap.sha256 });
+    for (const which of ['r', 's']) {
+        let n = 0, sg;
+        for (;; n++) { sg = ecdsaSignDet(K3.A, strBytes(`hyperbolic-lexicon trace short ${n}`)); if ((which === 'r' ? sg.r : sg.s) < (1n << 248n)) break; }
+        say(`short ${which} ${n} ${hex(derOf(sg))} ${hex(p1363Of(sg))} ${hex(p1363Unpadded(sg))}`);
+    }
+    const show = async (name, pkg) => {
+        say(`pkg ${name} ${sha256Str(JSON.stringify(pkg))}`);
+        const v = await verifyPackage(session, pkg);
+        say(`verdict ${name} ${verdictText(v)}`);
+        say(`checks ${name} ` + v.checks.map(c => (c.ok === true ? 'P' : c.ok === null ? '-' : 'F')).join(''));
+    };
+    const corpus = (cid, mode, tier = 'S') => {
+        const lps = shards.map((s, j) => lprep({ record: recs.get(s.name + mode), text: s.data, corpusId: cid, shardIndex: j, spdx: s.spdx, sourceSha: s.src,
+            lvocabHash: lv.sha256, laddrHash: la.sha256, vocab: v0, tier, salt: tier === 'P' ? testSalt(j) : null }).text);
+        const tree = corpusTree(lps), N = tree.n, lc = lcorpus({ corpusId: cid, tree, spdxSha: spdxSetSha(shards.map(s => s.spdx)) });
+        const cproof = N > 1 ? tree.consistency(N - 1) : [];
+        const lg = lgrow({ corpusId: cid, nOld: N - 1, rootOld: O.toHex(tree.mth(0, N - 1)), nNew: N, rootNew: lc.root, proof: cproof });
+        say(`lcorpus ${cid} ${lc.text}`); say(`lgrow ${cid} ${lg.text}`); say(`consproof ${cid} ${lst(hexList(cproof))}`);
+        return shards.map((s, j) => {
+            say(`inclproof ${cid} ${j} ${lst(hexList(tree.path(j)))}`);
+            return makePackage({ record: recs.get(s.name + mode), lprep: lps[j], salt: tier === 'P' ? testSalt(j) : null, attestation: attestDet(K3.A, kv, lps[j], EPOCH),
+                lcorpus: lc.text, inclusion: tree.path(j), lgrow: lg.text, consistency: cproof });
+        });
+    };
+    const payloadOf = b => attestPayload(b);
+    const derHex = sigHex => hex(derOf(rsOfP1363(fromHex(sigHex))));
+    const pk = corpus(CORPUS, 'on');
+    for (let j = 0; j < pk.length; j++) {
+        const b = pk[j].attestation, nm2 = 'P' + shards[j].name;
+        say(`attest ${nm2} ${payloadOf(b)} ${b.sig} ${derHex(b.sig)}`);
+        say(`twin ${nm2} ${hex(highSTwin(fromHex(b.sig)))}`);
+        await show(nm2, pk[j]);
+    }
+    const pkoff = corpus('lexicon-trace-off-v1', 'off');
+    for (let j = 0; j < pkoff.length; j++) await show('O' + shards[j].name, pkoff[j]);
+    const pkp = corpus('lexicon-trace-p-v1', 'on', 'P');
+    for (let j = 0; j < pkp.length; j++) await show('Q' + shards[j].name, pkp[j]);
+    // ---- tampers of PS0 and PV0 (traces_chain.py's cases, in its order)
+    for (const j of [0, 3]) {
+        const base = pk[j], nm2 = 'P' + shards[j].name, K = base.record.leafHashes.length;
+        const f0 = framesStrict(base.record.stream)[0], fl = silentFlips(f0.residual, Uint8Array.from(BC.decodeChunk(f0.residual, f0.chunkLen)), 1);
+        const withAtt = d => { const p = clone(base); p.attestation = attestDet(d, kv, p.lprep, EPOCH); return p; };
+        const t4 = withAtt(K3.B), unknown = withAtt(K3.C);
+        say(`attest ${nm2}.T4 ${payloadOf(t4.attestation)} ${t4.attestation.sig} ${derHex(t4.attestation.sig)}`);
+        say(`attest ${nm2}.unknown ${payloadOf(unknown.attestation)} ${unknown.attestation.sig} ${derHex(unknown.attestation.sig)}`);
+        const edit = f => { const p = clone(base); f(p); return p; };
+        const fo = frameOffsets(base.record.stream);
+        const cases = [
+            ['T1', edit(p => { delete p.record.leafHashes; delete p.record.merkleRoot; })],
+            ['T2', edit(p => { const s = p.record.stream, at = fo[2][0]; p.record.stream = s.slice(0, at) + refixParity(word16(BigInt('0x' + s.slice(at, at + 16)) ^ (1n << 24n))) + s.slice(at + 16); })],
+            ['T3', edit(p => { p.lprep = withField(p.lprep, 'lvocabHash', lastDigit(p.lprep.split('|')[9])); })],
+            ['T4', t4],
+            ['T5', edit(p => { p.attestation = clone(pk[j + 1].attestation); })],
+            ['T6', (() => { const p = clone(pkp[j]); p.salt = testSalt(j + 1); return p; })()],
+            ['T7', edit(p => { p.record.stream = swapFrames(p.record.stream, 0); })],
+            ['T7last', edit(p => { p.record.stream = swapFrames(p.record.stream, K - 2); })],
+            ['T8', edit(p => { p.record.chainId = lastDigit(p.record.chainId); })],
+            ['T9', edit(p => { const s = p.record.stream, [, r0, rl] = fo[0]; p.record.stream = s.slice(0, r0) + fl[0].alt + s.slice(r0 + rl); })],
+            ['twin', edit(p => { p.attestation.sig = hex(highSTwin(fromHex(base.attestation.sig))); })],
+            ['unknown', unknown],
+            ['keyVector', edit(p => { p.attestation.keyVector = lastDigit(p.attestation.keyVector); })],
+            ['sig', edit(p => { p.attestation.sig = lastDigit(p.attestation.sig); })],
+            ['engramCount', edit(p => { p.record.engramCount += 1; })],
+            ['value', edit(p => { p.record.value = +(p.record.value + 0.0001).toFixed(4); })],
+            ['shardIndex', edit(p => { const f = p.lprep.split('|'); f[2] = String(Number(f[2]) + 1); p.lprep = f.join('|'); })],
+            ['inclusion', edit(p => { p.inclusion[0] = lastDigit(p.inclusion[0]); })],
+            ['consistency', edit(p => { p.consistency[p.consistency.length - 1] = lastDigit(p.consistency[p.consistency.length - 1]); })],
+            ['lcorpusRoot', edit(p => { p.lcorpus = p.lcorpus.split('|').map((x, i) => (i === 3 ? lastDigit(x) : x)).join('|'); })],
+        ];
+        say(`flip ${nm2} 0 ${fl[0].i}:${fl[0].bit}:${fl[0].kind}`);
+        for (const [cn, p] of cases) await show(`${nm2}.${cn}`, p);
+    }
+    return { lines: out, complete: true };
+}
+// ===== end of chain
+
 // ================================================================== parity: all sections
 // traces = { normalise, wordpiece, address, points, rank } (file texts); vocabs = { V0, V1 }; wn = a WordNet object
 // (reference/golden/wordnet_v1.cjs's load(), Node only) or null: the geometry lines that need it are then skipped.
@@ -1591,5 +2904,24 @@ return {
     floatCols, floatKeys, exactOrder, adjacentFlags, floatQuery, exactTie, apOfOrder, acoshOrder, acoshAp, textBytes,
     // L3(f), map A, the geometry traces
     canonicalPointLines, canonicalPointList, l3fLine, isSpecial, nbPunct, mapA, wordOf, addressTraceLines, pointsTraceLines, pointsTraceWords, rankTraceLines,
+    // chain (Phase 3): the grower, the stream, the synthetic and gloss shards (L8)
+    chainCores, CHAIN_PINS, CHAIN_SOURCES, OWL_FIELDS, strBytes, sha256Str, latin1Utf8, concatBytes, bytesEq, isHex, leafHash, merkleShdccp2, weavesOf, segCutsOf,
+    chunksOf, shardText, kernelCrystallize, leafHashBinary, engramLayer, growSync, recordDiff, framesStrict, frameOffsets, frameHex, swapFrames, refixParity, word16, crystalHas80,
+    decodeTraced, silentFlips,
+    SYNTH_LETTERS, SYNTH_PUNCT, synthDraw, synthShard, glossLines, cutShards, glossShards,
+    // RFC 6962 and the controls of L9; the exact weave
+    rfcLeafHash, rfcNodeHash, RFC_EMPTY_ROOT, largestPow2Below, RfcTree, rfcVerifyInclusion, rfcVerifyConsistency, rfcRoot, rfcLeaves, xorSummary,
+    weaveValues, exactWeave, weaveText, weave3Sha, segmentWeaves, weaveReport,
+    // the records
+    recordOf, nbSpecShaOf, nbSpecSha, lvocab, addrRows, laddrRows, addrTableRoot, laddr, laddrOf, shardIdStream, shardIdStreamSha, synthSource, sourceUrlSha, testSalt, saltedRoot,
+    lprepFields, lprep, LPREP_FIELDS, withField, spdxSetSha, corpusTree, lcorpus, proofSha, lgrow, hexList, bytesList,
+    // ATTEST/1 and the hardened verifier (L10, L11)
+    attestPayload, keyIdOf, publicJwkOf, importPublic, newKeyPair, attestSign, KEY_STATUSES, registryEntry, registrySnapshot, loadSnapshot, sigBytes, verifyAttestation,
+    PACKAGE_KEYS, CHECKS, SELF_CHECKS, AUTH_CHECKS, parseLprep, parseLcorpus, parseLgrow, chainSession, verifyPackage, verdictText, fromCharCodes, makePackage, corpusPackages,
+    // ECDSA P-256 with RFC 6979 nonces (trace keys only), the encodings, BioChain-AI's identity and key vector
+    P256, p256Mul, hmacSha256, ecdsaSignDet, p1363Of, rsOfP1363, derOf, p1363Unpadded, highSTwin, b64u, testJwk, attestDet, TRACE_KEYS,
+    IDENTITY_SEED, IDENTITY_UID, CANONICAL_PARAMS, identityIdOf, keyVectorOf, epochTokenOf,
+    // the chain trace (reference/traces/chain_v1.txt)
+    CHAIN_HEAD, chainTraceLines,
 };
 });

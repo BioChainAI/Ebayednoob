@@ -18,6 +18,16 @@ Modules (Phase 1):
     phase2          Phase 2 (Amendment 4): L1's records and digests, S6's R(s) from the table (L1 control 1), the
                     Hugging Face wrapper; L4(b)'s float keys, inversions and control 2 (run_claims.py --phase2)
 
+Modules (Phase 3, Amendment 7):
+    chain           Owl Academy's shdccp/2 biochain grown synchronously (L8): the codec, packets (and BioChain-AI's
+                    0x80 normalisation), leaves, the shdccp/2 root, the float weaves with V8's Math.hypot and exact
+                    toFixed, the exact norm-5 weave, residual aliases, the synthetic generator, the dry-run shards
+    records         LVOCAB/1 (golden/nb_spec_v1.txt pinned), LADDR/1 with addrTableRoot over map A, LPREP/1 (Tier S
+                    and P), LCORPUS/1, LGROW/1
+    manifest        RFC 6962 trees, inclusion and consistency proofs with RFC 9162 verification (L9)
+    attest          ATTEST/1 with `cryptography`: P1363 <-> DER, the registry snapshot, BioChain's identity port (L10)
+    verify          packages, the hardened verifier and the T1-T9 tamper helpers (L10, L11)
+
 Hyperbolic Oracles' exact modules (hpstep: prng, problems, decode3d) and Engram Mind's Eye's (engram: ttmpt,
 address) are imported in place, unchanged, from their reference folders.
 """

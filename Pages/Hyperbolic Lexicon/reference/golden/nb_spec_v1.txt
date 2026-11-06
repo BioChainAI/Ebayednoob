@@ -1,0 +1,29 @@
+**1. N_B, exactly.** The input is a UTF-8 byte string; invalid UTF-8 is rejected and its first bad byte offset
+reported. The steps are BERT's `BasicTokenizer` (google-research/bert `tokenization.py`), on the pinned table:
+1. Drop U+0000, U+FFFD and every code point whose 15.1 category starts with C (Cc, Cf, Co; Cs cannot occur in valid
+   UTF-8), except tab, line feed and carriage return; Cn is kept for step 4. Tab, LF, CR and Zs become U+0020.
+   (BERT drops every C category. Explainer 3 listed Cc and Cf only; BERT's rule, which also drops Co, is the one
+   used. Cn is not dropped because D5 makes it fail closed.)
+2. Put U+0020 before and after every code point in BERT's CJK ranges: 4E00–9FFF, 3400–4DBF, 20000–2A6DF,
+   2A700–2B73F, 2B740–2B81F, 2B820–2CEAF, F900–FAFF, 2F800–2FA1F.
+3. Split on whitespace as Python's `str.split()` does after step 1: U+0020, U+2028 and U+2029 (the only code points
+   that `str.isspace` holds for and that survive step 1). Each piece is a *whitespace token*.
+4. A whitespace token that contains a code point unassigned in 15.1 (category Cn) **fails closed**: it becomes one
+   word written `[UNK]`, its byte span is logged, and steps 5–6 skip it.
+5. Lowercase the token as CPython 3.13's `str.lower` does at 15.1 (full mappings; Final_Sigma decided inside the
+   token, from the table's Case_Ignorable and cased-not-ignorable sets), then NFD (recursive canonical
+   decomposition, algorithmic Hangul, stable canonical ordering by combining class), then drop every code point of
+   category Mn.
+6. Split off punctuation: each code point in BERT's ASCII ranges 21–2F, 3A–40, 5B–60, 7B–7E, or of a 15.1 category
+   starting with P, becomes a word of its own; the runs between them are words. Empty words are dropped.
+
+N_B returns the words in order, each with its byte span `[start, end)` in the input: the smallest start and largest
+end of the input code points its code points came from (a code point made by lowercasing or decomposition comes
+from the one it was made from). The *normalised text* is the words joined by single U+0020, as UTF-8. N1 (the
+registered fallback) is unchanged.
+
+**3. Readings fixed in the reference** (each marked `READING` in its code):
+- *N_B.* The offset reported for invalid UTF-8 is where the first ill-formed sequence starts (Unicode Table 3-7,
+  Python's `UnicodeDecodeError.start`). L1's control 3 (accent stripping off) skips NFD and the Mn removal and keeps
+  the lowercase, as BERT does when `strip_accents` is off. A fail-closed word is one `[UNK]` piece with the
+  whitespace token's span.
