@@ -1578,3 +1578,967 @@ rate 3 had mean 0.999973 and rate 1 had 0.999840, a difference of 0.000133. Lore
 decides nothing: A10.8 chooses each cell's rate by the larger exact mean alone, and every printed value of Amendment
 11's tables and the file hashes are right. An independent check of the decisive record found this, and found no
 other difference among the record's decisions, intervals, controls, tuning choices, receipts and table hashes.
+
+### Amendment 13 · 2026-11-07, Stage 2, the lexical claims registered before any code
+
+Written on 2026-11-07, at the start of Stage 2 and before any Stage-2 module, loader, scorer, trainer or runner existed
+in the repository. It registers four claims, L12–L15, the definitions they need and Stage 2's order of work, as "What
+none of this decides" promised. Nothing registered above is changed: where a reading below could be read as a change,
+the reason is given (Amendment 1's rule). No metric (score, correlation, average precision, accuracy, reciprocal rank
+or F1) of any of this project's geometries, embeddings or baselines has been computed on any Stage-2 set. Before it,
+three surveys, three designs, two judges, three reviews and the synthesis and revision that wrote this text downloaded
+the candidate sets into a cache outside the repository, hashed them, read their scripts as text and counted: rows,
+columns, labels, folds, duplicates, word reuse, WordNet 3.0 coverage and monosemy, HyperLex's TYPE values and gold
+ties, and HiT's positives and repeated negatives. One count is a partial preview and is named here. For every
+HyperLex noun row, by TYPE, it is whether some sense pairing is a WordNet closure pair in either direction; for the
+type-of rows and the positives of BLESS, WBLESS and LEDS, whether it is a closure or a spanning-ancestor pair.
+Closure membership is exactly the top tie class of the WN arm's score G_WN, and a spanning ancestor is a prefix in the
+letter tree, where H3's G is near 0; with HyperLex's published per-TYPE means, these counts preview L12(d) and parts
+of L12(a) and L13 (item 20). Timing probes trained a few epochs on WordNet noun sets with unregistered seeds and
+evaluated no table, and synthetic probes drew unregistered seeds too (95000–95050, 95060, 95061, 95104–95113, 95901
+and 95920). No registered seed was drawn. Item 19 lists every count, probe and download, and item 20 what they
+already show about the claims.
+
+*Notation.* U_full is the 82,115 noun synsets. U_@ is the 74,401 noun synsets incident to a noun `@` edge (the
+hypernym graph without instance links, HiT's entity set), with its 75,850 direct edges E and 587,658 indirect pairs T.
+*The suite* is facebookresearch/hypernymysuite at `6891e0eb14edc1abcaa613cadd44a41f5811fae4`. HL, BD, WB, SL, MEN,
+WSR, HiT and GloVe name the instances and pins of item 2 and the claims. In a pair (x, y), x is the candidate hyponym
+and y the candidate hypernym. τ = ln 7 (H3) and ln 12 (H2). P17 is as in Amendment 10. *The definitions amendment* is
+the dated amendment of item 15 step 4 (Amendment 14 unless another comes first). *The lr-freeze amendment* is the one
+amendment after this one that gives the SHA-256 of `reference/settings-stage2.json` (item 15 step 6), found by that
+hash as A11.4 found Amendment 11. *Pass 1* and *pass 2* are the two blind scoring passes of item 8.
+
+| # | Claim | Kind | Track |
+| --- | --- | --- | --- |
+| L12 | On HyperLex's nouns, the exact trees track graded type-of better than the same construction at curvature 0, through ancestry and direction, and H3 as well as WordNet's own graph | statistical | CPU |
+| L13 | On BLESS and WBLESS, the exact trees detect hypernymy and its direction better than the same construction at curvature 0 | statistical (control 3 an exact check) | CPU |
+| L14 | Trained on WordNet's direct noun edges, learned Lorentz beats learned Euclidean at d = 2 and 3 on HiT's multi-hop test and on HyperLex's nouns | statistical | CPU |
+| L15 | At matched information, curvature 0 does as well as the exact trees on similarity and relatedness; GloVe beats H3 on relatedness, and H3 beats GloVe on HyperLex | statistical | CPU |
+
+The Python reference decides all four (item 1); the browser core reproduces their scores after the decisive run and
+decides nothing.
+
+#### L12 · Graded type-of on HyperLex: the exact trees against curvature 0, and what their reading adds
+
+**Claim.** On HyperLex's noun pairs, read by the is-a score G with the maximum over senses (items 3 and 5):
+- (a) the training-free exact trees H3 and H2 track the human ratings better than the same construction at curvature
+  0 (F3, F3\*, F2, F2\*);
+- (b) in H3 and in H2, G tracks them better than the depth gap of the same senses (Dep°): the tree carries ancestry
+  beyond generality;
+- (c) in H3 and in H2, G tracks them better than the symmetric score: the tree carries direction beyond similarity;
+- (d) H3 tracks them as well as WordNet's own graph read by the same form (G_WN), within ±0.02. This part was
+  registered after a partial preview (item 20) and is flagged so in the record.
+
+**Instances.** HL: the rows of `hyperlex-all.txt` whose POS is `N`, in file order: 2,163 pairs, all covered in U_full.
+x is WORD1 and y is WORD2 ("x is a type of y"); the gold is AVG_SCORE (0–6), read as exact decimals. No randomness
+but the controls' and the intervals'. Dry runs: item 13.
+
+**Arms.** H3, H2, F3, F3\*, F2 and F2\* with G (a); H3 and H2 with G, Dep° and Sym (b, c); H3 with G and WN with G_WN
+(d); the controls K3, S-full and W, on H3 with G (item 4).
+
+**Metric.** Spearman ρ of each arm's pair scores against the gold; the paired difference of two arms' ρ with its
+word-level ci_rho interval over the 2,163 rows (item 7).
+
+**Controls that must fail.** If any of controls 1–4 does not fail as required, all four parts are void.
+1. *Hierarchy removed.* The intervals of ρ(H3) − ρ(K3) and ρ(H3) − ρ(S-full\*) lie above 0, S-full\* the strongest of
+   its 20 permutations (item 7).
+2. *Senses scrambled at equal polysemy.* The interval of ρ(H3) − ρ(W\*) lies above 0, W\* the strongest of 20.
+   Otherwise the maximum over senses rewards polysemy, not words.
+3. *Roles reversed.* The interval of ρ(H3 read as Φ_G(x, y)) − ρ(H3 read as Φ_G(y, x)) lies above 0. Otherwise the
+   loader has the roles wrong or the asymmetry carries nothing.
+4. *Gold shuffled.* For each of H3, H2, F3, F3\*, F2, F2\* and WN, the mean ρ over 20 gold permutations satisfies
+   |mean| ≤ 5/√(20·2,162) = 0.0240 (item 7).
+
+**Checks that must pass.** The count checks (item 9). A mismatch stops the run with no result.
+
+**Decision.**
+- (a) Supported if the intervals of ρ(H3) − ρ(F3), ρ(H3) − ρ(F3\*), ρ(H2) − ρ(F2) and ρ(H2) − ρ(F2\*) all lie above 0;
+  refuted if any lies entirely at or below 0; inconclusive otherwise (L5's rule).
+- (b) Supported if ρ(G) − ρ(Dep°) lies above 0 in H3 and in H2; refuted if either lies entirely at or below 0.
+- (c) The same rule for ρ(G) − ρ(Sym).
+- (d) For the interval of ρ(H3) − ρ(WN): supported if it lies within [−0.02, +0.02]; refuted if it lies entirely outside
+  it; inconclusive otherwise; the failing side is reported. The band is L6(b)'s, chosen without the survey counts, and
+  it is narrower than the spread of the published WordNet readings of these pairs (0.214–0.240, HyperLex Table 13,
+  verified).
+
+**Prediction.** Ours and analytic unless graded; nothing was measured on HyperLex.
+- (a) Supported. In H a spanning ancestor t of s loses G only to the bends of the path near t, which do not grow with
+  depth; a non-ancestor loses about 2τ per letter of t below the common prefix. On synthetic random words (item 19),
+  G of a spanning ancestor lay in [−1.85, 0] in H3 (median −0.64) and in [−2.11, 0] in H2 (median −0.30), while a word
+  leaving s's word one letter below their common prefix scored at most −2.26 and −2.57 (medians −3.34 and −4.25), and
+  each further letter cost about 2τ (3.89 in H3, 4.97 in H2). In F a bent path's deficit grows with its legs and the
+  lattice collides, so unrelated words can share a point (G = 0); in F\* every deficit shrinks as 4^−depth. Either way
+  ancestors at one depth interleave with non-ancestors at another. Expected, graded in the write-up and deciding
+  nothing: ρ(H3) between 0.45 and 0.70, every F arm at least 0.10 below it.
+- (b) Supported: Dep° ranks high every pair whose chosen senses lie far apart in depth, ancestry or not, while G sends
+  non-ancestors down by about 2τ per letter. Against it, Dep° grades hyp-1 … hyp-4 by their depth gap as the human
+  means rise (7.99 to 8.62; HyperLex Table 7, verified), which G, near 0 for every ancestor, cannot.
+- (c) Supported: Sym gives (x, y) and (y, x) one score; 464 rows are the reverse of another row, and the hyp and
+  r-hyp means differ by 3.8–6.1 points (Table 7, verified).
+- (d) Refuted on the low side, with inconclusive the likeliest alternative. G is near 0 only for spanning ancestors.
+  Of the 1,004 hyp pairs, 1,003 are closure pairs and 957 spanning-ancestor pairs for some sense pairing (the data
+  survey's counts, item 20); the 46 others leave the top block, worth about 0.02–0.04 of ρ by a rank-displacement
+  estimate. H3's spanning ancestors are themselves spread over about [−1.9, 0] by bend artefacts largely unrelated to
+  the gold, against WN's single tied block at 0, which lowers ρ(H3) further. The word-level interval's half-width is
+  estimated at 0.015–0.026 (0.015 for rows as independent, times at most √(2,163/731) = 1.72 for HL's word reuse), so
+  support needs an estimate near 0.
+- G's known limits against Table 7: synonyms (6.69) tie with the hyp pairs (G = 0 on a shared synset); meronyms (3.14)
+  fall with no-rel (0.64); co-hyponyms (3.29) sit beside r-hyp-1 (4.17).
+- For orientation only (verified; none comparable): Nickel & Kiela's Poincaré 0.512 and Euclidean 0.389 (P17 Table 3:
+  learned, d = 5, no sense rule stated); WN-Basic 0.240, WN-WuP 0.214, WN-LCh 0.214 (WordNet 3.1); LEAR 0.705 (OOV
+  pairs dropped; trained on WordNet's entailment pairs); gensim's 0.48 on 1,981 pairs; human IAA-1 0.854, an agreement,
+  not a ceiling.
+
+**Data.** HyperLex states no licence: hashes only (item 2). WordNet under its licence.
+
+#### L13 · Detection and direction on BLESS and WBLESS
+
+**Claim.** On the suite's BLESS and WBLESS test folds, read by G with the maximum over senses, the exact trees H3 and
+H2 do better than the same construction at curvature 0 in (a) BLESS detection AP, (b) WBLESS detection AP and (c)
+BLESS direction accuracy, the choice of which word of a hypernym pair is the more general.
+
+**Instances.** Test folds only. The validation folds decide nothing; they are scored only for the reported suite
+protocol (item 11).
+- BD: the `bless.tsv` rows with fold `test` covered in U_full, in file order: 12,365 rows, 1,194 labelled True. Its 6
+  repeated pairs and 3 self-pairs (all False) stay as rows. Clusters: word1, 200 concepts.
+- WB: the `wbless.tsv` test rows covered in U_full: 1,493 rows, 764 True. Clusters: the BLESS concept each row holds,
+  word1 if it is one of `bless.tsv`'s 200 word1 values and word2 otherwise. Every covered row holds one; there are
+  192 clusters.
+- BD-dir: BD's 1,194 True rows (word1 the hyponym). A row is correct when Φ_G(x, y) > Φ_G(y, x). Clusters as BD.
+  Pass 1 scores both directions of every covered BD row, and pass 2 selects the True rows (item 8).
+
+**Arms.** H3, H2, F3, F3\*, F2 and F2\* with G; the controls K3, S-full and W, on H3 with G; Sym on H3 and GloVe
+cosine for control 3.
+
+**Metric.** AP with pessimistic ties (a, b) and direction accuracy (c), per arm (item 7). The effects H3 − F3,
+H3 − F3\*, H2 − F2 and H2 − F2\*, each with its ci_cluster interval.
+
+**Controls that must fail.** If any of controls 1–3 does not fail as required, L13 is void.
+1. *Hierarchy removed, senses scrambled.* On each of (a), (b) and (c), the intervals of H3 − K3, H3 − S-full\* and
+   H3 − W\* lie above 0.
+2. *Labels shuffled.* For each of the six arms and each of BD and WB, the mean AP over 20 label permutations is at most
+   π + 1/50, compared exactly, π being the share of True rows (1,194/12,365 and 764/1,493). That bound is at least six
+   null standard errors above a random ranking's expected AP (item 19).
+3. *Symmetric score on direction.* Sym on H3, and GloVe on the BD-dir rows in its vocabulary, give a direction
+   accuracy of exactly 0: every row ties, and a tie is wrong under the strict ">" (Roller et al.'s symmetric Cosine
+   scores .00, verified). Any other value means the direction evaluator breaks ties.
+
+**Checks that must pass.** The count checks (item 9). A mismatch stops the run with no result.
+
+**Decision.** For each part: supported if its four intervals lie above 0; refuted if any lies entirely at or below 0;
+inconclusive otherwise.
+
+**Prediction.** (a), (b) and (c) supported, for L12(a)'s reasons. 1,099 of BLESS's 1,334 in-index positives and 680 of
+WBLESS's 834 are spanning-ancestor pairs for some sense pairing (all folds; item 20), which G places near the top in
+H, while F interleaves ancestors and non-ancestors across depths. In (c), with ancestry G(x, y) is near 0 and G(y, x)
+about −2τ per letter between them; without ancestry G's order follows depth, and F3's radius is not monotone along a
+word. F\* is the likeliest inconclusive cell of (c), because a prefix's radius is usually below its extension's. For
+orientation only (verified; the paper's folds were never released): Roller et al.'s spmi .76 / .96 / .96 and HypeCones
+.81 / .98 / .94 for BLESS AP, WBLESS AP and BLESS direction.
+
+**Data.** The suite's repository is CC BY-NC 4.0. Of its upstream sets, EVALution's repository is Apache-2.0 (its
+`LICENSE.txt`) and the others state no licence. Hashes only.
+
+#### L14 · Learned Lorentz against learned Euclidean on WordNet's direct edges
+
+**Claim.** Trained by Amendment 10's protocol on WordNet 3.0's 75,850 direct noun hypernym edges E alone (item 10),
+at the same dimension, budget, rate grid and seeds, learned Lorentz embeddings beat learned Euclidean embeddings at
+d = 2 and d = 3, both read by G at the origin o (item 10.8; neither loss anchors any synset at o, a dependence named
+under Risks):
+- (a) on HiT's multi-hop test, ranking each child's held-out indirect ancestor above its 10 random negatives, and above
+  its 10 hard negatives;
+- (b) on HyperLex's noun pairs.
+
+**Instances.**
+- (a) HiT: `wordnet-multi/test.jsonl`, 29,383 rows as given (repeats kept). The random setting pairs each row's
+  `parent` with its 10 `random_negatives`; the hard setting with its 10 `hard_negatives`. Names resolve to offsets by
+  item 3. Every test pair is in T, so none enters training as a positive. The rows hold 2,110 distinct positives:
+  entity.n.01 is the positive of 12.8% of them and the 12 most frequent positives of about half. 3 rows hold the child
+  itself among their random negatives, and 23 (random) and 14 (hard) rows repeat a negative (at least 9 distinct): all
+  kept as given. G scores the child itself 0, the top, so those 3 rows have RR at most 1/2 in every table.
+- (b) The HL rows covered in U_@ (2,153), with senses restricted to U_@ and the gold of L12. Disclosed: HyperLex drew
+  its hyp-1 pairs as WordNet path-length-1 pairs, so most of them are edges of E for some sense pairing and were seen
+  in training; (b) measures how training on E carries over to graded judgements, not held-out generalisation. The
+  number of HL rows that are E edges for some sense pairing is reported.
+- Training data, cells, tuning, runs and replays: item 10.
+
+**Arms.** Learned Lorentz and learned Euclidean at d ∈ {2, 3}, seeds 0–4, at the frozen rates; their edge-shuffled
+partners and floors.
+
+**Metric.**
+- (a) The pessimistic reciprocal rank RR of each row (item 7). For each d, setting and seed, the per-row differences
+  RR(Lorentz) − RR(Euclidean), with `rank.ci_mean` over the rows (item 7 gives the reason for rows as the unit).
+- (b) ρ; for each d and seed, ρ(Lorentz) − ρ(Euclidean) with the word-level ci_rho.
+
+**Controls that must fail.** If control 1 or 2 does not fail as required, L14 is void; controls 3 and 4 void the part
+they name.
+1. *Within-row label shuffle (the evaluator).* One `Rng(2620)` draws j = below(11) for each test row in order, and
+   candidate j of that row (0 its parent, then its 10 random negatives in file order) is declared the positive. For
+   every trained table, as many as exist (the 48 tuning, 20 measured and 20 edge-shuffled tables), the mean RR in the
+   random setting is at most H₁₁/11 + 1/50 (= 0.29453), compared exactly; a correct evaluator gives at most
+   H₁₁/11 = 0.27453 in expectation whatever the table, with a standard deviation of about 0.0015.
+2. *Point relabelling* (after A10.9's control 1). P = `Rng(7).shuffle(list(range(74401)))`, computed once, in the
+   decisive run; the node with index P[i] takes row i's point. For every trained table, as many as exist, the
+   relabelled RR in the random setting, averaged first over the rows of each positive synset and then over the 2,110
+   positive synsets (the *macro mean*), is at most H₁₁/11 + 1/50, compared exactly.
+   - *Why the macro mean.* Under relabelling, every row whose positive is a given synset shares the one point that
+     synset's label receives, so the per-row mean moves with a few labels. Seven positives each hold more than 2.76% of
+     the rows, enough alone to breach +1/50 if the label lands on a point of low radius: entity.n.01 12.8%,
+     physical_entity.n.01 6.9%, abstraction.n.06 6.5%, whole.n.02 4.9%, object.n.01 4.7%, organism.n.01 2.8% and
+     living_thing.n.01 2.8%, whose rows reaching RR = 1 would raise the per-row mean by 0.093, 0.050, 0.047, 0.036,
+     0.034, 0.020 and 0.020. The shares' sum of squares is 0.0344 (about 29 effective labels). In a synthetic model
+     where G ranks candidates by the radius of the point their label takes (item 19), one P breaches the band in the
+     per-row mean with a chance of about 1 in 6 to 1 in 4 per table, and since P is shared the tables breach together.
+     Weighting each positive synset once makes the standard deviation about √(0.0663/2,110) = 0.0056, 0.0663 being the
+     variance of one row's RR when its 11 candidates are exchangeable, so the band lies about 3.5 standard deviations
+     above the expectation.
+   - *The expectation.* For any table and a uniform P, a row's 11 candidates take exchangeable points, so its expected
+     RR is at most H₁₁/11 (ties count pessimistically). The 37 rows that repeat a negative can exceed it by at most
+     0.006 each, which moves the macro mean's expectation by at most about 10^−4.
+   - *Reported,* to tell a tail event from a leak: per trained table, the per-row relabelled mean RR under P; for each
+     measured table, the radius rank of the points that P gives the seven labels above; and each measured table's
+     per-row and macro relabelled means under 200 further permutations `Rng(2700 + j)`, computed in binary64.
+3. *Edge-shuffled training, per metric.* For each d, each metric (RR random, RR hard, ρ) and each seed s present at d,
+   the interval of true − shuffled (item 10.6) lies above 0 in at least one of the two cells at d (ci_mean over the
+   test rows for RR, ci_rho over the 2,153 rows for ρ). If at some (d, s, metric) neither cell's interval lies above 0,
+   the part that uses the metric is void: (a) for either RR, (b) for ρ. Every cell's interval is reported, and a cell
+   whose interval does not lie above 0 is reported as "true ≈ shuffled". Why at least one cell: a losing arm that
+   learns nothing measurable is a result, not an evaluator defect, and requiring the control of the predicted winner
+   alone would void the part exactly when Lorentz learns nothing, which would shield the prediction from refutation.
+   This narrows A10.9's reading (every cell and seed) for L14 only, registered now.
+4. *Gold shuffled.* For each measured table, |mean ρ over 20 gold permutations| ≤ 5/√(20·2,152) = 0.0241. Otherwise
+   (b) is void.
+
+**Checks that must pass.**
+- *The closure of the training edges* (a positive control). Scoring each test row by membership in the transitive
+  closure of the 75,850 training edges gives RR = 1 on every row in both settings. Otherwise the names or rows are
+  misread, and L14 is void.
+- The count checks (item 9); a mismatch stops the run with no result. The floors (item 10.6) are reported.
+
+**Decision** (A10.7's rules). At (d, s) a seed is *present* when both measured tables exist and converged (item 10.7)
+and both cells' edge-shuffled runs at s exist. A cell without a frozen rate has no seed present.
+- (a) For each d ∈ {2, 3} and each setting: supported if all five seeds are present with lo > 0; refuted if the mean is
+  ≤ 0 in three or more seeds present. (a) is supported if all four (d, setting) cells are supported, refuted if any is
+  refuted, and inconclusive otherwise.
+- (b) For each d, the same rule on ρ. (b) is supported if supported at both d, and refuted if refuted at either.
+- Item 7's precedence applies to each part as a whole. The claim is stated at the training budget in force at the
+  decisive run: item 10.3's 1,000 epochs unless the definitions amendment changes it.
+
+**Prediction.** (a) and (b) supported, with a larger gap in (a) than in (b), held with low confidence: inconclusive is
+a likely alternative and refuted a possible one.
+- L6(a) found Lorentz ahead by 0.72–0.75 in closure MAP at d = 2 and 3 on the mammals (Phase 4, public). A tree of
+  74,401 nodes cannot sit in R² or R³ without crowding distinct subtrees together. In H a child placed beside its
+  parent, which sits beside its own parent, lies near the geodesic toward the region of the general synsets, and G
+  reads ancestry if that region is near o.
+- *Risks.*
+  - Training on direct edges is Ganea et al.'s "0% non-basic" setting. There 5-d Poincaré and Euclidean embeddings
+    reached test F1 29.4 and 26.8 on transitive pairs, and 10-d ones 28.9 and 29.4 (verified, Table 1): the only
+    published direct-edge comparison has a mixed sign. Absolute values may be low; the prediction concerns the
+    difference.
+  - A node gets about one positive row per epoch here, against 5.5 on the mammals, so Euclidean at low rates may not
+    converge within 1,000 epochs, which removes seeds and leaves (a) inconclusive.
+  - *The origin.* G reads ancestry from o. Neither loss anchors a synset there: the softmax depends only on distances,
+    so it is invariant under each geometry's isometries. Both arms start every point within 10^−3 of o. The Euclidean
+    step gives the anchor a and the candidate −a (A10.4), so it conserves the table's centroid up to rounding, and o
+    stays the centroid of 74,401 mostly leaf points; nothing in the Lorentz step holds a point at o. Whether the
+    general synsets end near o is an outcome of training, and the arms may differ in it; about half the test rows have
+    one of 12 general synsets as their positive. The Euclidean arm is trained on the squared distance (A10.4) but read
+    through the distance itself, because G ≤ 0 needs the triangle inequality. Reported for both arms (item 11): G with
+    the base point at the table's own point of entity.n.01, the distance-only score, and whether their per-seed mean
+    differences agree in sign with G's; a disagreement in three or more seeds of a (d, setting) cell is stated in the
+    write-up.
+- For orientation only: HiT's static PoincaréEmbed (200-d, Riemannian Adam, Nickel & Kiela's α = 10³ score, an integer
+  threshold grid) scored F1 0.864 / 0.830 with random / hard negatives (verified, HiT Table 2).
+
+**Data.** HiT's Zenodo record is CC BY 4.0: hashes and the name verifier are committed, not its 41 MB of files.
+HyperLex as in L12. Tables stay in the cache, with their SHA-256s committed (item 14).
+
+#### L15 · Where flat should win: similarity and relatedness
+
+**Claim.**
+- (a) *At matched information.* Read by distance with the maximum over senses (Sym), the curvature-0 constructions do
+  as well as the exact hyperbolic trees on human similarity (SimLex-999 nouns) and relatedness (MEN noun–noun pairs):
+  the hyperbolic gain in ρ is at most 0.02.
+- (b) *Against a distributional space.* With H3 read by Sym, GloVe 6B 300-d cosine beats H3 on relatedness (MEN
+  noun–noun pairs and WordSim-353's relatedness pairs), and H3 beats GloVe on HyperLex's nouns. Both scores are
+  symmetric, so this part compares information sources, not curvature or direction. HyperLex's pairs and TYPE were
+  built from WordNet, so its leg is near-circular by construction.
+
+**Instances.**
+- SL: the `SimLex-999.txt` rows with POS `N`: 666, all covered; the gold is the `SimLex999` column (0–10).
+- MEN: the `MEN_dataset_lemma_form_full` rows whose two words are both tagged `-n`: 2,005, all covered, tags
+  stripped; gold 0–50.
+- WSR: `wordsim_relatedness_goldstandard.txt`: 252 rows, 245 covered in U_full.
+- HL as in L12.
+- In (b) each set is intersected with GloVe's vocabulary (item 3). Those counts are made when the code is built,
+  written into the instance manifest (item 2) and frozen in the definitions amendment, before any score.
+
+**Arms.** (a) H3, H2, F3, F3\*, F2 and F2\* with Sym (exact rational keys; no decimal step), and the controls K3,
+S-full and W on H3 with Sym. (b) H3 with Sym, and GloVe; H3 with G against GloVe on HL is reported.
+
+**Metric.** ρ; the paired differences with the word-level ci_rho.
+
+**Controls that must fail.** If control 1 does not fail as required, (a) is void; control 2 voids the part that uses
+the set; control 3 voids (b).
+1. *(a): the hierarchy and the senses are visible.* On SL and on MEN, the intervals of ρ(H3) − ρ(K3),
+   ρ(H3) − ρ(S-full\*) and ρ(H3) − ρ(W\*) lie above 0. "Flat does as well" on a set that does not see WordNet's
+   structure would be empty.
+2. *Gold shuffled.* For every arm and set, |mean ρ over 20 gold permutations| ≤ 5/√(20(n − 1)) with the set's n (SL
+   0.0434, MEN 0.0250; WSR and HL within GloVe from their frozen counts).
+3. *(b): GloVe vectors shuffled.* For each set of (b), its distinct covered words in code-point order are permuted by a
+   fresh `Rng(2580 + i)`, i < 20; word k takes the vector of the word at position k of the permutation. |mean ρ| lies
+   within control 2's band.
+
+**Checks that must pass.** The count checks (item 9). A mismatch stops the run with no result.
+
+**Decision.**
+- (a) Supported if all eight intervals, ρ(H3) − ρ(F3), ρ(H3) − ρ(F3\*), ρ(H2) − ρ(F2) and ρ(H2) − ρ(F2\*) on SL and on
+  MEN, have hi ≤ +0.02; refuted if any has lo > +0.02; inconclusive otherwise.
+- (b) Supported if ρ(GloVe) − ρ(H3) lies above 0 on MEN and on WSR and ρ(H3) − ρ(GloVe) lies above 0 on HL; refuted
+  if any of the three lies entirely at or below 0; inconclusive otherwise.
+
+**Prediction.**
+- (a) Refuted, at least on SimLex. Phase 0 expected a flat *distributional* space to win here. With the same
+  information in both arms, curvature is what lets the tree keep WordNet's path distances (L5): F collides on its
+  lattice and F\* compresses depth, and SimLex's nouns follow WordNet path distance closely (shortest path with
+  max-similarity senses scores 0.513 on these 666 pairs; path2vec Table 2, verified). On MEN the gain is smaller and
+  less certain, and MEN's word reuse (2,005 rows, about 410 effective words) widens its intervals. Read with L12(a):
+  if both turn out as predicted, curvature makes the tree a more faithful copy of WordNet for every judgement that
+  follows WordNet, not for type-of alone.
+- (b) Supported on MEN and WSR: corpora carry association and WordNet carries taxonomy ("cup" and "coffee"). On
+  HyperLex less certain: both readings give a pair and its reverse one score, so neither gains from direction, and
+  H3's lead rests on WordNet's distinctions, which built HyperLex's TYPE (its no-rel pairs come from association norms
+  and have no WordNet relation, so they sit near in a corpus and far in WordNet). For orientation (verified, other
+  spaces and versions): the symmetric WordNet measures WN-WuP and WN-LCh score 0.214 on HyperLex (Table 13, WordNet
+  3.1); Roller et al.'s distributional Cosine scores .14 on HyperLex's test nouns; on SimLex's nouns, reported here,
+  path2vec gives GloVe Common Crawl 0.404 against WordNet's 0.513.
+
+**Data.** SimLex-999 states no licence. MEN's `licence.txt` releases "the models" under CC BY 2.0 and does not say
+whether that covers the pairs and ratings, so MEN is treated as CC BY 2.0 at most. Agirre's split states none
+(WordSim-353 is CC BY 4.0 per Phase 0, not re-read). GloVe is PDDL. Hashes only.
+
+**1. Code and authorities.**
+- The Python reference decides every part of L12–L15 (Common rules, "Authority"; D9 for the trainer). New modules in
+  `reference/lexicon/`: `stage2data.py` (pins and loaders, word-column readers kept apart from gold readers, item 8),
+  `senses.py` (item 3), `wngraph.py` (WN and its reported variants), `scores2.py` (items 5–6), `stats2.py` (item 7),
+  `hit.py` (rows, names, the verifier and HIT-R) and `glove.py`; `reference/golden/make_stage2_v1.py` (fetch, check
+  and the instance manifest); the runner `reference/run_claims_stage2.py`.
+- `embed.py`, `stream.py` and `pystream.py` gain new functions only (item 10.2), and every Phase 4 test passes bit for
+  bit. `rank`, `h3tree`, `h2exact`, `flat`, `address`, `learned`, `wordnet` and `l6` are used unchanged. NLTK is not
+  used anywhere.
+- After the decisive run, `lexicon_core.js` reproduces the rational keys and the tie-class lists (BigInt fixed point at
+  1,024 bits for the square roots), compared by SHA-256 on `Rng(8000 + i)` traces and on the decisive pass-1 code
+  files. It decides nothing, and it is required before the browser shows any Stage-2 claim as holding.
+
+**2. Data pins, licences, and what is committed.** `reference/golden/make_stage2_v1.py --check` fetches each file into
+its own new folder under `~/.cache/hyperbolic-lexicon/stage2/<name>/`, checks its size and SHA-256, opens archives with
+`zipfile` and checks their members the same way, and refuses on any difference. Nothing fetched is executed; parsing
+runs under `python3 -B -I` with explicit paths. Paths inside a repository are given where known; the SHA-256 is the
+pin.
+
+| Set (use) | Source at revision | File: bytes, SHA-256 | Licence; committed |
+| --- | --- | --- | --- |
+| HyperLex (L12, L14(b), L15(b); split reported) | github.com/cambridgeltl/hyperlex @ `ccb416191a46e37f7104a530e7c23f260e066e8c`, `hyperlex-data.zip` 183,900 B `27ef061e2f711d8e8a53b9fe204eaf06c596ef53d95bbed81ae52c6eebe5713b` (ivulic/hyperlex has the same HEAD; the size equals the 183,900 B gensim recorded for the original host in 2019) | `hyperlex-all.txt` 157,526 B `582297878d7ab4d08b284291fdd828c686757dc2c8a9db062416c87bda73923c`; check: its N rows equal `nouns-verbs/hyperlex-nouns.txt` 130,654 B `b296c920fa4fe0367fe2f2a053d6db68afa4799bdf37f6092a5840fa7622703c`; reported: `splits/random/hyperlex_test_all_random.txt` 39,559 B `4c8115d25c6ea732507a70f619bb7fb63a5aab6a0f3bf4990e482dc121a6a0e3` | none stated; hashes |
+| hypernymysuite (L13; the rest reported) | the suite, `data/` (checked in; `download_data.sh` is neither run nor adapted) | `bless.tsv` 364,389 B `bfe8f66540fb08b46e42ea690d49aa8c57c979fa9c9eb6900f1484cfc2b4fdb8`; `wbless.tsv` 51,267 B `24a3d202fb05883c93ec214982b697569325e372791819568c6f8ad125d1aa76`; reported: `leds.tsv` 73,597 B `aadbfd66301d6c50a8bd0408f874be27f3adc9675ab18a2ea7b2ac7a65fbbaa1`, `eval.tsv` 400,751 B `2ef2cbdbb7e6afee2c2c4604116f7ab33944cc8ced1f636f6ee50470810ad163`, `shwartz.tsv` 1,397,533 B `148e6a1fe206269763ff32a970bd33315a187cf21cbd7030782815301bf468a0`, `bibless.tsv` 37,667 B `ceb040e7fb59d401b0049980ffcb056935d7b910b5e354749e1613f8f258516e`, `hyperlex_rnd.tsv` 85,088 B `7ec7fcefe488c8d17bf31c6affe8643f0d3f02bc228b18c08e9768e24754c133` | repository CC BY-NC 4.0; upstream: EVALution's repository Apache-2.0 (its `LICENSE.txt`), the others unstated; hashes |
+| EVALution upstream (reported check) | vered1986/UnsupervisedHypernymy @ `e3b22709365c7b3042126e5887c9baa03631354e` | `datasets/EVALution.val` 39,621 B `490e86f8c4c1c112a4cc82fc0123b31a790d14fdae8cfc485a89e7ae33dce0e5`; `datasets/EVALution.test` 354,725 B `392541eb07e4abbd45630a8ada7b95a69c5af4216f5ef92c31a70265be68a923` | repository Apache-2.0; hashes |
+| HiT WordNet multi-hop (L14) | zenodo.org record 14036213 (concept DOI 10.5281/zenodo.10511042), `wordnet-multi.zip` 20,655,764 B `882033a7f05484a450703f1604b363a1af9d72569c5e83c18d1c98e723905d87` (API MD5 `39c18ae770a4d84c650badc5f648f6d8`) | `wordnet-multi/train.jsonl` 36,829,683 B `1eaf3c8fdd41991d7b397d092f4f40958e208ab942e7f76d239f889e2fc3afe3`; `val.jsonl` 14,281,583 B `708dc06c02bc5fc23d6aa7c84b946e1a080d0baae554b370fa408ca192d8841a`; `test.jsonl` 14,288,451 B `4c525a6de8ee315ef2999f27343d7c9401fc8895baf8c97c7870ced870da46e2`; `entity_lexicon.json` 11,480,490 B `0006c5bdfa0b363f20be083895c054bd1c5a1d20e54cf439017752a86abefaae` | CC BY 4.0 (the Hugging Face card says Apache-2.0); hashes and the verifier |
+| SimLex-999 (L15) | commonsense/conceptnet5 @ `fda1b39607ea6f07e41ddce22d9d5f8360ded581`, `conceptnet5/support_data/simlex/SimLex-999.txt` (byte-identical in EloiZ/embedding_evaluation @ `6928da22b7dd53d18d5816236539062a01093ff2`) | 44,050 B `ca00ff8515a36cde32d13c2b83def23f5a167b67db93ebfcfb7dae039ba22c0b` | none stated; hashes |
+| MEN (L15) | Thombrom/6.8611-project @ `0d05a99326da36bc1c672cd1fa32dd8de6abf9b1`, `datasets/MEN/` (byte-identical in akshithio/glove-fastText @ `27e4fca89513529b45663d26db849006f76502a4` and fanglanting/RA-retrofit @ `258c0351939b2cd90dd4ac213a728bac2b5a3de3`) | `MEN_dataset_lemma_form_full` 80,593 B `d13c9c666691944c29aa4bdee7128fa69eb5f9734603f8c6048d1bc2ca08465a`; `licence.txt` 809 B `d8d7416e8adbba39f5eeabf2876a98293c4ac2ce2f25f7446d6a435f8e7b67b6` | `licence.txt`: "The models are released under a Creative Commons Attribute licence (…/by/2.0/)"; whether this covers the pairs and ratings is not stated: CC BY 2.0 at most; hashes |
+| WordSim-353 (L15; similarity and combined reported) | Agirre's split: deemakx2/PPDM2 @ `e2de627dc1c4ad916916858789612b92aa642a6a`, `DATA/wordsim353_sim_rel/` (byte-identical, same blob ids, in ToineSayan/MUtE @ `d81f01ea8558c8b4c696ba9c210132048bb895f0` under `data/GloVe/evaluation/ws353simrel/wordsim353_sim_rel/`; the relatedness file also in mfaruqui/eval-word-vectors @ `94b3dd9fdbac7ed08dbee7179cd5ee464acf0594`, `data/word-sim/EN-WS-353-REL.txt`). Combined: conceptnet5 @ `fda1b396…`, `conceptnet5/support_data/wordsim-353/combined.tab` | `wordsim_relatedness_goldstandard.txt` 5,134 B `66a7c88100624d0a391605ff61ce84e11d11ee620d51ec0298da49592838f8fa`; `wordsim_similarity_goldstandard.txt` 4,002 B `f1da938998863c94e53f72f984a5c6e215f0b46c323aae8f0f4930703a339107`; `combined.tab` 7,433 B `1edf400ed472e796b3be562cf7970b10d749a07874a96ddc77e75fd1006b446c` | the split states none; WS-353 CC BY 4.0 per Phase 0, not re-read; hashes |
+| GloVe (L15(b)) | huggingface.co/stanfordnlp/glove @ `1db2080b2d94def6e5b0386a523102f9d8849e9d`, the download that the official README (stanfordnlp/GloVe@52f7dbc) links | `glove.6B.zip` 862,182,753 B `6471382cdd837544bf3ac72497a38715e845897d265b2b424b4761832009c837` (the Hugging Face API's LFS oid for that revision is the same); only its text members are read: `glove.6B.300d.txt` (decided) 1,037,965,801 B `a12599d41e3589c7160be27fffe5b0080eccd0f0c75f46666c59f90188093c40` and `glove.6B.50d.txt` (reported) 171,350,515 B `c99ba128d1efdaa3496b7542ba599ecdd1dd6679114d3b5ce19f0ec208b4aa5b`, each 400,001 lines with no repeated word | PDDL; hashes |
+| WordNet 3.0 | as registered (`cbda5ea6…`) | — | WordNet licence |
+
+- *Provenance of the pinned copies.* HyperLex's zip equals the original host's size, and its N rows and splits equal
+  the paper's counts (Table 10). Agirre's split (WSR) has no primary count or checksum. It is judged equal to WS-353
+  in pairs and scores: the similarity and relatedness files' 352 distinct ordered pairs are exactly combined.tab's,
+  their 103 shared pairs are the overlap that Agirre et al.'s construction gives (similarity = similar ∪ unrelated,
+  relatedness = related ∪ unrelated), all 455 scores equal combined.tab's, and three copies are byte-identical. Its
+  provenance is likely, not proven, and is reported so.
+- *Rejected copies*, recorded so that nobody uses them: Hugging Face `almogtavor/WordSim353` @ `9a943442…` and
+  `enus5three/WordSim353` @ `bbe0190d…` (`wordsim353crowd.csv` 7,488 B `6ebe5d67…`), a crowd re-rating that differs
+  from WS-353 on 351 of 352 pairs; LEAR's `evaluation/simlex-english.txt` (nmrksic/LEAR@67c2b02), which is not
+  SimLex-999's scores; mfaruqui's `EN-MEN-TR-3k.txt` (53,593 B `888b1358…`), the lemma form with its tags stripped;
+  the Hugging Face parquet copies of HiT and MEN, where the pinned text files exist.
+- *Phase 0's licence table* (Explainer 7 §9) lists HyperLex, SimLex-999, MEN, HiT's Zenodo data and SemEval-2018
+  Task 9 as "Report only; nothing redistributed", and hypernymysuite as "Protocol reference only … Not redistributed".
+  It is read as a rule about redistribution. Claims may be decided on these sets because no word, rating, label, TYPE
+  or line of any of them enters a committed file, shard or page: results key rows by number, and only pins, hashes,
+  counts, metrics and per-row codes of this project's own scores are published. The suite's data files become pinned
+  instances as well as a protocol reference, used for non-commercial research evaluation under CC BY-NC 4.0; its code
+  is read, never run or copied. Two rows of that table change: MEN's `licence.txt` releases "the models" under CC BY
+  2.0, which may or may not cover its data (CC BY 2.0 at most; nothing is redistributed), and HiT's Zenodo record is
+  CC BY 4.0.
+- *The instance manifest.* `reference/golden/stage2_instances_v1.meta.json` is written by `make_stage2_v1.py` from the
+  pinned files and WordNet. For every instance of the claims and of item 11 it holds: the source SHA-256; the row
+  count; the covered count in each universe used; the SHA-256 of the covered row numbers (0-based data rows after any
+  header, decimal, LF-joined, no final LF); the SHA-256 of the N_S pairs `x<TAB>y` in row order; the clusters (count,
+  and the SHA-256 of their keys in row order); the word types of each ρ set (count, and the SHA-256 of their N_S forms
+  in code-point order, LF-joined); and, for L15(b) and L13's control 3, the GloVe-covered rows. The definitions
+  amendment freezes it by its SHA-256, as Amendment 2 froze L1's lists, and the decisive run refuses another.
+
+**3. Words, senses and pair sets.**
+- *Normalisation N_S.* ASCII A–Z are lowercased and each space becomes `_`. Nothing else: N_B is not applied (these
+  are word lists, not text) and there is no lemmatiser (the suite's NLTK lemmatiser gives different forms for 220 of
+  its word types between NLTK ≤ 3.7 and ≥ 3.8). Non-ASCII words are kept and counted. MEN's tag (the last two
+  characters, `-n`, `-v` or `-j`) is read and removed first.
+- *Senses.* S_U(w) is the list of offsets of `index.noun[N_S(w)]` that lie in the universe U (U_full; U_@ for L14), in
+  index order (sense 1 first); it is empty when the lemma is absent. A row is *covered* in U when S_U(x) and S_U(y)
+  are both non-empty. For GloVe, both N_S words must also be in GloVe's vocabulary; a word whose N_S form contains `_`
+  is treated as outside it (6B holds 460 such tokens, artefacts such as `formula_1` and `codice_1`).
+- *Pair sets.* Every comparison runs on one pair set: the rows covered by every arm in it, in file order, repeats kept
+  and counted. No decision imputes an uncovered row.
+- *The sense rule.* For a sense score φ, Φ(x, y) is the largest φ(s, t) over (s, t) ∈ S(x) × S(y) in the order of
+  item 6; only the value is kept. Φ(y, x) ranges over S(y) × S(x). This is HyperLex's guideline ("if any of their
+  senses"), Resnik's rule, the SimLex authors' footnote and path2vec's choice. Reported only: first senses
+  (S(x)[0], S(y)[0]); gensim's rule (the sense pair at the smallest distance, then scored); and noun morphy for words
+  absent raw (`noun.exc` first, then the endings s→∅, ses→s, xes→x, zes→z, ches→ch, shes→sh, men→man, ies→y; the
+  shortest candidate in `index.noun`).
+- *HiT names.* An `entity_lexicon.json` name resolves by NLTK's rule: the first lemma of the synset's data line,
+  lowercased, then `.n.`, then the two-digit 1-based position of the synset in that lemma's `index.noun` entry. HiT
+  rows use synsets directly, with no senses.
+
+**4. The arms.**
+- *H3, H2.* L3's exact points of all U_full synsets (`h3tree`, t = 3/4; `h2exact`, t = 11/13). The base point o is
+  the empty word's point, the hyperboloid's (1, 0, …). x0(s) = cosh r(s) and K(s, t) = −⟨P(s), P(t)⟩_L = cosh d(s, t)
+  are exact rationals.
+- *F3, F3\*, F2, F2\*.* L5's curvature-0 arms (`flat`, A1 item 7) on the same words; o = 0; |s|² and |s − t|² exact.
+- *WN*, WordNet's own graph with no geometry. Parents are `@` ∪ `@i` (`wordnet.closure_parents`). A(x) = {x} ∪ x's
+  closure ancestors; up(x, a) is the fewest upward edges from x to a ∈ A(x); D(x) = up(x, entity.n.01).
+- *K3.* L5's content-hash words (`address.k3_words`) placed by `h3tree`.
+- *S-full_i*, i < 20. P_i = `Rng(2400 + i).shuffle(list(range(82115)))`; the synset with offset-order index P_i[j]
+  takes H3's point of synset j (`l6.move_points`'s convention); o stays.
+- *W_i*, i < 20: the polysemy-matched lemma shuffle. `index.noun`'s 117,798 lemmas are grouped by their number of noun
+  senses k = 1, …, 9 and k ≥ 10 pooled (101,863, 10,257, 2,989, 1,178, 620, 306, 212, 94, 96 and 183 lemmas). One
+  `Rng(2420 + i)` takes the strata in increasing k: each stratum's lemmas, sorted by code point as L, are permuted by
+  `shuffle` into Q, and lemma L[j] takes the sense list of Q[j]. The geometry (H3) stays in place, so the maximum over
+  senses is inflated as for the real arm while the words become other words.
+- *Learned.* L14's snapped tables over U_@ (item 10).
+- *GloVe.* 6B, 300-d (50-d reported); word vectors read as exact decimals; word-level, no senses.
+- *Reported only:* S3_i, L5's equal-length permutations (`address.s3_words(words, 2000 + i)`, i < 5: L5's public noun
+  permutations), which keep every depth; WN-U, the undirected `@` ∪ `@i` graph's BFS metric d_U, read as
+  −(d_U(s, t) + d_U(t, root) − d_U(s, root)); ST, L3's spanning tree with unit edges; the letter tree; WN-path; WN-LCh.
+
+**5. The scores.** For an arm with base point o and metric d, r(s) = d(o, s). For an ordered sense pair (s, t):
+- *G(s, t) = r(s) − r(t) − d(s, t)*, the is-a score. G ≤ 0 by the triangle inequality, and G = 0 exactly when t lies on
+  a geodesic from o to s. G = −2(r(t) − (s|t)_o), the Gromov form at o. It is HiT's score with λ = 1: no free constant,
+  no threshold.
+- *Sym(s, t) = −d(s, t)*, the symmetric score; its maximum over senses is the minimum distance.
+- *Dep°(x, y) = r(s\*) − r(t\*)*, where (s\*, t\*) is the first pair of S(x) × S(y), x's sense index the major key,
+  among the pairs in the top tie class of G: the depth gap of the senses G chose.
+- *WN*, exact integers: G_WN(s, t) = −2·min over a ∈ A(s) ∩ A(t) of up(t, a), which is 0 exactly when t ∈ A(s);
+  Sym_WN(s, t) = −p(s, t) with p = min over a ∈ A(s) ∩ A(t) of up(s, a) + up(t, a) (WN-path); Dep_WN = D(s) − D(t).
+- *GloVe:* cos(x, y) on the word vectors.
+- *Reported only:* Dep under the maximum over senses and under first senses; Nickel & Kiela's eq. 8 with α = 10³ and
+  Poincaré norms ‖u‖² = (x0 − 1)/(x0 + 1); the product (r(s) − r(t))·d(s, t); the letter form −2(|w(t)| − lcp(w(s),
+  w(t))); WN-LCh = −log((p + 1)/(2·D_max)), D_max the longest root path plus one, computed by a separate
+  bidirectional search; for learned tables, G_root, G with the base point p at the table's point of entity.n.01
+  (r_p(s) = d(p, s); G_root ≤ 0 by the same triangle inequality), and the distance-only score −d(s, t).
+
+**6. Exact and certified order; tie classes.**
+- *Exact keys,* ordered as exact integers or `Fraction`s: the WN and letter-tree scores; Sym through K for H3 and H2,
+  through the squared distance for F and learned Euclidean, and through
+  K = 1 + 2·4^32·|n_s − n_t|²/((4^32 − |n_s|²)(4^32 − |n_t|²)) for learned Lorentz (A10.11), not κ, which orders one
+  query's candidates only; GloVe through c·|c|/(|a|²|b|²) with c = a·b, an increasing function of the cosine.
+- *Certified values:* G, G_root and Dep° of the H, F and learned arms.
+  - H and learned Lorentz: e^G = E(x0_s)/(E(x0_t)·E(K)) and e^Dep = E(x0_s)/E(x0_t), with E(z) = z + √((z − 1)(z + 1)).
+    The radicand is formed exactly before any rounding. For learned Lorentz x0 = (4^32 + |n|²)/(4^32 − |n|²). G_root
+    replaces x0_s and x0_t by K(p, s) and K(p, t).
+  - F and learned Euclidean: G = √|s|² − √|t|² − √|s − t|² and Dep = √|s|² − √|t|², from exact squared norms (for
+    learned tables the common factor 2^−32 is dropped); G_root uses |s − p|² and |t − p|².
+  - Two values whose exact input tuples are equal ((x0_s, x0_t, K), or (|s|², |t|², |s − t|²); for Dep the first two)
+    are tied without computation.
+  - Each value is computed with Python `decimal` at precision p = 120 (ROUND_HALF_EVEN), every exact rational entering
+    through one division and `sqrt` correctly rounded. It carries the bound e_p = 10^(10 − p)·M, with M the value
+    itself for the H forms and the sum of its square roots for the flat forms, about eight orders of magnitude above the
+    accumulated rounding error. Two values are ordered by their 120-digit results when they differ by more than the sum
+    of their bounds; otherwise both are recomputed at p = 240 and ordered the same way; values still within the sum of
+    their 240-digit bounds are tied (a *numerical tie*). This rule, its thresholds included, is part of the metric.
+- *Reading of "tied exactly".* The Common rules' tie sentence speaks of a neighbour "tied exactly" with a
+  non-neighbour. A numerical tie between different input tuples is read as tied exactly for AP, RR and accuracy: G is
+  irrational in general, and exact algebraic comparison of sums of square roots is not done. Every such tie is
+  counted and reported with its inputs, so a reader can see whether any decision rests on one.
+- *Tie classes.* An arm's values on a pair set (both directions together where a metric compares them) are sorted and
+  numbered 0, 1, … by tie class. Every metric and bootstrap reads only these integers; no float64 value orders
+  anything decided. The classes are ordinal: whether two values share a class, or which is above, does not depend on
+  the other values in the list. A chain of numerical ties whose ends lie farther apart than their bounds, the one case
+  where it would, stops the run, to be repaired by amendment. Every 240-digit recomputation and every numerical tie
+  between different input tuples is counted and reported with its inputs. Φ's maximum over senses uses the same
+  comparison.
+
+**7. Statistics, intervals and decisions.**
+- *ρ.* R_i is the average rank of row i's tie class among the n rows, and likewise for the gold (equal exact values
+  tie). With the integers a_i = 2R_i − (n + 1) and b_i likewise, ρ = Σa_ib_i/√(Σa_i²·Σb_i²), its three sums exact,
+  displayed correctly rounded to six decimals; a zero variance gives ρ = 0, flagged. A comparison with a rational
+  bound is made exactly. Reported: the tie-pessimistic and tie-optimistic ρ, the arm's ties broken against and with
+  the gold order.
+- *Reading of the Common rules' tie sentence for ρ.* "Ties count pessimistically … Fractional-tie values are reported,
+  never used to decide" governs AP, RR and accuracy, where a tie is broken against the positive. ρ is decided on
+  average ranks, the standard tie-corrected Spearman, which scipy's `spearmanr` computes and which the suite's
+  `evaluation.py` and gensim's evaluation call; it is not the mean of ρ over tie orders, which A10.11's fractional-tie
+  value would be. A pessimistic reading has no neutral form for a paired difference of ρ: breaking each arm's ties
+  against the gold penalises the arm with more ties, which is F against H in L12(a) and L15(a), both predicted to
+  favour H, and WN against H3 in L12(d), so the tie-pessimistic ρ would decide parts by their arms' tie counts. The
+  tie-pessimistic and tie-optimistic ρ are reported for every arm.
+- *AP* of a pair set: one query whose candidates are the rows and whose neighbours are the True rows, by
+  `rank._ap_and_ranks` (pessimistic ties: a False row tied with a True row ranks before it); an exact `Fraction`.
+- *RR* of a HiT row: 1/(1 + the number of its negatives whose tie class is at least the positive's); exact.
+- *Direction accuracy:* the share of rows with Φ(x, y) > Φ(y, x) strictly, tie classes taken over both directions
+  together; exact.
+- *Intervals:* 95% percentile bootstraps of 10,000 resamples, from a fresh numpy `default_rng(7)` for each interval.
+  The resampling unit follows how each set was drawn.
+  - `rank.ci_mean`, unchanged, for per-row values on HiT (the RR differences). HiT's val and test are a uniform random
+    sample of T (its `construct.py`, `train_test_split`, read as text), so for fixed tables the rows are the design's
+    unit; the randomness of training is what the five seeds carry. Rows sharing a positive synset are not
+    independent in their effect, which the reported macro means show (item 11).
+  - *ci_rho*, the word-level (pigeonhole) bootstrap, for every difference of ρ. HL, SL, MEN and WSR were built by
+    choosing words and pairing them, and a word's sense placement moves every pair that holds it, in one arm and not in
+    the other: HL's 2,163 rows hold 1,843 words (one in 65 rows; about 731 effective words, (Σn_w)²/Σn_w²), MEN's
+    2,005 rows 645 words (about 410 effective) and SL's 666 rows about 488. A row bootstrap treats such rows as
+    independent and is anti-conservative. Let the pair set's V words be the N_S forms of its x and y values, distinct,
+    in code-point order. Resample b draws `rng.integers(0, V, V)`, and word k's multiplicity m_k is the number of
+    draws equal to k; row i enters the resample m(x_i)·m(y_i) times, rows in file order. Both arms' ρ are recomputed
+    in float64 with average ranks on the resample, and Δ_b = ρ_A − ρ_B; the interval is
+    `np.percentile(Δ, [2.5, 97.5])`; the estimate is the exact full-sample difference, rounded to binary64. A
+    resample with fewer than three rows, or in which a ρ is undefined, counts that ρ as 0, and is reported. This is
+    Owen's pigeonhole bootstrap for one shared vocabulary, which is mildly conservative. Reported beside it: the row
+    bootstrap (idx_b = `rng.integers(0, n, n)`, the calls `ci_mean` makes).
+  - *ci_cluster* for BD, WB and BD-dir: the same with idx_b = `rng.integers(0, C, C)` over the C clusters, sorted by
+    key in code-point order; a resample is the drawn clusters' rows in draw order, and both arms' AP or accuracy is
+    recomputed on it in float64 with pessimistic ties.
+- *Readings* (A10.7), in float64: "above 0" is lo > 0; "entirely at or below 0" is hi ≤ 0; "within [−m, +m]" is
+  lo ≥ −m and hi ≤ m; "entirely outside" is lo > m or hi < −m; "the mean" is the estimate.
+- *Precedence.* Void comes before refuted. A part that meets both its support and its refutation condition is
+  inconclusive, judged on the part as a whole (A11.4). No multiplicity correction is applied: support is an
+  intersection–union test over a part's cells, and the number of cells is reported with every refutation.
+- *Controls.* A control *fails as required* when its stated condition holds: the broken variant shows its weakness. A
+  check that must pass is a positive control, and its consequence is stated with it.
+- *The strongest permutation* of a control is the one of its 20 with the largest point estimate, ties to the smaller i.
+  The control fails as required only if the interval of (arm − that permutation) lies above 0.
+- *Shuffle bands.* Gold shuffles: |mean of 20 ρ| ≤ 5/√(20(n − 1)), five null standard errors of the mean, in float64.
+  Label shuffles: the mean of 20 exact APs ≤ π + 1/50, exactly. Within-row HiT: the mean RR ≤ H₁₁/11 + 1/50, exactly.
+  Relabelled HiT: the macro mean RR (L14 control 2) ≤ H₁₁/11 + 1/50, exactly.
+
+**8. Blind, two-pass scoring.**
+- *Pass 1 (scores)* reads only the word columns, the POS column and MEN's tags (to select rows), the fold column (to
+  select rows), HiT's names (a row's candidates in file order) and the tables. For every instance, arm, score form,
+  sense rule and table it writes, keyed by row number, the tie-class codes, and it records the SHA-256 of the stream
+  of its 120-digit values in row order. Values that took the 240-digit path or sit in a numerical tie are written, with
+  their input tuples, to a side file. Where a set's rows are chosen by a label (BD-dir's True rows; the dry hyp rows
+  of item 13), pass 1 writes forward and reverse codes for every covered row and pass 2 selects the rows: tie classes
+  are ordinal (item 6), so whether a row's forward code exceeds its reverse code does not depend on the other rows in
+  the list. Each file's SHA-256 goes into the run record.
+- *Pass 2 (gold)* reads gold, labels and TYPE, runs the count checks that need them, and computes every metric from
+  pass 1's files alone, refusing a file whose SHA-256 differs from the record. A test proves that pass 1 never parses a
+  gold, label, relation or TYPE field: poisoning those fields leaves its files byte-identical.
+- *Disk.* Full value files would take about 27–32 GB (135–160 M lines), more than the container's free 15.0 GB; they
+  are not written. The code files take about 135 M lines, about 0.8 GB gzip-compressed (5.8 bytes per line, measured on
+  a synthetic file), and the side files are small. Before steps 3, 5 and 7 of item 15 the runner projects the bytes it
+  will write and refuses to start if they exceed the free space less 2 GB.
+
+**9. Count checks** (positive controls). Before any metric the runner reproduces each count exactly; a mismatch stops
+the run with no result and is repaired by amendment. Those that need a label or TYPE run at the start of pass 2.
+- *WordNet:* U_@ has 74,401 nodes, offsets SHA-256 `9af5a81a2d8725ba431ebfc55fe17b6698a024b8d85f09c01106ae1218eeb117`
+  (LF-joined); 75,850 edges, `74748ad85fcea82e8f282f5ab72cfdfacc292aa4073d58c078d7a311fa2d7dd2` (sorted `child parent`
+  lines, LF-joined); 587,658 indirect pairs; 12 roots; 74,389 anchors; the smallest |NN(u)| is 73,996. `index.noun` has
+  117,798 lemmas in item 4's strata.
+- *HL:* `hyperlex-all.txt` has 2,616 rows, 2,163 of them N, equal to `hyperlex-nouns.txt`'s rows; 2,163 covered in
+  U_full and 2,153 in U_@; 93 with both words monosemous; 1,843 word types; 464 rows whose reverse is a row. TYPE:
+  hyp-1 to hyp-4 287, 241, 254, 222; r-hyp-1 to r-hyp-4 73, 53, 60, 40; cohyp 242, mero 241, syn 165, ant 68, no-rel
+  217. For some sense pairing, closure: hyp-1 to hyp-4 286, 241, 254, 222, and r-hyp (reversed) 73, 53, 60, 40;
+  spanning ancestor: hyp-1 to hyp-4 281, 229, 233, 214.
+- *BD:* 14,542 rows; test 13,089 (1,197 True); covered test 12,365 (1,194 True), 200 concepts, 6 repeated pairs and 3
+  self-pairs. All folds: 1,334 True rows covered, 1,149 closure and 1,099 spanning-ancestor pairs.
+- *WB:* 1,668 rows; test 1,501 (764 True); covered 1,493 (764 True); 192 clusters; no covered row without a BLESS
+  concept; 150 with two.
+- *Reported sets:* LEDS test 2,495 (1,250 True), all covered, and 1,385 of 1,385 positives (all folds) first-sense
+  closure pairs; EVAL 13,450 rows and 6,926 distinct pairs, 181 with both labels; Shwartz test 47,321 (11,780 True),
+  17,073 covered.
+- *L15:* SL 999 rows, 666 N, all covered; MEN 3,000 rows, 2,005 n–n, all covered; WSR 252 rows, 245 covered; WS-353
+  similarity 203 (197 covered), combined 353 rows (344 covered) with 352 distinct ordered pairs, equal to the union of
+  the two split files, which share 103 pairs and agree with it on every score.
+- *Word reuse* (the word-level bootstrap's units): HL nouns 1,843 word types; SL nouns 751; MEN n–n 645.
+- *HiT:* the 74,401 names map one-to-one onto U_@; the train rows equal E as a set; val and test hold 29,383 rows each,
+  with 10 random and 10 hard negatives per row; every val and test positive is in the closure of E and no negative is.
+  Test: 2,110 distinct positives; 3 rows hold the child among their random negatives; 23 rows repeat a random negative
+  and 14 a hard negative, none with fewer than 9 distinct. Val's corresponding counts are made when the code is built
+  and stated in the definitions amendment.
+
+**10. L14's training protocol.**
+- *10.1 The instance.* S = U_@ in offset order (n = 74,401; instanceSha as in item 9). The positives are E's 75,850
+  pairs (child, parent), in order of (child index, parent index); the child is the anchor; 1,517 batches of 50, none
+  short. NN(u) = S \ ({u} ∪ parents(u) ∪ children(u)), in index order: A10.2's construction applied to this training
+  relation, with no closure taken, for A10.9's reason (the closure is what (a) tests). |NN(u)| ≥ 73,996. Disclosed:
+  an anchor's indirect ancestors and indirect descendants can be drawn as negatives, about 406 and 356 of an epoch's
+  3,792,500 draws in expectation (WordNet count, item 19); for the most general anchors indirect descendants are up to
+  53% of their own draws. HiT filters its negatives by E ∪ T; that is not followed, because it would tell training the
+  test relation.
+- *10.2 The implicit non-neighbour map.* R(u) = sorted({u} ∪ parents(u) ∪ children(u)) is stored per anchor, with
+  shift_i = R(u)_i − i; then NN(u)[j] = j + #{i : shift_i ≤ j}, by one binary search. The draws NN(u)[below(|NN(u)|)]
+  are A10.3's, call for call. It replaces the explicit `nonneighbour_csr` table, which would need about 44 GB here.
+  Before any run, tests show it equal to the explicit complement on every index for 320 anchors (300 from an
+  unregistered seed and the 20 with the fewest non-neighbours) of synthetic DAGs and of the dry instance, and show
+  `Stream.negatives`'s arrays and final state identical to the explicit table's over 3 epochs on a materialised instance
+  of about 1,300 nodes. The edge-shuffled instances use the same map.
+- *10.3 Unchanged from Amendment 10:* items 3–6, with n = 74,401 and E = 75,850 in place of 1,182 and 6,542:
+  perm = `shuffle(list(range(75850)))` each epoch, batch b = perm[50b : 50b + 50] for b = 0, …, 1,516 (none short, so
+  B = 50 always), 1,517,000 steps. The rest is verbatim: the stream order and initialisation; 50 negatives with
+  replacement; 20 burn-in epochs at lr/10; 1,000 epochs; the loss, the step and the arithmetic, with
+  `embed._accumulate_T` (no faster accumulator is adopted, so Phase 4's bits carry over); divergence; snapping at 2^−32
+  and the snapped text. The budget field is `1000,20,50,50,1517000,3792500000`.
+- *10.4 Cells:* {Lorentz, Euclidean} × d ∈ {2, 3}. Nothing else trains.
+- *10.5 Tuning.* Rate k of {0.03, 0.1, 0.3, 1, 3, 10} (k = 0..5, ascending) trains on seeds 9000 + 2k and 9001 + 2k: 12
+  runs per cell, 48 in all. A run's score is the exact mean of its mean val RR in the random setting and in the hard
+  setting, under G on HiT multi-hop val (29,383 rows). A rate is eligible if neither of its runs diverged and both
+  converged (10.7); its score is the exact mean of its two runs. The frozen rate is the eligible rate with the largest
+  score, ties to the smaller rate; the grid is never extended; a cell with no eligible rate has no frozen rate. Tuning
+  computes nothing else, and touches no other Stage-2 set. The lr-freeze amendment writes
+  `reference/settings-stage2.json` and lists every tuning run from `reference/results/tuning-stage2.json`.
+- *10.6 Runs.* *Measured:* seeds 0–4 at each cell's frozen rate. *Edge-shuffled:* A10.9's control 2 with n = 74,401 and
+  E = 75,850; the pairs come from a fresh `Rng(2600 + s)` with A10.9's rejection rule; NN′ is the pairs' own relation;
+  the draws come from `Rng(s)`. *Floors:* the initial table from a fresh `Rng(2600 + i)`, i < 5, untrained and snapped
+  (the two registered uses of A10.9). Tuning tables are kept in the cache for controls 1–2.
+- *10.7 Convergence.* With m(a, b) the mean of the recorded epoch losses (A10.5) over epochs a–b, a run has converged
+  iff m(0, 9) − m(990, 999) > 0 and m(890, 899) − m(990, 999) ≤ (m(0, 9) − m(990, 999))/100, in float64. A
+  comparison counts a seed only if both of its measured runs converged, so that the schedule cannot decide the
+  geometry.
+- *10.8 Scores.* G with o the origin (the dependence on o: L14's Risks): Lorentz from the lifted snapped points,
+  Euclidean from n/2^32 (item 6). HiT rows use synsets directly; HL uses senses in U_@.
+- *10.9 Replays and pre-flight.* Tuning replays (lorentz, 3, `0.03`, 9000) and the decisive run replays measured
+  (lorentz, 3, seed 0), each with `hpstep.prng.Rng` over all 1,000 epochs (about 1.0 h of one core); the final state
+  must equal the run's, or that step writes no result (A10.1). The decisive run retrains (euclid, 2, `0.03`, 9000) and
+  (lorentz, 2, `0.03`, 9000) and records whether their float SHA-256s equal tuning's; a mismatch is disclosed and does
+  not stop the run (A10.14).
+
+**11. Reported, deciding nothing** (Common rules, "Reporting"), beyond what the claims list:
+- *Every set and arm:* coverage and the vocabulary each arm misses; the numbers of tie classes, 240-digit
+  recomputations and numerical ties; tie-pessimistic and tie-optimistic ρ; the row-bootstrap interval beside every
+  word-level one; fractional-tie AP; AP in sklearn's `average_precision_score` convention (below).
+- *L12:* every arm under every score of item 5 and every sense rule of item 3; the 93 monosemous pairs; ρ in each TYPE
+  stratum of at least 100 pairs, on the 768 pairs with no type-of TYPE (cohyp, mero, ant, no-rel), and on the rows
+  that are a WordNet closure pair in neither direction for any sense pairing (the closure bit computed from WordNet
+  in pass 1); S3; the chain WN → WN-U → ST → letter tree → H3, which shows whether a gap to WordNet comes from
+  multiple inheritance, virtual letters or the embedding; HyperLex's random-split test nouns (541; Roller et al.'s
+  subset; the original split file and `hyperlex_rnd.tsv` must agree); whether AVG_SCORE_0_10 ranks the rows as
+  AVG_SCORE does.
+- *L13:* WN and GloVe; AP without the 3 self-pairs (G = 0 tops every arm on them); AP and direction on the positives
+  that are not WordNet closure pairs, with all negatives, and the closure membership of every scored pair (from WordNet,
+  in pass 1); the suite's own detection protocol (OOV rows at the lowest in-vocabulary validation score); LEDS test,
+  a circularity probe; EVAL test as distinct ordered pairs, the pairs with both labels dropped and counted, after the
+  check that the suite's file equals upstream EVALution after `sort | uniq` and removal of `-[jvn]`; Shwartz's
+  covered test rows; WBLESS and BiBLESS accuracy as the suite's `evaluation.py` defines them (below); L14's tables on
+  these rows.
+- *The suite's 1,000 × 2% protocol,* written out: the in-vocabulary rows of the whole file; one
+  `numpy.random.RandomState(42)` (the protocol's constant, not this project's seed) gives 1,000 successive masks
+  `rand(n) < 0.02` as validation; the thresholds are the distinct validation scores at or above the lowest validation
+  positive's; h ≥ t predicts positive; the threshold with the best validation accuracy, the first in increasing order,
+  is applied to the other rows; a trial with no validation positive is skipped and counted. WBLESS: h = Φ_G(x, y).
+  BiBLESS: h = max(Φ_G(x, y), Φ_G(y, x)), and a detected row is +1 if Φ_G(x, y) ≥ Φ_G(y, x), else −1, against labels
+  {−1, 0, 1}. Scores are tie classes over all values compared. The threshold set re-implements the truncation at full
+  recall of sklearn's `precision_recall_curve`, which the suite calls; sklearn is not installed and is not installed
+  for this, and a test checks the rule on hand-computed synthetic cases. sklearn's `average_precision_score`
+  convention (a tied block counted at once) is re-implemented the same way.
+- *L14:*
+  - for the measured tables: F1 under HiT's protocol (positive when G ≥ θ, θ the distinct val score with the best val
+    F1, the smallest on ties; then test), both settings, which scores HiT val in step 7 and decides nothing; G_root and
+    the distance-only score on test (both settings) and HL, with their Lorentz − Euclidean intervals and their sign
+    agreement with G's; RR averaged first per positive synset (the macro mean), with a bootstrap over positive synsets;
+    RR on the rows whose positive is not among the 12 most frequent;
+  - HIT-R, a HiT-protocol split rebuilt from WordNet with instance seeds: T in (child index, ancestor index) order
+    shuffled by `Rng(1500)`; val the first ⌊0.05·587,658⌋ = 29,382, test the next 29,382; 10 random negatives per row
+    from `Rng(1501)` by below(74,401), rejecting the child, any x with (child, x) ∈ E ∪ T and repeats; 10 hard
+    negatives, the children of the child's parents minus the child and its ancestors, in offset order, padded from
+    `Rng(1502)`. Instance seeds are shared across claims (Common rules): L1(d), L3(f) and L7(b) also drew
+    `Rng(1500)`–`Rng(1502)`; i = 500–502 only avoids `Rng(1000)`, the noun query sample's seed;
+  - the exact trees on HiT test, flagged as reconstruction (they encode E, and 93.0% of closure edges by prefix);
+    NK17 scores; floors; every edge-shuffle cell, with "true ≈ shuffled" where its interval does not lie above 0;
+  - loss curves, the epoch at which each run reaches 95% of its loss drop, guard hits, the largest step and radius;
+    the 200 relabelled tails (per row and macro); |ΔRR| between snapped-exact and float64 scoring; H3 against the
+    learned tables on HL within U_@; wall clocks; Nickel & Kiela 2018's diagnostic, the Spearman ρ between r and
+    sp/(sp + lp), for the tables and the exact trees.
+- *L15:* SL, WS-353 similarity (197) and combined (344 rows) under Sym for the six exact arms, WN and GloVe; GloVe at
+  50-d; H − F under Sym on every similarity set; H3 read by G against GloVe on HL; WN-path on SL with the maximum over
+  senses against path2vec's 0.513, an implementation check whose gap above 0.005 is reported with its cause if found.
+- *Diagnostics:* the number of noun synsets whose H3 and H2 Poincaré norms round to 1.0 in float64; WN-LCh's tie
+  classes against WN-path's on every set.
+- *Literature numbers,* each with its grade and why it is not comparable (subset, WordNet version, folds, OOV rule,
+  trainer); human agreement (HyperLex IAA-1 0.854 and IAA-2 0.864 on nouns; SimLex 0.67) as agreement, never as a
+  bound.
+
+**12. Seeds.** As the Common rules number them: secondary draws 2000 + i, training 0–4, tuning 9000–9023 (9000–9011
+used), the statistics constant 7, dry runs: 4000 + i for instance seeds and +3000 on every other seed; instance seeds
+only for HIT-R.
+
+| Use | Decisive | Dry |
+| --- | --- | --- |
+| S3 (reported) | `s3_words(words, 2000 + i)`, i < 5 | 5000 + i |
+| S-full | `Rng(2400 + i)`, i < 20 | 5400 + i |
+| W | `Rng(2420 + i)`, i < 20 | 5420 + i |
+| L12 gold permutations | `Rng(2440 + i)`, i < 20, each `shuffle(list(range(n)))`; row k takes the gold of row π[k] | 5440 + i |
+| L13 label permutations | BD `Rng(2460 + i)`, WB `Rng(2480 + i)`, i < 20 | 5460 + i, 5480 + i |
+| L15 gold permutations | SL `Rng(2500 + i)`, MEN `Rng(2520 + i)`, WSR `Rng(2540 + i)`, HL in GloVe `Rng(2560 + i)` | +3000 |
+| L15 GloVe vector permutations | `Rng(2580 + i)`, fresh per set | 5580 + i |
+| L14 edge pairs and floors | `Rng(2600 + s)`, s < 5 | 5600 + s |
+| L14 within-row label | `Rng(2620)` | 5620 |
+| L14 gold permutations | `Rng(2640 + i)`, i < 20 | 5640 + i |
+| L14 point relabelling P | `Rng(7)` (A10.9's) | `Rng(3007)` |
+| L14 relabelling tail (reported) | `Rng(2700 + j)`, j < 200 | 5700 + j |
+| L14 training; tuning | 0–4; 9000–9011 | 3000–3004; 12000–12011 |
+| HIT-R (reported) | `Rng(1500)`, `Rng(1501)`, `Rng(1502)` | the dry split: `Rng(4500)`, `Rng(4501)`, `Rng(4502)` |
+| Bootstrap (every interval) | numpy `default_rng(7)` | the same |
+| Suite protocol (reported) | numpy `RandomState(42)`, the protocol's constant | the same |
+| Tests; the timing projection (item 16); the review (unregistered) | 95200 + i, i < 300; 95500 + i, i < 8; 95600 + i, i < 300 | — |
+
+No other draw is made. Nobody computes P, any registered permutation (dry ones included) or any training draw before
+the step of item 15 that uses it. Tests give every function that takes a registered seed a seed parameter, draw it at
+95200 + i, and pin the registered value only as a constant. The spikes drew 90000–91999, 92013, 92017, 92029, 97000
+and 97001 (`spikes/`; S6's 2,000 synthetic strings take 90000–91999); no spike drew from 95000–95999, the range this
+amendment's unregistered seeds use.
+
+**13. Dry runs** (+3000) use WordNet's verbs, disjoint from every decided instance (all nouns), as Phase 1 used the
+verb forest; the suite's validation folds are not dry data, since they share BLESS's concepts.
+- *L12:* HyperLex's verb rows (453; 452 covered in `index.verb`) on the verb forest of A1 item 10 (559 roots under the
+  virtual root [1]): H3, H2, F and F\* on the verb words; K3 by `address.k3_words(…, pos='verb')`; WN on the verb `@`
+  graph with a virtual root joined to its roots; W over `index.verb`'s strata.
+- *L13:* HyperLex's verb rows as a detection set (TYPE hyp-1 to hyp-4 positive, 201 rows; the others negative;
+  clusters by word1) and as a direction set (the hyp rows, selected in pass 2).
+- *L14:* the verb `@` graph (13,542 nodes, 13,239 direct edges, 21,840 indirect pairs, 334 roots; the 225 isolated
+  verbs left out), with a HiT-protocol split built as HIT-R from `Rng(4500)`, `Rng(4501)` and `Rng(4502)` (val and test
+  1,092 rows each); graded: HyperLex's verbs covered in that graph. The whole of item 10 runs, dry tuning's 48 runs
+  included.
+- *L15:* SimLex's 222 verb rows for (a); MEN's v–v rows (29) and HyperLex's verbs against GloVe for (b), a pipeline
+  check.
+- Every control, interval, report and receipt runs; the results are written to `reference/results/dry/` and decide
+  nothing. Dry counts are stated in the definitions amendment.
+- *Sealed values.* Unlike Phase 1–4's dry data, these verb sets carry human ratings and labels from the same files,
+  raters and protocols as the decided nouns. Every dry metric value, interval and verdict on a human-rated or
+  human-labelled set (HyperLex's verbs, as rated and as a detection and direction set; SimLex's verbs; MEN's v–v
+  rows; L14's graded part) is written only to a sealed file in the cache, whose SHA-256 the dry record holds; it is
+  opened after step 7 and reported then. The dry record and console show the rest: crashes, count checks, whether each
+  control failed as required, convergence, timings, tie and recomputation counts, and L14's values on the verb graph
+  and its split (WordNet data, as Phase 4's dry run showed its own).
+
+**14. Receipts, and what is committed.**
+- One LBENCH/1 record (A7.3's conventions) per evaluated arm, score, sense rule, instance and table:
+  `LBENCH/1|<claim>/1|instanceId|instanceSha|pairSetSha|arm|geometry|d|seed|lr|scoreForm|senseRule|protocolSha|settingsSha|budget|floatTableSha|snapSha|itemScoresSha|metric|metricSha|metricValue|track|engine|wallMs`
+  - LBENCH/1's fields after the second are defined by the claim field: `L6/1` by A10.12 (22 fields), and `L12/1` to
+    `L15/1` and `stage2/1` (item 11's general reports) by this item (24 fields). A parser selects the layout by the
+    claim field; Phase 4's parser, which accepts `L6/1` only, is unchanged. The snap exponent is 32 throughout (item
+    10.3), so this layout has no field for it.
+  - instanceId names set, pin and slice (for example `hyperlex-ccb4161-nouns`, `suite-6891e0e-bless-test`,
+    `hit-zenodo14036213-multi-test-hard`); instanceSha is the file's SHA-256; pairSetSha that of the pair set's row
+    numbers (item 2's convention).
+  - protocolSha is the SHA-256 of `reference/golden/stage2_protocol_v1.txt`: Amendment 10, then this amendment,
+    verbatim from their headings, with LF line ends and a final LF, pinned by a test against this file. An amendment
+    that changes a definition here makes `stage2_protocol_v2.txt` (Amendment 10, this amendment, then that amendment),
+    and records from then on carry its SHA-256 (A10.12's rule).
+  - settingsSha hashes `reference/settings-stage2.json`; budget is item 10.3's for learned tables; itemScoresSha
+    hashes pass 1's code file.
+  - metricSha is the SHA-256 of the exact value's text (ρ as `Σab|Σa²|Σb²`; AP, accuracy and mean RR as `p/q` in
+    lowest terms); metricValue is `format(float(value), '.6f')`; track `cpu`; engine as A10.12. Fields that do not
+    apply are `-`.
+- *Committed:* the code, tests and synthetic traces; `reference/results/claims-stage2.json` and `.md`; the receipts;
+  the instance manifest; `settings-stage2.json` and `tuning-stage2.json`; every learned table's float and snapped
+  SHA-256; a manifest of the SHA-256 of every pass-1 code file and side file. Two groups of files are committed only
+  under a size rule, the size deciding, as reported: the pass-1 code files of every arm and table named in a decision
+  of L12–L15 (the exact arms on HL, BD, WB, BD-dir, SL, MEN and WSR; the 20 measured tables on HiT test in both
+  settings and on HL), gzip-compressed, holding no word, gold, label or TYPE, if together at most 50 MB (expected about
+  40 MB); and the 20 measured snapped texts, gzip-compressed, if together at most 50 MB (expected about 26 MB), for the
+  Node re-evaluation. Otherwise each group is committed by its hashes only. The repository is published whole as a
+  Pages site, so nothing larger is committed.
+- *Not committed:* any Stage-2 file or line, whatever its licence; GloVe; HiT's files; every other code and side file
+  and table (cache, by hash in the manifest).
+
+**15. Order of work.**
+1. This amendment, committed alone.
+2. The code of item 1 and its tests, on synthetic data, the dry data and unregistered seeds 95200 + i. The fetch
+   script checks every pin, GloVe's members included, and writes the instance manifest; count checks may run, since
+   they count. Then an adversarial review (four reviewers, two skeptics per finding; seeds 95600 + i), with
+   independent implementations of the certified order, ρ and its bootstraps, the cluster keys and the implicit map.
+3. The dry run (item 13) on the committed code, with its values on human-rated sets sealed. A fix is committed and the
+   affected dry part rerun.
+4. The definitions amendment: the readings fixed in the code (`READING` markers); the instance manifest's SHA-256 and
+   the GloVe coverage counts; the dry run's diagnostics, convergence included. It may change a definition of this
+   amendment only in response to a failure seen in steps 2–3 (a crash, a count mismatch, a control that did not fail
+   as required, a run that did not converge, a chained tie, a projected time or disk overrun), never on a metric value,
+   and it names the failure each change answers. Its date and reasons follow A10.14. It comes before any registered
+   tuning and any decisive evaluation.
+5. Registered tuning of L14 on a clean committed tree (the runner refuses uncommitted changes), evaluating HiT val
+   only, with its replay.
+6. The lr-freeze amendment: `settings-stage2.json` with its SHA-256 and every tuning run. It changes nothing else.
+7. One decisive run at the lr-freeze amendment's commit. It records HEAD and refuses unless the only paths changed
+   since tuning's commit are PREREGISTRATION.md, `settings-stage2.json`, `tuning-stage2.json` and tuning's console
+   file. Pass 1 scores every instance and table (L12, L13 and L15's arms; L14's tuning, measured, edge-shuffled and
+   floor tables, and the measured tables on HiT val for item 11's F1); pass 2 runs the label checks and decides
+   L12–L15. The run computes P for the first time, replays the measured run and retrains the two pre-flight jobs. If
+   interrupted, it resumes at the same HEAD from its finished jobs.
+8. Write-up: an explainer, the claims ledger, the Node re-evaluation (item 1), an independent check of the decisive
+   record, the dry run's sealed file, and errata as amendments.
+
+Until step 7 nothing is scored on HL, BD, WB, SL, MEN, WSR, HiT test or any reported set. HiT val is scored only in
+step 5 (tuning) and in step 7 (θ for item 11's reported F1, which decides nothing). L12, L13 and L15 depend on nothing
+tuning computes; they run in step 7 so that there is one decisive record. A defect found after step 5 is fixed only by
+an amendment that says it was found after tuning results were seen (A10.14).
+
+**16. Compute plan** (this container: 4 CPUs, 16.9 GB of memory, 15.0 GB of free disk; times from the compute survey,
+the review's re-timing and item 19's timing). The training figures are CPU time on U_@ itself, four processes at once,
+with the existing arithmetic; wall time ran 19–41% higher while another workload shared the container, so no other
+workload runs during steps 5 and 7, and the run record holds the load average.
+
+| Step | Work | Wall, 4 processes |
+| --- | --- | --- |
+| Exact arms: L12, L13, L15, item 11 | about 16 M certified values at about 45 µs each (120 digits) and about 120 intervals (about 7 s each for ρ at n = 2,163, row and word level) | under 0.5 h |
+| Timing projection | two epochs of each cell on U_@, seeds 95500 + i, no evaluation | under 0.1 h |
+| L14 tuning | 48 runs of 1,000 epochs; per epoch: Lorentz d = 2 1.12 s, d = 3 1.32 s; Euclidean d = 2 0.76 s, d = 3 0.87 s | 3.3 h |
+| L14 tuning evaluation | 48 tables × about 0.62 M val values | 0.1 h |
+| L14 decisive training | 20 measured, 20 edge-shuffled and 2 pre-flight runs | 2.9 h |
+| L14 decisive evaluation | about 145 M certified values: test in both settings, relabelling, HL, floors, the tuning tables' controls, G_root, HIT-R and val for the reported F1 | 0.6 h |
+| Replays | 2 × 1.0 h of one core | 0.5 h |
+| Dry run | all of the above on 13,239 verb edges (n = 13,542): about 0.1 of the training cost, since `_accumulate_T`'s bincount of length D·n makes the cost per positive grow with n (8–9 µs against 10–17 µs on U_@) | 1.0 h |
+| **Total** | | **about 9 h of the 12 h available** |
+| Disk | pass-1 code files about 0.8 GB; tables (110, float and snapped) about 0.5 GB; GloVe 0.86 GB and the survey and review caches 2 GB already held | about 1.3 GB new, against 15.0 GB free |
+
+Before step 5 the runner projects the registered total from the timing projection's wall times (not from the dry run
+scaled by edges, which would understate the training about 1.9 times); if it exceeds 11 h, or the projected bytes
+exceed the free space less 2 GB, it stops and reports before tuning, and any cut is an amendment, not a runner option.
+Peak memory is under 0.85 GB per training process; the implicit map stores n + 2E ≈ 2.3 × 10^5 entries. Not
+affordable here, and not registered: the full noun closure (196 h at A10's shape, 58 h without tuning, and 53.9 GB for
+its explicit non-neighbour table), d ≥ 5, per-benchmark training universes, and the relabelling control over many
+permutations in exact arithmetic (about 1.8 h per 20 permutations of the 88 tables).
+
+**17. Where each borrowed protocol comes from** (Amendment 6's rule).
+- *HyperLex* (Vulić et al. 2017, J17-4004; paper): the 2,163 noun pairs and their TYPE strata; the guideline "if any
+  of their senses" behind the maximum over senses (§4.3); the random split (Table 10). *From code:* the 0–6 AVG_SCORE
+  column, which gensim's `LexicalEntailmentEvaluation` and the suite's `evaluation.py` read.
+- *Nickel & Kiela, P17* (paper, §4.3): HyperLex's nouns as a test of WordNet-trained embeddings; eq. 8, reported only.
+- *Roller et al. 2018* (arXiv:1806.03191v1, paper §3.1): detection AP on the five sets; direction by
+  score(x, y) > score(y, x); 1,000 iterations with 2% validation for WBLESS and BiBLESS (also LEAR and Nguyen et al.
+  2017, papers). *From the suite's code at 6891e0e:* the committed folds (the paper's were never released), the
+  noun-only HyperLex rows, the strict `forward > reverse`, `RandomState(42)`, the threshold set and its ties, the OOV
+  rules of the reported comparisons, and scipy's average-rank Spearman. *Not followed:* sklearn AP as the decisive AP,
+  OOV imputation, NLTK lemmatisation, float32 scores, model selection on validation.
+- *HiT* (He et al. 2024, arXiv:2401.11374v4, paper §4.2 and Table 1): the multi-hop protocol (train on E, test on held-
+  out T), 10 random and 10 hard negatives per positive, the score −(d + λ(r(t) − r(s))). *From its Zenodo record:* the
+  split files. *From its code* (`datasets/construct.py`, read as text): the hard negatives as the child's siblings minus
+  its ancestors, which HIT-R follows, and the uniform sampling of val and test from T, which makes rows the bootstrap's
+  unit. *Not followed:* F1 at a validation threshold as the decisive metric (reported), training negatives filtered by
+  E ∪ T, the λ search (λ = 1 is fixed here).
+- *Ganea et al. 2018* (paper §5, Table 1): the "0% non-basic" comparison in L14's risks, both dimensions.
+- *SimLex-999* (Hill et al., arXiv:1408.3456, footnote) and *path2vec* (Kutuzov et al., arXiv:1808.05611v4, Table 2):
+  the minimum distance over senses for similarity; the WordNet numbers of the replication check.
+- *Owen 2007,* "The pigeonhole bootstrap", Annals of Applied Statistics (from memory, not re-read for this amendment):
+  resampling both crossed factors, here the one shared vocabulary, for ci_rho.
+- *Data files:* Agirre et al.'s relatedness and similarity split; MEN's lemma form and its `licence.txt`; GloVe 6B via
+  the official README's download.
+- *Amendment 10:* the whole trainer, with its own attributions (A10.15).
+- *This project's own:* G at λ = 1 as the sole decisive is-a reading; Dep° at G's senses; the controls K3, S-full, W,
+  reversed roles, within-row RR and the relabelled macro mean RR, and their bands; RR with pessimistic ties; the
+  cluster bootstrap and the choice of resampling unit per set; the certified order; blind two-pass scoring and the
+  sealed dry values; direct-edge training with the training relation's complement as negatives; the convergence rule;
+  tuning on validation RR; the edge-shuffle control at one cell per (d, seed, metric) and its per-metric voiding;
+  L15(a)'s band.
+
+**18. Numbering, and corrections to Phase 0's pages.**
+- Explainer 7, the tracks explainer, the README roadmap and the hub's roadmap (`index.html`, Phase 6's row) call four
+  Phase 6 candidates "L12–L15". None was registered, so the names carry no weight and nothing registered changes. They
+  take the next free numbers when they are registered: the address factor on BLiMP becomes L16 (Explainer 7's
+  "equivalence test (L12)"), hierarchy heads on HiT-protocol F1 L17 (which meets L14's leakage rule), the Poincaré
+  probe against the structural probe on UD EWT L18, and PolyStep against MeZO and ZO-SGD L19.
+- *For the write-up* (pages, not registered text): the suite's data is checked in, so `download_data.sh` needs no
+  adaptation (it exits before downloading); the suite's EVAL has 13,450 rows and 6,926 distinct pairs, against Roller
+  et al.'s "7,378 pairs", whose source is unconfirmed; gensim's 0.48 and Poincaré GloVe's tables are verified; MEN's
+  `licence.txt` releases "the models" under CC BY 2.0, which may or may not cover the data, and HiT's Zenodo record is
+  CC BY 4.0; WS-353's CC BY 4.0 could not be re-read; the SimLex, HyperLex and MEN hosts are unreachable, and pinned
+  copies replace them; HiT's pinned split replaces the planned rebuild, which becomes HIT-R; WBLESS's "seeded splits
+  (seed 42)" are the protocol's `RandomState(42)` over 1,000 trials, not folds.
+
+**19. Disclosures** (Common rules, "Reporting"). Every download went into its own new folder under
+`~/.cache/hyperbolic-lexicon/stage2-survey/` (the reviews' re-downloads under `stage2-review/`); nothing downloaded was
+executed; parsing ran under `python3 -B -I`; no repository file was written and nothing was committed.
+- *The data survey* downloaded and hashed 104 files and read the suite's `download_data.sh` and Python, and SemEval's
+  scorer, as text. It installed `bsdtar` (libarchive-tools 3.7.2) to list HypeNET's RAR, and pyarrow 26.0.1 in a scratch
+  venv to read two Hugging Face parquet files. It counted rows, columns, labels, folds, duplicates, WordNet coverage and
+  monosemy. It counted closure membership for every HyperLex noun row by TYPE, in both directions, and spanning-ancestor
+  membership for the hyp rows; closure and spanning-ancestor membership for the positives of BLESS, WBLESS, LEDS,
+  EVAL, Shwartz and SemEval; and, for HiT, that every positive and no negative is a closure pair. Its own notes say
+  "for gold positive pairs only", which the HyperLex count by TYPE was not. It computed nothing on detection-set
+  negatives or ratings, and drew no seed.
+- *The methods survey* read 14 papers and 7 repositories at pinned commits (hypernymysuite 6891e0e, gensim 37f90ec,
+  LEAR 67c2b02, hyperbolic_cones fbf1558, HierarchyTransformers 1b68f00, poincare_glove 6a5c80a, poincare-embeddings
+  dff101b), never running them, and Hugging Face API listings. It counted the suite's rows, folds and labels and EVAL's
+  duplicates and conflicts; HyperLex's noun gold ties (305 distinct values; 2,137 pairs share one), the only read of a
+  rating column for a count, for ties alone; and LEAR's evaluation folder (line counts and two SimLex gold values, to
+  identify a version). On WordNet it counted instance-only synsets, the root-removed closure and its reduction, HiT's
+  graph sizes, NLTK names and the cones vocabulary. It timed `embed._batch_T` on synthetic indices from numpy
+  `default_rng(95000 + i)`, i < 10.
+- *The compute survey* used seeds 95000–95050 only. It built the full-noun instance and the implicit map and checked
+  the map against the explicit lists (320 anchors) and `Stream.negatives` (906,450 draws). For timing only, it trained a
+  few epochs on the full noun closure, the closures of whole.n.02 and event.n.01 (which contain the mammal set, whose
+  L6 result is public) and the direct-edge instance; it kept no table and evaluated none. It scored synthetic lemma
+  pairs against synthetic gold and ran five full-noun ranking queries of H3, H2 and a synthetic table, keeping no value.
+  From the benchmark files it read only the two word columns, to count senses and up-closures. It read Phase 4's wall
+  clocks and loss logs, and replaced `_accumulate_T` inside probe processes only.
+- *The designs.* One counted fold sizes, labels, EVAL's repair counts and test-fold noun coverage; one read four header
+  lines and the key names of HiT's first test row; one counted word, POS, TYPE, label and fold fields (rows, folds,
+  coverage in U_full and U_@, monosemy, TYPE, reversed rows, concepts, repeated and self-pairs), the verb `@` graph and
+  U_@'s hashes, and compared MEN's two lemma-form copies.
+- *The judges* counted on WordNet (U_@'s hashes; that undirected BFS shortens the depth of 12,831 of the 82,115 nouns),
+  timed decimal acosh and sqrt at 60–600 digits on synthetic values, read BLESS's word1, word2, label and fold columns
+  (no duplicated positive; 4 self-pairs, all False, 3 in test) and HyperLex's noun TYPE column.
+- *The synthesis* counted on WordNet the indirect draws of item 10.1 and T's 74,370 pairs through entity.n.01; read
+  `wbless.tsv`'s word1, word2 and fold fields and `bless.tsv`'s word1 for WB's coverage and clusters; simulated AP
+  under random untied rankings from BD's and WB's (n, positives) alone, with numpy `default_rng(95060)`, 20,000 draws
+  each (expected AP 0.0972 and 0.5140, SD 0.0028 and 0.0129, so π + 1/50 lies 31 and 6.1 standard errors of a
+  20-permutation mean above it); timed e^G in `decimal` on synthetic rationals from Python's `random.Random(95061)`
+  (45 µs at 120 digits, 104 µs at 240); and requested one GitHub API listing of deemakx2/PPDM2, which was refused.
+- *The reviews* (three, of the synthesis's draft):
+  - one read the Common rules and Amendments 1–12 against the draft, searched `spikes/` for the seeds they drew, and
+    counted on WordNet, in memory, the share of T held by each ancestor;
+  - one counted on WordNet the share of T held by each ancestor; counted word reuse in the word columns of HL, SL and
+    MEN; and ran a synthetic model of the relabelled mean RR from T's shares alone, with Python's
+    `random.Random(95901)`;
+  - one re-downloaded the pins into `stage2-review/` and re-hashed them; read their licence files and READMEs; listed
+    PPDM2's tree at e2de627 and hashed MUtE's and mfaruqui's copies; compared the WS-353 split files' pairs and scores
+    with combined.tab's (equality only); hashed GloVe's text members and counted their lines, words, repeats and
+    underscore tokens; re-timed the trainer for two epochs per cell on the direct-edge instance and on a noun
+    direct-edge subgraph of the dry instance's size (psychological_feature.n.01), seeds 95104–95111, keeping no table
+    and evaluating none; and measured side-file and code-file sizes on synthetic files from Python's
+    `random.Random(95112)` and `random.Random(95113)`.
+- *This revision* counted, in HiT's test file, the distinct positives and their shares, the rows that repeat a
+  negative and the rows that hold the child as a negative (names only); re-ran the WS-353 equality check; and
+  computed G for prefix and non-prefix pairs of 400 synthetic random words in H3 and H2 (Python's
+  `random.Random(95920)`; no WordNet word), the numbers in L12's prediction.
+- *Not done by anyone:* no score, correlation, AP, accuracy, RR or F1 of any arm on any Stage-2 row; no registered seed
+  drawn (0–4, 7, 1000 + i, 2000 + i, 4000 + i, 9000–9023, the spikes' 90000 + i).
+
+**20. Known before Stage 2.**
+- Phase 1–4's public results, among them L5's values for these exact arms on WordNet's own neighbours and L6's
+  Lorentz − Euclidean gaps on the mammals. No arm here has been scored on a Stage-2 set.
+- *A partial preview of L12 and L13, from counts.* For HyperLex's 2,163 noun rows by TYPE, whether some sense pairing
+  is a closure pair: hyp-1 to hyp-4 286, 241, 254 and 222 forward; r-hyp-1 to r-hyp-4 73, 53, 60 and 40 reversed;
+  cohyp 0 forward and 1 reversed; mero 2 and 2; syn 11 and 9; ant 0; no-rel 0. Spanning-ancestor pairs among hyp-1 to
+  hyp-4: 281, 229, 233 and 214. BLESS's positives: 1,149 closure and 1,099 spanning of 1,334; WBLESS's 718 and 680 of
+  834; LEDS's 1,385 of 1,385 first-sense closure pairs. G_WN = 0 exactly on closure pairs (its top class), and H3's G
+  is near 0 on spanning ancestors. With the per-TYPE means of HyperLex's Table 7, these counts preview L12(d) in large
+  part and L12(a)–(c) and L13 in part: they show where each arm's top block falls by TYPE, though not the order of the
+  rest. The predictions of L12(d) and L13 used them. L12(d) stays decisive and is flagged in the record as registered
+  after a partial preview, as A10.16 kept L6(c) decisive with its bound from Phase 1 disclosed.
+- HyperLex's noun gold has 305 distinct values, and its per-TYPE means are published (Table 7).
+- HiT: every val and test positive lies in E's closure and no negative does (the closure check of L14 confirms it);
+  the test's positive shares of L14's control 2.
+
+**21. What none of this decides.**
+- *Discovery, or lexical knowledge beyond WordNet.* Every arm reads WordNet; HyperLex's TYPE, 86% of BLESS's positives,
+  all of LEDS and all of HiT were built from it. L12–L14 decide what curvature and learning do with the same
+  information, and L15(b) compares an information source with another, not geometries.
+- Senses in context; verbs and adjectives (dry data only); words outside WordNet.
+- *Learned geometry beyond this setting:* closure-trained or full-noun tables, d ≥ 5, the 7,714 instance-only synsets
+  (absent from U_@, and with them most named entities), converged embeddings, other trainers (Riemannian Adam, cones,
+  HiT's encoders), and readings of the learned tables from a base point other than o (reported only).
+- Comparability with any published number: subsets, WordNet versions, folds, OOV rules and trainers differ, so every
+  literature number is orientation.
+- *The sets not decided:* SemEval-2018 Task 9 (corpus-based discovery without its corpora, licence unknown, gold
+  through BabelNet, 1,083 of its 1,500 English test terms WordNet nouns); HiT mixed-hop (its val and test hold direct
+  edges that L14 trains on); LEDS, EVAL, Shwartz and BiBLESS (reported only).
+- Whether hyperbolic geometry helps a language model: Stages 3 and 4, by amendment.
+- G's order is certified by square roots at 120 and 240 digits, not computed in rationals; ties at the 240-digit bound
+  are a registered part of the metric, read as exact ties (item 6).
