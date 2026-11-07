@@ -400,7 +400,8 @@ def test_pass1_names_no_gold_reader():
     """Import inspection: no @pass1 function names a gold, label, relation or TYPE reader (A13.8)."""
     assert RS.pass1_gold_references() == {}
     for name in ('build_instances', 'job_score', 'job_score_learned', 'score_instance', 'count_checks_words',
-                 'closure_bits', 'write_code_file', '_noun_instances', '_verb_instances'):
+                 'closure_bits', 'edge_bits', 'write_bits_files', 'write_code_file', '_noun_instances',
+                 '_verb_instances'):
         assert name in RS.PASS1
 
 
@@ -482,6 +483,10 @@ def pass1_in_process(cfg, world, n_jobs=None, arms=None):
             continue
         for fk, f in RS.job_score(job)['files'].items():
             out[fk] = f['sha']
+    # the per-row WordNet bits of pass 1 (closure membership, L14(b)'s E edges): word fields and WordNet only
+    for fk, f in RS.write_bits_files(cfg, insts, RS.closure_bits(cfg, world, insts),
+                                     RS.edge_bits(cfg, world, insts)).items():
+        out[fk] = f['sha']
     n = len(world.at.nodes)
     X, N = EM.floor_table_snapped(95233, n, 2, 'lorentz')
     from lexicon import learned as LR
@@ -587,6 +592,142 @@ def test_dry_console_seals_values():
     p2.say(True, 'L12(a)', 'supported 0.123457')
     p2.say(False, 'L14(a)', 'inconclusive')
     assert logs == ['L12(a): [sealed]', 'L14(a): inconclusive']
+
+
+def test_wiring_problems_keep_their_values_sealed(tmp_path):
+    """A13.13 (READING stage2-runner-50): under the seal a wiring problem's console text carries no value; the full
+    text goes to a sealed side file beside the sealed file, and nothing is sealed when there is no seal."""
+    p2 = RS.Pass2.__new__(RS.Pass2)
+    p2.cfg, p2._sealed_problems = RS.make_cfg('selftest', 1, out=str(tmp_path / 'dry'), shape='verb'), []
+    assert p2.cfg.seal
+    txt = p2.seal_problem('L12/a/H3-F3: the ci_rho interval of rho on HL (HL/H3/G/max/- - HL/F3/G/max/-) is not its '
+                          'recomputation', 'L12/a/H3-F3: the interval (0.123456789, 0.1, 0.2) is not its recomputation')
+    assert '0.123456789' not in txt and 'L12/a/H3-F3' in txt
+    sha = p2.write_sealed_problems()
+    raw = open(RS.sealed_problems_path(p2.cfg), 'rb').read()
+    assert hashlib.sha256(raw).hexdigest() == sha and b'0.123456789' in raw
+    assert os.path.dirname(RS.sealed_problems_path(p2.cfg)) == os.path.dirname(p2.cfg.sealed)
+    q = RS.Pass2.__new__(RS.Pass2)
+    q.cfg, q._sealed_problems = RS.make_cfg('selftest', 1, out=str(tmp_path / 'noun')), []
+    assert q.seal_problem('public', 'full 0.5') == 'full 0.5' and q.write_sealed_problems() is None
+
+
+def test_permutation_memo_is_by_content():
+    """Pass2.permuted: two gold lists with equal seeds (MEN and MEN-glove share Rng(2520 + i)) never share a cached
+    permutation, whatever id() a freed list's successor gets; equal lists share one."""
+    p2 = RS.Pass2.__new__(RS.Pass2)
+    p2._perm = {}
+    a = p2.permuted([F(i) for i in range(9)], 95250)
+    for n in (9, 5, 7):
+        vals = [F(10 * i + 1) for i in range(n)]
+        out = p2.permuted(vals, 95250)
+        assert sorted(out) == sorted(vals) and len(out) == n
+        assert out == ST.permute_rows(vals, 95250)
+        del vals
+    assert p2.permuted([F(i) for i in range(9)], 95250) is a                   # equal content: one entry
+
+
+def test_decision_files_are_the_decided_comparisons_files():
+    """A13.14's group (READING stage2-runner-43): the exact files a decided comparison reads (the wiring's provenance,
+    the strongest permutations resolved), and the measured tables read by G on HiT test (21 slots) and HL-at; not the
+    other band permutations, not the edge-shuffled sides, the relabelled or the joint lists."""
+    files = {'HL/H3/G/max/-': {}, 'HL/F3/G/max/-': {}, 'HL/S-full-3/G/max/-': {}, 'HL/S-full-4/G/max/-': {},
+             'HIT-test-s21/learned/G/-/m1': {'table': 'm1', 'table_kind': 'learned', 'form': 'G', 'inst': 'HIT-test-s21'},
+             'HIT-test-s21/edge-shuffled/G/-/s1': {'table': 's1', 'table_kind': 'edge-shuffled', 'form': 'G',
+                                                   'inst': 'HIT-test-s21'},
+             'HIT-test-relabel-s11/learned/G/-/m1': {'table': 'm1', 'table_kind': 'learned', 'form': 'G',
+                                                     'inst': 'HIT-test-relabel-s11', 'relabel': True},
+             'HL-at/learned/G/max/m1': {'table': 'm1', 'table_kind': 'learned', 'form': 'G', 'inst': 'HL-at'},
+             'HL-at/learned/dist/max/m1': {'table': 'm1', 'table_kind': 'learned', 'form': 'dist', 'inst': 'HL-at'}}
+    for f in files.values():
+        f.setdefault('table', '-')
+    wiring = {'provenance': {'L12/a/H3-F3': {'x': 'HL/H3/G/max/-', 'y': 'HL/F3/G/max/-'},
+                             'L12/control1/S-full*': {'x': 'HL/H3/G/max/-', 'y': 'HL/S-full-3/G/max/-'},
+                             'L14/control3/d2/rr_random/lorentz/j0': {'x': 'HIT-test-s21/learned/G/-/m1',
+                                                                      'y': 'HIT-test-s21/edge-shuffled/G/-/s1'}}}
+    parts = RS.decision_files(files, wiring)
+    assert parts == {'exact': ['HL/F3/G/max/-', 'HL/H3/G/max/-', 'HL/S-full-3/G/max/-'],
+                     'hit_test': ['HIT-test-s21/learned/G/-/m1'], 'hl_at': ['HL-at/learned/G/max/m1']}
+
+
+def test_visible_l14_reports_are_the_split_s():
+    """A13.13 (READING stage2-runner-45): the dry record shows L14's reports on the verb graph and its split, by
+    whitelist; HL-at's values (rho, H3 against the tables, the E-edge rows by TYPE, NK17's rho) stay sealed."""
+    rep = {'floors': {'f': {'random': '1/3'}}, 'off_top12_rows': 5, 'nk18_r_against_sp_lp': {'tables': {}},
+           'exact_trees_on_hit_test': {'H3': {'random': '1/2'}}, 'relabel_tail': {'x': 1}, 'delta_rr_snapped_vs_float64':
+           {'y': 0}, 'tables': {'lorentz-2-s0': {'macro_random': '1/4', 'f1': {}, 'NK17': {'random': '1/5', 'hard': '1/6',
+                                                                                       'rho_hl_at': 'PLANTED-NK'}}},
+           'h3_against_learned_on_hl_at': {'rho_H3': 'PLANTED-H3'},
+           'hl_rows_that_are_E_edges': {'by_type': 'PLANTED-TYPE'},
+           'lorentz_minus_euclid': {'d2/random/j0': {'est': 0.1}, 'd2/HL-at/j0/dist': {'est': 'PLANTED-LME'}},
+           'edge_shuffle_cells': {'lorentz/d2/j0/rr_random': {'est': 0.2}, 'lorentz/d2/j0/rho': {'est': 'PLANTED-ESC'}},
+           'sign_agreement_with_G': {'d2/random/dist': {'stated': False}, 'd2/HL-at/dist': {'stated': 'PLANTED-SIGN'}}}
+    vis = RS.visible_reported_l14(rep)
+    text = json.dumps(vis)
+    assert 'PLANTED' not in text
+    assert vis['tables']['lorentz-2-s0']['NK17'] == {'random': '1/5', 'hard': '1/6'}
+    assert vis['floors'] == rep['floors'] and vis['relabel_tail'] == {'x': 1} and vis['off_top12_rows'] == 5
+    assert set(vis['lorentz_minus_euclid']) == {'d2/random/j0'} and set(vis['edge_shuffle_cells']) == {
+        'lorentz/d2/j0/rr_random'} and set(vis['sign_agreement_with_G']) == {'d2/random/dist'}
+    assert RS.visible_reported_l14(None) is None
+
+
+def test_a_later_protocol_stops_the_wiring_check(tmp_path, monkeypatch):
+    """READING stage2-runner-48: while golden/ holds a stage2_protocol_v<N>.txt with N >= 2, spec_from_a13 (which
+    parses Amendment 13 alone) refuses rather than check the decisions against text an amendment has changed."""
+    assert RS.later_protocols() == []
+    for name in ('stage2_protocol_v1.txt', 'stage2_protocol_v2.txt', 'stage2_protocol_v10.txt', 'x_v3.txt'):
+        (tmp_path / name).write_text('x')
+    assert RS.later_protocols(str(tmp_path)) == ['stage2_protocol_v10.txt', 'stage2_protocol_v2.txt']
+    monkeypatch.setattr(RS, 'later_protocols', lambda golden=None: ['stage2_protocol_v2.txt'])
+    with pytest.raises(RS.WiringError, match='stage2_protocol_v2.txt'):
+        RS.check_spec()
+
+
+@pytest.mark.parametrize('shape', ['noun', 'verb'])
+def test_tuning_reads_hit_val_alone(tmp_path, monkeypatch, shape):
+    """A13.10.5 (READING stage2-runner-46): the tuning step's count checks and instances read WordNet and HiT val
+    only: no word column of HyperLex, the suite, SimLex, MEN, WS-353 or GloVe, and not HiT test."""
+    cfg = RS.make_cfg('selftest', 1, out=str(tmp_path / shape), shape=shape)
+    world = RS.World(cfg)
+    touched = []
+    for mod, names in ((S2D, ('hyperlex_words', 'suite_words', 'simlex_words', 'men_words', 'ws353_words',
+                              'hyperlex_split_words', 'bless_concepts', 'count_checks_words', 'dry_counts')),
+                       (RS.GL, ('vocabulary', 'vectors'))):
+        for n in names:
+            monkeypatch.setattr(mod, n, lambda *a, _n=n, **k: touched.append(_n))
+    real_rows = RS.HIT.rows
+
+    def rows(split, *a, **k):
+        touched.append(f'hit-{split}') if split == 'test' else None
+        return real_rows(split, *a, **k)
+    monkeypatch.setattr(RS.HIT, 'rows', rows)
+    counts = RS.count_checks_words(cfg, world, lambda m: None, scope='tune')
+    insts = RS.build_tuning_instances(cfg, world, lambda m: None)
+    RS.check_instance_counts(cfg, insts, counts, lambda m: None, scope='tune')
+    assert touched == [] and set(insts) == {'HIT-val'} and insts['HIT-val'].rows and 'budget' in counts
+    assert counts['scope'].startswith('tune')
+    if shape == 'noun':
+        assert set(counts['hit_detail']) == {'val'} and not any('.test.' in k for k in counts['hit'])
+
+
+def test_side_file_holds_every_tie_the_count_holds(tmp_path):
+    """A13.6: every numerical tie met inside the maximum over senses is logged with its inputs (Certifier's log is
+    unbounded by default); a side file that would hold fewer than the count refuses to be written."""
+    from lexicon import scores2 as SC
+    assert SC.Certifier().log_limit is None
+    cfg = RS.make_cfg('selftest', 1, out=str(tmp_path))
+    inst = RS.Inst('X', 'x', 'k', 's', 'stage2/1', 'rho', 'pair', 'full', [(0, 'a', 'b'), (1, 'c', 'd')])
+    cert = SC.Certifier(log_limit=0)
+    a, b = SC.Val('fDep', (F(4), F(1))), SC.Val('fDep', (F(9), F(4)))
+    cert.n_ties = 1                                       # a tie counted whose inputs the capped log dropped
+    with pytest.raises(ValueError, match='1 numerical ties'):
+        RS.write_code_file(cfg, 'X/H3/G/max/-', 'pair', inst, [0, 1], ['1', '2'], {}, [], cert)
+    cert2 = SC.Certifier()
+    cert2.ties, cert2.n_ties = [(a, b, 'v', 'w')], 1
+    rec = RS.write_code_file(cfg, 'X/H3/G/max/-', 'pair', inst, [0, 1], ['1', '2'], {}, [], cert2)
+    side = json.loads(gzip.decompress(open(RS.side_path(cfg.cache, 'X/H3/G/max/-'), 'rb').read()))
+    assert rec['phi_ties'] == len(side['phi_ties']) == 1
 
 
 # ================================================================ slow: the self-test end to end
@@ -717,6 +858,79 @@ def test_selftest_end_to_end(selftest_runs):
     assert d['failing_side'] in (None, 'low', 'high', 'both') and set(d['failing_excess']) <= {'low', 'high'}
     # every start records the interpreter's flags (A13.2)
     assert all('interpreter_flags' in s for s in rec['starts'][-1:])
+    # the completed A13.11 reports and the wiring (READINGs stage2-runner-34 to 41)
+    grid = rep['L12']['grid']
+    assert len(grid['cells']) == 224 and grid['scored'] == 116 and grid['missing'] == []
+    assert all(isinstance(v.get('rho'), dict) for v in grid['cells'].values() if v['status'] == 'scored')
+    for k in ('F3/Dep/first', 'F2*/Sym/first', 'WN/Dep/first', 'WN/Sym/first', 'H3/Dep/gensim', 'H2/NK17/gensim',
+              'F3*/product/gensim', 'WN/G/gensim', 'WN/LCh/first', 'K3/NK17/gensim', 'K3/Dep/first', 'F2/NK17/max'):
+        assert grid['cells'][k]['file'] in man['files'], k
+    wg = rep['L13']['wn_and_glove']
+    assert set(wg['WN']) == {'BD', 'WB', 'BD-dir'} and set(wg['GloVe']) == {'BD-glove', 'WB-glove', 'BD-dir-glove'}
+    assert wg['GloVe']['BD-glove']['pairSetSha'] == rec['instances']['BD-dir-glove']['pairSetSha']
+    assert wg['GloVe']['BD-dir-glove']['accuracy']['exact'] == '0/1' and wg['GloVe']['WB-glove']['ap'] is not None
+    ncp = rep['L13']['non_closure_positives']
+    for st in ('BD', 'WB'):
+        assert ncp[st]['positives'] >= 1 and set(RS.SIX) | {'WN'} <= set(ncp[st])
+    cm = rep['L13']['closure_membership']
+    assert set(cm) == {k for k in rec['instances'] if not k.startswith(('HIT-', 'HITR-'))}     # every word-pair set
+    for st, e in cm.items():
+        assert len(e['per_row']) == e['rows'] == rec['instances'][st]['rows'] and set(e['per_row']) <= set('0123')
+        assert e['pairSetSha'] == rec['instances'][st]['pairSetSha'] and man['files'][e['file']]['tsv_sha256'] == \
+            e['tsv_sha256']
+        assert e['forward'] == sum(c in '13' for c in e['per_row']) and e['neither'] == e['per_row'].count('0')
+    assert rep['L12']['closure_bits']['neither'] == cm['HL']['neither']
+    agree = rep['L14']['sign_agreement_with_G']
+    assert {f'd{d}/HL-at/{f}' for d in (2, 3) for f in ('Groot', 'dist')} <= set(agree)
+    assert all(agree[f'd{d}/HL-at/{f}']['seeds_compared'] >= 1 for d in (2, 3) for f in ('Groot', 'dist'))
+    eb = rep['L14']['hl_rows_that_are_E_edges']
+    assert eb['rows'] == rec['instances']['HL-at']['rows'] and eb['number'] == eb['forward'] >= 1
+    assert sum(v['forward'] for v in eb['by_type'].values()) == eb['forward']
+    lch = rep['diagnostics']['lch_against_path']
+    assert {'HL', 'HL/first', 'SL', 'WSS', 'WSC', 'WSR'} <= set(lch)
+    assert all(v['classes_equal'] and v['rho_lch']['exact'] == v['rho_path']['exact'] for v in lch.values())
+    assert rec['wiring']['spec_equals_a13'] and rec['wiring']['comparisons'] == len(rec['wiring']['provenance'])
+    assert not any(e['fkey'].split('/')[2] in ('closure', 'E-edge') for e in rec['files_metrics'])
+    # this round's gaps (READINGs stage2-runner-42 to 51)
+    l14 = rec['claims']['L14']
+    pres = {(int(k[1]), int(k.split('/s')[1])): v for k, v in l14['presence'].items()}
+    esc = rep['L14']['edge_shuffle_cells']                 # every (geometry, d, seed) with both tables, per metric
+    meas = {(e['key'].split('-')[1], int(e['key'].split('-d')[1][0]), RS.SELFTEST_SEEDS.training.index(e['seed']))
+            for e in rec['training'].values() if e['kind'] == 'measured' and e.get('snap_sha')}
+    assert len(esc) == 3 * len(meas) and {v['present'] for v in esc.values()} >= {True}
+    for k, v in esc.items():
+        g, d, j, m = k.split('/')
+        assert v['present'] == pres[(int(d[1]), int(j[1]))] and v['label'] == ('true > shuffled' if v['lo'] > 0 else
+                                                                                'true ≈ shuffled')
+        if v['present']:
+            held = l14['controls']['control3']['cells'][f'{d}/s{j[1]}/{m}'][g]
+            assert (held['est'], held['lo'], held['hi']) == (v['est'], v['lo'], v['hi'])
+    lme = rep['L14']['lorentz_minus_euclid']
+    assert all('present' in v for v in lme.values())
+    if not all(pres.values()):                              # a seed that is not present still has its cells
+        d, j = next(k for k, v in pres.items() if not v)
+        assert f'd{d}/random/j{j}' in lme and any(k.startswith(f'lorentz/d{d}/j{j}/') for k in esc)
+    for k, e in rec['training'].items():                    # loss curves: compact in the record, full by SHA-256
+        lc = e['loss_curve']
+        assert lc['values'][0] == e['loss']['0'] and lc['every'] == 10
+        assert e['diverged_epoch'] is not None or (len(lc['values']) == 101 and lc['last'] == 999
+                                                   and lc['values'][-1] == e['loss']['999'])
+        lf = man['loss_files'][k]
+        assert hashlib.sha256(open(os.path.join(cache, lf['cache_path']), 'rb').read()).hexdigest() == e['loss_sha']
+    assert all(r['loss_file'] and r['loss_sha'] == man['loss_files'][r['loss_file'].split('/')[-1][:-10]]['sha256']
+               for r in tuning['runs'])
+    parts = man['decision_files']['parts']
+    assert parts['hit_test']['count'] == parts['hl_at']['count'] == 20 and parts['exact']['count'] >= 1
+    prov = {fk for v in rec['wiring']['provenance'].values() for fk in (v['x'], v['y'])}
+    assert not any('/S-full-' in fk or '/W-' in fk for fk in man['files'] if man['files'][fk]['committed']
+                   and fk not in prov)
+    assert rep['L12']['random_split_agrees']['valid'] and 'HL-split' not in {
+        e['base_inst'] for e in rec['files_metrics'] if e.get('invalid')}
+    sp2 = rep['L13']['ap_without_self_pairs']
+    assert sp2['removed'] == 1 and 'ap_without_ns_self_pairs' in rep['L13']       # the synthetic world's self-pair
+    assert tuning['counts']['scope'].startswith('tune') and 'words' not in tuning['counts']
+    assert t['disk']['exact_code_lines'] > 0
+    assert not any(k.startswith(('BD-val', 'WB-val')) for k in rec['instances'])
 
 
 def skip_if_head_moved(cache):
@@ -773,8 +987,10 @@ def test_selftest_resume_reruns_a_changed_file(selftest_runs, tmp_path):
     runs = os.path.join(dst, 'cache', 'noun', 'runs.jsonl')
     text = open(runs, encoding='utf-8').read().replace(src, dst)
     open(runs, 'w', encoding='utf-8').write(text)
-    # the first exact-arm file (table '-'; a learned table's files end with its key and rerun another pool)
-    victim = [f for f in sorted(os.listdir(os.path.join(dst, 'cache', 'noun', 'codes'))) if f.endswith('__-.tsv.gz')][0]
+    # the first exact-arm file (table '-'; a learned table's files end with its key and rerun another pool), not one of
+    # WordNet's bits files (closure, E edges), which every decisive run writes afresh outside the pools
+    victim = [f for f in sorted(os.listdir(os.path.join(dst, 'cache', 'noun', 'codes'))) if f.endswith('__-.tsv.gz')
+              and '__any__' not in f][0]
     p = os.path.join(dst, 'cache', 'noun', 'codes', victim)
     open(p, 'wb').write(gzip.compress(b'0\t0\n'))
     assert RS.main(['--selftest', '--out', dst, '--workers', '2']) == 0
@@ -808,31 +1024,50 @@ def test_selftest_dry_shape_seals(tmp_path, capfd):
     assert sealed['lbench_sealed'] and all(
         RS.parse_lbench(x)['instanceId'].split('-relabelled')[0] in sealed_ids for x in sealed['lbench_sealed'])
     # every interval of a sealed set (distinctive floats) and every sealed metric hash stays out of the visible files
-    planted = set()
-
-    def walk(x):
+    def walk(x, into):
         if isinstance(x, dict):
             for v in x.values():
-                walk(v)
+                walk(v, into)
         elif isinstance(x, list):
             for v in x:
-                walk(v)
+                walk(v, into)
         elif isinstance(x, float) and len(repr(x)) >= 12:
-            planted.add(repr(x))
+            into.add(repr(x))
+        return into
     rec = sealed['record']
+    planted = set()
     for k in ('L12', 'L13', 'L15'):
-        walk(rec['claims'][k]['parts'])
-    walk(rec['claims']['L14']['parts']['b'])
+        walk(rec['claims'][k]['parts'], planted)
+    walk(rec['claims']['L14']['parts']['b'], planted)
     assert planted
+    # the split's own values that A13.13 shows (READING stage2-runner-45) can equal a sealed value by coincidence (a
+    # common fraction such as 2/9): a planted value counts as leaked only where the split's reports do not hold it
+    split_values = walk(RS.visible_reported_l14(rec['reported']['L14']), set())
     visible = console + ''.join(open(os.path.join(res, n), encoding='utf-8').read() for n in os.listdir(res)
                                 if os.path.isfile(os.path.join(res, n)))
-    assert not [v for v in planted if v in visible]
+    assert not [v for v in planted - split_values if v in visible]
     assert 'L12(a): [sealed]' in console and 'L14(b): [sealed]' in console
     # the review's additions: the suite protocol does not apply to the dry sets (no validation fold); L14's tables on
     # the dry detection rows and the reports stay in the sealed file
     assert rec['reported']['L13']['suite_detection_protocol']['applies'] is False
     assert set(rec['reported']['L13']['l14_tables_on_these_rows']['pair_sets']) == {'BD-at', 'WB-at', 'BD-dir-at'}
     assert all(vis['instances'][k]['sealed'] for k in ('BD-at', 'WB-at', 'BD-dir-at'))
+    # the completed reports stay in the sealed file; the visible record holds the wiring's provenance, no value
+    assert rec['reported']['L12']['grid']['scored'] == 116 and 'BD-glove' in rec['reported']['L13']['wn_and_glove']['GloVe']
+    assert rec['reported']['L14']['hl_rows_that_are_E_edges']['rows'] == vis['instances']['HL-at']['rows']
+    assert vis['instances']['BD-glove']['sealed'] and vis['instances']['WB-glove']['sealed']
+    w = vis['wiring']
+    assert w['spec_equals_a13'] and w['comparisons'] == len(w['provenance']) > 0
+    assert all(set(v) == {'x', 'y', 'inst', 'metric', 'interval'} for v in w['provenance'].values())
+    # A13.13: L14's values on the verb graph and its split are visible (READING stage2-runner-45); HL-at's stay sealed
+    v14 = vis['L14_reported_on_the_verb_graph']
+    full14 = rec['reported']['L14']
+    assert v14['floors'] == full14['floors'] and v14['relabel_tail'] == full14['relabel_tail']
+    assert v14['nk18_r_against_sp_lp'] == full14['nk18_r_against_sp_lp'] and v14['tables']
+    assert all('rho_hl_at' not in e.get('NK17', {}) for e in v14['tables'].values())
+    assert 'h3_against_learned_on_hl_at' not in v14 and 'hl_rows_that_are_E_edges' not in v14
+    assert not any('HL-at' in k for k in list(v14['lorentz_minus_euclid']) + list(v14['sign_agreement_with_G']))
+    assert v14['edge_shuffle_cells'] and not any(k.endswith('/rho') for k in v14['edge_shuffle_cells'])
 
 
 # ================================================================ slow: WordNet 3.0 and the pinned files (counting only)

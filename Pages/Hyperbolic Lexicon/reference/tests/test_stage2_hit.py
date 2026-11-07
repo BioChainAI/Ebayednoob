@@ -279,6 +279,30 @@ def test_readers_verifier_and_counts_on_a_synthetic_zip(tmp_path):
     assert ok
 
 
+def test_test_positives_that_are_direct_edges_are_checked(tmp_path):
+    """A13 L14 Instances (a), "Every test pair is in T, so none enters training as a positive": a test row whose
+    positive is a direct edge of E is counted (hit.test.positives_direct_edges) and differs from COUNTS' 0; val's count
+    is made for the definitions amendment; splits=('val',), tuning's subset (A13.10.5), reads no test row."""
+    wn = random_dag(95209, n=250)
+    g = S.at_graph(wn)
+    split = synthetic_split(wn, g, 30)
+    store, _ = hit_store(tmp_path / 'a', wn, split)
+    out, detail = hit.count_checks(wn, store, count=len(g.nodes))
+    assert out['hit.test.positives_direct_edges'] == 0 == detail['val']['positives_direct_edges']
+    assert out['hit.val.positives_direct_edges'] == 0
+    assert not [k for k, _, _ in D.compare_counts(out, hit.COUNTS) if 'direct' in k]
+    off_name = {o: n for n, o in S.hit_names(wn).items()}
+    child, parent = g.edges[0]
+    leaked = dict(split, test=[dict(split['test'][0], child=off_name[child], parent=off_name[parent])]
+                  + split['test'][1:])
+    store2, _ = hit_store(tmp_path / 'b', wn, leaked)
+    out2, _ = hit.count_checks(wn, store2, count=len(g.nodes))
+    assert out2['hit.test.positives_direct_edges'] == 1
+    assert ('hit.test.positives_direct_edges', 0, 1) in D.compare_counts(out2, hit.COUNTS)
+    out3, detail3 = hit.count_checks(wn, store2, count=len(g.nodes), splits=('val',))
+    assert set(detail3) == {'val'} and not any('.test.' in k for k in out3)
+
+
 @pytest.mark.parametrize('line', [
     '{"child": "w1.n.01", "child": "w2.n.01", "parent": "w0.n.01", "random_negatives": [], "hard_negatives": []}',
     '{"parent": "w0.n.01", "random_negatives": [], "hard_negatives": []}',

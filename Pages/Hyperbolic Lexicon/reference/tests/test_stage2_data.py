@@ -262,6 +262,31 @@ def test_script_check_exit_codes(tmp_path):
     assert r.returncode == 1 and 'DIFFERENT' in r.stdout
 
 
+def test_script_check_fetches_missing_files(tmp_path):
+    """A13.2: "`make_stage2_v1.py --check` fetches each file into its own new folder ..., checks its size and SHA-256
+    ... and refuses on any difference": --check fetches a missing pinned file (here copied from --source: no network)
+    and then verifies; --check --no-fetch only verifies, so a missing file is a difference and nothing is created."""
+    src = tmp_path / 'src'
+    pins = build(str(src), zip_files())
+    for p in pins['files']:
+        p['url'] = 'file:///nonexistent/' + p['file']
+        if p['name'] == 'glove-6b':
+            p['members'] = [m for m in p['members'] if '100d' not in m['path']]
+    pf = tmp_path / 'pins.json'
+    pf.write_text(json.dumps(pins))
+    empty = tmp_path / 'empty'
+    r = run_script('--check', '--no-fetch', '--root', str(empty), '--pins', str(pf))
+    assert r.returncode == 1 and 'missing' in r.stdout
+    assert not empty.exists() or not any(empty.iterdir())
+    out = tmp_path / 'out'
+    r = run_script('--check', '--root', str(out), '--pins', str(pf), '--source', str(src))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert 'fetched' in r.stdout and 'equal their pins' in r.stdout
+    assert sorted(os.listdir(out)) == sorted(p['name'] for p in pins['files'])
+    r = run_script('--check', '--root', str(out), '--pins', str(pf))            # everything in place: nothing fetched
+    assert r.returncode == 0 and 'fetched' not in r.stdout
+
+
 def load_script():
     spec = importlib.util.spec_from_file_location('make_stage2_v1_under_test', SCRIPT)
     mod = importlib.util.module_from_spec(spec)

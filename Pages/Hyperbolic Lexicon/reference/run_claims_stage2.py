@@ -47,6 +47,10 @@ How it runs.
   in a numerical tie, with their input tuples. Pass 2 opens the gold, runs the count checks that need it, selects
   label-chosen rows (BD-dir's True rows; the dry hyp rows), reads each pass-1 file only after checking its SHA-256
   against the run record, and computes every metric, control and decision.
+- The wiring (READING stage2-runner-41). DECISION_SPEC and CONTROL_SPEC hold every decided comparison and control of
+  L12-L15 (arms, form, sense rule, instance, X - Y, metric, interval); the decisive step refuses unless they equal
+  Amendment 13's text as spec_from_a13 parses it, pass 2 assembles every decision from them, and verify_wiring
+  recomputes each decided interval and control value from the files the text names before anything is written.
 - Resume (A13.15 step 7; A10.14). Each finished job appends a line to runs.jsonl in the cache (lexicon.CACHE/
   stage2-run/<mode>/); a restart at the same HEAD and configuration reuses the lines whose files still have their
   recorded SHA-256s. Every start is listed with its environment and load average, and the console file is appended to.
@@ -91,6 +95,7 @@ import textwrap  # noqa: E402
 import time  # noqa: E402
 import traceback  # noqa: E402
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait  # noqa: E402
+from collections import namedtuple  # noqa: E402
 from dataclasses import dataclass, field, replace  # noqa: E402
 from fractions import Fraction  # noqa: E402
 
@@ -542,7 +547,8 @@ RUNNER_READINGS = (
      'and sqrt (math.acosh may differ in the last bits; sqrt is correctly rounded in both), ties pessimistic; reported '
      'only.'),
     ('stage2-runner-20', 'A13.11, "the closure bit computed from WordNet in pass 1": some sense pairing (s, t) with t a '
-     'strict @/@i ancestor of s (wngraph.WNGraph.anc), per row of HL, BD and WB, in each direction.'),
+     'strict @/@i ancestor of s (wngraph.WNGraph.anc), senses in the instance\'s universe, per row of every scored '
+     'word-pair instance, in each direction.'),
     ('stage2-runner-21', 'A13.7, the strongest permutation of a control: the largest point estimate of the permuted '
      'arm\'s own metric (rho, AP or direction accuracy, exact), ties to the smaller i; then one interval.'),
     ('stage2-runner-22', 'Spec section 0, the load average every 10 minutes: sampled at every start, at each phase\'s '
@@ -557,8 +563,9 @@ RUNNER_READINGS = (
      'the same nodes; "the tables" are every learned table of the run (tuning, measured, edge-shuffled, floors).'),
     ('stage2-runner-25', 'A13.11, "NK17 scores" (L14): each measured table scored by NK17 (A13.5, alpha 10^3, 120 '
      'digits, uncertified) on HiT test (21 slots: mean RR in both settings) and on HL within U_@ (rho), deciding '
-     'nothing; a learned Euclidean table, which has no Poincare norm, is read with its Euclidean norm and distance '
-     '(scores2.nk17_value), as P17 scored its Euclidean embeddings by eq. 8.'),
+     'nothing. One rule for every table without x0: a flat table (the learned Euclidean table, and the exact flat arms '
+     'F3, F3*, F2, F2* in the L12 grid), which has no Poincare norm, is read with its Euclidean norm and distance '
+     '(scores2.nk17_value), as P17 scored its Euclidean embeddings by eq. 8; named for the definitions amendment.'),
     ('stage2-runner-26', 'A13.11, "L14\'s tables on these rows" (L13): the measured tables read by G at o on BD, WB '
      'and BD-dir covered in U_@ (BD-at, WB-at, BD-dir-at; senses in U_@, as L14(b) reads HL), detection AP '
      '(pessimistic and sklearn\'s convention) and direction accuracy on the True rows, with the exact Lorentz - '
@@ -597,6 +604,99 @@ RUNNER_READINGS = (
      'each read only after its float or snapped SHA-256 matches the run record; none reads a gold, label or TYPE field, '
      'and each decides nothing. Named for the definitions amendment, since A13.8 says pass 2 computes every metric '
      'from pass 1\'s files alone.'),
+    ('stage2-runner-34', 'A13.11 (L12), "every arm under every score of item 5 and every sense rule of item 3" '
+     '(L12_GRID): the arms are L12\'s seven scored arms (the six exact trees and WN) and K3 (A13.4\'s geometric arm: '
+     'one hyperboloid table); the permutation families S-full_i and W_i (40 arms, defined as readings on H3 with G), S3_i '
+     'and the chain\'s arms, each defined by one reading, stay at G with the maximum (their exclusion, 48 arms: 20 '
+     'S-full, 20 W, 5 S3 and the chain\'s 3, named for the definitions amendment). The scores are G, Sym, Dep°, Dep '
+     'and the reported NK17 (the seven geometric arms: Poincaré norms on H3, H2 and K3, Euclidean norms on the exact '
+     'flat arms, READING stage2-runner-25), product (the seven geometric arms) and WN-LCh (WN); the rules are the '
+     'maximum, first senses, '
+     'gensim\'s rule and noun morphy. A cell is scored, an alias of a cell equal to it by definition (morphy = the '
+     'maximum, since every pair-set word is in the index raw; Dep° under first senses or gensim\'s rule = Dep under '
+     'that rule, G\'s pair being the rule\'s; Sym and WN-LCh under gensim\'s rule = the maximum, the gensim pair having '
+     'the least distance), or n/a with its reason; reported.L12.grid lists all 224 cells (8 arms x 7 scores x 4 rules).'),
+    ('stage2-runner-35', 'A13.3, gensim\'s rule on WN (scores2.WNScorer.gensim_pair): WN has no geometry, so "the sense '
+     'pair at the smallest distance" uses its path p (WN-path, Sym_WN = -p): the pair of the largest Sym_WN, ties to '
+     'the first in (i, j) order, then G_WN or Dep_WN of that pair.'),
+    ('stage2-runner-36', 'A13.11 (L13), "WN and GloVe": WN by G_WN with the maximum over senses on BD, WB (detection '
+     'AP) and BD-dir (direction accuracy); GloVe 300-d\'s cosine detection AP on BD-glove and WB-glove, BD\'s and WB\'s '
+     'rows covered in U_full with both N_S words in GloVe\'s vocabulary (A13.3; the instance manifest\'s gloveCovered '
+     'rows, which manifest_check compares), clusters as the base set\'s; GloVe\'s direction on BD-dir-glove is L13 '
+     'control 3\'s file. Reported.'),
+    ('stage2-runner-37', 'A13.11, "the closure membership of every scored pair (from WordNet, in pass 1)", and L12\'s '
+     '"the closure bit computed from WordNet in pass 1": the bits of closure_bits (READING stage2-runner-20) for every '
+     'scored word-pair instance (HL, BD, whose rows BD-dir scores both ways, WB, and every other set of L12, L13, L15 '
+     'and A13.11, senses in the instance\'s universe) are written in pass 1 as code files (row, forward bit, reverse bit; '
+     'write_bits_files) with their SHA-256s in the run record, and pass 2 reads them only through that check. Reported '
+     'per row as one character per pair-set row, forward + 2 x reverse, with the pair set\'s pairSetSha; no word is '
+     'written. The non-closure positives (AP on BD and on WB, direction on BD-dir) are the True rows whose forward bit '
+     'is 0, with every negative.'),
+    ('stage2-runner-38', 'A13 L14 Instances (b), "the number of HL rows that are E edges for some sense pairing": on '
+     'HL-at with senses in U_@ (edge_bits, pass 1, a bits file like the closure bits), the rows with some sense pair '
+     '(s, t) in E, x the child (forward: the number); the rows with (t, s) in E, either, and the counts by TYPE (pass 2) '
+     'beside it.'),
+    ('stage2-runner-39', 'A13 L14 Risks, the sign agreement of G_root and the distance-only score with G: per (d, '
+     'setting) on HiT test, and per d on HL-at, the seeds at which the form\'s Lorentz - Euclidean estimate and G\'s (on '
+     'HL-at: L14(b)\'s own interval at that seed) are not both > 0 or both <= 0; three or more such seeds are flagged '
+     '"stated".'),
+    ('stage2-runner-40', 'A13.11\'s diagnostic, "WN-LCh\'s tie classes against WN-path\'s on every set": WN-LCh is scored '
+     '(with the maximum over senses) wherever WN-path is read: HL (and its first-senses cell of the grid), SL, WSS, WSC '
+     'and WSR; per set, whether the two tie-class lists are equal, their class counts and both rhos.'),
+    ('stage2-runner-41', 'The wiring (it implements A13\'s Decision, Metric and Controls lines as written): every decided '
+     'comparison and control of L12-L15 is a constant (DECISION_SPEC, CONTROL_SPEC: arms, score form, sense rule, '
+     'instance, X - Y order, metric, interval; bands with their arms, instances and permutations). The decisive step '
+     'refuses before scoring unless spec_from_a13, which parses the terms, their order, the arm lists and the intervals '
+     'from A13\'s own sentences (quoted verbatim from the pinned protocol file), equals the constants (check_spec). '
+     'Pass 2 assembles every decision from the constants; then verify_wiring re-derives each comparison from the '
+     'text\'s spec with its own lookup of the code files and training records, recomputes every interval and control '
+     'value with stats2\'s and rank\'s functions directly, and compares them with what the decision holds; any '
+     'difference stops the run with no result (WiringError). The record keeps the provenance of every comparison (its '
+     'two files, instance, metric and interval), no value.'),
+    ('stage2-runner-42', 'A13.11 (L14), "loss curves": every run\'s full curve (its recorded mean epoch losses, A10.5) '
+     'is the cache\'s .loss.json, whose SHA-256 the run record (training, tuning-stage2.json\'s runs) and '
+     'stage2-manifest.json (loss_files) hold and the resume check verifies; the record keeps a compact curve beside the '
+     'five losses of '
+     'epochs 0, 19, 99, 499 and 999: epochs 0, 10, 20, ... and the last recorded epoch (loss_curve).'),
+    ('stage2-runner-43', 'A13.14, the code files "of every arm and table named in a decision of L12-L15 (the exact arms '
+     'on HL, BD, WB, BD-dir, SL, MEN and WSR; the 20 measured tables on HiT test in both settings and on HL)": the exact '
+     'arms\' files that a decided comparison reads (the wiring\'s provenance, the strongest S-full and W permutations '
+     'resolved; the GloVe intersections of L15(b) included) and the 20 measured tables read by G on HiT test (21 slots) '
+     'and on HL within U_@, not every file a band control reads (the 20 S-full_i, W_i and GloVe-vec_i permutations); '
+     'the size of each part is reported with the group\'s.'),
+    ('stage2-runner-44', 'A13.11 (L12), "the original split file and hyperlex_rnd.tsv must agree": checked at the start '
+     'of pass 2, before any HL-split metric (words, TYPE and AVG_SCORE, in order; registered: 541 noun rows in each, '
+     'all covered); on a difference the run goes on (the item decides nothing), the console says so, and HL-split\'s '
+     'values are withheld (its file metrics marked invalid, no LBENCH/1 record).'),
+    ('stage2-runner-45', 'A13.13, "L14\'s values on the verb graph and its split (WordNet data)": the dry record shows, by '
+     'whitelist, A13.11\'s L14 reports computed on the verb graph and its split alone (floors, the tables\' macro and '
+     'off-top-12 RR, G_root, the distance-only score, NK17 and F1 on the split, the Lorentz - Euclidean cells, the sign '
+     'agreement and the edge-shuffle cells on the split, the exact trees on the split, Nickel & Kiela 2018\'s diagnostic, '
+     'the relabelled tails, |dRR|); everything read on HL within U_@ stays sealed.'),
+    ('stage2-runner-46', 'A13.10.5, "Tuning computes nothing else, and touches no other Stage-2 set": the tuning step '
+     'makes WordNet\'s counts (U_@ or the verb graph, the W strata, the budget) and HiT\'s that need no other set (the '
+     'names, the training edges, HiT val\'s rows, negatives and closure) and builds HiT val alone; no word column of '
+     'another set, and not HiT test, is read. The decisive step makes every count of A13.9 and A13.13.'),
+    ('stage2-runner-47', 'A13.16 with A13.8, the disk projection before tuning: the timing step builds the word-level '
+     'instances (pass 1\'s readers, word fields only) and counts the code lines of the decisive run\'s exact plan (L12, '
+     'L13, L15 and item 11), added to the learned tables\' code files and the tables.'),
+    ('stage2-runner-48', 'A13.14, "An amendment that changes a definition here makes stage2_protocol_v2.txt": '
+     'spec_from_a13 parses Amendment 13 alone, so while a later protocol file exists the wiring check refuses rather '
+     'than check the decisions against text an amendment has changed; teaching it the amending text is the definitions '
+     'amendment\'s work.'),
+    ('stage2-runner-49', 'A13.11, "every edge-shuffle cell, with \'true ≈ shuffled\' where its interval does not lie '
+     'above 0", and L14 control 3, "Every cell\'s interval is reported": the true - shuffled interval of every '
+     '(geometry, d, seed) whose measured and edge-shuffled tables both exist, per metric, marked present or not; at a '
+     'present seed it is control 3\'s own, elsewhere computed the same way and deciding nothing. The G_root and '
+     'distance-only Lorentz - Euclidean cells are reported at every seed where both measured tables exist, marked; the '
+     'sign agreement with G counts the present seeds (the decision\'s cell).'),
+    ('stage2-runner-50', 'A13.13, the sealed values when a run stops: a wiring check that fails in a sealed run names '
+     'each comparison, its two files, instance, metric and interval on the console and in the WiringError, with no '
+     'value; the problems with their values go to a sealed side file beside the sealed file (wiring-problems.json, its '
+     'SHA-256 on the console), opened after step 7 with it.'),
+    ('stage2-runner-51', 'A13.11, "AP without the 3 self-pairs": the rows A13.9\'s count counts (BD\'s raw word fields '
+     'equal; registered, exactly 3, else the run stops), with the N_S variant (N_S forms equal) reported beside it '
+     'under its own label.'),
 )
 
 
@@ -902,6 +1002,14 @@ def _noun_instances(cfg, world, log):
         _reported_noun_instances(cfg, world, add, vocab, bless, concepts, wb, sl, sn)
         for base in ('BD', 'WB', 'BD-dir'):
             add(_at_variant(world, out[base], base + '-at'))
+        # A13.11 (L13, "WN and GloVe"): GloVe's detection AP on BD and WB, each on its rows covered in U_full and within
+        # GloVe's vocabulary (A13.3; the instance manifest's gloveCovered rows), clusters as the base set's
+        add(_inst(world, 'BD-glove', bd_iid + '-glove', 'bless', 'stage2/1', 'ap', 'pair', 'full', bdg, glove=True,
+                  clusters=[x for _, x, _ in bdg], gold='bless', cand=bt))
+        wg = select_rows(wt, Uf, wn, 'noun', vocab)
+        add(_inst(world, 'WB-glove', 'suite-6891e0e-wbless-test-glove', 'wbless', 'stage2/1', 'ap', 'pair', 'full', wg,
+                  glove=True, clusters=[S2D.wbless_cluster(x, y, concepts) for _, x, y in wg], gold='wbless',
+                  cand=wt))
     return out
 
 
@@ -910,16 +1018,9 @@ def _reported_noun_instances(cfg, world, add, vocab, bless, concepts, wb, sl, sn
     """A13.11's reported sets (stage2/1)."""
     wn, store = world.wn, world.store
     Uf = world.U_full
-    for fold in ('val',):
-        rows = [(r, x, y) for r, x, y, f in bless if f == fold]
-        rr = select_rows(rows, Uf, wn, 'noun')
-        add(_inst(world, 'BD-val', 'suite-6891e0e-bless-val', 'bless', 'stage2/1', 'ap', 'pair', 'full', rr,
-                  clusters=[x for _, x, _ in rr], gold='bless', cand=rows))
-        rows = [(r, x, y) for r, x, y, f in wb if f == fold]
-        rr = select_rows(rows, Uf, wn, 'noun')
-        add(_inst(world, 'WB-val', 'suite-6891e0e-wbless-val', 'wbless', 'stage2/1', 'ap', 'pair', 'full', rr,
-                  clusters=[S2D.wbless_cluster(x, y, concepts) for _, x, y in rr], gold='wbless',
-                  cand=rows))
+    # A13 L13 Instances: "The validation folds decide nothing; they are scored only for the reported suite protocol
+    # (item 11)": BLESS's and WBLESS's validation rows are scored only inside BD-suite and WB-suite (the suite's own
+    # detection protocol) and WB-all and BIB-all (its 1,000 x 2% protocol), never as instances of their own
     # the suite's own detection protocol on L13's sets (A13.11): val and test folds in one list
     add(_suite_instance(world, 'BD-suite', 'suite-6891e0e-bless-valtest', 'bless', bless, 'bless'))
     add(_suite_instance(world, 'WB-suite', 'suite-6891e0e-wbless-valtest', 'wbless', wb, 'wbless'))
@@ -1018,6 +1119,11 @@ def _verb_instances(cfg, world, log):
     if cfg.reported:
         for base in ('BD', 'WB', 'BD-dir'):
             out[base + '-at'] = _at_variant(world, out[base], base + '-at')
+        # A13.11 (L13, "WN and GloVe"): GloVe's detection AP on the dry detection set within GloVe (and on its WB
+        # stand-in), sealed like the sets they come from
+        for name, suffix in (('BD-glove', '-detection-glove'), ('WB-glove', '-detection-standin-glove')):
+            add(_inst(world, name, iid + suffix, 'hyperlex-all', 'stage2/1', 'ap', 'pair', 'full', hg, glove=True,
+                      clusters=[x for _, x, _ in hg], gold='hyperlex-hyp', sealed=True, cand=hv))
     # L14: the verb '@' graph's HiT-protocol split (A13.13), drawn here with the dry split's seeds (4500-4502)
     split = dry_split(world, cfg.seeds.hitr)
     for name in ('test', 'val'):
@@ -1192,6 +1298,505 @@ def shuffled_vectors(cfg, inst, vecs, i):
     return {words[k]: vecs[words[pi[k]]] for k in range(len(words))}
 
 
+# ================================================================ the wiring: A13's decided comparisons and controls
+# DECISION_SPEC holds every decided comparison of L12-L15: X - Y in that order, each side an arm read by one score form
+# under one sense rule (a learned side names its geometry and table kind, its d and seed coming from the cell), on one
+# instance, with one metric and one interval. CONTROL_SPEC holds every control: its arms, form and rule, instances,
+# metric, what is permuted and its band. Pass 2 assembles every decision from these two constants (Pass2.spec_iv,
+# Pass2.side_codes, Pass2.band_*); spec_from_a13 rebuilds both from Amendment 13's own text, term by term, and
+# check_spec refuses a decisive run whose constants differ from it; Pass2.verify_wiring re-derives every decided
+# interval and control value from the text's spec with its own file lookup and stats2's functions before anything is
+# written, and stops the run on any difference. Pinned by tests/test_stage2_spec.py, as Phase 4's COMP_SPEC is pinned.
+Side = namedtuple('Side', 'arm form rule table')     # table '-' (an exact arm) | 'measured' | 'edge-shuffled' | ...
+Comp = namedtuple('Comp', 'x y inst metric interval')
+Band = namedtuple('Band', 'sides insts metric permuted band')
+
+_HF = (('H3', 'F3'), ('H3', 'F3*'), ('H2', 'F2'), ('H2', 'F2*'))
+GLOVE_SIDE = Side('GloVe-300', 'cos', '-', '-')
+
+
+def _sg(arm):
+    return Side(arm, 'G', 'max', '-')
+
+
+def _ss(arm):
+    return Side(arm, 'Sym', 'max', '-')
+
+
+def _learned_side(geometry, rule, table='measured'):
+    return Side(geometry, 'G', rule, table)
+
+
+DECISION_SPEC = {
+    # L12: on HL, read by G with the maximum over senses; word-level ci_rho for every difference of rho
+    'L12/a': {f'{h}-{f}': Comp(_sg(h), _sg(f), 'HL', 'rho', 'ci_rho') for h, f in _HF},
+    'L12/b': {h: Comp(_sg(h), Side(h, 'DepG', 'max', '-'), 'HL', 'rho', 'ci_rho') for h in ('H3', 'H2')},
+    'L12/c': {h: Comp(_sg(h), _ss(h), 'HL', 'rho', 'ci_rho') for h in ('H3', 'H2')},
+    'L12/d': {'H3-WN': Comp(_sg('H3'), _sg('WN'), 'HL', 'rho', 'ci_rho')},
+    'L12/control1': {'K3': Comp(_sg('H3'), _sg('K3'), 'HL', 'rho', 'ci_rho'),
+                     'S-full*': Comp(_sg('H3'), _sg('S-full*'), 'HL', 'rho', 'ci_rho')},
+    'L12/control2': {'W*': Comp(_sg('H3'), _sg('W*'), 'HL', 'rho', 'ci_rho')},
+    'L12/control3': {'H3-reversed': Comp(_sg('H3'), Side('H3', 'Grev', 'max', '-'), 'HL', 'rho', 'ci_rho')},
+    # L13: G with the maximum over senses; AP on BD and WB, direction accuracy on BD-dir; ci_cluster
+    'L13/a': {f'{h}-{f}': Comp(_sg(h), _sg(f), 'BD', 'ap', 'ci_cluster') for h, f in _HF},
+    'L13/b': {f'{h}-{f}': Comp(_sg(h), _sg(f), 'WB', 'ap', 'ci_cluster') for h, f in _HF},
+    'L13/c': {f'{h}-{f}': Comp(_sg(h), _sg(f), 'BD-dir', 'accuracy', 'ci_cluster') for h, f in _HF},
+    'L13/control1/a': {k: Comp(_sg('H3'), _sg(k), 'BD', 'ap', 'ci_cluster') for k in ('K3', 'S-full*', 'W*')},
+    'L13/control1/b': {k: Comp(_sg('H3'), _sg(k), 'WB', 'ap', 'ci_cluster') for k in ('K3', 'S-full*', 'W*')},
+    'L13/control1/c': {k: Comp(_sg('H3'), _sg(k), 'BD-dir', 'accuracy', 'ci_cluster') for k in ('K3', 'S-full*', 'W*')},
+    # L14: the measured tables read by G at o, Lorentz - Euclidean per d, setting and seed
+    'L14/a': {f'd{d}/{st}': Comp(_learned_side('lorentz', '-'), _learned_side('euclid', '-'), 'HIT-test', f'rr-{st}',
+                                 'ci_mean') for d in (2, 3) for st in ('random', 'hard')},
+    'L14/b': {f'd{d}': Comp(_learned_side('lorentz', 'max'), _learned_side('euclid', 'max'), 'HL-at', 'rho', 'ci_rho')
+              for d in (2, 3)},
+    'L14/control3': {f'd{d}/{m}/{g}': Comp(_learned_side(g, r), _learned_side(g, r, 'edge-shuffled'), inst, metric, iv)
+                     for d in (2, 3) for m, inst, metric, r, iv in (('rr_random', 'HIT-test', 'rr-random', '-', 'ci_mean'),
+                                                                   ('rr_hard', 'HIT-test', 'rr-hard', '-', 'ci_mean'),
+                                                                   ('rho', 'HL-at', 'rho', 'max', 'ci_rho'))
+                     for g in ('lorentz', 'euclid')},
+    # L15: Sym with the maximum over senses on SL and MEN; (b) on the sets within GloVe
+    'L15/a': {f'{st}/{h}-{f}': Comp(_ss(h), _ss(f), st, 'rho', 'ci_rho') for st in ('SL', 'MEN') for h, f in _HF},
+    'L15/b': {'MEN': Comp(GLOVE_SIDE, _ss('H3'), 'MEN-glove', 'rho', 'ci_rho'),
+              'WSR': Comp(GLOVE_SIDE, _ss('H3'), 'WSR-glove', 'rho', 'ci_rho'),
+              'HL': Comp(_ss('H3'), GLOVE_SIDE, 'HL-glove', 'rho', 'ci_rho')},
+    'L15/control1': {f'{st}/{k}': Comp(_ss('H3'), _ss(k), st, 'rho', 'ci_rho') for st in ('SL', 'MEN')
+                     for k in ('K3', 'S-full*', 'W*')},
+}
+# Arm families in CONTROL_SPEC: 'S-full_i', 'W_i' and 'GloVe-vec_i' name every permutation i < 20; '*' every table
+# of the side's kind. A band 'gold' is |mean of 20 rho| <= 5/sqrt(20 (n - 1)); 'label' mean AP <= pi + 1/50; 'rr' mean
+# RR <= H11/11 + 1/50; 'zero' an exact accuracy of 0; 'one' RR = 1 on every row (the positive control).
+CONTROL_SPEC = {
+    'L12/control4': Band(tuple(_sg(a) for a in ('H3', 'H2', 'F3', 'F3*', 'F2', 'F2*', 'WN')), ('HL',), 'rho', 'gold',
+                         'gold'),
+    'L13/control2': Band(tuple(_sg(a) for a in SIX), ('BD', 'WB'), 'ap', 'labels', 'label'),
+    'L13/control3': Band((Side('H3', 'Sym', 'max', '-'), GLOVE_SIDE), ('BD-dir', 'BD-dir-glove'), 'accuracy', '-',
+                         'zero'),
+    'L14/control1': Band(tuple(Side('*', 'G', '-', k) for k in ('tuning', 'measured', 'edge-shuffled')), ('HIT-test',),
+                         'rr-random', 'within-row label', 'rr'),
+    'L14/control2': Band(tuple(Side('*', 'G', '-', k) for k in ('tuning', 'measured', 'edge-shuffled')), ('HIT-test',),
+                         'macro-rr-random', 'point labels', 'rr'),
+    'L14/control4': Band((Side('*', 'G', 'max', 'measured'),), ('HL-at',), 'rho', 'gold', 'gold'),
+    'L14/closure': Band((Side('closure of E', '-', '-', '-'),), ('HIT-test',), 'rr-random rr-hard', '-', 'one'),
+    'L15/control2/a': Band(tuple(_ss(a) for a in SIX + ('K3', 'S-full_i', 'W_i')), ('SL', 'MEN'), 'rho', 'gold', 'gold'),
+    'L15/control2/b': Band((_ss('H3'), GLOVE_SIDE), ('MEN-glove', 'WSR-glove', 'HL-glove'), 'rho', 'gold', 'gold'),
+    'L15/control3': Band((Side('GloVe-vec_i', 'cos', '-', '-'),), ('MEN-glove', 'WSR-glove', 'HL-glove'), 'rho',
+                         'vectors', 'gold'),
+}
+# the gold and label permutations' seeds of the bands (A13.12), by Seeds2 field (L15 control 3 permutes GloVe's vectors
+# in pass 1, Rng(l15_vec + i))
+BAND_SEEDS = {('L12/control4', 'HL'): 'l12_gold', ('L13/control2', 'BD'): 'l13_bd', ('L13/control2', 'WB'): 'l13_wb',
+              ('L14/control4', 'HL-at'): 'l14_gold', ('L15/control2/a', 'SL'): 'l15_sl',
+              ('L15/control2/a', 'MEN'): 'l15_men', ('L15/control2/b', 'MEN-glove'): 'l15_men',
+              ('L15/control2/b', 'WSR-glove'): 'l15_wsr', ('L15/control2/b', 'HL-glove'): 'l15_hl'}
+
+
+class WiringError(P4.Refused):
+    """A decision assembled otherwise than A13 states it (check_spec, Pass2.verify_wiring): the run stops with no
+    result."""
+
+
+def _ws(s):
+    return ' '.join(s.split())
+
+
+_TERM = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-*°\\_')
+MINUS = ' − '
+
+
+def _close_paren(s, i):
+    """The index of the ')' matching the '(' at s[i]."""
+    depth = 0
+    for k in range(i, len(s)):
+        depth += {'(': 1, ')': -1}.get(s[k], 0)
+        if depth == 0:
+            return k
+    raise ValueError(f'unbalanced parentheses in {s!r}')
+
+
+def _open_paren(s, j):
+    """The index of the '(' matching the ')' at s[j]."""
+    depth = 0
+    for k in range(j, -1, -1):
+        depth += {')': 1, '(': -1}.get(s[k], 0)
+        if depth == 0:
+            return k
+    raise ValueError(f'unbalanced parentheses in {s!r}')
+
+
+def _unwrap(op):
+    """'ρ(H3)' -> 'H3', 'RR(Lorentz)' -> 'Lorentz', 'F3\\*' -> 'F3*': A13's operand without its metric wrapper and
+    without Markdown's escape."""
+    m = re.match(r'^(ρ|RR)\((.*)\)$', op)
+    return (m.group(2) if m else op).replace('\\*', '*')
+
+
+def parse_diffs(text):
+    """Every difference 'X − Y' of an A13 sentence, in order: [(X, Y)], the operands unwrapped (ρ(·), RR(·)) and
+    unescaped. An operand is a metric applied to a parenthesised term (balanced, so 'ρ(H3 read as Φ_G(x, y))' is one)
+    or a bare term of letters, digits, '-', '*', '°' and '_'."""
+    s = _ws(text)
+    out = []
+    i = s.find(MINUS)
+    while i >= 0:
+        if s[i - 1] == ')':
+            k = _open_paren(s, i - 1)
+            while k > 0 and s[k - 1].isalpha():
+                k -= 1
+            left = s[k:i]
+        else:
+            k = i
+            while k > 0 and s[k - 1] in _TERM:
+                k -= 1
+            left = s[k:i]
+        j = i + len(MINUS)
+        m = re.match(r'(ρ|RR)\(', s[j:])
+        if m:
+            right = s[j:_close_paren(s, j + len(m.group(1))) + 1]
+        else:
+            k = j
+            while k < len(s) and s[k] in _TERM:
+                k += 1
+            right = s[j:k].rstrip('\\')
+        if not left or not right:
+            raise ValueError(f'an empty operand around "−" in {s!r}')
+        out.append((_unwrap(left), _unwrap(right)))
+        i = s.find(MINUS, i + len(MINUS))
+    return out
+
+
+def parse_arm_list(text):
+    """'H3, H2, F3, F3\\*, F2, F2\\* and WN' -> ['H3', 'H2', 'F3', 'F3*', 'F2', 'F2*', 'WN']."""
+    parts = re.split(r', | and ', _ws(text))
+    return [p.replace('\\*', '*').strip() for p in parts if p.strip()]
+
+
+def interval_of(text):
+    """A13's name of an interval -> the stats function deciding it (A13.7): the word-level ci_rho, ci_cluster, or
+    rank.ci_mean over the rows."""
+    t = _ws(text)
+    found = [name for key, name in (('word-level ci_rho', 'ci_rho'), ('ci_cluster', 'ci_cluster'),
+                                    ('`rank.ci_mean`', 'ci_mean')) if key in t]
+    if len(found) != 1:
+        raise ValueError(f'no single interval named in {t!r}')
+    return found[0]
+
+
+def later_protocols(golden=None):
+    """The protocol files after v1 in golden/ (stage2_protocol_v<N>.txt, N >= 2): A13.14's file of an amendment that
+    changes a definition of Amendment 13."""
+    golden = golden or lexicon.GOLDEN
+    return sorted(f for f in os.listdir(golden) if re.fullmatch(r'stage2_protocol_v([2-9]|[1-9]\d+)\.txt', f))
+
+
+def a13_text():
+    """Amendment 13 as the pinned protocol file holds it (golden/stage2_protocol_v1.txt, its SHA-256 checked).
+    READING stage2-runner-48 (A13.14, "An amendment that changes a definition here makes stage2_protocol_v2.txt"):
+    spec_from_a13 parses Amendment 13 alone, so once a later protocol file exists the wiring check refuses (WiringError)
+    rather than check the decisions against text that an amendment has changed, until it is taught the amending
+    text."""
+    later = later_protocols()
+    if later:
+        raise WiringError(f'{", ".join(later)} exists: spec_from_a13 parses Amendment 13 alone and must be taught the '
+                          f'amending text before the wiring check can stand on it (A13.14)')
+    S2D.protocol_sha()
+    with open(S2D.PROTOCOL_FILE, encoding='utf-8') as fh:
+        return l6.amendment_section(fh.read(), 13)
+
+
+# A13's notation, read once (A13.4, A13.5): the arms and the score form each term of a difference names
+A13_ARMS = {'H3': 'H3', 'H2': 'H2', 'F3': 'F3', 'F3*': 'F3*', 'F2': 'F2', 'F2*': 'F2*', 'WN': 'WN', 'K3': 'K3',
+            'S-full*': 'S-full*', 'W*': 'W*', 'GloVe': 'GloVe-300', 'Lorentz': 'lorentz', 'Euclidean': 'euclid'}
+A13_FORMS = {'G': 'G', 'Dep°': 'DepG', 'Sym': 'Sym'}
+A13_ROLES = {'H3 read as Φ_G(x, y)': Side('H3', 'G', 'max', '-'), 'H3 read as Φ_G(y, x)': Side('H3', 'Grev', 'max', '-')}
+
+
+def parse_symmetric_control(s, direction_set, rule):
+    """L13 control 3's sentence ("Sym on H3, and GloVe on the BD-dir rows in its vocabulary, give a direction accuracy
+    of exactly 0") -> its Band: the symmetric score on the arm it names and GloVe, on the direction set and on that
+    set within GloVe's vocabulary (A13.3; the runner's -glove slice); None when the sentence names another set."""
+    m = re.match(r'(\w+) on (H\d), and (GloVe) on the ([\w-]+) rows in its vocabulary, give a direction accuracy of '
+                 r'exactly 0', s)
+    if not m or m.group(4) != direction_set or m.group(1) not in A13_FORMS:
+        return None
+    form, arm, _, inst = m.groups()
+    return Band((Side(A13_ARMS[arm], A13_FORMS[form], rule, '-'), GLOVE_SIDE), (inst, f'{inst}-glove'), 'accuracy',
+                '-', 'zero')
+
+
+def parse_table_gold_control(s, comp):
+    """L14 control 4's sentence -> its Band: the tables it names, read as the part it voids reads them (comp, that
+    part's comparison: its form, sense rule, instance and metric); None unless it voids (b) and names a table kind."""
+    kind = re.search(r'For each (measured|tuning|edge-shuffled) table', s)
+    voids = re.search(r'Otherwise \((\w)\) is void', s)
+    if not (kind and voids and voids.group(1) == 'b'):
+        return None
+    return Band((Side('*', comp.x.form, comp.x.rule, kind.group(1)),), (comp.inst,), comp.metric, 'gold', 'gold')
+
+
+def parse_closure_check(s, comp, settings):
+    """L14's positive control -> its Band on (a)'s instance (comp), in the settings the sentence names ("in both
+    settings": every setting of (a), in order)."""
+    both = ' '.join(f'rr-{t}' for t in settings) if 'in both settings' in s else None
+    return Band((Side('closure of E', '-', '-', '-'),), (comp.inst,), both, '-', 'one')
+
+
+def parse_gold_controls_l15(arms_s, band_s, form, rule, sets_a, sets_b):
+    """L15 control 2 from its Arms sentence ("(a) H3, ..., and the controls K3, S-full and W on H3 with Sym. (b) H3
+    with Sym, and GloVe") and its own sentence ("... with the set's n (SL 0.0434, MEN 0.0250; WSR and HL within GloVe
+    from their frozen counts)"): (band (a), band (b), problems). The parenthesis must name (a)'s sets (sets_a, from
+    (a)'s decision) and sets of (b) within GloVe (sets_b, from (b)'s decision); (b)'s band covers every set of (b)."""
+    problems = []
+    six = parse_arm_list(arms_s[len('(a) '):arms_s.index(' with Sym')])
+    ctl = re.search(r'and the controls (.*?) on H3 with Sym', arms_s)
+    fam = {'K3': 'K3', 'S-full': 'S-full_i', 'W': 'W_i'}       # A13.4: S-full_i and W_i, i < 20, each an arm
+    ctl_arms = [fam[a] for a in parse_arm_list(ctl.group(1))] if ctl else []
+    mb = re.search(r'\(b\) (\w+) with (\w+), and (GloVe)$', arms_s)
+    arms_b = ((Side(A13_ARMS[mb.group(1)], A13_FORMS[mb.group(2)], rule, '-'), GLOVE_SIDE)
+              if mb and mb.group(2) in A13_FORMS else ())
+    par = re.search(r"with the set's n \((.*)\)\.$", band_s)
+    a_part, b_part = par.group(1).split('; ') if par and par.group(1).count('; ') == 1 else ('', '')
+    sets_a2 = re.findall(r'\b(SL|MEN|WSR|HL) 0\.\d+', a_part)
+    within = re.match(r'(.*) within GloVe from their frozen counts$', b_part)
+    glove_named = parse_arm_list(within.group(1)) if within else []
+    if sets_a2 != list(sets_a):
+        problems.append(f'L15 control 2 names the sets {sets_a2} of (a); its decision names {list(sets_a)}')
+    if not glove_named or not set(glove_named) <= set(sets_b):
+        problems.append(f'L15 control 2 names {glove_named} within GloVe; (b) decides on {list(sets_b)}')
+    band_a = Band(tuple(Side(A13_ARMS[a], form, rule, '-') for a in six) + tuple(_ss(a) for a in ctl_arms),
+                  tuple(sets_a2), 'rho', 'gold', 'gold')
+    band_b = Band(arms_b, tuple(f'{t}-glove' for t in sets_b), 'rho', 'gold', 'gold')
+    return band_a, band_b, problems
+
+
+def parse_vector_control(s, insts):
+    """L15 control 3's sentence -> its Band on the sets of (b) it names ("For each set of (b)"), or None."""
+    if not s.startswith('For each set of (b)'):
+        return None
+    return Band((Side('GloVe-vec_i', 'cos', '-', '-'),), tuple(insts), 'rho', 'vectors', 'gold')
+
+
+def spec_from_a13(text=None):
+    """DECISION_SPEC and CONTROL_SPEC rebuilt from Amendment 13's text: every sentence that states a comparison or a
+    control is quoted verbatim (whitespace normalised) and must occur in A13; the terms and their order (X − Y), the
+    arm lists and the intervals are parsed from those sentences; the score form, the sense rule and the instance come
+    from the claim's own reading sentence, also quoted. Returns (decision spec, control spec, problems)."""
+    A = _ws(text if text is not None else a13_text())
+    problems = []
+
+    def q(s):
+        if _ws(s) not in A:
+            problems.append(f'not in A13: {s!r}')
+        return _ws(s)
+
+    def arm_side(term, form, rule):
+        if term in A13_ROLES:
+            return A13_ROLES[term]
+        arm = A13_ARMS[term]
+        if arm == 'GloVe-300':
+            return GLOVE_SIDE
+        return Side(arm, form, rule, '-')
+    d, c = {}, {}
+    # ---- L12
+    rd = q('On HyperLex\'s noun pairs, read by the is-a score G with the maximum over senses')
+    form, rule = ('G', 'max') if 'the is-a score G with the maximum over senses' in rd else (None, None)
+    q('HL: the rows of `hyperlex-all.txt` whose POS is `N`')
+    iv = interval_of(q("the paired difference of two arms' ρ with its word-level ci_rho interval over the 2,163 rows"))
+    s = q('(a) Supported if the intervals of ρ(H3) − ρ(F3), ρ(H3) − ρ(F3\\*), ρ(H2) − ρ(F2) and ρ(H2) − ρ(F2\\*) all '
+          'lie above 0')
+    d['L12/a'] = {f'{x}-{y}': Comp(arm_side(x, form, rule), arm_side(y, form, rule), 'HL', 'rho', iv)
+                  for x, y in parse_diffs(s)}
+    s = q('(b) Supported if ρ(G) − ρ(Dep°) lies above 0 in H3 and in H2')
+    arms_bc = re.findall(r'in (H\d)', s.split('lies above 0')[1])
+    for part, s2 in (('b', s), ('c', q('(c) The same rule for ρ(G) − ρ(Sym).'))):
+        (fx, fy), = parse_diffs(s2)
+        d[f'L12/{part}'] = {h: Comp(Side(h, A13_FORMS[fx], rule, '-'), Side(h, A13_FORMS[fy], rule, '-'), 'HL', 'rho',
+                                    iv) for h in arms_bc}
+    q('H3 with G and WN with G_WN (d)')
+    (x, y), = parse_diffs(q('(d) For the interval of ρ(H3) − ρ(WN)'))
+    d['L12/d'] = {f'{x}-{y}': Comp(arm_side(x, form, rule), arm_side(y, form, rule), 'HL', 'rho', iv)}
+    for name, s in (('control1', q('The intervals of ρ(H3) − ρ(K3) and ρ(H3) − ρ(S-full\\*) lie above 0, S-full\\* '
+                                   'the strongest of its 20 permutations')),
+                    ('control2', q('The interval of ρ(H3) − ρ(W\\*) lies above 0, W\\* the strongest of 20.'))):
+        d[f'L12/{name}'] = {y: Comp(arm_side(x, form, rule), arm_side(y, form, rule), 'HL', 'rho', iv)
+                            for x, y in parse_diffs(s)}
+    (x, y), = parse_diffs(q('The interval of ρ(H3 read as Φ_G(x, y)) − ρ(H3 read as Φ_G(y, x)) lies above 0.'))
+    d['L12/control3'] = {'H3-reversed': Comp(arm_side(x, form, rule), arm_side(y, form, rule), 'HL', 'rho', iv)}
+    s = q('For each of H3, H2, F3, F3\\*, F2, F2\\* and WN, the mean ρ over 20 gold permutations satisfies |mean| ≤ '
+          '5/√(20·2,162)')
+    arms = parse_arm_list(s[len('For each of '):s.index(', the mean')])
+    c['L12/control4'] = Band(tuple(arm_side(a, form, rule) for a in arms), ('HL',), 'rho', 'gold', 'gold')
+    # ---- L13
+    rd = q('read by G with the maximum over senses, the exact trees H3 and H2 do better than the same construction at '
+           'curvature 0 in (a) BLESS detection AP, (b) WBLESS detection AP and (c) BLESS direction accuracy')
+    form, rule = ('G', 'max') if rd.startswith('read by G with the maximum over senses') else (None, None)
+    q('BD: the `bless.tsv` rows with fold `test` covered in U_full')
+    q('WB: the `wbless.tsv` test rows covered in U_full')
+    q("BD-dir: BD's 1,194 True rows (word1 the hyponym). A row is correct when Φ_G(x, y) > Φ_G(y, x).")
+    task = {'BLESS detection AP': ('BD', 'ap'), 'WBLESS detection AP': ('WB', 'ap'),
+            'BLESS direction accuracy': ('BD-dir', 'accuracy')}
+    parts = re.findall(r'\(([abc])\) (BLESS detection AP|WBLESS detection AP|BLESS direction accuracy)', rd)
+    s = q('The effects H3 − F3, H3 − F3\\*, H2 − F2 and H2 − F2\\*, each with its ci_cluster interval.')
+    iv = interval_of(s)
+    for p, what in parts:
+        inst, metric = task[what]
+        d[f'L13/{p}'] = {f'{x}-{y}': Comp(arm_side(x, form, rule), arm_side(y, form, rule), inst, metric, iv)
+                         for x, y in parse_diffs(s)}
+    s = q('On each of (a), (b) and (c), the intervals of H3 − K3, H3 − S-full\\* and H3 − W\\* lie above 0.')
+    for p, what in parts:
+        inst, metric = task[what]
+        d[f'L13/control1/{p}'] = {y: Comp(arm_side(x, form, rule), arm_side(y, form, rule), inst, metric, iv)
+                                  for x, y in parse_diffs(s)}
+    s = q('H3, H2, F3, F3\\*, F2 and F2\\* with G; the controls K3, S-full and W, on H3 with G')
+    six = parse_arm_list(s.split(' with G')[0])
+    s = q('For each of the six arms and each of BD and WB, the mean AP over 20 label permutations is at most π + 1/50')
+    c['L13/control2'] = Band(tuple(arm_side(a, form, rule) for a in six), tuple(re.findall(r'\b(BD|WB)\b', s)), 'ap',
+                             'labels', 'label')
+    s = q('Sym on H3, and GloVe on the BD-dir rows in its vocabulary, give a direction accuracy of exactly 0')
+    c['L13/control3'] = parse_symmetric_control(s, task['BLESS direction accuracy'][0], rule)
+    # ---- L14
+    rd = q('learned Lorentz embeddings beat learned Euclidean embeddings at d = 2 and d = 3, both read by G at the '
+           'origin o')
+    dims = [int(x) for x in re.findall(r'd = (\d)', rd)]
+    q('(a) HiT: `wordnet-multi/test.jsonl`, 29,383 rows as given')
+    q('(b) The HL rows covered in U_@ (2,153), with senses restricted to U_@ and the gold of L12.')
+    st = q("ranking each child's held-out indirect ancestor above its 10 random negatives, and above its 10 hard "
+           "negatives")
+    settings = re.findall(r'10 (random|hard) negatives', st)
+    s = q('the per-row differences RR(Lorentz) − RR(Euclidean), with `rank.ci_mean` over the rows')
+    (x, y), = parse_diffs(s)
+    iv = interval_of(s)
+    d['L14/a'] = {f'd{k}/{t}': Comp(Side(A13_ARMS[x], 'G', '-', 'measured'), Side(A13_ARMS[y], 'G', '-', 'measured'),
+                                    'HIT-test', f'rr-{t}', iv) for k in dims for t in settings}
+    s = q('(b) ρ; for each d and seed, ρ(Lorentz) − ρ(Euclidean) with the word-level ci_rho.')
+    (x, y), = parse_diffs(s)
+    d['L14/b'] = {f'd{k}': Comp(Side(A13_ARMS[x], 'G', 'max', 'measured'), Side(A13_ARMS[y], 'G', 'max', 'measured'),
+                                'HL-at', 'rho', interval_of(s)) for k in dims}
+    s = q('For each d, each metric (RR random, RR hard, ρ) and each seed s present at d, the interval of true − shuffled '
+          '(item 10.6) lies above 0 in at least one of the two cells at d (ci_mean over the test rows for RR, ci_rho '
+          'over the 2,153 rows for ρ)')
+    q('Cells:* {Lorentz, Euclidean} × d ∈ {2, 3}. Nothing else trains.')
+    (x, y), = parse_diffs(s)
+    kind = {'true': 'measured', 'shuffled': 'edge-shuffled'}
+    ivs = dict((m, f) for f, m in re.findall(r'(ci_mean|ci_rho) over the [^()]*? for (RR|ρ)', s))
+    metrics = re.search(r'each metric \(([^)]*)\)', s).group(1).split(', ')
+    # each metric's instance, metric and sense rule are those of the part that uses it ((a) for RR in its setting, (b)
+    # for rho), read from the comparisons parsed above, not restated
+    names = {}
+    for mm in metrics:
+        if mm.startswith('RR '):
+            t = mm.split(' ', 1)[1]
+            ca = next(iter(v for k, v in d['L14/a'].items() if k.endswith('/' + t)))
+            names[mm] = (f'rr_{t}', ca.inst, ca.metric, ca.x.rule)
+        elif mm == 'ρ':
+            cb = next(iter(d['L14/b'].values()))
+            names[mm] = ('rho', cb.inst, cb.metric, cb.x.rule)
+    d['L14/control3'] = {}
+    for k in dims:
+        for mm in metrics:
+            m, inst, metric, r = names[mm]
+            for g in ('lorentz', 'euclid'):
+                d['L14/control3'][f'd{k}/{m}/{g}'] = Comp(Side(g, 'G', r, kind[x]), Side(g, 'G', r, kind[y]), inst,
+                                                          metric, ivs['RR' if mm.startswith('RR') else 'ρ'])
+    s = q('For every trained table, as many as exist (the 48 tuning, 20 measured and 20 edge-shuffled tables), the mean '
+          'RR in the random setting is at most H₁₁/11 + 1/50')
+    kinds = tuple(re.findall(r'\d+ (tuning|measured|edge-shuffled)', s))
+    c['L14/control1'] = Band(tuple(Side('*', 'G', '-', k) for k in kinds), ('HIT-test',), 'rr-random',
+                             'within-row label', 'rr')
+    q('One `Rng(2620)` draws j = below(11) for each test row in order')
+    q('For every trained table, as many as exist, the relabelled RR in the random setting, averaged first over the rows '
+      'of each positive synset and then over the 2,110 positive synsets (the *macro mean*), is at most H₁₁/11 + 1/50')
+    c['L14/control2'] = Band(tuple(Side('*', 'G', '-', k) for k in kinds), ('HIT-test',), 'macro-rr-random',
+                             'point labels', 'rr')
+    s = q('4. *Gold shuffled.* For each measured table, |mean ρ over 20 gold permutations| ≤ 5/√(20·2,152) = 0.0241. '
+          'Otherwise (b) is void.')
+    c['L14/control4'] = parse_table_gold_control(s, next(iter(d['L14/b'].values())))
+    s = q('Scoring each test row by membership in the transitive closure of the 75,850 training edges gives RR = 1 on '
+          'every row in both settings.')
+    c['L14/closure'] = parse_closure_check(s, next(iter(d['L14/a'].values())), settings)
+    # ---- L15
+    rd = q('Read by distance with the maximum over senses (Sym)')
+    form, rule = ('Sym', 'max') if rd.endswith('(Sym)') else (None, None)
+    iv = interval_of(q('ρ; the paired differences with the word-level ci_rho.'))
+    s = q('Supported if all eight intervals, ρ(H3) − ρ(F3), ρ(H3) − ρ(F3\\*), ρ(H2) − ρ(F2) and ρ(H2) − ρ(F2\\*) on SL '
+          'and on MEN, have hi ≤ +0.02')
+    sets_a = re.findall(r'\b[Oo]n (SL|MEN)\b', s)
+    d['L15/a'] = {f'{t}/{x}-{y}': Comp(arm_side(x, form, rule), arm_side(y, form, rule), t, 'rho', iv)
+                  for t in sets_a for x, y in parse_diffs(s)}
+    q('With H3 read by Sym, GloVe 6B 300-d cosine beats H3 on relatedness')
+    q("In (b) each set is intersected with GloVe's vocabulary (item 3).")
+    s = q('Supported if ρ(GloVe) − ρ(H3) lies above 0 on MEN and on WSR and ρ(H3) − ρ(GloVe) lies above 0 on HL')
+    d['L15/b'] = {}
+    for x, y, where in re.findall(r'ρ\((\w+)\) − ρ\((\w+)\) lies above 0 on (\w+(?: and on \w+)*)', s):
+        for t in where.split(' and on '):
+            d['L15/b'][t] = Comp(arm_side(x, 'Sym', rule), arm_side(y, 'Sym', rule), f'{t}-glove', 'rho', iv)
+    s = q('On SL and on MEN, the intervals of ρ(H3) − ρ(K3), ρ(H3) − ρ(S-full\\*) and ρ(H3) − ρ(W\\*) lie above 0.')
+    d['L15/control1'] = {f'{t}/{y}': Comp(arm_side(x, form, rule), arm_side(y, form, rule), t, 'rho', iv)
+                         for t in re.findall(r'\b[Oo]n (SL|MEN)\b', s) for x, y in parse_diffs(s)}
+    s = q('(a) H3, H2, F3, F3\\*, F2 and F2\\* with Sym (exact rational keys; no decimal step), and the controls K3, '
+          'S-full and W on H3 with Sym. (b) H3 with Sym, and GloVe')
+    arms_s = s
+    s = q('For every arm and set, |mean ρ over 20 gold permutations| ≤ 5/√(20(n − 1)) with the set\'s n (SL 0.0434, MEN '
+          '0.0250; WSR and HL within GloVe from their frozen counts).')
+    c['L15/control2/a'], c['L15/control2/b'], more = parse_gold_controls_l15(arms_s, s, form, rule, sets_a,
+                                                                             list(d['L15/b']))
+    problems += more
+    s = q('For each set of (b), its distinct covered words in code-point order are permuted by a fresh `Rng(2580 + i)`, '
+          'i < 20')
+    c['L15/control3'] = parse_vector_control(s, c['L15/control2/b'].insts)
+    return d, c, problems
+
+
+def check_spec(text=None):
+    """The problems that make the constants differ from A13's text (spec_from_a13): quotes not found, and every
+    group whose comparisons or control differ. Empty when the wiring is A13's."""
+    d, c, problems = spec_from_a13(text)
+    for name, mine, theirs in (('DECISION_SPEC', DECISION_SPEC, d), ('CONTROL_SPEC', CONTROL_SPEC, c)):
+        for k in sorted(set(mine) | set(theirs)):
+            if mine.get(k) != theirs.get(k):
+                problems.append(f'{name}[{k!r}] differs from A13\'s text')
+    return problems
+
+
+def decided_exact_cells(perms):
+    """The (arm, instance, form, rule, claim) of every exact-arm code file a decision or a control reads, from
+    DECISION_SPEC and CONTROL_SPEC, each once in first-seen order: the strongest-permutation sides and the families
+    take all of their permutations."""
+    out = []
+
+    def arms_of(arm):
+        if arm in ('S-full*', 'S-full_i'):
+            return [f'S-full-{i}' for i in perms]
+        if arm in ('W*', 'W_i'):
+            return [f'W-{i}' for i in perms]
+        if arm == 'GloVe-vec_i':
+            return [f'GloVe-vec-{i}' for i in perms]
+        return [arm]
+
+    def add(side, inst, claim):
+        if side.table != '-':
+            return
+        for a in arms_of(side.arm):
+            if (a, inst, side.form, side.rule, claim) not in out:
+                out.append((a, inst, side.form, side.rule, claim))
+    for group, cells in DECISION_SPEC.items():
+        claim = group.split('/')[0] + '/1'
+        for comp in cells.values():
+            add(comp.x, comp.inst, claim)
+            add(comp.y, comp.inst, claim)
+    for group, band in CONTROL_SPEC.items():
+        claim = group.split('/')[0] + '/1'
+        if band.band == 'one':                 # the positive control reads WordNet's closure, no code file
+            continue
+        if band.band == 'zero':
+            for side, inst in zip(band.sides, band.insts):
+                add(side, inst, claim)
+            continue
+        for inst in band.insts:
+            for side in band.sides:
+                add(side, inst, claim)
+    return out
+
+
 # ================================================================ score values (A13.5, A13.6)
 def vtype_of(form):
     if form in FORMS_CERT:
@@ -1207,6 +1812,13 @@ def _max_int(vals):
     return max(vals)
 
 
+def _by_rule(table, ac, form, rule):
+    """The function of one sense rule, refusing a rule the (arm, form) does not define (never a silent stand-in)."""
+    if rule not in table:
+        raise ValueError(f'arm {ac.arm} has no form {form} under the sense rule {rule!r}')
+    return table[rule]
+
+
 @pass1
 def pair_value(ac, form, rule, sx, sy, cert, p=None):
     """One ordered row's value under the arm, form and sense rule: a Val (certified forms), an exact key (int or
@@ -1215,41 +1827,44 @@ def pair_value(ac, form, rule, sx, sy, cert, p=None):
         sc = ac.scorer
         sc.cert = cert
         if form in ('G', 'Grev'):
-            return {'max': sc.phi_g, 'first': sc.first_g, 'gensim': sc.gensim_g}[rule](sx, sy)
+            return _by_rule({'max': sc.phi_g, 'first': sc.first_g, 'gensim': sc.gensim_g}, ac, form, rule)(sx, sy)
         if form == 'DepG':
-            return sc.dep_circ(sx, sy)
+            return _by_rule({'max': sc.dep_circ}, ac, form, rule)(sx, sy)
         if form == 'Dep':
-            return {'max': sc.phi_dep, 'first': sc.first_dep, 'gensim': sc.gensim_dep}[rule](sx, sy)
+            return _by_rule({'max': sc.phi_dep, 'first': sc.first_dep, 'gensim': sc.gensim_dep}, ac, form, rule)(sx, sy)
         if form in ('Sym', 'dist'):
-            return {'max': sc.phi_sym, 'first': sc.first_sym}[rule](sx, sy)
+            return _by_rule({'max': sc.phi_sym, 'first': sc.first_sym}, ac, form, rule)(sx, sy)
         if form == 'Groot':
-            return sc.phi_groot(p, sx, sy)
-        if form == 'NK17':
-            vals = [SC.nk17_value(ac.table, s, t) for s in sx for t in sy] if rule == 'max' else \
-                [SC.nk17_value(ac.table, sx[0], sy[0])]
-            return vals[SC.phi_plain(vals)]
-        if form == 'product':
-            vals = [SC.product_value(ac.table, s, t) for s in sx for t in sy]
+            return _by_rule({'max': lambda a, b: sc.phi_groot(p, a, b)}, ac, form, rule)(sx, sy)
+        if form in ('NK17', 'product'):
+            # the reported uncertified forms (A13.5) under each sense rule of A13.3: the maximum over every sense
+            # pair (the first maximum), the first senses, or gensim's pair (the least distance) then scored
+            fn = SC.nk17_value if form == 'NK17' else SC.product_value
+            pairs = _by_rule({'max': lambda a, b: [(s, t) for s in a for t in b],
+                              'first': lambda a, b: [(a[0], b[0])],
+                              'gensim': lambda a, b: [sc.gensim_pair(a, b)]}, ac, form, rule)(sx, sy)
+            vals = [fn(ac.table, s, t) for s, t in pairs]
             return vals[SC.phi_plain(vals)]
     elif ac.kind == 'wn':
         g = ac.graph
         if ac.arm == 'WN-U':
-            return _max_int([g.g_u(s, t) for s in sx for t in sy])
+            return _by_rule({'max': lambda a, b: _max_int([g.g_u(s, t) for s in a for t in b])}, ac, form, rule)(sx, sy)
         sc = SC.WNScorer(g)
         if form in ('G', 'Grev'):
-            return sc.phi_g(sx, sy) if rule == 'max' else sc.first_g(sx, sy)
+            return _by_rule({'max': sc.phi_g, 'first': sc.first_g, 'gensim': sc.gensim_g}, ac, form, rule)(sx, sy)
         if form == 'DepG':
-            return sc.dep_circ(sx, sy)
+            return _by_rule({'max': sc.dep_circ}, ac, form, rule)(sx, sy)
         if form == 'Dep':
-            return sc.phi_dep(sx, sy) if rule == 'max' else sc.first_dep(sx, sy)
+            return _by_rule({'max': sc.phi_dep, 'first': sc.first_dep, 'gensim': sc.gensim_dep}, ac, form, rule)(sx, sy)
         if form == 'Sym':
-            return sc.phi_sym(sx, sy) if rule == 'max' else sc.first_sym(sx, sy)
+            return _by_rule({'max': sc.phi_sym, 'first': sc.first_sym}, ac, form, rule)(sx, sy)
         if form == 'LCh':
-            return _max_int([-g.lch_p(s, t) for s in sx for t in sy])
+            return _by_rule({'max': lambda a, b: _max_int([-g.lch_p(s, t) for s in a for t in b]),
+                             'first': lambda a, b: -g.lch_p(a[0], b[0])}, ac, form, rule)(sx, sy)
     elif ac.kind == 'tree':
         t = ac.graph
         f = t.g_st if ac.arm == 'ST' else t.g_letter
-        return _max_int([f(s, u) for s in sx for u in sy])
+        return _by_rule({'max': lambda a, b: _max_int([f(s, u) for s in a for u in b])}, ac, form, rule)(sx, sy)
     raise ValueError(f'arm {ac.arm} has no form {form} under rule {rule}')
 
 
@@ -1361,6 +1976,11 @@ def write_code_file(cfg, fkey, kind, inst, codes, values, info, side, cert, extr
     sd = {'fkey': fkey, 'entries': [dict(e, row=item_of[e['item']][0], slot=item_of[e['item']][1]) for e in side],
           'phi_ties': [{'a': [str(x) for x in a.tup], 'b': [str(x) for x in b.tup], 'a240': str(va), 'b240': str(vb)}
                        for a, b, va, vb in (cert.ties if cert is not None else [])]}
+    if cert is not None and len(sd['phi_ties']) != cert.n_ties:
+        # A13.6: "every numerical tie between different input tuples is counted and reported with its inputs", the
+        # ties met inside the maximum over senses included: the side file holds every one the count holds
+        raise ValueError(f'{fkey}: {cert.n_ties} numerical ties met inside the maximum over senses, '
+                         f'{len(sd["phi_ties"])} logged with their inputs')
     side_bytes = gz_bytes(json.dumps(sd, separators=(',', ':')).encode())
     cp, sp = code_path(cfg.cache, fkey), side_path(cfg.cache, fkey)
     write_atomic(cp, gz)
@@ -1532,12 +2152,33 @@ def _init_train_worker(wcfg):
                pool_size=wcfg['pool_size'])
 
 
+LOSS_CURVE_EVERY = 10          # the loss curve kept in the record: every 10th epoch and the last (READING 42)
+
+
+def loss_text(epoch_loss):
+    """The .loss.json text of a run (the cache file whose SHA-256 the record and the manifest hold)."""
+    return json.dumps(epoch_loss)
+
+
+def loss_curve(epoch_loss, every=LOSS_CURVE_EVERY):
+    """A13.11's "loss curves" as the record keeps them: the recorded mean epoch losses at epochs 0, every, 2 every, ...
+    and the last recorded epoch (binary64, as A10.5 records them); the full curve is the cache's .loss.json, pinned by
+    its SHA-256 (READING stage2-runner-42)."""
+    n = len(epoch_loss)
+    epochs = list(range(0, n, every))
+    if n and epochs[-1] != n - 1:
+        epochs.append(n - 1)
+    return {'epochs': f'0, {every}, ..., and the last recorded epoch ({n - 1})' if n else 'none',
+            'every': every, 'last': n - 1 if n else None, 'values': [epoch_loss[e] for e in epochs]}
+
+
 def _run_fields(run, cfg):
     loss = run.epoch_loss
     return {'geometry': run.geometry, 'd': run.d, 'lr': run.lr, 'seed': run.seed, 'instance': run.instance,
             'diverged_epoch': run.diverged_epoch, 'epochs_run': run.epochs_run, 'guard_hits': run.guard_hits,
             'max_step': run.max_step, 'max_radius': run.max_radius,
             'loss': {str(e): loss[e] for e in (0, 19, 99, 499, 999) if e < len(loss)},
+            'loss_curve': loss_curve(loss), 'loss_sha': sha256(loss_text(loss)),
             'converged': bool(run.table is not None and len(loss) == EM.EPOCHS and EM.converged(loss)),
             'drop_epoch': EM.drop_epoch(loss) if len(loss) == EM.EPOCHS else None,
             'final_state': list(run.final_state), 'float_sha': run.table_sha, 'wall_s': run.wall_s,
@@ -1566,7 +2207,8 @@ def job_train(job):
         return rec
     key = job['key']
     os.makedirs(os.path.join(cfg.cache, 'tables'), exist_ok=True)
-    write_atomic(table_path(cfg.cache, key, '.loss.json'), json.dumps(run.epoch_loss))
+    write_atomic(table_path(cfg.cache, key, '.loss.json'), loss_text(run.epoch_loss))
+    rec['cached_loss'] = True
     if run.table is not None:
         N = LR.snap(run.table, job['geometry'])
         text = LR.snap_text(_TW['offsets'], N)
@@ -1632,6 +2274,10 @@ def cached_ok(cfg, rec):
     if rec.get('cached_snap'):
         p = table_path(cfg.cache, rec['key'], '.snap.txt')
         if not os.path.exists(p) or sha256_file(p) != rec['snap_sha']:
+            return False
+    if rec.get('cached_loss'):
+        p = table_path(cfg.cache, rec['key'], '.loss.json')
+        if not os.path.exists(p) or sha256_file(p) != rec['loss_sha']:
             return False
     return True
 
@@ -1722,6 +2368,7 @@ def table_bytes(n, d, geometry):
 
 # ================================================================ count checks (A13.9: positive controls)
 FROZEN_GLOVE = {'MEN-glove': 2005, 'WSR-glove': 245, 'HL-glove': 2162}   # the manifest's gloveCovered (A13.2, L15(b))
+HL_SPLIT_NOUNS = 541                                                       # A13.11: the random split's test nouns
 BUDGET_STRING = '1000,20,50,50,1517000,3792500000'                         # A13.10.3
 
 
@@ -1732,10 +2379,33 @@ def _check(name, computed, expected, problems):
     return not bad
 
 
+def _only(expected, keep):
+    """The registered counts whose names keep() accepts (the tuning step's subset)."""
+    return {k: v for k, v in expected.items() if keep(k)}
+
+
+def _tune_hit_key(k):
+    """A13.9's HiT counts that tuning may make: the names, the training edges and HiT val's (no test count)."""
+    return '.test.' not in k
+
+
+def verb_at_counts(g):
+    """The verb '@' graph's counts of A13.13 (WordNet only), keyed as stage2data.dry_counts keys them."""
+    return {'verb_at.nodes': len(g.nodes), 'verb_at.edges': len(g.edges), 'verb_at.indirect': g.n_indirect,
+            'verb_at.roots': len(g.roots), 'verb_at.isolated': g.isolated,
+            'verb_at.dry_split_rows': g.n_indirect * 5 // 100}
+
+
 @pass1
-def count_checks_words(cfg, world, log):
+def count_checks_words(cfg, world, log, scope='all'):
     """The word-level counts of A13.9 (registered), A13.13 (dry) or the synthetic world's planted counts (self-test),
-    before pass 1. A mismatch raises S2D.CountMismatch: the run stops with no result."""
+    before pass 1. A mismatch raises S2D.CountMismatch: the run stops with no result.
+    scope 'tune' (registered and dry tuning, A13.10.5: "Tuning computes nothing else, and touches no other Stage-2
+    set"): WordNet's counts (U_@ or the verb '@' graph, the W strata) and HiT's that need no other set (the names, the
+    training edges, HiT val's rows, negatives and closure); no word column of HyperLex, the suite, SimLex, MEN, WS-353
+    or GloVe, and not HiT test, is read (READING stage2-runner-46). The decisive step makes every count."""
+    if scope == 'tune':
+        return _count_checks_tune(cfg, world, log)
     t0 = time.perf_counter()
     out, problems = {}, []
     wn, store = world.wn, world.store
@@ -1793,16 +2463,83 @@ def count_checks_words(cfg, world, log):
     return out
 
 
-def check_instance_counts(cfg, insts, counts, log):
+@pass1
+def _count_checks_tune(cfg, world, log):
+    """count_checks_words(scope='tune'): WordNet's and HiT val's counts only (A13.10.5)."""
+    t0 = time.perf_counter()
+    out, problems = {'scope': 'tune: WordNet and HiT val only (A13.10.5)'}, []
+    g = world.at
+    out['budget'] = l6.budget(len(g.edges), epochs=cfg.epochs, burnin=cfg.burnin)
+    if world.pos == 'noun':
+        out['at'] = {'nodes': len(g.nodes), 'nodes_sha': g.nodes_sha(), 'edges': len(g.edges),
+                     'edges_sha': g.edges_sha(), 'indirect': g.n_indirect, 'roots': len(g.roots), 'anchors': g.anchors,
+                     'min_nn': g.min_nn}
+        hc, detail = HIT.count_checks(world.wn, world.store, count=len(g.nodes), splits=('val',))
+        out['hit'], out['hit_detail'] = hc, detail
+        if cfg.mode == 'registered':
+            try:
+                SE.check_at_graph(g)
+            except ValueError as e:
+                problems.append(str(e))
+            _check('hit', hc, _only(HIT.COUNTS, _tune_hit_key), problems)
+            try:
+                out['w_strata'] = SC.w_check(SC.w_strata(world.index))
+            except ValueError as e:
+                problems.append(str(e))
+            if out['budget'] != BUDGET_STRING:
+                problems.append(f'budget {out["budget"]}, registered {BUDGET_STRING}')
+        else:
+            ex = world.expected
+            _check('hit', hc, _only(ex['hit'], _tune_hit_key), problems)
+            _check('at', out['at'], ex['at'], problems)
+    else:
+        out['verb_at'] = verb_at_counts(g)
+        want = S2D.DRY_COUNTS_A13 if cfg.mode == 'dry' else world.expected['dry_words']
+        _check('dry', out['verb_at'], _only(want, lambda k: k.startswith('verb_at.')), problems)
+        if cfg.mode == 'dry':
+            try:
+                SE.check_at_graph(g)
+            except ValueError as e:
+                problems.append(str(e))
+    out['problems'] = problems
+    log(f'count checks (tuning: WordNet and HiT val only, A13.10.5): '
+        + ('all equal' if not problems else f'{len(problems)} MISMATCH(ES)') + f' ({time.perf_counter() - t0:.1f} s)')
+    if problems:
+        raise S2D.CountMismatch('count check failed (A13.9: the run stops with no result): ' + '; '.join(problems))
+    return out
+
+
+@pass1
+def build_tuning_instances(cfg, world, log=print):
+    """The one instance tuning scores (A13.10.5): HiT val (the registered shape: HiT's names resolved by NLTK's rule;
+    the dry run: the verb split's val, built with its test from Rng(4500)-Rng(4502) in one draw, as the decisive step
+    builds it). No other Stage-2 set is read (READING stage2-runner-46)."""
+    out = {}
+    if world.pos == 'noun':
+        names_map, _ = HIT.resolve(world.wn, world.store, count=len(world.at.nodes))
+        world._cache['hit_names'] = names_map
+        rows = HIT.rows('val', names_map, world.store)
+        out['HIT-val'] = _inst(world, 'HIT-val', 'hit-zenodo14036213-multi-val', HIT.KEYS['val'], 'L14/1', 'rr', 'hit',
+                               'at', rows, selected_rows=len(rows))
+    else:
+        split = dry_split(world, cfg.seeds.hitr)
+        out['HIT-val'] = _inst(world, 'HIT-val', 'wordnet30-verb-at-split-val', 'hyperlex-all', 'L14/1', 'rr', 'hit',
+                               'at', split['val'], selected_rows=len(split['val']),
+                               note='the dry split (A13.13): WordNet data, not sealed')
+        out['HIT-val'].sha = world.lazy('dry_split_sha', lambda: split['sha'])
+    return out
+
+
+def check_instance_counts(cfg, insts, counts, log, scope='all'):
     """The frozen L15(b) GloVe counts (registered; A13.2, frozen by the definitions amendment) and the dry split's
-    size (A13.13)."""
+    size (A13.13); scope 'tune' (build_tuning_instances): HiT val's alone."""
     problems = []
-    if cfg.mode == 'registered':
+    if cfg.mode == 'registered' and scope != 'tune':
         for k, v in FROZEN_GLOVE.items():
             if len(insts[k].rows) != v:
                 problems.append(f'{k}: {len(insts[k].rows)} GloVe-covered rows, frozen {v}')
     if cfg.mode == 'dry':
-        for k in ('HIT-test', 'HIT-val'):
+        for k in (('HIT-val',) if scope == 'tune' else ('HIT-test', 'HIT-val')):
             if len(insts[k].rows) != S2D.DRY_COUNTS_A13['verb_at.dry_split_rows']:
                 problems.append(f'{k}: {len(insts[k].rows)} rows, A13.13 says 1,092')
     if problems:
@@ -1835,7 +2572,9 @@ def manifest_check(cfg, world, insts, log):
             'MEN': ('men-0d05a99-nn', 'covered', 'U_full'), 'MEN-glove': ('men-0d05a99-nn', 'gloveCovered', None),
             'WSR-glove': ('ws353-e2de627-rel', 'gloveCovered', None),
             'BD-at': ('suite-6891e0e-bless-test', 'covered', 'U_at'), 'WB-at': ('suite-6891e0e-wbless-test', 'covered',
-                                                                                  'U_at')}
+                                                                                  'U_at'),
+            'BD-glove': ('suite-6891e0e-bless-test', 'gloveCovered', None),
+            'WB-glove': ('suite-6891e0e-wbless-test', 'gloveCovered', None)}
     bad = []
     for name, (iid, kind, u) in want.items():
         if name not in insts:                     # A13.11's reported instances exist only when the reports run
@@ -1849,14 +2588,62 @@ def manifest_check(cfg, world, insts, log):
     return {'sha256': sha256(raw), 'rebuilt_equal': True}
 
 
+# ================================================================ A13.11's L12 grid (reported)
+# READING (A13.11, L12: "every arm under every score of item 5 and every sense rule of item 3"): the arms are L12's
+# seven scored arms, the six exact trees and WN (A13 L12 Arms, control 4's arms), and K3, a geometric arm of its own
+# (item 4: L5's content-hash words placed by h3tree, one hyperboloid table on which every geometric form is defined).
+# Left at G with the maximum, as their own items of A13.11, are the permutation families S-full_i and W_i (40 arms,
+# each defined as a reading "on H3 with G": L12 Arms), S3_i (item 4: reported at G) and the chain's arms (WN-U, ST, the
+# letter tree; item 5's letter form is the letter tree's G): their exclusion from the grid (cost: 48 more arms) is
+# named for the definitions amendment. The scores are item 5's that an arm defines: G, Sym, Dep° and Dep, and, reported
+# only, NK17 (on a hyperboloid table with A13.5's Poincaré norms; on an exact flat arm with its Euclidean norm and
+# distance, scores2.nk17_value's reading for every flat table, READING stage2-runner-25), the product (the seven
+# geometric arms) and WN-LCh (WN); WN reads them as G_WN, Sym_WN (WN-path) and Dep_WN. The rules are item 3's: the
+# maximum over senses, first senses, gensim's rule (the pair at the least distance, then scored: Scorer.gensim_pair on
+# the geometric arms, WNScorer.gensim_pair, the least WN-path, on WN) and noun morphy. A cell is 'scored' (a code file of
+# its own), an 'alias' of a cell whose values are the same by definition (not scored twice), or 'n/a' (the arm does not
+# define the form):
+# - noun morphy: every word of a pair set is in index.<pos> raw (a covered word has senses, A13.3), so the rule, "for
+#   words absent raw", changes no row and the cell is the maximum's (READING stage2-runner-18);
+# - Dep° under first senses or gensim's rule: Dep° is the depth gap of the senses G chose (A13.5), and under those rules
+#   G's pair is the rule's own pair, so the cell is Dep under that rule;
+# - Sym under gensim's rule: the gensim pair maximises Sym (the least distance), so its Sym is the maximum's;
+# - WN-LCh under gensim's rule: the gensim pair has the least p and LCh decreases in p, so it is the maximum's.
+L12_GRID_ARMS = SIX + ('K3', 'WN')
+L12_GRID_FORMS = ('G', 'Sym', 'DepG', 'Dep', 'NK17', 'product', 'LCh')
+L12_GRID_RULES = ('max', 'first', 'gensim', 'morphy')
+
+
+def l12_grid_cell(arm, form, rule):
+    """(status, detail) of one cell of A13.11's L12 grid (the READING above): ('scored', None), ('alias', (form,
+    rule)) or ('n/a', why)."""
+    geo = arm in SIX + ('K3',)
+    if arm not in L12_GRID_ARMS or form not in L12_GRID_FORMS or rule not in L12_GRID_RULES:
+        raise ValueError(f'not a cell of the L12 grid: {(arm, form, rule)}')
+    if form == 'NK17' and not geo:
+        return 'n/a', 'NK17 reads the norms and the distance of a geometry: WN has none'
+    if form == 'product' and not geo:
+        return 'n/a', 'the product (r(s) - r(t)) d(s, t) needs a base point and a metric: WN has no geometry'
+    if form == 'LCh' and arm != 'WN':
+        return 'n/a', "WN-LCh is a reading of WordNet's path p"
+    if rule == 'morphy':
+        return 'alias', (form, 'max')
+    if form == 'DepG' and rule != 'max':
+        return 'alias', ('Dep', rule)
+    if form in ('Sym', 'LCh') and rule == 'gensim':
+        return 'alias', (form, 'max')
+    return 'scored', None
+
+
+L12_GRID = {(a, f, r): l12_grid_cell(a, f, r) for a in L12_GRID_ARMS for f in L12_GRID_FORMS for r in L12_GRID_RULES}
+
+
 # ================================================================ the pass-1 plan of the exact arms (spec section 11)
 def exact_plan(cfg, insts):
     """[(arm, instance, [(form, rule, claim)])]: every exact arm the claims decide on (claim field L12/1-L15/1) and
     A13.11's reports (stage2/1)."""
     plan = {}
     perms = range(cfg.seeds.perms)
-    sfull = [f'S-full-{i}' for i in perms]
-    wsh = [f'W-{i}' for i in perms]
 
     def add(arm, inst, claim, *frs):
         if inst in insts and insts[inst].rows:
@@ -1864,38 +2651,16 @@ def exact_plan(cfg, insts):
             for fr in frs:
                 if all((f, r) != fr for f, r, _ in lst):
                     lst.append((fr[0], fr[1], claim))
-    # L12 (A13: (a)-(d) and controls 1-4)
-    for a in SIX:
-        add(a, 'HL', 'L12/1', ('G', 'max'))
-    for a in ('H3', 'H2'):
-        add(a, 'HL', 'L12/1', ('DepG', 'max'), ('Sym', 'max'))
-    add('H3', 'HL', 'L12/1', ('Grev', 'max'))
-    for a in ['WN', 'K3'] + sfull + wsh:
-        add(a, 'HL', 'L12/1', ('G', 'max'))
-    # L13 (a)-(c), controls 1 and 3 (control 2 reads the six arms' codes)
-    for inst in ('BD', 'WB', 'BD-dir'):
-        for a in list(SIX) + ['K3'] + sfull + wsh:
-            add(a, inst, 'L13/1', ('G', 'max'))
-    add('H3', 'BD-dir', 'L13/1', ('Sym', 'max'))
-    add('GloVe-300', 'BD-dir-glove', 'L13/1', ('cos', '-'))
-    # L15 (a), (b) and controls 1-3
-    for inst in ('SL', 'MEN'):
-        for a in list(SIX) + ['K3'] + sfull + wsh:
-            add(a, inst, 'L15/1', ('Sym', 'max'))
-    for inst in ('MEN-glove', 'WSR-glove', 'HL-glove'):
-        add('H3', inst, 'L15/1', ('Sym', 'max'))
-        add('GloVe-300', inst, 'L15/1', ('cos', '-'))
-        for i in perms:
-            add(f'GloVe-vec-{i}', inst, 'L15/1', ('cos', '-'))
+    # every code file a decision or a control of L12, L13 and L15 reads, from DECISION_SPEC and CONTROL_SPEC (the
+    # wiring A13 states, check_spec); the exact arms only (L14's sides are learned tables, learned_plan)
+    for arm, inst, form, rule, claim in decided_exact_cells(perms):
+        add(arm, inst, claim, (form, rule))
     if cfg.reported:
         rep = 'stage2/1'
-        for a in ('H3', 'H2'):
-            add(a, 'HL', rep, ('Dep', 'max'), ('G', 'first'), ('G', 'gensim'), ('Dep', 'first'), ('Sym', 'first'),
-                ('NK17', 'max'), ('product', 'max'))
-        for a in ('F3', 'F3*', 'F2', 'F2*'):
-            add(a, 'HL', rep, ('DepG', 'max'), ('Sym', 'max'), ('Dep', 'max'), ('G', 'first'), ('G', 'gensim'),
-                ('product', 'max'))
-        add('WN', 'HL', rep, ('DepG', 'max'), ('Sym', 'max'), ('Dep', 'max'), ('G', 'first'), ('LCh', 'max'))
+        # A13.11 (L12): every arm under every score of item 5 and every sense rule of item 3 (L12_GRID)
+        for (a, form, rule), (status, _) in L12_GRID.items():
+            if status == 'scored':
+                add(a, 'HL', rep, (form, rule))
         for a in ('WN-U', 'ST', 'letter'):
             add(a, 'HL', rep, ('G', 'max'))
         for i in range(cfg.seeds.s3_count):
@@ -1905,14 +2670,21 @@ def exact_plan(cfg, insts):
         for inst in ('HL-glove', 'MEN-glove', 'WSR-glove', 'SL-glove', 'WSS-glove', 'WSC-glove'):
             add('GloVe-50', inst, rep, ('cos', '-'))
             add('GloVe-300', inst, rep, ('cos', '-'))
+        # A13.11 (L13): "WN and GloVe": WN by G_WN on BD, WB and BD-dir; GloVe 300-d's cosine detection AP on BD and
+        # WB within GloVe's vocabulary (BD-glove, WB-glove: A13.3's GloVe coverage), its direction on BD-dir-glove
+        # being L13 control 3's file
         for inst in ('BD', 'WB', 'BD-dir'):
             add('WN', inst, rep, ('G', 'max'))
+        for inst in ('BD-glove', 'WB-glove'):
+            add('GloVe-300', inst, rep, ('cos', '-'))
+        # A13.11's diagnostics, "WN-LCh's tie classes against WN-path's on every set": WN-path (Sym_WN) and WN-LCh,
+        # both with the maximum over senses, on every set where WN-path is read (HL by L12_GRID, SL, WSS, WSC, WSR)
         add('WN', 'SL', rep, ('Sym', 'max'), ('LCh', 'max'))
         for inst in ('WSS', 'WSC', 'WSR'):
             for a in list(SIX) + ['WN']:
                 add(a, inst, rep, ('Sym', 'max'))
-        for inst in ('BD-val', 'WB-val', 'LEDS-test', 'EVAL-test', 'SHW-test', 'WB-all', 'BIB-all', 'HL-split',
-                     'BD-suite', 'WB-suite'):
+            add('WN', inst, rep, ('LCh', 'max'))
+        for inst in ('LEDS-test', 'EVAL-test', 'SHW-test', 'WB-all', 'BIB-all', 'HL-split', 'BD-suite', 'WB-suite'):
             for a in list(SIX) + ['WN']:
                 add(a, inst, rep, ('G', 'max'))
         for a in ('H3', 'H2'):
@@ -1979,7 +2751,13 @@ def step_time(cfg, ctx):
     replay_epoch = rp['wall_s'] / TIME_EPOCHS
     hours, total = projection(per_epoch, replay_epoch, wall)
     n, E = len(world.at.nodes), len(world.at.edges)
-    proj = projected_bytes(n, E)
+    # A13.16 with A13.8: the projected bytes include the exact arms' code files (L12, L13, L15 and item 11), the
+    # decisive run's exact plan on the word-level instances (word fields only, pass 1's readers), not left at 0
+    # (READING stage2-runner-47)
+    S2D.close_gold()
+    xinsts = build_instances(cfg, world, log)
+    exact_lines = plan_lines(xinsts, exact_plan(cfg, xinsts))
+    proj = projected_bytes(n, E, hit_rows=len(xinsts['HIT-test'].rows), exact_lines=exact_lines)
     free = shutil.disk_usage(cfg.cache).free
     within = total <= BUDGET_HOURS
     disk_ok = proj <= free - DISK_MARGIN
@@ -1988,7 +2766,8 @@ def step_time(cfg, ctx):
     log(f'  replay: {replay_epoch:.3f} s per epoch (hpstep.prng.Rng)')
     log('projection (hours): ' + ', '.join(f'{k} {v:.2f}' for k, v in hours.items()) + f'; total {total:.2f} h '
         f'against {BUDGET_HOURS} h: ' + ('within' if within else 'OVER'))
-    log(f'disk: {proj / 1e9:.2f} GB projected, {free / 1e9:.2f} GB free: ' + ('within' if disk_ok else 'OVER'))
+    log(f'disk: {proj / 1e9:.2f} GB projected ({exact_lines} code lines of the exact arms), {free / 1e9:.2f} GB free: '
+        + ('within' if disk_ok else 'OVER'))
     rec = {'label': ctx['label'], 'mode': cfg.mode, 'step': 'time', 'head': ctx['git']['head'], 'git': ctx['git'],
            'starts': ctx['starts'], 'environment': ctx['env'], 'load_averages': ctx['load'].samples,
            'readings': ctx['readings'].items, 'seeds': list(seeds), 'lr': TIME_LR, 'epochs': TIME_EPOCHS,
@@ -1997,7 +2776,7 @@ def step_time(cfg, ctx):
                                if j['kind'] == 'time'},
            'replay_epoch_s': replay_epoch, 'hours': hours, 'total_hours': total, 'limit_hours': BUDGET_HOURS,
            'within_budget': within, 'disk': {'projected_bytes': int(proj), 'free_bytes': int(free),
-                                             'margin': DISK_MARGIN, 'ok': disk_ok},
+                                             'margin': DISK_MARGIN, 'ok': disk_ok, 'exact_code_lines': exact_lines},
            'verdict': 'within budget' if (within and disk_ok) else 'stop before tuning (A13.16): any cut is an '
                                                                    'amendment, not a runner option',
            'jobs': {k: {x: v for x, v in r.items() if x not in ('environment', 'states')} for k, r in res.items()}}
@@ -2107,7 +2886,10 @@ def step_tune(cfg, ctx):
              'seed': j['seed'], 'diverged_epoch': r['diverged_epoch'], 'epochs_run': r['epochs_run'],
              'converged': r['converged'], 'drop_epoch': r['drop_epoch'], 'float_sha': r['float_sha'],
              'snap_sha': r.get('snap_sha'), 'guard_hits': r['guard_hits'], 'max_step': r['max_step'],
-             'max_radius': r['max_radius'], 'loss': r['loss'], 'final_state': r['final_state'], 'wall_s': r['wall_s'],
+             'max_radius': r['max_radius'], 'loss': r['loss'], 'loss_curve': r['loss_curve'],
+             'loss_sha': r['loss_sha'], 'loss_file': os.path.relpath(table_path(cfg.cache, j['key'], '.loss.json'),
+                                                                     cfg.cache),
+             'final_state': r['final_state'], 'wall_s': r['wall_s'],
              'cpu_s': r['cpu_s'], 'concurrent_processes': r['concurrent_processes'],
              'environment_sha': r.get('environment_sha'), 'resumed': bool(r.get('resumed'))}
         sj = sres.get(f'p1L-tune-{j["key"]}')
@@ -2429,6 +3211,12 @@ def learned_plan(cfg, world, insts, tuning, trained, floors):
 def step_decisive(cfg, ctx):
     log, rd = ctx['log'], ctx['readings']
     world, insts = ctx['world'], ctx['insts']
+    # the wiring (DECISION_SPEC, CONTROL_SPEC) must be A13's text term by term before anything is scored
+    problems = check_spec()
+    if problems:
+        raise WiringError('the decision spec differs from Amendment 13 (check_spec): ' + '; '.join(problems[:8]))
+    log(f'wiring: DECISION_SPEC ({sum(len(v) for v in DECISION_SPEC.values())} comparisons) and CONTROL_SPEC '
+        f'({len(CONTROL_SPEC)} controls) equal Amendment 13\'s text')
     tuning, rates, ssha, pre = preflight_settings(cfg, ctx)
     ctx['preflight'] = pre
     if cfg.mode == 'registered':
@@ -2469,8 +3257,10 @@ def step_decisive(cfg, ctx):
     t0 = time.perf_counter()
     xres = run_pool(cfg, ctx, xjobs, 'pass 1: exact arms', 'fork')
     ctx['timings']['pass1_exact_s'] = time.perf_counter() - t0
-    # closure bits from WordNet (A13.11: "the closure bit computed from WordNet in pass 1")
+    # closure bits from WordNet (A13.11: "the closure bit computed from WordNet in pass 1") and L14(b)'s E-edge bits,
+    # written as pass-1 files that pass 2 reads after their SHA-256 check
     closure = closure_bits(cfg, world, insts)
+    bits_files = write_bits_files(cfg, insts, closure, edge_bits(cfg, world, insts))
     t0 = time.perf_counter()
     tres = run_pool(cfg, ctx, tjobs, 'training: measured, edge-shuffled, pre-flight, replay', 'spawn')
     ctx['timings']['training_s'] = time.perf_counter() - t0
@@ -2519,22 +3309,73 @@ def step_decisive(cfg, ctx):
     for j in ljobs:
         for fk, f in lres[j['key']]['files'].items():
             files[fk] = dict(f, table=j['table'], table_kind=j['arm'])
+    files.update(bits_files)
     recheck_tree(cfg, ctx, 'before pass 2')
     return pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, rates, ssha, trained, floors,
                            replay, pre_runs, P)
 
 
 @pass1
-def closure_bits(cfg, world, insts):
-    """Per row of HL, BD and WB (and their dry stand-ins): whether some sense pairing (s, t) is a WordNet closure pair
-    in either direction (t a strict '@'/'@i' ancestor of s), from WordNet alone (A13.11). Returns {inst: (fwd, rev)}."""
-    g = world.wn_graph
-    U = world.U_full
+def edge_bits(cfg, world, insts):
+    """L14(b)'s report, "the number of HL rows that are E edges for some sense pairing" (A13 L14 Instances): per row of
+    HL-at, with senses restricted to U_@, whether some sense pairing (s, t) is a direct '@' edge of E (forward: (s, t)
+    in E, x the child) or (t, s) is (reverse), from WordNet alone. Returns {inst: (fwd, rev)}."""
+    g = world.at
+    U = world.U_at
     out = {}
-    for name in ('HL', 'BD', 'WB'):
-        inst = insts.get(name)
-        if inst is None:
+    inst = insts.get('HL-at')
+    if inst is not None:
+        fw, rv = [], []
+        for _, x, y in inst.rows:
+            sx = SE.senses(x, U, world.wn, world.pos)
+            sy = SE.senses(y, U, world.wn, world.pos)
+            fw.append(any((s, t) in g.edge_set for s in sx for t in sy))
+            rv.append(any((t, s) in g.edge_set for s in sx for t in sy))
+        out['HL-at'] = (fw, rv)
+    return out
+
+
+BITS_FORMS = {'closure': 'closure', 'edge': 'E-edge'}
+
+
+def bits_fkey(inst, what):
+    """The pass-1 file of an instance's per-row WordNet bits: closure membership or E-edge membership."""
+    return fkey_of(inst, 'WN', BITS_FORMS[what], 'any')
+
+
+@pass1
+def write_bits_files(cfg, insts, closure, edges):
+    """The per-row bits of closure_bits and edge_bits as pass-1 files (A13.8, A13.11): a 'dir' code file per
+    instance (row, forward bit, reverse bit; 1 when some sense pairing is a closure pair, or an E edge, in that
+    direction), with its value-stream SHA-256 like every code file; pass 2 reads them only after their SHA-256 check.
+    They hold no score and no LBENCH/1 record."""
+    out = {}
+    for what, table in (('closure', closure), ('edge', edges)):
+        for name, (fw, rv) in sorted(table.items()):
+            inst = insts[name]
+            codes = [int(b) for b in fw] + [int(b) for b in rv]
+            fk = bits_fkey(name, what)
+            info = {'classes': 2, 'distinct': len(set(codes)), 'recomputed': 0, 'tie_classes': 0, 'tie_tuples': 0}
+            out[fk] = write_code_file(cfg, fk, 'dir', inst, codes, [str(c) for c in codes], info, [], None,
+                                      {'vtype': 'bits', 'bits': what, 'wall_s': 0.0, 'inst': name, 'base_inst': name,
+                                       'arm': 'WN', 'form': BITS_FORMS[what], 'rule': 'any', 'table': '-',
+                                       'slots': None})
+    return out
+
+
+@pass1
+def closure_bits(cfg, world, insts):
+    """Per row of every scored word-pair instance (HL, BD, WB and every other set of L12, L13, L15 and A13.11, the dry
+    stand-ins included; BD-dir's rows are BD's, read both ways): whether some sense pairing (s, t), senses in the
+    instance's universe, is a WordNet closure pair in either direction (t a strict '@'/'@i' ancestor of s), from WordNet
+    alone (A13.11: "the closure membership of every scored pair (from WordNet, in pass 1)"; READING stage2-runner-37).
+    HiT's rows (synsets, no senses) are not word pairs. Returns {inst: (fwd, rev)}."""
+    g = world.wn_graph
+    out = {}
+    for name, inst in sorted(insts.items()):
+        if inst.kind == 'hit' or not inst.rows or isinstance(inst.rows[0], JointRow):
             continue
+        U = world.universe(inst.universe)
         fw, rv = [], []
         for _, x, y in inst.rows:
             sx = SE.senses(x, U, world.wn, world.pos)
@@ -2572,6 +3413,40 @@ def clean(x):
     return x
 
 
+def decision_view(claims, key):
+    """The view (est, lo, hi) the decision record holds of one comparison of DECISION_SPEC, by its spec key
+    (Pass2.spec_iv's; L14's keys end in /j<seed index>), or None (verify_wiring)."""
+    p = key.split('/')
+    try:
+        c = claims[p[0]]
+        if p[0] == 'L12':
+            if p[1] in ('a', 'b', 'c', 'd'):
+                return c['parts'][p[1]]['cells'][p[2]]
+            return c['controls']['control3'] if p[1] == 'control3' else c['controls'][p[1]][p[2]]
+        if p[0] == 'L13':
+            if p[1] == 'control1':
+                return c['controls']['control1'][p[2]][p[3]]
+            return c['parts'][p[1]]['cells'][p[2]]
+        if p[0] == 'L14':
+            j = int(p[-1][1:])
+            if p[1] == 'a':
+                return c['parts']['a']['cells'][f'{p[2]}/{p[3]}']['per_seed'][j]
+            if p[1] == 'b':
+                return c['parts']['b']['cells'][p[2]]['per_seed'][j]
+            if p[1] == 'control3':
+                return c['controls']['control3']['cells'][f'{p[2]}/s{j}/{p[3]}'][p[4]]
+        if p[0] == 'L15':
+            if p[1] == 'a':
+                return c['parts']['a']['cells'][f'{p[2]}/{p[3]}']
+            if p[1] == 'b':
+                return c['parts']['b']['cells'][p[2]]
+            if p[1] == 'control1':
+                return c['controls']['control1'][p[2]][p[3]]
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+    return None
+
+
 class Pass2:
     """Pass 2 (A13.8): reads gold, labels and TYPE; checks every pass-1 file's SHA-256 before reading it; computes
     every metric, interval, control and decision from the codes alone."""
@@ -2583,6 +3458,10 @@ class Pass2:
         self.perms = range(cfg.seeds.perms)
         self._gold, self._codes, self._perm = {}, {}, {}
         self.n_intervals = 0
+        self.wiring, self._rr = {}, {}             # spec_iv's provenance (verify_wiring); RR per (file, setting)
+        self.tab, self.trained, self.tuning = {}, {}, {'runs': []}
+        self._sealed_problems = []                  # verify_wiring's problems with their values (A13.13)
+        self.split_check = None                     # A13.11's random-split agreement (random_split_check)
         self.by = {}
         for fk, f in files.items():
             self.by[(f['inst'], f['arm'], f['form'], f['rule'], f.get('table', '-'))] = fk
@@ -2593,6 +3472,26 @@ class Pass2:
             self.log(f'{what}: [sealed]')
         else:
             self.log(f'{what}: {msg}')
+
+    def seal_problem(self, public, full):
+        """A wiring problem's text for the console and the WiringError (A13.13): under the seal the text without any
+        value (public), the full text kept for the sealed side file (write_sealed_problems); otherwise the full text
+        (READING stage2-runner-50)."""
+        if self.cfg.seal:
+            self._sealed_problems.append(full)
+            return public
+        return full
+
+    def write_sealed_problems(self):
+        """A13.13: under the seal, the wiring problems with their values go to a sealed side file beside the sealed
+        file (cache only, opened after step 7 with it); returns its SHA-256, or None when there is nothing to seal."""
+        if not (self.cfg.seal and self._sealed_problems):
+            return None
+        text = json.dumps({'definition': 'A13.13: the wiring check\'s problems with their values (intervals and their '
+                                         'recomputations on human-rated sets), sealed; opened after A13.15 step 7',
+                           'problems': self._sealed_problems}, indent=1, ensure_ascii=False, sort_keys=True) + '\n'
+        write_atomic(sealed_problems_path(self.cfg), text)
+        return sha256(text)
 
     # ------------------------------------------------------------ gold
     def gold_map(self, spec):
@@ -2629,10 +3528,13 @@ class Pass2:
         return [bool(x) for x in self.gold(inst)]
 
     def permuted(self, values, seed):
-        key = (id(values), seed)
-        if key not in self._perm:
-            self._perm[key] = ST.permute_rows(values, seed)
-        return self._perm[key]
+        """ST.permute_rows(values, seed), memoised by the content of values and the seed (never by id(): a freed list's
+        id can be reused by the next gold list, and MEN and MEN-glove share their seeds Rng(2520 + i))."""
+        key = (seed, len(values), sha256(repr(list(values))))
+        hit = self._perm.get(key)
+        if hit is None or hit[0] != values:
+            hit = self._perm[key] = (list(values), ST.permute_rows(values, seed))
+        return hit[1]
 
     # ------------------------------------------------------------ codes
     def fk(self, inst, arm, form, rule='max', table='-'):
@@ -2704,6 +3606,30 @@ class Pass2:
             raise S2D.CountMismatch('count check failed (A13.9: the run stops with no result): ' + '; '.join(problems))
         return c
 
+    def random_split_check(self):
+        """A13.11 (L12): "HyperLex's random-split test nouns (541; Roller et al.'s subset; the original split file and
+        `hyperlex_rnd.tsv` must agree)": before any HL-split metric, the two files' noun test rows must agree in order on
+        the words, TYPE and AVG_SCORE (stage2data.random_split_agrees, pass 2: TYPE and the score are gold), and in the
+        registered run each must hold 541 noun rows, all covered (HL-split's pair set). On a difference the run goes on
+        (the item decides nothing), the console says so and HL-split's values are withheld: its file metrics are marked
+        invalid and get no LBENCH/1 record (READING stage2-runner-44)."""
+        if not (self.world.pos == 'noun' and 'HL-split' in self.insts):
+            return None
+        a = S2D.random_split_agrees(self.world.store)
+        n = len(self.insts['HL-split'].rows)
+        problems = [f'the files differ in {k}' for k in ('words', 'type', 'score') if not a[k]]
+        if a['rows'][0] != a['rows'][1]:
+            problems.append(f'{a["rows"][0]} and {a["rows"][1]} noun test rows')
+        if self.cfg.mode == 'registered' and (tuple(a['rows']) != (HL_SPLIT_NOUNS, HL_SPLIT_NOUNS)
+                                              or n != HL_SPLIT_NOUNS):
+            problems.append(f'{a["rows"]} noun test rows and {n} covered, A13.11 gives {HL_SPLIT_NOUNS}')
+        self.split_check = dict(a, rows=list(a['rows']), pair_set_rows=n, valid=not problems, problems=problems)
+        self.log('HyperLex random split (A13.11): ' + (
+            f'the split file and hyperlex_rnd.tsv agree (words, TYPE, AVG_SCORE; {a["rows"][0]} noun rows, {n} covered)'
+            if not problems else 'MUST AGREE and does not (' + '; '.join(problems) + '): HL-split\'s values are '
+            'withheld'))
+        return self.split_check
+
     def world_expected(self, key):
         if self.world.expected is not None:
             return self.world.expected[key]
@@ -2714,34 +3640,137 @@ class Pass2:
         with tempfile.TemporaryDirectory() as d:
             return stage2_synth.make_world(d, SELFTEST_WORLD_SEED).expected[key]
 
+    # ------------------------------------------------------------ the wiring: sides, intervals and bands from the spec
+    def learned_key(self, table, geometry, d, j):
+        """The key of the measured or edge-shuffled table at (geometry, d, seed index j) (l14 sets self.tab)."""
+        return self.tab[('m' if table == 'measured' else 's', geometry, d, j)]
+
+    def side_fkey(self, inst, side, d=None, j=None, picks=None):
+        """The code file of one spec side on one instance: an exact arm's (for 'S-full*' and 'W*' the strongest
+        permutation's, as picks names it), or a learned table's (HiT test read in its 21 slots, HL-at with senses)."""
+        if side.table == '-':
+            arm = picks[side.arm] if side.arm in ('S-full*', 'W*') else side.arm
+            return self.fk(inst, arm, side.form, side.rule)
+        key = self.learned_key(side.table, side.arm, d, j)
+        name = f'{inst}-s21' if self.insts[inst].kind == 'hit' else inst
+        label = {'measured': 'learned', 'edge-shuffled': 'edge-shuffled'}[side.table]
+        return self.fk(name, label, side.form, side.rule, key)
+
+    def side_codes(self, inst, side, d=None, j=None, picks=None):
+        fk = self.side_fkey(inst, side, d, j, picks)
+        return self.codes_fk(fk), fk
+
+    def true_rows(self, inst):
+        """The rows a direction set's pass 2 selects (A13.8): BD-dir's True rows (the dry run: TYPE hyp-1 to hyp-4)."""
+        return [i for i, t in enumerate(self.labels(inst)) if t]
+
+    def rr(self, fk, setting):
+        """Per row, the pessimistic RR of slot 0 against the setting's negatives, for one HiT code file (memoised)."""
+        k = (fk, setting)
+        if k not in self._rr:
+            self._rr[k] = hit_rr(self.codes_fk(fk), RANDOM_SLOTS if setting == 'random' else HARD_SLOTS)
+        return self._rr[k]
+
+    def exact_metric(self, inst, codes, metric):
+        """An arm's own exact metric on an instance (the strongest permutation's criterion, A13.7)."""
+        I = self.insts[inst]
+        if metric == 'rho':
+            return ST.rho(codes, self.gold(I))
+        if metric == 'ap':
+            return ST.ap_exact(codes, self.labels(I))
+        if metric == 'accuracy':
+            sel = self.true_rows(I)
+            return ST.accuracy([codes[0][i] for i in sel], [codes[1][i] for i in sel]) if sel else Fraction(0)
+        raise ValueError(metric)
+
+    def picks(self, inst, form, rule, metric):
+        """The strongest of the 20 S-full and W permutations on one instance, by the permuted arm's own exact metric,
+        ties to the smaller i (A13.7; READING stage2-runner-21): ({'S-full*': 'S-full-i', 'W*': 'W-i'}, estimates)."""
+        out, est = {}, {}
+        for fam, pre in (('S-full*', 'S-full'), ('W*', 'W')):
+            vals = [self.exact_metric(inst, self.C(inst, f'{pre}-{i}', form, rule), metric) for i in self.perms]
+            out[fam] = f'{pre}-{ST.strongest(vals)}'
+            est[fam] = vals
+        return out, est
+
+    def spec_iv(self, group, cell, d=None, j=None, picks=None):
+        """One decided comparison of DECISION_SPEC: X - Y on its instance, with its metric and its interval (A13.7),
+        and its provenance (the spec key, the two code files, instance, metric, interval) in self.wiring, which
+        verify_wiring checks against A13's text."""
+        comp = DECISION_SPEC[group][cell]
+        key = f'{group}/{cell}' + (f'/j{j}' if j is not None else '')
+        X, fx = self.side_codes(comp.inst, comp.x, d, j, picks)
+        Y, fy = self.side_codes(comp.inst, comp.y, d, j, picks)
+        inst = self.insts[comp.inst]
+        what = f'{comp.metric}({fx}) - {comp.metric}({fy})'
+        if comp.interval == 'ci_rho' and comp.metric == 'rho':
+            iv = self.rho_iv(inst, X, Y, what)
+        elif comp.interval == 'ci_cluster' and comp.metric == 'ap':
+            iv = self.cluster_iv(inst, X, Y, inst.clusters, 'ap', self.labels(inst), what)
+        elif comp.interval == 'ci_cluster' and comp.metric == 'accuracy':
+            sel = self.true_rows(inst)
+            iv = self.cluster_iv(inst, ([X[0][i] for i in sel], [X[1][i] for i in sel]),
+                                 ([Y[0][i] for i in sel], [Y[1][i] for i in sel]), [inst.clusters[i] for i in sel],
+                                 'accuracy', what=what)
+        elif comp.interval == 'ci_mean' and comp.metric in ('rr-random', 'rr-hard'):
+            slots = RANDOM_SLOTS if comp.metric == 'rr-random' else HARD_SLOTS
+            iv = self.mean_iv([float(p) - float(q) for p, q in zip(hit_rr(X, slots), hit_rr(Y, slots))], what)
+        else:
+            raise WiringError(f'{key}: no interval {comp.interval!r} for the metric {comp.metric!r} (A13.7)')
+        iv.update(spec=key, x=fx, y=fy, inst=comp.inst, metric=comp.metric, interval=comp.interval)
+        self.wiring[key] = iv
+        return iv
+
+    def band_arms(self, side):
+        """The arms of a band side: a family ('S-full_i', 'W_i', 'GloVe-vec_i') takes every permutation i < 20."""
+        if side.arm.endswith('_i'):
+            pre = side.arm[:-2]
+            return [f'{pre}-{i}' for i in self.perms]
+        return [side.arm]
+
+    def band_rhos(self, group):
+        """A gold or vector band over exact arms (CONTROL_SPEC): {inst: {arm: 20 rho}}. Gold bands permute the gold
+        by the instance's Rng(base + i) (A13.12); the GloVe vector band reads the 20 GloVe-vec_i files against the
+        gold itself."""
+        band = CONTROL_SPEC[group]
+        out = {}
+        for name in band.insts:
+            inst = self.insts[name]
+            gold = self.gold(inst)
+            pg = [self.permuted(gold, inst.perm_seed + i) for i in self.perms] if band.permuted == 'gold' else None
+            ent = {}
+            for side in band.sides:
+                for arm in self.band_arms(side):
+                    codes = self.C(name, arm, side.form, side.rule)
+                    if pg is not None:
+                        ent[arm] = [ST.rho(codes, g) for g in pg]
+                    else:
+                        ent[arm] = ST.rho(codes, gold)
+            out[name] = ent
+        return out
+
     # ------------------------------------------------------------ L12 (A13)
     def l12(self):
         inst = self.insts['HL']
-        C = functools.partial(self.C, 'HL')
         sealed = inst.sealed
-        a = {f'{h}-{f}': self.rho_iv(inst, C(h), C(f), f'rho({h}) - rho({f})')
-             for h, f in (('H3', 'F3'), ('H3', 'F3*'), ('H2', 'F2'), ('H2', 'F2*'))}
-        b = {h: self.rho_iv(inst, C(h), C(h, 'DepG'), f'rho({h} G) - rho({h} Dep°)') for h in ('H3', 'H2')}
-        c = {h: self.rho_iv(inst, C(h), C(h, 'Sym'), f'rho({h} G) - rho({h} Sym)') for h in ('H3', 'H2')}
-        d = self.rho_iv(inst, C('H3'), C('WN'), 'rho(H3) - rho(WN)')
-        sf = [self.rho_of(inst, C(f'S-full-{i}')) for i in self.perms]
-        i_sf = ST.strongest(sf)
-        ws = [self.rho_of(inst, C(f'W-{i}')) for i in self.perms]
-        i_w = ST.strongest(ws)
-        control1 = {'K3': self.rho_iv(inst, C('H3'), C('K3'), 'rho(H3) - rho(K3)'),
-                    'S-full*': self.rho_iv(inst, C('H3'), C(f'S-full-{i_sf}'), f'rho(H3) - rho(S-full_{i_sf})')}
-        control2 = {'W*': self.rho_iv(inst, C('H3'), C(f'W-{i_w}'), f'rho(H3) - rho(W_{i_w})')}
-        control3 = self.rho_iv(inst, C('H3'), C('H3', 'Grev'), 'rho(H3 as Phi_G(x, y)) - rho(H3 as Phi_G(y, x))')
-        gold = self.gold(inst)
-        pg = [self.permuted(gold, inst.perm_seed + i) for i in self.perms]
-        control4 = {arm: [ST.rho(C(arm), g) for g in pg] for arm in ST.L12_GOLD_ARMS}
+        sp = DECISION_SPEC
+        a = {k: self.spec_iv('L12/a', k) for k in sp['L12/a']}
+        b = {k: self.spec_iv('L12/b', k) for k in sp['L12/b']}
+        c = {k: self.spec_iv('L12/c', k) for k in sp['L12/c']}
+        d = self.spec_iv('L12/d', 'H3-WN')
+        picks, pest = self.picks('HL', 'G', 'max', 'rho')
+        control1 = {k: self.spec_iv('L12/control1', k, picks=picks) for k in sp['L12/control1']}
+        control2 = {k: self.spec_iv('L12/control2', k, picks=picks) for k in sp['L12/control2']}
+        control3 = self.spec_iv('L12/control3', 'H3-reversed')
+        control4 = self.band_rhos('L12/control4')['HL']
         dec = ST.decide_l12(a, b, c, d, control1, control2, control3, control4, n=len(inst.rows))
         dec['intervals'] = {'a': a, 'b': b, 'c': c, 'd': d, 'control1': control1, 'control2': control2,
                             'control3': control3}
         dec['control4_rho'] = control4
-        dec['strongest'] = {'S-full': {'i': i_sf, 'rho': [x.display() for x in sf]},
-                            'W': {'i': i_w, 'rho': [x.display() for x in ws]}}
-        dec['rho'] = {arm: self.rho_of(inst, C(arm)) for arm in list(SIX) + ['WN', 'K3']}
+        dec['strongest'] = {'S-full': {'i': int(picks['S-full*'].rsplit('-', 1)[1]),
+                                       'rho': [x.display() for x in pest['S-full*']]},
+                            'W': {'i': int(picks['W*'].rsplit('-', 1)[1]), 'rho': [x.display() for x in pest['W*']]}}
+        dec['rho'] = {arm: self.rho_of(inst, self.C('HL', arm)) for arm in list(SIX) + ['WN', 'K3']}
         dec['pair_set'] = {'iid': inst.iid, 'n': len(inst.rows), 'sha': inst.pair_set_sha}
         for k, v in sorted(dec['parts'].items()):
             self.say(sealed, f'L12({k})', v['verdict'])
@@ -2750,71 +3779,46 @@ class Pass2:
 
     # ------------------------------------------------------------ L13 (A13)
     def l13(self):
-        BD, WB, BDd = self.insts['BD'], self.insts['WB'], self.insts['BD-dir']
+        BD, WB = self.insts['BD'], self.insts['WB']
         sealed = BD.sealed
-        lab = {'BD': self.labels(BD), 'WB': self.labels(WB)}
-        keys = {'BD': BD.clusters, 'WB': WB.clusters}
-        cells = (('H3', 'F3'), ('H3', 'F3*'), ('H2', 'F2'), ('H2', 'F2*'))
-        parts = {}
-        for p, st in (('a', 'BD'), ('b', 'WB')):
-            inst = self.insts[st]
-            parts[p] = {f'{h}-{f}': self.cluster_iv(inst, self.C(st, h), self.C(st, f), keys[st], 'ap', lab[st],
-                                                    f'AP({h}) - AP({f}) on {st}') for h, f in cells}
-        dl = self.labels(BDd)
-        sel = [i for i, t in enumerate(dl) if t]
-        kd = [BDd.clusters[i] for i in sel]
-
-        def D(arm, form='G', inst='BD-dir'):
-            cf, cr = self.C(inst, arm, form)
-            return [cf[i] for i in sel], [cr[i] for i in sel]
-        parts['c'] = {f'{h}-{f}': self.cluster_iv(BDd, D(h), D(f), kd, 'accuracy', what=f'acc({h}) - acc({f})')
-                      for h, f in cells}
-        control1 = {}
-        for p, st in (('a', 'BD'), ('b', 'WB')):
-            inst = self.insts[st]
-            aps_sf = [ST.ap_exact(self.C(st, f'S-full-{i}'), lab[st]) for i in self.perms]
-            aps_w = [ST.ap_exact(self.C(st, f'W-{i}'), lab[st]) for i in self.perms]
-            i_sf, i_w = ST.strongest(aps_sf), ST.strongest(aps_w)
-            control1[p] = {'K3': self.cluster_iv(inst, self.C(st, 'H3'), self.C(st, 'K3'), keys[st], 'ap', lab[st],
-                                                 f'AP(H3) - AP(K3) on {st}'),
-                           'S-full*': self.cluster_iv(inst, self.C(st, 'H3'), self.C(st, f'S-full-{i_sf}'), keys[st],
-                                                      'ap', lab[st], f'AP(H3) - AP(S-full_{i_sf}) on {st}'),
-                           'W*': self.cluster_iv(inst, self.C(st, 'H3'), self.C(st, f'W-{i_w}'), keys[st], 'ap',
-                                                 lab[st], f'AP(H3) - AP(W_{i_w}) on {st}')}
-        acc_sf = [ST.accuracy(*D(f'S-full-{i}')) for i in self.perms]
-        acc_w = [ST.accuracy(*D(f'W-{i}')) for i in self.perms]
-        i_sf, i_w = ST.strongest(acc_sf), ST.strongest(acc_w)
-        control1['c'] = {'K3': self.cluster_iv(BDd, D('H3'), D('K3'), kd, 'accuracy', what='acc(H3) - acc(K3)'),
-                         'S-full*': self.cluster_iv(BDd, D('H3'), D(f'S-full-{i_sf}'), kd, 'accuracy',
-                                                    what=f'acc(H3) - acc(S-full_{i_sf})'),
-                         'W*': self.cluster_iv(BDd, D('H3'), D(f'W-{i_w}'), kd, 'accuracy',
-                                               what=f'acc(H3) - acc(W_{i_w})')}
+        sp = DECISION_SPEC
+        parts = {p: {k: self.spec_iv(f'L13/{p}', k) for k in sp[f'L13/{p}']} for p in ('a', 'b', 'c')}
+        control1, strongest = {}, {}
+        for p in ('a', 'b', 'c'):
+            g = f'L13/control1/{p}'
+            ref = sp[g]['S-full*']
+            picks, pest = self.picks(ref.inst, ref.y.form, ref.y.rule, ref.metric)
+            control1[p] = {k: self.spec_iv(g, k, picks=picks) for k in sp[g]}
+            strongest[p] = {'S-full': int(picks['S-full*'].rsplit('-', 1)[1]), 'W': int(picks['W*'].rsplit('-', 1)[1])}
+        band = CONTROL_SPEC['L13/control2']
         control2 = {}
-        for st in ('BD', 'WB'):
+        for st in band.insts:
             inst = self.insts[st]
-            pl = [self.permuted(lab[st], inst.perm_seed + i) for i in self.perms]
-            for arm in SIX:
-                control2[(arm, st)] = [ST.ap_exact(self.C(st, arm), x) for x in pl]
-        g = self.insts['BD-dir-glove']
-        gl = self.labels(g)
-        gsel = [i for i, t in enumerate(gl) if t]
-        cf, cr = self.C('BD-dir-glove', 'GloVe-300', 'cos', '-')
-        # READING (A13 L13 control 3): an empty GloVe direction set (no True row within GloVe) would make the accuracy
-        # 0/0; it is recorded as 0 with a flag (the control holds vacuously). BD-dir has 1,194 rows within GloVe's
-        # coverage in the registered data, so this applies to synthetic data only.
-        glove_acc = ST.accuracy([cf[i] for i in gsel], [cr[i] for i in gsel]) if gsel else Fraction(0)
-        control3 = {'Sym-H3': ST.accuracy(*D('H3', 'Sym')), 'GloVe': glove_acc}
+            lab = self.labels(inst)
+            pl = [self.permuted(lab, inst.perm_seed + i) for i in self.perms]
+            for side in band.sides:
+                control2[(side.arm, st)] = [ST.ap_exact(self.C(st, side.arm, side.form, side.rule), x) for x in pl]
+        band = CONTROL_SPEC['L13/control3']
+        control3, sel3 = {}, {}
+        for name, side, st in zip(ST.L13_SYMMETRIC, band.sides, band.insts):
+            inst = self.insts[st]
+            sel = self.true_rows(inst)
+            cf, cr = self.C(st, side.arm, side.form, side.rule)
+            # READING (A13 L13 control 3): an empty GloVe direction set (no True row within GloVe) would make the
+            # accuracy 0/0; it is recorded as 0 with a flag (the control holds vacuously). BD-dir has 1,194 rows
+            # within GloVe's coverage in the registered data, so this applies to synthetic data only.
+            control3[name] = ST.accuracy([cf[i] for i in sel], [cr[i] for i in sel]) if sel else Fraction(0)
+            sel3[st] = {'rows': len(sel), 'of': len(inst.rows), 'empty': not sel}
+        lab = {'BD': self.labels(BD), 'WB': self.labels(WB)}
         pis = {st: Fraction(sum(lab[st]), len(lab[st])) for st in ('BD', 'WB')}
         dec = ST.decide_l13(parts, control1, control2, control3, pis)
         dec['intervals'] = {'parts': parts, 'control1': control1}
         dec['control2_aps'] = {f'{arm}/{st}': [fstr(x) for x in v] for (arm, st), v in control2.items()}
-        dec['strongest'] = {'c': {'S-full': i_sf, 'W': i_w}}
-        dec['selection'] = {'BD-dir': {'rows': len(sel), 'of': len(dl)}, 'BD-dir-glove': {'rows': len(gsel),
-                                                                                            'of': len(gl),
-                                                                                            'empty': not gsel}}
+        dec['strongest'] = strongest
+        dec['selection'] = sel3
         dec['pis'] = {k: fstr(v) for k, v in pis.items()}
         dec['ap'] = {st: {arm: ST.ap_exact(self.C(st, arm), lab[st]) for arm in SIX} for st in ('BD', 'WB')}
-        dec['accuracy'] = {arm: ST.accuracy(*D(arm)) for arm in SIX}
+        dec['accuracy'] = {arm: self.exact_metric('BD-dir', self.C('BD-dir', arm), 'accuracy') for arm in SIX}
         for k, v in sorted(dec['parts'].items()):
             self.say(sealed, f'L13({k})', v['verdict'])
         self.say(False, 'L13 controls fail as required', dec['controls']['fails_as_required'])
@@ -2822,53 +3826,36 @@ class Pass2:
 
     # ------------------------------------------------------------ L15 (A13)
     def l15(self):
-        cells = (('H3', 'F3'), ('H3', 'F3*'), ('H2', 'F2'), ('H2', 'F2*'))
-        a, control1, control2 = {}, {}, []
-        for st in ('SL', 'MEN'):
-            inst = self.insts[st]
-
-            def S(arm):
-                return self.C(st, arm, 'Sym')
-            a[st] = {f'{h}-{f}': self.rho_iv(inst, S(h), S(f), f'rho({h} Sym) - rho({f} Sym) on {st}')
-                     for h, f in cells}
-            sf = [self.rho_of(inst, S(f'S-full-{i}')) for i in self.perms]
-            ws = [self.rho_of(inst, S(f'W-{i}')) for i in self.perms]
-            i_sf, i_w = ST.strongest(sf), ST.strongest(ws)
-            control1[st] = {'K3': self.rho_iv(inst, S('H3'), S('K3'), f'rho(H3) - rho(K3) on {st}'),
-                            'S-full*': self.rho_iv(inst, S('H3'), S(f'S-full-{i_sf}'),
-                                                   f'rho(H3) - rho(S-full_{i_sf}) on {st}'),
-                            'W*': self.rho_iv(inst, S('H3'), S(f'W-{i_w}'), f'rho(H3) - rho(W_{i_w}) on {st}')}
-            gold = self.gold(inst)
-            pg = [self.permuted(gold, inst.perm_seed + i) for i in self.perms]
-            # READING (A13 L15 control 2, "for every arm and set"): every arm of L15's Arms list on the sets it reads.
-            # On SL and MEN: the six exact arms and the controls K3, S-full_i and W_i (each of the 20 permutations an
-            # arm, as A13.4 defines them), all with Sym; on (b)'s sets: H3 with Sym and GloVe 300-d. The readings that
-            # the Arms list marks as reported (H3 with G against GloVe on HL; GloVe at 50-d, item 11) decide nothing
-            # and are not banded.
-            for arm in l15_control2_arms(self.perms):
-                control2.append({'arm': arm, 'set': st, 'n': len(inst.rows),
-                                 'rhos': [ST.rho(S(arm), g) for g in pg]})
-        b, control3 = {}, {}
-        for st, name in (('MEN-glove', 'MEN'), ('WSR-glove', 'WSR'), ('HL-glove', 'HL')):
-            inst = self.insts[st]
-            H = self.C(st, 'H3', 'Sym')
-            G = self.C(st, 'GloVe-300', 'cos', '-')
-            b[name] = (self.rho_iv(inst, G, H, f'rho(GloVe) - rho(H3 Sym) on {st}') if name != 'HL' else
-                       self.rho_iv(inst, H, G, f'rho(H3 Sym) - rho(GloVe) on {st}'))
-            gold = self.gold(inst)
-            pg = [self.permuted(gold, inst.perm_seed + i) for i in self.perms]
-            for arm, codes in (('H3', H), ('GloVe-300', G)):
-                control2.append({'arm': arm, 'set': st, 'n': len(inst.rows), 'rhos': [ST.rho(codes, g) for g in pg]})
-            control3[st] = ([ST.rho(self.C(st, f'GloVe-vec-{i}', 'cos', '-'), gold) for i in self.perms],
-                            len(inst.rows))
-        need = [(arm, st) for st in ST.L15_A_SETS for arm in l15_control2_arms(self.perms)]
-        need += [(arm, st) for st in ST.L15_B_SETS for arm in ('H3', 'GloVe-300')]
+        sp = DECISION_SPEC
+        a = {st: {} for st in ST.L15_A_SETS}
+        for k in sp['L15/a']:
+            st, cell = k.split('/')
+            a[st][cell] = self.spec_iv('L15/a', k)
+        control1 = {}
+        for st in ST.L15_A_SETS:
+            picks, _ = self.picks(st, 'Sym', 'max', 'rho')
+            control1[st] = {k.split('/')[1]: self.spec_iv('L15/control1', k, picks=picks) for k in sp['L15/control1']
+                            if k.split('/')[0] == st}
+        b = {k: self.spec_iv('L15/b', k) for k in sp['L15/b']}
+        # READING (A13 L15 control 2, "for every arm and set"): every arm of L15's Arms list on the sets it reads
+        # (CONTROL_SPEC 'L15/control2/a' and '/b'): on SL and MEN the six exact arms and the controls K3, S-full_i and
+        # W_i (each of the 20 permutations an arm, as A13.4 defines them), all with Sym; on (b)'s sets H3 with Sym and
+        # GloVe 300-d. The readings the Arms list marks as reported (H3 with G against GloVe on HL; GloVe at 50-d,
+        # item 11) decide nothing and are not banded.
+        control2, need = [], []
+        for g in ('L15/control2/a', 'L15/control2/b'):
+            for st, ent in self.band_rhos(g).items():
+                for arm, rhos in ent.items():
+                    control2.append({'arm': arm, 'set': st, 'n': len(self.insts[st].rows), 'rhos': rhos})
+                    need.append((arm, st))
+        control3 = {st: ([ent[arm] for arm in sorted(ent, key=lambda x: int(x.rsplit('-', 1)[1]))],
+                         len(self.insts[st].rows)) for st, ent in self.band_rhos('L15/control3').items()}
         dec = ST.decide_l15(a, b, control1, control2, control3, required=need)
         dec['intervals'] = {'a': a, 'b': b, 'control1': control1}
         dec['control2_rho'] = control2
         dec['control3_rho'] = {k: v[0] for k, v in control3.items()}
         dec['rho'] = {st: {arm: self.rho_of(self.insts[st], self.C(st, arm, 'Sym')) for arm in SIX}
-                      for st in ('SL', 'MEN')}
+                      for st in ST.L15_A_SETS}
         sealed = self.insts['SL'].sealed
         for k, v in sorted(dec['parts'].items()):
             self.say(sealed, f'L15({k})', v['verdict'])
@@ -2883,11 +3870,32 @@ class Pass2:
                 return self.codes_fk(fk)
         return None
 
+    def hit_fkey(self, table, inst='HIT-test', slots=21, relabel=False, form='G'):
+        name = f'{inst}{"-relabel" if relabel else ""}-s{slots}'
+        for (i, arm, f, r, t), fk in self.by.items():
+            if i == name and f == form and t == table:
+                return fk
+        return None
+
+    def band_tables(self, band):
+        """The trained tables of an L14 band, as many as exist (A13 L14 controls 1-2): [(key, slots)] for the band's
+        table kinds, tuning tables in their 11 slots (the random setting), measured and edge-shuffled in 21."""
+        kinds = {s.table for s in band.sides}
+        out = []
+        if 'tuning' in kinds:
+            out += [(tuning_key(r['geometry'], r['d'], r['lr'], r['seed']), 11) for r in self.tuning['runs']
+                    if r.get('snap_sha')]
+        for kind, name in (('measured', 'measured'), ('edge-shuffled', 'shuffled')):
+            if kind in kinds:
+                out += [(k, 21) for k, r in sorted(self.trained.items()) if r['kind'] == name and r.get('snap_sha')]
+        return out
+
     def l14(self, tuning, rates, trained, floors):
         cfg, world = self.cfg, self.world
         T = self.insts['HIT-test']
         HLa = self.insts['HL-at']
         seeds = cfg.seeds.training
+        self.tuning, self.trained = tuning, trained
         ok, bad = HIT.closure_check(T.rows, world.at.ancestors)
         closure = {'random': bad['random'] == 0, 'hard': bad['hard'] == 0}
         meas, shuf = {}, {}
@@ -2903,71 +3911,45 @@ class Pass2:
         # READING (A13 L14, "at (d, s) a seed is present ..."): seeds are indexed j = 0..4 in the decision (the
         # training seed s itself in the registered run; 3000 + j in the dry run)
         presence = ST.l14_presence(measured, shuffled, rates)
-        rr = {}
-
-        def rr_of(key, slots_codes, setting):
-            k = (key, setting)
-            if k not in rr:
-                rr[k] = hit_rr(slots_codes, RANDOM_SLOTS if setting == 'random' else HARD_SLOTS)
-            return rr[k]
         tab = {}
         for (g, d, j), r in meas.items():
             tab[('m', g, d, j)] = r['key']
         for (g, d, j), r in shuf.items():
             tab[('s', g, d, j)] = r['key']
+        self.tab = tab
+
+        def rr_of(key, slots_codes, setting):
+            return self.rr(self.hit_fkey(key), setting)
         a, b, c3 = {}, {}, {}
         for d in (2, 3):
             for j in range(len(seeds)):
                 if not presence[(d, j)]:
                     continue
-                kl, ke = tab[('m', 'lorentz', d, j)], tab[('m', 'euclid', d, j)]
                 for st in ('random', 'hard'):
-                    xl = rr_of(kl, self.hit_codes(kl), st)
-                    xe = rr_of(ke, self.hit_codes(ke), st)
-                    a[(d, st, j)] = self.mean_iv([float(p) - float(q) for p, q in zip(xl, xe)],
-                                                 f'RR(Lorentz) - RR(Euclidean), d={d}, {st}, seed index {j}')
-                b[(d, j)] = self.rho_iv(HLa, self.C('HL-at', 'learned', 'G', 'max', kl),
-                                        self.C('HL-at', 'learned', 'G', 'max', ke),
-                                        f'rho(Lorentz) - rho(Euclidean) on HL-at, d={d}, seed index {j}')
+                    a[(d, st, j)] = self.spec_iv('L14/a', f'd{d}/{st}', d=d, j=j)
+                b[(d, j)] = self.spec_iv('L14/b', f'd{d}', d=d, j=j)
                 for metric in ('rr_random', 'rr_hard', 'rho'):
-                    e = {}
-                    for g in ('lorentz', 'euclid'):
-                        km, ks = tab[('m', g, d, j)], tab.get(('s', g, d, j))
-                        if ks is None:
-                            e[g] = None
-                            continue
-                        if metric == 'rho':
-                            e[g] = self.rho_iv(HLa, self.C('HL-at', 'learned', 'G', 'max', km),
-                                               self.C('HL-at', 'edge-shuffled', 'G', 'max', ks),
-                                               f'rho(true) - rho(shuffled), {g} d={d}, seed index {j}')
-                        else:
-                            st = metric[3:]
-                            xt = rr_of(km, self.hit_codes(km), st)
-                            xs = rr_of(ks, self.hit_codes(ks), st)
-                            e[g] = self.mean_iv([float(p) - float(q) for p, q in zip(xt, xs)],
-                                                f'RR(true) - RR(shuffled), {g} d={d}, {st}, seed index {j}')
-                    c3[(d, j, metric)] = e
-        # controls 1 and 2 over every trained table, as many as exist (A13 L14)
+                    c3[(d, j, metric)] = {g: (self.spec_iv('L14/control3', f'd{d}/{metric}/{g}', d=d, j=j)
+                                              if ('s', g, d, j) in tab else None) for g in ('lorentz', 'euclid')}
+        # controls 1 and 2 over every trained table, as many as exist (A13 L14; CONTROL_SPEC)
         slots_j = HIT.within_row_slots(cfg.seeds.within_row, len(T.rows))
         groups = [r.parent for r in T.rows]
         control1, control2, rel_rows = {}, {}, {}
-        tables = [(tuning_key(r['geometry'], r['d'], r['lr'], r['seed']), 11) for r in tuning['runs']
-                  if r.get('snap_sha')]
-        tables += [(r['key'], 21) for r in list(meas.values()) + list(shuf.values()) if r.get('snap_sha')]
+        tables = self.band_tables(CONTROL_SPEC['L14/control1'])
         for key, slots in tables:
-            cs = self.hit_codes(key, slots=slots)
-            control1[key] = ST.mean_exact(within_row_rr(cs, slots_j))
-            rc = self.hit_codes(key, slots=11, relabel=True)
-            rrr = hit_rr(rc, RANDOM_SLOTS)
+            control1[key] = ST.mean_exact(within_row_rr(self.hit_codes(key, slots=slots), slots_j))
+        for key, _ in self.band_tables(CONTROL_SPEC['L14/control2']):
+            rrr = hit_rr(self.hit_codes(key, slots=11, relabel=True), RANDOM_SLOTS)
             control2[key], _ = ST.macro_rr(rrr, groups)
             rel_rows[key] = ST.mean_exact(rrr)
         control4 = {}
+        band4 = CONTROL_SPEC['L14/control4']
         hl_gold = self.gold(HLa)
         pg = [self.permuted(hl_gold, HLa.perm_seed + i) for i in self.perms]
-        for (g, d, j), r in sorted(meas.items()):
-            if r.get('snap_sha'):
-                codes = self.C('HL-at', 'learned', 'G', 'max', r['key'])
-                control4[r['key']] = [ST.rho(codes, x) for x in pg]
+        side4 = band4.sides[0]
+        for key, _ in self.band_tables(band4):
+            codes = self.C(band4.insts[0], 'learned', side4.form, side4.rule, key)
+            control4[key] = [ST.rho(codes, x) for x in pg]
         dec = ST.decide_l14(a, b, presence, control1, control2, c3, control4, closure, n_rho=len(HLa.rows))
         dec['intervals'] = {'a': a, 'b': b, 'control3': c3}
         dec['control4_rho'] = control4
@@ -2988,7 +3970,280 @@ class Pass2:
         self.say(HLa.sealed, 'L14(b)', dec['parts']['b']['verdict'])
         self.say(False, 'L14 controls 1-2 and the closure check fail/pass as required',
                  {k: v for k, v in dec['controls']['fails_as_required'].items() if k != 'control4'})
-        return dec, {'tab': tab, 'meas': meas, 'shuf': shuf, 'rr_of': rr_of, 'presence': presence}
+        return dec, {'tab': tab, 'meas': meas, 'shuf': shuf, 'rr_of': rr_of, 'presence': presence, 'b': b, 'c3': c3}
+
+    # ------------------------------------------------------------ the wiring check (A13 against the run)
+    def _find(self, what, pred):
+        hits = sorted(fk for fk, f in self.files.items() if pred(f))
+        if len(hits) != 1:
+            raise WiringError(f'wiring check: {len(hits)} code files for {what}')
+        return hits[0]
+
+    def ind_fkey(self, inst, side, d=None, j=None, picks=None):
+        """The code file of a spec side found from the files' own fields and the training records, not through
+        side_fkey, learned_key or the pass-2 index (the wiring check's lookup)."""
+        if side.table == '-':
+            arm = picks[side.arm] if side.arm in ('S-full*', 'W*') else side.arm
+            return self._find(f'{arm} {side.form} {side.rule} on {inst}', lambda f: (
+                f['base_inst'] == inst and f['inst'] == inst and f['arm'] == arm and f['form'] == side.form
+                and f['rule'] == side.rule and f.get('table', '-') == '-' and not f.get('bits')))
+        kind = {'measured': 'measured', 'edge-shuffled': 'shuffled'}[side.table]
+        seed = self.cfg.seeds.training[j]
+        keys = sorted(k for k, r in self.trained.items() if r['kind'] == kind and r['geometry'] == side.arm
+                      and r['d'] == d and r['seed'] == seed)
+        if len(keys) != 1:
+            raise WiringError(f'wiring check: {len(keys)} {kind} tables for {side.arm}, d = {d}, seed {seed}')
+        return self._find(f'{keys[0]} {side.form} on {inst}', lambda f: (
+            f.get('table') == keys[0] and f['base_inst'] == inst and f['form'] == side.form and f['rule'] == side.rule
+            and not f.get('relabel') and not f.get('joint_of') and f.get('slots') in (None, 21)))
+
+    def ind_codes(self, fk):
+        return read_codes(self.cfg, self.files[fk])
+
+    def ind_metric(self, inst, codes, metric):
+        I = self.insts[inst]
+        if metric == 'rho':
+            return ST.rho(codes, self.gold(I))
+        if metric == 'ap':
+            return ST.ap_exact(codes, [bool(x) for x in self.gold(I)])
+        sel = [i for i, t in enumerate(self.gold(I)) if t]
+        return ST.accuracy([codes[0][i] for i in sel], [codes[1][i] for i in sel]) if sel else Fraction(0)
+
+    def ind_picks(self, comp):
+        """The strongest permutations of a comparison's instance, recomputed from the files (ties to the smaller i)."""
+        out = {}
+        for fam, pre in (('S-full*', 'S-full'), ('W*', 'W')):
+            vals = [self.ind_metric(comp.inst, self.ind_codes(self.ind_fkey(comp.inst, Side(f'{pre}-{i}', comp.y.form,
+                                                                                            comp.y.rule, '-'))),
+                                    comp.metric) for i in self.perms]
+            best = 0
+            for i in range(1, len(vals)):
+                if vals[i] > vals[best]:
+                    best = i
+            out[fam] = f'{pre}-{best}'
+        return out
+
+    def recompute(self, comp, fx, fy):
+        """(est, lo, hi) of one comparison from its two files, by stats2's and rank's functions directly."""
+        X, Y = self.ind_codes(fx), self.ind_codes(fy)
+        I = self.insts[comp.inst]
+        gold = self.gold(I) if I.gold is not None else None
+        if comp.interval == 'ci_rho' and comp.metric == 'rho':
+            iv = ST.ci_rho(X, Y, gold, I.word_pairs(), seed=self.boot, resamples=self.R)
+        elif comp.interval == 'ci_cluster' and comp.metric == 'ap':
+            iv = ST.ci_cluster(X, Y, I.clusters, 'ap', [bool(x) for x in gold], seed=self.boot, resamples=self.R)
+        elif comp.interval == 'ci_cluster' and comp.metric == 'accuracy':
+            sel = [i for i, t in enumerate(gold) if t]
+            iv = ST.ci_cluster(([X[0][i] for i in sel], [X[1][i] for i in sel]),
+                               ([Y[0][i] for i in sel], [Y[1][i] for i in sel]), [I.clusters[i] for i in sel],
+                               'accuracy', seed=self.boot, resamples=self.R)
+        elif comp.interval == 'ci_mean' and comp.metric in ('rr-random', 'rr-hard'):
+            slots = range(1, 11) if comp.metric == 'rr-random' else range(11, 21)
+            diffs = [float(ST.rr(a[0], [a[s] for s in slots])) - float(ST.rr(b[0], [b[s] for s in slots]))
+                     for a, b in zip(X, Y)]
+            mean, (lo, hi) = RK.ci_mean(diffs, resamples=self.R, seed=self.boot)
+            return mean, lo, hi
+        else:
+            raise WiringError(f'wiring check: A13 names no interval {comp.interval!r} for {comp.metric!r}')
+        return iv.est, iv.lo, iv.hi
+
+    def verify_wiring(self, claims, rates):
+        """Every decided comparison and control of L12-L15 re-derived from A13's own text (spec_from_a13, not the
+        constants the assembly read): for each comparison, its two code files found by ind_fkey (and the strongest
+        permutations by ind_picks), its interval recomputed from them by stats2 and rank directly, and the value the
+        decision holds; for each control, its values recomputed the same way. Any difference (a file, an order, an
+        instance, an interval, a value, a comparison missing or extra) raises WiringError: the run stops with no
+        result. Returns the record's 'wiring' entry (provenance only, no value)."""
+        dspec, cspec, problems = spec_from_a13()
+        problems = list(problems)
+        seen, prov = set(), {}
+        seeds = self.cfg.seeds.training
+        nseeds = len(seeds)
+        # presence (A13 L14) from the training records themselves, against the decision's
+        runs = {(r['kind'], r['geometry'], r['d'], seeds.index(r['seed'])): r for r in self.trained.values()
+                if r['kind'] in ('measured', 'shuffled')}
+        presence = ST.l14_presence(
+            {(g, d, j): {'exists': bool(runs.get(('measured', g, d, j), {}).get('snap_sha')),
+                         'converged': bool(runs.get(('measured', g, d, j), {}).get('converged'))}
+             for g, d in self.cfg.cells for j in range(nseeds)},
+            {(g, d, j): bool(runs.get(('shuffled', g, d, j), {}).get('snap_sha')) for g, d in self.cfg.cells
+             for j in range(nseeds)}, rates)
+        if claims['L14']['presence'] != {f'd{d}/s{j}': presence[(d, j)] for d in ST.L14_DIMS for j in ST.L14_SEEDS}:
+            problems.append('L14: the presence of seeds differs from the training records (A13 L14)')
+        for group, cells in dspec.items():
+            for cell, comp in cells.items():
+                if group.startswith('L14/'):
+                    d = int(cell.split('/')[0][1:])
+                    runs = [(d, j) for j in range(nseeds) if presence[(d, j)]]
+                else:
+                    runs = [(None, None)]
+                for d, j in runs:
+                    key = f'{group}/{cell}' + (f'/j{j}' if j is not None else '')
+                    seen.add(key)
+                    rec = self.wiring.get(key)
+                    if rec is None:
+                        problems.append(f'{key}: A13 asks for this comparison and the run assembled none')
+                        continue
+                    picks = self.ind_picks(comp) if comp.y.arm in ('S-full*', 'W*') else None
+                    try:
+                        fx, fy = self.ind_fkey(comp.inst, comp.x, d, j, picks), self.ind_fkey(comp.inst, comp.y, d, j,
+                                                                                               picks)
+                    except WiringError as e:
+                        problems.append(f'{key}: {e}')
+                        continue
+                    if (rec['x'], rec['y']) != (fx, fy):
+                        problems.append(f'{key}: read {rec["x"]} - {rec["y"]}; A13 states {fx} - {fy}')
+                    if (rec['inst'], rec['metric'], rec['interval']) != (comp.inst, comp.metric, comp.interval):
+                        problems.append(f'{key}: {rec["inst"]}, {rec["metric"]}, {rec["interval"]}; A13 states '
+                                        f'{comp.inst}, {comp.metric}, {comp.interval}')
+                    want = self.recompute(comp, fx, fy)
+                    if (rec['est'], rec['lo'], rec['hi']) != want:
+                        # A13.13: the numbers go to the sealed side file only (seal_problem); the console and the
+                        # record name the comparison, its files, instance, metric and interval
+                        problems.append(self.seal_problem(
+                            f'{key}: the {comp.interval} interval of {comp.metric} on {comp.inst} ({fx} - {fy}) is '
+                            f'not its recomputation',
+                            f'{key}: the interval {(rec["est"], rec["lo"], rec["hi"])} is not its recomputation '
+                            f'{want}'))
+                    view = decision_view(claims, key)
+                    if view is None or (view['est'], view['lo'], view['hi']) != want:
+                        problems.append(f'{key}: the decision does not hold this comparison\'s interval')
+                    prov[key] = {'x': fx, 'y': fy, 'inst': comp.inst, 'metric': comp.metric,
+                                 'interval': comp.interval}
+        extra = sorted(set(self.wiring) - seen)
+        if extra:
+            problems.append(f'{len(extra)} interval(s) of no comparison A13 states, e.g. {extra[:3]}')
+        bands = self.verify_bands(claims, cspec, problems)
+        if problems:
+            side = self.write_sealed_problems()
+            raise WiringError('the wiring check failed (A13 against the run): ' + '; '.join(problems[:12])
+                              + (f'; and {len(problems) - 12} more' if len(problems) > 12 else '')
+                              + (f'; the values are in the sealed side file (SHA-256 {side})' if side else ''))
+        self.log(f'wiring check: {len(seen)} decided comparisons and {bands} control values equal A13\'s text and '
+                 f'their recomputation from the files')
+        return {'spec_equals_a13': True, 'comparisons': len(seen), 'control_values': bands, 'provenance': prov}
+
+    def verify_bands(self, claims, cspec, problems):
+        """CONTROL_SPEC's controls recomputed from the files (verify_wiring): the gold and vector bands' 20 rho, the
+        label bands' 20 AP, the symmetric scores' accuracies, L14's within-row and relabelled means over every trained
+        table and the closure check, each against the value the decision holds. Returns the number checked."""
+        n = 0
+        seeds = self.cfg.seeds
+
+        def arms_of(side):
+            return self.band_arms(side)
+
+        def rhos(st, side, arm, permuted):
+            I = self.insts[st]
+            gold = self.gold(I)
+            codes = self.ind_codes(self.ind_fkey(st, Side(arm, side.form, side.rule, '-')))
+            if not permuted:                 # the GloVe vector band: its permutations are pass 1's (Rng(2580 + i))
+                return metric_text(ST.rho(codes, gold))
+            base = getattr(seeds, BAND_SEEDS[(group, st)])
+            if I.perm_seed != base:
+                problems.append(f'{group} on {st}: permutations from {I.perm_seed}, A13.12 gives {base}')
+            return [metric_text(ST.rho(codes, ST.permute_rows(gold, base + i))) for i in self.perms]
+        for group, band in cspec.items():
+            if group == 'L12/control4':
+                held = claims['L12']['control4_rho']
+                if set(held) != {s.arm for s in band.sides}:
+                    problems.append(f'{group}: arms {sorted(held)}; A13 states {[s.arm for s in band.sides]}')
+                for side in band.sides:
+                    n += 1
+                    if [metric_text(r) for r in held.get(side.arm, [])] != rhos('HL', side, side.arm, True):
+                        problems.append(f'{group}: {side.arm} differs from its recomputation')
+            elif group in ('L15/control2/a', 'L15/control2/b'):
+                held = {(e['arm'], e['set']): [metric_text(r) for r in e['rhos']] for e in claims['L15']['control2_rho']}
+                for st in band.insts:
+                    for side in band.sides:
+                        for arm in arms_of(side):
+                            n += 1
+                            if held.get((arm, st)) != rhos(st, side, arm, True):
+                                problems.append(f'{group}: {arm} on {st} differs from its recomputation')
+            elif group == 'L15/control3':
+                held = claims['L15']['control3_rho']
+                for st in band.insts:
+                    side = band.sides[0]
+                    n += 1
+                    if [metric_text(r) for r in held.get(st, [])] != [rhos(st, side, a, False) for a in arms_of(side)]:
+                        problems.append(f'{group}: {st} differs from its recomputation')
+            elif group == 'L13/control2':
+                held = claims['L13']['control2_aps']
+                for st in band.insts:
+                    I = self.insts[st]
+                    lab = [bool(x) for x in self.gold(I)]
+                    base = getattr(seeds, BAND_SEEDS[(group, st)])
+                    if I.perm_seed != base:
+                        problems.append(f'{group} on {st}: permutations from {I.perm_seed}, A13.12 gives {base}')
+                    for side in band.sides:
+                        n += 1
+                        codes = self.ind_codes(self.ind_fkey(st, side))
+                        want = [fstr(ST.ap_exact(codes, ST.permute_rows(lab, base + i))) for i in self.perms]
+                        if held.get(f'{side.arm}/{st}') != want:
+                            problems.append(f'{group}: {side.arm} on {st} differs from its recomputation')
+            elif group == 'L13/control3':
+                held = claims['L13']['controls']['control3']
+                for name, side, st in zip(ST.L13_SYMMETRIC, band.sides, band.insts):
+                    n += 1
+                    want = fstr(self.ind_metric(st, self.ind_codes(self.ind_fkey(st, side)), 'accuracy'))
+                    if held.get(name, {}).get('accuracy') != want:
+                        problems.append(f'{group}: {name} on {st} differs from its recomputation')
+            elif group in ('L14/control1', 'L14/control2'):
+                held = claims['L14']['controls']['control1' if group.endswith('1') else 'control2']
+                T = self.insts['HIT-test']
+                kinds = {s.table for s in band.sides}
+                tabs = []
+                if 'tuning' in kinds:
+                    tabs += [(tuning_key(r['geometry'], r['d'], r['lr'], r['seed']), 11) for r in self.tuning['runs']
+                             if r.get('snap_sha')]
+                for kind, name in (('measured', 'measured'), ('edge-shuffled', 'shuffled')):
+                    if kind in kinds:
+                        tabs += [(k, 21) for k, r in self.trained.items() if r['kind'] == name and r.get('snap_sha')]
+                if set(held) != {str(k) for k, _ in tabs}:
+                    problems.append(f'{group}: {len(held)} tables; A13 states every trained table ({len(tabs)})')
+                declared = HIT.within_row_slots(seeds.within_row, len(T.rows))
+                groups_ = [r.parent for r in T.rows]
+                for key, slots in tabs:
+                    n += 1
+                    relabel = group.endswith('2')
+                    fk = self._find(f'{key} on HiT test', lambda f: (
+                        f.get('table') == key and f['base_inst'] == 'HIT-test' and f['form'] == 'G'
+                        and bool(f.get('relabel')) == relabel and f.get('slots') == (11 if relabel else slots)))
+                    cs = self.ind_codes(fk)
+                    if relabel:
+                        v = ST.macro_rr([ST.rr(r[0], [r[s] for s in range(1, 11)]) for r in cs], groups_)[0]
+                        got = held.get(str(key), {}).get('macro')
+                    else:
+                        v = ST.mean_exact([ST.rr(r[k], [r[x] for x in range(11) if x != k]) for r, k in zip(cs, declared)])
+                        got = held.get(str(key), {}).get('mean')
+                    if got != fstr(v):
+                        problems.append(f'{group}: {key} differs from its recomputation')
+            elif group == 'L14/control4':
+                held = claims['L14']['control4_rho']
+                st = band.insts[0]
+                I = self.insts[st]
+                gold = self.gold(I)
+                base = getattr(seeds, BAND_SEEDS[(group, st)])
+                keys = sorted(k for k, r in self.trained.items() if r['kind'] == 'measured' and r.get('snap_sha'))
+                if set(held) != set(keys):
+                    problems.append(f'{group}: {len(held)} tables; A13 states each measured table ({len(keys)})')
+                side = band.sides[0]
+                for key in keys:
+                    n += 1
+                    fk = self._find(f'{key} on {st}', lambda f: (f.get('table') == key and f['base_inst'] == st
+                                                                 and f['form'] == side.form and f['rule'] == side.rule))
+                    codes = self.ind_codes(fk)
+                    want = [metric_text(ST.rho(codes, ST.permute_rows(gold, base + i))) for i in self.perms]
+                    if [metric_text(r) for r in held.get(key, [])] != want:
+                        problems.append(f'{group}: {key} differs from its recomputation')
+            elif group == 'L14/closure':
+                n += 1
+                _, bad = HIT.closure_check(self.insts['HIT-test'].rows, self.world.at.ancestors)
+                if claims['L14']['controls']['closure_check'] != {k: v == 0 for k, v in bad.items()}:
+                    problems.append(f'{group}: the closure check differs from its recomputation')
+            else:
+                problems.append(f'{group}: a control the wiring check does not know')
+        return n
 
     # ------------------------------------------------------------ every evaluated file: its metric (A13.14, A13.11)
     def file_metrics(self, claims_of):
@@ -3000,6 +4255,8 @@ class Pass2:
             f = self.files[fk]
             if f.get('joint_of'):
                 continue                    # F1's joint val + test list: its metric is F1, reported by Pass2.f1
+            if f.get('bits'):
+                continue                    # WordNet's per-row bits (write_bits_files): no score, no metric
             inst = self.insts[f['base_inst']]
             claim = claims_of.get(fk) or self.learned_claim(f)
             e = {'fkey': fk, 'inst': f['inst'], 'base_inst': inst.name, 'arm': f['arm'], 'form': f['form'],
@@ -3007,6 +4264,12 @@ class Pass2:
                  'sealed': inst.sealed, 'rows': f['rows'], 'classes': f['classes'], 'recomputed': f['recomputed'],
                  'tie_classes': f['tie_classes'], 'tie_tuples': f['tie_tuples'], 'phi_recomputed': f['phi_recomputed'],
                  'phi_ties': f['phi_ties'], 'metrics': []}
+            if inst.name == 'HL-split' and self.split_check is not None and not self.split_check['valid']:
+                # A13.11: the split file and hyperlex_rnd.tsv must agree; they do not, so no value (random_split_check)
+                e['invalid'] = 'the random split\'s two files do not agree (A13.11): ' + '; '.join(
+                    self.split_check['problems'])
+                out.append(e)
+                continue
             codes = self.codes_fk(fk)
             if f['kind'] == 'hit':
                 if f.get('relabel'):
@@ -3084,7 +4347,55 @@ class Pass2:
                 out[arm] = ST.rho([c[i] for i in idx], g) if len(idx) >= 3 else None
         return out
 
-    def rep_l12(self, closure):
+    def bits(self, inst, what):
+        """An instance's per-row WordNet bits from its pass-1 file (write_bits_files), read after its SHA-256 check:
+        (forward, reverse) as booleans in pair-set order, or None when the run wrote none."""
+        fk = bits_fkey(inst, what)
+        if fk not in self.files:
+            return None
+        fw, rv = self.codes_fk(fk)
+        return [bool(x) for x in fw], [bool(x) for x in rv]
+
+    def bits_report(self, inst, what):
+        """The per-row bits of one instance as A13.11 reports them: counts, the file and its SHA-256, and one
+        character per pair-set row in file order, the code forward + 2 x reverse (0 neither, 1 forward only, 2 reverse
+        only, 3 both), keyed by the pair set's rows through its pairSetSha (no word is written, A13.2)."""
+        b = self.bits(inst, what)
+        if b is None:
+            return None
+        fw, rv = b
+        I = self.insts[inst]
+        fk = bits_fkey(inst, what)
+        return {'iid': I.iid, 'rows': len(fw), 'pairSetSha': I.pair_set_sha, 'forward': sum(fw), 'reverse': sum(rv),
+                'either': sum(1 for a, c in zip(fw, rv) if a or c), 'both': sum(1 for a, c in zip(fw, rv) if a and c),
+                'neither': sum(1 for a, c in zip(fw, rv) if not a and not c), 'file': fk,
+                'tsv_sha256': self.files[fk]['tsv_sha'], 'codes': 'forward + 2 x reverse, one per row in file order',
+                'per_row': ''.join(str(int(a) + 2 * int(c)) for a, c in zip(fw, rv))}
+
+    def rep_grid(self):
+        """A13.11's L12 grid (L12_GRID's READING): every cell of arm x score x sense rule on HL, with its rho (scored),
+        the cell whose values it shares by definition (alias) or why the arm has no such score (n/a)."""
+        inst = self.insts['HL']
+        out = {}
+        for (arm, form, rule), (status, detail) in L12_GRID.items():
+            k = f'{arm}/{form}/{rule}'
+            if status == 'scored':
+                ent = {'status': 'scored'}
+                if self.has('HL', arm, form, rule):
+                    fk = self.fk('HL', arm, form, rule)
+                    ent.update(file=fk, rho=self.rho_of(inst, self.codes_fk(fk)))
+                else:
+                    ent['missing'] = True
+            elif status == 'alias':
+                ent = {'status': 'alias', 'of': f'{arm}/{detail[0]}/{detail[1]}'}
+            else:
+                ent = {'status': 'n/a', 'why': detail}
+            out[k] = ent
+        return {'arms': list(L12_GRID_ARMS), 'forms': list(L12_GRID_FORMS), 'rules': list(L12_GRID_RULES),
+                'scored': sum(1 for v in out.values() if v['status'] == 'scored'),
+                'missing': sorted(k for k, v in out.items() if v.get('missing')), 'cells': out}
+
+    def rep_l12(self):
         inst = self.insts['HL']
         arms = list(SIX) + ['WN']
         U = self.world.U_full
@@ -3099,16 +4410,18 @@ class Pass2:
                 strata[t] = self.subset_rhos(inst, keep, arms)
         out['type_strata_at_least_100'] = strata
         out['no_type_of'] = self.subset_rhos(inst, [t in ('cohyp', 'mero', 'ant', 'no-rel') for t in types], arms)
-        fw, rv = closure.get('HL', ([], []))
+        fw, rv = self.bits('HL', 'closure') or ([], [])
         out['closure_neither'] = self.subset_rhos(inst, [not a and not b for a, b in zip(fw, rv)], arms)
         g6, g10 = self.gold(inst), self.gold(inst, 'hyperlex-010')
         out['avg_score_0_10_ranks_as_avg_score'] = ST.exact_codes(g6) == ST.exact_codes(g10)
         out['chain'] = {arm: self.rho_of(inst, self.C('HL', arm)) for arm in ('WN', 'WN-U', 'ST', 'letter', 'H3')
                         if self.has('HL', arm, 'G')}
-        if self.world.pos == 'noun' and 'HL-split' in self.insts:
-            out['random_split_agrees'] = S2D.random_split_agrees(self.world.store)
+        if self.split_check is not None:
+            out['random_split_agrees'] = self.split_check
         out['closure_bits'] = {'forward': sum(fw), 'reverse': sum(rv), 'neither': sum(1 for a, b in zip(fw, rv)
-                                                                                     if not a and not b)}
+                                                                                     if not a and not b),
+                               'per_row': "reported['L13']['closure_membership']['HL']"}
+        out['grid'] = self.rep_grid()
         # READING (A13.3, the morphy rule "only for words absent raw"): on HL every pair-set word is in the index raw
         # (the pair set is the covered rows), so the morphy rule's scores equal the maximum's and are not recomputed;
         # the count of HL words absent raw is recorded
@@ -3120,23 +4433,48 @@ class Pass2:
                          'file_words_absent_raw': len(absent), 'scores': 'equal to the maximum over senses'}
         return out
 
-    def rep_l13(self, closure, l14x=None):
+    def rep_l13(self, l14x=None):
         out = {}
         BD = self.insts['BD']
         lab = self.labels(BD)
-        keep = [SE.N_S(x) != SE.N_S(y) for _, x, y in BD.rows]
-        idx = [i for i, k in enumerate(keep) if k]
-        out['ap_without_self_pairs'] = {'removed': len(keep) - len(idx)}
-        fw, rv = closure.get('BD', ([], []))
-        nc = [i for i in range(len(lab)) if not lab[i] or not fw[i]]
-        out['non_closure_positives'] = {'positives': sum(1 for i in range(len(lab)) if lab[i] and not fw[i])}
-        for arm in list(SIX) + ['WN']:
-            if not self.has('BD', arm, 'G'):
+        # A13.11, "AP without the 3 self-pairs": the rows A13.9's count check counts as BD's 3 self-pairs, the raw word
+        # fields equal (stage2data.count_checks_words' READING); the N_S variant (bless.tsv writes some words in two
+        # cases, which N_S merges) is reported beside it under its own label (READING stage2-runner-51)
+        for name, keep in (('ap_without_self_pairs', [x != y for _, x, y in BD.rows]),
+                           ('ap_without_ns_self_pairs', [SE.N_S(x) != SE.N_S(y) for _, x, y in BD.rows])):
+            idx = [i for i, k in enumerate(keep) if k]
+            ent = out[name] = {'removed': len(keep) - len(idx),
+                               'definition': 'raw word fields equal (A13.9\'s count)' if name == 'ap_without_self_pairs'
+                               else 'N_S forms equal (reported beside it)'}
+            for arm in list(SIX) + ['WN']:
+                if self.has('BD', arm, 'G'):
+                    c = self.C('BD', arm)
+                    ent[arm] = ST.ap_exact([c[i] for i in idx], [lab[i] for i in idx])
+        removed = out['ap_without_self_pairs']['removed']
+        if self.cfg.mode == 'registered' and removed != S2D.COUNTS_WORDS['bd.self_pairs']:
+            raise S2D.CountMismatch(f'count check failed: AP without the self-pairs removes {removed} rows of BD, '
+                                    f'A13.9 counts {S2D.COUNTS_WORDS["bd.self_pairs"]} self-pairs')
+        # A13.11: "AP and direction on the positives that are not WordNet closure pairs, with all negatives": AP on BD
+        # and on WB (the two detection sets), direction on BD-dir's True rows that are not closure pairs; a positive
+        # (x, y) is a closure pair when y is a strict ancestor of x for some sense pairing (the forward closure bit)
+        out['non_closure_positives'] = {}
+        for st in ('BD', 'WB'):
+            inst = self.insts[st]
+            b = self.bits(st, 'closure')
+            if b is None:
                 continue
-            c = self.C('BD', arm)
-            out['ap_without_self_pairs'][arm] = ST.ap_exact([c[i] for i in idx], [lab[i] for i in idx])
-            if out['non_closure_positives']['positives']:
-                out['non_closure_positives'][arm] = ST.ap_exact([c[i] for i in nc], [lab[i] for i in nc])
+            fw = b[0]
+            ls = self.labels(inst)
+            nc = [i for i in range(len(ls)) if not ls[i] or not fw[i]]
+            ent = {'positives': sum(1 for i in range(len(ls)) if ls[i] and not fw[i]),
+                   'positives_closure': sum(1 for i in range(len(ls)) if ls[i] and fw[i]),
+                   'negatives': sum(1 for x in ls if not x)}
+            for arm in list(SIX) + ['WN']:
+                if ent['positives'] and self.has(st, arm, 'G'):
+                    c = self.C(st, arm)
+                    ent[arm] = ST.ap_exact([c[i] for i in nc], [ls[i] for i in nc])
+            out['non_closure_positives'][st] = ent
+        fw = (self.bits('BD', 'closure') or ([False] * len(BD.rows), None))[0]
         dl = self.labels(self.insts['BD-dir'])
         sel = [i for i, t in enumerate(dl) if t and not fw[i]]
         out['direction_non_closure'] = {'rows': len(sel)}
@@ -3145,7 +4483,11 @@ class Pass2:
                 if self.has('BD-dir', arm, 'G'):
                     cf, cr = self.C('BD-dir', arm)
                     out['direction_non_closure'][arm] = ST.accuracy([cf[i] for i in sel], [cr[i] for i in sel])
-        out['closure_membership'] = {'forward': sum(fw), 'reverse': sum(rv), 'rows': len(fw)}
+        # A13.11: "the closure membership of every scored pair (from WordNet, in pass 1)": per row of every scored
+        # word-pair instance (closure_bits; BD-dir's rows are BD's, scored in both directions)
+        out['closure_membership'] = {st: self.bits_report(st, 'closure') for st in sorted(self.insts)
+                                     if self.bits(st, 'closure') is not None}
+        out['wn_and_glove'] = self.wn_and_glove()
         out['suite_detection_protocol'] = self.suite_protocol()
         if l14x is not None:
             out['l14_tables_on_these_rows'] = self.l14_on_l13(l14x['meas'])
@@ -3166,6 +4508,36 @@ class Pass2:
                 if self.has('EVAL-test', arm, 'G') and any(le[i] for i in ie):
                     c = self.C('EVAL-test', arm)
                     out['eval_distinct'][arm] = ST.ap_exact([c[i] for i in ie], [le[i] for i in ie])
+        return out
+
+    def wn_and_glove(self):
+        """A13.11's "WN and GloVe" on L13 (reported): WN read by G_WN with the maximum over senses on BD and WB
+        (detection AP, pessimistic and in sklearn's convention) and on BD-dir (direction accuracy on its True rows);
+        GloVe 300-d's cosine on BD and WB within GloVe's vocabulary (BD-glove, WB-glove: A13.3's GloVe coverage,
+        detection AP) and on BD-dir-glove (direction accuracy: L13 control 3's file, 0 by symmetry). Each with its
+        pair set; deciding nothing."""
+        out = {'WN': {}, 'GloVe': {}}
+
+        def pset(inst):
+            return {'iid': inst.iid, 'rows': len(inst.rows), 'pairSetSha': inst.pair_set_sha}
+        for st in ('BD', 'WB'):
+            if self.has(st, 'WN', 'G'):
+                inst = self.insts[st]
+                lab, c = self.labels(inst), self.C(st, 'WN')
+                out['WN'][st] = dict(pset(inst), true_rows=sum(lab), ap=ST.ap_exact(c, lab) if any(lab) else None,
+                                     ap_sklearn=ST.ap_sklearn(c, lab) if any(lab) else None)
+        for st, arm, form, rule, key in (('BD-dir', 'WN', 'G', 'max', 'WN'),
+                                         ('BD-dir-glove', 'GloVe-300', 'cos', '-', 'GloVe')):
+            if st in self.insts and self.has(st, arm, form, rule):
+                inst = self.insts[st]
+                out[key][st] = dict(pset(inst), true_rows=len(self.true_rows(inst)),
+                                    accuracy=self.exact_metric(st, self.C(st, arm, form, rule), 'accuracy'))
+        for st in ('BD-glove', 'WB-glove'):
+            if st in self.insts and self.insts[st].rows and self.has(st, 'GloVe-300', 'cos', '-'):
+                inst = self.insts[st]
+                lab, c = self.labels(inst), self.C(st, 'GloVe-300', 'cos', '-')
+                out['GloVe'][st] = dict(pset(inst), true_rows=sum(lab), ap=ST.ap_exact(c, lab) if any(lab) else None,
+                                        ap_sklearn=ST.ap_sklearn(c, lab) if any(lab) else None)
         return out
 
     def suite_protocol(self):
@@ -3248,7 +4620,8 @@ class Pass2:
                 'glove': lambda w: SE.in_vocab(w, vocab)}
         arms = {}
         for f in self.files.values():
-            arms.setdefault(f['base_inst'], set()).add(f['arm'])
+            if not f.get('bits'):
+                arms.setdefault(f['base_inst'], set()).add(f['arm'])
         out = {}
         for name, inst in sorted(self.insts.items()):
             if inst.kind == 'hit' or inst.cand is None:
@@ -3373,14 +4746,18 @@ class Pass2:
         out['h3_against_learned_on_hl_at'] = hl
         if tuning is not None:
             out['nk18_r_against_sp_lp'] = self.nk18(tuning, trained, floors)
+        # A13.11's Lorentz - Euclidean cells of G_root and the distance-only score (and G's own, with its macro
+        # bootstrap) at every seed where both measured tables exist, each marked with whether the seed is present
+        # (A13 L14's decision reads present seeds only)
         cells = {}
         for d in (2, 3):
             for j in range(len(self.cfg.seeds.training)):
-                if not x['presence'].get((d, j)):
+                kl, ke = tab.get(('m', 'lorentz', d, j)), tab.get(('m', 'euclid', d, j))
+                if kl is None or ke is None:
                     continue
-                kl, ke = tab[('m', 'lorentz', d, j)], tab[('m', 'euclid', d, j)]
+                present = bool(x['presence'].get((d, j)))
                 for st in ('random', 'hard'):
-                    sl, se = RANDOM_SLOTS if st == 'random' else HARD_SLOTS, None
+                    sl = RANDOM_SLOTS if st == 'random' else HARD_SLOTS
                     row = {}
                     for form in ('G', 'Groot', 'dist'):
                         cl, ce = self.hit_codes(kl, form=form), self.hit_codes(ke, form=form)
@@ -3391,24 +4768,59 @@ class Pass2:
                                                  f'{form}: RR(L) - RR(E), d={d}, {st}, seed index {j}')
                         if form == 'G':
                             row['macro'] = ST.ci_macro(a, b, groups, seed=self.boot, resamples=self.R)
-                    cells[f'd{d}/{st}/j{j}'] = row
+                    if row:
+                        row['present'] = present
+                        cells[f'd{d}/{st}/j{j}'] = row
                 for form in ('Groot', 'dist'):
                     if self.has('HL-at', 'learned', form, 'max', kl) and self.has('HL-at', 'learned', form, 'max', ke):
-                        cells[f'd{d}/HL-at/j{j}/{form}'] = self.rho_iv(
+                        cells[f'd{d}/HL-at/j{j}/{form}'] = dict(self.rho_iv(
                             self.insts['HL-at'], self.C('HL-at', 'learned', form, 'max', kl),
-                            self.C('HL-at', 'learned', form, 'max', ke), f'{form}: rho(L) - rho(E), d={d}, j={j}')
+                            self.C('HL-at', 'learned', form, 'max', ke), f'{form}: rho(L) - rho(E), d={d}, j={j}'),
+                            present=present)
         out['lorentz_minus_euclid'] = cells
+        out['edge_shuffle_cells'] = self.edge_shuffle_cells(x)
+        # A13 L14 Risks: "whether their per-seed mean differences agree in sign with G's; a disagreement in three or
+        # more seeds of a (d, setting) cell is stated in the write-up", on HiT test in both settings and on HL-at.
+        # READING (A13 L14 Risks, "agree in sign"): two differences agree when both are > 0 or both are <= 0 (the
+        # reading's "Lorentz ahead" or not); on HL-at G's difference is L14(b)'s own interval of rho(Lorentz) -
+        # rho(Euclidean) at that (d, seed), and each form's is its word-level interval's estimate.
         agree = {}
+        b = x.get('b') or {}
         for d in (2, 3):
-            for st in ('random', 'hard'):
+            for st in ('random', 'hard', 'HL-at'):
                 for form in ('Groot', 'dist'):
-                    dis = 0
+                    dis = n = 0
                     for j in range(len(self.cfg.seeds.training)):
-                        row = cells.get(f'd{d}/{st}/j{j}')
-                        if row and 'G' in row and form in row and (row['G']['est'] > 0) != (row[form]['est'] > 0):
+                        if not x['presence'].get((d, j)):
+                            continue                # the seeds of the decision's cell (A13 L14: present seeds)
+                        if st == 'HL-at':
+                            g_iv, f_iv = b.get((d, j)), cells.get(f'd{d}/HL-at/j{j}/{form}')
+                        else:
+                            row = cells.get(f'd{d}/{st}/j{j}') or {}
+                            g_iv, f_iv = row.get('G'), row.get(form)
+                        if g_iv is None or f_iv is None:
+                            continue
+                        n += 1
+                        if (g_iv['est'] > 0) != (f_iv['est'] > 0):
                             dis += 1
-                    agree[f'd{d}/{st}/{form}'] = {'seeds_disagreeing_with_G': dis, 'stated': dis >= 3}
+                    agree[f'd{d}/{st}/{form}'] = {'seeds_compared': n, 'seeds_disagreeing_with_G': dis,
+                                                  'stated': dis >= 3}
         out['sign_agreement_with_G'] = agree
+        # A13 L14 Instances (b): "The number of HL rows that are E edges for some sense pairing is reported" (HL-at,
+        # senses in U_@, from WordNet in pass 1: edge_bits); forward is the number, x the child and y the parent
+        eb = self.bits_report('HL-at', 'edge')
+        if eb is not None:
+            fw, rv = self.bits('HL-at', 'edge')
+            types = self.gold(HLa, 'hyperlex-type')
+            by = {}
+            for t, a, c in zip(types, fw, rv):
+                e = by.setdefault(t, {'rows': 0, 'forward': 0, 'reverse': 0})
+                e['rows'] += 1
+                e['forward'] += int(a)
+                e['reverse'] += int(c)
+            eb.update(number=eb['forward'], by_type={t: by[t] for t in S2D.HL_TYPES if t in by},
+                      definition='rows of HL-at with some sense pairing (s, t) in E (forward; reverse: (t, s) in E)')
+        out['hl_rows_that_are_E_edges'] = eb
         exact = {}
         for arm in ('H3', 'H2'):
             if self.has('HIT-test', arm, 'G', '-'):
@@ -3427,6 +4839,48 @@ class Pass2:
                                                       lambda key, st: rr_of(key, self.hit_codes(key), st))
         if self.world.pos == 'noun':
             out['relabel_label_radius_ranks'] = self.label_radius_ranks(meas)
+        return out
+
+    def edge_shuffle_cells(self, x):
+        """A13.11, "every edge-shuffle cell, with 'true ≈ shuffled' where its interval does not lie above 0", and L14
+        control 3, "Every cell's interval is reported": the interval of true - shuffled for every (geometry, d, seed)
+        whose measured and edge-shuffled tables both exist, per metric (RR random and RR hard with rank.ci_mean over the
+        test rows, rho with the word-level ci_rho on HL-at), each marked with whether the seed is present. At a present
+        seed the interval is control 3's own (the decision's); at a seed that is not present it is computed here the
+        same way and decides nothing (control 3 reads present seeds only; READING stage2-runner-49)."""
+        tab, presence, c3 = x['tab'], x['presence'], x.get('c3') or {}
+        HLa = self.insts['HL-at']
+        out = {}
+        for (kind, g, d, j), km in sorted(tab.items()):
+            if kind != 'm' or ('s', g, d, j) not in tab:
+                continue
+            ks = tab[('s', g, d, j)]
+            present = bool(presence.get((d, j)))
+            for metric in ('rr_random', 'rr_hard', 'rho'):
+                held = (c3.get((d, j, metric)) or {}).get(g) if present else None
+                if held is not None:
+                    iv, source = held, 'L14 control 3 (the decision)'
+                elif metric == 'rho':
+                    if not (self.has('HL-at', 'learned', 'G', 'max', km)
+                            and self.has('HL-at', 'edge-shuffled', 'G', 'max', ks)):
+                        continue
+                    iv = self.rho_iv(HLa, self.C('HL-at', 'learned', 'G', 'max', km),
+                                     self.C('HL-at', 'edge-shuffled', 'G', 'max', ks),
+                                     f'rho(true) - rho(shuffled), {g}, d={d}, seed index {j}')
+                    source = 'reported (the seed is not present)'
+                else:
+                    ct, cs = self.hit_codes(km), self.hit_codes(ks)
+                    if ct is None or cs is None:
+                        continue
+                    sl = RANDOM_SLOTS if metric == 'rr_random' else HARD_SLOTS
+                    iv = self.mean_iv([float(p) - float(q) for p, q in zip(hit_rr(ct, sl), hit_rr(cs, sl))],
+                                      f'RR(true) - RR(shuffled), {g}, d={d}, {metric[3:]}, seed index {j}')
+                    source = 'reported (the seed is not present)'
+                above = iv['lo'] > 0
+                out[f'{g}/d{d}/j{j}/{metric}'] = {
+                    'est': iv['est'], 'lo': iv['lo'], 'hi': iv['hi'], 'n': iv.get('n'), 'unit': iv.get('unit'),
+                    'row_bootstrap': iv.get('row_bootstrap'), 'true': km, 'shuffled': ks, 'present': present,
+                    'source': source, 'label': 'true > shuffled' if above else 'true ≈ shuffled'}
         return out
 
     def f1(self, table):
@@ -3487,11 +4941,22 @@ class Pass2:
         for name in ('H3', 'H2'):
             t = base_table(self.world, name)
             out[f'norm_rounds_to_one_{name}'] = sum(1 for o in self.world.offsets if SC.norm_rounds_to_one(t.x0(o)))
-        same = {}
-        for (inst, arm, form, rule, table) in list(self.by):
+        same, detail = {}, {}
+        for (inst, arm, form, rule, table) in sorted(self.by):
             if arm == 'WN' and form == 'LCh' and self.has(inst, 'WN', 'Sym', rule):
-                same[inst] = self.C(inst, 'WN', 'LCh', rule) == self.C(inst, 'WN', 'Sym', rule)
+                a, b = self.C(inst, 'WN', 'LCh', rule), self.C(inst, 'WN', 'Sym', rule)
+                k = inst if rule == 'max' else f'{inst}/{rule}'
+                same[k] = a == b
+                I = self.insts[inst]
+                ent = {'rule': rule, 'rows': len(a), 'classes_equal': a == b, 'lch_classes': len(set(a)),
+                       'path_classes': len(set(b)), 'pairSetSha': I.pair_set_sha}
+                if I.metric == 'rho':
+                    ent.update(rho_lch=self.rho_of(I, a), rho_path=self.rho_of(I, b))
+                detail[k] = ent
         out['lch_classes_equal_path_classes'] = same
+        # A13.11: "WN-LCh's tie classes against WN-path's on every set" where WN-path is read: HL (both rules of the
+        # grid), SL, WSS, WSC and WSR, with each reading's rho
+        out['lch_against_path'] = detail
         return out
 
 
@@ -3663,12 +5128,14 @@ def pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, r
     try:
         p2 = Pass2(cfg, ctx, world, insts, files)
         counts_gold = p2.count_checks_gold()
+        p2.random_split_check()                           # before any HL-split metric (A13.11)
         claims = {'L12': p2.l12(), 'L13': p2.l13()}
         l14, l14x = p2.l14(tuning, rates, trained, floors)
         claims['L14'] = l14
         claims['L15'] = p2.l15()
+        wiring = p2.verify_wiring(claims, rates)             # stops the run (WiringError) on any difference
         entries = p2.file_metrics(claims_of)
-        reported = {'L12': p2.rep_l12(closure), 'L13': p2.rep_l13(closure, l14x),
+        reported = {'L12': p2.rep_l12(), 'L13': p2.rep_l13(l14x),
                     'L14': p2.rep_l14(l14x, floors, trained, tuning), 'L15': p2.rep_l15(),
                     'diagnostics': p2.diagnostics(), 'coverage': p2.coverage()}
         lb = lbench_lines(cfg, ctx, entries, insts, files, ssha, trained, floors, tuning)
@@ -3691,7 +5158,7 @@ def pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, r
                           'clusters': len(set(v.clusters)) if v.clusters else None,
                           'word_types': (len(SE.word_types([(x, y) for _, x, y in v.rows])) if v.kind != 'hit'
                                          else None)} for k, v in sorted(insts.items())},
-        'claims': claims, 'reported': reported,
+        'claims': claims, 'reported': reported, 'wiring': wiring,
         'training': training, 'replay_check': replay, 'preflight_runs': pre_runs, 'floors': floors,
         'convergence': {k: {'converged': r.get('converged'), 'diverged_epoch': r.get('diverged_epoch'),
                             'drop_epoch': r.get('drop_epoch'),
@@ -3704,11 +5171,16 @@ def pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, r
     if cfg.mode == 'selftest':
         record['selftest'] = SELFTEST_BANNER
     recheck_tree(cfg, ctx, 'before writing the record')
-    write_outputs(cfg, ctx, record, lb, files, claims_of, insts, trained)
+    write_outputs(cfg, ctx, record, lb, files, claims_of, insts, trained, tuning)
     return 0
 
 
 # ================================================================ the dry seal (A13.13; spec section 14)
+def sealed_problems_path(cfg):
+    """The sealed side file of a stopped wiring check (Pass2.write_sealed_problems): beside the sealed file."""
+    return os.path.join(os.path.dirname(cfg.sealed), 'wiring-problems.json')
+
+
 def visible_record(record):
     """The dry record's visible part, built by whitelisting (never by redaction): crashes (none, or there is no
     record), the count checks, whether each control failed as required, convergence, timings, tie and recomputation
@@ -3731,7 +5203,7 @@ def visible_record(record):
     keep = ('label', 'mode', 'shape', 'step', 'head', 'git', 'git_checks', 'development_run', 'starts', 'environment',
             'load_averages', 'readings', 'counts', 'counts_gold', 'preflight', 'disk', 'protocol_sha', 'settings_sha',
             'training', 'replay_check', 'preflight_runs', 'floors', 'convergence', 'pass1', 'P', 'timings', 'flags',
-            'selftest')
+            'selftest', 'wiring')
     out = {k: record[k] for k in keep if k in record}
     out['instances'] = {k: {x: v for x, v in e.items()} for k, e in record['instances'].items()}
     out['controls_fail_as_required'] = {k: c[k]['controls']['fails_as_required'] for k in ('L12', 'L13', 'L15')}
@@ -3739,7 +5211,37 @@ def visible_record(record):
     out['files_counts'] = [{x: e[x] for x in ('fkey', 'rows', 'classes', 'recomputed', 'tie_classes', 'tie_tuples',
                                               'phi_recomputed', 'phi_ties')} for e in record['files_metrics']]
     out['files_metrics_unsealed'] = [e for e in record['files_metrics'] if not e['sealed']]
+    out['L14_reported_on_the_verb_graph'] = visible_reported_l14((record.get('reported') or {}).get('L14'))
     out['sealed'] = None
+    return out
+
+
+def visible_reported_l14(rep):
+    """A13.13, "L14's values on the verb graph and its split (WordNet data, as Phase 4's dry run showed its own)": the
+    entries of A13.11's L14 reports computed on the verb graph and its HiT-protocol split alone, by whitelist: the
+    floors, the measured tables' macro and off-top-12 RR, HIT-R, G_root, the distance-only score, NK17 and F1 on the
+    split, the Lorentz - Euclidean cells and the sign agreement on the split, every edge-shuffle cell on the split, the
+    exact trees on the split, Nickel & Kiela 2018's diagnostic (WordNet's nodes), the relabelled tails, |dRR| and the
+    labels' radius ranks. Everything read on HL within U_@ (a human-rated set: rho, H3 against the tables, the E-edge
+    rows by TYPE, NK17's rho) stays sealed (READING stage2-runner-45)."""
+    if not rep:
+        return None
+    out = {k: rep[k] for k in ('floors', 'off_top12_rows', 'nk18_r_against_sp_lp', 'exact_trees_on_hit_test',
+                               'relabel_tail', 'delta_rr_snapped_vs_float64', 'relabel_label_radius_ranks')
+           if k in rep}
+    tables = {}
+    for name, e in (rep.get('tables') or {}).items():
+        ent = {k: v for k, v in e.items() if k != 'NK17'}
+        if isinstance(e.get('NK17'), dict):
+            ent['NK17'] = {k: v for k, v in e['NK17'].items() if k in ('random', 'hard')}
+        tables[name] = ent
+    out['tables'] = tables
+    out['lorentz_minus_euclid'] = {k: v for k, v in (rep.get('lorentz_minus_euclid') or {}).items()
+                                   if k.split('/')[1] in ('random', 'hard')}
+    out['edge_shuffle_cells'] = {k: v for k, v in (rep.get('edge_shuffle_cells') or {}).items()
+                                 if k.rsplit('/', 1)[1] in ('rr_random', 'rr_hard')}
+    out['sign_agreement_with_G'] = {k: v for k, v in (rep.get('sign_agreement_with_G') or {}).items()
+                                    if k.split('/')[1] in ('random', 'hard')}
     return out
 
 
@@ -3747,27 +5249,53 @@ def visible_record(record):
 CODES_LIMIT = 50 * 10 ** 6                                 # A13.14: committed only if together <= 50 MB
 
 
-def decision_files(files, claims_of):
-    """The pass-1 code files of every arm and table named in a decision of L12-L15 (A13.14): the exact arms on HL, BD,
-    WB, BD-dir, SL, MEN and WSR, and the measured tables on HiT test (both settings) and on HL within U_@."""
-    out = []
+def decision_files(files, wiring):
+    """The pass-1 code files of every arm and table named in a decision of L12-L15 (A13.14), by part:
+    'exact' the exact arms' files that a decided comparison of DECISION_SPEC reads (the wiring's provenance, verified
+    against A13's text: L12-L15's parts and the interval controls, the strongest S-full and W permutations resolved),
+    on HL, BD, WB, BD-dir, SL, MEN and WSR (and the GloVe intersections L15(b) decides on); 'hit_test' and 'hl_at' the
+    measured tables read by G on HiT test (21 slots: both settings) and on HL within U_@, all 20 of them.
+    READING stage2-runner-43 (A13.14, "the pass-1 code files of every arm and table named in a decision ... (the exact
+    arms on HL, BD, WB, BD-dir, SL, MEN and WSR; the 20 measured tables on HiT test in both settings and on HL)"): the
+    files a decided comparison reads, not every file a band control reads (the 20 S-full_i, W_i and GloVe-vec_i
+    permutations, which enter a decision only through their band or their strongest member). Returns {part: [fkey]}."""
+    exact = set()
+    for p in (wiring or {}).get('provenance', {}).values():
+        for fk in (p['x'], p['y']):
+            if fk in files and files[fk].get('table', '-') == '-':
+                exact.add(fk)
+    out = {'exact': sorted(exact), 'hit_test': [], 'hl_at': []}
     for fk, f in sorted(files.items()):
-        claim = claims_of.get(fk)
-        if claim in ('L12/1', 'L13/1', 'L15/1') and f.get('table', '-') == '-':
-            out.append(fk)
-        elif f.get('table_kind') == 'learned' and f['form'] == 'G' and (
-                f['inst'] == 'HIT-test-s21' or f['inst'] == 'HL-at'):
-            out.append(fk)
+        if f.get('table_kind') == 'learned' and f['form'] == 'G' and not f.get('relabel') and not f.get('joint_of'):
+            if f['inst'] == 'HIT-test-s21':
+                out['hit_test'].append(fk)
+            elif f['inst'] == 'HL-at':
+                out['hl_at'].append(fk)
     return out
 
 
-def write_outputs(cfg, ctx, record, lb, files, claims_of, insts, trained):
+def loss_files(cfg, trained, tuning=None):
+    """A13.11's loss curves in full: the cache path and SHA-256 of every run's .loss.json (tuning, measured,
+    edge-shuffled, pre-flight), for stage2-manifest.json; the record keeps each run's compact curve (loss_curve)."""
+    out = {}
+    runs = [(tuning_key(r['geometry'], r['d'], r['lr'], r['seed']), r) for r in (tuning or {}).get('runs', [])]
+    runs += sorted(trained.items())
+    for key, r in runs:
+        if r.get('loss_sha'):
+            out[key] = {'cache_path': os.path.relpath(table_path(cfg.cache, key, '.loss.json'), cfg.cache),
+                        'sha256': r['loss_sha'], 'epochs': r.get('epochs_run')}
+    return out
+
+
+def write_outputs(cfg, ctx, record, lb, files, claims_of, insts, trained, tuning=None):
     log = ctx['log']
     pth = paths(cfg, 'decisive')
     os.makedirs(cfg.results, exist_ok=True)
     # the code files named in a decision and the 20 measured snapped texts, each group under the 50 MB rule
-    dec = decision_files(files, claims_of)
+    parts = decision_files(files, record.get('wiring'))
+    dec = [fk for part in ('exact', 'hit_test', 'hl_at') for fk in parts[part]]
     size = sum(files[fk]['bytes'] for fk in dec)
+    part_sizes = {part: {'count': len(v), 'bytes': sum(files[fk]['bytes'] for fk in v)} for part, v in parts.items()}
     committed = size <= CODES_LIMIT
     if os.path.isdir(pth['codes']):
         shutil.rmtree(pth['codes'])
@@ -3795,9 +5323,10 @@ def write_outputs(cfg, ctx, record, lb, files, claims_of, insts, trained):
                                'tsv_sha256': f['tsv_sha'], 'values_sha256': f['values_sha'],
                                'side_sha256': f['side_sha'], 'lines': f['lines'], 'bytes': f['bytes'],
                                'committed': committed and fk in dec} for fk, f in sorted(files.items())},
-                'decision_files': {'count': len(dec), 'bytes': size, 'committed': committed},
+                'decision_files': {'count': len(dec), 'bytes': size, 'committed': committed, 'parts': part_sizes},
                 'measured_snapped_texts': {'count': len(tables), 'bytes_gzip': tsize, 'committed': tcommitted,
-                                           'sha256': {k: trained[k]['snap_sha'] for k in meas}}}
+                                           'sha256': {k: trained[k]['snap_sha'] for k in meas}},
+                'loss_files': loss_files(cfg, trained, tuning)}
     record['receipts'] = {'decision_code_files': manifest['decision_files'],
                           'measured_snapped_texts': manifest['measured_snapped_texts']}
     visible_lb = [rec for sealed, rec, _ in lb if not (cfg.seal and sealed)]
@@ -3859,6 +5388,10 @@ def claims_md(cfg, rec):
             L.append(f'- {k}: `{json.dumps(v)}`')
         a = rec['L14_on_the_verb_graph']['parts']['a']
         L += ['', '## L14(a) on the verb graph and its split (WordNet data)', '', f'Verdict: {a["verdict"]}', '']
+    w = rec.get('wiring')
+    if w:
+        L += ['## Wiring', '', f'{w["comparisons"]} decided comparisons and {w["control_values"]} control values equal '
+              "Amendment 13's text (check_spec) and their recomputation from the code files (verify_wiring).", '']
     conv = rec.get('convergence', {})
     L += ['## Convergence', '', f'{sum(1 for v in conv.values() if v["converged"])} of {len(conv)} runs converged.', '']
     p1 = rec.get('pass1', {})
@@ -3941,17 +5474,28 @@ def run_step(cfg, step, world=None):
         S2D.close_gold()
         if step == 'time':
             rc = step_time(cfg, ctx)
+        elif step == 'tune':
+            # A13.10.5: "Tuning computes nothing else, and touches no other Stage-2 set": WordNet's and HiT val's
+            # counts and HiT val alone (READING stage2-runner-46); the decisive step makes every count
+            ctx['counts'] = count_checks_words(cfg, world, log, scope='tune')
+            insts = build_tuning_instances(cfg, world, log)
+            check_instance_counts(cfg, insts, ctx['counts'], log, scope='tune')
+            ctx['insts'] = insts
+            rc = step_tune(cfg, ctx)
         else:
             ctx['counts'] = count_checks_words(cfg, world, log)
             insts = build_instances(cfg, world, log)
             check_instance_counts(cfg, insts, ctx['counts'], log)
             ctx['insts'] = insts
-            rc = step_tune(cfg, ctx) if step == 'tune' else step_decisive(cfg, ctx)
+            rc = step_decisive(cfg, ctx)
         if 'numba' in sys.modules:
             log('NOTE: numba was imported in the main process')
         ctx['load'].sample('end')
         log(f'{step} finished with exit code {rc} ({time.perf_counter() - ctx["t0"]:.0f} s)')
         return rc, world
+    except WiringError as e:
+        log(f'STOPPED: {e}')
+        return 1, world
     except Refused as e:
         log(f'REFUSED: {e}')
         return 1, world

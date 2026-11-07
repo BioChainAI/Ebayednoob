@@ -284,6 +284,12 @@ def make_world(root, seed=SEED):
     bless.append((concepts[0], concepts[0], 'False', 'test'))          # a self-pair
     bless.append(bless[2])                                              # a repeated pair
     bless.append((concepts[1], OOV[2], 'False', 'test'))               # uncovered
+    # A13.11's positives that are not WordNet closure pairs (L13's reported AP and direction on them): one True test
+    # row whose pair is a closure pair in neither direction, chosen without a draw so that the rest of the world stays
+    # as it was
+    nc_bd = next(w for w in nlem if '_' not in w and w not in concepts and covered_in(w, nidx)
+                 and not label(concepts[2], w) and not label(w, concepts[2]))
+    bless.append((concepts[2], nc_bd, 'True', 'test'))
     bl = bless[1:]
     btest = [r for r in bl if r[3] == 'test']
     exp.update({'bd.rows': len(bl), 'bd.test': len(btest),
@@ -301,6 +307,9 @@ def make_world(root, seed=SEED):
         lab = label(x, y2)
         rel = 'hyper' if lab else ('rhyper' if label(y2, x) else 'other')
         wbless.append((x, y2, str(lab), rel, 'test' if k < 20 else 'val'))
+    nc_wb = next(w for w in nlem if '_' not in w and w not in concepts and w != nc_bd and covered_in(w, nidx)
+                 and not label(concepts[3], w) and not label(w, concepts[3]))
+    wbless.append((concepts[3], nc_wb, 'True', 'hyper', 'test'))        # a non-closure positive (as in BLESS)
     wl = wbless[1:]
     wt = [r for r in wl if r[4] == 'test']
     exp.update({'wb.rows': len(wl), 'wb.test': len(wt), 'wb.test_covered': len(wt)})
@@ -392,7 +401,8 @@ def make_world(root, seed=SEED):
     hit_exp = {'hit.names': len(g.nodes), 'hit.train_equals_E': True, 'hit.val.rows': len(val),
                'hit.test.rows': len(test), 'hit.val.ten_and_ten': True, 'hit.test.ten_and_ten': True,
                'hit.val.positives_in_closure': True, 'hit.test.positives_in_closure': True,
-               'hit.val.negatives_in_closure': 0, 'hit.test.negatives_in_closure': 0}
+               'hit.val.negatives_in_closure': 0, 'hit.test.negatives_in_closure': 0,
+               'hit.test.positives_direct_edges': 0}           # the split is drawn from T (hit_r), E's pairs excluded
 
     # ---------------------------------------------------------------- GloVe
     vocab = set()

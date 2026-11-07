@@ -371,14 +371,15 @@ class Certifier:
     repeat across sense pairs); counts 240-digit recomputations and numerical ties.
 
         recomputed     values computed at 240 digits (each Val once)
-        ties           the numerical ties met by cmp between different tuples: (a, b, a.v2, b.v2)"""
+        ties           the numerical ties met by cmp between different tuples: (a, b, a.v2, b.v2), every one of them
+                       (A13.6: "counted and reported with its inputs"); log_limit caps the list for tests only"""
 
-    def __init__(self, log_limit=10000):
+    def __init__(self, log_limit=None):
         self._E = {p: {} for p in PRECISIONS}
         self.recomputed = 0
         self.ties = []
         self.n_ties = 0
-        self.log_limit = log_limit
+        self.log_limit = log_limit          # None (default): every numerical tie logged with its inputs (A13.6)
 
     # ------------------------------------------------------------ values
     def _E_of(self, z, ctx, p, cache):
@@ -458,7 +459,7 @@ class Certifier:
         if d.copy_abs() > EXACT.add(a.e2, b.e2):
             return 1 if d > 0 else -1
         self.n_ties += 1
-        if len(self.ties) < self.log_limit:
+        if self.log_limit is None or len(self.ties) < self.log_limit:
             self.ties.append((a, b, a.v2, b.v2))
         return 0
 
@@ -692,7 +693,8 @@ class Scorer:
 
 
 class WNScorer:
-    """The same interface on WordNet's exact integers (lexicon.wngraph.WNGraph): G_WN, Sym_WN, Dep_WN."""
+    """The same interface on WordNet's exact integers (lexicon.wngraph.WNGraph): G_WN, Sym_WN, Dep_WN; first senses
+    and gensim's rule (the pair of the least WN-path) for the reported grid (A13.11)."""
 
     def __init__(self, graph):
         self.g = graph
@@ -723,6 +725,26 @@ class WNScorer:
     def first_dep(self, S1, S2):
         return self.g.dep(S1[0], S2[0])
 
+    def gensim_pair(self, S1, S2):
+        """gensim's rule on WN (reported, A13.3): the sense pair at the smallest distance, WN's distance being the
+        path p (WN-path; Sym_WN = -p), i.e. the largest Sym_WN, ties to the first pair in (i, j) order.
+        READING (A13.3, "the sense pair at the smallest distance, then scored", with A13.4: WN has no geometry): WN's
+        distance is A13.5's WN-path p, the metric Sym_WN reads, so the pair is Scorer.gensim_pair's with Sym_WN as
+        the key."""
+        best, bk = None, None
+        for s in S1:
+            for u in S2:
+                k = self.g.sym(s, u)
+                if bk is None or k > bk:
+                    best, bk = (s, u), k
+        return best
+
+    def gensim_g(self, S1, S2):
+        return self.g.g(*self.gensim_pair(S1, S2))
+
+    def gensim_dep(self, S1, S2):
+        return self.g.dep(*self.gensim_pair(S1, S2))
+
 
 # ================================================================ reported forms (not certified; 120 digits)
 def _ln_E(z, ctx):
@@ -736,15 +758,17 @@ def nk17_value(table, s, t, alpha=1000, prec=P1):
     """Nickel & Kiela's eq. 8 (reported, A13.5): -(1 + alpha (||t|| - ||s||)) arcosh(K(s, t)) with the Poincare norms
     ||u|| = sqrt((x0 - 1)/(x0 + 1)), alpha = 10^3, in decimal at `prec` digits.
     READING (A13.5; P17 eq. 8 scores is-a(u, v) as -(1 + alpha (||v|| - ||u||)) d(u, v)): u is s, the sense of the
-    candidate hyponym x, and v is t, the sense of y. Defined on hyperboloid tables (H3, H2, K3, S-full, learned
-    Lorentz) and on the learned Euclidean table; the exact flat arms have none.
-    READING (A13.11, "NK17 scores" among L14's reports): a learned Euclidean table has no Poincare norm; it is read
-    with its own Euclidean norm and distance, ||u|| = |n_u|/2^32 and d = |n_s - n_t|/2^32, as P17 scored its Euclidean
-    embeddings by eq. 8 (its Table 3), so that the two learned geometries are read by one form."""
-    if isinstance(table, ETable):
+    candidate hyponym x, and v is t, the sense of y. Defined with A13.5's Poincare norms on hyperboloid tables (H3, H2,
+    K3, S-full, learned Lorentz).
+    READING (A13.11, "NK17 scores" among L14's reports, and the L12 grid's "every score of item 5"): one rule for every
+    table without x0. A flat table (the learned Euclidean table; the exact flat arms F3, F3*, F2, F2*) has no Poincare
+    norm; it is read with its own Euclidean norm and distance (learned: ||u|| = |n_u|/2^32, d = |n_s - n_t|/2^32;
+    exact: ||u|| = sqrt(|u|^2), d = sqrt(|s - t|^2)), as P17 scored its Euclidean embeddings by eq. 8 (its Table 3).
+    Named for the definitions amendment."""
+    if isinstance(table, FTable):
         return _nk17_euclid(table, s, t, alpha, prec)
     if table.kind != 'h':
-        raise ValueError('NK17 is read on hyperboloid tables and the learned Euclidean table only')
+        raise ValueError('NK17 is read on hyperboloid and flat tables only')
     ctx = Context(prec=prec, rounding=ROUND_HALF_EVEN)
 
     def norm(z):
@@ -755,13 +779,18 @@ def nk17_value(table, s, t, alpha=1000, prec=P1):
 
 
 def _nk17_euclid(table, s, t, alpha, prec):
-    """NK17 on a learned Euclidean table (nk17_value's READING): the integers n over 2^32 (the dropped factor
-    restored, since alpha (||t|| - ||s||) is added to 1), each square root correctly rounded at `prec` digits."""
+    """NK17 on a flat table (nk17_value's READING): on a learned Euclidean table the integers n over 2^32 (the dropped
+    factor restored, since alpha (||t|| - ||s||) is added to 1); on an exact flat arm its exact squared norms and
+    distances, each entering through one division (A13.6); each square root correctly rounded at `prec` digits."""
     ctx = Context(prec=prec, rounding=ROUND_HALF_EVEN)
-    S = Decimal(2 ** 32)
+    if isinstance(table, ETable):
+        S = Decimal(2 ** 32)
 
-    def norm(sq):
-        return ctx.divide(ctx.sqrt(Decimal(sq)), S)
+        def norm(sq):
+            return ctx.divide(ctx.sqrt(Decimal(sq)), S)
+    else:
+        def norm(sq):
+            return ctx.sqrt(_dec(Fraction(sq), ctx))
     d = norm(table.d2(s, t))
     factor = ctx.add(Decimal(1), ctx.multiply(Decimal(alpha), ctx.subtract(norm(table.sq(t)), norm(table.sq(s)))))
     return ctx.minus(ctx.multiply(factor, d))

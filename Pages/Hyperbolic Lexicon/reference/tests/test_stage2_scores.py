@@ -474,8 +474,12 @@ def test_reported_forms():
         assert float(nk) == pytest.approx(-(1 + 1000 * (nv - nu)) * math.acosh(float(h.K(s, t))), rel=1e-6, abs=1e-9)
     f = S.flat_table(words, 3)
     assert S.product_value(f, 0, 0) == 0
+    # NK17 on an exact flat arm (READING stage2-runner-25): its exact Euclidean norms and distance
+    for s, t in itertools.product(range(4), range(4)):
+        nu, nv, dd = (math.sqrt(float(x)) for x in (f.sq(s), f.sq(t), f.d2(s, t)))
+        assert float(S.nk17_value(f, s, t)) == pytest.approx(-(1 + 1000 * (nv - nu)) * dd, rel=1e-9, abs=1e-12)
     with pytest.raises(ValueError):
-        S.nk17_value(f, 0, 1)
+        S.nk17_value(type('Graph', (), {'kind': 'wn'})(), 0, 1)     # neither a hyperboloid nor a flat table
     assert S.codes_plain([Decimal('0.5'), Decimal('0.25'), Decimal('0.5')]) == [1, 0, 1]
     assert not S.norm_rounds_to_one(F(7)) and S.norm_rounds_to_one(F(10 ** 40))
     big = F(2 ** 56)                             # 1 - norm ~ 1/x0 = 2^-56 < 2^-54: rounds to 1.0

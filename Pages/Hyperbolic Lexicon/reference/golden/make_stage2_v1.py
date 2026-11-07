@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """Hyperbolic Lexicon, Stage 2 (Amendment 13 item 2): fetch and check the pinned data, and write the instance manifest.
 
-    python3 -B -I make_stage2_v1.py                      fetch every pinned file into its own new folder
-                                                         ~/.cache/hyperbolic-lexicon/stage2/<name>/, then check it
-    python3 -B -I make_stage2_v1.py --source DIR ...     the same, taking a file from DIR (searched recursively, no
-                                                         symlinks followed) when its name, size and SHA-256 match
+    python3 -B -I make_stage2_v1.py --check              A13.2's command: fetch every pinned file that is missing
+                                                         into its own new folder
+                                                         ~/.cache/hyperbolic-lexicon/stage2/<name>/ (a folder that
+                                                         exists but does not hold the pinned file is refused, not
+                                                         reused), then verify every pin: each file's size and
+                                                         SHA-256, HiT's API MD5, and every member used of each
+                                                         archive (GloVe's two text members streamed out of the zip);
+                                                         exit 0 all equal, 1 any difference, failed fetch or
+                                                         missing file
+    python3 -B -I make_stage2_v1.py                      the same as --check
+    python3 -B -I make_stage2_v1.py --check --source DIR ...   the same, taking a file from DIR (searched recursively,
+                                                         no symlinks followed) when its name, size and SHA-256 match
                                                          the pin, instead of downloading it
-    python3 -B -I make_stage2_v1.py --check              verify every pin: each file's size and SHA-256, HiT's API
-                                                         MD5, and every member used of each archive (GloVe's two
-                                                         text members streamed out of the zip); exit 0 all equal,
-                                                         1 any difference or missing file
+    python3 -B -I make_stage2_v1.py --check --no-fetch   verify only: nothing is fetched, a missing file is a
+                                                         difference
     python3 -B -I make_stage2_v1.py --manifest           write golden/stage2_instances_v1.meta.json (counting only)
     python3 -B -I make_stage2_v1.py --check-manifest     rebuild the manifest in memory and compare (exit 0 / 1)
     --root DIR, --pins FILE                              another cache root or pins file (tests)
@@ -316,6 +322,7 @@ def manifest_text(meta):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--check', action='store_true')
+    ap.add_argument('--no-fetch', action='store_true')
     ap.add_argument('--manifest', action='store_true')
     ap.add_argument('--check-manifest', action='store_true')
     ap.add_argument('--source', action='append', default=[])
@@ -324,16 +331,6 @@ def main(argv=None):
     a = ap.parse_args(argv)
     pins = stage2data.load_pins(a.pins)
     root = a.root or stage2data.STAGE2
-    if a.check:
-        problems = stage2data.check_pins(pins, root)
-        for p in problems:
-            print('DIFFERENT', p)
-        if problems:
-            print(f'--check: {len(problems)} differences: refused')
-            return 1
-        print(f'--check: all {len(pins["files"])} pinned files and '
-              f'{sum(len(p.get("members", [])) for p in pins["files"])} members equal their pins')
-        return 0
     if a.manifest or a.check_manifest:
         if not wordnet.available():
             print('skipped: no WordNet archive in the cache', file=sys.stderr)
@@ -355,14 +352,22 @@ def main(argv=None):
             fh.write(text)
         print(f'wrote {META} ({len(text.encode())} B, SHA-256 {_sha(text)})')
         return 0
-    failed = fetch(pins, root, a.source)
-    if failed:
-        print(f'fetch failed for {failed}')
-        return 1
+    # A13.2: "`reference/golden/make_stage2_v1.py --check` fetches each file into its own new folder under
+    # `~/.cache/hyperbolic-lexicon/stage2/<name>/`, checks its size and SHA-256, opens archives with `zipfile` and
+    # checks their members the same way, and refuses on any difference": --check (and the bare command) fetches every
+    # missing pinned file (fetch: a present folder is checked, never refetched), then verifies every pin
+    failed = [] if a.no_fetch else fetch(pins, root, a.source)
     problems = stage2data.check_pins(pins, root)
     for p in problems:
         print('DIFFERENT', p)
-    return 1 if problems else 0
+    if failed:
+        print(f'fetch failed for {failed}')
+    if failed or problems:
+        print(f'--check: {len(problems)} differences, {len(failed)} failed fetches: refused')
+        return 1
+    print(f'--check: all {len(pins["files"])} pinned files and '
+          f'{sum(len(p.get("members", [])) for p in pins["files"])} members equal their pins')
+    return 0
 
 
 if __name__ == '__main__':

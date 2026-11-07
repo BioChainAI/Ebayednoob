@@ -202,9 +202,14 @@ def test_nk17_on_learned_tables():
     ctx = Context(prec=120)
     assert SC.nk17_value(et, offs[0], offs[0]) == 0 and isinstance(SC.nk17_value(et, offs[0], offs[1]), Decimal)
     assert ctx.prec == 120
+    # one rule for every table without x0 (READING stage2-runner-25): an exact flat arm is read with its exact
+    # Euclidean norm and distance, as the learned Euclidean table is
     words = {k: (k,) for k in range(4)}
-    with pytest.raises(ValueError):                    # the exact flat arms have no NK17 (unchanged)
-        SC.nk17_value(SC.flat_table(words, 3), 0, 1)
+    ft = SC.flat_table(words, 3)
+    for s, t in itertools.product(range(4), range(4)):
+        nu, nv, dd = (math.sqrt(float(x)) for x in (ft.sq(s), ft.sq(t), ft.d2(s, t)))
+        assert float(SC.nk17_value(ft, s, t)) == pytest.approx(-(1 + 1000 * (nv - nu)) * dd, rel=1e-9, abs=1e-12)
+    assert SC.nk17_value(ft, 0, 0) == 0
 
 
 # ================================================================ the suite's own detection protocol

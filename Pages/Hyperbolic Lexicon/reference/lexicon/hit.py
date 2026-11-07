@@ -46,6 +46,9 @@ COUNTS = {
     'hit.test.repeat_random': 23,
     'hit.test.repeat_hard': 14,
     'hit.test.min_distinct_ok': True,
+    # A13 L14 Instances (a): "Every test pair is in T, so none enters training as a positive": no test positive is a
+    # direct edge of E (A13.9's closure count admits E's own pairs; T excludes them)
+    'hit.test.positives_direct_edges': 0,
 }
 MIN_DISTINCT = 9
 # L14 control 2's reported labels: the seven positives that each hold more than 2.76% of the test rows (A13 L14).
@@ -150,28 +153,32 @@ def counts(split_rows, g):
     return c
 
 
-def count_checks(wn, store=None, count=senses.U_AT_COUNT):
+def count_checks(wn, store=None, count=senses.U_AT_COUNT, splits=('val', 'test')):
     """A13.9's HiT counts, keyed like COUNTS, with each split's full counts (val's for the definitions amendment).
-    Names only: no table, no score."""
+    Names only: no table, no score. splits=('val',) is tuning's subset (A13.10.5: HiT test is not read).
+    Each split's positives that are direct edges of E are counted (positives_direct_edges); for test, A13 L14's "Every
+    test pair is in T" makes it a check (COUNTS), for val a count for the definitions amendment."""
     names_map, g = resolve(wn, store, count)
     out = {'hit.names': len(names_map)}
     train = rows('train', names_map, store)
     out['hit.train_equals_E'] = {(r.child, r.parent) for r in train} == g.edge_set
     out['hit.train.rows'] = len(train)
     detail = {}
-    for split in ('val', 'test'):
+    for split in splits:
         c = counts(rows(split, names_map, store), g)
         detail[split] = c
         out[f'hit.{split}.rows'] = c['rows']
         out[f'hit.{split}.ten_and_ten'] = c['ten_and_ten']
         out[f'hit.{split}.positives_in_closure'] = c['positives_in_closure']
         out[f'hit.{split}.negatives_in_closure'] = c['negatives_in_closure']
-    t = detail['test']
-    out['hit.test.distinct_positives'] = t['distinct_positives']
-    out['hit.test.child_in_random'] = t['child_in_random']
-    out['hit.test.repeat_random'] = t['repeat_random']
-    out['hit.test.repeat_hard'] = t['repeat_hard']
-    out['hit.test.min_distinct_ok'] = min(t['min_distinct_random'], t['min_distinct_hard']) >= MIN_DISTINCT
+        out[f'hit.{split}.positives_direct_edges'] = c['positives_direct_edges']
+    if 'test' in detail:
+        t = detail['test']
+        out['hit.test.distinct_positives'] = t['distinct_positives']
+        out['hit.test.child_in_random'] = t['child_in_random']
+        out['hit.test.repeat_random'] = t['repeat_random']
+        out['hit.test.repeat_hard'] = t['repeat_hard']
+        out['hit.test.min_distinct_ok'] = min(t['min_distinct_random'], t['min_distinct_hard']) >= MIN_DISTINCT
     return out, detail
 
 

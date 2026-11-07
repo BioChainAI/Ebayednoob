@@ -341,7 +341,8 @@ python3 -B -I run_claims_stage2.py --dry                 # step 3, the dry run (
                                                          # every value on a human-rated set in the sealed cache file
 python3 -B -I run_claims_stage2.py --time                # before step 5: two epochs per L14 cell on U_@ (seeds 95500 + i);
                                                          # projects the registered total and refuses above 11 h or the disk
-python3 -B -I run_claims_stage2.py --tune                # step 5, registered tuning: HiT val only; results/tuning-stage2.json
+python3 -B -I run_claims_stage2.py --tune                # step 5, registered tuning: reads WordNet and HiT val only (its
+                                                         # counts too); results/tuning-stage2.json
 python3 -B -I run_claims_stage2.py --write-settings      # settings-stage2.json; prints its SHA-256 for the lr freeze (step 6)
 python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decisive run of L12-L15
 ```
@@ -358,6 +359,22 @@ python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decis
   (reported) reads one code file of HiT val and test together per measured table; the binary64 relabelling tails,
   |ΔRR|, Nickel & Kiela 2018's diagnostic and the labels' radius ranks, which A13 defines outside these files, are
   computed in pass 2 from the SHA-checked tables (READING stage2-runner-33, named for the definitions amendment).
+- **The wiring** (READING stage2-runner-41). `DECISION_SPEC` holds every decided comparison of L12–L15 (X − Y,
+  each side an arm read by one score form under one sense rule, on one instance, with its metric and interval) and
+  `CONTROL_SPEC` every control (arms, form, rule, instances, metric, permutation, band). `--decisive` refuses before
+  scoring unless `spec_from_a13`, which parses the terms, their order, the arm lists and the intervals out of
+  Amendment 13's own sentences in the pinned protocol file, equals both constants (`check_spec`); pass 2 assembles
+  every decision from them; `Pass2.verify_wiring` then re-derives each comparison from the text's spec with its own
+  file lookup, recomputes every interval and control value with `stats2` and `rank` directly and compares them with
+  what the decision holds, and stops the run with no result on any difference. The record keeps each comparison's
+  provenance (`wiring`). A13.11's L12 grid (the six exact trees, K3 and WN × score × sense rule, `L12_GRID`), WN and
+  GloVe on L13, the non-closure positives on BD and WB, AP without BD's 3 self-pairs (raw fields, A13.9's count; the
+  N_S variant beside it), the per-row closure bits of every scored word-pair set and L14(b)'s E-edge rows (pass-1
+  files), every edge-shuffle cell (at present seeds control 3's own, elsewhere marked not present), the sign agreement
+  on HL-at, the loss curves (compact in the record, each full `.loss.json` by SHA-256 in the record and the manifest),
+  the random split (withheld unless its two files agree) and WN-LCh against WN-path on every set are reported beside
+  the claims. A sealed run that stops in the wiring check names the comparison on the console and puts its values in
+  `dry-sealed/wiring-problems.json` (READINGs stage2-runner-42 to 51).
 - **Rules.** `--workers W` (1–4, default 4); training in a spawn pool (numba in the workers only), pass-1 scoring in a
   fork pool. Registered `--tune` and `--decisive` refuse an unclean tree (Phase 4's check, scope and repetitions), and
   refuse until an amendment after 13 holds the instance manifest's SHA-256; `--tune` also needs a `--time` record
@@ -377,13 +394,18 @@ python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decis
   `LBENCH/1` record per evaluated instance, arm, form, rule and table, in A13.14's 24-field layout with claim field
   `L12/1`–`L15/1` or `stage2/1`; `run_claims_stage2.parse_lbench` selects the layout by the claim field, and
   `l6.parse_lbench` still accepts `L6/1` only), `stage2-manifest.json` (the SHA-256 of every pass-1 code file, value
-  stream and side file), `stage2-codes/` and `stage2-tables/` (each committed only if together at most 50 MB); the
-  same under `results/dry/` without the sealed values, which go to `~/.cache/hyperbolic-lexicon/stage2/dry-sealed/
-  values.json`. Every other code file, side file and table stays in the cache.
+  stream and side file, and of every run's `.loss.json`), `stage2-codes/` (the files a decided comparison reads and the
+  20 measured tables on HiT test and HL-at, READING stage2-runner-43) and `stage2-tables/` (each committed only if
+  together at most 50 MB); the same under `results/dry/` without the sealed values, which go to
+  `~/.cache/hyperbolic-lexicon/stage2/dry-sealed/values.json` (L14's values on the verb graph and its split stay
+  visible). Every other code file, side file and table stays in the cache.
 - **Tests:** `tests/test_stage2_runner.py` (the rules, LBENCH/1, the disk pre-flight and budget refusals, blindness by
   import inspection, a gold-reader spy and poisoned gold fields, the dry seal; slow: the self-test end to end in both
   shapes, its resume and its determinism, and the word-level counts and pair sets on the pinned files against the
-  instance manifest).
+  instance manifest); `tests/test_stage2_spec.py` (the two constants pinned term by term against Amendment 13 and
+  rebuilt from its text, mutated text and constants caught, the L12 grid and its aliases, gensim's rule on WN, the
+  pass-1 WordNet bits); `tests/test_stage2_wiring.py` (slow: the self-test rerun with a mutated runner, each mutation
+  stopped by `check_spec` or `verify_wiring`, and in the dry shape with no value on the console).
 
 ## Results
 
