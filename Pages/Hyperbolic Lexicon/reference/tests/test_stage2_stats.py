@@ -628,10 +628,21 @@ def test_l12_every_branch():
                 assert T.decide_l12(**l12_inputs(**{part: x}))['parts'][part]['verdict'] == want
     cases = ((Iv(0, -0.02, 0.02), 'supported', None), (Iv(0.05, 0.03, 0.07), 'refuted', 'high'),
              (Iv(-0.05, -0.07, -0.03), 'refuted', 'low'), (Iv(0.02, 0.01, 0.03), 'inconclusive', 'high'),
-             (Iv(-0.02, -0.03, 0.01), 'inconclusive', 'low'), (Iv(0.03, 0.02, 0.04), 'inconclusive', 'high'))
+             (Iv(-0.02, -0.03, 0.01), 'inconclusive', 'low'), (Iv(0.03, 0.02, 0.04), 'inconclusive', 'high'),
+             # the interval passes both ends of the band: both sides fail and both are reported
+             (Iv(-0.004, -0.03, 0.021), 'inconclusive', 'both'), (Iv(0.0, -0.025, 0.025), 'inconclusive', 'both'),
+             (Iv(0.004, -0.021, 0.03), 'inconclusive', 'both'), (Iv(-0.01, -0.0200001, 0.02), 'inconclusive', 'low'),
+             (Iv(0.0, -0.02, 0.0200001), 'inconclusive', 'high'))
     for iv, want, side in cases:
         p = T.decide_l12(**l12_inputs(d=iv))['parts']['d']
         assert p['verdict'] == want and p['failing_side'] == side
+        sides = {'both': ['high', 'low'], None: [], 'low': ['low'], 'high': ['high']}
+        assert sorted(p['failing_excess']) == sides[side]
+        assert all(v > 0 for v in p['failing_excess'].values())
+    p = T.decide_l12(**l12_inputs(d=Iv(-0.004, -0.03, 0.021)))['parts']['d']
+    assert p['failing_excess']['low'] == -0.02 - -0.03 and p['failing_excess']['high'] == 0.021 - 0.02
+    assert 'passes the low end' in p['reasons'][0] and 'passes the high end' in p['reasons'][0]
+    assert T.decide_l12(**l12_inputs(d=Iv(0.05, 0.03, 0.07)))['parts']['d']['failing_excess'] == {'high': 0.07 - 0.02}
 
 
 def test_l12_controls_void_before_refuted():
@@ -844,11 +855,22 @@ def test_l15_controls():
     assert d['parts']['a']['verdict'] == 'void' and d['parts']['a']['verdict_before_controls'] == 'refuted'
     assert d['parts']['b']['verdict'] == 'supported'
     for st, parts in T.L15_SET_PARTS.items():
-        c2 = l15_inputs()['control2'] + [{'arm': 'H3', 'set': st, 'rhos': [0.2] * 20, 'n': 666}]
+        c2 = l15_inputs()['control2'] + [{'arm': 'K3', 'set': st, 'rhos': [0.2] * 20, 'n': 666}]
         d = T.decide_l15(**l15_inputs(control2=c2))
         assert {p for p in 'ab' if d['parts'][p]['verdict'] == 'void'} == set(parts)
     with pytest.raises(ValueError):
         T.decide_l15(**l15_inputs(control2=[{'arm': 'H3', 'set': 'MEN∩GloVe', 'rhos': [0.0] * 20, 'n': 9}]))
+    # "for every arm and set": a required (arm, set) missing from control 2, or one held twice, raises
+    held = [(e['arm'], e['set']) for e in l15_inputs()['control2']]
+    assert not T.decide_l15(**l15_inputs(), required=held)['void']
+    with pytest.raises(ValueError, match='lacks'):
+        T.decide_l15(**l15_inputs(), required=held + [('W-19', 'SL')])
+    with pytest.raises(ValueError, match='twice'):
+        T.decide_l15(**l15_inputs(control2=l15_inputs()['control2'] * 2))
+    # a control arm (here W-3 on SL) outside the band voids the part that uses its set, like any other arm
+    c2 = l15_inputs()['control2'] + [{'arm': 'W-3', 'set': 'SL', 'rhos': [0.2] * 20, 'n': 666}]
+    d = T.decide_l15(**l15_inputs(control2=c2), required=held + [('W-3', 'SL')])
+    assert d['parts']['a']['verdict'] == 'void' and d['parts']['b']['verdict'] == 'supported'
     c3 = {st: ([0.002] * 20, 245) for st in T.L15_B_SETS}
     c3['HL-glove'] = ([0.5] * 20, 2000)
     d = T.decide_l15(**l15_inputs(control3=c3))

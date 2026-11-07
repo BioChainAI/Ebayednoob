@@ -90,15 +90,17 @@ def complement(n, rel):
 
 
 def check_anchors(imap, anchors, rel_of, seed=95200, k=300, few=20):
-    """A13.10.2's check: 300 anchors drawn with Rng(seed) (below over the anchor list) plus the `few` anchors with the
-    fewest non-neighbours (ties by index); every index j of NN(u) against the brute-force complement. Returns the
-    number of anchors checked."""
+    """A13.10.2's check on 320 anchors: the `few` anchors with the fewest non-neighbours (ties by index) and `k` more,
+    distinct, drawn with Rng(seed).sample (partial Fisher-Yates) from the other anchors in anchor order, so that
+    exactly k + few anchors are checked (every anchor when there are fewer); every index j of NN(u) against the
+    brute-force complement. Returns the anchors checked, ascending."""
     anchors = np.asarray(anchors, dtype=np.int64)
-    rng = P.Rng(seed)
-    drawn = {int(anchors[rng.below(len(anchors))]) for _ in range(k)}
     sizes = imap.sizes()[anchors]
     thin = [int(u) for u in anchors[np.lexsort((anchors, sizes))[:few]]]
-    chosen = sorted(drawn | set(thin))
+    rest = [int(u) for u in anchors if int(u) not in set(thin)]
+    drawn = rest if len(rest) <= k else [rest[j] for j in P.Rng(seed).sample(len(rest), k)]
+    chosen = sorted(set(thin) | set(drawn))
+    assert len(chosen) == min(k + few, len(set(anchors.tolist())))
     for u in chosen:
         want = complement(imap.n, rel_of(u))
         assert imap.size(u) == len(want)
@@ -241,7 +243,7 @@ def test_map_equals_explicit_table_on_synthetic_dags():
         assert np.array_equal(imap.related(u), np.array(sorted({u} | related[u]), dtype=np.int64))
     assert imap.shift.shape[0] == n + 2 * len(pairs)              # sum |R(u)| = n + 2E for a direct-edge relation
     chosen = check_anchors(imap, np.unique(inst.pos[:, 0]), lambda u: {u} | related[u])
-    assert len(chosen) >= 200
+    assert len(chosen) == 320
     cs = l6_synth.dag(95214)
     exp = EM.training_instance(cs)
     rel = [cs.anc[u] | cs.desc[u] for u in range(cs.n)]
@@ -603,7 +605,7 @@ def test_direct_instance_counts(wn):
     index = {o: i for i, o in enumerate(offsets)}
     assert set(nb) == set(offsets)
     chosen = check_anchors(imap, anchors, lambda u: {u} | {index[x] for x in nb[offsets[u]]})
-    assert len(chosen) >= 300
+    assert len(chosen) == 320
     # the kernel on U_@ against the pure-Python replay, over 2,000 anchors of one epoch's permutation
     st, r = S.ImplicitStream(95231, imap), P.Rng(95231)
     perm = st.shuffle_fresh(E)
@@ -625,7 +627,7 @@ def test_dry_verb_instance(wn):
     nb = _independent_relation(wn, 'verb')
     index = {o: i for i, o in enumerate(offsets)}
     chosen = check_anchors(imap, np.unique(inst.pos[:, 0]), lambda u: {u} | {index[x] for x in nb[offsets[u]]})
-    assert len(chosen) >= 290
+    assert len(chosen) == 320                                       # A13.10.2: 320 anchors of the dry instance
 
 
 _MEM_JOB = r'''

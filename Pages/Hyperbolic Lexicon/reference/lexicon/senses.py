@@ -12,9 +12,11 @@ synset names (item 3).
     ns_pairs_sha(pairs), word_types(pairs), word_types_sha(types)
     hit_names(wn), resolve_names(names, wn, nodes)    NLTK's synset names and HiT's name verifier
     first_pair, gensim_pair, noun_exceptions, morphy  the reported sense rules
+    missed_words(rows, has), missed_report(...)       the vocabulary an arm misses (A13.11, reported)
+    sp_lp(g)                            Nickel & Kiela 2018's sp and lp of every node of an '@' graph (A13.11, reported)
 """
 import hashlib
-from collections import Counter
+from collections import Counter, deque
 
 from . import wordnet
 
@@ -322,3 +324,60 @@ def strata(wn, pos='noun'):
 def strata_counts(wn, pos='noun'):
     c = Counter(min(len(e.offsets), 10) for e in wn['index'][pos].values())
     return tuple(c[k] for k in range(1, 11))
+
+
+# ================================================================ reported (A13.11): missed vocabulary, NK18's ranks
+def missed_words(rows, has):
+    """The vocabulary an arm misses (A13.11, "every set and arm: coverage and the vocabulary each arm misses";
+    reported): over [(row, x, y)], the distinct N_S forms of the x and y values for which has(w) is false, in
+    code-point order, and the number of rows holding at least one of them. has(w) is the arm's own vocabulary test: a
+    non-empty S_U(w) for the arms that read senses in U, N_S(w) a lemma of index.<pos> for W (whose lemma takes another
+    lemma's sense list), in_vocab(w, vocab) for GloVe."""
+    miss, lost = set(), 0
+    for _, x, y in rows:
+        bad = [N_S(w) for w in (x, y) if not has(w)]
+        if bad:
+            lost += 1
+            miss.update(bad)
+    return sorted(miss), lost
+
+
+def missed_report(types, rows_lost):
+    """A missed vocabulary as committed (A13.2: no word of a Stage-2 file enters a committed file): the number of word
+    types, the SHA-256 of their N_S forms in code-point order (LF-joined, no final LF) and the rows holding one."""
+    return {'missed_types': len(types), 'missed_sha256': word_types_sha(types), 'rows_with_a_missed_word': rows_lost}
+
+
+def sp_lp(g):
+    """Nickel & Kiela 2018's ground-truth position of every node of the '@' graph g (an AtGraph; A13.11, reported):
+    sp, the fewest edges between the node and a root (a node without a parent), and lp, the most edges from the node
+    down to a leaf (a node without a child). Returns {offset: (sp, lp)}; the diagnostic ranks the nodes by
+    sp/(sp + lp).
+    READING (A13.11, "the Spearman rho between r and sp/(sp + lp)"; P18 reads sp as the shortest path from the root
+    and lp as the longest path to a descendant leaf): U_@'s graph E has 12 roots (the dry verb graph 334), so sp is the
+    distance to the nearest root; lp is the node's height; both are taken on E, the relation the tables are trained
+    on, and the exact trees are read on the same nodes and ranks."""
+    sp = {r: 0 for r in g.roots}
+    q = deque(sorted(g.roots))
+    while q:
+        u = q.popleft()
+        for c in g.children[u]:
+            if c not in sp:
+                sp[c] = sp[u] + 1
+                q.append(c)
+    lp = {}
+    for start in g.nodes:
+        if start in lp:
+            continue
+        stack = [(start, 0)]
+        while stack:
+            u, k = stack[-1]
+            ch = g.children[u]
+            if k < len(ch):
+                stack[-1] = (u, k + 1)
+                if ch[k] not in lp:
+                    stack.append((ch[k], 0))
+            else:
+                lp[u] = 1 + max(lp[c] for c in ch) if ch else 0
+                stack.pop()
+    return {o: (sp[o], lp[o]) for o in g.nodes}

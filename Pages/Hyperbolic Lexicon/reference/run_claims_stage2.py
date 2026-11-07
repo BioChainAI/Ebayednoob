@@ -2,23 +2,25 @@
 """Runs Stage 2 of ../PREREGISTRATION.md: Amendment 13 (cited A13.n), the lexical claims L12-L15, with Amendment 10's
 trainer (A10.n) for L14. Build spec sections 9, 11, 12, 14 and 16.
 
-    python3 -B run_claims_stage2.py --time [--workers 4]      the timing projection (A13.16): two epochs of each L14
+    python3 -B -I run_claims_stage2.py --time [--workers 4]   the timing projection (A13.16): two epochs of each L14
                                                               cell on U_@, four at once, seeds 95500 + i, no
                                                               evaluation; projects the registered total and the disk
                                                               and refuses (exit 1) above 11 h or past the free disk
                                                               less 2 GB: results/stage2-time.json and its console
-    python3 -B run_claims_stage2.py --dry [--allow-dirty]     the dry run (A13.13; A13.15 step 3): WordNet's verbs,
+    python3 -B -I run_claims_stage2.py --dry [--allow-dirty]  the dry run (A13.13; A13.15 step 3): WordNet's verbs,
                                                               every seed + 3000; dry tuning (48 runs), its settings,
                                                               then the dry decisive run: results/dry/, with every value
                                                               on a human-rated set sealed in the cache
-    python3 -B run_claims_stage2.py --tune                    registered tuning (A13.10.5; A13.15 step 5): HiT val only;
+    python3 -B -I run_claims_stage2.py --tune                 registered tuning (A13.10.5; A13.15 step 5): HiT val only;
                                                               results/tuning-stage2.json and its console
-    python3 -B run_claims_stage2.py --write-settings          settings-stage2.json from results/tuning-stage2.json; prints
-                                                              its SHA-256 for the lr-freeze amendment (step 6)
-    python3 -B run_claims_stage2.py --decisive                the decisive run (A13.15 step 7): results/claims-stage2.json
-                                                              and .md, lbench-stage2.txt, stage2-manifest.json,
-                                                              stage2-codes/, stage2-tables/, stage2-console.txt
-    python3 -B run_claims_stage2.py --selftest --out DIR [--dry]   the whole pipeline (time, tune, settings, decisive) on a
+    python3 -B -I run_claims_stage2.py --write-settings       settings-stage2.json from results/tuning-stage2.json;
+                                                              prints its SHA-256 for the lr-freeze amendment (step 6)
+    python3 -B -I run_claims_stage2.py --decisive             the decisive run (A13.15 step 7): results/
+                                                              claims-stage2.json and .md, lbench-stage2.txt,
+                                                              stage2-manifest.json, stage2-codes/, stage2-tables/,
+                                                              stage2-console.txt
+    python3 -B -I run_claims_stage2.py --selftest --out DIR [--dry]
+                                                              the whole pipeline (time, tune, settings, decisive) on a
                                                               synthetic world (tests/stage2_synth.py) with seeds
                                                               95200 + i and a reduced bootstrap; written under DIR only
                                                               (outside the repository), never under results/; --dry
@@ -27,6 +29,12 @@ trainer (A10.n) for L14. Build spec sections 9, 11, 12, 14 and 16.
 
 Options: --workers W (default 4, at most 4: A10.1 and spec section 0), --allow-dirty (dry only: a tree with other
 changes, the record marked "development run: not a registered run").
+
+Hygiene (A13.2: "parsing runs under python3 -B -I with explicit paths"). --time, --dry, --tune and --decisive read the
+pinned downloads (or, for --time, the store and WordNet) and refuse unless the interpreter runs with -B and -I (-I:
+no PYTHONPATH, no user site-packages, no script-relative or working-directory path but this folder, which the runner
+puts on sys.path itself); the spawn pool passes both flags on to its workers. Every start records the interpreter's
+flags. The self-test reads only its synthetic world, so it runs either way (the tests call it in-process).
 
 How it runs.
 - The five thread variables are 1 before numpy is imported (A10.1). The main process never imports numba: training
@@ -406,12 +414,33 @@ def recheck_tree(cfg, ctx, where):
 
 
 def frozen_in_amendment(prereg_text, sha, after):
-    """The number of the one amendment section (after Amendment `after`) that holds the SHA-256 `sha` (l6's rule for the
-    lr freeze, A10.8); raises otherwise."""
+    """The number of the one amendment section (after Amendment `after`) that holds the SHA-256 `sha`: A11.4's rule,
+    which A13's notation names for the lr-freeze amendment and settings-stage2.json ("found by that hash as A11.4 found
+    Amendment 11"); raises otherwise."""
     n = l6.freeze_amendment(prereg_text, sha)
     if n <= after:
         raise ValueError(f'the SHA-256 {sha[:12]}... is in Amendment {n}, not in an amendment after {after}')
     return n
+
+
+def definitions_amendment(prereg_text, manifest_sha, after=13):
+    """The number of the definitions amendment as the decisive run and registered tuning find it: the earliest
+    amendment section after Amendment `after` whose text holds the instance manifest's SHA-256 (64 lowercase hex
+    digits, not part of a longer hex run); raises if none does.
+    READING (A13's notation, "the dated amendment of item 15 step 4 (Amendment 14 unless another comes first)", and
+    A13.2, "the definitions amendment freezes it by its SHA-256 ... and the decisive run refuses another"): A13 names
+    the definitions amendment by its place in the order of work, not by a hash count, and registers A11.4's
+    exactly-one rule only for the lr-freeze amendment; so the first amendment after 13 that holds the manifest's
+    SHA-256 is the one that froze it, and a later amendment (the lr-freeze amendment, an erratum) may restate the hash
+    without refusing the run."""
+    sha = manifest_sha.lower()
+    if not re.fullmatch(r'[0-9a-f]{64}', sha):
+        raise ValueError('not a SHA-256')
+    pat = re.compile(r'(?<![0-9a-fA-F])' + sha + r'(?![0-9a-fA-F])')
+    hits = sorted(n for n, sec in l6._sections(prereg_text) if n > after and pat.search('\n'.join(sec).lower()))
+    if not hits:
+        raise ValueError(f'the instance manifest\'s SHA-256 {sha[:12]}... is in no amendment after Amendment {after}')
+    return hits[0]
 
 
 # ================================================================ the load average (spec section 0)
@@ -488,10 +517,13 @@ RUNNER_READINGS = (
      'SimLex\'s verbs within GloVe; all sealed. G_root is not read in the dry run (no entity.n.01 among the verbs).'),
     ('stage2-runner-11', 'A13.13, the dry split: hit.hit_r on the verb @ graph with Rng(4500)-Rng(4502) and its default '
      'n_val = floor(0.05 |T|) (1,092 for 21,840 indirect pairs).'),
-    ('stage2-runner-12', 'A13.11, F1 under HiT\'s protocol (measured tables only): HiT\'s labels are structural (slot 0 '
-     'positive, every other slot of the setting negative), so F1 is computed from the certified values with '
-     'scores2.f1_hit in the measured table\'s pass-1 job (theta a distinct val value under cmp, ties to the smallest), '
-     'per setting; it decides nothing.'),
+    ('stage2-runner-12', 'A13.11, F1 under HiT\'s protocol (measured tables only), with A13.8 ("pass 2 ... computes '
+     'every metric from pass 1\'s files alone") and A13.6 (one tie-class list "where a metric compares" values): the '
+     'measured table\'s pass-1 job writes one code file of HiT val\'s and HiT test\'s G values together (val rows, then '
+     'test rows, 21 slots, keyed val:<row> and test:<row>; its value-stream SHA-256 and side file as for every code '
+     'file); pass 2 reads it after its SHA-256 check and computes F1 per setting (slot 0 the positive, the setting\'s '
+     'other slots the negatives): theta the val code with the best val F1, ties to the smallest, a pair positive when '
+     'its code is at least theta (stats2.f1_threshold); it decides nothing and has no LBENCH/1 record.'),
     ('stage2-runner-13', 'A13.15 step 7 with A10.14, "the same run": a restart that finds every tuning job finished and '
      'tuning-stage2.json already holding exactly these runs, files and choice leaves it and its settings unchanged.'),
     ('stage2-runner-14', 'Spec section 10, settings-stage2.json: the two geometry keys of the spec, each d a grid string '
@@ -519,6 +551,52 @@ RUNNER_READINGS = (
     ('stage2-runner-23', 'A13.8, BD and BD-dir: the detection AP reads a tie-class list of the forward values alone, '
      'BD-dir one list of forward and reverse values of every covered row (both written by one pass-1 job from the same '
      'certified values); pass 2 selects the True rows (the dry run: TYPE hyp-1 to hyp-4).'),
+    ('stage2-runner-24', 'A13.11, Nickel & Kiela 2018\'s diagnostic: rho (exact, average ranks) between r and '
+     'sp/(sp + lp) over the nodes of U_@ (the dry run: the verb @ graph), sp the distance to the nearest root and lp '
+     'the height, both on E (senses.sp_lp); r is ordered by |n|^2 for a learned table and by x0 for H3 and H2, read on '
+     'the same nodes; "the tables" are every learned table of the run (tuning, measured, edge-shuffled, floors).'),
+    ('stage2-runner-25', 'A13.11, "NK17 scores" (L14): each measured table scored by NK17 (A13.5, alpha 10^3, 120 '
+     'digits, uncertified) on HiT test (21 slots: mean RR in both settings) and on HL within U_@ (rho), deciding '
+     'nothing; a learned Euclidean table, which has no Poincare norm, is read with its Euclidean norm and distance '
+     '(scores2.nk17_value), as P17 scored its Euclidean embeddings by eq. 8.'),
+    ('stage2-runner-26', 'A13.11, "L14\'s tables on these rows" (L13): the measured tables read by G at o on BD, WB '
+     'and BD-dir covered in U_@ (BD-at, WB-at, BD-dir-at; senses in U_@, as L14(b) reads HL), detection AP '
+     '(pessimistic and sklearn\'s convention) and direction accuracy on the True rows, with the exact Lorentz - '
+     'Euclidean differences per (d, seed); no interval. The instance manifest records the two U_@ pair sets.'),
+    ('stage2-runner-27', 'A13.11, the suite\'s own detection protocol (L13): BD-suite and WB-suite hold the covered '
+     'rows of the val and test folds in one tie-class list per arm (the six and WN, G with the maximum over senses); '
+     'a test row the arm does not cover takes the code of its lowest in-vocabulary validation score (it ties with that '
+     'class), and AP is taken over the whole test fold, pessimistic and in sklearn\'s convention '
+     '(stats2.suite_detection); with no in-vocabulary validation row the lowest in-vocabulary test code stands in '
+     '(flagged). The dry sets have no validation fold, so it does not run there.'),
+    ('stage2-runner-28', 'A13.11, "the vocabulary each arm misses": per word-pair instance and per vocabulary an arm '
+     'reads (the senses in the instance\'s universe; index.<pos> for W; GloVe 6B\'s words for GloVe), the word types '
+     'of the rows the word-level selection kept that it misses, as a count, the SHA-256 of their N_S forms in '
+     'code-point order and the rows holding one; no word is written (A13.2).'),
+    ('stage2-runner-29', 'A13.11, "H3 against the learned tables on HL within U_@": rho(H3 G) - rho(table G) on HL-at '
+     'for each measured table, with the word-level ci_rho and the row bootstrap beside it, as every difference of rho '
+     '(A13.7); deciding nothing.'),
+    ('stage2-runner-30', 'A13 L15 control 2, "for every arm and set": every arm of L15\'s Arms list on the sets it '
+     'reads: on SL and MEN the six exact arms and the controls K3, S-full_i and W_i (each of the 20 permutations an '
+     'arm, as A13.4 defines them), all with Sym; on MEN, WSR and HL within GloVe, H3 with Sym and GloVe 300-d. The '
+     'readings the Arms list marks as reported (H3 with G against GloVe on HL; GloVe at 50-d) decide nothing and are '
+     'not banded. stats2.decide_l15 refuses a control 2 that lacks one of these (arm, set) pairs.'),
+    ('stage2-runner-31', 'A13\'s notation, "the definitions amendment is the dated amendment of item 15 step 4 '
+     '(Amendment 14 unless another comes first)", with A13.2, "freezes it by its SHA-256": registered tuning and the '
+     'decisive run find it as the earliest amendment after 13 whose text holds the instance manifest\'s SHA-256; a later '
+     'amendment (the lr-freeze amendment, an erratum) may restate that hash. A11.4\'s exactly-one rule is kept for the '
+     'lr-freeze amendment and settings-stage2.json only, as A13\'s notation registers it.'),
+    ('stage2-runner-32', 'A13.2, "parsing runs under python3 -B -I with explicit paths": --time, --dry, --tune and '
+     '--decisive refuse an interpreter without -B and -I (sys.flags); the runner puts its own folder on sys.path, and '
+     'the spawn pool passes both flags on to its workers. The self-test (a synthetic world) and --write-settings (this '
+     'project\'s own JSON) parse nothing fetched and are not held to it. Every start records the flags.'),
+    ('stage2-runner-33', 'A13.8 and A13.11, the reported values that A13 defines outside pass 1\'s files of tie-class '
+     'codes of an (instance, arm, form, rule, table): the 200 relabelled tails (L14 control 2, "computed in binary64"), '
+     '|dRR| (against float64 scoring of the unsnapped table as stored), Nickel & Kiela 2018\'s diagnostic and the radius '
+     'ranks of the seven labels under P (over WordNet\'s nodes, no Stage-2 row) are computed in pass 2 from the tables, '
+     'each read only after its float or snapped SHA-256 matches the run record; none reads a gold, label or TYPE field, '
+     'and each decides nothing. Named for the definitions amendment, since A13.8 says pass 2 computes every metric '
+     'from pass 1\'s files alone.'),
 )
 
 
@@ -680,6 +758,8 @@ class Inst:
     selected_rows: int = 0    # rows the word-level selection kept, before coverage
     slots: int = 21           # HiT: 21 (both settings) or 11 (the random setting)
     note: str = ''
+    cand: list = None         # the rows the word-level selection kept, before coverage (A13.11's missed vocabulary)
+    folds: dict = None        # the suite protocol's sets (BD-suite, WB-suite): {'val': [rows], 'oov_test': [rows]}
 
     @property
     def pair_rows(self):
@@ -716,7 +796,41 @@ def build_instances(cfg, world, log=print):
 
 
 def _inst(world, name, iid, key, claim, metric, kind, universe, rows, **kw):
+    if kw.get('cand') is not None:
+        kw['cand'] = list(kw['cand'])
+        kw.setdefault('selected_rows', len(kw['cand']))
     return Inst(name, iid, key, world.store.sha256(key), claim, metric, kind, universe, rows, **kw)
+
+
+@pass1
+def _at_variant(world, base, name, iid_suffix='-at', note=''):
+    """L14's tables on an L13 set (A13.11, "L14's tables on these rows"): the base instance's covered rows that are
+    covered in U_@ too, in file order, read with senses restricted to U_@ (as L14(b) reads HL); clusters, gold and
+    selection as the base set's.
+    READING (A13.11): a learned table holds points of U_@ only, so its pair set is the rows covered in U_@, as A13 L14
+    gives HL-at for HL; only the measured tables are scored on them (the tables L14 decides on)."""
+    rows = select_rows(base.rows, world.U_at, world.wn, world.pos)
+    keep = {r for r, _, _ in rows}
+    clusters = [k for (r, _, _), k in zip(base.rows, base.clusters) if r in keep] if base.clusters else None
+    return replace(base, name=name, iid=base.iid + iid_suffix, claim='stage2/1', universe='at', rows=rows,
+                   clusters=clusters, perm_seed=None, note=note or f'{base.name} covered in U_@ (A13.11)')
+
+
+@pass1
+def _suite_instance(world, name, iid, key, fold_rows, base_gold):
+    """The suite's own detection protocol (A13.11, reported): one pair set holding the covered rows of the
+    validation and test folds in file order, so that an arm's codes compare across the two folds (tie classes are
+    ordinal within one list, A13.6); folds['val'] the covered validation rows, folds['oov_test'] the test rows not
+    covered in U_full, which no arm of the protocol scores (they take the lowest in-vocabulary validation score in
+    pass 2)."""
+    cand = sorted((r, x, y) for r, x, y, f in fold_rows if f in ('val', 'test'))
+    fold = {r: f for r, _, _, f in fold_rows}
+    rows = select_rows(cand, world.U_full, world.wn, world.pos)
+    cov = {r for r, _, _ in rows}
+    folds = {'val': [r for r, _, _ in rows if fold[r] == 'val'],
+             'oov_test': [r for r, _, _ in cand if fold[r] == 'test' and r not in cov]}
+    return _inst(world, name, iid, key, 'stage2/1', 'ap', 'pair', 'full', rows, gold=base_gold, cand=cand,
+                 folds=folds, note="the suite's own detection protocol (A13.11): val and test folds in one list")
 
 
 @pass1
@@ -734,49 +848,49 @@ def _noun_instances(cfg, world, log):
     hn = [(r, x, y) for r, x, y, p in hl if p == 'N']
     hl_iid = 'hyperlex-ccb4161-nouns'
     add(_inst(world, 'HL', hl_iid, 'hyperlex-all', 'L12/1', 'rho', 'pair', 'full', select_rows(hn, Uf, wn, 'noun'),
-              gold='hyperlex', perm_seed=seeds.l12_gold, selected_rows=len(hn)))
+              gold='hyperlex', perm_seed=seeds.l12_gold, cand=hn))
     # READING (A13.14, instanceId "names set, pin and slice"): the slices L14(b) (U_@) and L15(b) (in GloVe) add -at and
     # -glove to the manifest's instance name; BD-dir adds -dir; HiT's settings add -random or -hard (A13.14's example)
     add(_inst(world, 'HL-at', hl_iid + '-at', 'hyperlex-all', 'L14/1', 'rho', 'pair', 'at',
-              select_rows(hn, Ua, wn, 'noun'), gold='hyperlex', perm_seed=seeds.l14_gold, selected_rows=len(hn)))
+              select_rows(hn, Ua, wn, 'noun'), gold='hyperlex', perm_seed=seeds.l14_gold, cand=hn))
     add(_inst(world, 'HL-glove', hl_iid + '-glove', 'hyperlex-all', 'L15/1', 'rho', 'pair', 'full',
               select_rows(hn, Uf, wn, 'noun', vocab), glove=True, gold='hyperlex', perm_seed=seeds.l15_hl,
-              selected_rows=len(hn)))
+              cand=hn))
     bless = S2D.suite_words('bless', store)
     concepts = S2D.bless_concepts(store)
     bt = [(r, x, y) for r, x, y, f in bless if f == 'test']
     bd_rows = select_rows(bt, Uf, wn, 'noun')
     bd_iid = 'suite-6891e0e-bless-test'
     add(_inst(world, 'BD', bd_iid, 'bless', 'L13/1', 'ap', 'pair', 'full', bd_rows, clusters=[x for _, x, _ in bd_rows],
-              gold='bless', perm_seed=seeds.l13_bd, selected_rows=len(bt)))
+              gold='bless', perm_seed=seeds.l13_bd, cand=bt))
     add(_inst(world, 'BD-dir', bd_iid + '-dir', 'bless', 'L13/1', 'acc', 'dir', 'full', bd_rows,
-              clusters=[x for _, x, _ in bd_rows], gold='bless', select='true', selected_rows=len(bt)))
+              clusters=[x for _, x, _ in bd_rows], gold='bless', select='true', cand=bt))
     bdg = select_rows(bt, Uf, wn, 'noun', vocab)
     add(_inst(world, 'BD-dir-glove', bd_iid + '-dir-glove', 'bless', 'L13/1', 'acc', 'dir', 'full', bdg, glove=True,
-              clusters=[x for _, x, _ in bdg], gold='bless', select='true', selected_rows=len(bt)))
+              clusters=[x for _, x, _ in bdg], gold='bless', select='true', cand=bt))
     wb = S2D.suite_words('wbless', store)
     wt = [(r, x, y) for r, x, y, f in wb if f == 'test']
     wb_rows = select_rows(wt, Uf, wn, 'noun')
     add(_inst(world, 'WB', 'suite-6891e0e-wbless-test', 'wbless', 'L13/1', 'ap', 'pair', 'full', wb_rows,
               clusters=[S2D.wbless_cluster(x, y, concepts) for _, x, y in wb_rows], gold='wbless',
-              perm_seed=seeds.l13_wb, selected_rows=len(wt)))
+              perm_seed=seeds.l13_wb, cand=wt))
     sl = S2D.simlex_words(store)
     sn = [(r, x, y) for r, x, y, p in sl if p == 'N']
     add(_inst(world, 'SL', 'simlex-fda1b39-nouns', 'simlex', 'L15/1', 'rho', 'pair', 'full',
-              select_rows(sn, Uf, wn, 'noun'), gold='simlex', perm_seed=seeds.l15_sl, selected_rows=len(sn)))
+              select_rows(sn, Uf, wn, 'noun'), gold='simlex', perm_seed=seeds.l15_sl, cand=sn))
     men = S2D.men_words(store)
     mn = [(r, x, y) for r, x, tx, y, ty in men if tx == '-n' and ty == '-n']
     add(_inst(world, 'MEN', 'men-0d05a99-nn', 'men', 'L15/1', 'rho', 'pair', 'full', select_rows(mn, Uf, wn, 'noun'),
-              gold='men', perm_seed=seeds.l15_men, selected_rows=len(mn)))
+              gold='men', perm_seed=seeds.l15_men, cand=mn))
     add(_inst(world, 'MEN-glove', 'men-0d05a99-nn-glove', 'men', 'L15/1', 'rho', 'pair', 'full',
               select_rows(mn, Uf, wn, 'noun', vocab), glove=True, gold='men', perm_seed=seeds.l15_men,
-              selected_rows=len(mn)))
+              cand=mn))
     wsr = S2D.ws353_words('ws353-rel', store)
     add(_inst(world, 'WSR-glove', 'ws353-e2de627-rel-glove', 'ws353-rel', 'L15/1', 'rho', 'pair', 'full',
               select_rows(wsr, Uf, wn, 'noun', vocab), glove=True, gold='ws353-rel', perm_seed=seeds.l15_wsr,
-              selected_rows=len(wsr)))
+              cand=wsr))
     add(_inst(world, 'WSR', 'ws353-e2de627-rel', 'ws353-rel', 'stage2/1', 'rho', 'pair', 'full',
-              select_rows(wsr, Uf, wn, 'noun'), gold='ws353-rel', selected_rows=len(wsr)))
+              select_rows(wsr, Uf, wn, 'noun'), gold='ws353-rel', cand=wsr))
     # HiT (L14): names resolved by NLTK's rule (A13.3); rows as given
     names_map, _ = HIT.resolve(wn, store, count=len(world.at.nodes))
     world._cache['hit_names'] = names_map
@@ -786,6 +900,8 @@ def _noun_instances(cfg, world, log):
                   'at', rows, selected_rows=len(rows)))
     if cfg.reported:
         _reported_noun_instances(cfg, world, add, vocab, bless, concepts, wb, sl, sn)
+        for base in ('BD', 'WB', 'BD-dir'):
+            add(_at_variant(world, out[base], base + '-at'))
     return out
 
 
@@ -798,24 +914,29 @@ def _reported_noun_instances(cfg, world, add, vocab, bless, concepts, wb, sl, sn
         rows = [(r, x, y) for r, x, y, f in bless if f == fold]
         rr = select_rows(rows, Uf, wn, 'noun')
         add(_inst(world, 'BD-val', 'suite-6891e0e-bless-val', 'bless', 'stage2/1', 'ap', 'pair', 'full', rr,
-                  clusters=[x for _, x, _ in rr], gold='bless', selected_rows=len(rows)))
+                  clusters=[x for _, x, _ in rr], gold='bless', cand=rows))
         rows = [(r, x, y) for r, x, y, f in wb if f == fold]
         rr = select_rows(rows, Uf, wn, 'noun')
         add(_inst(world, 'WB-val', 'suite-6891e0e-wbless-val', 'wbless', 'stage2/1', 'ap', 'pair', 'full', rr,
                   clusters=[S2D.wbless_cluster(x, y, concepts) for _, x, y in rr], gold='wbless',
-                  selected_rows=len(rows)))
+                  cand=rows))
+    # the suite's own detection protocol on L13's sets (A13.11): val and test folds in one list
+    add(_suite_instance(world, 'BD-suite', 'suite-6891e0e-bless-valtest', 'bless', bless, 'bless'))
+    add(_suite_instance(world, 'WB-suite', 'suite-6891e0e-wbless-valtest', 'wbless', wb, 'wbless'))
     # the suite's 1,000 x 2% protocol: the in-vocabulary rows of the whole file (A13.11)
-    wall = select_rows([(r, x, y) for r, x, y, _ in wb], Uf, wn, 'noun')
+    wcand = [(r, x, y) for r, x, y, _ in wb]
+    wall = select_rows(wcand, Uf, wn, 'noun')
     add(_inst(world, 'WB-all', 'suite-6891e0e-wbless-all', 'wbless', 'stage2/1', 'acc', 'pair', 'full', wall,
-              gold='wbless', selected_rows=len(wb), note="the suite's 1,000 x 2% protocol (WBLESS)"))
+              gold='wbless', cand=wcand, note="the suite's 1,000 x 2% protocol (WBLESS)"))
     bib = S2D.suite_words('bibless', store)
-    ball = select_rows([(r, x, y) for r, x, y, _ in bib], Uf, wn, 'noun')
+    bcand = [(r, x, y) for r, x, y, _ in bib]
+    ball = select_rows(bcand, Uf, wn, 'noun')
     add(_inst(world, 'BIB-all', 'suite-6891e0e-bibless-all', 'bibless', 'stage2/1', 'acc', 'dir', 'full', ball,
-              gold='bibless', selected_rows=len(bib), note="the suite's 1,000 x 2% protocol (BiBLESS)"))
+              gold='bibless', cand=bcand, note="the suite's 1,000 x 2% protocol (BiBLESS)"))
     for name, short in (('leds', 'LEDS'), ('shwartz', 'SHW')):
         rows = [(r, x, y) for r, x, y, f in S2D.suite_words(name, store) if f == 'test']
         add(_inst(world, f'{short}-test', f'suite-6891e0e-{name}-test', name, 'stage2/1', 'ap', 'pair', 'full',
-                  select_rows(rows, Uf, wn, 'noun'), gold=name, selected_rows=len(rows)))
+                  select_rows(rows, Uf, wn, 'noun'), gold=name, cand=rows))
     # READING (A13.11, "EVAL test as distinct ordered pairs"): a distinct N_S pair is represented by its first test row
     # in file order (the manifest's distinctPairs); pass 2 drops and counts the pairs with both labels
     ev = [(r, x, y) for r, x, y, f in S2D.suite_words('eval', store) if f == 'test']
@@ -826,19 +947,19 @@ def _reported_noun_instances(cfg, world, add, vocab, bless, concepts, wb, sl, sn
             seen.add(p)
             first.append((r, x, y))
     add(_inst(world, 'EVAL-test', 'suite-6891e0e-eval-test-distinct', 'eval', 'stage2/1', 'ap', 'pair', 'full',
-              select_rows(first, Uf, wn, 'noun'), gold='eval', selected_rows=len(first)))
+              select_rows(first, Uf, wn, 'noun'), gold='eval', cand=first))
     sp = S2D.hyperlex_split_words(store)
     spn = [(r, x, y) for r, x, y, p, _ in sp if p == 'N']
     add(_inst(world, 'HL-split', 'hyperlex-ccb4161-nouns-random-test', 'hyperlex-test-random', 'stage2/1', 'rho',
-              'pair', 'full', select_rows(spn, Uf, wn, 'noun'), gold='hyperlex-split', selected_rows=len(spn)))
+              'pair', 'full', select_rows(spn, Uf, wn, 'noun'), gold='hyperlex-split', cand=spn))
     add(_inst(world, 'SL-glove', 'simlex-fda1b39-nouns-glove', 'simlex', 'stage2/1', 'rho', 'pair', 'full',
-              select_rows(sn, Uf, wn, 'noun', vocab), glove=True, gold='simlex', selected_rows=len(sn)))
+              select_rows(sn, Uf, wn, 'noun', vocab), glove=True, gold='simlex', cand=sn))
     for key, name, iid in (('ws353-sim', 'WSS', 'ws353-e2de627-sim'), ('ws353-combined', 'WSC', 'ws353-fda1b39-combined')):
         rows = S2D.ws353_words(key, store)
         add(_inst(world, name, iid, key, 'stage2/1', 'rho', 'pair', 'full', select_rows(rows, Uf, wn, 'noun'),
-                  gold=key, selected_rows=len(rows)))
+                  gold=key, cand=rows))
         add(_inst(world, name + '-glove', iid + '-glove', key, 'stage2/1', 'rho', 'pair', 'full',
-                  select_rows(rows, Uf, wn, 'noun', vocab), glove=True, gold=key, selected_rows=len(rows)))
+                  select_rows(rows, Uf, wn, 'noun', vocab), glove=True, gold=key, cand=rows))
 
 
 @pass1
@@ -860,40 +981,43 @@ def _verb_instances(cfg, world, log):
     iid = 'hyperlex-ccb4161-verbs'
     hv_rows = select_rows(hv, Uf, wn, 'verb')
     add(_inst(world, 'HL', iid, 'hyperlex-all', 'L12/1', 'rho', 'pair', 'full', hv_rows, gold='hyperlex', sealed=True,
-              perm_seed=seeds.l12_gold, selected_rows=len(hv)))
+              perm_seed=seeds.l12_gold, cand=hv))
     add(_inst(world, 'HL-at', iid + '-at', 'hyperlex-all', 'L14/1', 'rho', 'pair', 'at', select_rows(hv, Ua, wn, 'verb'),
-              gold='hyperlex', sealed=True, perm_seed=seeds.l14_gold, selected_rows=len(hv)))
+              gold='hyperlex', sealed=True, perm_seed=seeds.l14_gold, cand=hv))
     add(_inst(world, 'HL-glove', iid + '-glove', 'hyperlex-all', 'L15/1', 'rho', 'pair', 'full',
               select_rows(hv, Uf, wn, 'verb', vocab), glove=True, gold='hyperlex', sealed=True,
-              perm_seed=seeds.l15_hl, selected_rows=len(hv)))
+              perm_seed=seeds.l15_hl, cand=hv))
     cl = [x for _, x, _ in hv_rows]
     add(_inst(world, 'BD', iid + '-detection', 'hyperlex-all', 'L13/1', 'ap', 'pair', 'full', hv_rows, clusters=cl,
-              gold='hyperlex-hyp', sealed=True, perm_seed=seeds.l13_bd, selected_rows=len(hv)))
+              gold='hyperlex-hyp', sealed=True, perm_seed=seeds.l13_bd, cand=hv))
     add(_inst(world, 'WB', iid + '-detection-standin', 'hyperlex-all', 'L13/1', 'ap', 'pair', 'full', hv_rows,
-              clusters=cl, gold='hyperlex-hyp', sealed=True, perm_seed=seeds.l13_wb, selected_rows=len(hv),
+              clusters=cl, gold='hyperlex-hyp', sealed=True, perm_seed=seeds.l13_wb, cand=hv,
               note='stand-in for WB (A13.13 has one dry detection set)'))
     add(_inst(world, 'BD-dir', iid + '-direction', 'hyperlex-all', 'L13/1', 'acc', 'dir', 'full', hv_rows, clusters=cl,
-              gold='hyperlex-hyp', select='hyp', sealed=True, selected_rows=len(hv)))
+              gold='hyperlex-hyp', select='hyp', sealed=True, cand=hv))
     hg = select_rows(hv, Uf, wn, 'verb', vocab)
     add(_inst(world, 'BD-dir-glove', iid + '-direction-glove', 'hyperlex-all', 'L13/1', 'acc', 'dir', 'full', hg,
               glove=True, clusters=[x for _, x, _ in hg], gold='hyperlex-hyp', select='hyp', sealed=True,
-              selected_rows=len(hv)))
+              cand=hv))
     sl = S2D.simlex_words(store)
     sv = [(r, x, y) for r, x, y, p in sl if p == 'V']
     add(_inst(world, 'SL', 'simlex-fda1b39-verbs', 'simlex', 'L15/1', 'rho', 'pair', 'full',
               select_rows(sv, Uf, wn, 'verb'), gold='simlex', sealed=True, perm_seed=seeds.l15_sl,
-              selected_rows=len(sv)))
+              cand=sv))
     men = S2D.men_words(store)
     mv = [(r, x, y) for r, x, tx, y, ty in men if tx == '-v' and ty == '-v']
     add(_inst(world, 'MEN', 'men-0d05a99-vv-standin', 'men', 'L15/1', 'rho', 'pair', 'full',
               select_rows(mv, Uf, wn, 'verb'), gold='men', sealed=True, perm_seed=seeds.l15_men,
-              selected_rows=len(mv), note="stand-in for L15(a)'s MEN (A13.13 names MEN's v-v rows for (b))"))
+              cand=mv, note="stand-in for L15(a)'s MEN (A13.13 names MEN's v-v rows for (b))"))
     add(_inst(world, 'MEN-glove', 'men-0d05a99-vv-glove', 'men', 'L15/1', 'rho', 'pair', 'full',
               select_rows(mv, Uf, wn, 'verb', vocab), glove=True, gold='men', sealed=True, perm_seed=seeds.l15_men,
-              selected_rows=len(mv)))
+              cand=mv))
     add(_inst(world, 'WSR-glove', 'simlex-fda1b39-verbs-glove-standin', 'simlex', 'L15/1', 'rho', 'pair', 'full',
               select_rows(sv, Uf, wn, 'verb', vocab), glove=True, gold='simlex', sealed=True, perm_seed=seeds.l15_wsr,
-              selected_rows=len(sv), note="stand-in for L15(b)'s WSR (A13.13 has no dry relatedness set)"))
+              cand=sv, note="stand-in for L15(b)'s WSR (A13.13 has no dry relatedness set)"))
+    if cfg.reported:
+        for base in ('BD', 'WB', 'BD-dir'):
+            out[base + '-at'] = _at_variant(world, out[base], base + '-at')
     # L14: the verb '@' graph's HiT-protocol split (A13.13), drawn here with the dry split's seeds (4500-4502)
     split = dry_split(world, cfg.seeds.hitr)
     for name in ('test', 'val'):
@@ -932,6 +1056,12 @@ def dry_split(world, seeds):
 
 # ================================================================ arms (A13.4)
 SIX = ('H3', 'H2', 'F3', 'F3*', 'F2', 'F2*')
+
+
+def l15_control2_arms(perms):
+    """L15 control 2's arms on SL and MEN (A13 L15 Arms (a) and control 2, "for every arm and set"; READING in
+    Pass2.l15): the six exact arms, K3, and every S-full_i and W_i."""
+    return SIX + ('K3',) + tuple(f'S-full-{i}' for i in perms) + tuple(f'W-{i}' for i in perms)
 ARM_GEOMETRY = {'H3': 'h3', 'H2': 'h2', 'F3': 'f3', 'F3*': 'f3*', 'F2': 'f2', 'F2*': 'f2*', 'K3': 'h3', 'S-full': 'h3',
                 'W': 'h3', 'S3': 'h3', 'WN': 'wn', 'WN-U': 'wn-u', 'ST': 'st', 'letter': 'letter', 'GloVe': 'glove',
                 'GloVe-vec': 'glove'}
@@ -954,6 +1084,18 @@ def split_arm(arm):
         if arm.startswith(base + '-') and arm[len(base) + 1:].isdigit():
             return base, int(arm[len(base) + 1:])
     return arm, None
+
+
+def arm_vocabulary(arm, universe):
+    """The vocabulary an arm reads (A13.11's missed vocabulary): 'glove' for the GloVe arms (GloVe 6B's words, both
+    dimensions sharing them), 'index' for W (a lemma of index.<pos> takes another lemma's sense list), and the senses in
+    the instance's universe ('U_full' or 'U_at') for every other arm, the learned tables included."""
+    base, _ = split_arm(arm)
+    if base in ('GloVe', 'GloVe-vec'):
+        return 'glove'
+    if base == 'W':
+        return 'index'
+    return 'U_full' if universe == 'full' else 'U_at'
 
 
 class ArmCtx:
@@ -1133,6 +1275,8 @@ def score_instance(cfg, world, ac, inst, form, rule, cert, vectors=None, p=None)
                 out.append([SC.Val(t.g_form, t.groot_tuple(p, r.child, x)) for x in c])
             elif form == 'dist':
                 out.append([t.sym_key(r.child, x) for x in c])
+            elif form == 'NK17':
+                out.append([SC.nk17_value(t, r.child, x) for x in c])
             else:
                 raise ValueError(f'HiT has no form {form}')
         return 'hit', out, vtype_of(form)
@@ -1293,11 +1437,17 @@ def learned_ctx(geometry, offsets, N, name, P=None):
     return ArmCtx(name, 'geo', t)
 
 
+@dataclass
+class JointRow:
+    """A row of the joint HiT val + test list (F1's file): its key, 'val:<row>' or 'test:<row>'."""
+    row: str
+
+
 @pass1
 def job_score_learned(job):
     """A pass-1 job of one learned table (tuning, measured, edge-shuffled or floor): every instance and form asked,
-    the relabelled table too when asked (a fork worker). F1 under HiT's protocol is computed here for the measured
-    tables (READING below)."""
+    the relabelled table too when asked (a fork worker). For a measured table it also writes F1's joint list: HiT
+    val's and HiT test's G values (21 slots) in one tie-class list (READING below), from which pass 2 computes F1."""
     cfg, world, insts = _G['cfg'], _G['world'], _G['insts']
     S2D.close_gold()
     offsets = world.at.nodes
@@ -1327,29 +1477,29 @@ def job_score_learned(job):
                                        'form': out['form'], 'rule': out['rule'], 'table': job['table'],
                                        'slots': inst.slots if kind == 'hit' else None})
         if out.get('f1'):
-            extra.setdefault('f1_vals', {})[out['inst']] = (vals, inst.slots)
-    if 'f1_vals' in extra:
-        # READING (A13.11, F1 under HiT's protocol, measured tables only): HiT's labels are structural (slot 0 is the
-        # positive, every other slot of the setting a negative; no gold column), so F1 is computed here from the
-        # certified values with scores2.f1_hit (theta: a distinct val value under cmp; ties to the smallest), per
-        # setting; it decides nothing and is reported with the measured tables.
-        f1 = {}
+            extra.setdefault('f1_vals', {})[out['inst']] = (inst, vals, vt)
+    if {'HIT-val', 'HIT-test'} <= set(extra.get('f1_vals', ())):
+        # READING (A13.11, F1 under HiT's protocol, with A13.8, "pass 2 ... computes every metric from pass 1's files
+        # alone", and A13.6's tie classes "both directions together where a metric compares them"): F1 compares test
+        # values with a threshold among the val values, so pass 1 writes one tie-class list of HiT val's and HiT test's
+        # G values (val rows first, then test rows, all 21 slots, rows keyed val:<row> and test:<row>), with its
+        # value-stream SHA-256 and side file like every code file; pass 2 computes F1 from it alone. Tie classes are
+        # ordinal, so theta's class and each test value's place against it are those of the separate lists.
+        (vi, vv, vt), (ti, tv, _) = extra['f1_vals']['HIT-val'], extra['f1_vals']['HIT-test']
         cert = SC.Certifier()
-        (vv, sv), (tv, stv) = extra['f1_vals']['HIT-val'], extra['f1_vals']['HIT-test']
-        for setting, slots in (('random', range(0, 11)), ('hard', [0] + list(range(11, 21)))):
-            def flat_lab(rows):
-                vals_, labs = [], []
-                for row in rows:
-                    for s in slots:
-                        vals_.append(row[s])
-                        labs.append(s == 0)
-                return vals_, labs
-            a, la = flat_lab(vv)
-            b, lb = flat_lab(tv)
-            r = SC.f1_hit(cert, a, la, b, lb)
-            f1[setting] = {'theta_code': r['theta_code'], 'f1_val': fstr(r['f1_val']), 'f1_test': fstr(r['f1_test']),
-                           'f1_test_float': float(r['f1_test']), 'test_counts': r['test_counts']}
-        return {'files': files, 'f1': f1}
+        t0 = time.perf_counter()
+        codes, values, info, side = code_values(vt, [v for row in vv for v in row] + [v for row in tv for v in row],
+                                                cert)
+        joint = replace(ti, name='HIT-valtest', rows=[JointRow(f'val:{r.row}') for r in vi.rows]
+                        + [JointRow(f'test:{r.row}') for r in ti.rows], slots=ti.slots)
+        iname = f'HIT-valtest-s{joint.slots}'
+        fkey = fkey_of(iname, job['arm'], 'G', '-', job['table'])
+        files[fkey] = write_code_file(cfg, fkey, 'hit', joint, codes, values, info, side, cert,
+                                      {'vtype': vt, 'wall_s': time.perf_counter() - t0, 'relabel': False,
+                                       'inst': iname, 'base_inst': 'HIT-valtest', 'arm': job['arm'], 'form': 'G',
+                                       'rule': '-', 'table': job['table'], 'slots': joint.slots,
+                                       'joint_of': ['HIT-val', 'HIT-test'], 'val_rows': len(vi.rows),
+                                       'test_rows': len(ti.rows)})
     return {'files': files}
 
 
@@ -1683,9 +1833,13 @@ def manifest_check(cfg, world, insts, log):
                                                                                         'gloveCovered', None),
             'WB': ('suite-6891e0e-wbless-test', 'covered', 'U_full'), 'SL': ('simlex-fda1b39-nouns', 'covered', 'U_full'),
             'MEN': ('men-0d05a99-nn', 'covered', 'U_full'), 'MEN-glove': ('men-0d05a99-nn', 'gloveCovered', None),
-            'WSR-glove': ('ws353-e2de627-rel', 'gloveCovered', None)}
+            'WSR-glove': ('ws353-e2de627-rel', 'gloveCovered', None),
+            'BD-at': ('suite-6891e0e-bless-test', 'covered', 'U_at'), 'WB-at': ('suite-6891e0e-wbless-test', 'covered',
+                                                                                  'U_at')}
     bad = []
     for name, (iid, kind, u) in want.items():
+        if name not in insts:                     # A13.11's reported instances exist only when the reports run
+            continue
         e = m[iid][kind][u] if u else m[iid][kind]
         if e['rowsSha256'] != insts[name].pair_set_sha or e['count'] != len(insts[name].rows):
             bad.append(name)
@@ -1757,7 +1911,8 @@ def exact_plan(cfg, insts):
         for inst in ('WSS', 'WSC', 'WSR'):
             for a in list(SIX) + ['WN']:
                 add(a, inst, rep, ('Sym', 'max'))
-        for inst in ('BD-val', 'WB-val', 'LEDS-test', 'EVAL-test', 'SHW-test', 'WB-all', 'BIB-all', 'HL-split'):
+        for inst in ('BD-val', 'WB-val', 'LEDS-test', 'EVAL-test', 'SHW-test', 'WB-all', 'BIB-all', 'HL-split',
+                     'BD-suite', 'WB-suite'):
             for a in list(SIX) + ['WN']:
                 add(a, inst, rep, ('G', 'max'))
         for a in ('H3', 'H2'):
@@ -2255,6 +2410,13 @@ def learned_plan(cfg, world, insts, tuning, trained, floors):
                          {'inst': 'HL-at', 'form': 'Groot', 'rule': 'max'}]
             if 'HITR-test' in insts:
                 outs.append({'inst': 'HITR-test', 'form': 'G', 'rule': '-', 'slots': 21})
+            if cfg.reported:
+                # A13.11 (reported): NK17 scores on HiT test (both settings) and HL within U_@; L14's tables on the L13
+                # rows (BD, WB and BD-dir covered in U_@)
+                outs += [{'inst': 'HIT-test', 'form': 'NK17', 'rule': '-', 'slots': 21},
+                         {'inst': 'HL-at', 'form': 'NK17', 'rule': 'max'},
+                         {'inst': 'BD-at', 'form': 'G', 'rule': 'max'}, {'inst': 'WB-at', 'form': 'G', 'rule': 'max'},
+                         {'inst': 'BD-dir-at', 'form': 'G', 'rule': 'max'}]
         jobs.append(learned_hit_job(key, r, outs, 'learned' if r['kind'] == 'measured' else 'edge-shuffled',
                                     {'est': 200.0}))
     for key, r in floors.items():
@@ -2293,8 +2455,12 @@ def step_decisive(cfg, ctx):
     tjobs = training_plan(cfg, rates, tuning)
     n = len(world.at.nodes)
     hit_rows = len(insts['HIT-test'].rows)
+    n_meas = sum(1 for j in tjobs if j['kind'] == 'measured')
+    val_rows = len(insts['HIT-val'].rows) if insts.get('HIT-val') is not None else 0
     learned_lines = (len(tuning['runs']) * hit_rows * 22 + sum(1 for j in tjobs if j['kind'] in ('measured', 'shuffled'))
-                     * hit_rows * 21 * 4 + len(cfg.cells) * 5 * hit_rows * 21)
+                     * hit_rows * 21 * 4 + len(cfg.cells) * 5 * hit_rows * 21
+                     + (n_meas * hit_rows * 21 if cfg.reported else 0)
+                     + n_meas * (val_rows + hit_rows) * 21)          # F1's joint val + test lists (A13.8, A13.11)
     disk_preflight(cfg, ctx, plan_lines(insts, xjobs) * CODE_LINE_BYTES + learned_lines * CODE_LINE_BYTES
                    + sum(table_bytes(n, j['d'], j['geometry']) for j in tjobs if j['kind'] != 'replay')
                    + len(cfg.cells) * 5 * table_bytes(n, 3, 'lorentz'), 'the decisive run')
@@ -2353,7 +2519,6 @@ def step_decisive(cfg, ctx):
     for j in ljobs:
         for fk, f in lres[j['key']]['files'].items():
             files[fk] = dict(f, table=j['table'], table_kind=j['arm'])
-    ctx['f1'] = {j['table']: lres[j['key']].get('f1') for j in ljobs if lres[j['key']].get('f1')}
     recheck_tree(cfg, ctx, 'before pass 2')
     return pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, rates, ssha, trained, floors,
                            replay, pre_runs, P)
@@ -2675,7 +2840,12 @@ class Pass2:
                             'W*': self.rho_iv(inst, S('H3'), S(f'W-{i_w}'), f'rho(H3) - rho(W_{i_w}) on {st}')}
             gold = self.gold(inst)
             pg = [self.permuted(gold, inst.perm_seed + i) for i in self.perms]
-            for arm in SIX:
+            # READING (A13 L15 control 2, "for every arm and set"): every arm of L15's Arms list on the sets it reads.
+            # On SL and MEN: the six exact arms and the controls K3, S-full_i and W_i (each of the 20 permutations an
+            # arm, as A13.4 defines them), all with Sym; on (b)'s sets: H3 with Sym and GloVe 300-d. The readings that
+            # the Arms list marks as reported (H3 with G against GloVe on HL; GloVe at 50-d, item 11) decide nothing
+            # and are not banded.
+            for arm in l15_control2_arms(self.perms):
                 control2.append({'arm': arm, 'set': st, 'n': len(inst.rows),
                                  'rhos': [ST.rho(S(arm), g) for g in pg]})
         b, control3 = {}, {}
@@ -2691,7 +2861,9 @@ class Pass2:
                 control2.append({'arm': arm, 'set': st, 'n': len(inst.rows), 'rhos': [ST.rho(codes, g) for g in pg]})
             control3[st] = ([ST.rho(self.C(st, f'GloVe-vec-{i}', 'cos', '-'), gold) for i in self.perms],
                             len(inst.rows))
-        dec = ST.decide_l15(a, b, control1, control2, control3)
+        need = [(arm, st) for st in ST.L15_A_SETS for arm in l15_control2_arms(self.perms)]
+        need += [(arm, st) for st in ST.L15_B_SETS for arm in ('H3', 'GloVe-300')]
+        dec = ST.decide_l15(a, b, control1, control2, control3, required=need)
         dec['intervals'] = {'a': a, 'b': b, 'control1': control1}
         dec['control2_rho'] = control2
         dec['control3_rho'] = {k: v[0] for k, v in control3.items()}
@@ -2826,6 +2998,8 @@ class Pass2:
         out = []
         for fk in sorted(self.files):
             f = self.files[fk]
+            if f.get('joint_of'):
+                continue                    # F1's joint val + test list: its metric is F1, reported by Pass2.f1
             inst = self.insts[f['base_inst']]
             claim = claims_of.get(fk) or self.learned_claim(f)
             e = {'fkey': fk, 'inst': f['inst'], 'base_inst': inst.name, 'arm': f['arm'], 'form': f['form'],
@@ -2850,6 +3024,16 @@ class Pass2:
                 e['metrics'].append(('rho', None, r))
                 pe, op = ST.rho_tie_bounds(codes, gold)
                 e['tie_bounds'] = {'pessimistic': pe, 'optimistic': op}
+            elif inst.folds is not None:
+                # the suite's own detection protocol (A13.11): its records carry the protocol's test-fold AP, not an
+                # AP over the validation and test rows together
+                val = set(inst.folds['val'])
+                m = self.gold_map(inst.gold)
+                res = ST.suite_detection(codes, ['val' if r in val else 'test' for r in inst.pair_rows],
+                                         [bool(m[r]) for r in inst.pair_rows], [bool(m[r]) for r in inst.folds['oov_test']])
+                e['suite_detection'] = res
+                e['metrics'].append(('suite-ap', None, res['ap']))
+                e['metrics'].append(('suite-ap-sklearn', None, res['ap_sklearn']))
             elif inst.name == 'WB-all':
                 info = {}
                 res = ST.suite_threshold(codes, self.labels(inst), seed=self.cfg.seeds.suite, info=info)
@@ -2936,7 +3120,7 @@ class Pass2:
                          'file_words_absent_raw': len(absent), 'scores': 'equal to the maximum over senses'}
         return out
 
-    def rep_l13(self, closure):
+    def rep_l13(self, closure, l14x=None):
         out = {}
         BD = self.insts['BD']
         lab = self.labels(BD)
@@ -2962,6 +3146,9 @@ class Pass2:
                     cf, cr = self.C('BD-dir', arm)
                     out['direction_non_closure'][arm] = ST.accuracy([cf[i] for i in sel], [cr[i] for i in sel])
         out['closure_membership'] = {'forward': sum(fw), 'reverse': sum(rv), 'rows': len(fw)}
+        out['suite_detection_protocol'] = self.suite_protocol()
+        if l14x is not None:
+            out['l14_tables_on_these_rows'] = self.l14_on_l13(l14x['meas'])
         if 'EVAL-test' in self.insts and self.world.pos == 'noun':
             ev = self.insts['EVAL-test']
             rows = S2D.suite_words('eval', self.world.store)
@@ -2979,6 +3166,128 @@ class Pass2:
                 if self.has('EVAL-test', arm, 'G') and any(le[i] for i in ie):
                     c = self.C('EVAL-test', arm)
                     out['eval_distinct'][arm] = ST.ap_exact([c[i] for i in ie], [le[i] for i in ie])
+        return out
+
+    def suite_protocol(self):
+        """A13.11's "the suite's own detection protocol (OOV rows at the lowest in-vocabulary validation score)" on
+        L13's BLESS and WBLESS: per arm (the six and WN, by G with the maximum over senses), every test row the arm
+        does not cover takes its lowest in-vocabulary validation score, and AP is taken over the whole test fold,
+        pessimistic and in sklearn's convention (stats2.suite_detection). Reported; it decides nothing."""
+        if self.world.pos != 'noun':
+            return {'applies': False, 'why': "the dry detection sets have no validation fold (A13.13: the suite's "
+                                             "validation folds are not dry data)"}
+        out = {}
+        for st, spec in (('BD-suite', 'bless'), ('WB-suite', 'wbless')):
+            inst = self.insts.get(st)
+            if inst is None or not inst.rows:
+                continue
+            m = self.gold_map(spec)
+            val = set(inst.folds['val'])
+            folds = ['val' if r in val else 'test' for r in inst.pair_rows]
+            labels = [bool(m[r]) for r in inst.pair_rows]
+            oov = [bool(m[r]) for r in inst.folds['oov_test']]
+            ent = {'iid': inst.iid, 'pairSetSha': inst.pair_set_sha, 'rows_in_vocabulary': len(inst.rows),
+                   'val_rows_in_vocabulary': len(val), 'oov_test_rows': len(oov), 'arms': {}}
+            for arm in list(SIX) + ['WN']:
+                if self.has(st, arm, 'G'):
+                    ent['arms'][arm] = ST.suite_detection(self.C(st, arm), folds, labels, oov)
+            out[st] = ent
+        return out
+
+    def l14_on_l13(self, meas):
+        """A13.11's "L14's tables on these rows": each measured table read by G at o on BD, WB and BD-dir covered in
+        U_@ (senses in U_@): detection AP (pessimistic, exact) on BD-at and WB-at, direction accuracy on BD-dir-at's
+        True rows, and per (d, seed) the exact Lorentz - Euclidean differences. Reported; no interval."""
+        out = {'pair_sets': {}, 'tables': {}, 'lorentz_minus_euclid': {}}
+        names = [n for n in ('BD-at', 'WB-at', 'BD-dir-at') if n in self.insts and self.insts[n].rows]
+        lab = {n: self.labels(self.insts[n]) for n in names}
+        for n in names:
+            out['pair_sets'][n] = {'iid': self.insts[n].iid, 'rows': len(self.insts[n].rows),
+                                   'pairSetSha': self.insts[n].pair_set_sha,
+                                   'true_rows': sum(lab[n])}
+        vals = {}
+        for (g, d, j), r in sorted(meas.items()):
+            if not r.get('snap_sha'):
+                continue
+            ent = {}
+            for n in names:
+                if not self.has(n, 'learned', 'G', 'max', r['key']):
+                    continue
+                c = self.C(n, 'learned', 'G', 'max', r['key'])
+                if self.insts[n].kind == 'dir':
+                    sel = [i for i, t in enumerate(lab[n]) if t]
+                    ent[n] = {'accuracy': ST.accuracy([c[0][i] for i in sel], [c[1][i] for i in sel]) if sel else None}
+                elif any(lab[n]):
+                    ent[n] = {'ap': ST.ap_exact(c, lab[n]), 'ap_sklearn': ST.ap_sklearn(c, lab[n])}
+            out['tables'][f'{g}-{d}-s{r["seed"]}'] = ent
+            vals[(g, d, j)] = ent
+        for (g, d, j), ent in sorted(vals.items()):
+            if g != 'lorentz' or ('euclid', d, j) not in vals:
+                continue
+            other = vals[('euclid', d, j)]
+            diff = {}
+            for n, e in ent.items():
+                k = 'accuracy' if 'accuracy' in e else 'ap'
+                if n in other and e[k] is not None and other[n][k] is not None:
+                    diff[n] = e[k] - other[n][k]
+            out['lorentz_minus_euclid'][f'd{d}/j{j}'] = diff
+        return out
+
+    def coverage(self):
+        """A13.11's "every set and arm: coverage and the vocabulary each arm misses" (reported): per word-pair
+        instance, the rows the word-level selection kept and the rows covered (its pair set), and for each vocabulary an
+        arm reads (arm_vocabulary: the senses in the instance's universe, index.<pos> for W, GloVe 6B's words for
+        GloVe) the word types of the selected rows it misses (senses.missed_words): their count, the SHA-256 of their
+        N_S forms and the rows holding one, never the words (A13.2). HiT's rows use names, which the count checks map
+        one-to-one onto U_@ (A13.9)."""
+        world = self.world
+        vocab = glove_vocabulary(world)
+        test = {'U_full': lambda w: bool(SE.senses(w, world.U_full, world.wn, world.pos)),
+                'U_at': lambda w: bool(SE.senses(w, world.U_at, world.wn, world.pos)),
+                'index': lambda w: SE.N_S(w) in world.index,
+                'glove': lambda w: SE.in_vocab(w, vocab)}
+        arms = {}
+        for f in self.files.values():
+            arms.setdefault(f['base_inst'], set()).add(f['arm'])
+        out = {}
+        for name, inst in sorted(self.insts.items()):
+            if inst.kind == 'hit' or inst.cand is None:
+                continue
+            by = {}
+            for a in sorted(arms.get(name, ())):
+                by.setdefault(arm_vocabulary(a, inst.universe), []).append(a)
+            out[name] = {'iid': inst.iid, 'selected_rows': len(inst.cand), 'covered_rows': len(inst.rows),
+                         'word_types': len(SE.word_types([(x, y) for _, x, y in inst.cand])),
+                         'arms_by_vocabulary': by,
+                         'missed': {v: SE.missed_report(*SE.missed_words(inst.cand, test[v])) for v in sorted(by)}}
+        return out
+
+    def nk18(self, tuning, trained, floors):
+        """A13.11's "Nickel & Kiela 2018's diagnostic, the Spearman rho between r and sp/(sp + lp), for the tables and
+        the exact trees" (reported): over the nodes of U_@ with sp and lp on E (senses.sp_lp), rho (exact, average
+        ranks) between each table's radius from o (|n|^2 orders it in both learned geometries) and sp/(sp + lp), for
+        every learned table the decisive run holds (tuning, measured, edge-shuffled and floors) and for H3 and H2.
+        READING (A13.11, "the tables"): every learned table of the run, not the measured ones alone; the exact trees
+        are read on the same nodes (their points of U_@'s synsets) and the same ranks."""
+        g = self.world.at
+        nodes = g.nodes
+        m = SE.sp_lp(g)
+        splp = [m[o] for o in nodes]
+        pos = ST.nk18_positions(splp)                       # the ranks sp/(sp + lp), computed once for every table
+        out = {'nodes': len(nodes), 'roots': len(g.roots), 'max_sp': max(a for a, _ in splp),
+               'max_lp': max(b for _, b in splp), 'exact_trees': {}, 'tables': {}}
+        for name in ('H3', 'H2'):
+            t = base_table(self.world, name)
+            out['exact_trees'][name] = ST.nk18_rho([SC.radius_key(t, o) for o in nodes], splp, pos)
+        tabs = [(tuning_key(r['geometry'], r['d'], r['lr'], r['seed']), dict(r, kind='tuning'))
+                for r in tuning['runs'] if r.get('snap_sha')]
+        tabs += [(k, r) for k, r in sorted(trained.items()) if r['kind'] in ('measured', 'shuffled')
+                 and r.get('snap_sha')]
+        tabs += sorted(floors.items())
+        for key, r in tabs:
+            N = load_snapped(self.cfg, key, r['snap_sha'], r['geometry'], nodes)
+            out['tables'][key] = {'kind': r['kind'], 'geometry': r['geometry'], 'd': r['d'],
+                                  'rho': ST.nk18_rho(SC.snapped_radius_keys(N), splp, pos)}
         return out
 
     def rep_l15(self):
@@ -3001,12 +3310,15 @@ class Pass2:
             out['WN-path on SL against path2vec 0.513'] = {'rho': r, 'gap': gap, 'gap_above_0.005': gap > 0.005}
         return out
 
-    def rep_l14(self, x, floors, trained):
+    def rep_l14(self, x, floors, trained, tuning=None):
         """A13.11's L14 reports: floors, G_root and the distance-only score (Lorentz - Euclidean, with sign agreement),
         the macro mean RR with its bootstrap over positive synsets, RR off the 12 most frequent positives, HIT-R, F1
-        and the radius ranks of the seven labels under P."""
+        and the radius ranks of the seven labels under P; NK17 scores of the measured tables (HiT test, both settings,
+        and HL within U_@); H3 against the measured tables on HL within U_@ as word-level intervals (with the row
+        bootstrap beside them); Nickel & Kiela 2018's diagnostic."""
         out = {}
         T = self.insts['HIT-test']
+        HLa = self.insts['HL-at']
         rr_of, tab, meas = x['rr_of'], x['tab'], x['meas']
         out['floors'] = {}
         for key, r in sorted(floors.items()):
@@ -3039,8 +3351,28 @@ class Pass2:
                 if c2 is not None:
                     ent[form] = {st: fstr(ST.mean_exact(hit_rr(c2, RANDOM_SLOTS if st == 'random' else HARD_SLOTS)))
                                  for st in ('random', 'hard')}
-            ent['f1'] = self.ctx.get('f1', {}).get(r['key'])
+            nk = self.hit_codes(r['key'], form='NK17')
+            if nk is not None:
+                ent['NK17'] = {st: fstr(ST.mean_exact(hit_rr(nk, RANDOM_SLOTS if st == 'random' else HARD_SLOTS)))
+                               for st in ('random', 'hard')}
+            if self.has('HL-at', 'learned', 'NK17', 'max', r['key']):
+                ent.setdefault('NK17', {})['rho_hl_at'] = self.rho_of(HLa, self.C('HL-at', 'learned', 'NK17', 'max',
+                                                                                  r['key']))
+            ent['f1'] = self.f1(r['key'])
             out['tables'][f'{g}-{d}-s{r["seed"]}'] = ent
+        # H3 against the learned tables on HL within U_@ (A13.11): word-level intervals, the row bootstrap beside
+        hl = {}
+        if self.has('HL-at', 'H3', 'G', 'max'):
+            H = self.C('HL-at', 'H3', 'G', 'max')
+            hl['rho_H3'] = self.rho_of(HLa, H)
+            for (g, d, j), r in sorted(meas.items()):
+                if r.get('snap_sha') and self.has('HL-at', 'learned', 'G', 'max', r['key']):
+                    hl[f'{g}-{d}-s{r["seed"]}'] = self.rho_iv(
+                        HLa, H, self.C('HL-at', 'learned', 'G', 'max', r['key']),
+                        f'rho(H3) - rho({g}, d={d}, seed {r["seed"]}) on HL-at')
+        out['h3_against_learned_on_hl_at'] = hl
+        if tuning is not None:
+            out['nk18_r_against_sp_lp'] = self.nk18(tuning, trained, floors)
         cells = {}
         for d in (2, 3):
             for j in range(len(self.cfg.seeds.training)):
@@ -3086,11 +3418,39 @@ class Pass2:
         if exact:
             exact['flag'] = ('reconstruction (A13.11): the exact trees encode E, and most closure edges by prefix')
         out['exact_trees_on_hit_test'] = exact
+        # READING (A13.8 with A13.11 and L14 control 2's "computed in binary64"): the relabelled tails, |dRR|, Nickel &
+        # Kiela 2018's diagnostic (above) and the labels' radius ranks (below) are reported values that A13 defines
+        # outside pass 1's files of tie-class codes; they are computed here from the tables, each read only after its
+        # float or snapped SHA-256 matches the run record, and none reads a gold, label or TYPE field
         out['relabel_tail'] = relabel_tail(self.cfg, self.world, T, meas)
         out['delta_rr_snapped_vs_float64'] = delta_rr(self.cfg, self.world, T, meas,
                                                       lambda key, st: rr_of(key, self.hit_codes(key), st))
         if self.world.pos == 'noun':
             out['relabel_label_radius_ranks'] = self.label_radius_ranks(meas)
+        return out
+
+    def f1(self, table):
+        """F1 under HiT's protocol (A13.11, reported; measured tables), from the table's joint val + test code file
+        (job_score_learned's READING): per setting, theta is the val code with the best val F1 (ties to the smallest;
+        stats2.f1_select), a pair is predicted positive when its code is at least theta, and test is scored at that
+        theta. Slot 0 is the positive, the setting's other slots the negatives (HiT's labels are structural)."""
+        fk = next((k for k, f in self.files.items() if f.get('inst') == 'HIT-valtest-s21' and f.get('form') == 'G'
+                   and f.get('table') == table), None)
+        if fk is None:
+            return None
+        rows = self.codes_fk(fk)
+        n_val = self.files[fk]['val_rows']
+        if len(rows) != n_val + self.files[fk]['test_rows']:
+            raise ValueError(f'{fk}: {len(rows)} rows, not val + test')
+        out = {}
+        for setting, slots in (('random', (0,) + RANDOM_SLOTS), ('hard', (0,) + HARD_SLOTS)):
+            def flat(part):
+                return [cs[s] for cs in part for s in slots], [s == 0 for _ in part for s in slots]
+            vc, vl = flat(rows[:n_val])
+            tc, tl = flat(rows[n_val:])
+            r = ST.f1_threshold(vc, vl, tc, tl)
+            out[setting] = {'theta_code': r['theta_code'], 'f1_val': fstr(r['f1_val']), 'f1_test': fstr(r['f1_test']),
+                            'f1_test_float': float(r['f1_test']), 'test_counts': r['test_counts']}
         return out
 
     def label_radius_ranks(self, meas):
@@ -3308,8 +3668,9 @@ def pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, r
         claims['L14'] = l14
         claims['L15'] = p2.l15()
         entries = p2.file_metrics(claims_of)
-        reported = {'L12': p2.rep_l12(closure), 'L13': p2.rep_l13(closure), 'L14': p2.rep_l14(l14x, floors, trained),
-                    'L15': p2.rep_l15(), 'diagnostics': p2.diagnostics()}
+        reported = {'L12': p2.rep_l12(closure), 'L13': p2.rep_l13(closure, l14x),
+                    'L14': p2.rep_l14(l14x, floors, trained, tuning), 'L15': p2.rep_l15(),
+                    'diagnostics': p2.diagnostics(), 'coverage': p2.coverage()}
         lb = lbench_lines(cfg, ctx, entries, insts, files, ssha, trained, floors, tuning)
     finally:
         S2D.close_gold()
@@ -3523,7 +3884,7 @@ def start(cfg, step, console_path):
                 text = fh.read()
             msha = sha256_file(MANIFEST_FILE)
             try:
-                extra['definitions_amendment'] = frozen_in_amendment(text, msha, 13)
+                extra['definitions_amendment'] = definitions_amendment(text, msha, 13)
             except ValueError as e:
                 raise Refused(f'the definitions amendment must freeze the instance manifest by its SHA-256 '
                               f'{msha[:12]}... before registered tuning and the decisive run (A13.2, A13.15 step 4): '
@@ -3547,6 +3908,8 @@ def start(cfg, step, console_path):
     starts = P4.record_start(cfg, step, gs['head'], mark, renv)
     load = LoadLog(log, cfg.load_interval)
     starts[-1]['loadavg'] = load.sample('start')
+    starts[-1]['interpreter_flags'] = flags = interpreter_flags()
+    log(f'interpreter flags: isolated (-I) {flags["isolated"]}, no bytecode (-B) {flags["dont_write_bytecode"]}')
     log(f'environment {esha[:12]}: Python {renv["python"]}, numpy {renv["numpy"]}, numba {renv["numba"]}')
     if len(starts) > 1:
         log(f'start {len(starts)} of this step in this cache (earlier: '
@@ -3613,6 +3976,23 @@ def selftest(cfg, steps=('time', 'tune', 'decisive')):
     return 0
 
 
+ISOLATED_STEPS = ('time', 'tune', 'decisive')       # and --dry: main() refuses them unless under_b_i() (A13.2)
+
+
+def under_b_i():
+    """Whether the interpreter runs under -B -I (A13.2's hygiene: isolated, and writing no bytecode); main() refuses
+    the steps that parse fetched data otherwise. A function so that the tests can stand in for the flags."""
+    return bool(sys.flags.isolated) and bool(sys.flags.dont_write_bytecode)
+
+
+def interpreter_flags():
+    """The interpreter's flags that A13.2's hygiene names, recorded at every start."""
+    f = sys.flags
+    return {'isolated': bool(f.isolated), 'dont_write_bytecode': bool(f.dont_write_bytecode),
+            'ignore_environment': bool(f.ignore_environment), 'no_user_site': bool(f.no_user_site),
+            'safe_path': bool(getattr(f, 'safe_path', False)), 'sys_path_0': sys.path[0] if sys.path else None}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description='Stage 2 of the Hyperbolic Lexicon preregistration: L12-L15 (A13).')
     m = ap.add_mutually_exclusive_group()
@@ -3652,6 +4032,14 @@ def main(argv=None):
                           'a folder outside it')
         cfg = make_cfg('selftest', a.workers, out=out, shape='verb' if a.dry else 'noun')
         return selftest(cfg)
+    if (a.dry or step in ISOLATED_STEPS) and not under_b_i():
+        # READING (A13.2, "parsing runs under python3 -B -I with explicit paths"): the steps that read the pinned
+        # downloads (--dry, --tune, --decisive) and --time (the store and WordNet) refuse an interpreter without -B
+        # and -I; the self-test (a synthetic world) and --write-settings (this project's own JSON) parse nothing
+        # fetched. Every start records the flags (interpreter_flags).
+        given = ' '.join(argv if argv is not None else sys.argv[1:])
+        return refuse('this step parses fetched data and runs only under python3 -B -I (A13.2): rerun it as '
+                      f'"python3 -B -I {os.path.basename(__file__)} {given}"')
     if a.dry:
         cfg = make_cfg('dry', a.workers, a.allow_dirty)
         rc, world = run_step(cfg, 'tune')

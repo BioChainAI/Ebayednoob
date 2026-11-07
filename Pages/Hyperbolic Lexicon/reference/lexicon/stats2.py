@@ -14,7 +14,11 @@ Metrics (exact):
     rr(pos_code, neg_codes), mean_exact, macro_rr(rrs, groups)       HiT's pessimistic RR, the per-row and macro means
     accuracy(codes_f, codes_r)           direction accuracy #{f > r}/n
     f1_select(val_codes, val_labels), f1_from_predictions(pred, labels)   F1 under HiT's protocol (reported)
+    f1_threshold(val_codes, val_labels, test_codes, test_labels)          the same from one joint val + test list
     suite_threshold(h, y, ...)           the suite's 1,000 x 2% threshold protocol (WBLESS, BiBLESS; reported)
+    suite_detection(codes, folds, ...)   the suite's own detection protocol: OOV test rows at the lowest in-vocabulary
+                                         validation score, AP over the whole test fold (reported)
+    nk18_rho(radius_keys, splp)          Nickel & Kiela 2018's diagnostic, rho between r and sp/(sp + lp) (reported)
 Intervals (95% percentile bootstrap, 10,000 resamples, a fresh numpy default_rng(seed) per interval, seed 7):
     ci_mean                              rank.ci_mean, unchanged (per-row RR differences on HiT)
     ci_rho(A, B, gold, rows, words)      the word-level (pigeonhole) bootstrap of rho(A) - rho(B) (decided)
@@ -213,6 +217,26 @@ def rho_tie_bounds(codes, gold):
     return tuple(out)
 
 
+def nk18_positions(splp):
+    """(the nodes kept, the dense codes of their positions sp/(sp + lp)) for nk18_rho: a node with sp + lp = 0 (one
+    without an edge) has no position and is left out."""
+    keep = [i for i, (a, b) in enumerate(splp) if a + b > 0]
+    return keep, exact_codes([Fraction(splp[i][0], splp[i][0] + splp[i][1]) for i in keep])
+
+
+def nk18_rho(radius_keys, splp, positions=None):
+    """Nickel & Kiela 2018's diagnostic (A13.11, reported for the learned tables and the exact trees): Spearman's rho,
+    on average ranks (A13.7's rho, exact), between the radius r(s) = d(o, s) of each node and its position
+    sp/(sp + lp) in the hierarchy (senses.sp_lp). radius_keys: per node, an exact key increasing with r (rho reads ranks
+    only: scores2.radius_key or snapped_radius_keys); splp: per node, (sp, lp); positions: nk18_positions(splp), when
+    many tables share the nodes. A node with sp + lp = 0 has no position and is left out; U_@ and the dry verb graph
+    hold none. Returns a Rho (.n the nodes kept)."""
+    if len(radius_keys) != len(splp):
+        raise ValueError('radius keys and (sp, lp) differ in length')
+    keep, gold = positions if positions is not None else nk18_positions(splp)
+    return rho(exact_codes([radius_keys[i] for i in keep]), gold)
+
+
 def rho_diff_float(ra, rb):
     """The exact difference rho_A - rho_B rounded to binary64 (via 60 decimal digits): an interval's estimate.
     READING (A13.7, "the exact full-sample difference, rounded to binary64"): the difference is evaluated at 60
@@ -303,6 +327,19 @@ def f1_from_predictions(pred, labels):
     return (Fraction(2 * tp, den) if den else Fraction(0)), {'tp': tp, 'fp': fp, 'fn': fn, 'tn': tn}
 
 
+def f1_threshold(val_codes, val_labels, test_codes, test_labels):
+    """F1 under HiT's protocol (reported, A13.11) from codes of one tie-class list over the val and the test values
+    (pass 1's joint file, so codes are shared): theta is the val code with the best val F1, ties to the smallest
+    (f1_select); a test pair is predicted positive when its code is at least theta. Tie classes are ordinal (A13.6),
+    so this equals theta chosen among the certified val values and each test value compared with it under cmp
+    (scores2.f1_hit). Returns {'theta_code', 'f1_val', 'f1_test', 'test_counts'}."""
+    if len(val_codes) != len(val_labels) or len(test_codes) != len(test_labels):
+        raise ValueError('codes and labels differ in length')
+    theta, f1v = f1_select(val_codes, val_labels)
+    f1t, counts = f1_from_predictions([c >= theta for c in test_codes], test_labels)
+    return {'theta_code': theta, 'f1_val': f1v, 'f1_test': f1t, 'test_counts': counts}
+
+
 def f1_select(val_codes, val_labels):
     """HiT's threshold (reported, spec section 7): theta ranges over the distinct val codes, a pair is positive when
     its code is >= theta, theta maximises val F1 with ties to the smallest. Returns (theta, F1 at theta)."""
@@ -375,6 +412,37 @@ def suite_threshold(h, y, direction=None, seed=SUITE_SEED, trials=SUITE_TRIALS, 
     return {'acc_val': float(np.mean(val_scores)) if val_scores else None,
             'acc_test': float(np.mean(test_scores)) if test_scores else None,
             'trials': trials, 'skipped': skipped}
+
+
+def suite_detection(codes, folds, labels, oov_test_labels):
+    """The suite's own detection protocol (A13.11, reported for L13's BLESS and WBLESS): the arm scores the
+    in-vocabulary rows of the validation and test folds in one tie-class list (codes, folds and labels per row, file
+    order); every out-of-vocabulary row of the test fold (oov_test_labels: their labels) takes the lowest
+    in-vocabulary validation score (its code, so it ties with that class); AP is taken over the whole test fold, with
+    pessimistic ties (ap_exact) and in sklearn's average_precision_score convention (ap_sklearn), which the suite calls.
+    No randomness. Returns the two APs (exact Fractions; None without a True test row) and the counts.
+    READING (A13.11, "OOV rows at the lowest in-vocabulary validation score"): an arm is out of vocabulary on a row it
+    does not cover (A13.3); with no in-vocabulary validation row, the lowest in-vocabulary code of the test fold takes
+    the floor's place (flagged; the registered folds hold validation rows)."""
+    codes, folds, labels = list(codes), list(folds), [bool(x) for x in labels]
+    if not (len(codes) == len(folds) == len(labels)):
+        raise ValueError('codes, folds and labels differ in length')
+    if set(folds) - {'val', 'test'}:
+        raise ValueError('folds are val or test')
+    val = [c for c, f in zip(codes, folds) if f == 'val']
+    test = [c for c, f in zip(codes, folds) if f == 'test']
+    from_test = not val
+    if from_test and not test:
+        raise ValueError('no in-vocabulary row')
+    floor = min(val) if val else min(test)
+    oov = [bool(x) for x in oov_test_labels]
+    h = test + [floor] * len(oov)
+    y = [lab for lab, f in zip(labels, folds) if f == 'test'] + oov
+    has = any(y)
+    return {'ap': ap_exact(h, y) if has else None, 'ap_sklearn': ap_sklearn(h, y) if has else None,
+            'test_rows': len(h), 'oov_test_rows': len(oov), 'val_rows_in_vocabulary': len(val),
+            'positives': sum(y), 'oov_positives': sum(oov), 'floor_code': floor, 'floor_from_test': from_test,
+            'test_rows_in_floor_class': sum(1 for c in test if c == floor)}
 
 
 # ================================================================ bootstraps (A13.7; spec section 7)
@@ -762,6 +830,23 @@ L12_N = 2163
 L12_PREVIEW_FLAG = 'registered after a partial preview (A13.20)'
 
 
+def l12_failing_side(iv, m=BAND):
+    """L12(d)'s failing side (A13 L12 Decision (d), "the failing side is reported"): ('low', 'high', 'both' or None,
+    {side: how far the interval passes that end of [-m, +m]}), in float64 as A13.7 reads the band.
+    READING (A13 L12(d), "the failing side is reported"): a side fails when the interval passes that end of the band
+    (low: lo < -0.02, the amount -0.02 - lo; high: hi > +0.02, the amount hi - 0.02); every failing side is reported,
+    'both' when the interval passes both ends (possible only when the part is inconclusive), and a supported part has
+    none. A refuted part fails on one side only (lo > +0.02, or hi < -0.02)."""
+    _, lo, hi = _parts(iv)
+    excess = {}
+    if lo < -m:
+        excess['low'] = -m - lo
+    if hi > m:
+        excess['high'] = hi - m
+    side = 'both' if len(excess) == 2 else next(iter(excess), None)
+    return side, excess
+
+
 def decide_l12(a, b, c, d, control1, control2, control3, control4, n=L12_N):
     """L12 (A13). a: {L12_A cell: interval of rho(H) - rho(F)}; b: {'H3', 'H2': rho(G) - rho(Dep°)}; c: the same for
     rho(G) - rho(Sym); d: rho(H3) - rho(WN). control1: {'K3', 'S-full*': rho(H3) - rho(.)}; control2: {'W*': ...};
@@ -787,11 +872,11 @@ def decide_l12(a, b, c, d, control1, control2, control3, control4, n=L12_N):
         s, r, views, k = _all_above0_part(cells, L12_BC)
         parts[name] = _part_out(s, r, views, [f'({name}): H3 and H2 above 0: {s}; {k} of 2 entirely at or below 0'])
     sd, rd = within(d, BAND), outside(d, BAND)
-    est, lo, hi = _parts(d)
-    side = 'high' if lo > BAND else 'low' if hi < -BAND else ('high' if hi > BAND else 'low' if lo < -BAND else None)
+    side, excess = l12_failing_side(d)
     parts['d'] = _part_out(sd, rd, {'H3-WN': _view(d, within_band=sd, outside_band=rd)},
-                           [f'(d): within [-0.02, +0.02]: {sd}; entirely outside: {rd}; failing side: {side}'],
-                           failing_side=None if sd else side, flag=L12_PREVIEW_FLAG)
+                           [f'(d): within [-0.02, +0.02]: {sd}; entirely outside: {rd}; failing side: {side}'
+                            + ''.join(f'; passes the {k} end by {v!r}' for k, v in excess.items())],
+                           failing_side=side, failing_excess=excess, flag=L12_PREVIEW_FLAG)
     for p in parts.values():
         _apply_void(p, void, why)
     return {'claim': 'L12', 'void': void, 'parts': parts,
@@ -983,17 +1068,25 @@ L15_SET_PARTS = {'SL': ('a',), 'MEN': ('a',), 'MEN-glove': ('b',), 'WSR-glove': 
 L15_B_SETS = ('MEN-glove', 'WSR-glove', 'HL-glove')
 
 
-def decide_l15(a, b, control1, control2, control3):
+def decide_l15(a, b, control1, control2, control3, required=None):
     """L15 (A13). a: {'SL', 'MEN': {L12_A cell: interval of rho(H) - rho(F) under Sym}}; b: {'MEN', 'WSR': interval
     of rho(GloVe) - rho(H3), 'HL': rho(H3) - rho(GloVe)}, each on its set within GloVe; control1: {'SL', 'MEN':
     {'K3', 'S-full*', 'W*': rho(H3) - rho(.)}}; control2: a list of {'arm', 'set', 'rhos' (20), 'n'} with 'set' in
-    L15_SET_PARTS; control3: {(b)'s set: (20 rhos under GloVe vector shuffles, n)}.
+    L15_SET_PARTS; control3: {(b)'s set: (20 rhos under GloVe vector shuffles, n)}. required: the (arm, set) pairs
+    control 2 must hold ("for every arm and set"); a missing or repeated pair raises.
 
     Control 1 failing voids (a); control 2 voids the part that uses the failing set; control 3 voids (b). (a):
     supported if all eight intervals have hi <= +0.02, refuted if any has lo > +0.02. (b): supported if all three lie
     above 0, refuted if any lies entirely at or below 0."""
     c1 = {st: {k: _view(control1[st][k], above_0=above0(control1[st][k])) for k in ('K3', 'S-full*', 'W*')}
           for st in L15_A_SETS}
+    held = [(e['arm'], e['set']) for e in control2]
+    if len(set(held)) != len(held):
+        raise ValueError('control 2 holds an (arm, set) twice')
+    if required is not None:
+        missing = sorted(set(required) - set(held))
+        if missing:
+            raise ValueError(f'control 2 lacks {len(missing)} (arm, set) pairs, e.g. {missing[:3]}')
     c2, void2 = [], set()
     for e in control2:
         if e['set'] not in L15_SET_PARTS:

@@ -331,19 +331,19 @@ code and its tests are being built (step 2); nothing has been scored on any Stag
 drawn.
 
 ```
-python3 -B run_claims_stage2.py --selftest --out <dir> [--dry]   # the whole pipeline (time, tune, settings, decisive)
-                                                         # on tests/stage2_synth.py's synthetic world, seeds 95200 + i,
-                                                         # a 400-resample bootstrap (about 25 s on 2 workers; --dry: the
-                                                         # dry run's shape, verbs and sealing); decides nothing, writes
-                                                         # only under <dir>
-python3 -B run_claims_stage2.py --dry                    # step 3, the dry run (A13.13): verbs, every seed + 3000; dry
+python3 -B -I run_claims_stage2.py --selftest --out <dir> [--dry]   # the whole pipeline (time, tune, settings,
+                                                         # decisive) on tests/stage2_synth.py's synthetic world, seeds
+                                                         # 95200 + i, a 400-resample bootstrap (about 25 s on 2 workers;
+                                                         # --dry: the dry run's shape, verbs and sealing); decides
+                                                         # nothing, writes only under <dir>
+python3 -B -I run_claims_stage2.py --dry                 # step 3, the dry run (A13.13): verbs, every seed + 3000; dry
                                                          # tuning, its settings, the dry decisive run: results/dry/, and
                                                          # every value on a human-rated set in the sealed cache file
-python3 -B run_claims_stage2.py --time                   # before step 5: two epochs per L14 cell on U_@ (seeds 95500 + i);
+python3 -B -I run_claims_stage2.py --time                # before step 5: two epochs per L14 cell on U_@ (seeds 95500 + i);
                                                          # projects the registered total and refuses above 11 h or the disk
-python3 -B run_claims_stage2.py --tune                   # step 5, registered tuning: HiT val only; results/tuning-stage2.json
-python3 -B run_claims_stage2.py --write-settings         # settings-stage2.json; prints its SHA-256 for the lr freeze (step 6)
-python3 -B run_claims_stage2.py --decisive               # step 7, the one decisive run of L12-L15
+python3 -B -I run_claims_stage2.py --tune                # step 5, registered tuning: HiT val only; results/tuning-stage2.json
+python3 -B -I run_claims_stage2.py --write-settings      # settings-stage2.json; prints its SHA-256 for the lr freeze (step 6)
+python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decisive run of L12-L15
 ```
 
 - **The order of work** (A13.15): this code and its tests on synthetic data, the dry data and seeds 95200 + i, then
@@ -354,15 +354,21 @@ python3 -B run_claims_stage2.py --decisive               # step 7, the one decis
   columns and HiT's names, and writes per (instance, arm, form, sense rule, table) a gzip TSV of tie-class codes
   keyed by row number, the SHA-256 of its 120-digit value stream and a side file of the values that took the 240-digit
   path or sit in a numerical tie. Pass 2 opens the gold, runs the label and TYPE count checks, selects BD-dir's True
-  rows, reads each code file only after checking its SHA-256 and computes every metric, control and decision.
+  rows, reads each code file only after checking its SHA-256 and computes every metric, control and decision. F1
+  (reported) reads one code file of HiT val and test together per measured table; the binary64 relabelling tails,
+  |ΔRR|, Nickel & Kiela 2018's diagnostic and the labels' radius ranks, which A13 defines outside these files, are
+  computed in pass 2 from the SHA-checked tables (READING stage2-runner-33, named for the definitions amendment).
 - **Rules.** `--workers W` (1–4, default 4); training in a spawn pool (numba in the workers only), pass-1 scoring in a
   fork pool. Registered `--tune` and `--decisive` refuse an unclean tree (Phase 4's check, scope and repetitions), and
   refuse until an amendment after 13 holds the instance manifest's SHA-256; `--tune` also needs a `--time` record
   within 11 h and the disk; `--decisive` refuses unless only `PREREGISTRATION.md`, `settings-stage2.json`,
   `results/tuning-stage2.json` and tuning's console changed since tuning's commit and the lr-freeze amendment holds
-  the settings' SHA-256, and it rebuilds the instance manifest from the pinned files and refuses another. Before
-  `--dry`, `--tune` and `--decisive` the disk pre-flight refuses a projection above the free space less 2 GB. The load
-  average is recorded at every start and every 10 minutes. `--allow-dirty` is the dry run's only.
+  the settings' SHA-256, and it rebuilds the instance manifest from the pinned files and refuses another. The
+  definitions amendment is the earliest amendment after 13 that holds the manifest's SHA-256; a later amendment may
+  restate it. `--time`, `--dry`, `--tune` and `--decisive` parse fetched data and refuse unless Python runs with
+  `-B -I` (A13.2); every start records the interpreter's flags. Before `--dry`, `--tune` and `--decisive` the disk
+  pre-flight refuses a projection above the free space less 2 GB. The load average is recorded at every start and
+  every 10 minutes. `--allow-dirty` is the dry run's only.
 - **Resume.** Each finished job (a training run, or a pass-1 job with its code and side files) is a line of
   `runs.jsonl` in `~/.cache/hyperbolic-lexicon/stage2-run/<mode>/`; a restart at the same HEAD and code reuses the
   lines whose files still have their SHA-256s, and lists every start.

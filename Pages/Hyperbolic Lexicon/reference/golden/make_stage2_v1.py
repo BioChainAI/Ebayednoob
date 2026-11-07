@@ -196,15 +196,21 @@ def build_manifest(wn, store, vocab300, vocab50=None):
             # READING (A13.2 with A13.8): BD-dir has no entry of its own; its rows are chosen by a label in pass 2, so
             # the manifest (written from word fields only) records BD's covered rows, clusters and GloVe rows for it.
             claims = {('bless', 'test'): 'L13(a) BD and L13(c) BD-dir (pass 2 selects the True rows; both directions '
-                                         'of every covered row are scored); control 3 (gloveCovered)',
-                      ('wbless', 'test'): 'L13(b) WB'}.get((name, fold), 'item 11 (reported)')
+                                         'of every covered row are scored); control 3 (gloveCovered); item 11: '
+                                         "L14's tables on these rows (U_at)",
+                      ('wbless', 'test'): "L13(b) WB; item 11: L14's tables on these rows (U_at)"}.get(
+                (name, fold), 'item 11 (reported)')
+            # A13.11 ("L14's tables on these rows"): the learned tables read BD, BD-dir and WB on their rows covered in
+            # U_at, a universe A13.2 asks the manifest to record for every instance that uses it
+            univ = ('U_full', 'U_at') if fold == 'test' and name in ('bless', 'wbless') else ('U_full',)
             cl = None
             if name == 'bless':
                 cl = ('word1', lambda x, y: x)
             elif name == 'wbless':
                 cl = ('the BLESS concept: word1 if a bless.tsv word1 value, else word2',
                       lambda x, y: stage2data.wbless_cluster(x, y, concepts))
-            e = word_instance(store, wn, U, vocab300, name, sel, len(rows), f"fold == '{fold}'", claims, clusters=cl)
+            e = word_instance(store, wn, U, vocab300, name, sel, len(rows), f"fold == '{fold}'", claims, universes=univ,
+                              clusters=cl)
             if name == 'eval':
                 # READING (A13.11, "EVAL test as distinct ordered pairs"): a distinct N_S pair is represented by its
                 # first row in file order; pass 2 drops and counts the pairs with both labels.

@@ -107,6 +107,34 @@ def test_refusals(argv, capsys):
     assert 'REFUSED' in capsys.readouterr().err
 
 
+def test_parsing_steps_need_b_and_i(monkeypatch, capsys):
+    """A13.2 ("parsing runs under python3 -B -I with explicit paths"): --time, --dry, --tune and --decisive refuse
+    an interpreter without -B and -I before anything runs or is written; under both flags they go on. The self-test,
+    which reads only its synthetic world, and --write-settings are not held to it. run_step is replaced, so nothing
+    runs here."""
+    real = RS.under_b_i
+    assert real() == (bool(sys.flags.isolated) and bool(sys.flags.dont_write_bytecode))
+    calls = []
+
+    def fake_run_step(cfg, step, world=None):
+        calls.append((cfg.mode, step))
+        return 0, None
+    monkeypatch.setattr(RS, 'run_step', fake_run_step)
+    monkeypatch.setattr(RS, 'under_b_i', lambda: False)
+    for argv in (['--time'], ['--dry'], ['--dry', '--allow-dirty'], ['--tune'], ['--decisive', '--workers', '2']):
+        assert RS.main(argv) == 1
+        err = capsys.readouterr().err
+        assert 'REFUSED' in err and 'python3 -B -I' in err and ' '.join(argv) in err
+    assert calls == []
+    monkeypatch.setattr(RS, 'under_b_i', lambda: True)
+    assert RS.main(['--tune']) == 0 and RS.main(['--dry']) == 0 and RS.main(['--time']) == 0
+    assert calls == [('registered', 'tune'), ('dry', 'tune'), ('dry', 'decisive'), ('registered', 'time')]
+    flags = RS.interpreter_flags()
+    assert set(flags) >= {'isolated', 'dont_write_bytecode', 'sys_path_0'}
+    assert flags['isolated'] == bool(sys.flags.isolated)
+    assert flags['dont_write_bytecode'] == bool(sys.flags.dont_write_bytecode)
+
+
 def test_check_tree_and_outputs():
     rel = RS.REL_REF + '/results/'
     clean = {'head': 'abc', 'status_ok': True, 'changed': []}
@@ -150,8 +178,24 @@ def test_registered_steps_refuse_without_the_definitions_amendment(monkeypatch, 
     sha = hashlib.sha256(open(RS.MANIFEST_FILE, 'rb').read()).hexdigest()
     fake = text + f'\n### Amendment 14 · 2026-11-08, Stage 2, the definitions amendment\n\nManifest `{sha}`.\n'
     assert RS.frozen_in_amendment(fake, sha, 13) == 14
+    assert RS.definitions_amendment(fake, sha, 13) == 14
     with pytest.raises(ValueError):
         RS.frozen_in_amendment(text, sha, 13)
+    with pytest.raises(ValueError, match='no amendment after Amendment 13'):
+        RS.definitions_amendment(text, sha, 13)
+    # A later amendment (the lr-freeze amendment, an erratum) may restate the manifest's SHA-256: the definitions
+    # amendment is still the earliest that holds it (A13's notation), while the settings keep A11.4's exactly-one rule
+    ssha = 'ab' * 32
+    later = fake + (f'\n### Amendment 15 · 2026-11-09, Stage 2, the learning rates frozen\n\nSettings `{ssha}`; '
+                    f'the manifest stays `{sha}`.\n')
+    assert RS.definitions_amendment(later, sha, 13) == 14 and RS.frozen_in_amendment(later, ssha, 13) == 15
+    with pytest.raises(ValueError):
+        RS.frozen_in_amendment(later, sha, 13)                    # exactly one: the rule kept for the settings only
+    assert RS.definitions_amendment(later.replace(f'Manifest `{sha}`', 'Manifest pending'), sha, 13) == 15
+    with pytest.raises(ValueError):
+        RS.definitions_amendment(fake, sha[:-1] + 'g', 13)           # not a SHA-256
+    with pytest.raises(ValueError):                                 # inside a longer hex run: not this SHA-256
+        RS.definitions_amendment(fake.replace(f'`{sha}`', f'`{sha}0`'), sha, 13)
     p = tmp_path / 'prereg.md'
     p.write_text(fake, encoding='utf-8')
     monkeypatch.setattr(S2D, 'PREREGISTRATION', str(p))
@@ -626,6 +670,53 @@ def test_selftest_end_to_end(selftest_runs):
     t = json.load(open(os.path.join(res, 'stage2-time.json'), encoding='utf-8'))
     assert set(t['per_epoch_wall_s']) == {'lorentz-2', 'lorentz-3', 'euclid-2', 'euclid-3'}
     assert not any(os.path.exists(os.path.join(RESULTS, n)) for n in ('claims-stage2.json', 'tuning-stage2.json'))
+    # A13.11's reports added by the review: NK18's diagnostic, NK17 on the learned tables, L14's tables on the L13
+    # rows, the suite's own detection protocol, the vocabulary each arm misses, H3 against the learned tables on HL-at
+    rep = rec['reported']
+    nk18 = rep['L14']['nk18_r_against_sp_lp']
+    assert set(nk18['exact_trees']) == {'H3', 'H2'} and len(nk18['tables']) == 16 + 20 + 20 + 20
+    assert all(e['rho']['n'] == nk18['nodes'] for e in list(nk18['tables'].values()) + [
+        {'rho': x} for x in nk18['exact_trees'].values()])
+    hl = rep['L14']['h3_against_learned_on_hl_at']
+    assert len(hl) == 21 and 'rho_H3' in hl
+    assert all(v['unit'] == 'word' and v['row_bootstrap']['unit'] == 'row' and v['n'] == rec['instances']['HL-at']['rows']
+               for k, v in hl.items() if k != 'rho_H3')
+    assert len(rep['L14']['tables']) == 20
+    assert all(set(e['NK17']) == {'random', 'hard', 'rho_hl_at'} for e in rep['L14']['tables'].values())
+    sp = rep['L13']['suite_detection_protocol']
+    assert set(sp) == {'BD-suite', 'WB-suite'} and set(sp['BD-suite']['arms']) == set(RS.SIX) | {'WN'}
+    assert sp['BD-suite']['oov_test_rows'] >= 1 and sp['BD-suite']['val_rows_in_vocabulary'] >= 1
+    for st, base in (('BD-suite', 'BD'), ('WB-suite', 'WB')):
+        for e in sp[st]['arms'].values():         # every test row of the file, the OOV ones at the validation floor
+            assert e['test_rows'] == rec['instances'][base]['selected'] and not e['floor_from_test']
+            assert e['test_rows'] - e['oov_test_rows'] == rec['instances'][base]['rows']
+    l13 = rep['L13']['l14_tables_on_these_rows']
+    assert set(l13['pair_sets']) == {'BD-at', 'WB-at', 'BD-dir-at'} and len(l13['tables']) == 20
+    assert len(l13['lorentz_minus_euclid']) == 10
+    cov = rep['coverage']
+    assert cov['HL']['missed']['U_full']['missed_types'] >= 1 and 'glove' in cov['HL-glove']['missed']
+    assert set(cov['HL-at']['arms_by_vocabulary']) == {'U_at'} and 'index' in cov['HL']['arms_by_vocabulary']
+    raw = open(os.path.join(res, 'claims-stage2.json'), encoding='utf-8').read()
+    assert all(w not in raw for w in SY.OOV)                      # the missed words are hashed, never written
+    # F1 (A13.11) from pass 1's joint val + test code file, computed in pass 2 (A13.8): one file per measured table,
+    # named in the manifest with its SHA-256, and F1 in both settings for each of the 20 measured tables
+    assert sum(1 for fk in man['files'] if fk.startswith('HIT-valtest-s21/learned/G/-/measured-')) == 20
+    for e in rep['L14']['tables'].values():
+        assert set(e['f1']) == {'random', 'hard'}
+        for v in e['f1'].values():
+            assert 0 <= v['f1_test_float'] <= 1 and set(v['test_counts']) == {'tp', 'fp', 'fn', 'tn'}
+            assert sum(v['test_counts'].values()) == rec['instances']['HIT-test']['rows'] * 11
+    # L15 control 2 (READING stage2-runner-30): every arm on SL and MEN, the controls K3, S-full_i and W_i included
+    c2 = rec['claims']['L15']['control2_rho']
+    held = {(e['arm'], e['set']) for e in c2}
+    perms = RS.SELFTEST_SEEDS.perms
+    assert len(c2) == len(held) == 2 * (7 + 2 * perms) + 3 * 2
+    assert {('K3', 'SL'), ('S-full-0', 'MEN'), (f'W-{perms - 1}', 'SL'), ('GloVe-300', 'HL-glove')} <= held
+    # L12(d)'s failing side, every side reported (READING in stats2.l12_failing_side)
+    d = rec['claims']['L12']['parts']['d']
+    assert d['failing_side'] in (None, 'low', 'high', 'both') and set(d['failing_excess']) <= {'low', 'high'}
+    # every start records the interpreter's flags (A13.2)
+    assert all('interpreter_flags' in s for s in rec['starts'][-1:])
 
 
 def skip_if_head_moved(cache):
@@ -682,7 +773,8 @@ def test_selftest_resume_reruns_a_changed_file(selftest_runs, tmp_path):
     runs = os.path.join(dst, 'cache', 'noun', 'runs.jsonl')
     text = open(runs, encoding='utf-8').read().replace(src, dst)
     open(runs, 'w', encoding='utf-8').write(text)
-    victim = sorted(os.listdir(os.path.join(dst, 'cache', 'noun', 'codes')))[0]
+    # the first exact-arm file (table '-'; a learned table's files end with its key and rerun another pool)
+    victim = [f for f in sorted(os.listdir(os.path.join(dst, 'cache', 'noun', 'codes'))) if f.endswith('__-.tsv.gz')][0]
     p = os.path.join(dst, 'cache', 'noun', 'codes', victim)
     open(p, 'wb').write(gzip.compress(b'0\t0\n'))
     assert RS.main(['--selftest', '--out', dst, '--workers', '2']) == 0
@@ -736,6 +828,11 @@ def test_selftest_dry_shape_seals(tmp_path, capfd):
                                 if os.path.isfile(os.path.join(res, n)))
     assert not [v for v in planted if v in visible]
     assert 'L12(a): [sealed]' in console and 'L14(b): [sealed]' in console
+    # the review's additions: the suite protocol does not apply to the dry sets (no validation fold); L14's tables on
+    # the dry detection rows and the reports stay in the sealed file
+    assert rec['reported']['L13']['suite_detection_protocol']['applies'] is False
+    assert set(rec['reported']['L13']['l14_tables_on_these_rows']['pair_sets']) == {'BD-at', 'WB-at', 'BD-dir-at'}
+    assert all(vis['instances'][k]['sealed'] for k in ('BD-at', 'WB-at', 'BD-dir-at'))
 
 
 # ================================================================ slow: WordNet 3.0 and the pinned files (counting only)

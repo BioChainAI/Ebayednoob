@@ -510,6 +510,39 @@ def test_f1_hit_threshold():
     assert out['f1_test'] == F(4, 4) and out['test_counts'] == {'tp': 2, 'fp': 0, 'fn': 0, 'tn': 1}
 
 
+@pytest.mark.parametrize('i', range(3))
+def test_f1_from_the_joint_list_equals_f1_hit(i):
+    """F1 as pass 2 computes it (stats2.f1_threshold on one tie-class list of val and test values, the joint file of
+    run_claims_stage2's READING) equals scores2.f1_hit on the certified values (theta among the val values, test values
+    compared under cmp), on H3 G values of random words with many ties and the label layout of HiT's settings."""
+    from lexicon import stats2 as T
+    r = random.Random(95488 + i)
+    words = dict(enumerate(rwords(r, 30, 0, 3)))
+    words.update({k: words[k - 25] for k in range(25, 30)})            # repeated points: tied values
+    sc = S.Scorer(S.h3_table(words))
+
+    def rows(n):                       # HiT rows: G(child, c) of six candidates in slot order (Scorer.slot_vals)
+        return [sc.slot_vals(r.randrange(30), [r.randrange(30) for _ in range(6)]) for _ in range(n)]
+    vv, tv = rows(40), rows(35)
+    flat = [x for row in vv for x in row] + [x for row in tv for x in row]
+    codes = sc.cert.tie_classes(flat).codes
+    nv = 6 * len(vv)
+    for slots in ((0, 1, 2, 3), (0, 4, 5)):
+        def lab(part):
+            return [s == 0 for _ in part for s in slots]
+
+        def pick(part, off):
+            return [codes[off + 6 * k + s] for k in range(len(part)) for s in slots]
+
+        def vals(part):
+            return [row[s] for row in part for s in slots]
+        got = T.f1_threshold(pick(vv, 0), lab(vv), pick(tv, nv), lab(tv))
+        want = S.f1_hit(S.Certifier(), vals(vv), lab(vv), vals(tv), lab(tv))
+        assert (got['f1_val'], got['f1_test'], got['test_counts']) == (want['f1_val'], want['f1_test'],
+                                                                       want['test_counts'])
+        assert 0 < len(set(pick(vv, 0) + pick(tv, nv))) < len(lab(vv)) + len(lab(tv))       # ties occur
+
+
 # ================================================================ W, S-full, S3, K3 (test 11)
 class _Entry:
     def __init__(self, offsets):

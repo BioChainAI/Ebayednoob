@@ -34,7 +34,8 @@ score through -K or -|s - t|^2. Larger key = higher score.
     Scorer(table, cert): .g_vals, .phi_g, .dep_circ, .phi_sym, .phi_dep, .first_*, .gensim_pair, .groot_vals, ...
     WNScorer(graph): the same interface on lexicon.wngraph's exact integers
     nk17_value, product_value, codes_plain, phi_plain (reported forms, 120 digits, not certified); cos_key; f1_hit;
-    norm_rounds_to_one (A13.11's diagnostic)
+    norm_rounds_to_one (A13.11's diagnostic); radius_key, snapped_radius_keys (exact keys of r for A13.11's NK18
+    diagnostic)
 
 READINGs are marked where a definition admits two readings; each cites the A13 item it implements.
 """
@@ -736,9 +737,14 @@ def nk17_value(table, s, t, alpha=1000, prec=P1):
     ||u|| = sqrt((x0 - 1)/(x0 + 1)), alpha = 10^3, in decimal at `prec` digits.
     READING (A13.5; P17 eq. 8 scores is-a(u, v) as -(1 + alpha (||v|| - ||u||)) d(u, v)): u is s, the sense of the
     candidate hyponym x, and v is t, the sense of y. Defined on hyperboloid tables (H3, H2, K3, S-full, learned
-    Lorentz) only; the flat arms have no Poincare norm."""
+    Lorentz) and on the learned Euclidean table; the exact flat arms have none.
+    READING (A13.11, "NK17 scores" among L14's reports): a learned Euclidean table has no Poincare norm; it is read
+    with its own Euclidean norm and distance, ||u|| = |n_u|/2^32 and d = |n_s - n_t|/2^32, as P17 scored its Euclidean
+    embeddings by eq. 8 (its Table 3), so that the two learned geometries are read by one form."""
+    if isinstance(table, ETable):
+        return _nk17_euclid(table, s, t, alpha, prec)
     if table.kind != 'h':
-        raise ValueError('NK17 is read on hyperboloid tables only')
+        raise ValueError('NK17 is read on hyperboloid tables and the learned Euclidean table only')
     ctx = Context(prec=prec, rounding=ROUND_HALF_EVEN)
 
     def norm(z):
@@ -746,6 +752,32 @@ def nk17_value(table, s, t, alpha=1000, prec=P1):
     d = _ln_E(table.K(s, t), ctx)
     factor = ctx.add(Decimal(1), ctx.multiply(Decimal(alpha), ctx.subtract(norm(table.x0(t)), norm(table.x0(s)))))
     return ctx.minus(ctx.multiply(factor, d))
+
+
+def _nk17_euclid(table, s, t, alpha, prec):
+    """NK17 on a learned Euclidean table (nk17_value's READING): the integers n over 2^32 (the dropped factor
+    restored, since alpha (||t|| - ||s||) is added to 1), each square root correctly rounded at `prec` digits."""
+    ctx = Context(prec=prec, rounding=ROUND_HALF_EVEN)
+    S = Decimal(2 ** 32)
+
+    def norm(sq):
+        return ctx.divide(ctx.sqrt(Decimal(sq)), S)
+    d = norm(table.d2(s, t))
+    factor = ctx.add(Decimal(1), ctx.multiply(Decimal(alpha), ctx.subtract(norm(table.sq(t)), norm(table.sq(s)))))
+    return ctx.minus(ctx.multiply(factor, d))
+
+
+def radius_key(table, k):
+    """An exact key that increases with r(k) = d(o, k) (A13.11's NK18 diagnostic reads only the order of r): x0 on a
+    hyperboloid table (r = arcosh x0; learned Lorentz x0 = (4^32 + |n|^2)/(4^32 - |n|^2)), |k|^2 on a flat or learned
+    Euclidean table (r = sqrt of it)."""
+    return table.x0(k) if table.kind == 'h' else table.sq(k)
+
+
+def snapped_radius_keys(N):
+    """|n|^2 per row of a snapped table: r increases with it in both learned geometries (Lorentz r = arcosh((4^32 +
+    |n|^2)/(4^32 - |n|^2)); Euclidean r = |n|/2^32), so it is radius_key without building the table."""
+    return [sum(int(x) * int(x) for x in row) for row in N]
 
 
 def product_value(table, s, t, prec=P1):
@@ -796,9 +828,11 @@ def cos_key(a, b):
 
 # ================================================================ F1 under HiT's protocol (reported, spec section 7)
 def f1_hit(cert, val_vals, val_labels, test_vals, test_labels):
-    """F1 (reported; measured tables only, in the decisive run): theta ranges over the distinct certified val values
-    (val's tie classes), a pair is positive when its value compares >= theta under cmp, theta maximises val F1 with
-    ties to the smallest, then test is scored at that theta.
+    """F1 (reported; measured tables only, in the decisive run) on certified values: theta ranges over the distinct
+    certified val values (val's tie classes), a pair is positive when its value compares >= theta under cmp, theta
+    maximises val F1 with ties to the smallest, then test is scored at that theta. The runner computes F1 in pass 2
+    from pass 1's joint val + test code file (stats2.f1_threshold, A13.8); this function is the oracle the tests hold
+    that computation to.
     READING (spec section 7): theta is the smallest value of its val tie class (the class's first member by its
     certified order), and a test value v is positive when cmp(v, theta) >= 0. Returns a dict with theta's code and
     tuple, the val and test F1 (exact Fractions) and the counts."""
