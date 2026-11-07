@@ -1,10 +1,10 @@
 # Stage 2 claims (dry run (A13.13))
 
-PREREGISTRATION.md with Amendments 1-13; HEAD `841b90cca9894d2b544c4a0635fba1a9507fdd1e`
+PREREGISTRATION.md with Amendments 1-14; HEAD `9550eeaeb0543280519b03e13ba060238a8638e1`
 
 ## Sealed (A13.13)
 
-Every value, interval and verdict on a human-rated set is in the sealed file (SHA-256 `7ba50e016172955f4052d488711a9f561c47fb3d20540e7c0136f1648dd28936`).
+Every value, interval and verdict on a human-rated set is in the sealed file (SHA-256 `9c9eac2c8122f1f228b76be34cef189c4fd2429b93dd4e3b48046a37cda79d64`).
 
 ## Controls fail as required
 
@@ -26,5 +26,5 @@ Verdict: void
 
 ## Pass 1
 
-915 code files, 5589064 lines; 12214 240-digit recomputations; 12214 values in numerical ties between distinct tuples.
+1475 code files, 5842184 lines; 15801 240-digit recomputations; 15801 values in numerical ties between distinct tuples.
 
