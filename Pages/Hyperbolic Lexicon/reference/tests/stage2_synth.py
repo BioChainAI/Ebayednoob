@@ -403,6 +403,18 @@ def make_world(root, seed=SEED):
                'hit.val.positives_in_closure': True, 'hit.test.positives_in_closure': True,
                'hit.val.negatives_in_closure': 0, 'hit.test.negatives_in_closure': 0,
                'hit.test.positives_direct_edges': 0}           # the split is drawn from T (hit_r), E's pairs excluded
+    # HiT val's counts of Amendment 14 item 2, planted from the split itself (index space, not hit.counts), so that the
+    # self-test's tuning reproduces them before its first metric as registered tuning does
+    vrows = split['val']
+    hit_exp.update({
+        'hit.val.distinct_positives': len({a for _, a, _, _ in vrows}),
+        'hit.val.child_in_random': sum(1 for c, _, rn, _ in vrows if c in rn),
+        'hit.val.child_in_hard': sum(1 for c, _, _, hd in vrows if c in hd),
+        'hit.val.repeat_random': sum(1 for _, _, rn, _ in vrows if len(set(rn)) < len(rn)),
+        'hit.val.repeat_hard': sum(1 for _, _, _, hd in vrows if len(set(hd)) < len(hd)),
+        'hit.val.min_distinct_ok': all(len(set(rn)) >= HIT.MIN_DISTINCT and len(set(hd)) >= HIT.MIN_DISTINCT
+                                       for _, _, rn, hd in vrows),
+        'hit.val.positives_direct_edges': sum(1 for c, a, _, _ in vrows if (nodes[c], nodes[a]) in g.edge_set)})
 
     # ---------------------------------------------------------------- GloVe
     vocab = set()

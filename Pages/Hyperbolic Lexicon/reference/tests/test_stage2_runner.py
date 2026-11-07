@@ -711,6 +711,53 @@ def test_tuning_reads_hit_val_alone(tmp_path, monkeypatch, shape):
         assert set(counts['hit_detail']) == {'val'} and not any('.test.' in k for k in counts['hit'])
 
 
+A14_VAL_KEYS = ('hit.val.distinct_positives', 'hit.val.child_in_random', 'hit.val.child_in_hard',
+                'hit.val.repeat_random', 'hit.val.repeat_hard', 'hit.val.min_distinct_ok',
+                'hit.val.positives_direct_edges')
+
+
+@pytest.fixture(scope='module')
+def noun_world(tmp_path_factory):
+    cfg = RS.make_cfg('selftest', 1, out=str(tmp_path_factory.mktemp('val-counts') / 'st'))
+    return cfg, RS.World(cfg)
+
+
+def test_tuning_checks_hit_vals_counts(noun_world):
+    """Amendment 14 items 2 and 6 (A13.9: "Before any metric the runner reproduces each count exactly; a mismatch
+    stops the run"): registered tuning checks every HiT val count of hit.COUNTS (_tune_hit_key keeps them, and no test
+    count), and the decisive run all of them; the synthetic world plants val's counts, which the tuning check
+    reproduces."""
+    tune = RS._only(RS.HIT.COUNTS, RS._tune_hit_key)
+    assert set(A14_VAL_KEYS) <= set(tune) and not any('.test.' in k for k in tune)
+    assert {'hit.names', 'hit.train_equals_E', 'hit.val.rows'} <= set(tune)
+    assert set(A14_VAL_KEYS) <= set(RS.HIT.COUNTS) and RS._tune_hit_key('hit.test.repeat_hard') is False
+    cfg, world = noun_world
+    assert set(A14_VAL_KEYS) <= set(world.expected['hit'])
+    counts = RS.count_checks_words(cfg, world, lambda m: None, scope='tune')
+    assert counts['problems'] == [] and all(counts['hit'][k] == world.expected['hit'][k] for k in A14_VAL_KEYS)
+
+
+@pytest.mark.parametrize('key', A14_VAL_KEYS)
+def test_a_mismatched_val_count_stops_tuning(noun_world, monkeypatch, key):
+    """A HiT val count that differs from the registered one stops tuning before its first metric with the runner's
+    count-check error (S2D.CountMismatch, 'STOPPED: count check failed' on the console, exit 1): no instance is built,
+    no run is trained and no tuning record is written. Synthetic world; one planted count changed per case."""
+    cfg, world = noun_world
+    want = world.expected['hit'][key]
+    wrong = (not want) if isinstance(want, bool) else want + 1
+    monkeypatch.setitem(world.expected['hit'], key, wrong)
+    with pytest.raises(S2D.CountMismatch, match=re.escape(f'hit {key}: registered {wrong}, found {want}')):
+        RS.count_checks_words(cfg, world, lambda m: None, scope='tune')
+    reached = []
+    monkeypatch.setattr(RS, 'build_tuning_instances', lambda *a, **k: reached.append('instances'))
+    monkeypatch.setattr(RS, 'step_tune', lambda *a, **k: reached.append('tune') or 0)
+    rc, _ = RS.run_step(cfg, 'tune', world)
+    assert rc == 1 and reached == []
+    assert not os.path.exists(RS.paths(cfg, 'tune')['json'])
+    console = open(RS.paths(cfg, 'tune')['console'], encoding='utf-8').read().split('=' * 100)[-1]
+    assert 'STOPPED: count check failed (A13.9: the run stops with no result)' in console and key in console
+
+
 def test_side_file_holds_every_tie_the_count_holds(tmp_path):
     """A13.6: every numerical tie met inside the maximum over senses is logged with its inputs (Certifier's log is
     unbounded by default); a side file that would hold fewer than the count refuses to be written."""
@@ -860,11 +907,21 @@ def test_selftest_end_to_end(selftest_runs):
     assert all('interpreter_flags' in s for s in rec['starts'][-1:])
     # the completed A13.11 reports and the wiring (READINGs stage2-runner-34 to 41)
     grid = rep['L12']['grid']
-    assert len(grid['cells']) == 224 and grid['scored'] == 116 and grid['missing'] == []
+    assert len(grid['cells']) == 1344 and grid['scored'] == 716 and grid['missing'] == []
+    assert grid['arms'] == list(RS.L12_GRID_ARMS) and len(grid['arms']) == 48
     assert all(isinstance(v.get('rho'), dict) for v in grid['cells'].values() if v['status'] == 'scored')
+    assert RS.l12_grid_problems(grid, man['files']) == []
     for k in ('F3/Dep/first', 'F2*/Sym/first', 'WN/Dep/first', 'WN/Sym/first', 'H3/Dep/gensim', 'H2/NK17/gensim',
-              'F3*/product/gensim', 'WN/G/gensim', 'WN/LCh/first', 'K3/NK17/gensim', 'K3/Dep/first', 'F2/NK17/max'):
+              'F3*/product/gensim', 'WN/G/gensim', 'WN/LCh/first', 'K3/NK17/gensim', 'K3/Dep/first', 'F2/NK17/max',
+              'S-full-0/NK17/gensim', 'S-full-19/Dep/first', 'W-0/product/max', 'W-19/Sym/first', 'W-7/DepG/max'):
         assert grid['cells'][k]['file'] in man['files'], k
+    # Amendment 14 item 6: S-full_i and W_i score 15 cells each (600), 560 of them new files beside the decided G files
+    new = [v for k, v in grid['cells'].items() if k.split('/')[0] in RS.L12_GRID_PERM_ARMS and v['status'] == 'scored']
+    assert len(new) == 600 and len({v['file'] for v in new}) == 600
+    assert grid['cells']['W-3/Sym/gensim'] == {'status': 'alias', 'of': 'W-3/Sym/max'}
+    assert grid['cells']['S-full-5/LCh/max']['status'] == 'n/a'
+    assert 'self-test, L12 grid: 1344 cells of 48 arms, 716 scored, 432 aliases, 196 n/a: whole' in open(
+        os.path.join(res, 'stage2-console.txt'), encoding='utf-8').read()
     wg = rep['L13']['wn_and_glove']
     assert set(wg['WN']) == {'BD', 'WB', 'BD-dir'} and set(wg['GloVe']) == {'BD-glove', 'WB-glove', 'BD-dir-glove'}
     assert wg['GloVe']['BD-glove']['pairSetSha'] == rec['instances']['BD-dir-glove']['pairSetSha']
@@ -1053,7 +1110,8 @@ def test_selftest_dry_shape_seals(tmp_path, capfd):
     assert set(rec['reported']['L13']['l14_tables_on_these_rows']['pair_sets']) == {'BD-at', 'WB-at', 'BD-dir-at'}
     assert all(vis['instances'][k]['sealed'] for k in ('BD-at', 'WB-at', 'BD-dir-at'))
     # the completed reports stay in the sealed file; the visible record holds the wiring's provenance, no value
-    assert rec['reported']['L12']['grid']['scored'] == 116 and 'BD-glove' in rec['reported']['L13']['wn_and_glove']['GloVe']
+    assert rec['reported']['L12']['grid']['scored'] == 716 and 'BD-glove' in rec['reported']['L13']['wn_and_glove']['GloVe']
+    assert len(rec['reported']['L12']['grid']['cells']) == 1344 and rec['reported']['L12']['grid']['missing'] == []
     assert rec['reported']['L14']['hl_rows_that_are_E_edges']['rows'] == vis['instances']['HL-at']['rows']
     assert vis['instances']['BD-glove']['sealed'] and vis['instances']['WB-glove']['sealed']
     w = vis['wiring']

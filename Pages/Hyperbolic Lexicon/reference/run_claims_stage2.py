@@ -605,17 +605,20 @@ RUNNER_READINGS = (
      'and each decides nothing. Named for the definitions amendment, since A13.8 says pass 2 computes every metric '
      'from pass 1\'s files alone.'),
     ('stage2-runner-34', 'A13.11 (L12), "every arm under every score of item 5 and every sense rule of item 3" '
-     '(L12_GRID): the arms are L12\'s seven scored arms (the six exact trees and WN) and K3 (A13.4\'s geometric arm: '
-     'one hyperboloid table); the permutation families S-full_i and W_i (40 arms, defined as readings on H3 with G), S3_i '
-     'and the chain\'s arms, each defined by one reading, stay at G with the maximum (their exclusion, 48 arms: 20 '
-     'S-full, 20 W, 5 S3 and the chain\'s 3, named for the definitions amendment). The scores are G, Sym, Dep°, Dep '
-     'and the reported NK17 (the seven geometric arms: Poincaré norms on H3, H2 and K3, Euclidean norms on the exact '
-     'flat arms, READING stage2-runner-25), product (the seven geometric arms) and WN-LCh (WN); the rules are the '
-     'maximum, first senses, '
+     '(L12_GRID): A13.11\'s L12 grid is L12\'s 48 arms (A13 L12, Arms: the six exact trees, WN, K3 and each S-full_i '
+     'and each W_i, i < 20) x 7 scores x 4 sense rules = 1,344 cells, each scored, an alias or n/a; each S-full_i and '
+     'W_i places words on H3\'s points, so every form reads it as it reads K3 (A13.4\'s geometric arm: one hyperboloid '
+     'table). S3\'s 5 arms and the chain\'s 3 (WN-U, ST, the letter tree) stay at G with the maximum (at 841b90c the '
+     'grid had 8 arms and 224 cells, and S-full_i and W_i also stayed at G with the maximum; Amendment 14, items 5 '
+     'and 6). The scores are G, Sym, Dep°, Dep '
+     'and the reported NK17 (the 47 geometric arms: Poincaré norms on H3, H2, K3, S-full_i and W_i, Euclidean norms on '
+     'the exact flat arms, READING stage2-runner-25), product (the 47 geometric arms) and WN-LCh (WN); the rules are '
+     'the maximum, first senses, '
      'gensim\'s rule and noun morphy. A cell is scored, an alias of a cell equal to it by definition (morphy = the '
      'maximum, since every pair-set word is in the index raw; Dep° under first senses or gensim\'s rule = Dep under '
      'that rule, G\'s pair being the rule\'s; Sym and WN-LCh under gensim\'s rule = the maximum, the gensim pair having '
-     'the least distance), or n/a with its reason; reported.L12.grid lists all 224 cells (8 arms x 7 scores x 4 rules).'),
+     'the least distance), or n/a with its reason; reported.L12.grid lists all 1,344 cells (48 arms x 7 scores x 4 '
+     'rules).'),
     ('stage2-runner-35', 'A13.3, gensim\'s rule on WN (scores2.WNScorer.gensim_pair): WN has no geometry, so "the sense '
      'pair at the smallest distance" uses its path p (WN-path, Sym_WN = -p): the pair of the largest Sym_WN, ties to '
      'the first in (i, j) order, then G_WN or Dep_WN of that pair.'),
@@ -675,7 +678,8 @@ RUNNER_READINGS = (
      'the relabelled tails, |dRR|); everything read on HL within U_@ stays sealed.'),
     ('stage2-runner-46', 'A13.10.5, "Tuning computes nothing else, and touches no other Stage-2 set": the tuning step '
      'makes WordNet\'s counts (U_@ or the verb graph, the W strata, the budget) and HiT\'s that need no other set (the '
-     'names, the training edges, HiT val\'s rows, negatives and closure) and builds HiT val alone; no word column of '
+     'names, the training edges, HiT val\'s rows, negatives and closure, and from Amendment 14\'s code commit on every '
+     'val count of Amendment 14 item 2) and builds HiT val alone; no word column of '
      'another set, and not HiT test, is read. The decisive step makes every count of A13.9 and A13.13.'),
     ('stage2-runner-47', 'A13.16 with A13.8, the disk projection before tuning: the timing step builds the word-level '
      'instances (pass 1\'s readers, word fields only) and counts the code lines of the decisive run\'s exact plan (L12, '
@@ -2402,8 +2406,10 @@ def count_checks_words(cfg, world, log, scope='all'):
     before pass 1. A mismatch raises S2D.CountMismatch: the run stops with no result.
     scope 'tune' (registered and dry tuning, A13.10.5: "Tuning computes nothing else, and touches no other Stage-2
     set"): WordNet's counts (U_@ or the verb '@' graph, the W strata) and HiT's that need no other set (the names, the
-    training edges, HiT val's rows, negatives and closure); no word column of HyperLex, the suite, SimLex, MEN, WS-353
-    or GloVe, and not HiT test, is read (READING stage2-runner-46). The decisive step makes every count."""
+    training edges, and every count of HiT val in hit.COUNTS: its rows, negatives and closure, and Amendment 14 item
+    2's distinct positives, child rows, repeats, 9-distinct floor and direct edges), before tuning's first metric; no
+    word column of HyperLex, the suite, SimLex, MEN, WS-353 or GloVe, and not HiT test, is read (READING
+    stage2-runner-46). The decisive step makes every count, val's again."""
     if scope == 'tune':
         return _count_checks_tune(cfg, world, log)
     t0 = time.perf_counter()
@@ -2589,15 +2595,18 @@ def manifest_check(cfg, world, insts, log):
 
 
 # ================================================================ A13.11's L12 grid (reported)
-# READING (A13.11, L12: "every arm under every score of item 5 and every sense rule of item 3"): the arms are L12's
-# seven scored arms, the six exact trees and WN (A13 L12 Arms, control 4's arms), and K3, a geometric arm of its own
-# (item 4: L5's content-hash words placed by h3tree, one hyperboloid table on which every geometric form is defined).
-# Left at G with the maximum, as their own items of A13.11, are the permutation families S-full_i and W_i (40 arms,
-# each defined as a reading "on H3 with G": L12 Arms), S3_i (item 4: reported at G) and the chain's arms (WN-U, ST, the
-# letter tree; item 5's letter form is the letter tree's G): their exclusion from the grid (cost: 48 more arms) is
-# named for the definitions amendment. The scores are item 5's that an arm defines: G, Sym, Dep° and Dep, and, reported
+# READING (A13.11, L12: "every arm under every score of item 5 and every sense rule of item 3"; stage2-runner-34): the
+# grid is L12's 48 arms (A13 L12 Arms) x 7 scores x 4 sense rules = 1,344 cells: the six exact trees and WN (control
+# 4's arms), K3, a geometric arm of its own (item 4: L5's content-hash words placed by h3tree, one hyperboloid table on
+# which every geometric form is defined), and the controls S-full_i and W_i, i < 20 (L12 Arms: "the controls K3, S-full
+# and W, on H3 with G"). Each S-full_i and W_i places words on H3's points (S-full_i moves the synsets' points by its
+# permutation; W_i gives each lemma another lemma's sense list), so every form reads it as it reads K3, and READING
+# stage2-runner-30 reads each of them as an arm of L15. S3_i (item 4: reported at G) and the chain's arms (WN-U, ST, the
+# letter tree; item 5's letter form is the letter tree's G), A13.4's reported arms that A13.11 lists after L12 as
+# reports of their own, stay at G with the maximum: S3's 5 arms and the chain's 3 (Amendment 14, items 5 and 6). The
+# scores are item 5's that an arm defines: G, Sym, Dep° and Dep, and, reported
 # only, NK17 (on a hyperboloid table with A13.5's Poincaré norms; on an exact flat arm with its Euclidean norm and
-# distance, scores2.nk17_value's reading for every flat table, READING stage2-runner-25), the product (the seven
+# distance, scores2.nk17_value's reading for every flat table, READING stage2-runner-25), the product (the 47
 # geometric arms) and WN-LCh (WN); WN reads them as G_WN, Sym_WN (WN-path) and Dep_WN. The rules are item 3's: the
 # maximum over senses, first senses, gensim's rule (the pair at the least distance, then scored: Scorer.gensim_pair on
 # the geometric arms, WNScorer.gensim_pair, the least WN-path, on WN) and noun morphy. A cell is 'scored' (a code file of
@@ -2609,15 +2618,18 @@ def manifest_check(cfg, world, insts, log):
 #   G's pair is the rule's own pair, so the cell is Dep under that rule;
 # - Sym under gensim's rule: the gensim pair maximises Sym (the least distance), so its Sym is the maximum's;
 # - WN-LCh under gensim's rule: the gensim pair has the least p and LCh decreases in p, so it is the maximum's.
-L12_GRID_ARMS = SIX + ('K3', 'WN')
+L12_GRID_PERMS = Seeds2.perms             # A13.4: S-full_i and W_i for i < 20, named as l15_control2_arms names them
+L12_GRID_PERM_ARMS = (tuple(f'S-full-{i}' for i in range(L12_GRID_PERMS))
+                      + tuple(f'W-{i}' for i in range(L12_GRID_PERMS)))
+L12_GRID_ARMS = SIX + ('K3', 'WN') + L12_GRID_PERM_ARMS
 L12_GRID_FORMS = ('G', 'Sym', 'DepG', 'Dep', 'NK17', 'product', 'LCh')
 L12_GRID_RULES = ('max', 'first', 'gensim', 'morphy')
 
 
 def l12_grid_cell(arm, form, rule):
     """(status, detail) of one cell of A13.11's L12 grid (the READING above): ('scored', None), ('alias', (form,
-    rule)) or ('n/a', why)."""
-    geo = arm in SIX + ('K3',)
+    rule)) or ('n/a', why). S-full_i and W_i are geometric arms on H3's points, read as K3 is read."""
+    geo = arm in SIX + ('K3',) + L12_GRID_PERM_ARMS
     if arm not in L12_GRID_ARMS or form not in L12_GRID_FORMS or rule not in L12_GRID_RULES:
         raise ValueError(f'not a cell of the L12 grid: {(arm, form, rule)}')
     if form == 'NK17' and not geo:
@@ -2636,6 +2648,30 @@ def l12_grid_cell(arm, form, rule):
 
 
 L12_GRID = {(a, f, r): l12_grid_cell(a, f, r) for a in L12_GRID_ARMS for f in L12_GRID_FORMS for r in L12_GRID_RULES}
+
+
+def l12_grid_problems(grid, files):
+    """The self-test's check of pass 2's grid report (Pass2.rep_grid) against L12_GRID: every cell listed with its
+    status, every scored cell, S-full_i's and W_i's included, read from a pass-1 code file of its own, none missing,
+    and every alias pointing at a scored cell of its own arm. Returns the problems (none when the report is whole)."""
+    cells = grid.get('cells', {})
+    want = {f'{a}/{f}/{r}': (st, d) for (a, f, r), (st, d) in L12_GRID.items()}
+    problems = [f'{k}: not a cell of L12_GRID' for k in sorted(set(cells) - set(want))]
+    for k, (st, d) in want.items():
+        e = cells.get(k)
+        if e is None:
+            problems.append(f'{k}: not listed')
+        elif e.get('status') != st:
+            problems.append(f'{k}: {e.get("status")}, L12_GRID says {st}')
+        elif st == 'scored' and (e.get('missing') or e.get('file') not in files or 'rho' not in e):
+            problems.append(f'{k}: scored without its code file')
+        elif st == 'alias' and e.get('of') != f'{k.split("/")[0]}/{d[0]}/{d[1]}':
+            problems.append(f'{k}: an alias of {e.get("of")}')
+    n_scored = sum(1 for st, _ in L12_GRID.values() if st == 'scored')
+    if grid.get('scored') != n_scored or grid.get('missing'):
+        problems.append(f'{grid.get("scored")} scored cells and {len(grid.get("missing") or [])} missing; L12_GRID '
+                        f'scores {n_scored}')
+    return problems
 
 
 # ================================================================ the pass-1 plan of the exact arms (spec section 11)
@@ -2657,7 +2693,12 @@ def exact_plan(cfg, insts):
         add(arm, inst, claim, (form, rule))
     if cfg.reported:
         rep = 'stage2/1'
-        # A13.11 (L12): every arm under every score of item 5 and every sense rule of item 3 (L12_GRID)
+        # A13.11 (L12): every arm under every score of item 5 and every sense rule of item 3 (L12_GRID): L12's 48
+        # arms, S-full_i and W_i included (READING stage2-runner-34); each of their G-with-the-maximum files is also a
+        # decided cell above, so add() keeps it once, under its decision's claim
+        if cfg.seeds.perms != L12_GRID_PERMS:
+            raise ValueError(f'the L12 grid holds S-full_i and W_i for i < {L12_GRID_PERMS}; this configuration draws '
+                             f'{cfg.seeds.perms} permutations')
         for (a, form, rule), (status, _) in L12_GRID.items():
             if status == 'scored':
                 add(a, 'HL', rep, (form, rule))
@@ -4373,8 +4414,9 @@ class Pass2:
                 'per_row': ''.join(str(int(a) + 2 * int(c)) for a, c in zip(fw, rv))}
 
     def rep_grid(self):
-        """A13.11's L12 grid (L12_GRID's READING): every cell of arm x score x sense rule on HL, with its rho (scored),
-        the cell whose values it shares by definition (alias) or why the arm has no such score (n/a)."""
+        """A13.11's L12 grid (L12_GRID's READING, stage2-runner-34): every cell of arm x score x sense rule on HL, the
+        48 arms' 1,344 (S-full_i and W_i included), with its rho (scored), the cell whose values it shares by
+        definition (alias) or why the arm has no such score (n/a)."""
         inst = self.insts['HL']
         out = {}
         for (arm, form, rule), (status, detail) in L12_GRID.items():
@@ -5143,6 +5185,18 @@ def pass2_and_write(cfg, ctx, world, insts, files, claims_of, closure, tuning, r
         S2D.close_gold()
     ctx['timings']['pass2_s'] = time.perf_counter() - t0
     ctx['timings']['intervals'] = p2.n_intervals
+    if cfg.mode == 'selftest':
+        # the self-test covers the whole L12 grid (READING stage2-runner-34): 48 arms, S-full_i and W_i included,
+        # each scored cell from its own pass-1 file
+        grid = reported['L12']['grid']
+        bad = l12_grid_problems(grid, files)
+        log(f'self-test, L12 grid: {len(grid["cells"])} cells of {len(grid["arms"])} arms, {grid["scored"]} scored, '
+            f'{sum(1 for v in grid["cells"].values() if v["status"] == "alias")} aliases, '
+            f'{sum(1 for v in grid["cells"].values() if v["status"] == "n/a")} n/a: '
+            + ('whole' if not bad else f'{len(bad)} PROBLEM(S): ' + '; '.join(bad[:6])))
+        if bad:
+            raise Refused('self-test: the L12 grid report is not L12_GRID (READING stage2-runner-34): '
+                          + '; '.join(bad[:6]))
     claims['L12']['flag_d'] = ST.L12_PREVIEW_FLAG
     training = {k: {x: v for x, v in r.items() if x not in ('environment',)} for k, r in sorted(trained.items())}
     record = {

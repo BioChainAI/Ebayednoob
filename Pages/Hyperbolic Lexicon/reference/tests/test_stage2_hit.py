@@ -303,6 +303,48 @@ def test_test_positives_that_are_direct_edges_are_checked(tmp_path):
     assert set(detail3) == {'val'} and not any('.test.' in k for k in out3)
 
 
+A14_VAL = {'hit.val.distinct_positives': 2104, 'hit.val.child_in_random': 3, 'hit.val.child_in_hard': 0,
+           'hit.val.repeat_random': 22, 'hit.val.repeat_hard': 7, 'hit.val.min_distinct_ok': True,
+           'hit.val.positives_direct_edges': 0}
+
+
+def test_val_counts_are_checks_promoted_as_tests_are(tmp_path):
+    """Amendment 14 item 2 (A13.9's lead-in: "a mismatch stops the run"): COUNTS holds HiT val's counts as item 2 states
+    them, count_checks promotes val's details exactly as test's (the same suffixes from each split's counts()), and on
+    a synthetic split a val row that holds the child among its random negatives, or repeats a negative, changes the
+    promoted val count, so a check against the planted value names it; tuning's subset (_tune_hit_key's) keeps them."""
+    assert {k: v for k, v in hit.COUNTS.items() if k in A14_VAL} == A14_VAL
+    assert {k for k in hit.COUNTS if k.startswith('hit.val.')} == set(A14_VAL) | {
+        'hit.val.rows', 'hit.val.ten_and_ten', 'hit.val.positives_in_closure', 'hit.val.negatives_in_closure'}
+    wn = random_dag(95210, n=250)
+    g = S.at_graph(wn)
+    split = synthetic_split(wn, g, 30)
+    store, _ = hit_store(tmp_path / 'a', wn, split)
+    out, detail = hit.count_checks(wn, store, count=len(g.nodes))
+    val = {k[len('hit.val.'):] for k in out if k.startswith('hit.val.')}
+    test = {k[len('hit.test.'):] for k in out if k.startswith('hit.test.')}
+    assert val == test and {k[len('hit.val.'):] for k in A14_VAL} <= val
+    v = detail['val']
+    assert out['hit.val.distinct_positives'] == v['distinct_positives'] == len({r['parent'] for r in split['val']})
+    assert (out['hit.val.child_in_random'], out['hit.val.child_in_hard'], out['hit.val.repeat_random'],
+            out['hit.val.repeat_hard'], out['hit.val.positives_direct_edges']) == (0, 0, 0, 0, 0)
+    assert out['hit.val.min_distinct_ok'] is True
+    planted = {k: out[k] for k in A14_VAL}
+    assert D.compare_counts(out, planted) == []
+    # one val row holds the child among its random negatives, another repeats a hard negative twice over (8 distinct)
+    rows_ = [dict(r) for r in split['val']]
+    rows_[0]['random_negatives'] = [rows_[0]['child']] + rows_[0]['random_negatives'][1:]
+    h = rows_[1]['hard_negatives']
+    rows_[1]['hard_negatives'] = h[:8] + [h[0], h[1]]
+    store2, _ = hit_store(tmp_path / 'b', wn, dict(split, val=rows_))
+    out2, _ = hit.count_checks(wn, store2, count=len(g.nodes), splits=('val',))
+    bad = {k for k, _, _ in D.compare_counts(out2, planted)}
+    assert bad == {'hit.val.child_in_random', 'hit.val.repeat_hard', 'hit.val.min_distinct_ok'}
+    with pytest.raises(D.CountMismatch, match='hit.val.child_in_random'):
+        D.check_counts(out2, planted)
+    assert not any('.test.' in k for k in out2)
+
+
 @pytest.mark.parametrize('line', [
     '{"child": "w1.n.01", "child": "w2.n.01", "parent": "w0.n.01", "random_negatives": [], "hard_negatives": []}',
     '{"parent": "w0.n.01", "random_negatives": [], "hard_negatives": []}',

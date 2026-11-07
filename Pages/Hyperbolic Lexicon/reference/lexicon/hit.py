@@ -5,7 +5,8 @@ verifier, the count checks, the closure check, HIT-R, the dry split and the with
     read_rows(split, store)                [(row, child, [parent, 10 random, 10 hard])] as names (pass 1's reader)
     resolve(wn, store)                     the verifier: {name: offset}, one-to-one onto U_@, and the '@' graph
     rows(split, names_map, store)          [HitRow] with offsets
-    counts(rows, g), count_checks(wn)      A13.9's HiT counts (train = E; 29,383 rows; 10 + 10; closure; test counts)
+    counts(rows, g), count_checks(wn)      A13.9's HiT counts (train = E; 29,383 rows; 10 + 10; closure; test's and
+                                           val's counts, val's stated in Amendment 14, item 2)
     closure_rr(rows, g), closure_check     L14's positive control: closure membership gives RR = 1 on every row
     hit_r(g, seed_split, seed_random, seed_hard, n_val)   HIT-R (reported) and, on the verb graph, the dry split
     within_row_slots(seed, n_rows)          L14 control 1's declared positive slots
@@ -49,6 +50,17 @@ COUNTS = {
     # A13 L14 Instances (a): "Every test pair is in T, so none enters training as a positive": no test positive is a
     # direct edge of E (A13.9's closure count admits E's own pairs; T excludes them)
     'hit.test.positives_direct_edges': 0,
+    # A13.9, "Val's corresponding counts are made when the code is built and stated in the definitions amendment":
+    # Amendment 14, item 2 (counted from HiT val's names); its lead-in, "Before any metric the runner reproduces each
+    # count exactly; a mismatch stops the run", makes each a check, so tuning, the first step to compute a val metric,
+    # reproduces them (READING stage2-runner-46), and the decisive run again. Val's 0 direct edges is item 2's count.
+    'hit.val.distinct_positives': 2104,
+    'hit.val.child_in_random': 3,
+    'hit.val.child_in_hard': 0,
+    'hit.val.repeat_random': 22,
+    'hit.val.repeat_hard': 7,
+    'hit.val.min_distinct_ok': True,
+    'hit.val.positives_direct_edges': 0,
 }
 MIN_DISTINCT = 9
 # L14 control 2's reported labels: the seven positives that each hold more than 2.76% of the test rows (A13 L14).
@@ -154,10 +166,13 @@ def counts(split_rows, g):
 
 
 def count_checks(wn, store=None, count=senses.U_AT_COUNT, splits=('val', 'test')):
-    """A13.9's HiT counts, keyed like COUNTS, with each split's full counts (val's for the definitions amendment).
-    Names only: no table, no score. splits=('val',) is tuning's subset (A13.10.5: HiT test is not read).
-    Each split's positives that are direct edges of E are counted (positives_direct_edges); for test, A13 L14's "Every
-    test pair is in T" makes it a check (COUNTS), for val a count for the definitions amendment."""
+    """A13.9's HiT counts, keyed like COUNTS, with each split's full counts. Names only: no table, no score.
+    splits=('val',) is tuning's subset (A13.10.5: HiT test is not read).
+    Val's and test's counts are promoted alike: rows, 10 + 10, closure, positives that are direct edges of E,
+    distinct positives, rows holding the child among their random or hard negatives, rows repeating a random or a
+    hard negative, and whether every row keeps at least 9 distinct of each. COUNTS decides which are checks: test's of
+    A13.9 (with A13 L14's "Every test pair is in T": 0 direct edges) and val's of Amendment 14, item 2 (the child among
+    the hard negatives is a check for val only; A13.9 states no such count for test)."""
     names_map, g = resolve(wn, store, count)
     out = {'hit.names': len(names_map)}
     train = rows('train', names_map, store)
@@ -172,13 +187,12 @@ def count_checks(wn, store=None, count=senses.U_AT_COUNT, splits=('val', 'test')
         out[f'hit.{split}.positives_in_closure'] = c['positives_in_closure']
         out[f'hit.{split}.negatives_in_closure'] = c['negatives_in_closure']
         out[f'hit.{split}.positives_direct_edges'] = c['positives_direct_edges']
-    if 'test' in detail:
-        t = detail['test']
-        out['hit.test.distinct_positives'] = t['distinct_positives']
-        out['hit.test.child_in_random'] = t['child_in_random']
-        out['hit.test.repeat_random'] = t['repeat_random']
-        out['hit.test.repeat_hard'] = t['repeat_hard']
-        out['hit.test.min_distinct_ok'] = min(t['min_distinct_random'], t['min_distinct_hard']) >= MIN_DISTINCT
+        out[f'hit.{split}.distinct_positives'] = c['distinct_positives']
+        out[f'hit.{split}.child_in_random'] = c['child_in_random']
+        out[f'hit.{split}.child_in_hard'] = c['child_in_hard']
+        out[f'hit.{split}.repeat_random'] = c['repeat_random']
+        out[f'hit.{split}.repeat_hard'] = c['repeat_hard']
+        out[f'hit.{split}.min_distinct_ok'] = min(c['min_distinct_random'], c['min_distinct_hard']) >= MIN_DISTINCT
     return out, detail
 
 

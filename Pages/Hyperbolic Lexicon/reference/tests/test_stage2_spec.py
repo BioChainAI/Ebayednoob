@@ -8,8 +8,11 @@ bits of pass 1 (closure membership, L14(b)'s E edges) and the plan's new report 
   and find every sentence it quotes. Mutated constants and mutated text are caught by check_spec.
 - The selftest-level check that a mutated runner is caught (verify_wiring) is in tests/test_stage2_wiring.py (slow).
 
-Synthetic data only (tests/stage2_synth.py's world) and no seed is drawn here: nothing is scored on a Stage-2 instance.
+Synthetic data only (tests/stage2_synth.py's world): nothing is scored on a Stage-2 instance. The only seeds drawn are
+the self-test's (S-full_i's and W_i's permutations in the grid test, 95260 + i and 95280 + i); hpstep.prng.Rng refuses
+every seed outside 95200-95499 while these tests run.
 """
+import dataclasses
 import re
 from decimal import Decimal
 from fractions import Fraction as F
@@ -24,6 +27,19 @@ from lexicon import wngraph as WG
 import run_claims_stage2 as RS  # noqa: E402
 
 S, C, B = RS.Side, RS.Comp, RS.Band
+
+
+@pytest.fixture(autouse=True)
+def seed_guard(monkeypatch):
+    """A13.12: tests draw 95200 + i only (the grid test builds S-full_i and W_i from the self-test's seeds)."""
+    import hpstep.prng as P
+    init = P.Rng.__init__
+
+    def guarded(self, seed=0, *a, **k):
+        if k.get('state') is None and not (a and a[0] is not None) and not 95200 <= seed < 95500:
+            raise RuntimeError(f'seed {seed}: Stage 2 tests draw 95200 + i only (A13.12)')
+        return init(self, seed, *a, **k)
+    monkeypatch.setattr(P.Rng, '__init__', guarded)
 
 
 def g(arm):
@@ -304,16 +320,28 @@ def test_decided_cells_are_the_specs():
 
 # ================================================================ the L12 grid (A13.11)
 def test_l12_grid_cells():
-    """224 cells: 8 arms (the six exact trees, K3 and WN) x 7 scores x 4 sense rules; each scored, an alias of a scored
-    cell, or n/a (READING stage2-runner-34); NK17 on every geometric arm (Poincaré norms on H3, H2 and K3, Euclidean
-    norms on the exact flat arms: READING stage2-runner-25)."""
+    """1,344 cells: L12's 48 arms (the six exact trees, K3, WN, and each S-full_i and W_i, i < 20) x 7 scores x 4 sense
+    rules; each scored, an alias of a scored cell, or n/a (READING stage2-runner-34, Amendment 14 items 5 and 6); NK17
+    on every geometric arm (Poincaré norms on H3, H2, K3, S-full_i and W_i, Euclidean norms on the exact flat arms:
+    READING stage2-runner-25). 716 scored: the 116 of the eight arms before Amendment 14 and 15 per new arm."""
     grid = RS.L12_GRID
-    assert RS.L12_GRID_ARMS == RS.SIX + ('K3', 'WN')
-    assert len(grid) == 8 * 7 * 4 == 224
+    perm_arms = tuple(f'S-full-{i}' for i in range(20)) + tuple(f'W-{i}' for i in range(20))
+    assert RS.L12_GRID_PERMS == RS.REGISTERED.perms == RS.DRY.perms == RS.SELFTEST_SEEDS.perms == 20
+    assert RS.L12_GRID_PERM_ARMS == perm_arms
+    assert RS.L12_GRID_ARMS == RS.SIX + ('K3', 'WN') + perm_arms
+    assert set(perm_arms) <= set(RS.l15_control2_arms(range(20)))     # the names L15 control 2 and the wiring use
+    assert len(grid) == 48 * 7 * 4 == 1344
     status = {k: v[0] for k, v in grid.items()}
-    assert sum(1 for v in status.values() if v == 'scored') == 116
-    assert sum(1 for v in status.values() if v == 'alias') == 72
-    assert sum(1 for v in status.values() if v == 'n/a') == 36
+    assert sum(1 for v in status.values() if v == 'scored') == 716 == 116 + 15 * 40
+    assert sum(1 for v in status.values() if v == 'alias') == 432 == 72 + 9 * 40
+    assert sum(1 for v in status.values() if v == 'n/a') == 196 == 36 + 4 * 40
+    old = RS.SIX + ('K3', 'WN')
+    assert sum(1 for (a, _, _), v in status.items() if a in old and v == 'scored') == 116
+    # each S-full_i and W_i places words on H3's points: every form reads it as it reads K3
+    for arm in perm_arms:
+        assert {(f, r): grid[(arm, f, r)] for f in RS.L12_GRID_FORMS for r in RS.L12_GRID_RULES} == \
+            {(f, r): grid[('K3', f, r)] for f in RS.L12_GRID_FORMS for r in RS.L12_GRID_RULES}
+        assert sum(1 for f in RS.L12_GRID_FORMS for r in RS.L12_GRID_RULES if status[(arm, f, r)] == 'scored') == 15
     for (arm, form, rule), (st, detail) in grid.items():
         if st == 'alias':
             assert grid[(arm,) + tuple(detail)][0] == 'scored', (arm, form, rule)
@@ -336,9 +364,15 @@ def test_l12_grid_cells():
     assert grid[('F3', 'DepG', 'first')] == ('alias', ('Dep', 'first'))
     assert grid[('WN', 'DepG', 'gensim')] == ('alias', ('Dep', 'gensim'))
     assert status[('WN', 'LCh', 'first')] == status[('WN', 'DepG', 'max')] == status[('F2*', 'DepG', 'max')] == 'scored'
-    for arm in ('S-full-0', 'W-0', 'S3-0', 'WN-U', 'ST', 'letter'):    # left at G with the maximum (READING 34)
+    for arm in ('S3-0', 'S3-4', 'WN-U', 'ST', 'letter'):    # S3's 5 and the chain's 3 stay at G with the maximum
         with pytest.raises(ValueError):
             RS.l12_grid_cell(arm, 'G', 'max')
+    for arm in ('S-full-20', 'W-20', 'S-full', 'W', 'GloVe-300', 'GloVe-vec-0'):    # i < 20 only; no other arm
+        with pytest.raises(ValueError):
+            RS.l12_grid_cell(arm, 'G', 'max')
+    assert RS.l12_grid_cell('S-full-0', 'NK17', 'gensim') == RS.l12_grid_cell('W-19', 'product', 'first') == \
+        ('scored', None)
+    assert RS.l12_grid_cell('W-0', 'LCh', 'max')[0] == 'n/a'
 
 
 @pytest.fixture(scope='module')
@@ -458,6 +492,15 @@ def test_plan_holds_the_new_report_cells(synth):
     outs = {(j['arm'], j['inst'], f, r): j['claims'][f'{f}/{r}'] for j in jobs for f, r in j['outputs']}
     for (arm, form, rule), (st, _) in RS.L12_GRID.items():
         assert ((arm, 'HL', form, rule) in outs) == (st == 'scored'), (arm, form, rule)
+    # Amendment 14 item 6: 600 scored cells of S-full_i and W_i on HL, 560 of them new code files (each arm's G with the
+    # maximum is a decided cell, planted once under its decision's claim)
+    new = {(a, 'HL', f, r) for (a, f, r), (st, _) in RS.L12_GRID.items()
+           if st == 'scored' and a in RS.L12_GRID_PERM_ARMS}
+    hl_decided = {(a, i, f, r) for a, i, f, r, _ in RS.decided_exact_cells(range(cfg.seeds.perms)) if i == 'HL'}
+    assert len(new) == 600 and new <= set(outs) and len(new - hl_decided) == 560
+    assert new & hl_decided == {(a, 'HL', 'G', 'max') for a in RS.L12_GRID_PERM_ARMS}
+    assert all(outs[k] == 'stage2/1' for k in new - hl_decided) and all(outs[k] != 'stage2/1' for k in new & hl_decided)
+    assert {j['arm'] for j in jobs if j['inst'] == 'HL'} >= set(RS.L12_GRID_ARMS)
     for st in ('BD-glove', 'WB-glove'):
         assert outs[('GloVe-300', st, 'cos', '-')] == 'stage2/1'
         assert insts[st].glove and insts[st].rows and len(insts[st].clusters) == len(insts[st].rows)
@@ -469,3 +512,25 @@ def test_plan_holds_the_new_report_cells(synth):
         if k[1] in insts and insts[k[1]].rows:
             assert outs[k] == c, k
     assert outs[('H3', 'HL', 'G', 'max')] == 'L12/1' and outs[('H3', 'HL', 'NK17', 'gensim')] == 'stage2/1'
+
+
+def test_disk_projection_counts_the_new_grid_cells(synth, monkeypatch):
+    """READING stage2-runner-47 (the disk projection counts the decisive run's exact-arm code lines, plan_lines of
+    exact_plan, in the timing step and the decisive pre-flight): the 560 new code files of S-full_i and W_i on HL add
+    560 x |HL| lines against the grid of 841b90c (8 arms), and nothing else of the plan moves; a configuration with
+    another number of permutations than the grid's 20 is refused rather than planned short."""
+    cfg, world, insts = synth
+    jobs = RS.exact_plan(cfg, insts)
+    old_grid = {k: v for k, v in RS.L12_GRID.items() if k[0] not in RS.L12_GRID_PERM_ARMS}
+    assert len(old_grid) == 224
+    monkeypatch.setattr(RS, 'L12_GRID', old_grid)
+    old_jobs = RS.exact_plan(cfg, insts)
+    files = {(j['arm'], j['inst'], f, r) for j in jobs for f, r in j['outputs']}
+    old_files = {(j['arm'], j['inst'], f, r) for j in old_jobs for f, r in j['outputs']}
+    assert old_files <= files and len(files - old_files) == 560
+    assert {(a, i) for a, i, _, _ in files - old_files} == {(a, 'HL') for a in RS.L12_GRID_PERM_ARMS}
+    n_hl = len(insts['HL'].rows)
+    assert n_hl > 0 and RS.plan_lines(insts, jobs) - RS.plan_lines(insts, old_jobs) == 560 * n_hl
+    monkeypatch.setattr(cfg, 'seeds', dataclasses.replace(cfg.seeds, perms=19))
+    with pytest.raises(ValueError, match='i < 20'):
+        RS.exact_plan(cfg, insts)
