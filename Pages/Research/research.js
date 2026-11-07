@@ -8,6 +8,7 @@ import { loadPublished, loadFeedConfig, saveItem, loadArticleSyncConfig } from "
 import { syncArticles, groupArticles, mergeArticleItems, PLATFORMS } from "../../assets/js/article-sync.js";
 import { scanFeed, selectLatest, dedupe, SOURCE_TYPES, safeUrl } from "../../assets/js/feed-core.js";
 import { $, $$, esc, resolveLink, hostOf, fmtDate, timeAgo, toast, fetchJson, ICONS, CROSSPOST_PLATFORMS, SITE_ROOT } from "../../assets/js/ui.js";
+import { moveLegacyKeys } from "../../assets/js/storage-keys.js";
 
 startBackground();
 
@@ -313,7 +314,7 @@ async function refreshFeed() {
     try {
         const result = await scanFeed(state.config);
         state.live = result;
-        try { sessionStorage.setItem("research-live-scan", JSON.stringify(result)); } catch { /* storage unavailable */ }
+        try { sessionStorage.setItem("ebayednoob-research-live-scan", JSON.stringify(result)); } catch { /* storage unavailable */ }
         const failed = result.sourceStatus.filter((s) => !s.ok);
         toast(failed.length ? `Scan finished: ${result.items.length} items; ${failed.length} source(s) failed.` : `Scan finished: ${result.items.length} items from ${result.sourceStatus.length} sources.`, failed.length ? "error" : "success");
     } catch (e) {
@@ -433,8 +434,9 @@ onAuthStateChanged(auth, async (user) => {
 // ---------- Load ----------
 
 routeFromHash();
+moveLegacyKeys("sessionStorage", ["research-live-scan"]);
 try {
-    const saved = JSON.parse(sessionStorage.getItem("research-live-scan") || "null");
+    const saved = JSON.parse(sessionStorage.getItem("ebayednoob-research-live-scan") || "null");
     if (saved?.items) state.live = saved;
 } catch { /* storage unavailable */ }
 

@@ -2,7 +2,10 @@
 
 **Status:** proposal only. Nothing in the SHD-CCP repository was changed. Written by the Hyperbolic Lexicon project
 (Ebayednoob, `Pages/Hyperbolic Lexicon/`) in its Phase 0, from a read-only survey of four repositories at
-Ebayednoob 7b10514, Owl-Academy 7f45f35, BioChain-AI c975161 and SHD-CCP 97d90ac.
+Ebayednoob 7b10514, Owl-Academy 7f45f35, BioChain-AI c975161 and SHD-CCP 97d90ac. The census is a reading of code
+and documents, not a measurement. It was finalised after the Lexicon's Phase 3, which adds the **measured** results
+in the last section (`reference/results/claims-phase3.json`, commit 865791f, on the code committed at 6da04be). What
+we ask is still **proposed**.
 
 ## The problem
 
@@ -58,7 +61,14 @@ word.
 ## What Hyperbolic Lexicon does meanwhile
 
 - **At the boundary with Owl Academy and BioChain-AI,** it writes the Blackwell word exactly as the pinned codec
-  writes it, in unmodified `shdccp/2` streams, and never emits a new form inside them.
-- **For its own records,** it names data by record kind (`LVOCAB/1`, `LADDR/1`, `LPREP/1`, `LCORPUS/1`, `LGROW/1`,
-  `LBENCH/1`), never by a Form nibble.
+  writes it, in unmodified `shdccp/2` streams, and never emits a new form inside them. **Measured (L8, supported for
+  its JS grower and its Python port):** on 148 shards of WordNet's noun synsets and 20 synthetic shards, each grown
+  with engrams off and on, none of its 336 records differs from Owl Academy's own `growBiochain` in any of the fifteen
+  record fields. BioChain-AI's grower gives the same records. That includes every chunk whose crystal holds a 0x80
+  byte (189 in the WordNet shards, 32 in the synthetic ones), where BioChain-AI's Python kernel writes a different
+  word (L8's control 1: the stream differs on 20 of 20 synthetic shards).
+- **For its own records,** it names data by record kind, never by a Form nibble. `LVOCAB/1`, `LADDR/1`, `LPREP/1`,
+  `LCORPUS/1` and `LGROW/1` are now built in JavaScript and Python. The `LVOCAB/1`, `LADDR/1` and `LPREP/1` strings
+  are identical in the two languages (L8(d)), and so are the manifest's roots and proofs (L9). `LBENCH/1` is defined
+  when the Lexicon's Phase 4 first uses it. These kinds live above the word, as item 2 above asks of SHD-CCP.
 - **It never calls Engram Mind's Eye's internal Form 5 tiles SHD-CCP-conformant.** They use layout 7.

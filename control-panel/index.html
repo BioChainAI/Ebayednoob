@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Content-Security-Policy: lists every host this page loads from. Keep it in step with the tags below
+         (scripts/checks/sri.cjs checks that each external tag is allowed here). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+          script-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js https://www.gstatic.com/firebasejs/11.9.1/ https://apis.google.com https://www.google.com/recaptcha/enterprise.js https://www.gstatic.com/recaptcha/releases/;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src 'self' https://fonts.gstatic.com;
+          img-src 'self' data: blob: https:;
+          connect-src 'self' https://api.github.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://export.arxiv.org https://api.openalex.org https://www.ebi.ac.uk https://api.allorigins.win https://corsproxy.io https://api.codetabs.com;
+          frame-src https://ebayednoob-github.firebaseapp.com https://accounts.google.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/;
+          object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control Panel - Ebayednoob</title>
     <meta name="robots" content="noindex">
@@ -25,7 +35,7 @@
         <header class="py-4 sm:py-6 border-b border-gray-700/50 content-overlay rounded-b-xl sticky top-0 z-50">
             <nav class="flex flex-wrap gap-y-3 justify-between items-center px-4 sm:px-6">
                 <a href="../index.html" class="flex items-center gap-3 transition-opacity hover:opacity-80" title="Back to the main site">
-                    <img src="../Resources/Pictures/Logo Files/Ebayednoob-logo.png" alt="Ebayednoob Logo" class="h-8 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/150x40/0a0a0a/ffffff?text=Ebayednoob';">
+                    <img src="../Resources/Pictures/Logo Files/Ebayednoob-logo.png" alt="Ebayednoob Logo" class="h-8 w-auto">
                 </a>
                 <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
                     <a href="../index.html" class="text-gray-300 hover:text-white transition-colors">Main site</a>
@@ -157,6 +167,21 @@
         </form>
     </dialog>
 
+    <dialog id="gh-run-dialog" class="bg-gray-900 text-gray-100 border border-gray-700 rounded-xl p-0 w-[min(30rem,calc(100vw-2rem))]">
+        <form id="gh-run-form" method="dialog" class="p-6 space-y-3">
+            <h2 class="text-lg font-semibold">Run the workflow</h2>
+            <p class="text-sm text-gray-400">Paste a fine-grained token for this repository with <b>Actions: Read and write</b>, or open the workflow on GitHub and press “Run workflow” there. The token is kept for this page only: it is never saved in the browser, and reloading or leaving the page forgets it.</p>
+            <div><label class="lbl" for="gh-run-token">Token</label><input id="gh-run-token" type="password" class="field" autocomplete="off" placeholder="github_pat_…"></div>
+            <div class="flex justify-between gap-2">
+                <button type="button" id="gh-run-github" class="btn btn-ghost btn-sm">Open on GitHub</button>
+                <div class="flex gap-2"><button type="button" id="gh-run-cancel" class="btn btn-ghost btn-sm">Cancel</button><button type="submit" class="btn btn-primary btn-sm">Run now</button></div>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Loaded on its own (it imports nothing), so a token saved by an earlier version is removed even when the
+         Firebase modules of the main script cannot load. -->
+    <script type="module" src="../assets/js/github-store.js"></script>
     <script type="module" src="control-panel.js"></script>
 </body>
 </html>

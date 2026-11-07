@@ -4,6 +4,14 @@
 Lexicon's Phase 0, in a read-only survey of Owl-Academy at 7f45f35. Every item gives the file and line so it can be
 checked. Items 1–4 affect correctness; 5–8 matter if Owl Academy's language data is to be grown as biochains.
 
+**Finalised after Phase 3 with measured numbers.** Items 1–3, 5 and 6 come from reading the code and were not
+measured. Items 4 and 8 now carry results of the Lexicon's Phase 3 decisive run, which ran `scripts/biomesh.js` at
+7f45f35 unchanged, from the Owl-Academy checkout, by name-grab in Node. That run decided claims L8 and L10, which
+were registered in `PREREGISTRATION.md` in Phase 0; Amendments 7 and 8 were written before the run. Every number is
+in `reference/results/claims-phase3.json`, commit 865791f: one run, on the code committed at 6da04be. Item 7 carries
+the result of claim L2 from Phase 1 (`reference/results/claims.json`, commit 6af2a83). The suggestions are still
+suggestions; none has been tried in Owl Academy's code.
+
 ## 1. The packet continuity check in Engram Mind Eye always passes
 
 `Library/Experimental_Systems/Engram_Mind_Eye.html`:
@@ -38,13 +46,33 @@ already use) would make the certificate checkable anywhere. This matters before 
 - leaf and Merkle-root checks are skipped when the fields are absent, so a record with both deleted passes;
 - a packet's `crystal32` and checksum are never compared with the recreated chunk; only parity is checked, and
   `payload16` is used as the decode length;
-- `chainId` and `weaveMirror` are not recomputed.
+- `chainId` and `weaveMirror` are not recomputed;
+- residuals are decoded but never re-encoded, so a residual bit can be flipped where the chunk still decodes to the
+  same bytes (a non-canonical encoding).
 
 A record can therefore be altered and still verify. Authenticity needs the GROWN/1 seal checked as well
 (`verifyGrown`).
 
-Hyperbolic Lexicon's claim L10 registers a stricter verifier and a tamper set that measures each gap. Its control
-expects Owl's `verifyIntegrity` to accept records with leaves and root removed, or with a crystal changed.
+**Measured (L10, supported; its control 1).** `verifyIntegrity`, run unchanged from the Owl-Academy checkout,
+**accepted 50 of 50** records in each of four registered tamper classes, 200 of 200 in all. Each record was a WordNet
+shard grown as Owl's `growBiochain` grows it (L8 found the records identical), then altered:
+
+| Class | Alteration | Owl's `verifyIntegrity` | Hyperbolic Lexicon's hardened check that rejects it |
+| --- | --- | --- | --- |
+| T1 | `leafHashes` and `merkleRoot` removed | accepts 50/50 | leaves (leaves and root mandatory, recomputed) |
+| T2 | one packet's `crystal32` changed, parity re-fixed | accepts 50/50 | crystal (`crystallize(chunk)` must equal the packet) |
+| T8 | `chainId` altered | accepts 50/50 | weaves (both weaves and `chainId` recomputed) |
+| T9 | one residual bit flipped; the chunk decodes to the same bytes | accepts 50/50 | canonical (decode, re-encode, require the stored residual) |
+
+In T9, 49 of the 50 flips fell inside a raw-byte escape code and 1 in the padding after the last code. The
+Lexicon's verifier, in JavaScript and in Python, rejected all 200, naming the same check in both languages, and
+accepted all 50 clean packages of the run.
+
+**Suggested:** add these four checks to `verifyIntegrity`, or to a strict variant beside it, and check the GROWN/1
+seal where records are imported. The Lexicon's `lexicon_core.js` (chain section) and `reference/lexicon/verify.py`
+implement them and may serve as a reference. Two limits apply. The tampers are the nine registered classes, 50
+records each, not an adversary's search. And L10 ran `verifyIntegrity` on engrams-off records only (Amendment 8, item
+1).
 
 ## 5. The engram tokenizers disagree
 
@@ -73,15 +101,39 @@ engram/1 keeps only the parity of each letter's count. The 26 letter grids have 
 - distances between words look random (mean about 32/64 bits).
 
 `BIOMESH_SYSTEM.md` (lines 141–145) says so too. Hyperbolic Lexicon keeps engram/1 only as a compatibility checksum.
-Its claim L2 measures the collision share on WordNet's lemmas.
+
+**Measured (L2, supported, Phase 1).** 77,520 of WordNet 3.0's 147,305 normalised lemma types (52.6%) share their
+engram/1 key with another type. The registration had predicted 2–10%. The anagram classes hold 15,025 of those types.
+The rest share a key with types made of different letters, because the key keeps only the parity of each letter's
+count. 371 types sit on the zero key, among them all 131 types made only of digits. As the control required, a
+SHA-256-prefix key over the same types gives no collision.
 
 **Proposal: an engram/2 key** made of a subword id from a pinned vocabulary plus an exact address in the LPS p=5
-quaternion tree, the same tree Engram Mind Eye's addresses already use. Hyperbolic Lexicon is building and testing
-this address; engram/2 would be registered separately once the address claims are decided.
+quaternion tree, the same tree Engram Mind Eye's addresses already use. The address claims are now decided. L3 (exact,
+invertible, certified addresses in H³ and H²) is supported, in Phase 1 and, for its JavaScript part (L3(f)), in
+Phase 2 (`reference/results/claims-phase2.json`, commit 648a6b6). L7 (address, H³ point and X(5, q) vertex agree) is
+supported, in Phase 1. engram/2 itself is still to be registered, separately; the Lexicon's roadmap places it in
+Engram Mind's Eye in Phase 8.
 
 ## 8. Language biochains
 
 A whole biochain lineage is capped at 60,000 bytes: `extendBiochain` regrows parent plus new text through
-`growBiochain`, which throws above `MAX_GROW_BYTES`. Corpus-scale language data therefore needs many independent
-shards tied together by a manifest. See `BioChain-AI-language-chains.md` in this folder; the same design applies to
-Owl Academy's `biomesh.js`, which shares the codec byte for byte.
+`growBiochain`, which throws above `MAX_GROW_BYTES` (`scripts/biomesh.js`, lines 33, 276–280 and 398). Corpus-scale
+language data therefore needs many independent shards tied together by a manifest. See
+`BioChain-AI-language-chains.md` in this folder; the same design applies to Owl Academy's `biomesh.js`, which shares
+the codec byte for byte.
+
+**Measured (L8, supported for the Lexicon's JS grower and for its Python port).** WordNet 3.0's noun synsets (corpus
+C0, 8,831,867 bytes) were cut into 148 shards of at most 60,000 bytes. With 20 synthetic multi-byte shards, each grown
+with engrams off and on, that makes 336 records. None of the Lexicon's 336 records (JS or Python) differs from Owl's
+`growBiochain`'s in any of the fifteen record fields. That includes the 189 C0 chunks and 32 synthetic chunks whose
+crystal holds a 0x80 byte, which Owl's code writes raw. Owl's `verifyIntegrity` accepts every one of them. The 148 C0
+shards sit under one RFC 6962 manifest whose roots and proofs are identical in JavaScript and Python (claim L9).
+
+**Measured (L8, reported): the engram layer's cost.** With engrams on, Owl's `growBiochain` took a median 9,319 ms
+per shard, against 70.5 ms with engrams off. These figures come from four contended worker threads; that pool took
+1,837.6 s of the 50 min 44 s run. The Lexicon's grower writes the same engram layer (0 of 336 records differ),
+computing each distinct token's packet once. Run alone, it took a median 119.1 ms per shard with engrams on. The two
+timings are not like for like. **Suggested:** cache `engramCharGrid` (line 120), or each distinct token's packet.
+Line 131 calls `engramCharGrid(ch)` inside the `map` over the 64 grid entries, so each letter of each token builds its
+64-entry grid 64 times.

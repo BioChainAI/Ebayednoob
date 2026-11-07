@@ -1,0 +1,473 @@
+### Amendment 10 · 2026-11-06, Phase 4, before any code for its claims
+
+Written at the start of Phase 4, before any trainer, evaluator or runner for L6 and L4(c) existed in the repository
+(the throwaway prototypes in a scratch folder are listed in item 16). No result of these claims was known: nothing had
+been trained, ranked or evaluated on the mammal sets, and the shared generator had drawn from no registered seed
+(item 16 lists every probe, and the one call of the statistics constant `default_rng(7)`). It fixes the definitions
+that L6 and L4(c) leave open; nothing registered is changed. Where the text allows two readings, the more literal is
+taken and the reason is given.
+Notation: S is the mammal closure set in offset order (n = 1,182; node i is its i-th offset); anc(u) and desc(u) are
+u's closure ancestors and descendants inside S (`wordnet.closure`, `wordnet.descendants`); P17 is arXiv:1705.08039v2,
+P18 is arXiv:1806.03417v2, and *the script* is facebookresearch/poincare-embeddings at dff101b
+(`dff101b5089a635a751aa45e3a6cb21670a3588e`).
+
+**1. Code and authorities.** `reference/lexicon/embed.py` builds the training data and is the numpy float64 trainer
+of items 2–5, D9's authority for the learned tables. `reference/lexicon/stream.py` computes the training stream with
+numba 0.68.1 (pinned in `requirements.txt`, `cache=False`): a line-for-line copy of `hpstep/prng.py`'s splitmix32 and
+xoshiro128\*\* (`next_u32`, `random`, `below`, `shuffle`). "The numpy reference trainer" drawing "with `Rng(seed)`" is
+read as: the trainer's arithmetic is numpy, and its stream is `Rng`'s by definition; numba only computes that stream
+(in pure Python it would cost about 330 s a run) and is used for nothing else; `reference/lexicon/pystream.py` gives
+the same calls on `hpstep.prng.Rng` for every draw outside training. Before any run, a test must find the copy equal to
+prng.py output for output, including `below` on bounds that reject about half the time; and registered tuning and the
+decisive run each replay one of their runs' draws with `hpstep.prng.Rng` itself, whose final state must equal the
+run's, or that step writes no result (item 14). `reference/lexicon/learned.py` snaps and ranks (item 6, item 10's
+float64 ranking); `reference/lexicon/l6.py` holds the controls, intervals, decisions, tuning choice and LBENCH/1
+(items 7–12); `reference/run_claims_phase4.py` is the runner. MAPs are decided by the Python reference through
+`rank._ap_and_ranks`, `map_exact`, `mean_rank`, `paired_diffs` and `ci_mean`, unchanged; no other evaluator decides.
+The trainer calls no BLAS routine (no `@`, `dot`, `einsum` or `linalg`). The runner sets `OPENBLAS_NUM_THREADS`,
+`MKL_NUM_THREADS`, `OMP_NUM_THREADS`, `NUMEXPR_NUM_THREADS` and `NUMBA_NUM_THREADS` to 1 before numpy is imported. Each
+run is one single-threaded process; running four at once changes no bit.
+
+**2. The instance and its neighbour sets.**
+- *Positives.* The 6,542 pairs (u, v) with v ∈ anc(u), in order of (index of u, index of v). u is the anchor and v
+  the positive; one direction only, the script's (`wordnet/transitive_closure.py` line 24; `train-nouns.sh` does not
+  pass `-sym`).
+- *Non-neighbours.* NN(u) = S \ ({u} ∪ anc(u) ∪ desc(u)), in index order: the complement of the registered closure
+  neighbours (Amendment 1 item 7). mammal.n.01 (01861778) has none and is never an anchor; placental.n.01 (01886756)
+  has 49; over the anchors |NN(u)| runs from 49 to 1,180. The runner asserts |NN(u)| ≥ 1 for every anchor; no
+  fallback exists. The script rejects only u and its ancestors, and so draws descendants as negatives (16,439
+  anchor–descendant incidences per epoch here); that is not followed, because the registered metric scores them as
+  neighbours.
+- *Evaluation.* Closure neighbours are `rank.closure_neighbours`; graph-edge neighbours are `rank.graph_neighbours`
+  with the full noun `spanning_forest`. Closure MAP has all 1,182 queries, each against the other 1,181. mammal.n.01
+  is one of them: its AP is 1 under every ranking, and it is counted as the one query without non-neighbours.
+  Graph-edge MAP has 1,176 queries. 01322508, 01322604, 01322898, 01322983, 01323068 and 01862399 have their spanning
+  parents outside S and no children in S, so they have no AP: they are left out of the MAP and of every graph-edge
+  difference and counted (Amendment 2), and they stay candidates.
+- *The exact arm.* `h3tree.arm` over the L3 noun words of S (`address.noun_words`), with its exact integer keys.
+
+**3. The stream, the initialisation and the schedule.** A run is a function of the geometry, d, lr, seed, positives
+and non-neighbour sets alone. d is the manifold dimension: a Lorentz row stores (x0, x1, …, xd), a Euclidean row
+(x1, …, xd).
+- One `Rng(seed)` per run is read in this order, and by nothing else:
+  1. For node i = 0, …, n − 1, and k = 1, …, d within it: x_ik = (2·random() − 1)·1e−3. Lorentz then sets
+     x_i0 = √(1 + Σ x_ik²) (item 4's arithmetic). Lorentz and Euclidean at the same (seed, d) thus start from the
+     same spatial numbers ("same init").
+  2. At the start of every epoch, perm = `shuffle(list(range(6542)))` of a fresh list.
+  3. Then, for each batch in order and each row in batch order, 50 negatives NN(u)[below(|NN(u)|)]: independent,
+     with replacement, repeats kept as separate terms. With replacement, because placental.n.01 has only 49
+     non-neighbours.
+- There are 1,000 epochs, numbered 0–999. Batch b of an epoch is perm[50b : 50b + 50], b = 0, …, 130; the last has 42
+  rows and is kept, so a run takes 131,000 steps. Epochs 0–19 use the rate η = lr/10 (a float64 division, as written),
+  and epochs 20–999 use η = lr; lr is the grid's decimal string read by `float()`. There is no momentum, weight decay,
+  max-norm, step clip or other schedule.
+- The table after epoch 999 is the run's table. Nothing else is kept or selected.
+
+**4. The loss and the step.** All arithmetic is IEEE-754 binary64, rounded to nearest, without fused multiply-add.
+Σ_seq is a left-to-right sum in index order whose terms are each rounded first. `exp`, `log1p`, `cosh` and `sinh` are
+numpy's float64 ufuncs applied to C-contiguous arrays, and `sqrt` is correctly rounded. Bit identity is promised on
+the build machine only; each run records the numpy, numba and libc versions and numpy's SIMD features.
+- *Distances,* for a row with anchor u and candidates c_0 = v and c_1, …, c_50 (the negatives):
+  - Lorentz: z_j = u0·c0 − Σ_seq(u_k·c_k, k = 1..d). If z_j > 1, then t = z_j − 1, r_j = √(t·(t + 2)) and
+    d_j = log1p(t + r_j). Otherwise d_j = 0 and the term has no gradient (a *guard hit*, counted). This is
+    arcosh(max(z, 1)) with its exact derivative 1/√(z² − 1). The script floors that denominator at 1e−5; that is not
+    used, because no clamp is registered and this guard adds no constant.
+  - Euclidean: d_j = Σ_seq((u_k − c_k)², k = 1..d), the squared distance, because the registration attributes
+    training to Nickel & Kiela, whose Euclidean distance is ‖u − v‖² (P17 p. 5; the script's `euclidean.py` line 29).
+- *Loss.* A softmax over −d of the 51 candidates, the positive included (the script's `F.cross_entropy` with target 0,
+  `energy_function.py` line 48): ℓ = d_0 + log Σ_j e^(−d_j). The batch loss is the mean of ℓ over the batch's B rows
+  (B = 50, or 42). With m = min_j d_j, e_j = exp(m − d_j), S = Σ_seq(e_j, j = 0..50) and q_j = e_j/S, its derivatives
+  are δ_0 = (1 − q_0)/B and δ_j = (−q_j)/B for j ≥ 1.
+- *Gradient terms,* taken in term order: rows in batch order, then j = 0, …, 50, then the anchor's term before the
+  candidate's.
+  - Lorentz: g = δ_j/r_j (0 at a guard hit). The anchor receives g·c_j and the candidate g·u, in all d + 1
+    coordinates.
+  - Euclidean: g = 2·δ_j and a = g·(u − c_j), coordinatewise. The anchor receives a and the candidate −a.
+
+  A node's accumulator A is the Σ_seq of the terms it receives, per coordinate, starting from 0.
+- *Step.* Every node met in the batch (anchors, positives, negatives) takes one step. All steps are computed from the
+  table as it stood at the start of the batch.
+  - Lorentz:
+    - ip = Σ_seq(x_k·A_k, k = 1..d) − x0·A0;
+    - w_k = η·(A_k + ip·x_k) for k = 0, …, d;
+    - ν = Σ_seq(w_k·w_k, k = 1..d) − w0·w0 and τ = √max(ν, 0);
+    - if τ > 0, x_k ← cosh(τ)·x_k + (sinh(τ)/τ)·w_k for k = 1, …, d;
+    - then x0 ← √(1 + Σ_seq(x_k·x_k, k = 1..d)).
+
+    This is −η times the tangent projection h + ⟨x, h⟩_L x of the Minkowski gradient h = −A (the ambient gradient
+    with its time component negated), and the exact exp map (P18 eqs. 9–10, Algorithm 1), whose time coordinate is
+    then recomputed from the spatial ones. Both are registered words: the exp map moves the row, and "on the
+    hyperboloid" keeps it there, which in binary64 the exp map's own x0 does not (item 15 attributes the step). The
+    exp map has no clip, although the script clips the step length at 1 (`lorentz.py` line 116): "exp map" is
+    registered without one, and the Euclidean arm's SGD has none. At lr = 10 a hub node's step can exceed 1.
+  - Euclidean: x_k ← x_k − η·A_k.
+
+**5. Divergence and diagnostics.** After every epoch, a table with any non-finite entry stops the run. The run is
+recorded as *diverged at epoch e*, and it has no table and no MAP. The check is on the table because the table is
+what is evaluated. Floating-point exceptions within an epoch are not errors, and a finite table is evaluated as it
+stands. Recorded per run, deciding nothing:
+- the guard hits and the largest step (τ for Lorentz; the norm of η·A for Euclidean);
+- the largest distance from the origin (arcosh of the largest x0; Euclidean: the largest norm);
+- the mean of ℓ over each epoch's rows, computed as (d_0 − m) + log S for this record only;
+- the generator's final state and the float table's SHA-256 (item 6);
+- wall and process time.
+
+**6. Snapping and exact ranking.**
+- *The float table.* Its bytes are little-endian float64, row-major, rows in offset order, a Lorentz row with x0
+  first. Their SHA-256 names the table.
+- *Lorentz.* Take p_k = x_k/(1 + x0) in binary64 for k = 1, …, d, then `fence.dyadic(p, 32)`: n_k = ⌊2^32·p_k + 1/2⌋,
+  stepped in by one unit coordinatewise while |n|² ≥ 4^32. The exact point is `fence.lift(p, 32)`. For a query u
+  and a candidate v, −⟨lift_u, lift_v⟩_L = 1 + 2·4^32·κ_u(v)/(4^32 − |n_u|²), where
+  κ_u(v) = |n_u − n_v|²/(4^32 − |n_v|²). So the key κ_u(v), an exact `Fraction`, orders and ties the candidates
+  exactly as the Lorentz product does.
+- *Euclidean.* n_k = ⌊2^32·x_k + 1/2⌋ of the float read exactly. This is `fence.dyadic`'s rounding without its rim
+  rule, which belongs to the Poincaré ball and never ends on a vector of norm 1 or more. The key is the squared
+  distance of the dyadic points, through a `rank.Arm` of kind `'euclid'` over the denominator 2^32.
+- *Metrics.* AP and neighbour ranks come from `rank._ap_and_ranks` on these keys (Amendment 1 item 5: pessimistic
+  ties, ties listed by offset); MAP from `rank.map_exact`; mean rank from `rank.mean_rank` (pooled, Amendment 2).
+- *The snapped text.* Lines `offset n_1 … n_d` (the dyadic integers; for Lorentz, those of the Poincaré point),
+  LF-joined, with no final LF. Its SHA-256 names the snapped table.
+
+**7. Intervals and the decision of L6.** For a comparison X − Y at seed s:
+- The values are `rank.paired_diffs(AP_X, AP_Y)` over the queries in offset order (closure n = 1,182, graph-edge
+  n = 1,176).
+- The interval is `rank.ci_mean` of them (numpy `default_rng(7)`, 10,000 resamples, percentiles 2.5 and 97.5),
+  started afresh for each interval.
+- The exact arm has no seed, so its APs enter every seed's comparison.
+- In float64, with "the mean" being `ci_mean`'s mean:
+  - "above 0" is lo > 0;
+  - "within [−0.02, +0.02]" is lo ≥ −0.02 and hi ≤ 0.02;
+  - "entirely below 0" is hi < 0;
+  - "entirely above +0.02" is lo > 0.02.
+
+*Seeds present.* At seed s, a part's comparison is present when the learned tables it compares exist (no diverged
+run) and control 2 is established for each of their cells at s (item 9). A part is supported only if all five seeds
+are present; its refutation counts the seeds present. A diverged Euclidean run is no Lorentz win. A cell without a
+frozen lr (item 8) has no seed present.
+
+The parts:
+- **(a)** Closure, Lorentz(d, s) − Euclidean(d, s). At each d ∈ {2, 3}, it is supported if all five seeds are present
+  with lo > 0, and refuted if the mean is ≤ 0 in three or more seeds. (a) is refuted if refuted at either d,
+  supported if supported at both, and otherwise inconclusive.
+- **(b)** Closure, Lorentz(50, s) − Euclidean(50, s). Supported if all five seeds are present and each is within the
+  band or entirely below 0; refuted if lo > 0.02 in three or more seeds.
+- **(c)** Graph-edge, exact − Lorentz(3, s). Supported if all five seeds are present with lo ≥ −0.01; refuted if the
+  mean is < −0.05 in three or more seeds.
+- **(d)** Closure, Lorentz(3, s) − exact. Supported if all five seeds are present with lo > 0; refuted if the mean is
+  ≤ 0 in three or more seeds.
+- Otherwise each part is inconclusive.
+
+Precedence and edge cases:
+- A failed control (item 9) voids all four parts, as Amendment 5 read a control that names no part; void comes before
+  refuted.
+- A part that meets both its support and its refutation condition is inconclusive. That needs an interval whose lo
+  exceeds its mean (for (c), by more than 0.04), and (b) cannot meet both. Whether lo ≤ mean ≤ hi holds is reported
+  for every interval and decides nothing else.
+- No multiplicity correction is applied; none is registered.
+- *Prediction (a)'s gap,* graded in the write-up and deciding nothing: at d ∈ {2, 3}, the mean over the seeds present
+  of MAP(Lorentz(d, s)) − MAP(Euclidean(d, s)), exact snapped closure MAPs, also reported per seed. The prediction
+  holds if (a) is supported and the gap is at least 1/5 at both d.
+
+**8. Tuning.**
+- *The grid.* There are ten cells, {Lorentz, Euclidean} × d ∈ {2, 3, 5, 10, 50}, the reported d included. The 24
+  tuning seeds form six blocks of four, and the k-th rate of {0.03, 0.1, 0.3, 1, 3, 10} in ascending order
+  (k = 0, …, 5) is trained on block k, seeds 9000 + 4k to 9003 + 4k: 24 runs per cell, 240 in all.
+- *Why this reading.* "In blocks of four" must divide the seeds for a purpose, and six rates meet exactly six blocks
+  of four. Read as a full product (every rate on all 24 seeds, 1,440 runs), the phrase would describe only the order
+  of execution, which the registration fixes nowhere else. Phase 0's tracks explainer, written with the registration
+  (9f36f95, `explainers/tracks.html`), counts "L6, all runs: about 290, tuning included": 240 tuning runs and 50
+  measured ones (it leaves out control 2's runs). The product reading was weighed by this amendment's reviewers and is
+  not taken; it would cost about 15.6 h of tuning on four processes, against about 2.6 h.
+- *Scores.* A run's score is its exact snapped closure MAP (item 6). Tuning computes no other MAP, so that it previews
+  neither (c) nor L4(c). A rate is eligible if none of its four runs diverged, and its score is the exact mean of the four.
+- *The choice.* The frozen lr is the eligible rate with the largest mean; on a tie, the smaller rate. The grid is not
+  extended when 0.03 or 10 wins; that is reported. A cell with no eligible rate has no frozen lr, and no measured or
+  edge-shuffled runs.
+- *The lr-freeze amendment* (Amendment 11, unless a definitions amendment comes first; item 14), dated and before any
+  measured run, writes `reference/settings.json` (each cell's rate as its grid string, or null). It gives the file's
+  SHA-256 and every tuning run from `reference/results/tuning.json`, and it changes nothing else.
+- *Measured runs.* Each cell with a frozen lr is trained at it on seeds 0–4: 50 runs.
+- *The tuning tables* are kept in the cache, snapped and as float tables, with both SHA-256s in `tuning.json`, for
+  control 1. They are not committed (about 80 MB).
+
+**9. L6's controls.**
+- *Control 1, label shuffle.*
+  - One permutation serves every table: P = `Rng(7).shuffle(list(range(1182)))`, from one fresh generator. The node
+    with index P[i] takes the point of row i: the labels move and the points stay.
+  - The closure MAP of each relabelled table is computed exactly, against the true closure neighbours, over all 1,182
+    queries. It must be ≤ 1/20, compared exactly, for every trained table, or L6 is void. The trained tables are the
+    240 tuning tables, the 50 measured tables and the 50 edge-shuffled tables, as many as exist.
+  - A tuning table is read from the cache when its snapped text has its recorded SHA-256. Otherwise it is retrained;
+    if the retrained float table's SHA-256 differs from the recorded one (another machine's arithmetic, item 4), the
+    retrained table is evaluated and both hashes are reported, since a table trained by the same run tests the
+    evaluator as well.
+  - P is computed once, in the decisive run. Nobody computes it before; tests use unregistered seeds (80000 + i).
+  - *A disclosed risk.* mammal.n.01 and placental.n.01 neighbour 1,181 and 1,132 nodes. If P hands either label to the
+    point of a general node in a well-trained table, nearly every query gains a neighbour near the top. On toy tables
+    (item 16) one permutation breached 0.05 this way with probability 0.4% (a synthetic tree) and 0.8% (a WordNet
+    noun set). On the mammals, which have two such labels, it is perhaps 1–2%. Such a breach voids L6, as registered.
+  - *Reported, deciding nothing,* so that a void can be read: which points the two labels take; the relabelled
+    closure MAP of each measured table under 200 further permutations `Rng(2100 + j)`, j < 200 (secondary draws, as
+    the Common rules number them; no other L6 draw uses 2100–2299), which shows whether P sits in the far tail
+    (chance) or the whole distribution is high (a leak); and the relabelled graph-edge MAP.
+- *Control 2, edge shuffle.*
+  - *The pairs.* They come from one fresh `Rng(2000 + s)`: repeat a = below(1182), b = below(1182), rejecting a = b
+    and any unordered pair already held, until there are 6,542 pairs. (a, b) is (anchor, positive), and the pairs
+    are held in order of (a, b).
+  - *Training* is items 3–5 at the cell's frozen lr, with these pairs as positives. NN′(a) is every node other than
+    a that is paired with a in neither order: the pairs' own relation, with no closure taken, since the true closure
+    would leak the hierarchy into the control. Its draws come from `Rng(s)`, the generator the registration gives
+    training ("with `Rng(seed)`"). It therefore starts from the true run's initial table, and the two streams agree
+    until the first draw that one run rejects and the other accepts (after about a dozen epochs, on average).
+  - It runs in every cell with a frozen lr, for s = 0–4, because "true training" names no cell.
+  - *The test.* For each cell and seed, the per-node differences true − shuffled, both evaluated against the true
+    relations, must have lo > 0 for closure AP and for graph-edge AP, because L6's metric names both. Otherwise L6 is
+    void. The Common rules' "at least one case" is the least a control must show; control 2 states its own condition
+    for edge-shuffled training as such, naming no cell, seed or MAP, so every interval must hold, as Phase 1 required
+    of every interval in L5's controls.
+  - If either run of a pair diverged, the control is not established for that cell and seed, and item 7 counts that
+    seed as not present for the parts that use the cell.
+- *Control 3, the floor (reported).*
+  - For each cell and i = 0–4, item 3's initial table is drawn from a fresh `Rng(2000 + i)`, left untrained, snapped
+    and evaluated. It is reported with the intervals learned(s) − floor(i = s).
+  - The same stream also starts control 2's pairs for s = i. Both uses are registered and kept, and no comparison
+    involves both.
+  - The expected MAP of a uniformly random ranking, from the neighbour counts alone, is 0.014957 (closure) and
+    0.007320 (graph-edge). It is reported beside the controls.
+
+**10. L4(c).**
+- *What is compared.* Every learned L6 table at d ∈ {2, 3} with training seed 0–4: the 20 measured and the 20
+  edge-shuffled tables, since the edge-shuffled ones are trained by items 3–5 from `Rng(s)` too and the registration
+  names no narrower set. Floors (not learned) and tuning tables (seeds 9000–9023) are not. For each table,
+  |MAP(snapped, exact) − MAP(float64)| is taken for closure and for graph-edge MAP, against the true relations,
+  because L6's metric computes both MAPs from points snapped "(L4(c))"; the table's |ΔMAP| is the larger. The values
+  are exact rationals, compared exactly with 1/1000 and 1/100.
+- *The decision.* Supported if the largest is ≤ 1/1000; refuted if any exceeds 1/100; otherwise inconclusive. A
+  missing table (a diverged run) prevents support, but a present table above 1/100 still refutes. L6's controls do
+  not bear on L4(c).
+- *MAP(float64)* ranks the unsnapped table as stored after epoch 999, by keys computed in binary64 without fused
+  multiply-add. Equal keys are ties, counted pessimistically by `rank._ap_and_ranks`; there is no acosh.
+  - Lorentz: x0·y0 − x1·y1 − … − xd·yd, from left to right. This is Amendment 4 item 6's float key, which L4 already
+    uses.
+  - Euclidean: Σ_seq((x_k − y_k)², k = 1..d).
+- *Its controls* are L4's. Control 2 names "the test" and no part. Read as Amendment 5 read it, and as item 7 reads
+  L6's controls, it covers (c) too. It showed its weakness in Phase 2 (487 of 488 queries) on `rank._ap_and_ranks`,
+  the evaluator that (c) uses unchanged. No control is added.
+- *Reported:*
+  - the same 40 tables snapped to 2^−8 (`fence.dyadic(p, 8)`; Euclidean ⌊2^8·x + 1/2⌋), ranked exactly as in
+    item 6 with 8 in place of 32, with their |ΔMAP|: whether a coarse snap moves the MAP;
+  - the largest snap displacement per table. For Lorentz it is the hyperbolic distance arcosh(1 + 2R), with
+    R = |p − q|²/((1 − |p|²)(1 − |q|²)) exact, evaluated by `rank.acosh_ratio` (2R rounded once, then `log1p` and
+    `sqrt` in binary64); p is the float Poincaré point read exactly, q = n/2^32, and the distance is ∞ if
+    1 − |p|² ≤ 0. For Euclidean it is the Euclidean distance |x − n/2^32|, the square root in binary64 of the exact
+    squared difference, since a hyperbolic distance has no meaning there;
+  - |ΔMAP| of the measured and edge-shuffled tables at d ∈ {5, 10, 50}, and of the floors;
+  - the number of exact ties in each snapped table and of float ties in each unsnapped one.
+
+**11. Reported, deciding nothing.**
+- *Mean rank,* pooled, for closure and graph-edge.
+- *Fractional-tie MAP* (Common rules, "Ties"), closure and graph-edge, for the exact arm and the measured and
+  edge-shuffled tables: each query's AP averaged over all orders inside each exact tie class, computed exactly.
+- *Distortion,* for the exact arm and the measured tables: the mean of |d/(τ·d_T) − 1| over all unordered pairs of S
+  with d_T > 0.
+  - d_T is the L3 word tree distance. d is the binary64 distance of the snapped points, from their exact coordinates
+    as `rank.Arm.dist` computes it for the exact arm: Lorentz, `rank.acosh_ratio` of
+    −⟨lift_u, lift_v⟩ = 1 + 2·4^32·|n_u − n_v|²/((4^32 − |n_u|²)(4^32 − |n_v|²)); Euclidean, √(|n_u − n_v|²)/2^32.
+  - τ = ln 7 for the exact arm. For a learned table, which has no registered scale, τ is the median of d/d_T over the
+    same pairs.
+- *Bits per node* of the snapped points, mean and maximum (`h3tree.point_bits`; Lorentz: the lifted point over
+  4^32 − |n|²; Euclidean: n over 2^32).
+- *Wall-clock per run:* `time.perf_counter` and `time.process_time`, with the number of concurrent processes.
+- *Further intervals:* Lorentz − Euclidean, closure at d = 5 and 10 and graph-edge at every d; exact − learned
+  graph-edge and learned − exact closure in every cell.
+- *The geoopt cross-check (D9).*
+  - It compares geoopt's Lorentz Riemannian SGD step with item 4's, one step at a time, on synthetic batches with
+    unregistered seeds (80000 + i, as the tests use). It is reported as the largest relative difference of the
+    updated rows.
+  - geoopt's own floors (1e−8 on ⟨v, v⟩_L, 1e−15 in arcosh) make it a tolerance, never a decision.
+  - If no torch wheel installs on the build machine, it is reported as not run. On 2026-11-06 the proxy refused
+    download.pytorch.org, and PyPI's Linux wheel pulls more than 1 GB of CUDA wheels.
+  - The tests carry torch-free checks in its place: a 60-digit decimal recomputation of one step, and
+    finite-difference gradients.
+- *The Node re-evaluation.* After the decisive run, `lexicon_core.js` re-evaluates the 50 measured snapped tables,
+  after traces on `Rng(8000 + i)` toy tables. It needs one new function: κ_u(v) by BigInt cross-multiplication, and
+  |n_u − n_v|². It is reported, and it is needed before the browser shows L6 or L4(c) as holding (Common rules,
+  "Authority").
+
+**12. LBENCH/1,** with Amendment 7 item 3's conventions. There is one record per evaluated table:
+
+`LBENCH/1|L6/1|instanceId|instanceSha|arm|geometry|d|seed|lr|protocolSha|settingsSha|budget|floatTableSha|32|snapSha|closureMapSha|graphMapSha|closureMap|graphMap|track|engine|wallMs`
+
+| Field | Content |
+| --- | --- |
+| instanceId | `wordnet30-mammal-closure` |
+| instanceSha | the SHA-256 of S's offsets, LF-joined, with no final LF (the registered `c4748ce2…`) |
+| arm | `tuning`, `learned`, `edge-shuffled`, `floor` or `exact-h3` |
+| geometry | `lorentz`, `euclid` or `h3` |
+| seed | the training seed; for a floor, its i |
+| lr | the grid string |
+| protocolSha | the SHA-256 of `reference/golden/l6_protocol_v1.txt`: this amendment verbatim, from its heading, with LF line ends and a final LF, pinned by a test against this file. A later amendment that changes a definition here makes `l6_protocol_v2.txt` (this amendment, then that one), and records from then on carry its SHA-256 |
+| settingsSha | the SHA-256 of `reference/settings.json` |
+| budget | `epochs,burnin,negatives,batch,steps,negativeDraws` = `1000,20,50,50,131000,327100000` |
+| floatTableSha, snapSha | as item 6. The exact arm's snapSha hashes the canonical H³ lines of Amendment 1 item 6 for S |
+| closureMapSha, graphMapSha | the SHA-256 of the exact MAP written `p/q` in lowest terms (`-` for a tuning table's graph-edge MAP, which is not computed) |
+| closureMap, graphMap | `format(float(MAP), '.6f')` |
+| track | `cpu` |
+| engine | for example `python-3.13.x/numpy-2.y.z/numba-0.68.1` |
+| wallMs | the training wall-clock in whole milliseconds |
+
+Fields that do not apply are `-`. A track that holds a snapped table must reproduce its two MAP hashes; a track that
+trains its own table is compared at the same budget and protocolSha.
+
+**13. Dry runs** (+3000 on every seed).
+- *The data* is the closure set of solid.n.01 (15046900): 1,232 nouns and 5,696 closure edges (114 batches per epoch,
+  the last of 46). Only its root lacks non-neighbours (the smallest other count is 110), and 11 nodes have no
+  graph-edge neighbours. It is disjoint from S, and it has only been counted so far. In LBENCH/1 its instanceId is
+  `wordnet30-solid-closure` and its budget `1000,20,50,50,114000,284800000`. Its sizes replace 1,182 and 6,542
+  throughout.
+- *How it was chosen,* by criteria fixed before choosing: a noun closure set, so that the exact arm runs the
+  noun-word code (`address.noun_words`); disjoint from S; only its root without non-neighbours; at least one node
+  without graph-edge neighbours; within 10% of 1,182 nodes; then the smallest |n/1,182 − 1| + |(E/n)/(6,542/1,182) − 1|,
+  size and closure-edge density together. solid.n.01 scores 0.207, and the next, ill_health.n.01 (14052046), 0.218. By
+  size alone five sets are closer: family (08107499), communicator (09610660), municipality (08626283), ill_health and
+  urban_area (08675967).
+- *L4's dry line* ("`Rng(4000)` and the verb forest") names the dry stand-ins of the instances of (a) and (b), and
+  Phase 2 ran them so (Amendments 4 and 5). (c) is decided on L6's tables, so its dry run uses L6's dry tables.
+- *Seeds:*
+  - training 3000–3004;
+  - tuning 12000–12023, in the same blocks;
+  - the label shuffle `Rng(3007)`;
+  - edge pairs and floors `Rng(5000 + i)`;
+  - the reported permutations `Rng(5100 + j)`;
+  - the bootstrap keeps `default_rng(7)`, the statistics rule's constant, as in Phases 1–3.
+- *What runs* is the whole pipeline. Dry tuning is item 8's full grid on the dry set (240 runs, about 2.3 h) and
+  writes `results/dry/tuning.json` and `results/dry/settings.json`; then come the measured runs at the dry rates, with
+  every control, every interval, L4(c) and the receipts (`results/dry/claims-phase4.*`).
+- The dry set has no anchor with fewer than 50 non-neighbours; a unit test covers that case.
+
+**14. Order.**
+1. This amendment, committed alone.
+2. The code of item 1 with its tests, on synthetic graphs and unregistered seeds only, committed; then an
+   adversarial review on synthetic and dry data.
+3. The dry run on the committed code. A fix is committed and the affected dry part rerun. A fix that changes a
+   definition here needs a dated amendment before step 4.
+4. Registered tuning on a clean, committed tree; the runner refuses uncommitted changes. It replays the draws of its
+   job (lorentz, 3, `0.03`, 9000) with `hpstep.prng.Rng` (item 1).
+5. The lr-freeze amendment.
+6. One decisive run at that amendment's commit. It records HEAD, and it refuses unless the only paths changed since
+   the commit tuning ran on are `PREREGISTRATION.md`, `reference/settings.json`, `reference/results/tuning.json` and
+   tuning's console file.
+   - It retrains the tuning jobs (euclid, 2, `0.03`, 9000) and (lorentz, 2, `0.03`, 9000) and records whether their
+     float SHA-256s equal `tuning.json`'s. A mismatch (another machine) is disclosed and does not stop the run: the
+     registration fixes the protocol, not the bits.
+   - It trains the measured and edge-shuffled runs, replays the draws of measured (lorentz, 3, seed 0) with
+     `hpstep.prng.Rng`, computes P for the first time, and writes `reference/results/claims-phase4.json`, `.md` and
+     the receipts. The snapped texts of the measured and edge-shuffled tables and the float tables of L4(c)'s 40 are
+     committed with them.
+   - If it is interrupted, it resumes at the same HEAD on a clean tree from its finished jobs. That is the same run,
+     and the record lists every start.
+
+All code and the dry run come before registered tuning, because tuning previews L6's outcome (Lorentz against
+Euclidean closure MAP on the mammals). A defect found after step 4 is fixed only by an amendment that says it was
+found after the tuning results were seen.
+
+**15. Where each constant comes from,** under Amendment 6's rule.
+- *From P17:* the initial range U(−0.001, 0.001) (§3.2; also P18 p. 4); the burn-in rate η/10 (§3.2); the squared
+  Euclidean distance (p. 5).
+- *From P18:* the Lorentz model, the Minkowski gradient, the tangent projection and the exp map (eqs. 6, 9 and 10;
+  Algorithm 1); and the undirected closure (§4.1) that NN(u) follows.
+- *From the script's `train-nouns.sh`:* 50 negatives, batch 50 and 20 burn-in epochs (Amendment 6).
+- *From the script's code:*
+  - the positive inside the softmax, with logits −d (`energy_function.py` line 48);
+  - the batch-mean loss (`F.cross_entropy`'s default; `lr_type` constant);
+  - gradients to the anchor, the positive and the negatives, with repeats summed and one step per node (`rsgd.py`
+    lines 53–57);
+  - a fresh permutation each epoch, with the short last batch kept (`graph_dataset.pyx` lines 120 and 133–149);
+  - the (child, ancestor) orientation.
+- *From geoopt and the script:* x0 recomputed from the spatial coordinates, as geoopt's Lorentz `expmap(…,
+  project=True)` does after the exp map and the script's `normalize` (`lorentz.py` lines 57–75) does, with a max-norm,
+  before each step.
+- *This project's own:* 1,000 epochs (the script runs 1,500; neither paper gives a count); the lr grid and its tuning;
+  uniform non-neighbour negatives with replacement in every epoch, burn-in included; no clip, max-norm or derivative
+  floor; the final-epoch table; the divergence rule; the generator.
+- *Not followed from the script:*
+  - burn-in at lr × 0.01, with 5 negatives (`-neg_multiplier 0.1`) drawn by in-degree (`-dampening` is passed twice,
+    and 1.0, the last, wins);
+  - descendants as negatives;
+  - negatives drawn without replacement and padded by repeats;
+  - the exp-map step clipped at 1;
+  - `max_norm` 1e6, which is always on because `-no-maxnorm` is parsed and never read;
+  - the arcosh-derivative floor 1e−5;
+  - initial ranges ±1e−5 (Lorentz) and ±1e−4 (Euclidean);
+  - five Hogwild threads;
+  - the checkpoint with the lowest loss.
+- *For the record:*
+  - P18 states no negative count, batch size, epoch count or burn-in. Its eq. 12 puts the positive inside the softmax,
+    but for §3.3's similarity setting; for taxonomies (§4.1) it follows Nickel & Kiela.
+  - `train-mammals.sh` (Poincaré, d = 5, lr 0.3, 300 epochs, batch 10) is a different protocol.
+  - P17's eq. 6, as printed, has its sign inverted and leaves v out of N(u).
+  - The only mammal number found is P17's Figure 2 (Poincaré, d = 5: MAP 0.927, mean rank 1.26). It is verified, and
+    it is not comparable: its instance is unknown, its ranking is directed and its ties are not pessimistic. No claim
+    compares against it.
+
+**16. Disclosures** (Common rules, "Reporting"). Three design studies ran before this amendment, with throwaway
+prototype trainers and evaluators in a scratch folder; none is in the repository.
+- *Read:*
+  - P17; P18 (v1 and v2); and arXiv 1804.01882v3, 1804.03329v2 and 1902.04335v3, searched for mammal results (none
+    found);
+  - the script's repository at dff101b, and at its earlier commits 35c2322, 9aecb86 and 624584c;
+  - geoopt at v0.5.1-47-g56f56cc.
+
+  All were downloaded into a scratch folder and read, never run.
+- *Counted only.* On registered data: sizes, neighbour and non-neighbour counts, nodes without graph neighbours,
+  depths, hashes, the expected AP of a random ranking from the neighbour counts, and the generator's expected
+  rejection rate from the non-neighbour counts.
+  - The counting went through `lexicon.wordnet` and `rank.*_neighbours`, with an emulation of the script's data
+    filters. The script's released mammal file has 1,180 nodes and 6,540 edges: its `str.match` filter drops tusker
+    and female_mammal.
+  - Noun and verb closure sets of 300–2,000 nodes were counted to choose the dry set, and every one within 10% of
+    1,182 nodes was counted again to check item 13.
+- *Probes,* none on the mammal sets:
+  - On a synthetic DAG of 1,182 nodes from `Rng(70001)`:
+    - stream equality and timing (seeds 70010–70013, 70020–70023, 70030–70031, 70040 and 70600);
+    - trainer timing and the equality of two implementations (70100–70180), and reproducibility (70140);
+    - 14 toy 1,000-epoch runs (70202, 70203 and 70250; both geometries, d = 2, 3 and 50, lr 0.03–10);
+    - the key identity of item 6 (70300);
+    - a 60-digit decimal oracle (70400);
+    - timing of the label shuffle (`Rng(70500)`) and of `rank.ci_mean` on synthetic values from numpy
+      `default_rng(70501)`. That call resampled with `ci_mean`'s fixed `default_rng(7)`, the statistics rule's
+      constant: the one use of a registered seed number, on synthetic values;
+    - numpy `default_rng(70102)` and `default_rng(70103)` arrays in micro-benchmarks.
+  - Label-shuffle tails of the 13 finite toy tables, under `Rng(70300 + i)`, i < 200, and `Rng(71000 + i)`,
+    i < 5,000.
+  - The random-ranking SD per neighbour count (numpy `default_rng(70100 + j)` and `default_rng(70200 + j)`, on counts
+    only).
+  - On written_communication.n.01 (06349220, a noun set disjoint from S): four toy tables trained with seeds
+    70501–70504, and 5,000 permutations `Rng(72000 + i)`. This probe was started twice by mistake and the first copy
+    stopped; it is deterministic.
+  - Item 11's fractional-tie formula against brute force over every tie order, on 400 random synthetic key lists
+    (Python's `random.Random(80900)`, not the shared generator).
+
+  The prototypes used the Euclidean distance |u − v|, not item 4's squared one. Toy numbers predict nothing about the
+  mammals. What the probes showed, and what this amendment takes from them:
+  - the toy Lorentz run at d = 2, lr = 10 went non-finite at epoch 659 (item 5);
+  - a batch sum would make every step 50 times the mean's (item 4);
+  - one changed rounding moved a table by 8.8e−8 in three epochs (item 4's arithmetic);
+  - snapping moved the toy tables' MAP by at most 1.3e−6;
+  - the label-shuffle tail (item 9);
+  - `Rng.below` costs about 1 µs in Python, about 330 s of a run (item 1).
+- *Installed* into the system Python: numba 0.68.1 and llvmlite 0.50.0, and line_profiler for profiling. torch and
+  geoopt were not installed.
+- *Not done:* nothing was trained, ranked or evaluated on the mammal sets; the shared generator drew from no
+  registered seed (0–4, 7, 1000 + i, 2000 + i, 4000 + i, 9000–9023, 90000 + i); P was not computed; no repository
+  file was written.
+- *Known before Phase 4.* Phase 1's exact H³ graph-edge MAP on the spanning subtree is public: 0.690653. Item 2's
+  1,176 graph-edge queries are that subtree, with the same points and the same neighbours, and their candidates gain
+  six non-neighbours, which cannot raise a pessimistic AP. So the exact arm's L6 graph-edge MAP is at most 0.690653,
+  query by query. Phase 1's H³ closure MAP on the subtree (0.305932) is public too. Neither is an L6 number.
+
+**17. An omission in Phases 1–3** (Common rules, "Ties" and "Reporting"). The Common rules say fractional-tie values
+"are reported, never used to decide". Phases 1 and 2 ranked with exact ties (L5's arms and L4(a)) and reported only
+the pessimistic values; Phase 3 ranked nothing. No decision changes, since those values decide nothing. Phase 4
+computes them with item 11's formula for Phase 1's L5 arms and Phase 2's L4(a) rank lists, on the code and data those
+runs used, and reports them in `reference/results/fractional-ties.json` and `.md`, deciding nothing.

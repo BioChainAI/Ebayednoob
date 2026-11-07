@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexicon 2D - Hyperbolic Lexicon</title>
+    <meta name="description" content="Hyperbolic Lexicon, the 2D page: type a sentence and see its tokens, their V0 ids, their addresses in the norm-5 tree and their exact points in the hyperbolic plane, drawn in the Poincaré disk through an exact chart. Click a point to decode it exactly; a precision panel shows the bits; paths through the lowest common ancestor are drawn. A shard panel grows, signs and verifies a language biochain, and an Engram Mind's Eye session can be read in. It decides no claim.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/hl-app.css">
+    <link rel="stylesheet" href="assets/lexicon-2d.css">
+    <script src="../../scripts/geometric-build/orbital_core.js"></script>
+    <script src="../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+    <script src="../Hyperbolic%20Oracles/decoder3d.js"></script>
+    <script src="../Hyperbolic%20Oracles/twin3d.js"></script>
+    <script src="../Hyperbolic%20Oracles/fence.js"></script>
+    <script src="../Engram%20Minds%20Eye/ttmpt_core_v1.js"></script>
+    <script src="../Engram%20Minds%20Eye/engram_core.js"></script>
+    <script src="../Engram%20Minds%20Eye/biochain_v1.js"></script>
+    <script src="data/unicode_15_1_v1.js"></script>
+    <script src="data/vocab_v0_lex0.js"></script>
+    <script src="data/wordnet_nouns_v1.js"></script>
+    <script src="data/wordnet_map_a_v1.js"></script>
+    <script src="data/l6_view_v1.js"></script>
+    <script src="lexicon_core.js"></script>
+    <script src="assets/hl-pages.js"></script>
+    <script src="assets/hl-panels.js"></script>
+</head>
+<body class="app" data-ready="loading">
+<header class="app-head">
+    <div>
+        <div class="eyebrow">Hyperbolic Lexicon &middot; the 2D page</div>
+        <h1>The Lexicon in the Disk</h1>
+        <p>Type a sentence: every token gets its V0 id, its address in the norm-5 tree and its exact point in the hyperbolic plane, drawn in the Poincar&eacute; disk. Click a point to decode it exactly. <a href="explainers/page-2d.html">The manual</a> explains every panel; <a href="lexicon-3d.html">the 3D page</a> shows the same addresses in H&sup3;.</p>
+    </div>
+    <div class="chips" id="chips" aria-live="polite"><span class="stat">loading the engine and its data&hellip;</span></div>
+</header>
+
+<main class="board">
+    <section class="panel" id="p-input" aria-labelledby="h-input">
+        <h2 id="h-input">Sentence <small>N_B, WordPiece V0, ids, map A</small></h2>
+        <textarea id="q" class="textbox" rows="2" maxlength="2000" spellcheck="false" autocomplete="off" aria-label="A sentence to read" placeholder="Type a sentence…"></textarea>
+        <div class="row" id="examples" aria-label="Example sentences"></div>
+        <div class="toks" id="toks" aria-label="Its tokens: click one to select it"></div>
+        <div class="kv" id="nb-out"></div>
+        <p class="help">Tokens are coloured by their root: <span class="sw rc0"></span>noun <span class="sw rc1"></span>verb <span class="sw rc2"></span>adjective or adverb, spelled <span class="sw rc3"></span>## piece <span class="sw rc4"></span>other word <span class="sw rc5"></span>special. A word has one sense here and no context: map A takes a piece&rsquo;s first WordNet sense.</p>
+    </section>
+
+    <section class="panel" id="p-disk" aria-labelledby="h-disk" data-mode="exact">
+        <h2 id="h-disk">The tree in H&sup2; <small>Poincar&eacute; disk &middot; an exact chart</small></h2>
+        <div class="row">
+            <label>view <select id="mode" aria-label="What the disk shows"><option value="exact">exact tree</option><option value="learned">learned d = 2, the mammals (L6)</option></select></label>
+            <input type="search" id="find" class="field" placeholder="find a lemma or piece" aria-label="Find a lemma or a V0 piece" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="row find-out" id="find-out"></div>
+        <div class="cv-wrap"><canvas class="cv" id="cv-disk" tabindex="0" role="img" aria-label="The named tree around the centre, drawn in the Poincaré disk"></canvas></div>
+        <div class="readout" id="disk-read" aria-live="polite"></div>
+        <div class="legend" id="disk-legend"></div>
+        <div class="exact-only">
+            <div class="row" id="nav">
+                <button type="button" class="chip" id="b-up" title="Centre on the centre's named parent">Up</button>
+                <button type="button" class="chip" id="b-back" title="The previous centre">Back</button>
+                <button type="button" class="chip" id="b-origin" title="Centre on the origin, the empty word">Origin</button>
+                <button type="button" class="chip" id="b-centre" title="Centre on the selected point">Centre on selection</button>
+            </div>
+        </div>
+        <div class="row">
+            <span class="muted lbl">spread</span>
+            <button type="button" class="chip" id="b-sminus" aria-label="Less spread">&minus;</button>
+            <input type="range" id="spread" min="1" max="6" step="0.5" value="2" aria-label="Spread: drawn distances divided by this">
+            <button type="button" class="chip" id="b-splus" aria-label="More spread">+</button>
+            <span class="mono" id="spread-v">&times;2</span>
+            <button type="button" class="chip" id="b-rot0" title="Turn the disk back">turn &#x21ba; 0&deg;</button>
+        </div>
+        <div class="exact-only">
+            <div class="row" id="toggles">
+                <label><input type="checkbox" data-t="siblings" checked> siblings</label>
+                <label><input type="checkbox" data-t="children" checked> children</label>
+                <label><input type="checkbox" data-t="grandchildren" checked> grandchildren</label>
+                <label><input type="checkbox" data-t="labels" checked> labels</label>
+                <label><input type="checkbox" data-t="virtual" checked> virtual letters</label>
+                <label><input type="checkbox" data-t="paths" checked> paths</label>
+            </div>
+            <div class="row" id="paging"></div>
+            <div class="row" id="overlay"></div>
+        </div>
+        <div class="verdict" id="learned-out" hidden></div>
+        <p class="help" id="disk-help">Click or tap a point to select it; double-click or long-press to centre on it; drag sideways to turn the disk. Gold dots are virtual letters, the extra digits of families over five. The picture is drawn in floats after an exact isometry: the values in the panels are exact.</p>
+    </section>
+
+    <section class="panel" id="p-sel" aria-labelledby="h-sel">
+        <h2 id="h-sel">The selected point <small>its word, its exact point, decoded back</small></h2>
+        <div id="sel-body"><p class="help">Select a token or a point.</p></div>
+    </section>
+
+    <section class="panel" id="p-prec" aria-labelledby="h-prec">
+        <h2 id="h-prec">Precision <small>bits of the exact points</small></h2>
+        <div id="prec-body"></div>
+        <h3 class="mini">Point bits per token</h3>
+        <div class="legend" id="bits-legend"></div>
+        <div class="cv-wrap" id="bits-wrap"><canvas class="cv" id="cv-bits" role="img" aria-label="Point bits of every token, H² against H³"></canvas><div class="tip" id="bits-tip" hidden></div></div>
+        <details class="mini-details"><summary>the values as a table</summary><div class="tw" id="bits-table"></div></details>
+        <p class="note" id="prec-line"></p>
+    </section>
+
+    <section class="panel" id="p-tokens" aria-labelledby="h-tokens">
+        <h2 id="h-tokens">Tokens <small>ids, bytes, roots, synsets, words</small></h2>
+        <div class="tw"><table class="small" id="tok-table">
+            <thead><tr><th class="num">#</th><th>piece</th><th class="num">id</th><th>bytes</th><th>root</th><th>synset (lemma, offset)</th><th>word (len)</th><th class="num">id59</th><th class="num">H&sup2; bits</th><th>decodes</th></tr></thead>
+            <tbody></tbody>
+        </table></div>
+        <div class="row" id="tok-pager"></div>
+    </section>
+
+    <section class="panel" id="p-lca" aria-labelledby="h-lca">
+        <h2 id="h-lca">Paths through the lowest common ancestor <small>two tokens, one tree</small></h2>
+        <div class="row">
+            <label>A <select id="lca-a" class="field" aria-label="Token A"></select></label>
+            <label>B <select id="lca-b" class="field" aria-label="Token B"></select></label>
+        </div>
+        <div id="lca-body"></div>
+        <div class="row">
+            <button type="button" class="chip" id="b-lca-centre">Centre on the LCA</button>
+            <button type="button" class="chip" id="b-lca-a">Select A</button>
+            <button type="button" class="chip" id="b-lca-b">Select B</button>
+        </div>
+    </section>
+
+    <section class="panel" id="p-shard" aria-label="Shard"></section>
+    <section class="panel" id="p-engram" aria-label="Engram Mind's Eye"></section>
+    <section class="panel" id="p-checks" aria-label="Checks"></section>
+</main>
+<footer class="footer">Hyperbolic Lexicon &middot; <a href="index.html">Hub</a> &middot; <a href="lexicon-3d.html">3D page</a> &middot; <a href="explainers/page-2d.html">Manual</a> &middot; <a href="explainers/architecture.html#pages">The Phase 0 design</a></footer>
+<script src="assets/lexicon-2d.js"></script>
+<!-- page-chrome:start -->
+<script type="module" src="../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;lexicon-2d.html&quot;,&quot;label&quot;:&quot;Lexicon 2D: the tree in the disk&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Type a sentence: tokens, addresses and exact H² points; decode, precision, LCA paths&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;lexicon-3d.html&quot;,&quot;label&quot;:&quot;Lexicon 3D: the tree in the ball&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Segments A and B in H³: frames, X(5, q) vertices, the coupler as a check&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;explainers/analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/reference.html&quot;,&quot;label&quot;:&quot;The Python Reference and Its Results&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 9: the Phase 1 reference, L2, L3, L5 and L7 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core and Its Parity&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 10: lexicon_core.js, live parity, L1, L3(f) and L4(a, b) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/chains.html&quot;,&quot;label&quot;:&quot;Language Biochains, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 11: shards, records, the manifest and the signed verifier; L8-L11 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/learned.html&quot;,&quot;label&quot;:&quot;Learned Geometry, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 12: learned Lorentz vs Euclidean, the exact tree; L6 and L4(c) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 13: every panel of lexicon-2d.html, the shard and Engram panels&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;explainers/page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 14: every panel of lexicon-3d.html; frames, X(5, q), the coupler&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

@@ -1,0 +1,61 @@
+{
+  "// about": "Reviewed values that scripts/checks/sinks.cjs lets into HTML without esc(): file -> { expression (whitespace collapsed) : reason }. A key written /like this/ is a regular expression. Review again whenever an expression here changes. A key starting with url: covers a value that starts a URL attribute (href=, src= on a frame, action=...).",
+  "Pages/Research/read.js": {
+    "cls": "linkBtn() parameter: a CSS class; every caller passes a literal or the default.",
+    "icon": "linkBtn() parameter: an SVG from the ICONS constant in assets/js/ui.js.",
+    "readingMinutes(d.body)": "A number (assets/js/markdown.js: Math.max(1, Math.round(words / 230))).",
+    "elsewhere": "linkBtn() results joined; linkBtn escapes the URL and the label.",
+    "renderMarkdown(d.body)": "Markdown rendered by marked and sanitised by DOMPurify; maths by KaTeX renderToString (assets/js/markdown.js)."
+  },
+  "Pages/Research/research.js": {
+    "cls": "linkBtn() parameter: a CSS class; every caller passes a literal or the default.",
+    "label": "linkBtn() parameter: every caller passes a literal (\"Read\", \"PDF\", \"DOI\").",
+    "icon": "linkBtn() parameter: an SVG from the ICONS constant in assets/js/ui.js (the default).",
+    "counts.get(t)": "A number: counts is a Map of topic -> item count built just above."
+  },
+  "assets/js/collection-browser.js": {
+    "o.render(it, state.layout)": "The render callback given to createBrowser(): renderPublication, renderArticle and renderFeedItem in Pages/Research/research.js, whose templates this check covers.",
+    "state.page": "A page number kept by the browser itself.",
+    "o.latestCount": "createBrowser() option: a number set in code.",
+    "o.noun": "createBrowser() option: a literal set in code (\"publication\", \"article\", \"item\").",
+    "body": "Markup built just above from checked templates (itemsHtml, archiveHtml) or esc()."
+  },
+  "assets/js/markdown.js": {
+    "html": "DOMPurify output plus KaTeX markup, parsed into an inert <template> to rewrite links and images."
+  },
+  "assets/js/page-chrome.js": {
+    "viewBox": "svg() parameter: every call is in the ICONS constant, with literal arguments.",
+    "extra": "svg() parameter: every call is in the ICONS constant, with literal arguments.",
+    "body": "svg() parameter: every call is in the ICONS constant, with literal SVG markup.",
+    "id": "menuHTML() parameter: always `pc-menu-${i}` with a numeric index.",
+    "position": "One of \"top\", \"bottom-left\", \"bottom-right\": checked against that list just above.",
+    "url:x.href": "Menu and extra links from the page's own data-menus, data-extras and data-extra-href attributes on its page-chrome.js tag (authored in the page, installed by scripts/install-page-chrome.mjs); no record data.",
+    "url:home": "The page's own data-home attribute on its page-chrome.js tag, or the site's index.html."
+  },
+  "control-panel/control-panel.js": {
+    "title": "heading() parameter: callers pass literals, constants (schema titles) or templates that this check covers.",
+    "sub": "heading() and tile() parameter: callers pass literals, numbers or templates that this check covers.",
+    "actions": "heading() parameter: literal button markup or templates that this check covers.",
+    "v": "kv() value: every caller passes esc(...), ok(...) or literal markup.",
+    "href": "tile() parameter: a literal in-page link such as \"#publications\".",
+    "label": "tile() parameter: a literal.",
+    "value": "tile() parameter: a count, \"—\", or timeAgo(...) text built from numbers.",
+    "schema.noun": "From the SCHEMAS constant in this file.",
+    "name": "renderCollection() parameter: a literal collection name from VIEWS.",
+    "f.key": "A field key from the SCHEMAS constant in this file.",
+    "f.key.replace(/\\./g, \"-\")": "A field key from the SCHEMAS constant in this file.",
+    "st.count": "A number counted by syncArticles() in the browser.",
+    "key": "num() parameter: every caller passes a literal setting name.",
+    "hint": "num() parameter: every caller passes a literal.",
+    "s.count": "A number counted by scanFeed() in the browser.",
+    "s.ms": "A duration in milliseconds measured by scanFeed() in the browser.",
+    "url:href": "tile() parameter: a literal in-page link such as \"#publications\"."
+  },
+  "control-panel/studio.js": {
+    "id": "field() parameter: a literal element id or one built from the CROSSPOST_PLATFORMS constant.",
+    "label": "field() parameter: a literal, or a label from the CROSSPOST_PLATFORMS constant.",
+    "attrs": "field() parameter: literal attribute text.",
+    "renderMarkdown($(\"#st-body\").value, { resolve: previewResolve })": "Markdown rendered by marked and sanitised by DOMPurify (assets/js/markdown.js).",
+    "url:state.substackOrigin": "An origin: the https default set in this file, or new URL(...).origin of the configured Substack source. An origin is never a javascript: URL."
+  }
+}

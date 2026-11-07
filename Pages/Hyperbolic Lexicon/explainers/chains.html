@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Biochains, Measured - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 11 of Hyperbolic Lexicon, Phase 3: language shards as shdccp/2 biochains, grown by lexicon_core.js and a Python port; the LVOCAB, LADDR, LPREP, LCORPUS and LGROW records; an RFC 6962 corpus manifest; the exact norm-5 weave; and a hardened verifier with ATTEST/1 signatures. After Amendments 7 and 8, one decisive run supported L8 (0 of 336 records differ from Owl Academy's own growBiochain), L9 (every root and proof equal in JS and Python, every tamper detected, 148 exact weaves exact), L10 (0 false accepts and 0 false rejects of 500 attested packages, in both languages) and L11 (a median 155.4 ms per full shard against a 250 ms bar, on packages grown with engrams off, as Amendment 8 fixed after dry runs). A live lab grows, commits, signs, verifies and tampers with a shard in your browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 11 &middot; Phase 3</div>
+    <h1>Language Biochains, Measured</h1>
+    <p class="lede">Phase 3 built what Explainer 4 designed in Phase 0: language shards grown as Owl Academy&rsquo;s <code>shdccp/2</code> biochains, in JavaScript and in Python; typed records that bind each shard to its source, tokenizer and addresses; an RFC 6962 manifest over a corpus; an exact weave; and a hardened verifier that checks ATTEST/1 signatures. The definitions came before the code, the disclosures before the run. One run then decided L8, L9, L10 and L11: all four are supported under their registered rules, L11 on packages grown with engrams off, a reading Amendment 8 fixed after the dry runs and states plainly. On this page you can grow, sign, verify and tamper with a shard of your own.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#glance">The four decisions</a>
+        <a class="btn btn-ghost" href="#lab">Grow and verify a shard</a>
+        <a class="btn btn-ghost" href="#amend8">Amendment 8</a>
+        <a class="btn btn-ghost" href="#limits">What this does not show</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">decided: <b>L8, L9, L10, L11</b> &middot; all supported</span>
+        <span class="stat">L8: <b>0</b> of 336 records differ from Owl&rsquo;s</span>
+        <span class="stat">L10: <b>0</b> false accepts, <b>0</b> false rejects of 500</span>
+        <span class="stat">L11: median <b>155.4 ms</b> against a 250 ms bar</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#order">2. How Phase 3 was ordered</a></li>
+            <li><a href="#built">3. What was built</a></li>
+            <li class="part">Live</li>
+            <li><a href="#lab">4. Grow, sign and verify a shard</a></li>
+            <li class="part">Results</li>
+            <li><a href="#l8">5. L8 &middot; Owl-valid biochains</a></li>
+            <li><a href="#l9">6. L9 &middot; The manifest and the weave</a></li>
+            <li><a href="#l10">7. L10 &middot; The hardened import</a></li>
+            <li><a href="#l11">8. L11 &middot; Cheap enough to verify</a></li>
+            <li class="part">Limits</li>
+            <li><a href="#limits">9. What this does not show</a></li>
+            <li><a href="#next">10. Phase 4, planned and done</a></li>
+        </ol>
+    </nav>
+    <main style="font-variant-ligatures:none">
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#order">How Phase 3 was ordered</a></li><li><a href="#built">What was built</a></li>
+            <li><a href="#lab">Grow, sign and verify a shard</a></li>
+            <li><a href="#l8">L8 &middot; Owl-valid biochains</a></li><li><a href="#l9">L9 &middot; The manifest and the weave</a></li>
+            <li><a href="#l10">L10 &middot; The hardened import</a></li><li><a href="#l11">L11 &middot; Cheap enough to verify</a></li>
+            <li><a href="#limits">What this does not show</a></li><li><a href="#next">Phase 4, planned and done</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">A shard holds text; everything the front end derives from it travels as typed commitments; a manifest ties the shards of a corpus together; a signature says who committed. Explainer 4 designed this in Phase 0, before any measurement. Phase 3 built it and decided the four claims about it. This page&rsquo;s focus node is the shards and manifests.</p>
+            <div data-hl-map="focus" data-node="chains"></div>
+            <p>The code is the chain section of <a href="../lexicon_core.js"><code>lexicon_core.js</code></a> (lines 1,568&ndash;2,868 of its 2,928) and its Python twin in <code>reference/lexicon/</code>: <a href="../reference/lexicon/chain.py"><code>chain.py</code></a> (709 lines), <a href="../reference/lexicon/records.py"><code>records.py</code></a> (303), <a href="../reference/lexicon/manifest.py"><code>manifest.py</code></a> (201), <a href="../reference/lexicon/attest.py"><code>attest.py</code></a> (275) and <a href="../reference/lexicon/verify.py"><code>verify.py</code></a> (410). The runner is <a href="../reference/run_claims_phase3.cjs"><code>run_claims_phase3.cjs</code></a>, with its Python half <a href="../reference/run_claims_phase3.py"><code>run_claims_phase3.py</code></a>. Every number on this page comes from <a href="../reference/results/claims-phase3.json">results/claims-phase3.json</a> (summarised in <a href="../reference/results/claims-phase3.md">claims-phase3.md</a>), the console log <a href="../reference/results/phase3-console.txt">phase3-console.txt</a>, the registry snapshot <a href="../reference/results/phase3-registry.json">phase3-registry.json</a>, the dry run in <a href="../reference/results/dry/claims-phase3.md">results/dry/</a>, <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> (L8&ndash;L11, D7, D8, Amendments 7 and 8), the commit messages, the source files themselves (their line counts and docstrings) and <a href="biochains.html">Explainer 4</a>; the lab&rsquo;s values come from your own browser. Where this page and those files differ, the files win.</p>
+            <div class="callout plain"><span class="label">How to read this page</span>
+                <p><span class="tag t-SUPPORTED">supported</span> means what the registered decision rule says, and nothing more. L8, L9 and L10 are exact: every case passed and every control showed its weakness. L11 is measured: the upper end of the 95% interval of the median is at most 250 ms, and its control, as Amendment 8 replaced it, holds. A <strong>prediction</strong> was written with each claim; it is not part of the rule.</p>
+                <p>Timings belong to this container. L11 is decided on time, on this container, as registered; every other time on this page is reported and marked &ldquo;~&rdquo;.</p>
+            </div>
+            <dl class="gloss">
+                <dt>Shard</dt><dd>At most 60,000 bytes of UTF-8 grown into one unmodified <code>shdccp/2</code> biochain (D8). C0 is WordNet 3.0&rsquo;s noun glosses, one line per synset, <code>offset TAB lemmas TAB gloss</code>, cut at line boundaries: 148 shards, 147 of them at least 59,000 bytes.</dd>
+                <dt>Record</dt><dd>Owl Academy&rsquo;s biochain object, fifteen fields in Owl&rsquo;s order: chainId, stream, streamVersion, leafHashes, merkleRoot, weaveChiral, weaveMirror, segCuts, segments, engramStream, engramCount, engramMeanJ, origBytes, shippedBytes, value. With engrams off, the three engram fields are absent.</dd>
+                <dt>Engrams on, off</dt><dd>Owl&rsquo;s <code>growBiochain</code> can add an engram layer: 16 hex digits of engram/1 for every word token. The Lexicon keeps engram/1 as a compatibility checksum, never an input (D4), and off by default for corpora (<a href="architecture.html#ids">Explainer 3</a>).</dd>
+                <dt>Commitment</dt><dd>A typed record kind of D7, a pipe-joined string hashed with SHA-256: <code>LVOCAB/1</code>, <code>LADDR/1</code>, <code>LPREP/1</code> (one per shard), <code>LCORPUS/1</code>, <code>LGROW/1</code>.</dd>
+                <dt>Package</dt><dd>What a holder hands to the verifier: the record, its <code>LPREP/1</code> string, an ATTEST/1 block, the <code>LCORPUS/1</code> string with the shard&rsquo;s inclusion proof, and an <code>LGROW/1</code> string with its consistency proof (Amendment 7 item 6).</dd>
+                <dt>Session</dt><dd>What a verifying holder pins once: V0, the <code>LVOCAB/1</code> string, the <code>LADDR/1</code> string (its <code>addrTableRoot</code> recomputed from WordNet once per session) and the key-registry snapshot with its SHA-256.</dd>
+                <dt>Self-consistent, authentic</dt><dd>The verifier&rsquo;s two verdicts. Self-consistent: the record, its derived layers and its place in the manifest agree. Authentic: a registered, unrevoked key signed exactly this <code>LPREP/1</code>. Explainer 4 defined both; Amendment 8 item 3 made the code follow it.</dd>
+                <dt>Tamper class</dt><dd>One of L10&rsquo;s nine registered alterations, T1&ndash;T9, 50 records each (<a href="#l10">chapter 7</a>).</dd>
+                <dt>Dry run</dt><dd>The runner on data no claim uses: <code>Rng(4000 + i)</code> synthetic shards, the verb and adjective gloss shards, tampers from <code>Rng(5000 + &hellip;)</code>, the verb shards standing in for C0 (Amendment 7 item 8). It decides nothing.</dd>
+                <dt>Decisive run</dt><dd>The one run on the registered instances that decides: <code>node "Pages/Hyperbolic Lexicon/reference/run_claims_phase3.cjs"</code>, on the code committed at 6da04be.</dd>
+            </dl>
+            <h3 id="glance">The four decisions at a glance</h3>
+            <div class="table-wrap"><table style="min-width:860px">
+                <thead><tr><th>Claim</th><th>What it says</th><th>Decision</th><th>Result</th><th>Controls that must show their weakness</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="#l8"><strong>L8</strong></a></td><td>Language shards are Owl-valid biochains, field for field, in JS and Python; Owl&rsquo;s and BioChain-AI&rsquo;s verifiers accept them; Engram imports them; the derived layers and <code>LPREP/1</code> agree across languages</td><td><span class="tag t-SUPPORTED">supported</span><br><span style="color:var(--muted);font-size:0.82rem">JS grower and Python port</span></td><td>0 of 336 records (148 C0 and 20 synthetic shards, engrams off and on) differ from Owl&rsquo;s own <code>growBiochain</code> in any of the fifteen fields, for either grower</td><td>BioChain-AI&rsquo;s normalisation differs on 20/20 synthetic shards; leaves over binary bytes differ on 168/168 and Owl rejects them; one altered byte changes leaf and root on 168/168</td></tr>
+                    <tr><td class="mono"><a href="#l9"><strong>L9</strong></a></td><td>The RFC 6962 corpus manifest, its append-only growth and the exact norm-5 weave</td><td><span class="tag t-SUPPORTED">supported</span></td><td>The manifest over C0 (K = 148) and eight synthetic lists (K up to 1,001): every root and proof equal in JS and Python, every alteration detected, every wrong proof rejected; 148 of 148 exact weaves exact</td><td>The <code>shdccp/2</code> rule collides at K = 3, 7 and 1,001; an XOR summary misses every adjacent swap checked</td></tr>
+                    <tr><td class="mono"><a href="#l10"><strong>L10</strong></a></td><td>The hardened importer accepts every clean attested record and rejects every registered tamper, naming the check, identically in JS and Python</td><td><span class="tag t-SUPPORTED">supported</span></td><td>50 clean and 450 tampered packages: 0 false accepts and 0 false rejects in each language, verdicts identical on all 500</td><td>Owl&rsquo;s <code>verifyIntegrity</code> accepts 50/50 of T1, T2, T8 and T9; Python without the P1363-to-DER conversion accepts 0 of 126 signatures</td></tr>
+                    <tr><td class="mono"><a href="#l11"><strong>L11</strong></a></td><td>A full C0 shard verifies, every hardened check included, in a median of at most 250 ms in Node</td><td><span class="tag t-SUPPORTED">supported</span><br><span style="color:var(--muted);font-size:0.82rem">engrams-off packages (Amendment 8)</span></td><td>147 shards: median 155.4 ms, 95% interval [154.2, 156.0]. Reported: engrams-on packages 243.6 ms, the address table recomputed in every verification 1,350.2 ms</td><td>The step check (Amendment 8 item 2): the attestation ran inside the timed window in 441/441 full verifications and was skipped in 441/441 control verifications</td></tr>
+                </tbody>
+            </table></div>
+            <p>With these four, ten of the eleven claims were supported: L1&ndash;L5 and L7&ndash;L11, L3 in full and L4 in its decided parts, (a) and (b) (Phase 1 in <a href="reference.html">Explainer 9</a>, Phase 2 in <a href="browser-core.html">Explainer 10</a>). Left open by Phase 3: L4(c) and L6, the learned embeddings, which Phase 4 decided, both supported, L6(c) against its registered prediction, so all eleven are now supported (<a href="#next">chapter 10</a>; <a href="learned.html">Explainer 12</a>).</p>
+        </section>
+
+        <section class="chapter" id="order">
+            <div class="chapter-num">02</div>
+            <h2>How Phase 3 was ordered</h2>
+            <p class="chapter-intro">Definitions first, then code, a review and dry runs, then an amendment, then one decisive run on the code as committed. Six commits from 2026-11-05 to 2026-11-06 (times in UTC, from git) record the order; a container restart is part of it.</p>
+            <ol class="steps">
+                <li><strong>1ad40d0 &middot; 11-05 23:32 &middot; Amendment 7, before any code for its claims.</strong> Written before any record, grower port, manifest, verifier or runner for L8&ndash;L11 existed, with no Phase 3 result known: the code and its authorities, L8&rsquo;s synthetic shard generator, the exact record strings and Tier-P salted roots, the exact weave and its segments, the RFC 6962 conventions and L9&rsquo;s lists, L10&rsquo;s packages, keys, registry, draws and verdicts, L11&rsquo;s timing, and the dry runs. Nothing registered was changed.</li>
+                <li><strong>b822237 &middot; 11-06 00:52 &middot; The build, saved after a restart.</strong> A container restart cut the build workflow off during its dry run. The work on disk was kept and committed as it stood: the chain section of <code>lexicon_core.js</code>, the five Python modules, the chain trace (<code>traces/chain_v1.txt</code>, reproduced by the JS line for line, parity now 19,991/19,991), the Owl and BioChain-AI compatibility pin, the tests and the runner. &ldquo;No decisive run has been made; the dry run is to be redone.&rdquo;</li>
+                <li><strong>Between the commits: a review and dry runs.</strong> Amendment 8 records them; no commit holds their output except the final dry run&rsquo;s. Three reviewers, two skeptics for every finding, confirmed one finding: L11&rsquo;s control could not show whether the attestation step is timed (item 2). The others were not confirmed. The dry runs raised the engrams-on question that became item 1. The builders timed verb shards (dry data) and hashed C0&rsquo;s shard texts against their pins; no C0 shard was grown, verified or timed before the decisive run (item 5).</li>
+                <li><strong>8c51e08 &middot; 03:57 &middot; The runner and verdict changes for Amendment 8, before any decisive run.</strong> Packages grown with engrams off; L11&rsquo;s control read from each verification&rsquo;s own record of its checks; the two verdicts as Explainer 4 defined them, changed identically in both languages (eight verdict lines of the trace changed; parity 19,991/19,991, chain tests 30/30, Python Phase 3 tests 62/62).</li>
+                <li><strong>25b48b3 &middot; 04:15 &middot; The final dry run</strong>, started 03:56:57, 17&nbsp;min 46&nbsp;s: L8 supported for both growers (0 of 150 records differ), L9 supported, L10 supported (0 false accepts or rejects of 472 packages), L11 supported on 21 verb shards (median 156.2 ms, interval [150.1, 162.0]; engrams on 229.4 ms, reported; the step check 63/63).</li>
+                <li><strong>6da04be &middot; 04:15 &middot; Amendment 8, before any decisive run</strong> (<a href="#amend8">chapter 8</a>): engrams off, disclosed with the dry-run numbers that preceded it; L11&rsquo;s control replaced; the verdicts; the readings fixed in the code; the restart, the review and the environment. &ldquo;No result on a registered instance was known.&rdquo;</li>
+                <li><strong>The decisive run &middot; started 04:15:30.</strong> Once, on the code at 6da04be, in 50&nbsp;min 44&nbsp;s. It first reran the parity (19,991 of 19,991 lines, none skipped, the chain trace 1,323/1,323) and checked that Owl Academy (7f45f35, <code>scripts/biomesh.js</code> <span class="mono">7ffd768c&hellip;</span>) and BioChain-AI (c975161, <code>src/biomesh/biomesh.js</code> <span class="mono">a2e2056f&hellip;</span>) were unchanged.</li>
+                <li><strong>865791f &middot; 05:07 &middot; The results, as they came out:</strong> <code>claims-phase3.json</code> and <code>.md</code>, the console log and the registry snapshot. Every case is reported; per-instance data (Python&rsquo;s records, the packages, the L11 times) stay in the cache, outside git.</li>
+            </ol>
+            <h3>What Amendment 7 fixed</h3>
+            <div class="table-wrap"><table style="min-width:680px">
+                <thead><tr><th>Item</th><th>What it fixes</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">1 &middot; code</td><td>The JS is a new section of <code>lexicon_core.js</code> on <code>biochain_v1.js</code>, <code>engram_core.js</code> and <code>orbital_core.js</code>, unchanged; the Python port is <code>chain.py</code>, <code>records.py</code>, <code>manifest.py</code> and <code>attest.py</code>. Owl&rsquo;s code is the authority for L8(a, b), run unchanged in Node by name-grab; the Python reference for L8(d), L9 and L10&rsquo;s verdicts, which the JS must equal</td></tr>
+                    <tr><td class="mono">2 &middot; synthetic shards</td><td>Shard i from one <code>Rng(1000 + i)</code>: 20,000 + <code>below(40,001)</code> bytes, code points by class (40% ASCII letters, 10% spaces, 5% punctuation, 30% two-byte, 10% three-byte, 5% four-byte), drawn again until a chunk&rsquo;s crystal holds the byte 0x80</td></tr>
+                    <tr><td class="mono">3 &middot; records</td><td>The exact strings of <code>LVOCAB/1</code>, <code>LADDR/1</code> (with <code>addrTableRoot</code> over map A&rsquo;s rows), <code>LPREP/1</code> (Tier S and Tier P with its salted root), <code>LCORPUS/1</code> and <code>LGROW/1</code> (<a href="#built">chapter 3</a>)</td></tr>
+                    <tr><td class="mono">4 &middot; exact weave</td><td><code>engram_core.chainQuaternion</code> over the first 8 bytes of each leaf hash, and its segment sub-weaves over <code>segCuts</code></td></tr>
+                    <tr><td class="mono">5 &middot; RFC 6962</td><td>Leaf and node prefixes 0x00 and 0x01, the split at the largest power of two, RFC 9162&rsquo;s proof algorithms; L9&rsquo;s synthetic lists; what &ldquo;detected&rdquo; and a wrong proof mean</td></tr>
+                    <tr><td class="mono">6 &middot; packages</td><td>The package, the verdicts <code>{selfConsistent, authentic, failed}</code>, keys made per run in WebCrypto, BioChain-AI&rsquo;s own identity and key-vector functions, the registry snapshot pinned by SHA-256, the clean set and the tamper draws</td></tr>
+                    <tr><td class="mono">7 &middot; L11</td><td>A shard&rsquo;s time is the mean of repetitions 2 and 3; <code>addrTableRoot</code> is recomputed once per session and counted once; the literal reading, inside every verification, is measured and reported; the bootstrap of the median</td></tr>
+                    <tr><td class="mono">8 &middot; dry runs</td><td>Every seed +3000: <code>Rng(4000 + i)</code> shards, the verb and adjective gloss shards, tampers from <code>Rng(5000 + &hellip;)</code>, verb shards for C0</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Five labels to note</h3>
+            <p><strong>&ldquo;Amendments 1&ndash;7&rdquo;.</strong> Both result files, dry and decisive, say they ran &ldquo;with PREREGISTRATION.md with Amendments 1-7&rdquo;. The string was fixed in the runner (<code>run_claims_phase3.cjs</code>) and was not updated when Amendment 8 was added; Amendment 9 item 1 records this, and the runner now takes the label from <code>PREREGISTRATION.md</code> when it starts. The decisive run&rsquo;s HEAD, 6da04be, holds Amendment 8, and the runner it ran is 8c51e08&rsquo;s, with Amendment 8&rsquo;s changes: its READING runner-1 cites Amendment 8 item 1, and its L11 rule and control cite item 2 and carry the step check.</p>
+            <p><strong>Two READINGs that predate Amendment 8.</strong> In the same results, READING runner-11 says &ldquo;the control compares the two medians&rdquo;, and runner-13, which defines the step check, still says &ldquo;the registered comparison of the two medians still decides the control&rdquo;. The L11 rule, the control&rsquo;s own description in the JSON and the <code>.md</code> all say what Amendment 8 item 2 says: the step check decides, and the comparison is reported. In this run both came out the registered way (the step check holds, and the skipped median is faster), so the decision does not depend on which text one reads. Amendment 9 item 2 records this, and the runner&rsquo;s texts now say what its code does.</p>
+            <p><strong>The decisive run&rsquo;s uncommitted path.</strong> The results record that the system had one uncommitted path when the run started: <code>reference/results/phase3-console.txt</code>, untracked. That is the console log the run itself was writing; it was committed in 865791f.</p>
+            <p><strong>The final dry run&rsquo;s HEAD.</strong> Its result files record HEAD b822237 and six modified files, the six that 8c51e08 commits (<code>lexicon_core.js</code>, <code>verify.py</code>, the runner, the chain trace, <code>tests/all.cjs</code>, <code>tests/chain-lexicon.cjs</code>), with three earlier dry-run result files untracked. The run started at 03:56:57, 29 seconds before 8c51e08 was committed (03:57:26); 25b48b3&rsquo;s message says it ran on the code at 8c51e08. The result files list the paths, not the contents (Amendment 9 item 3). Dry runs decide nothing.</p>
+            <p><strong>A stale comment in the core.</strong> The comment above <code>verifyPackage</code> in <code>lexicon_core.js</code> gave the reading before Amendment 8: authentic is &ldquo;attestation, inclusion and consistency all pass&rdquo;. The code below it (line 2,538), changed in 8c51e08, computes Amendment 8 item 3&rsquo;s verdicts, as <code>verify.py</code>&rsquo;s docstring says: self-consistent when parity .. commitment, inclusion and consistency pass, authentic when the attestation passes. The decisive run used that code. The comment, and one in <code>tests/chain-lexicon.cjs</code>&rsquo;s header, were corrected after the run without any change to code (Amendment 9).</p>
+        </section>
+
+        <section class="chapter" id="built">
+            <div class="chapter-num">03</div>
+            <h2>What was built</h2>
+            <p class="chapter-intro">Five pieces, each written twice, once in the browser core and once in the Python reference, and checked line for line against a trace before anything was decided. The Python reference is the authority for the exact parts; Owl Academy&rsquo;s own JavaScript is the authority for what a biochain is.</p>
+            <h3>The grower</h3>
+            <p>Owl&rsquo;s <code>growBiochain</code> is asynchronous (it hashes with WebCrypto) and lives in <code>scripts/biomesh.js</code>. <code>growSync</code> repeats its steps in order, synchronously, on Engram Mind&rsquo;s Eye&rsquo;s <code>biochain_v1.js</code> (Owl&rsquo;s codec, verbatim) and the orbital core&rsquo;s SHA-256, as spike S4&rsquo;s grower did. The Python port copies the JavaScript&rsquo;s quirks too.</p>
+            <div class="table-wrap"><table style="min-width:760px">
+                <thead><tr><th>Step</th><th>What it does</th><th>JS (<code>lexicon_core.js</code>)</th><th>Python (<code>chain.py</code>)</th></tr></thead>
+                <tbody>
+                    <tr><td>Grow</td><td>The whole record, field for field, in Owl&rsquo;s key order; options for engrams and for the two control growers</td><td class="mono">growSync</td><td class="mono">grow</td></tr>
+                    <tr><td>Chunks and codec</td><td>720-byte chunks; the order-2 rank coder with Elias-gamma ranks and raw-byte escapes</td><td class="mono">BC.encodeChunk, BC.decodeChunk</td><td class="mono">encode_chunk, decode_chunk</td></tr>
+                    <tr><td>Packets</td><td>The form-9 crystal word, parity set last; Owl writes the crystal byte 0x80 raw</td><td class="mono">BC.crystallizeBytes</td><td class="mono">crystallize</td></tr>
+                    <tr><td>Leaves and root</td><td><code>sha256Hex(i + "|" + sha256Hex(String.fromCharCode(...chunk)))</code>: each byte from 0x80 up is hashed as two bytes; the root by the <code>shdccp/2</code> rule</td><td class="mono">leafHash, merkleShdccp2</td><td class="mono">leaf_hash, merkle_shdccp2</td></tr>
+                    <tr><td>Float weaves</td><td>The chiral and mirror products of the crystal quaternions, with V8&rsquo;s <code>Math.hypot</code> algorithm and <code>toFixed(12)</code> exactly (Python&rsquo;s own <code>math.hypot</code> differs on about 31% of calls)</td><td class="mono">weavesOf</td><td class="mono">weaves, v8_hypot, js_to_fixed</td></tr>
+                    <tr><td>chainId</td><td><code>"BC-"</code> + the first 24 hex digits of SHA-256(merkleRoot + &ldquo;|&rdquo; + weaveChiral)</td><td class="mono">growSync</td><td class="mono">chain_id</td></tr>
+                    <tr><td>Engram layer</td><td>Engram&rsquo;s <code>engramStream</code>, token for token, each distinct token&rsquo;s packet computed once</td><td class="mono">engramLayer</td><td class="mono">engram.ttmpt.engram_stream</td></tr>
+                    <tr><td>Control growers (L8)</td><td>BioChain-AI&rsquo;s kernel normalisation (0x80 written as 0x81, parity recomputed); leaves over binary bytes</td><td class="mono">kernelCrystallize, leafHashBinary</td><td class="mono">kernel_crystallize, leaf_hash_binary</td></tr>
+                    <tr><td>Synthetic shards</td><td>Amendment 7 item 2&rsquo;s generator</td><td class="mono">synthShard</td><td class="mono">synth_shard</td></tr>
+                </tbody>
+            </table></div>
+            <h3 id="records">The records, as exact strings</h3>
+            <p>Each record is a pipe-joined UTF-8 string, <code>-</code> for an empty field; its hash is the lowercase hex SHA-256 of those bytes (Amendment 7 item 3). The namespace lives in these kinds, never in a Form nibble (D7). Two of them are global and were equal in both languages in the decisive run:</p>
+            <pre class="spike">LVOCAB/1|df22705601de2e425cd090edc5df05619ce4a08df336f40bf92a1ed59f9ca1ff|4ceb92c48d9cbe92204931da3ab2ef1133f74bfb2bd53af26d482af7e69316fd|30bed6fbc1fec1f4382d212d7792de48d99f10713f728d28329f8d7506712229|wordpiece-greedy/1|lex0-bpe/1|bc86a44d55ee251c718eeb28ecd729396f82e4bca0d530097595cee9794e287f|-|[PAD]=0,[UNK]=1,[CLS]=2,[SEP]=3,[MASK]=4
+  <span class="pass">hash 55962675fc6953c82d2ddd1d239f6879faba8f9bedd8128b5fe53054ac1f3c56</span>
+
+LADDR/1|df22705601de2e425cd090edc5df05619ce4a08df336f40bf92a1ed59f9ca1ff|cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59|L3/1|30b17bc3992d5bab98e8955bc215c03c5706e5847b2ed4a7c7b22f39635349e1|3/4|11/13|D3
+  <span class="pass">hash 83f09be9c4de55b74aba7d0eea47fc29d9217fae06231ca8dd0fba239e760904</span></pre>
+            <div class="table-wrap"><table style="min-width:760px">
+                <thead><tr><th>Kind</th><th>Fields</th><th>JS</th><th>Python (<code>records.py</code>)</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">LVOCAB/1</td><td>vocabSha256 (V0), normaliserSpecSha (SHA-256 of <code>golden/nb_spec_v1.txt</code>, pinned), unicodeTablesSha, <code>wordpiece-greedy/1</code>, <code>lex0-bpe/1</code>, trainSetSha (instance (a)&rsquo;s digest), <code>-</code>, the five specials with their ids</td><td class="mono">lvocab</td><td class="mono">lvocab</td></tr>
+                    <tr><td class="mono">LADDR/1</td><td>vocabSha256, the WordNet archive&rsquo;s SHA-256, <code>L3/1</code>, <strong>addrTableRoot</strong>, <code>3/4</code>, <code>11/13</code>, <code>D3</code>. addrTableRoot is the RFC 6962 root over map A&rsquo;s 8,192 rows <code>id|token|word|len|h3PointSha|h2PointSha</code>, in id order: one row per V0 entry, with its word&rsquo;s exact H&sup3; and H&sup2; points hashed</td><td class="mono">laddrOf, addrRows, addrTableRoot</td><td class="mono">laddr_v0, addr_rows, addr_table_root</td></tr>
+                    <tr><td class="mono">LPREP/1</td><td>One per shard, 15 fields: the kind LPREP/1, corpusId, shardIndex, chainId, merkleRoot, byteLen, rawSha256, spdx, sourceUrlSha, lvocabHash, idStreamSha256 (the V0 id stream of the whole shard as one instance), laddrHash, weave3Sha (the exact weave&rsquo;s components in decimal, joined by commas), engramStreamSha (<code>-</code> with engrams off), tier</td><td class="mono">lprep, lprepFields</td><td class="mono">lprep, lprep_fields</td></tr>
+                    <tr><td class="mono">LPREP/1, Tier P</td><td>chainId written <code>-</code>, tier <code>P</code>, merkleRoot kept, and a 16th field: saltedRoot = SHA-256(<code>LPREP-SALT/1|</code> + salt hex + <code>|</code> + merkleRoot + <code>|</code> + chainId)</td><td class="mono">lprep({tier: 'P'}), saltedRoot</td><td class="mono">lprep(&hellip;, TIER_P), salted_root</td></tr>
+                    <tr><td class="mono">LCORPUS/1</td><td>corpusId, N, the RFC 6962 root over SHA-256(<code>LPREP/1</code>) in shard order, spdxSetSha (the SHA-256 of the distinct SPDX ids, sorted, joined by commas), then four fields written <code>-</code>: Amendment 7 leaves the evaluation-set, contamination and Croissant fields empty until Phase 6</td><td class="mono">lcorpus, corpusTree</td><td class="mono">lcorpus, corpus_log</td></tr>
+                    <tr><td class="mono">LGROW/1</td><td>corpusId, N_old, root_old, N_new, root_new, proofSha (SHA-256 of the consistency proof&rsquo;s hashes, concatenated)</td><td class="mono">lgrow</td><td class="mono">lgrow</td></tr>
+                </tbody>
+            </table></div>
+            <p>C0&rsquo;s manifest, as the run wrote it: <span class="mono" style="overflow-wrap:anywhere">LCORPUS/1|wordnet30-c0|148|f567700daafc85f8163c6e290f8555472751335daf4728fa9a64d18ad23f19b3|13e130f4&hellip;|-|-|-|-</span>, and its growth from 147 shards to 148, <span class="mono" style="overflow-wrap:anywhere">LGROW/1|wordnet30-c0|147|6725fc2a&hellip;|148|f567700d&hellip;|ccf1e2a5&hellip;</span>.</p>
+            <h3>The exact weave and RFC 6962</h3>
+            <div class="table-wrap"><table style="min-width:760px">
+                <thead><tr><th>Piece</th><th>What it does</th><th>JS</th><th>Python</th></tr></thead>
+                <tbody>
+                    <tr><td>Exact weave</td><td>The first 16 hex digits of each leaf hash as a 64-bit value; <code>engram_core.chainQuaternion</code> writes each as a 28-letter word of the norm-5 tree and multiplies them out, in order, into one integer quaternion of norm 5<sup>28K</sup></td><td class="mono">exactWeave, weaveValues, weave3Sha</td><td class="mono">chain.exact_weave, weave3_sha</td></tr>
+                    <tr><td>Its checks</td><td>The norm, <code>unfold</code> back to the prefixes in order, and the ordered product of the 7 segment sub-weaves over <code>segCuts</code></td><td class="mono">weaveReport, segmentWeaves</td><td class="mono">chain.exact_weave_checks, segment_weaves</td></tr>
+                    <tr><td>RFC 6962 tree</td><td>Leaf SHA-256(0x00 &#8214; d), node SHA-256(0x01 &#8214; left &#8214; right), split at the largest power of two below n, no duplication; audit paths and consistency proofs</td><td class="mono">RfcTree (mth, path, consistency)</td><td class="mono">manifest.Log</td></tr>
+                    <tr><td>Proof checks</td><td>RFC 9162&rsquo;s algorithms 2.1.3.2 and 2.1.4.2</td><td class="mono">rfcVerifyInclusion, rfcVerifyConsistency</td><td class="mono">verify_inclusion, verify_consistency</td></tr>
+                    <tr><td>L9&rsquo;s controls</td><td>The <code>shdccp/2</code> Merkle rule; an XOR of the 64-bit prefixes</td><td class="mono">merkleShdccp2, xorSummary</td><td class="mono">merkle_shdccp2, xor_summary</td></tr>
+                </tbody>
+            </table></div>
+            <h3>ATTEST/1 and the key registry</h3>
+            <p>BioChain-AI&rsquo;s format, unchanged: the payload <code>ATTEST/1|keyId|keyVector|contentHash|epochToken</code>, with contentHash the SHA-256 of the <code>LPREP/1</code> string and keyId <code>K-</code> plus 24 hex digits of SHA-256 over the public key&rsquo;s x|y. The signature is ECDSA P-256 over SHA-256 of the payload, as WebCrypto writes it: IEEE P1363 r&#8214;s, 128 hex digits. Python&rsquo;s <code>cryptography</code> verifies DER, so the signature is converted first (spike S7). The registry snapshot lists keyId, public JWK, keyVector and status (active, revoked or retired) and is pinned by its SHA-256.</p>
+            <div class="table-wrap"><table style="min-width:700px">
+                <thead><tr><th>Piece</th><th>JS</th><th>Python (<code>attest.py</code>)</th></tr></thead>
+                <tbody>
+                    <tr><td>Identity and key vector (BioChain-AI&rsquo;s <code>computeIdentityId</code>, <code>deriveKeyVector</code>, ported)</td><td class="mono">identityIdOf, keyVectorOf</td><td class="mono">identity_id, key_vector</td></tr>
+                    <tr><td>Keys, payload, signing</td><td class="mono">newKeyPair, attestPayload, attestSign (WebCrypto)</td><td class="mono">attestation_payload, attest, sign_p1363</td></tr>
+                    <tr><td>The signature&rsquo;s encodings</td><td class="mono">p1363Of, derOf, highSTwin</td><td class="mono">p1363_to_der, der_to_p1363 (r and s left-padded), high_s_twin</td></tr>
+                    <tr><td>Registry snapshot</td><td class="mono">registrySnapshot, loadSnapshot</td><td class="mono">snapshot_text, load_snapshot</td></tr>
+                    <tr><td>Verifying a block: the registry&rsquo;s entry, its status, its key vector, the content hash, then the signature</td><td class="mono">verifyAttestation</td><td class="mono">verify_attestation</td></tr>
+                </tbody>
+            </table></div>
+            <h3 id="checks">The hardened verifier: ten checks, two verdicts</h3>
+            <p><code>verifyPackage(session, package)</code> in JS and <code>verify.verify(package, session)</code> in Python run the checks in the registered order (Amendment 8 item 4). The first seven stop at the first failure; the last three always run. <code>failed</code> names the first check that failed, or <code>-</code>; a package is accepted when it is <code>-</code>. Explainer 4 numbered the same work as eight steps (<a href="biochains.html#verify">its checks</a>).</p>
+            <div class="table-wrap"><table style="min-width:760px">
+                <thead><tr><th class="num">#</th><th>Check</th><th>What it requires</th><th>Explainer 4</th><th>Verdict</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">1</td><td class="mono">parity</td><td>A <code>shdccp/2</code> record whose stream parses strictly, frame by frame, with at least one frame; every packet&rsquo;s parity holds</td><td>step 1</td><td>self-consistent</td></tr>
+                    <tr><td class="num">2</td><td class="mono">canonical</td><td>The 720-byte cut; every residual decodes, and re-encoding the chunk gives the stored residual byte for byte; the stream re-framed from its packets and residuals is the stored stream</td><td>step 2</td><td>self-consistent</td></tr>
+                    <tr><td class="num">3</td><td class="mono">crystal</td><td><code>crystallize(chunk)</code> is the stored packet, for every frame</td><td>step 3</td><td>self-consistent</td></tr>
+                    <tr><td class="num">4</td><td class="mono">leaves</td><td>leafHashes and merkleRoot present, and equal to the recomputed ones</td><td>step 4</td><td>self-consistent</td></tr>
+                    <tr><td class="num">5</td><td class="mono">weaves</td><td>weaveChiral, weaveMirror, segCuts, segments and chainId equal the recomputed ones</td><td>step 5</td><td>self-consistent</td></tr>
+                    <tr><td class="num">6</td><td class="mono">derived</td><td>The engram layer (if present), origBytes, shippedBytes, value; the V0 id stream and the exact weave recomputed (norm, unfold, segments)</td><td>step 6</td><td>self-consistent</td></tr>
+                    <tr><td class="num">7</td><td class="mono">commitment</td><td>The <code>LPREP/1</code> string equals the one rebuilt from the recomputed fields, the session&rsquo;s LVOCAB and LADDR hashes and the string&rsquo;s own corpusId, shardIndex, spdx and sourceUrlSha (Tier P: the salted root with the package&rsquo;s salt)</td><td>step 6</td><td>self-consistent</td></tr>
+                    <tr><td class="num">8</td><td class="mono">attestation</td><td>The ATTEST/1 block against SHA-256(<code>LPREP/1</code>) and the pinned registry: an unknown, revoked or retired key, a key-vector mismatch, another commitment or a bad signature fail. The signer is taken from the registry, never from unsigned fields</td><td>step 7</td><td><strong>authentic</strong></td></tr>
+                    <tr><td class="num">9</td><td class="mono">inclusion</td><td><code>LCORPUS/1</code> parses, names the same corpus, and the audit path of SHA-256(<code>LPREP/1</code>) at shardIndex verifies against its root</td><td>step 8</td><td>self-consistent</td></tr>
+                    <tr><td class="num">10</td><td class="mono">consistency</td><td><code>LGROW/1</code> grows the same corpus from N &minus; 1 to N, ending at the LCORPUS root; its proofSha is the proof&rsquo;s; the proof verifies</td><td>step 8</td><td>self-consistent</td></tr>
+                </tbody>
+            </table></div>
+            <div class="grid-2">
+                <div class="card"><h4>Self-consistent</h4><p>Checks 1&ndash;7, 9 and 10 (Explainer 4&rsquo;s steps 1&ndash;6 and 8): the record, its derived layers and its place in the manifest agree with one another. Anyone can check it, and anyone can produce it, by growing an altered text.</p><div class="meta">verdict.selfConsistent</div></div>
+                <div class="card"><h4>Authentic</h4><p>Check 8 (step 7): a registered, unrevoked key signed exactly this <code>LPREP/1</code>. The code as first built counted inclusion and consistency as authenticity; Amendment 8 item 3 records the change back to Explainer 4&rsquo;s definition, made identically in both languages before the run.</p><div class="meta">verdict.authentic</div></div>
+            </div>
+            <h3>Tier S and Tier P</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th></th><th>Tier S</th><th>Tier P</th></tr></thead>
+                <tbody>
+                    <tr><td>Text</td><td>Travels in the stream, losslessly</td><td>Stays with the holder; only commitments are public</td></tr>
+                    <tr><td><code>LPREP/1</code></td><td>15 fields, tier <code>S</code></td><td>chainId <code>-</code>, tier <code>P</code>, saltedRoot appended</td></tr>
+                    <tr><td>What a verifier rebuilds</td><td>Everything, from the stream</td><td>Everything, from a revealed stream and its salt (the salted root recomputed in the commitment check)</td></tr>
+                    <tr><td>In this run</td><td>Every package of L10 except T6&rsquo;s, and every package of L11; C0 is WordNet, redistributable with its notice</td><td>26 Tier-P twins of C0 shards, salted with the registered test salts, all accepted; T6 checks them with the wrong salt</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The checks before the run</h3>
+            <p>Before any decisive run the JS had to reproduce the reference&rsquo;s chain trace, <a href="../reference/traces/chain_v1.txt"><code>traces/chain_v1.txt</code></a>, written by <a href="../reference/traces_chain.py"><code>traces_chain.py</code></a> from seeds 8000 + i that no claim uses: the codec on eight cases, V8&rsquo;s <code>hypot</code> and <code>toFixed</code>, the synthetic generator, every record field, the controls&rsquo; growers, the exact weave, the records, the Certificate Transparency reference roots and RFC 6962&rsquo;s worked proofs, every inclusion, consistency and alteration case of small lists, the attestation with fixed test keys (RFC 6979 signatures, so the lines are the same on every run), and the verdict and per-check letters of every package and tamper. The parity runner, <a href="../tests/parity-lexicon.cjs"><code>tests/parity-lexicon.cjs</code></a>, passed 19,991 of 19,991 lines: Phase 2&rsquo;s 18,667, the chain trace&rsquo;s 1,323 and one control of the trace check (with Phase 4&rsquo;s L6 trace it now passes 22,586: <a href="learned.html">Explainer 12</a>). Beside it: <a href="../tests/chain-lexicon.cjs"><code>tests/chain-lexicon.cjs</code></a> (30/30 at 8c51e08), <a href="../tests/bridges-lexicon.cjs"><code>tests/bridges-lexicon.cjs</code></a> (Engram&rsquo;s importer on growSync&rsquo;s records, 40/40 at b822237), the Owl and BioChain-AI compatibility pin <a href="../reference/golden/biomesh_compat_v1.json"><code>golden/biomesh_compat_v1.json</code></a>, and the Python Phase 3 tests (62/62 at 8c51e08). These counts are from the commit messages.</p>
+        </section>
+
+        <section class="chapter" id="lab">
+            <div class="chapter-num">04</div>
+            <h2>Grow, sign and verify a shard</h2>
+            <p class="chapter-intro">The chain section of <code>lexicon_core.js</code>, in the browser you are reading this in: grow a shard from your text, commit to it, sign the commitment with a key made here, wrap it in a one-shard corpus, verify it with the hardened verifier, then break it seven ways and see which check notices, and whether Owl&rsquo;s own rule would have.</p>
+            <div class="lab" id="chain-lab">
+                <div class="lab-title">Lab &middot; grow, commit, sign, verify, tamper</div>
+                <label for="lab-text" style="display:block;font-size:0.85rem;color:var(--muted);margin:4px 0">Text to grow: twenty lines in C0&rsquo;s format (offset, lemmas, gloss, separated by tabs), written for this page; the offsets 90000001&ndash;90000020 are not WordNet&rsquo;s</label>
+                <textarea id="lab-text" rows="7" spellcheck="false" autocomplete="off" aria-label="Text to grow into a shard" style="display:block;width:100%;font:0.82rem/1.5 var(--mono);padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;resize:vertical;tab-size:4">90000001&#9;biochain&#9;a text kept as a stream of 720-byte chunks, each coded without loss and sealed by a hash, from which the text can be rebuilt exactly
+90000002&#9;shard&#9;one piece of a corpus, at most 60,000 bytes of UTF-8, grown into a single biochain
+90000003&#9;chunk&#9;720 consecutive bytes of a shard; the last chunk may be shorter
+90000004&#9;crystal, crystal packet&#9;a 64-bit word folded from a chunk's bytes, with a parity bit that makes its count of ones even
+90000005&#9;residual&#9;the lossless code of one chunk, written after its packet in the stream
+90000006&#9;leaf, leaf hash&#9;the SHA-256 of a chunk's position and the hash of its bytes
+90000007&#9;merkle root&#9;one hash over all the leaves of a chain, paired level by level
+90000008&#9;weave, chiral weave&#9;the product of the chunks' quaternions in order, printed to twelve decimals
+90000009&#9;exact weave&#9;an integer quaternion of norm 5 to the power 28K that multiplies the leaf prefixes in order and can be divided back into them
+90000010&#9;commitment, record&#9;a line of fields and hashes that binds a shard to its source, licence, tokenizer, ids and addresses
+90000011&#9;manifest, corpus manifest&#9;one root over every shard's commitment, in order, that can grow without being rebuilt
+90000012&#9;inclusion proof, audit path&#9;the sibling hashes that lead from one entry to the root of the tree that holds it
+90000013&#9;consistency proof&#9;the hashes that show a larger tree begins with every entry of a smaller one, unchanged
+90000014&#9;attestation&#9;a signature, by a key that a registry names and has not revoked, over the hash of a commitment
+90000015&#9;registry, key registry&#9;a list of public keys with their key vectors and their status: active, revoked or retired
+90000016&#9;salt&#9;a secret random value mixed into a hash so that guessing the text confirms nothing
+90000017&#9;verifier, importer&#9;the code that rebuilds a record from its stream and checks every field against what it rebuilt
+90000018&#9;licence&#9;permission to copy and pass on a text, which no hash and no signature can show
+90000019&#9;Poincar&eacute; disk&#9;a model of the hyperbolic plane drawn inside a circle, whose boundary lies infinitely far away
+90000020&#9;tamper&#9;a deliberate change to a record or its commitment, made to see which check notices it</textarea>
+                <div class="lab-row">
+                    <button class="chip on" type="button" id="lab-run">Grow, sign and verify</button>
+                    <button class="chip" type="button" id="lab-reset">Restore the gloss lines</button>
+                    <label for="lab-eng"><input id="lab-eng" type="checkbox"> engram layer on (texts up to 6,000 bytes)</label>
+                    <span class="mono" id="lab-bytes" style="font-size:0.85rem;color:var(--muted)"></span>
+                </div>
+                <div class="out" id="lab-status">Loading the cores&hellip;</div>
+
+                <h4>1 &middot; The record <code>growSync</code> grew</h4>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                    <tbody id="lab-record"><tr><td colspan="2" style="color:var(--muted)">not grown yet</td></tr></tbody>
+                </table></div>
+
+                <h4>2 &middot; The session, and the shard&rsquo;s <code>LPREP/1</code></h4>
+                <div class="out" id="lab-session">&ndash;</div>
+                <div class="out" id="lab-lprep" style="margin-top:8px">&ndash;</div>
+                <div class="table-wrap"><table style="min-width:480px">
+                    <thead><tr><th class="num">#</th><th>Field</th><th>Value</th><th>The verifier gets it</th></tr></thead>
+                    <tbody id="lab-lprep-fields"><tr><td colspan="4" style="color:var(--muted)">not built yet</td></tr></tbody>
+                </table></div>
+
+                <h4>3 &middot; The exact weave</h4>
+                <div class="out" id="lab-weave">&ndash;</div>
+
+                <h4>4 &middot; The signature and the one-shard corpus</h4>
+                <div class="out" id="lab-attest">&ndash;</div>
+
+                <h4>5 &middot; The hardened verifier on the clean package</h4>
+                <div class="out" id="lab-verdict">&ndash;</div>
+                <div class="table-wrap"><table style="min-width:560px">
+                    <thead><tr><th class="num">#</th><th>Check</th><th>Result</th><th class="num">~ms here</th><th>Detail</th></tr></thead>
+                    <tbody id="lab-checks"><tr><td colspan="5" style="color:var(--muted)">not verified yet</td></tr></tbody>
+                </table></div>
+
+                <h4>6 &middot; Break it</h4>
+                <div class="lab-row">
+                    <button class="chip" type="button" id="lab-tamper-all" disabled>Run all seven tampers</button>
+                    <span style="font-size:0.85rem;color:var(--muted)">or one at a time:</span>
+                    <span id="lab-tamper-chips" style="display:inline-flex;flex-wrap:wrap;gap:6px">
+                        <button class="chip" type="button" data-t="T1" disabled>T1</button>
+                        <button class="chip" type="button" data-t="T2" disabled>T2</button>
+                        <button class="chip" type="button" data-t="T3" disabled>T3</button>
+                        <button class="chip" type="button" data-t="T4" disabled>T4</button>
+                        <button class="chip" type="button" data-t="T7" disabled>T7</button>
+                        <button class="chip" type="button" data-t="T8" disabled>T8</button>
+                        <button class="chip" type="button" data-t="T9" disabled>T9</button>
+                    </span>
+                </div>
+                <div class="table-wrap"><table class="compact" style="min-width:820px">
+                    <thead><tr><th>Class</th><th>What changed here</th><th>Self-consistent /<br>authentic</th><th>Failing check</th><th>Checks 1&ndash;10</th><th>Owl&rsquo;s rule<br>(<code>verifyBiochain</code>)</th><th>In the decisive run<br>(50 each)</th></tr></thead>
+                    <tbody id="lab-tampers">
+                        <tr data-t="T1"><td class="mono">T1</td><td>leafHashes and merkleRoot removed</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>leaves 50; Owl accepted 50/50</td></tr>
+                        <tr data-t="T2"><td class="mono">T2</td><td>frame 0&rsquo;s crystal32, bit 0 (word bit 24), flipped, parity re-fixed</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>crystal 50; Owl accepted 50/50</td></tr>
+                        <tr data-t="T3"><td class="mono">T3</td><td>the <code>LPREP/1</code>&rsquo;s lvocabHash, last hex digit changed</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>commitment 50 (authentic 0/50); Owl not run</td></tr>
+                        <tr data-t="T4"><td class="mono">T4</td><td>attested by the key the registry marks revoked</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>attestation 50 (self-consistent 50/50); Owl not run</td></tr>
+                        <tr data-t="T7"><td class="mono">T7</td><td>frames 0 and 1 swapped</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>leaves 48, canonical 2 (the last two frames); Owl not run</td></tr>
+                        <tr data-t="T8"><td class="mono">T8</td><td>chainId, last hex digit changed</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>weaves 50; Owl accepted 50/50</td></tr>
+                        <tr data-t="T9"><td class="mono">T9</td><td>one residual bit flipped so that the chunk decodes the same</td><td>&ndash;</td><td>&ndash;</td><td class="mono">&ndash;</td><td>&ndash;</td><td>canonical 50; Owl accepted 50/50</td></tr>
+                    </tbody>
+                </table></div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">The checks column has one letter per check in the registered order: P passed, F failed, &ndash; not run (the first seven stop at the first failure). &ldquo;Owl&rsquo;s rule&rdquo; is <code>EngramCore.verifyBiochain</code> on the tampered record. Owl&rsquo;s own <code>verifyIntegrity</code> is asynchronous and lives in Owl Academy&rsquo;s <code>scripts/biomesh.js</code>, which no page here loads; <code>verifyBiochain</code> repeats its steps (frame parity, leaves when present, the root when present, the chiral weave, the engram layer) with a synchronous SHA-256, and Engram&rsquo;s tests check its verdicts against Owl&rsquo;s own, word for word, on the five records in <code>bridges_v1.json</code>. The decisive run ran Owl&rsquo;s own function, from the Owl checkout, on T1, T2, T8 and T9 (L10&rsquo;s control 1). T5 and T6 are not here: they need a second shard&rsquo;s attestation and a Tier-P twin, which a one-shard corpus does not have.</p>
+            </div>
+            <div class="callout note"><span class="label">How the lab handles LADDR/1</span>
+                <p>Everything in the shard&rsquo;s <code>LPREP/1</code> is computed here except one field. The <code>addrTableRoot</code> inside <code>LADDR/1</code> is an RFC 6962 root over map A&rsquo;s 8,192 rows, and building map A needs WordNet&rsquo;s noun and verb forests, read from the pinned 10,775,600-byte archive in the cache, outside the repository. A page cannot load it (and this lab uses no fetch at all, so it works from <code>file://</code> as well as over HTTP). So the lab&rsquo;s session is built from a given <code>LADDR/1</code>: the string both languages computed in the decisive run (<a href="#records">chapter 3</a>). The page checks that its SHA-256 is the recorded laddrHash, <span class="mono">83f09be9&hellip;</span>, and then uses it as a pinned value, as a holder would. The decisive run recomputed it from WordNet once per session (1,277.8 ms in L11&rsquo;s session); the lab does not recompute it, so its laddrHash is taken on trust. <code>LVOCAB/1</code> is built here from the pinned V0 and table and the two pins the core carries (the N<sub>B</sub> spec&rsquo;s SHA-256 and instance (a)&rsquo;s digest), and its hash is checked against the run&rsquo;s.</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li><strong>Grow, sign and verify</strong> with the gloss lines: 2,222 bytes, four chunks. All ten checks pass; both verdicts are true; Owl&rsquo;s rule accepts too.</li>
+                    <li><strong>T1, T2, T8, T9</strong>: the hardened verifier fails them at leaves, crystal, weaves and canonical; Owl&rsquo;s rule accepts all four. These are the gaps L10&rsquo;s control 1 measured, and the signature still verifies: authentic stays true, because the <code>LPREP/1</code> string was not touched.</li>
+                    <li><strong>T3</strong> breaks both verdicts: the commitment no longer matches, and the signature was made over the old string. <strong>T4</strong> breaks only authenticity: the record and its commitment are fine, the key is revoked.</li>
+                    <li><strong>T7</strong> on the gloss lines fails at leaves, and Owl&rsquo;s rule rejects it too (&ldquo;leaf 0 mismatch&rdquo;). Cut the text to between 721 and 1,439 bytes and frame 1 is the short last frame: the swap then fails at canonical, as two of the run&rsquo;s fifty T7 records did.</li>
+                    <li><strong>Paste a full shard</strong> (up to 60,000 bytes) to see the verifier&rsquo;s time in your browser beside L11&rsquo;s 155.4 ms in Node; one byte more and the grower refuses, as Owl&rsquo;s does.</li>
+                </ul>
+            </div>
+            <div class="callout limit"><span class="label">What this lab is, and is not</span>
+                <p>It runs the functions that decided L8&ndash;L11 in Node, in your browser, on your text. It touches no registered instance and decides nothing. Its key lives only in this page&rsquo;s memory and is gone when you leave; its signature says only that this page signed. Its corpus id (<code>lexicon-lab-v1</code>), spdx (<code>NOASSERTION</code>) and sourceUrlSha (the SHA-256 of <code>page:explainers/chains.html</code>) are labels for the lab, not registered values. It uses the decisive run&rsquo;s epoch token, <code>EPOCH-OFFLINE-2026-11-06</code>, so the page&rsquo;s port of BioChain-AI&rsquo;s identity and key-vector functions can be checked against the values the run recorded. WebCrypto needs a secure context (HTTPS, localhost or a local file); where it is missing, the lab signs with the core&rsquo;s own deterministic ECDSA, skips the attestation check, and says so.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="l8">
+            <div class="chapter-num">05</div>
+            <h2>L8 &middot; Language shards are Owl-valid biochains</h2>
+            <p class="chapter-intro">Grow every shard with our JS grower and with the Python port, engrams off and on, and compare each record with the one Owl Academy&rsquo;s own <code>growBiochain</code> grows from the same text. Not one field of one record differs. <span class="tag t-SUPPORTED">supported</span> <span style="color:var(--muted);font-size:0.9rem">for the JS grower and for the Python port</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Registered</th><th>As run</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Instances</strong></td><td>C0&rsquo;s 148 shards (8,831,867 bytes, 12,378 chunks) and 20 synthetic shards from <code>Rng(1000 + i)</code> (22,605&ndash;59,903 bytes), each grown with engrams off and on: 336 records per grower</td></tr>
+                    <tr><td><strong>Authorities</strong></td><td>Owl Academy&rsquo;s <code>scripts/biomesh.js</code> at 7f45f35 for (a) and (b), and BioChain-AI&rsquo;s <code>src/biomesh/biomesh.js</code> at c975161, both unchanged in Node by name-grab, in four worker threads; the Python reference for (d)</td></tr>
+                    <tr><td><strong>Metric</strong></td><td>The fields that differ among the fifteen; both <code>verifyIntegrity</code> verdicts; <code>importBiochain</code>&rsquo;s flag and text; Python/JS mismatches in (d)</td></tr>
+                    <tr><td><strong>Decision</strong></td><td>All-or-nothing, separately for the JS grower and the Python port; void if a control fails to show its weakness</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Part</th><th>Checked</th><th class="num">Result</th></tr></thead>
+                <tbody>
+                    <tr><td>(a)</td><td>Records differing from Owl&rsquo;s in any field: growSync; the Python port; BioChain-AI&rsquo;s own grower</td><td class="num">0, 0, 0 of 336</td></tr>
+                    <tr><td>(b)</td><td>Owl&rsquo;s and BioChain-AI&rsquo;s <code>verifyIntegrity</code> accept the record (engrams off; on)</td><td class="num">168/168; 168/168, each</td></tr>
+                    <tr><td>(c)</td><td><code>EngramCore.importBiochain</code> accepts and recreates the text byte for byte (off; on)</td><td class="num">168/168; 168/168</td></tr>
+                    <tr><td>(d)</td><td><code>LVOCAB/1</code> and <code>LADDR/1</code> equal in Python and JS (addrTableRoot <span class="mono">30b17bc3&hellip;</span>, 8,192 rows; ~2.0 s in JS, ~1.6 s in Python)</td><td class="num">equal, equal</td></tr>
+                    <tr><td>(d)</td><td>Shards whose V0 id stream (SHA-256 and count) or <code>LPREP/1</code> (engrams off or on) differs between Python and JS</td><td class="num">0 of 168</td></tr>
+                </tbody>
+            </table></div>
+            <p>Because growSync&rsquo;s, the Python port&rsquo;s, Owl&rsquo;s and BioChain-AI&rsquo;s records were equal, each shard and mode had one distinct record to verify and import (READING runner-7). Owl&rsquo;s authority in (a) and (b) is its own code: its functions are taken from the file by name and run as written, with only its <code>sha256Hex</code> (WebCrypto in the original) stood in for by Node&rsquo;s SHA-256 over UTF-8, as spikes S4 and S7 ran it.</p>
+            <h3>The controls</h3>
+            <div class="table-wrap"><table style="min-width:680px">
+                <thead><tr><th>Control</th><th>Must</th><th class="num">Measured</th></tr></thead>
+                <tbody>
+                    <tr><td>1 &middot; The Python grower with BioChain-AI&rsquo;s <code>shdccp_kernel.pack</code> normalisation (the crystal byte 0x80 written as 0x81), engrams off</td><td>differ from Owl&rsquo;s record on at least one synthetic shard</td><td class="num">20 of 20, in the stream only<br>(chainId and merkleRoot equal)</td></tr>
+                    <tr><td>2 &middot; A grower that hashes leaves over binary bytes, engrams off</td><td>differ on every shard and be rejected by Owl&rsquo;s <code>verifyIntegrity</code></td><td class="num">differs 168/168<br>rejected 168/168 (&ldquo;leaf 0 mismatch&rdquo;)</td></tr>
+                    <tr><td>3 &middot; Bit 0 of each shard&rsquo;s first ASCII byte flipped, regrown</td><td>change that chunk&rsquo;s leaf and the root</td><td class="num">168 of 168</td></tr>
+                </tbody>
+            </table></div>
+            <p>The control growers were run in both languages: the JS kernel grower equalled the Python one on all 20 synthetic shards, and the Python binary-leaf grower equalled the JS one on all 168.</p>
+            <h3>Reported, not decisive</h3>
+            <ul>
+                <li><strong>The 0x80 byte</strong>, where Owl and BioChain-AI&rsquo;s Python kernel disagree: 189 of C0&rsquo;s 12,378 chunks (1.527%) have a crystal holding it, and 32 of the synthetic shards&rsquo; 1,175 (2.723%). Each synthetic shard needed 1&ndash;5 draws to get one (1, 1, 1, 2, 2, 2, 5, 4, 3, 2, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1), and each has 29.522&ndash;30.682% two-byte characters, above the registered 25%.</li>
+                <li><strong>Value</strong> (original bytes over shipped bytes): median 1.095 with engrams off, 0.466 with engrams on. The engram layer is larger than the gloss text it describes, as Explainer 4 found from spike S4.</li>
+                <li><strong>Times</strong> (median per shard, ~): growSync 56 ms off and 119.1 ms on; the Python port 54.8 and 278.2 ms; Owl&rsquo;s grower 70.5 ms and 9,319 ms; BioChain-AI&rsquo;s 69.6 and 9,291.4 ms. Owl&rsquo;s and BioChain-AI&rsquo;s ran in four worker threads beside the Python half, so they were contended; growSync and Python ran alone. growSync&rsquo;s engrams-on time splits into encode 32.7, crystal 5.9, hash 4.4, weave 10.9 and engram 63.6 ms. With engrams on, Owl&rsquo;s grower took a median 9,319 ms against 70.5 ms off, the difference being its own engram layer; the worker threads that ran Owl&rsquo;s and BioChain-AI&rsquo;s code (1,848 jobs) took 1,837.6 s of the run&rsquo;s 3,044.2.</li>
+            </ul>
+            <p><strong>The prediction</strong> was &ldquo;supported for JS and for Python&rdquo;, after spike S4 found its grower equal to Owl&rsquo;s on 126/126 records, the 0x80 case in 1.41% of gloss chunks, and BioChain-AI&rsquo;s normalised packets changing the stream but never chainId or merkleRoot. It held. The 0x80 share was 1.527% on C0 (S4: 1.41% of verb and adjective gloss chunks; analytic 1.55%), and control 1 again changed the stream field only.</p>
+        </section>
+
+        <section class="chapter" id="l9">
+            <div class="chapter-num">06</div>
+            <h2>L9 &middot; The corpus manifest, its growth, and the exact weave</h2>
+            <p class="chapter-intro">An RFC 6962 tree over the shards&rsquo; <code>LPREP/1</code> hashes, with proofs of inclusion and of append-only growth, and an exact integer summary of each shard&rsquo;s order. No root, proof or verdict differs between the languages, nothing altered goes undetected, and every weave is exact. <span class="tag t-SUPPORTED">supported</span></p>
+            <h3>(a) The manifest and the synthetic lists</h3>
+            <div class="table-wrap"><table class="compact" style="min-width:860px">
+                <thead><tr><th>List</th><th class="num">K</th><th>Root (JS = Python)</th><th class="num">Inclusion<br>proofs (max,<br>mean hashes)</th><th class="num">Wrong leaf /<br>position<br>accepted</th><th class="num">Consistency<br>proofs<br>(failed)</th><th class="num">Alterations<br>(undetected)</th><th class="num">JS/Python<br>mismatches</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>C0 manifest</strong><br><span style="color:var(--muted);font-size:0.82rem">engrams off</span></td><td class="num">148</td><td class="mono">f567700daafc85f8&hellip;</td><td class="num">148<br>(8, 7.68)</td><td class="num">0 / 0</td><td class="num">147, every m<br>(0)</td><td class="num">739 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1000)</td><td class="num">1</td><td class="mono">2cf8247ae9bac207&hellip;</td><td class="num">1<br>(0, 0)</td><td class="num">0 / 0</td><td class="num">none for m &lt; 1<br>(0)</td><td class="num">4 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1001)</td><td class="num">2</td><td class="mono">fe053b6cc39f8102&hellip;</td><td class="num">2<br>(1, 1)</td><td class="num">0 / 0</td><td class="num">1, every m<br>(0)</td><td class="num">9 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1002)</td><td class="num">3</td><td class="mono">b8cad7eb705b5538&hellip;</td><td class="num">3<br>(2, 1.67)</td><td class="num">0 / 0</td><td class="num">2, every m<br>(0)</td><td class="num">14 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1003)</td><td class="num">7</td><td class="mono">dae8490fb9c474be&hellip;</td><td class="num">7<br>(3, 2.86)</td><td class="num">0 / 0</td><td class="num">6, every m<br>(0)</td><td class="num">34 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1004)</td><td class="num">84</td><td class="mono">982fdccbe433cc94&hellip;</td><td class="num">84<br>(7, 6.67)</td><td class="num">0 / 0</td><td class="num">83, every m<br>(0)</td><td class="num">419 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1005)</td><td class="num">200</td><td class="mono">945a4fc792cd011b&hellip;</td><td class="num">200<br>(8, 7.88)</td><td class="num">0 / 0</td><td class="num">199, every m<br>(0)</td><td class="num">999 (0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1006)</td><td class="num">1,000</td><td class="mono">4ff617501dca0600&hellip;</td><td class="num">1,000<br>(10, 9.98)</td><td class="num">0 / 0</td><td class="num">2,000 sampled<br>(0)</td><td class="num">2,000 sampled<br>(0)</td><td class="num">0</td></tr>
+                    <tr><td class="mono" style="white-space:nowrap">Rng(1007)</td><td class="num">1,001</td><td class="mono">a13b2b4fa6133589&hellip;</td><td class="num">1,001<br>(10, 9.99)</td><td class="num">0 / 0</td><td class="num">2,000 sampled<br>(0)</td><td class="num">2,000 sampled<br>(0)</td><td class="num">0</td></tr>
+                </tbody>
+            </table></div>
+            <p>Every inclusion proof verified for its own leaf and position and was rejected for leaf (i + 1) mod K at position i and for its own leaf at position (i + 1) mod K. Every consistency proof verified, and each was also rejected with a wrong old root. On C0&rsquo;s manifest the 739 alterations are all six registered kinds: 148 replacements, 148 deletions, 148 insertions, 147 adjacent swaps, 147 truncations with the old size kept, and the one duplicate-last; at K = 1,000 and 1,001, 2,000 alterations each were drawn from <code>Rng(2000 + j)</code> (READING runner-5). C0&rsquo;s root took ~1.8 ms in JS and ~0.3 ms in Python.</p>
+            <figure>
+                <div style="max-width:560px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 8px 4px">
+<svg class="pf" id="proof-fig" viewBox="0 0 420 256" role="img" aria-labelledby="pf-title pf-desc">
+<title id="pf-title">An RFC 6962 inclusion proof in a tree of seven entries</title>
+<desc id="pf-desc">RFC 6962's seven-entry example. Leaves a to f hash entries d0 to d5; j hashes d6 and is promoted, not duplicated. g, h and i join the pairs, k joins g and h, l joins i and j, and the root joins k and l. The proof for one entry is the list of sibling hashes along its path; the verifier rebuilds the path from the entry and compares the root.</desc>
+<style>.pf text{font-family:Inter,system-ui,sans-serif;font-size:12px;fill:var(--muted,#94a3b8)}.pf .pf-e{stroke:var(--muted,#94a3b8);stroke-opacity:.45;stroke-width:1.4;fill:none}.pf .pf-d{stroke:var(--muted,#94a3b8);stroke-opacity:.35;stroke-width:1;stroke-dasharray:3 3}.pf .pf-n circle{fill:#0f172a;stroke:#475569;stroke-width:1.5}.pf .pf-n text{fill:#cbd5e1;font-family:'Fira Code',ui-monospace,monospace;font-size:12px}.pf .pf-n.path circle{fill:rgba(26,163,194,.28);stroke:#1aa3c2;stroke-width:2.2}.pf .pf-n.proof circle{fill:rgba(184,134,11,.3);stroke:#b8860b;stroke-width:2.2}.pf .pf-e.path{stroke:#1aa3c2;stroke-opacity:1;stroke-width:2}.pf .pf-leaf{cursor:pointer}.pf .pf-leaf:hover text{fill:var(--text,#e2e8f0)}@media (max-width:520px){.pf text,.pf .pf-n text{font-size:14px}}</style>
+<g id="pf-edges"></g>
+<g id="pf-nodes"></g>
+<g transform="translate(14,250)"><circle cx="5" cy="-4" r="5" fill="rgba(26,163,194,.28)" stroke="#1aa3c2" stroke-width="2"/><text x="14" y="0">rebuilt by the verifier</text><circle cx="175" cy="-4" r="5" fill="rgba(184,134,11,.3)" stroke="#b8860b" stroke-width="2"/><text x="184" y="0">sent in the proof</text></g>
+</svg>
+                </div>
+                <div class="lab-row" id="proof-chips" style="justify-content:center"></div>
+                <div class="out" id="proof-out" style="max-width:560px;margin:0 auto">Choose an entry.</div>
+                <figcaption>RFC 6962&rsquo;s own seven-entry example, with its node names. Choose an entry: its proof is the sibling hashes along its path, bottom up, and the verifier rebuilds the path from the entry alone. With seven entries a proof holds two or three hashes; d6&rsquo;s leaf j is promoted to the next level, never duplicated, which is what keeps [a, b, c] and [a, b, c, c] apart. In C0&rsquo;s manifest of 148 shards a proof holds 7.68 hashes on average, at most 8; at 1,000 and 1,001 entries, at most 10.</figcaption>
+            </figure>
+            <h3>(b) The exact weaves</h3>
+            <div class="table-wrap"><table style="min-width:560px">
+                <thead><tr><th>On each of C0&rsquo;s 148 shards</th><th class="num">Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Norm exactly 5<sup>28K</sup> (5<sup>2352</sup> for the 147 shards of K = 84; 5<sup>840</sup> for the last, K = 30)</td><td class="num">148/148</td></tr>
+                    <tr><td><code>unfold</code> returns the leaf prefixes, in order</td><td class="num">148/148</td></tr>
+                    <tr><td>The ordered product of the 7 segment sub-weaves equals the weave</td><td class="num">148/148</td></tr>
+                    <tr><td>The four components, and every segment sub-weave, equal in JS and Python</td><td class="num">148/148</td></tr>
+                    <tr><td>Bits per component (K = 30; K = 84)</td><td class="num">971&ndash;976; 2,720&ndash;2,731</td></tr>
+                    <tr><td>Median time per shard (~): JS; Python</td><td class="num">45.9 ms; 51.3 ms</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The controls</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Control</th><th>Must</th><th class="num">Measured</th></tr></thead>
+                <tbody>
+                    <tr><td>1 &middot; The <code>shdccp/2</code> Merkle rule (pairwise SHA-256 over hex, odd node duplicated)</td><td>give equal roots for L and L with its last element duplicated, at every odd K &ge; 3 among the synthetic K</td><td class="num">collides at K = 3, 7, 1,001<br>(JS and Python)</td></tr>
+                    <tr><td>2 &middot; An XOR of the leaf prefixes</td><td>miss at least one adjacent swap that the weave detects</td><td class="num">misses all it was given:<br>1, 2, 6, 83, 199 swaps at K = 2&ndash;200;<br>2 of 2 at K = 1,000 and 1,001</td></tr>
+                </tbody>
+            </table></div>
+            <p>Control 2 checked every adjacent swap for K &le; 200 and the first and last for K = 1,000 and 1,001 (READING runner-6). K = 1 has no swap. XOR is blind to order by construction; the weave detected every swap the XOR missed, in both languages.</p>
+            <p><strong>The prediction</strong>, &ldquo;supported&rdquo;, held, with spike S4&rsquo;s figures: inclusion proofs of at most 10 hashes at 1,000 leaves (10 here, at 1,000 and 1,001), the <code>shdccp/2</code> rule colliding at every odd K &ge; 3, and components of about 2,730 bits at K = 84 (2,720&ndash;2,731 here).</p>
+        </section>
+
+        <section class="chapter" id="l10">
+            <div class="chapter-num">07</div>
+            <h2>L10 &middot; The hardened, attested import</h2>
+            <p class="chapter-intro">Fifty clean attested packages and fifty of each of nine tamper classes, verified in JavaScript with WebCrypto and in Python with <code>cryptography</code>. Every clean package is accepted, every tampered one rejected with its check named, and the two languages agree on every verdict. <span class="tag t-SUPPORTED">supported</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Set up for the run</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Identity and key vector (BioChain-AI&rsquo;s own <code>computeIdentityId</code> and <code>deriveKeyVector</code> on the seed <code>hyperbolic-lexicon/phase3</code> and uid <code>lexicon</code>; the core&rsquo;s port and Python&rsquo;s equal)</td><td class="mono">0xAE3502AC6FFBA237<br>9BC2024804859196</td></tr>
+                    <tr><td>Epoch token</td><td class="mono">EPOCH-OFFLINE-2026-11-06</td></tr>
+                    <tr><td>Keys, made in WebCrypto for this run</td><td class="mono">K-c097cdc661697dce0beb1d92 active<br>K-7e0fcb2cbfd856240bed45bd revoked</td></tr>
+                    <tr><td>Registry snapshot (public JWKs only; no private key is written anywhere)</td><td class="mono"><a href="../reference/results/phase3-registry.json">phase3-registry.json</a>, 456 bytes<br>36cbc21d78185642&hellip;</td></tr>
+                    <tr><td>The clean set: <code>Rng(1000 + i).below(148)</code> until 50 distinct shards</td><td class="num">50 shards, 55 draws</td></tr>
+                    <tr><td>Tier-P twins (for T6), accepted with their own salts</td><td class="num">26/26</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The nine classes</h3>
+            <div class="table-wrap"><table class="compact" style="min-width:880px">
+                <thead><tr><th>Class</th><th>What it changes (as run)</th><th>Caught by<br>(JS = Python)</th><th class="num">Self-consistent /<br>authentic, of 50</th><th>Owl&rsquo;s <code>verifyIntegrity</code><br>(control 1)</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">clean</td><td>Nothing: 50 packages, attested by the active key</td><td>accepted, 50</td><td class="num">50 / 50</td><td>&ndash;</td></tr>
+                    <tr><td class="mono">T1</td><td>leafHashes and merkleRoot removed</td><td class="mono">leaves 50</td><td class="num">0 / 50</td><td><strong style="color:var(--rose)">accepts 50/50</strong></td></tr>
+                    <tr><td class="mono">T2</td><td>One packet&rsquo;s crystal32 changed (a drawn frame, a drawn bit), parity re-fixed</td><td class="mono">crystal 50</td><td class="num">0 / 50</td><td><strong style="color:var(--rose)">accepts 50/50</strong></td></tr>
+                    <tr><td class="mono">T3</td><td>The <code>LPREP/1</code>&rsquo;s lvocabHash, last hex digit changed</td><td class="mono">commitment 50</td><td class="num">0 / 0</td><td>not run: the record is unchanged</td></tr>
+                    <tr><td class="mono">T4</td><td>Attested by the key the registry marks revoked</td><td class="mono">attestation 50</td><td class="num">50 / 0</td><td>not run: the record is unchanged</td></tr>
+                    <tr><td class="mono">T5</td><td>The attestation of the next clean package (a valid signature over another shard&rsquo;s <code>LPREP/1</code>)</td><td class="mono">attestation 50</td><td class="num">50 / 0</td><td>not run: the record is unchanged</td></tr>
+                    <tr><td class="mono">T6</td><td>The shard&rsquo;s Tier-P package, checked with the next shard&rsquo;s test salt</td><td class="mono">commitment 50</td><td class="num">0 / 50</td><td>not run: the record is unchanged</td></tr>
+                    <tr><td class="mono">T7</td><td>Two adjacent frames swapped (a drawn pair)</td><td class="mono">leaves 48<br>canonical 2</td><td class="num">0 / 50</td><td>not run; spike S4: rejects, &ldquo;leaf 0 mismatch&rdquo;</td></tr>
+                    <tr><td class="mono">T8</td><td>chainId, last hex digit changed</td><td class="mono">weaves 50</td><td class="num">0 / 50</td><td><strong style="color:var(--rose)">accepts 50/50</strong></td></tr>
+                    <tr><td class="mono">T9</td><td>One residual bit flipped so that the chunk still decodes to the same bytes</td><td class="mono">canonical 50</td><td class="num">0 / 50</td><td><strong style="color:var(--rose)">accepts 50/50</strong></td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table style="min-width:560px">
+                <thead><tr><th>Over all 500 packages</th><th class="num">JS</th><th class="num">Python</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>False accepts</strong> (a tampered package accepted)</td><td class="num"><strong>0</strong></td><td class="num"><strong>0</strong></td></tr>
+                    <tr><td><strong>False rejects</strong> (a clean package rejected)</td><td class="num"><strong>0</strong></td><td class="num"><strong>0</strong></td></tr>
+                    <tr><td>Verdicts that differ between the languages (self-consistent, authentic, failing check)</td><td class="num" colspan="2">0 of 500</td></tr>
+                    <tr><td>Median verification time per package, tampered ones included (~)</td><td class="num">135.4 ms</td><td class="num">131.5 ms</td></tr>
+                </tbody>
+            </table></div>
+            <ul>
+                <li><strong>T7&rsquo;s two canonical failures</strong> are the two draws that swapped an 84-chunk shard&rsquo;s last two frames, 82 and 83 (shards c0 096 and c0 007). The last frame is short, so after the swap a short frame stands first and the 720-byte cut fails before the leaves are compared; Amendment 8 item 4 had recorded that this can happen. The other 48 failed at leaves.</li>
+                <li><strong>T9&rsquo;s flips</strong>: each draw&rsquo;s first chosen frame had silent flips (103&ndash;232 of them); 49 of the 50 flips used lie inside a raw-byte escape&rsquo;s rank code and one in the residual&rsquo;s padding. Decoding cannot see them; only re-encoding can.</li>
+                <li><strong>The verdicts</strong> separate what was changed: the record (T1, T2, T7, T8, T9: not self-consistent, still authentic, since the signed <code>LPREP/1</code> is intact), the commitment (T3: neither; T6: not self-consistent, its signature intact), or the signature alone (T4, T5: self-consistent, not authentic).</li>
+            </ul>
+            <h3>The controls</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Control</th><th>Must</th><th class="num">Measured</th></tr></thead>
+                <tbody>
+                    <tr><td>1 &middot; Owl&rsquo;s <code>verifyIntegrity</code>, run from the Owl checkout, on T1, T2, T8 and T9</td><td>accept at least one record of each, or that class&rsquo;s gap claim is withdrawn and the class void</td><td class="num">T1 50/50, T2 50/50<br>T8 50/50, T9 50/50</td></tr>
+                    <tr><td>2 &middot; Python without the P1363-to-DER conversion (the raw 64 bytes handed to <code>cryptography</code> as DER)</td><td>reject every valid signature made in the run</td><td class="num">accepts 0 of 126<br>(126 verify with it)</td></tr>
+                </tbody>
+            </table></div>
+            <p>No class is void. <strong>The prediction</strong> was &ldquo;supported&rdquo;, from spike S4 (Owl accepts T1, T2, T8 and silent residual flips; rejects T7) and spike S7 (0 of 200 WebCrypto signatures verify in Python raw). It held in every class.</p>
+        </section>
+
+        <section class="chapter" id="l11">
+            <div class="chapter-num">08</div>
+            <h2>L11 &middot; Verification is cheap enough for corpora</h2>
+            <p class="chapter-intro">A holder verifies a full C0 shard, every hardened check included, in a median of 155.4 ms in Node, single-threaded: the interval&rsquo;s upper end, 156.0 ms, is under the 250 ms bar. The packages timed are the ones grown with engrams off, as Amendment 8 fixed after the dry runs. <span class="tag t-SUPPORTED">supported</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Registered</th><th>As run</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Instances</strong></td><td>Every C0 shard of at least 59,000 bytes: 147 packages, grown with engrams off (Amendment 8 item 1)</td></tr>
+                    <tr><td><strong>Timing</strong></td><td>A fresh Node process with nothing else running; three passes over the shards, each shard&rsquo;s full and attestation-skipped verifications back to back in alternating order; <code>process.hrtime.bigint</code>; a shard&rsquo;s time is the mean of repetitions 2 and 3; the package passed as a parsed object (READING runner-11)</td></tr>
+                    <tr><td><strong>Session</strong></td><td>LVOCAB/1, LADDR/1 recomputed from WordNet and the registry loaded once: 1,303.1 ms (the address table 1,277.8 ms), counted once in the corpus estimate (Amendment 7 item 7)</td></tr>
+                    <tr><td><strong>Decision</strong></td><td>Supported if the interval&rsquo;s upper end is &le; 250 ms; refuted if its lower end exceeds 500 ms; inconclusive otherwise; void unless the step check holds</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table style="min-width:600px">
+                <thead><tr><th>147 shards, engrams off</th><th class="num">Median</th><th class="num">95% interval</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Full hardened verification (decides)</strong></td><td class="num"><strong>155.387 ms</strong></td><td class="num"><strong>[154.197, 155.966]</strong></td></tr>
+                    <tr><td>Fastest and slowest shard</td><td class="num" colspan="2">140.5 ms; 246.9 ms</td></tr>
+                    <tr><td>A 1,000-shard corpus: the session once, then 1,000 medians</td><td class="num" colspan="2">~156.7 s</td></tr>
+                </tbody>
+            </table></div>
+            <p>The interval is the 95% percentile bootstrap of the median, 10,000 resamples of the 147 shard times with numpy&rsquo;s <code>default_rng(7)</code>. The claim&rsquo;s gloss, &ldquo;a 1,000-shard corpus therefore verifies in under about 5 minutes&rdquo;, comes out at about 2.6 minutes on this container.</p>
+            <h3>Where the time goes</h3>
+            <figure>
+                <div style="max-width:600px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 8px 4px">
+<svg class="sx" viewBox="0 0 420 294" role="img" aria-labelledby="sx-title sx-desc">
+<title id="sx-title">L11: the median time of each hardened check, Node and Python</title>
+<desc id="sx-desc">Median milliseconds per check over the 147 full C0 shards. In Node the canonical check (decode and re-encode every chunk) takes 78.9 ms and the derived layers 46.4 ms; every other check takes under 14 ms, the attestation 0.71 ms. In Python the derived layers take 100.8 ms and the canonical check 72.9 ms.</desc>
+<style>.sx text{font-family:Inter,system-ui,sans-serif;font-size:11px;fill:var(--muted,#94a3b8)}.sx .sx-v{fill:var(--text,#e2e8f0)}.sx .sx-grid{stroke:var(--line-strong,rgba(34,211,238,.38));stroke-opacity:.35;stroke-width:1}.sx .sx-base{stroke:var(--muted,#94a3b8);stroke-opacity:.6;stroke-width:1}.sx .js{fill:#1aa3c2}.sx .py{fill:#b8860b}.sx .sx-hit{fill:transparent}.sx g.sx-row:hover .sx-hit{fill:var(--line,rgba(34,211,238,.16))}@media (max-width:520px){.sx text{font-size:13px}}</style>
+<g transform="translate(100,14)"><rect class="js" x="0" y="-5" width="14" height="8" rx="2"/><text x="20" y="3">Node (lexicon_core.js)</text><rect class="py" x="160" y="-5" width="14" height="8" rx="2"/><text x="180" y="3">Python (verify.py)</text></g>
+<line class="sx-base" x1="100.0" y1="36" x2="100.0" y2="260"/><text x="100.0" y="274" text-anchor="middle">0</text>
+<line class="sx-grid" x1="154.3" y1="36" x2="154.3" y2="260"/><text x="154.3" y="274" text-anchor="middle">25</text>
+<line class="sx-grid" x1="208.6" y1="36" x2="208.6" y2="260"/><text x="208.6" y="274" text-anchor="middle">50</text>
+<line class="sx-grid" x1="262.9" y1="36" x2="262.9" y2="260"/><text x="262.9" y="274" text-anchor="middle">75</text>
+<line class="sx-grid" x1="317.1" y1="36" x2="317.1" y2="260"/><text x="317.1" y="274" text-anchor="middle">100</text>
+<line class="sx-grid" x1="371.4" y1="36" x2="371.4" y2="260"/><text x="371.4" y="274" text-anchor="middle">125</text>
+<g class="sx-row"><title>parity: Node 1.066 ms, Python 0.368 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="40" width="420" height="22"/><text x="94" y="54" text-anchor="end">1 parity</text><path class="js" d="M100.0,42.0H101.16A1.16,1.16 0 0 1 102.31,43.16V48.84A1.16,1.16 0 0 1 101.16,50.00H100.0Z"/><path class="py" d="M100.0,52.0H100.40A0.40,0.40 0 0 1 100.80,52.40V59.60A0.40,0.40 0 0 1 100.40,60.00H100.0Z"/><text class="sx-v" x="107.3" y="54">1.07 / 0.368</text></g>
+<g class="sx-row"><title>canonical: Node 78.86 ms, Python 72.881 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="62" width="420" height="22"/><text x="94" y="76" text-anchor="end">2 canonical</text><path class="js" d="M100.0,64.0H267.24A4.00,4.00 0 0 1 271.24,68.00V68.00A4.00,4.00 0 0 1 267.24,72.00H100.0Z"/><path class="py" d="M100.0,74.0H254.26A4.00,4.00 0 0 1 258.26,78.00V78.00A4.00,4.00 0 0 1 254.26,82.00H100.0Z"/><text class="sx-v" x="276.2" y="76">78.9 / 72.9</text></g>
+<g class="sx-row"><title>crystal: Node 7.24 ms, Python 9.027 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="84" width="420" height="22"/><text x="94" y="98" text-anchor="end">3 crystal</text><path class="js" d="M100.0,86.0H111.72A4.00,4.00 0 0 1 115.72,90.00V90.00A4.00,4.00 0 0 1 111.72,94.00H100.0Z"/><path class="py" d="M100.0,96.0H115.60A4.00,4.00 0 0 1 119.60,100.00V100.00A4.00,4.00 0 0 1 115.60,104.00H100.0Z"/><text class="sx-v" x="124.6" y="98">7.24 / 9.03</text></g>
+<g class="sx-row"><title>leaves: Node 4.615 ms, Python 0.43 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="106" width="420" height="22"/><text x="94" y="120" text-anchor="end">4 leaves</text><path class="js" d="M100.0,108.0H106.02A4.00,4.00 0 0 1 110.02,112.00V112.00A4.00,4.00 0 0 1 106.02,116.00H100.0Z"/><path class="py" d="M100.0,118.0H100.47A0.47,0.47 0 0 1 100.93,118.47V125.53A0.47,0.47 0 0 1 100.47,126.00H100.0Z"/><text class="sx-v" x="115.0" y="120">4.62 / 0.430</text></g>
+<g class="sx-row"><title>weaves: Node 13.308 ms, Python 9.201 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="128" width="420" height="22"/><text x="94" y="142" text-anchor="end">5 weaves</text><path class="js" d="M100.0,130.0H124.90A4.00,4.00 0 0 1 128.90,134.00V134.00A4.00,4.00 0 0 1 124.90,138.00H100.0Z"/><path class="py" d="M100.0,140.0H115.98A4.00,4.00 0 0 1 119.98,144.00V144.00A4.00,4.00 0 0 1 115.98,148.00H100.0Z"/><text class="sx-v" x="133.9" y="142">13.3 / 9.20</text></g>
+<g class="sx-row"><title>derived: Node 46.364 ms, Python 100.753 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="150" width="420" height="22"/><text x="94" y="164" text-anchor="end">6 derived</text><path class="js" d="M100.0,152.0H196.68A4.00,4.00 0 0 1 200.68,156.00V156.00A4.00,4.00 0 0 1 196.68,160.00H100.0Z"/><path class="py" d="M100.0,162.0H314.78A4.00,4.00 0 0 1 318.78,166.00V166.00A4.00,4.00 0 0 1 314.78,170.00H100.0Z"/><text class="sx-v" x="323.8" y="164">46.4 / 100.8</text></g>
+<g class="sx-row"><title>commitment: Node 1.821 ms, Python 0.145 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="172" width="420" height="22"/><text x="94" y="186" text-anchor="end">7 commitment</text><path class="js" d="M100.0,174.0H101.98A1.98,1.98 0 0 1 103.95,175.98V180.02A1.98,1.98 0 0 1 101.98,182.00H100.0Z"/><path class="py" d="M100.0,184.0H100.16A0.16,0.16 0 0 1 100.31,184.16V191.84A0.16,0.16 0 0 1 100.16,192.00H100.0Z"/><text class="sx-v" x="109.0" y="186">1.82 / 0.145</text></g>
+<g class="sx-row"><title>attestation: Node 0.714 ms, Python 0.246 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="194" width="420" height="22"/><text x="94" y="208" text-anchor="end">8 attestation</text><path class="js" d="M100.0,196.0H100.78A0.78,0.78 0 0 1 101.55,196.78V203.22A0.78,0.78 0 0 1 100.78,204.00H100.0Z"/><path class="py" d="M100.0,206.0H100.27A0.27,0.27 0 0 1 100.53,206.27V213.73A0.27,0.27 0 0 1 100.27,214.00H100.0Z"/><text class="sx-v" x="106.6" y="208">0.714 / 0.246</text></g>
+<g class="sx-row"><title>inclusion: Node 0.185 ms, Python 0.04 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="216" width="420" height="22"/><text x="94" y="230" text-anchor="end">9 inclusion</text><path class="js" d="M100.0,218.0H100.20A0.20,0.20 0 0 1 100.40,218.20V225.80A0.20,0.20 0 0 1 100.20,226.00H100.0Z"/><path class="py" d="M100.0,228.0H100.04A0.04,0.04 0 0 1 100.09,228.04V235.96A0.04,0.04 0 0 1 100.04,236.00H100.0Z"/><text class="sx-v" x="105.4" y="230">0.185 / 0.040</text></g>
+<g class="sx-row"><title>consistency: Node 0.11 ms, Python 0.025 ms (medians over 147 shards)</title><rect class="sx-hit" x="0" y="238" width="420" height="22"/><text x="94" y="252" text-anchor="end">10 consistency</text><path class="js" d="M100.0,240.0H100.12A0.12,0.12 0 0 1 100.24,240.12V247.88A0.12,0.12 0 0 1 100.12,248.00H100.0Z"/><path class="py" d="M100.0,250.0H100.03A0.03,0.03 0 0 1 100.05,250.03V257.97A0.03,0.03 0 0 1 100.03,258.00H100.0Z"/><text class="sx-v" x="105.2" y="252">0.110 / 0.025</text></g>
+<text x="404" y="290" text-anchor="end">median milliseconds per shard (Node / Python)</text>
+</svg>
+                </div>
+                <figcaption>The median of each check over the 147 shards, Node (the decisive engine) and Python (reported). The canonical check, which decodes and re-encodes every chunk, is about half of Node&rsquo;s time; the derived layers (the V0 id stream and the exact weave) most of the rest. The attestation, the step the control is about, is 0.71 ms. Hover a check for its values; the table below holds them.</figcaption>
+            </figure>
+            <details><summary style="cursor:pointer;color:var(--muted);font-size:0.88rem">The values behind the chart</summary>
+                <div class="table-wrap"><table style="max-width:520px">
+                    <thead><tr><th class="num">#</th><th>Check</th><th class="num">Node, ms</th><th class="num">Python, ms</th></tr></thead>
+                    <tbody>
+                        <tr><td class="num">1</td><td class="mono">parity</td><td class="num">1.066</td><td class="num">0.368</td></tr>
+                        <tr><td class="num">2</td><td class="mono">canonical</td><td class="num">78.860</td><td class="num">72.881</td></tr>
+                        <tr><td class="num">3</td><td class="mono">crystal</td><td class="num">7.240</td><td class="num">9.027</td></tr>
+                        <tr><td class="num">4</td><td class="mono">leaves</td><td class="num">4.615</td><td class="num">0.430</td></tr>
+                        <tr><td class="num">5</td><td class="mono">weaves</td><td class="num">13.308</td><td class="num">9.201</td></tr>
+                        <tr><td class="num">6</td><td class="mono">derived</td><td class="num">46.364</td><td class="num">100.753</td></tr>
+                        <tr><td class="num">7</td><td class="mono">commitment</td><td class="num">1.821</td><td class="num">0.145</td></tr>
+                        <tr><td class="num">8</td><td class="mono">attestation</td><td class="num">0.714</td><td class="num">0.246</td></tr>
+                        <tr><td class="num">9</td><td class="mono">inclusion</td><td class="num">0.185</td><td class="num">0.040</td></tr>
+                        <tr><td class="num">10</td><td class="mono">consistency</td><td class="num">0.110</td><td class="num">0.025</td></tr>
+                    </tbody>
+                </table></div>
+                <p style="font-size:0.85rem;color:var(--muted)">Each value is the median over shards of that check alone; the medians do not add up to the median of the totals (they sum to 154.3 ms in Node, against 155.4 ms).</p>
+            </details>
+            <h3 id="amend8">What Amendment 8 changed, and why it says so</h3>
+            <div class="callout limit"><span class="label">Disclosure: the engrams-off reading came after the dry runs</span>
+                <p>The registration does not say whether L10&rsquo;s and L11&rsquo;s packages are grown with engrams on or off. Amendment 8 item 1 fixed <strong>off</strong>, for three reasons it states: engram/1 was registered as a compatibility checksum, never an input (D4); the design published in Phase 0 has the engram layer &ldquo;off by default for corpora&rdquo; (Explainer 3); and L11&rsquo;s prediction, about 50&ndash;150 ms, was built from spike S4&rsquo;s codec-only timing, which has no engram layer. It also states what came first: the runner had read it the other way, as Owl&rsquo;s <code>growBiochain</code> defaults to engrams on, and in those dry runs L11&rsquo;s median on engrams-on packages was 243.5&ndash;265.5 ms, near the bar, against 157&ndash;182 ms with engrams off. The reading was fixed after seeing that. Those dry runs are not committed; the committed final dry run, already on 8c51e08&rsquo;s engrams-off code, measured 156.2 ms off and 229.4 ms on.</p>
+                <p>So the decisive run timed both. On the same 147 shards&rsquo; engrams-on packages the median is <strong>243.589 ms, interval [240.247, 246.673]</strong>, reported and deciding nothing. Its upper end is also under 250 ms, by 3.3 ms; in the dry runs before the amendment it was not always.</p>
+            </div>
+            <div class="callout note"><span class="label">Item 2: the control that could not show what it was for</span>
+                <p>The registered control reads: &ldquo;a run with the attestation step skipped must be faster; otherwise the step is not being timed and the test is void.&rdquo; The runner compared the two medians. Amendment 8 reports that in the dry runs the step cost 0.7&ndash;0.8 ms against a per-verification spread of 10&ndash;28 ms: with correct code the comparison failed by chance, voiding L11, and with the skip deliberately ignored, so that both arms did the same work, it passed. The review confirmed this as its one finding. Amendment 8 item 2 replaced the control, as Engram Mind&rsquo;s Eye&rsquo;s Amendment 1 had replaced one that could not fail, with the verifier&rsquo;s own record of its checks: every timed full verification must record the attestation check as run and passed inside the timed window with a time above 0, and every attestation-skipped one must record it as skipped with every other check passed; otherwise L11 is void. The median comparison is still reported.</p>
+            </div>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>The control in the decisive run</th><th class="num">Result</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Step check</strong> (decides): full verifications that ran and passed the attestation inside the timed window; skipped verifications that recorded it skipped, every other check passing</td><td class="num"><strong>441/441; 441/441</strong><br>holds</td></tr>
+                    <tr><td>Median with the attestation skipped, and its interval (reported)</td><td class="num">153.527 ms<br>[151.911, 154.522]</td></tr>
+                    <tr><td>Difference of the medians; shards where skipped is faster</td><td class="num">1.86 ms; 89 of 147</td></tr>
+                    <tr><td>Paired, full minus skipped: median and 95% interval</td><td class="num">1.858 ms [0.354, 2.999]</td></tr>
+                    <tr><td>The attestation step&rsquo;s own median; one verification&rsquo;s spread</td><td class="num">0.714 ms; ~5.466 ms</td></tr>
+                </tbody>
+            </table></div>
+            <p>The 441 are 147 shards &times; 3 repetitions. In this run the median comparison came out the registered way (skipped faster), but its difference, 1.86 ms, is more than twice the step&rsquo;s own 0.714 ms, so it says little either way, as item 2 anticipated. The committed final dry run shows the other outcome: there the step measured 2.995 ms (more than the 0.7&ndash;0.8 ms the amendment quotes) against a spread of about 20.95 ms, and the skipped median was <em>slower</em> (157.9 against 156.2 ms; paired &minus;0.7 ms, [&minus;4.6, 2.1]). Read as the median comparison, that dry run&rsquo;s control would have voided L11; its step check held, 63/63 and 63/63.</p>
+            <h3>Reported beside the decision</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Variant, 147 shards</th><th class="num">Median</th><th class="num">95% interval</th></tr></thead>
+                <tbody>
+                    <tr><td>Engrams-on packages (Amendment 8 item 1)</td><td class="num">243.589 ms</td><td class="num">[240.247, 246.673]</td></tr>
+                    <tr><td>LADDR/1 recomputed inside each verification (Amendment 7 item 7&rsquo;s literal reading)</td><td class="num">1,350.198 ms</td><td class="num">[1,341.062, 1,363.753]</td></tr>
+                    <tr><td>The session instead: LADDR/1 once, then every shard</td><td class="num" colspan="2">1,303.1 ms once, then 155.4 ms a shard</td></tr>
+                    <tr><td>Python, the same packages (session address table 935.5 ms)</td><td class="num">195.863 ms</td><td class="num">[192.518, 199.086]</td></tr>
+                </tbody>
+            </table></div>
+            <p>The literal reading is what a holder pays who rebuilds the 8,192-row address table for every shard; its cost is the table, not the shard. Amendment 7 fixed the session reading before any code, and the literal one is reported only. Python is reported; Node decides.</p>
+            <p><strong>The prediction</strong> was &ldquo;supported, with a median of about 50&ndash;150 ms&rdquo;, from spike S4&rsquo;s 41 ms codec part on verb shards, about 25 ms for the re-encode and 0.12&ndash;0.23 ms for ECDSA. The decision held; the range did not: 155.4 ms is above it. The canonical check alone takes 78.9 ms, and the derived layers 46.4 ms.</p>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">09</div>
+            <h2>What this does not show</h2>
+            <p class="chapter-intro">Four supported claims about one format, two codebases and one machine. They say a good deal about integrity, and little about anything else.</p>
+            <ul>
+                <li><strong>A signature proves who committed, not licence or correctness.</strong> An authentic verdict says that a key the registry lists as active signed this exact <code>LPREP/1</code>. It does not show that the spdx field is true, that the text is what its source says, that WordNet&rsquo;s notice was kept, or that the content is right. A holder who grows an altered text and signs it with a valid key produces a package that is self-consistent and authentic; nothing here can tell.</li>
+                <li><strong>The keys were throwaway.</strong> They were made in WebCrypto for the run, belong to no person or organisation, and only their public JWKs were written. Revocation was a status in a pinned snapshot, not a live lookup; key compromise, rotation and expiry were not tested.</li>
+                <li><strong>The manifest is checked as the package presents it.</strong> The attestation covers the <code>LPREP/1</code> string. The <code>LCORPUS/1</code> and <code>LGROW/1</code> strings in a package are not signed, so inclusion and consistency show that the shard sits in the tree the package names and that the tree grew from N &minus; 1 shards; a holder must take the corpus root itself from a source it trusts. Each package proves growth from N &minus; 1 only; L9 tested growth from every smaller size on the lists themselves.</li>
+                <li><strong>Tier P was tested only as a format.</strong> The 26 Tier-P twins used the registered test salts, SHA-256 of <code>lexicon-test-salt/1|j</code>, which anyone can compute, so these commitments hide nothing; a real Tier-P shard needs a secret salt. The challenge audits Explainer 4 describes were not built. No restricted corpus was used: C0 is WordNet, Tier S. Tier P remains attestation plus audit, not public recomputation.</li>
+                <li><strong>Nothing was published.</strong> No record went to Owl Academy&rsquo;s or BioChain-AI&rsquo;s Firestore; the registry was a file; their code ran unchanged from local checkouts at 7f45f35 and c975161, and nothing in either repository was changed. A later <code>biomesh.js</code> is a new test.</li>
+                <li><strong>The nine tamper classes are the registered ones.</strong> Replays of old packages, rollback to an older corpus root, a forged registry snapshot (it is pinned by hash, not signed) and attacks on the code itself were not part of L10.</li>
+                <li><strong>One machine, two engines.</strong> Node 22.23.4 and Python 3.13.18 (<code>cryptography</code> 50.0.1, OpenSSL 3.5.9) on this container, 4 CPUs. L10&rsquo;s JS ran on Node&rsquo;s WebCrypto, not a browser&rsquo;s. L11 is a Node figure; another machine is a new measurement, and the lab&rsquo;s browser times decide nothing.</li>
+                <li><strong>L11 is decided on engrams-off packages.</strong> That reading was fixed after the dry runs, as Amendment 8 discloses. Engrams-on packages took 243.6 ms, reported. Owl&rsquo;s own grower with its engram layer took a median 9.3 s a shard (~).</li>
+                <li><strong>The exact weave is an order check, not a hash.</strong> Collision resistance still comes from the SHA-256 leaves under it. It travels beside <code>shdccp/2</code> as weave3Sha in <code>LPREP/1</code>, proposed for <code>shdccp/3</code> in place of the float weave; <code>shdccp/2</code> itself is unchanged, float weave and all.</li>
+                <li><strong>The lab</strong> runs the same functions on your text, with a given LADDR/1 and a key made in the page. It demonstrates the code and decides nothing.</li>
+            </ul>
+        </section>
+
+        <section class="chapter" id="next">
+            <div class="chapter-num">10</div>
+            <h2>Phase 4, planned and done</h2>
+            <p class="chapter-intro">The plan at the end of Phase 3: learned embeddings, and the two claims still open. As before: the definitions by amendment before any code, a tuning amendment before any measured run, dry runs, then one decisive run. Phase 4 has done it and decided both (<a href="learned.html">Explainer 12</a>).</p>
+            <ol class="steps">
+                <li><strong>L6 &middot; Learned geometry at matched dimension.</strong> On the mammal closure (1,182 synsets, 6,542 edges), with the numpy float64 trainer: (a) learned Lorentz beats learned Euclidean on closure MAP at d = 2 and 3; (b) not at d = 50; (c) the training-free exact H&sup3; tree has graph-edge MAP at least that of learned Lorentz at d = 3, predicted <strong>refuted</strong> by spike S3&rsquo;s rule; (d) learned Lorentz at d = 3 beats the exact tree on closure MAP. Learning rates tuned on seeds 9000&ndash;9023 and frozen by a dated amendment; measured runs on seeds 0&ndash;4. The protocol is the project&rsquo;s own, after Nickel &amp; Kiela&rsquo;s paper and script, as Amendment 6 attributes it.</li>
+                <li><strong>L4(c) &middot; Snapped tables rank like floats.</strong> Every L6 table at d = 2 and 3, snapped to the 2<sup>&minus;32</sup> grid with <code>fence.js</code> and ranked exactly, has MAP within 0.001 of its float64 evaluation.</li>
+                <li><strong>LBENCH/1.</strong> The benchmark receipt, the one record kind of D7 not yet defined (Amendment 7 item 3), is defined when Phase 4 first uses it.</li>
+            </ol>
+            <div class="callout note"><span class="label">What Phase 4 found</span>
+                <p>Amendment 10 fixed the definitions before any code. The numpy float64 trainer, the exact evaluator of snapped tables, the decisions and the runner in <code>reference/</code>, and the exact ranking of snapped tables in <code>lexicon_core.js</code> (<code>SnapArm</code>, <code>evaluateSnapped</code>), were then built on synthetic data, reviewed and dry-run on the solid.n.01 closure set; <code>tests/parity-lexicon.cjs</code>, now with the L6 trace, passes 22,586 of 22,586 lines. Registered tuning ran 240 runs, Amendment 11 froze the rates, and one decisive run followed at 515a4a1, 3,051&nbsp;s on 4 workers. <strong>L6</strong> is <span class="tag t-SUPPORTED">supported</span> in all four parts. (a): learned Lorentz beats learned Euclidean on closure MAP at d = 2 (0.88&ndash;0.91 against 0.16&ndash;0.17) and d = 3 (0.95&ndash;0.97 against 0.22&ndash;0.23), every interval above 0. (b): at d = 50 Euclidean is ahead, 0.99997 against 0.968, every interval below 0, which the rule counts as support. (c): the exact H&sup3; tree&rsquo;s graph-edge MAP, 0.690653, is above learned Lorentz d = 3&rsquo;s 0.458&ndash;0.477, <strong>against the registered prediction of refuted</strong>. (d): learned Lorentz d = 3&rsquo;s closure MAP, 0.950&ndash;0.971, is above the exact tree&rsquo;s 0.305408. <strong>L4(c)</strong> is <span class="tag t-SUPPORTED">supported</span>: snapping to 2<sup>&minus;32</sup> moved no MAP by more than 9.37&times;10<sup>&minus;6</sup> over 40 tables. Every control showed its weakness. <code>LBENCH/1</code> was defined by Amendment 10 item 12, and the run wrote 367 receipts. Amendment 12, an erratum, corrects one sentence of Amendment 11.</p>
+            </div>
+            <p>Then Phase 5 brings the 2D and 3D pages, with a shard panel and an Engram session import (<a href="../index.html#roadmap">the roadmap</a>).</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="browser-core.html">&larr; The Browser Core and Its Parity</a>
+                <a class="btn btn-ghost" href="learned.html">Learned Geometry, Measured &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 11 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a> &middot; <a href="../reference/README.md">Reference README</a> &middot; <a href="../reference/results/claims-phase3.md">Results</a></footer>
+<script src="../../../scripts/geometric-build/orbital_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+<script src="../../Hyperbolic%20Oracles/twin3d.js"></script>
+<script src="../../Hyperbolic%20Oracles/fence.js"></script>
+<script src="../../Engram%20Minds%20Eye/ttmpt_core_v1.js"></script>
+<script src="../../Engram%20Minds%20Eye/engram_core.js"></script>
+<script src="../../Engram%20Minds%20Eye/biochain_v1.js"></script>
+<script src="../data/unicode_15_1_v1.js"></script>
+<script src="../data/vocab_v0_lex0.js"></script>
+<script src="../lexicon_core.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const good = s => `<span class="good">${s}</span>`, bad = s => `<span class="bad">${s}</span>`;
+    const comma = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const later = () => new Promise(r => setTimeout(r, 20));
+    const now = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+    const ms = x => (x < 10 ? x.toFixed(2) : x < 100 ? x.toFixed(1) : comma(Math.round(x)));
+    const errText = e => esc((e && e.message) || e);
+    const tint = (s, c) => `<strong style="color:var(--${c})">${s}</strong>`;
+
+    // ------------------------------------------------------------------ the inclusion-proof figure (L9): RFC 6962's 7-entry tree
+    (function proofFigure() {
+        const svg = $('proof-fig'), chips = $('proof-chips'), out = $('proof-out');
+        if (!svg || !chips || !out) return;
+        const NS = 'http://www.w3.org/2000/svg';
+        const XY = { root: [232, 26], k: [120, 82], l: [345, 82], g: [60, 138], h: [180, 138], i: [300, 138],
+            a: [30, 190], b: [90, 190], c: [150, 190], d: [210, 190], e: [270, 190], f: [330, 190], j: [390, 190] };
+        const CH = { g: ['a', 'b'], h: ['c', 'd'], i: ['e', 'f'], k: ['g', 'h'], l: ['i', 'j'], root: ['k', 'l'] };
+        const PARENT = {};
+        for (const [p, kids] of Object.entries(CH)) for (const k of kids) PARENT[k] = p;
+        const LEAVES = ['a', 'b', 'c', 'd', 'e', 'f', 'j'];
+        const el = (name, attrs, text) => { const e = document.createElementNS(NS, name); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text !== undefined) e.textContent = text; return e; };
+        const edges = $('pf-edges'), nodes = $('pf-nodes'), R = 13;
+        for (const [p, kids] of Object.entries(CH)) for (const k of kids)
+            edges.appendChild(el('line', { class: 'pf-e', 'data-a': p, 'data-b': k, x1: XY[p][0], y1: XY[p][1] + R, x2: XY[k][0], y2: XY[k][1] - R }));
+        LEAVES.forEach((n, i) => {
+            edges.appendChild(el('line', { class: 'pf-d', x1: XY[n][0], y1: XY[n][1] + R, x2: XY[n][0], y2: 214 }));
+            const t = el('text', { x: XY[n][0], y: 229, 'text-anchor': 'middle', class: 'pf-leaf', 'data-i': i }, 'd' + i);
+            t.addEventListener('click', () => pick(i));
+            edges.appendChild(t);
+        });
+        const nodeEls = {};
+        for (const [n, [x, y]] of Object.entries(XY)) {
+            const g = el('g', { class: 'pf-n' + (LEAVES.includes(n) ? ' pf-leaf' : '') });
+            g.appendChild(el('circle', { cx: x, cy: y, r: n === 'root' ? 17 : R }));
+            g.appendChild(el('text', { x, y: y + 4, 'text-anchor': 'middle' }, n));
+            if (LEAVES.includes(n)) g.addEventListener('click', () => pick(LEAVES.indexOf(n)));
+            nodes.appendChild(g); nodeEls[n] = g;
+        }
+        const buttons = LEAVES.map((n, i) => {
+            const b = document.createElement('button');
+            b.className = 'chip'; b.type = 'button'; b.textContent = 'd' + i;
+            b.addEventListener('click', () => pick(i));
+            chips.appendChild(b);
+            return b;
+        });
+        function pick(i) {
+            let n = LEAVES[i];
+            const path = new Set([n]), proof = [], steps = [];
+            while (n !== 'root') {
+                const p = PARENT[n], [l, r] = CH[p], sib = l === n ? r : l;
+                proof.push(sib); steps.push(`${p === 'root' ? 'the root' : p} = H(0x01 &#8214; ${l} &#8214; ${r})`);
+                path.add(p); n = p;
+            }
+            for (const [m, g] of Object.entries(nodeEls)) g.setAttribute('class', 'pf-n' + (LEAVES.includes(m) ? ' pf-leaf' : '') + (path.has(m) ? ' path' : proof.includes(m) ? ' proof' : ''));
+            svg.querySelectorAll('.pf-e').forEach(e => e.classList.toggle('path', path.has(e.dataset.a) && path.has(e.dataset.b)));
+            buttons.forEach((b, k) => b.classList.toggle('on', k === i));
+            out.innerHTML = `<span class="k">entry</span> d${i} at position ${i} of 7 &nbsp; <span class="k">proof</span> [${proof.join(', ')}], ${proof.length} hashes` +
+                `<br><span class="k">the verifier</span> ${LEAVES[i]} = H(0x00 &#8214; d${i}), then ${steps.join(', then ')}; it accepts if that root is the one it holds.` +
+                (i === 6 ? '<br><span class="k">note</span> j is d6&rsquo;s leaf hash, joined directly with i: nothing is duplicated.' : '');
+        }
+        pick(3);
+    })();
+
+    // ------------------------------------------------------------------ the lab
+    const status = $('lab-status'), runBtn = $('lab-run'), resetBtn = $('lab-reset'), ta = $('lab-text'), eng = $('lab-eng'), bytesOut = $('lab-bytes');
+    const recBody = $('lab-record'), sessOut = $('lab-session'), lpOut = $('lab-lprep'), lpBody = $('lab-lprep-fields'), weaveOut = $('lab-weave');
+    const attOut = $('lab-attest'), verdictOut = $('lab-verdict'), checksBody = $('lab-checks'), allBtn = $('lab-tamper-all');
+    const chipBtns = [...document.querySelectorAll('#lab-tamper-chips .chip')];
+    const LC = window.LexiconCore, EC = window.EngramCore, BC = window.BiochainV1;
+    const stop = msg => { status.innerHTML = bad(msg); runBtn.disabled = true; };
+    if (!LC || !EC || !BC) return stop('The cores did not load (the lab needs orbital_core.js, hyperbolic_core.js, decoder3d.js, twin3d.js, fence.js, ttmpt_core_v1.js, engram_core.js, biochain_v1.js, the two data files and lexicon_core.js beside it), so it cannot run. Open this page from its place in the repository.');
+    let v0, T;
+    try { LC.chainCores(); T = LC.tables(); v0 = LC.loadV0(); } catch (e) { return stop('The core refused its data: ' + errText(e)); }
+
+    // the decisive run's values the lab checks against (results/claims-phase3.json)
+    const RUN = {
+        lvocabHash: '55962675fc6953c82d2ddd1d239f6879faba8f9bedd8128b5fe53054ac1f3c56',
+        laddr: 'LADDR/1|df22705601de2e425cd090edc5df05619ce4a08df336f40bf92a1ed59f9ca1ff|cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59|L3/1|30b17bc3992d5bab98e8955bc215c03c5706e5847b2ed4a7c7b22f39635349e1|3/4|11/13|D3',
+        laddrHash: '83f09be9c4de55b74aba7d0eea47fc29d9217fae06231ca8dd0fba239e760904',
+        identityId: '0xAE3502AC6FFBA237', keyVector: '9BC2024804859196', epoch: 'EPOCH-OFFLINE-2026-11-06',
+    };
+    const LAB = { corpusId: 'lexicon-lab-v1', spdx: 'NOASSERTION', source: 'page:explainers/chains.html' };
+    const subtleOk = !!(typeof window.crypto === 'object' && window.crypto && window.crypto.subtle && window.isSecureContext !== false);
+    const eq = (a, b, what) => (a === b ? good(`= ${what}`) : bad(`&ne; ${what}`));
+    const tf = b => (b ? 'true' : 'false');
+
+    function sizeLine() {
+        let n;
+        try { n = LC.shardText(ta.value).data.length; } catch (e) { bytesOut.textContent = ''; return; }
+        let s = `${comma(n)} bytes, ${comma(Math.ceil(n / 720))} chunk${Math.ceil(n / 720) === 1 ? '' : 's'}`;
+        if (n > 60000) s += ' (over the 60,000-byte cap)';
+        else if (eng.checked && n > 6000) s += ' (over 6,000 with the engram layer)';
+        bytesOut.textContent = s;
+    }
+    ta.addEventListener('input', sizeLine);
+    eng.addEventListener('change', sizeLine);
+    resetBtn.addEventListener('click', () => { ta.value = ta.defaultValue; sizeLine(); });
+    sizeLine();
+    status.innerHTML = `<span class="k">core</span> ${esc(LC.version)} &nbsp; <span class="k">table</span> Unicode ${esc(T.unicode)} = the pin &nbsp; <span class="k">V0</span> ${comma(v0.size)} entries = the pin &nbsp; <span class="k">WebCrypto</span> ` +
+        (subtleOk ? 'available' : bad('not available in this context') + ' (the lab will sign with the core&rsquo;s own deterministic ECDSA and skip the attestation check)') + '<br>Growing the gloss lines&hellip;';
+
+    const short = (s, n = 40) => (s.length > n ? esc(s.slice(0, n)) + '&hellip;' : esc(s));
+    const wrapTd = s => `<td class="mono" style="overflow-wrap:anywhere;font-size:0.8rem">${s}</td>`;
+    function renderRecord(rec) {
+        const K = rec.leafHashes.length;
+        const val = {
+            chainId: esc(rec.chainId),
+            stream: `${comma(rec.stream.length)} hex digits (${comma(rec.stream.length / 2)} bytes) in ${K} frames: <b>${esc(rec.stream.slice(0, 16))}</b> ${esc(rec.stream.slice(16, 24))} ${esc(rec.stream.slice(24, 56))}&hellip; <span style="color:var(--muted)">(packet, residual length, residual)</span>`,
+            streamVersion: esc(rec.streamVersion),
+            leafHashes: `${K}: ${esc(rec.leafHashes[0])}${K > 1 ? ', &hellip;' : ''}`,
+            merkleRoot: esc(rec.merkleRoot), weaveChiral: esc(rec.weaveChiral), weaveMirror: esc(rec.weaveMirror),
+            segCuts: esc(JSON.stringify(rec.segCuts)), segments: String(rec.segments),
+            engramStream: rec.engramStream !== undefined ? `${comma(rec.engramStream.length)} hex digits: ${short(rec.engramStream, 32)}` : '',
+            engramCount: String(rec.engramCount), engramMeanJ: String(rec.engramMeanJ),
+            origBytes: comma(rec.origBytes), shippedBytes: comma(rec.shippedBytes), value: String(rec.value),
+        };
+        recBody.innerHTML = LC.OWL_FIELDS.filter(f => f in rec).map(f => `<tr><td class="mono">${f}</td>${wrapTd(val[f])}</tr>`).join('') +
+            (rec.engramStream === undefined ? '<tr><td colspan="2" style="color:var(--muted)">engramStream, engramCount and engramMeanJ are absent: the engram layer is off</td></tr>' : '');
+    }
+    const FIELD_SRC = { format: 'fixed', corpusId: 'read from the string', shardIndex: 'read from the string', spdx: 'read from the string', sourceUrlSha: 'read from the string',
+        chainId: 'recomputed from the stream', merkleRoot: 'recomputed from the stream', byteLen: 'recomputed from the stream', rawSha256: 'recomputed from the stream',
+        idStreamSha256: 'recomputed: N<sub>B</sub>, WordPiece, V0', weave3Sha: 'recomputed: the exact weave', engramStreamSha: 'recomputed from the stream',
+        lvocabHash: 'from the session', laddrHash: 'from the session (given here)', tier: 'read from the string' };
+    function renderChecks(v, skipped) {
+        checksBody.innerHTML = v.checks.map((c, i) => `<tr><td class="num">${i + 1}</td><td class="mono">${c.name}</td><td>${c.ok === true ? tint('pass', 'emerald') : c.ok === false ? tint('fail', 'rose') : '<span style="color:var(--muted)">' + esc(c.detail) + '</span>'}</td>` +
+            `<td class="num">${c.ok === null ? '&ndash;' : ms(c.ms)}</td><td style="font-size:0.85rem">${c.ok === null ? '' : esc(c.detail)}</td></tr>`).join('');
+        verdictOut.innerHTML = `<span class="k">self-consistent</span> ${v.selfConsistent ? good('true') : bad('false')} &nbsp; <span class="k">authentic</span> ${skipped ? 'not checked (no WebCrypto here)' : v.authentic ? good('true') : bad('false')} &nbsp; <span class="k">failed</span> ${esc(v.failed)} &nbsp; ` +
+            (v.failed === '-' ? good('accepted') : bad('rejected'));
+    }
+    const letters = v => v.checks.map(c => (c.ok === true ? 'P' : c.ok === null ? '&ndash;' : 'F')).join('');
+    const owlCell = (owl, unchanged) => (owl.ok ? (unchanged ? '<span style="color:var(--muted)">accepts; the record is unchanged, and it reads neither LPREP/1 nor the signature</span>' : tint('accepts', 'rose') + ' <span style="color:var(--muted)">' + esc(owl.reasons[0] || '') + '</span>')
+        : tint('rejects', 'emerald') + ': ' + esc(owl.reasons.join('; ')));
+
+    let S = null, busy = false;
+    const setTampers = on => { allBtn.disabled = !on; chipBtns.forEach(b => { b.disabled = !on || (b.dataset.t === 'T4' && !subtleOk); }); };
+    const tamperWhat = {};
+    document.querySelectorAll('#lab-tampers tr').forEach(tr => { tamperWhat[tr.dataset.t] = tr.cells[1].innerHTML; });
+    function resetTamperRows() {
+        document.querySelectorAll('#lab-tampers tr').forEach(tr => { tr.cells[1].innerHTML = tamperWhat[tr.dataset.t]; for (const k of [2, 3, 4, 5]) tr.cells[k].innerHTML = '&ndash;'; });
+        chipBtns.forEach(b => b.classList.remove('on'));
+    }
+    function randomScalar() {
+        const b = new Uint8Array(32);
+        window.crypto.getRandomValues(b);
+        return BigInt('0x' + LC.hex(b)) % (LC.P256.n - 1n) + 1n;
+    }
+    async function makeKey(kv) {
+        if (subtleOk) {
+            const k = await LC.newKeyPair();
+            return { keyId: k.keyId, publicJwk: k.publicJwk, sign: c => LC.attestSign(k.privateKey, { keyId: k.keyId, keyVector: kv, epochToken: RUN.epoch }, c) };
+        }
+        const d = randomScalar(), jwk = LC.testJwk(d);
+        return { keyId: LC.keyIdOf(jwk), publicJwk: jwk, sign: async c => LC.attestDet(d, kv, c, RUN.epoch) };
+    }
+
+    async function run() {
+        if (busy) return;
+        busy = true; runBtn.disabled = true; setTampers(false); resetTamperRows(); S = null;
+        try {
+            const text = ta.value, withEng = eng.checked, { data } = LC.shardText(text);
+            if (!data.length) throw new Error('Nothing to grow: the text is empty.');
+            if (withEng && data.length > 6000) throw new Error(`With the engram layer on, the lab grows texts of up to 6,000 bytes, and this one has ${comma(data.length)}. Owl's rule recomputes the layer with biomesh.js's own engramStreamFromText, whose median was 9.3 s on a full shard in L8. Turn the layer off or shorten the text.`);
+            status.innerHTML = 'Growing&hellip;'; await later();
+            let t = now();
+            const rec = LC.growSync(text, { engrams: withEng });
+            const tGrow = now() - t, K = rec.leafHashes.length;
+            renderRecord(rec);
+
+            // the session: LVOCAB/1 built here, LADDR/1 given, two keys made here and their registry snapshot
+            status.innerHTML = 'Making the keys and the session&hellip;'; await later();
+            const lv = LC.lvocab({ vocab: v0 }), laddrSha = LC.sha256Str(RUN.laddr);
+            const ident = LC.identityIdOf(), kv = LC.keyVectorOf(ident, RUN.epoch);
+            const keyA = await makeKey(kv), keyB = await makeKey(kv);
+            const snap = LC.registrySnapshot([{ publicJwk: keyA.publicJwk, keyVector: kv, status: 'active' }, { publicJwk: keyB.publicJwk, keyVector: kv, status: 'revoked' }]);
+            const session = await LC.chainSession({ vocab: v0, lvocab: lv.text, laddr: RUN.laddr, registry: snap.text, registrySha256: snap.sha256 });
+            sessOut.innerHTML = `<span class="k">LVOCAB/1</span> built here from the pinned V0 and table: hash ${esc(lv.sha256.slice(0, 16))}&hellip; ${eq(lv.sha256, RUN.lvocabHash, 'the decisive run&rsquo;s')}` +
+                `<br><span class="k">LADDR/1</span> given, the decisive run&rsquo;s string: hash ${esc(laddrSha.slice(0, 16))}&hellip; ${eq(laddrSha, RUN.laddrHash, 'the recorded laddrHash')}; its addrTableRoot ${esc(RUN.laddr.split('|')[4].slice(0, 16))}&hellip; is not recomputed here (it needs WordNet)` +
+                `<br><span class="k">identity</span> ${esc(ident)} ${eq(ident, RUN.identityId, 'the run&rsquo;s')} &nbsp; <span class="k">keyVector</span> ${esc(kv)} ${eq(kv, RUN.keyVector, 'the run&rsquo;s')} &nbsp; <span class="k">epoch</span> ${esc(RUN.epoch)}` +
+                `<br><span class="k">registry</span> two P-256 keys made in this page${subtleOk ? ' with WebCrypto' : ' (no WebCrypto: from random scalars, with the core&rsquo;s own arithmetic)'}: ${esc(keyA.keyId)} active, ${esc(keyB.keyId)} revoked; snapshot ${comma(snap.text.length)} bytes, SHA-256 ${esc(snap.sha256.slice(0, 16))}&hellip;, public JWKs only`;
+
+            // the shard's LPREP/1: the V0 id stream and the exact weave are computed inside
+            status.innerHTML = 'Committing: the V0 id stream and the exact weave&hellip;'; await later();
+            t = now();
+            const lp = LC.lprep({ record: rec, text: data, corpusId: LAB.corpusId, shardIndex: 0, spdx: LAB.spdx, sourceSha: LC.sha256Str(LAB.source),
+                lvocabHash: session.lvocabHash, laddrHash: session.laddrHash, vocab: v0 });
+            const tLprep = now() - t, ids = LC.encode(data, v0).ids.length, f = lp.text.split('|');
+            lpOut.innerHTML = `<span class="k">LPREP/1</span> ${esc(lp.text)}<br><span class="k">its SHA-256</span> ${esc(lp.sha256)} &nbsp; <span class="k">built in</span> ~${ms(tLprep)} ms, with ${comma(ids)} V0 ids`;
+            lpBody.innerHTML = f.map((x, i) => `<tr><td class="num">${i}</td><td class="mono">${LC.LPREP_FIELDS[i]}</td>${wrapTd(esc(x))}<td style="font-size:0.85rem">${FIELD_SRC[LC.LPREP_FIELDS[i]]}</td></tr>`).join('');
+
+            // the exact weave
+            const w = LC.weaveReport(rec.leafHashes, rec.segCuts);
+            const comp = q => { const s = (q < 0n ? -q : q).toString(); return `${q < 0n ? '&minus;' : ''}${s.length > 28 ? esc(s.slice(0, 18)) + '&hellip;' + esc(s.slice(-6)) : esc(s)} <span class="k">(${comma(s.length)} digits)</span>`; };
+            weaveOut.innerHTML = `<span class="k">K</span> ${K} leaves, ${comma(K * EC.L)} letters of the norm-5 tree &nbsp; <span class="k">bits per component</span> ${w.bits.join(', ')}` +
+                `<br><span class="k">norm = 5<sup>${comma(K * EC.L)}</sup></span> ${w.normOk ? good('exactly') : bad('no')} &nbsp; <span class="k">unfolds to the ${K} prefixes in order</span> ${w.unfoldOk ? good('yes') : bad('no')} &nbsp; <span class="k">7 segment sub-weaves multiply to it</span> ${w.segmentsOk ? good('yes') : bad('no')}` +
+                `<br>${w.q.map((q, i) => `<span class="k">q${i}</span> ${comp(q)}`).join('<br>')}` +
+                `<br><span class="k">weave3Sha</span> ${esc(w.sha256)} ${eq(w.sha256, f[12], 'field 12 of LPREP/1')}`;
+
+            // sign it and wrap it in a one-shard corpus
+            status.innerHTML = 'Signing and verifying&hellip;'; await later();
+            const tree = LC.corpusTree([lp.text]);
+            const lc = LC.lcorpus({ corpusId: LAB.corpusId, tree, spdxSha: LC.spdxSetSha([LAB.spdx]) });
+            const empty = LC.hex(tree.mth(0, 0));
+            const lg = LC.lgrow({ corpusId: LAB.corpusId, nOld: 0, rootOld: empty, nNew: 1, rootNew: lc.root, proof: [] });
+            t = now();
+            const att = await keyA.sign(lp.text);
+            const tSign = now() - t;
+            const pkg = LC.makePackage({ record: rec, lprep: lp.text, attestation: att, lcorpus: lc.text, inclusion: tree.path(0), lgrow: lg.text, consistency: [] });
+            attOut.innerHTML = `<span class="k">payload</span> ${esc(LC.attestPayload(att))}<br><span class="k">contentHash</span> = SHA-256 of the LPREP/1 string ${eq(att.contentHash, lp.sha256, 'its hash')}` +
+                `<br><span class="k">sig</span> ${esc(att.sig)} <span class="k">(IEEE P1363 r&#8214;s, 128 hex digits; ~${ms(tSign)} ms)</span>` +
+                `<br><span class="k">LCORPUS/1</span> ${esc(lc.text)}<br><span class="k">its root</span> SHA-256(0x00 &#8214; SHA-256(LPREP/1)): one entry, so the inclusion proof is empty` +
+                `<br><span class="k">LGROW/1</span> ${esc(lg.text)}<br><span class="k">growth</span> from the empty tree (root ${esc(empty.slice(0, 8))}&hellip;, the SHA-256 of nothing) to one entry: the consistency proof is empty, and so is what proofSha hashes`;
+
+            // verify
+            const opts = subtleOk ? {} : { skip: ['attestation'] };
+            t = now();
+            const v = await LC.verifyPackage(session, pkg, opts);
+            const tVer = now() - t;
+            renderChecks(v, !subtleOk);
+            const owl = EC.verifyBiochain(BC, rec);
+            verdictOut.innerHTML += `<br><span class="k">verified in</span> ~${ms(tVer)} ms in this browser <span class="k">(L11: a median 155.4 ms in Node, on full C0 shards)</span>` +
+                `<br><span class="k">Owl&rsquo;s rule</span> ${owl.ok ? good('accepts') : bad('rejects')}: ${esc(owl.reasons.join('; '))}`;
+            S = { pkg, session, opts, K, keyB, bytes: data.length };
+            status.innerHTML = `${comma(data.length)} bytes grown into ${K} chunk${K === 1 ? '' : 's'} in ~${ms(tGrow)} ms (engrams ${withEng ? 'on' : 'off'}); committed, signed and verified: ` +
+                (v.failed === '-' ? good('accepted') : bad('rejected at ' + esc(v.failed))) + '. Now break it below.';
+            setTampers(true);
+        } catch (e) {
+            status.innerHTML = bad(errText(e));
+        } finally {
+            busy = false; runBtn.disabled = false;
+        }
+    }
+
+    // ------------------------------------------------------------------ the tampers (L10's classes, on the lab's package)
+    const clone = o => JSON.parse(JSON.stringify(o));
+    const lastDigit = s => s.slice(0, -1) + (s.endsWith('0') ? '1' : '0');   // spike S4's rule, as the trace and the run use it
+    const TAMPERS = {
+        T1: async () => { const p = clone(S.pkg); delete p.record.leafHashes; delete p.record.merkleRoot; return { p, what: `leafHashes (${S.K}) and merkleRoot removed` }; },
+        T2: async () => {
+            const p = clone(S.pkg), s = p.record.stream, at = LC.frameOffsets(s)[0][0], old = s.slice(at, at + 16);
+            const nw = LC.refixParity(LC.word16(BigInt('0x' + old) ^ (1n << 24n)));
+            p.record.stream = s.slice(0, at) + nw + s.slice(at + 16);
+            return { p, what: `frame 0&rsquo;s packet ${esc(old)} &rarr; ${esc(nw)}: crystal32 bit 0 (word bit 24) flipped, parity re-fixed` };
+        },
+        T3: async () => { const p = clone(S.pkg), old = p.lprep.split('|')[9], nw = lastDigit(old); p.lprep = LC.withField(p.lprep, 'lvocabHash', nw); return { p, what: `lvocabHash &hellip;${esc(old.slice(-6))} &rarr; &hellip;${esc(nw.slice(-6))}`, unchanged: true }; },
+        T4: async () => {
+            if (!subtleOk) return { skip: 'needs WebCrypto, which this context does not offer' };
+            const p = clone(S.pkg); p.attestation = await S.keyB.sign(p.lprep);
+            return { p, what: `the same LPREP/1 signed by <span style="overflow-wrap:anywhere">${esc(S.keyB.keyId)}</span>, which the registry marks revoked`, unchanged: true };
+        },
+        T7: async () => {
+            if (S.K < 2) return { skip: 'one frame, nothing to swap: the text needs more than 720 bytes' };
+            const p = clone(S.pkg); p.record.stream = LC.swapFrames(p.record.stream, 0);
+            return { p, what: S.K === 2 && S.bytes < 1440 ? 'frames 0 and 1 swapped; frame 1 was the short last frame' : 'frames 0 and 1 swapped, both 720 bytes' };
+        },
+        T8: async () => { const p = clone(S.pkg), old = p.record.chainId; p.record.chainId = lastDigit(old); return { p, what: `chainId &hellip;${esc(old.slice(-6))} &rarr; &hellip;${esc(p.record.chainId.slice(-6))}` }; },
+        T9: async () => {
+            const frames = LC.framesStrict(S.pkg.record.stream);
+            for (let k = 0; k < frames.length; k++) {
+                const fr = frames[k], chunk = Uint8Array.from(BC.decodeChunk(fr.residual, fr.chunkLen)), fl = LC.silentFlips(fr.residual, chunk, 1);
+                if (!fl.length) continue;
+                const p = clone(S.pkg), s = p.record.stream, [, r0, rl] = LC.frameOffsets(s)[k];
+                p.record.stream = s.slice(0, r0) + fl[0].alt + s.slice(r0 + rl);
+                const where = fl[0].kind === 'escape' ? 'inside a raw-byte escape&rsquo;s rank code' : fl[0].kind === 'padding' ? 'in the padding after the last code' : 'elsewhere';
+                return { p, what: `frame ${k}, hex digit ${fl[0].i}, bit ${fl[0].bit}, ${where}: the first silent flip in spike S4&rsquo;s order` };
+            }
+            return { skip: 'no single residual bit of any frame flips without changing the decode' };
+        },
+    };
+    async function runTamper(name) {
+        const tr = document.querySelector(`#lab-tampers tr[data-t="${name}"]`), c = tr.cells;
+        c[2].innerHTML = c[3].innerHTML = c[4].innerHTML = c[5].innerHTML = '&hellip;';
+        await later();
+        let r;
+        try { r = await TAMPERS[name](); } catch (e) { c[3].innerHTML = tint('could not build: ', 'rose') + errText(e); c[2].innerHTML = c[4].innerHTML = c[5].innerHTML = '&ndash;'; return; }
+        if (r.skip) { c[1].innerHTML = esc(r.skip); c[3].innerHTML = '<span style="color:var(--muted)">not run</span>'; c[2].innerHTML = c[4].innerHTML = c[5].innerHTML = '&ndash;'; return; }
+        const v = await LC.verifyPackage(S.session, r.p, S.opts), owl = EC.verifyBiochain(BC, r.p.record), first = v.checks.find(x => x.ok === false);
+        c[1].innerHTML = r.what;
+        c[2].innerHTML = `${tf(v.selfConsistent)} / ${S.opts.skip ? 'not checked' : tf(v.authentic)}`;
+        c[3].innerHTML = first ? tint(first.name, 'emerald') + ` <span style="color:var(--muted)">${esc(first.detail)}</span>` : tint('none: accepted', 'rose');
+        c[4].innerHTML = letters(v);
+        c[5].innerHTML = owlCell(owl, !!r.unchanged);
+    }
+    async function guarded(fn) {
+        if (busy || !S) return;
+        busy = true; runBtn.disabled = true; setTampers(false);
+        try { await fn(); } catch (e) { status.innerHTML = bad(errText(e)); } finally { busy = false; runBtn.disabled = false; setTampers(!!S); }
+    }
+    chipBtns.forEach(b => b.addEventListener('click', () => guarded(async () => { b.classList.add('on'); await runTamper(b.dataset.t); })));
+    allBtn.addEventListener('click', () => guarded(async () => { for (const b of chipBtns) { b.classList.add('on'); await runTamper(b.dataset.t); } }));
+    runBtn.addEventListener('click', run);
+    run();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-2d.html&quot;,&quot;label&quot;:&quot;Lexicon 2D: the tree in the disk&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Type a sentence: tokens, addresses and exact H² points; decode, precision, LCA paths&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-3d.html&quot;,&quot;label&quot;:&quot;Lexicon 3D: the tree in the ball&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Segments A and B in H³: frames, X(5, q) vertices, the coupler as a check&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;reference.html&quot;,&quot;label&quot;:&quot;The Python Reference and Its Results&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 9: the Phase 1 reference, L2, L3, L5 and L7 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core and Its Parity&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 10: lexicon_core.js, live parity, L1, L3(f) and L4(a, b) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;chains.html&quot;,&quot;label&quot;:&quot;Language Biochains, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 11: shards, records, the manifest and the signed verifier; L8-L11 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;learned.html&quot;,&quot;label&quot;:&quot;Learned Geometry, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 12: learned Lorentz vs Euclidean, the exact tree; L6 and L4(c) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 13: every panel of lexicon-2d.html, the shard and Engram panels&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 14: every panel of lexicon-3d.html; frames, X(5, q), the coupler&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

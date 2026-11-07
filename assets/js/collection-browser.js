@@ -2,8 +2,11 @@
 // Each tab of the Research hub (Publications, Stay Current, Articles) gets its own instance
 // with its own archive, so they never mix.
 import { esc } from "./ui.js";
+import { moveLegacyKeys } from "./storage-keys.js";
 
 const PAGE_SIZE = 24;
+
+moveLegacyKeys("localStorage", ["browser-layout:*"]);
 
 function store(key, value) {
     try {
@@ -38,7 +41,7 @@ export function createBrowser(root, opts) {
         tag: "",
         sort: "newest",
         page: 1,
-        layout: store(`browser-layout:${o.key}`) || o.defaultLayout,
+        layout: store(`ebayednoob-browser-layout:${o.key}`) || o.defaultLayout,
         loading: true
     };
 
@@ -148,7 +151,7 @@ export function createBrowser(root, opts) {
         const act = e.target.closest("[data-act]")?.dataset.act;
         if (act === "layout") {
             state.layout = state.layout === "grid" ? "list" : "grid";
-            store(`browser-layout:${o.key}`, state.layout);
+            store(`ebayednoob-browser-layout:${o.key}`, state.layout);
             render();
         } else if (act === "prev" || act === "next") {
             state.page += act === "next" ? 1 : -1;

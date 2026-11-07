@@ -2,8 +2,8 @@
 // Uses the same project and SDK version as index.html.
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import {
-    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
-    setPersistence, browserLocalPersistence
+    getAuth, initializeAuth, browserSessionPersistence, browserPopupRedirectResolver,
+    GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
@@ -17,9 +17,29 @@ export const firebaseConfig = {
 };
 
 export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+
+// The sign-in lasts for this tab only (sessionStorage). Auth starts with session persistence, so these pages never
+// read or move the anonymous sign-ins that the learning hubs keep in IndexedDB (their saved progress belongs to that
+// user). A Google sign-in that an earlier version saved in localStorage is moved into this tab once; anonymous
+// entries there are left for the hubs. Same setup as index.html.
+function moveSavedSignIn(apiKey) {
+    const key = `firebase:authUser:${apiKey}:[DEFAULT]`;
+    try {
+        const saved = JSON.parse(localStorage.getItem(key) || "null");
+        if (!saved || typeof saved !== "object" || saved.isAnonymous) return;
+        if (sessionStorage.getItem(key) === null) sessionStorage.setItem(key, JSON.stringify(saved));
+        localStorage.removeItem(key);
+    } catch { /* storage unavailable */ }
+}
+moveSavedSignIn(firebaseConfig.apiKey);
+export const auth = (() => {
+    try {
+        return initializeAuth(app, { persistence: browserSessionPersistence, popupRedirectResolver: browserPopupRedirectResolver });
+    } catch {
+        return getAuth(app); // already set up on this page
+    }
+})();
 export const db = getFirestore(app);
-setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 // The first admin. Must match the bootstrap email in firestore.rules.
 // Further admins are granted from the Control Panel (stored in the `admins` collection).

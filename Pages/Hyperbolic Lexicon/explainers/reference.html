@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Python Reference and Its Results - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 9 of Hyperbolic Lexicon, Phase 1: how the exact Python reference was built (definitions fixed by Amendment 1 before any code, a text track and a geometry track, pins and traces), how it was checked (two adversarial reviews by independent reimplementation, dry runs, Amendment 2 with a disclosure and an erratum), and the one decisive run that decided L2, L3 (Python side), L5 and L7: all four supported under their registered rules, every control failing as required, and one registered prediction wrong. L1, L3(f) and L4(a, b), which needed the browser core, were decided in Phase 2 (Explainer 10).">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 9 &middot; Phase 1</div>
+    <h1>The Python Reference and Its Results</h1>
+    <p class="lede">Phase 1 wrote the exact reference in Python and ran four of the eleven claims on their registered instances, once. The open definitions were fixed before any code. The code was reviewed twice by independent reimplementation and dry-run on data no claim uses, and only then came the decisive run. L2, L3 (its Python side), L5 and L7 are supported under their registered decision rules, and every control failed as it had to. One registered prediction was wrong. The claims that needed the browser core were decided in Phase 2, all supported (<a href="browser-core.html">Explainer 10</a>).</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#glance">The four decisions</a>
+        <a class="btn btn-ghost" href="#order">How Phase 1 was ordered</a>
+        <a class="btn btn-ghost" href="#reviews">Checked twice</a>
+        <a class="btn btn-ghost" href="#limits">What this does not show</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">decided in Phase 1: <b>3</b> of 11, and L3&rsquo;s Python side &middot; all supported</span>
+        <span class="stat">decisive run: <b>1</b>, on <b>88e63f7</b>, 5 min</span>
+        <span class="stat">L2 shared keys: <b>52.6%</b> (predicted 2&ndash;10%)</span>
+        <span class="stat">noun graph-edge MAP, H3: <b>0.5679</b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#order">2. How Phase 1 was ordered</a></li>
+            <li><a href="#built">3. What was built</a></li>
+            <li><a href="#reviews">4. Checked twice before it counted</a></li>
+            <li class="part">Results</li>
+            <li><a href="#l2">5. L2 &middot; engram/1 is not a token id</a></li>
+            <li><a href="#l3">6. L3 &middot; An exact address for every noun</a></li>
+            <li><a href="#l5">7. L5 &middot; Hyperbolic against flat</a></li>
+            <li><a href="#l7">8. L7 &middot; One tree, three readings</a></li>
+            <li class="part">Limits</li>
+            <li><a href="#limits">9. What this does not show</a></li>
+            <li><a href="#next">10. Phase 2, planned and done</a></li>
+        </ol>
+    </nav>
+    <main>
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#order">How Phase 1 was ordered</a></li><li><a href="#built">What was built</a></li>
+            <li><a href="#reviews">Checked twice before it counted</a></li><li><a href="#l2">L2 &middot; engram/1 is not a token id</a></li>
+            <li><a href="#l3">L3 &middot; An exact address for every noun</a></li><li><a href="#l5">L5 &middot; Hyperbolic against flat</a></li>
+            <li><a href="#l7">L7 &middot; One tree, three readings</a></li><li><a href="#limits">What this does not show</a></li>
+            <li><a href="#next">Phase 2, planned and done</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The preregistration says what is tested and how it is decided. The Python reference is the code that decides the exact claims, and the browser core must reproduce it; Phase 2&rsquo;s core does, line for line (<a href="browser-core.html#parity">Explainer 10</a>). This page&rsquo;s focus node is the reference.</p>
+            <div data-hl-map="focus" data-node="reference"></div>
+            <p>The reference lives in <code>reference/</code>: the package <code>reference/lexicon/</code>, the runner <code>run_claims.py</code>, the pins in <code>golden/</code>, the traces in <code>traces/</code> and the results in <code>results/</code> (<a href="../reference/README.md">reference README</a>). Every number on this page comes from <a href="../reference/results/claims.md">results/claims.md</a> (the same content as <a href="../reference/results/claims.json">claims.json</a>), its console log <a href="../reference/results/claims-console.txt">claims-console.txt</a>, a commit message, <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>, or the pinned files&rsquo; own meta files and headers. The JSON gives exact metrics as rationals next to their floats; this page rounds the float. Where this page and those files differ, the files win.</p>
+            <div class="callout plain"><span class="label">How to read this page</span>
+                <p><span class="tag t-SUPPORTED">supported</span> means what the registered decision rule says, and nothing more. For an exact claim it means every case passed and every control failed. For L5 it means four bootstrap intervals lay above 0 on both instance sets. A <strong>prediction</strong> was written with each claim; it is not part of the rule, and a prediction can be wrong while its claim is supported. That happened once, on L2.</p>
+                <p>Timings belong to this container and change from machine to machine; <code>claims.json</code> marks L3&rsquo;s millisecond timings &ldquo;~ms&rdquo; and gives every claim&rsquo;s and arm&rsquo;s <code>seconds</code> unmarked; this page adds &ldquo;~&rdquo; where it uses one.</p>
+            </div>
+            <dl class="gloss">
+                <dt>Python reference</dt><dd>The code that decides the exact claims (the common rule &ldquo;Authority&rdquo;). It imports Hyperbolic Oracles&rsquo; <code>hpstep</code> and Engram Mind&rsquo;s Eye&rsquo;s <code>engram</code> modules in place, unchanged.</dd>
+                <dt>Dry run</dt><dd>The runner on data no claim uses: every seed moved up by 3000, the verb forest in place of the nouns, repository Markdown in place of the lemma types, and q = 13 only (Amendment 1, item 10). It decides nothing.</dd>
+                <dt>Decisive run</dt><dd>The one run on the registered instances that decides. Here: <code>python3 -B run_claims.py</code>, on the code committed at 88e63f7.</dd>
+                <dt>Pin</dt><dd>A file fixed by its SHA-256 and size. The reference refuses to load a pinned file whose hash differs.</dd>
+                <dt>Trace</dt><dd>A file of inputs and the reference&rsquo;s outputs that the browser core must reproduce line for line. Traces use seeds 8000 + i, which no claim uses.</dd>
+                <dt>Paired AP difference</dt><dd>For each query, its average precision in one arm minus its average precision in another. L5 decides on the mean of these differences and its 95% percentile bootstrap interval (10,000 resamples, seed 7).</dd>
+            </dl>
+            <h3 id="glance">The four decisions at a glance</h3>
+            <div class="table-wrap"><table style="min-width:860px">
+                <thead><tr><th>Claim</th><th>What it says</th><th>Decision</th><th>Result</th><th>Controls that must fail</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="#l2"><strong>L2</strong></a></td><td>engram/1 cannot serve as a token id: at least 1% of WordNet&rsquo;s lemma types share their key with another type</td><td><span class="tag t-SUPPORTED">supported</span></td><td>77,520 of 147,305 types (52.6%) share a key; the Python and Node key tables are identical</td><td>The SHA-256-prefix key gives 0 collisions, as required</td></tr>
+                    <tr><td class="mono"><a href="#l3"><strong>L3</strong></a><br><span style="color:var(--muted);white-space:nowrap">(a)&ndash;(e), (g)</span></td><td>Every noun synset has a distinct, invertible, certified address, with exact H&sup3; and H&sup2; points that decode back</td><td><span class="tag t-SUPPORTED">supported</span><br><span style="color:var(--muted);font-size:0.82rem">Python side</span></td><td>0 failures in each part, on all 82,115 noun synsets</td><td>All four break as required: 11,978, 74,220, 67,989 and 19,796 failures</td></tr>
+                    <tr><td class="mono"><a href="#l5"><strong>L5</strong></a></td><td>At d = 2 and 3 the exact hyperbolic tree reconstructs the noun hierarchy better than the same construction at curvature 0</td><td><span class="tag t-SUPPORTED">supported</span></td><td>All 8 registered intervals lie above 0; the smallest, H3 &minus; F3* on the mammals, is 0.049 [0.042, 0.055]</td><td>The shuffled (S3) and content-hash (K3) arms score far below H3 on both sets</td></tr>
+                    <tr><td class="mono"><a href="#l7"><strong>L7</strong></a></td><td>One tree, three readings: address, H&sup3; point and X(5, q) vertex, for q = 13, 17, 29</td><td><span class="tag t-SUPPORTED">supported</span></td><td>(a), (b), (c), (e): 0 failures; (d): the smallest Ramanujan margin is 0.030120, at q = 29</td><td>&iota; = 2, a 4-generator subset and the undivided Hurwitz product all fail</td></tr>
+                </tbody>
+            </table></div>
+            <p>Left open by Phase 1: L1 (byte identity in Python, Node and Chromium), L3(f) (Python against JavaScript) and L4(a, b), which Phase 2 decided with the browser core <code>lexicon_core.js</code>, all supported (<a href="browser-core.html">Explainer 10</a>). L8&ndash;L11 followed in Phase 3, all supported (<a href="chains.html">Explainer 11</a>). L6 and L4(c) followed in Phase 4, all supported, L6(c) against its registered prediction (<a href="learned.html">Explainer 12</a>). Their registration is summarised in <a href="evidence.html#claims">Explainer 8</a>.</p>
+        </section>
+
+        <section class="chapter" id="order">
+            <div class="chapter-num">02</div>
+            <h2>How Phase 1 was ordered</h2>
+            <p class="chapter-intro">Definitions first, then code, then two reviews and dry runs, then one decisive run on the code as committed. Seven commits on 2026-11-05 (times in UTC, from git) record the order.</p>
+            <ol class="steps">
+                <li><strong>29efe8a &middot; 11:24 &middot; Amendment 1, before any code.</strong> It fixed what the registration had left open: the normaliser N<sub>B</sub> step by step, the WordPiece loop and the id stream, the V0 &ldquo;lex0&rdquo; trainer, the token map A, ties and rank lists, the readings L2, L3, L5 and L7 need (the flat arms, S3, K3, the instance sets, the reported metrics, the intervals), and the dry-run and trace seeds. It was written before <code>reference/lexicon/</code> existed, and no claim result was known.</li>
+                <li><strong>d50a43f &middot; 11:52 &middot; The text track.</strong> <code>wordnet</code>, <code>unicode_tables</code> with the pinned Unicode 15.1 table, <code>normalise</code> (N<sub>B</sub>), <code>wordpiece</code> with the V0 trainer, and the L1 loaders in <code>l1</code>. V0 was frozen by committing its file; V1 was pinned by hash. The text traces and L2&rsquo;s Node half came with it. &ldquo;No claim has been run.&rdquo;</li>
+                <li><strong>e51a866 &middot; 12:02 &middot; The geometry track and the runner.</strong> <code>address</code>, <code>h3tree</code>, <code>h2exact</code>, <code>flat</code>, <code>rank</code> and <code>lps</code>, then <code>run_claims.py</code> and its dry run. Its tests replay the spikes: S3&rsquo;s verb-forest MAP 0.6309 with the same SHA-256, S2&rsquo;s decodes and bit counts, S5&rsquo;s girths, eigenvalues and controls. &ldquo;No decisive run has been made.&rdquo;</li>
+                <li><strong>8d845c7 &middot; 12:24 &middot; Fixes from the geometry review</strong> (<a href="#reviews">chapter 4</a>).</li>
+                <li><strong>20c3320 &middot; 12:39 &middot; Fixes from the text review, and a fresh dry run</strong> on the fixed reference, all four claims end to end (<a href="../reference/results/dry/claims.md">results/dry/</a>).</li>
+                <li><strong>88e63f7 &middot; 12:39 &middot; Amendment 2, before any decisive run:</strong> a disclosure, an erratum, the readings fixed in the code, and the two reviews. &ldquo;No claim result is known.&rdquo;</li>
+                <li><strong>The decisive run &middot; started 12:39:18.</strong> Once, on the code at 88e63f7, in 5 minutes of wall time (L2 9.3&nbsp;s, L3 86.5&nbsp;s, L5 152.1&nbsp;s, L7 50.9&nbsp;s, &ldquo;~&rdquo;).</li>
+                <li><strong>6af2a83 &middot; 12:44 &middot; The results, as they came out:</strong> <code>claims.json</code>, <code>claims.md</code>, the console log and L3(f)&rsquo;s Python side. Every case is reported.</li>
+            </ol>
+            <h3>Why the definitions came first</h3>
+            <p>The registration fixed the claims, but some things it named had no algorithm yet: how V0 is trained, how a vocabulary entry gets an address (map A), how tied candidates are listed. Others needed a reading before code could be written: what a lemma &ldquo;type&rdquo; is after normalisation, how the flat arms keep the trees&rsquo; directions, how S3&rsquo;s permutations are drawn, which bootstrap computes the intervals. Writing all of this down before any module existed means none of it could be chosen after seeing how the code or the data behaved. Amendment 1 changed nothing registered; where a reading could be taken for a change, it gives the reason.</p>
+            <p>The reference then had to decide some smaller readings in code (an invalid-UTF-8 offset, the trivial eigenvalues, how distortion treats two synsets with one word). Each is marked <code>READING</code> in its code and listed in Amendment 2, which was committed before the decisive run.</p>
+            <h3>Dry runs, then one decisive run</h3>
+            <p>The registered dry run (Amendment 1, item 10) uses the same runner on data disjoint from the instances: seeds 4000 + i and 5000 + i, the verb forest with its 559 roots under a virtual root, the repository Markdown spike S6 used in place of the lemma types, and q = 13 only for L7. It ran after the geometry track and again after the fixes. Its outputs decide nothing, whatever labels they carry. Then <code>run_claims.py</code> ran once on the registered instances, and its output was committed as it came out.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Draws in Phase 1</th><th>Seeds</th></tr></thead>
+                <tbody>
+                    <tr><td>Instances: the noun query sample <code>Rng(1000).sample(82115, 1000)</code>; L3(f)&rsquo;s 2,000 nodes; L7(b)&rsquo;s random words</td><td class="mono">1000 + i</td></tr>
+                    <tr><td>Secondary draws: S3&rsquo;s permutations; L7(e)&rsquo;s random words</td><td class="mono">2000 + i</td></tr>
+                    <tr><td>Dry runs</td><td class="mono">4000 + i, 5000 + i</td></tr>
+                    <tr><td>Traces for the browser core (no claim uses them)</td><td class="mono">8000 + i, 8100 + i, 8300 + i</td></tr>
+                    <tr><td>Bootstrap intervals</td><td class="mono">seed 7, 10,000 resamples</td></tr>
+                </tbody>
+            </table></div>
+            <p>One label to note: the header of <code>claims.json</code> names its rules as &ldquo;PREREGISTRATION.md with Amendment 1&rdquo;. That is the runner&rsquo;s fixed label. The run used the code at 88e63f7, which includes Amendment 2, and Amendment 2 changed no rule (Amendment 2: &ldquo;Nothing registered is changed&rdquo;).</p>
+        </section>
+
+        <section class="chapter" id="built">
+            <div class="chapter-num">03</div>
+            <h2>What was built</h2>
+            <p class="chapter-intro">Eleven modules, a runner, four pin scripts, two trace writers and a test suite. Exact stages work on integers and rationals only; floats appear only where a claim measures them.</p>
+            <h3>The package <code>reference/lexicon/</code></h3>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Module</th><th>What it holds</th><th>Used by</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="../reference/lexicon/wordnet.py">wordnet.py</a></td><td>The reader of <code>golden/wordnet_v1.cjs</code> in Python: synsets, the spanning forest, the closure, the mammal sets, the lemma types, C0 and the glosses. It refuses the archive unless its SHA-256 and size are the pinned ones</td><td>L2, L3, L5, L7; L1(a)</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/unicode_tables.py">unicode_tables.py</a></td><td>The pinned Unicode 15.1 table, the only source of Unicode facts for N<sub>B</sub>: categories, lowercase mappings, decompositions, combining classes and the two Final_Sigma sets</td><td>L1, L2</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/normalise.py">normalise.py</a></td><td>N<sub>B</sub>, BERT&rsquo;s BasicTokenizer on the pinned table, with byte spans, failing closed on code points unassigned in 15.1; N1, the registered fallback. It never calls <code>str.lower</code>, <code>unicodedata</code> or a regular-expression Unicode class</td><td>L1, L2</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/wordpiece.py">wordpiece.py</a></td><td>Greedy longest-match-first WordPiece on code points, the LEB128 id stream, the V0 trainer, the reported tokenizer metrics</td><td>L1</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/l1.py">l1.py</a></td><td>L1&rsquo;s instance loaders (a)&ndash;(d), the dry-run and trace strings. Loaders only: nothing here decides L1</td><td>L1 (Phase 2)</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/address.py">address.py</a></td><td>The L3 rule and its two controls, the verb forest, <code>certify</code>, the bijective 59/64-bit id codec (D6), the prefix check of L3(d), map A, and the words of the S3 and K3 arms</td><td>L3, L5, L7</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/h3tree.py">h3tree.py</a></td><td>Exact H&sup3; points (t = 3/4) as integer vectors over 7<sup>n</sup>, built once per distinct prefix; hpstep&rsquo;s <code>decode_exact</code> as the authority, an integer decoder as a cross-check, and the float control</td><td>L3, L5</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/h2exact.py">h2exact.py</a></td><td>The exact H&sup2; tree of D3 (t = 11/13) as integer frames over 2&middot;300<sup>n</sup>, with exact greedy decoding that counts ties; t = 3/4 as L3&rsquo;s control 4</td><td>L3, L5</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/flat.py">flat.py</a></td><td>The curvature-0 arms F3, F2 (unit edges) and F3*, F2* (edges (1/4)<sup>k</sup>), as exact integer vectors over one denominator per depth</td><td>L5</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/rank.py">rank.py</a></td><td>Exact integer ranking keys, pessimistic AP, MAP and mean rank as exact rationals, rank lists and their SHA-256, distortion, bits per node, and Hyperbolic Oracles&rsquo; bootstrap <code>ci_mean</code> replicated exactly</td><td>L5; L4 in Phase 2</td></tr>
+                    <tr><td class="mono"><a href="../reference/lexicon/lps.py">lps.py</a></td><td>X(5, q) for q = 13, 17, 29: the Cayley graph by breadth-first search, its structure, the exact girth, walk against reduction, injectivity, the spectrum, SHD-CCP&rsquo;s Hurwitz product, the controls and the spread of a word set</td><td>L7</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Scripts and tests</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>File</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="../reference/run_claims.py">run_claims.py</a></td><td>Runs L2, L3 (Python side), L5 and L7 and writes <code>results/claims.json</code> and <code>.md</code>; <code>--dry</code> runs the registered dry run into <code>results/dry/</code>. It runs every control, and an exact claim whose control passes is void</td></tr>
+                    <tr><td class="mono"><a href="../reference/js_engram_keys.cjs">js_engram_keys.cjs</a></td><td>L2&rsquo;s Node half: the engram/1 key of every type from Engram Mind&rsquo;s Eye&rsquo;s <code>ttmpt_core_v1.js</code>, loaded unchanged</td></tr>
+                    <tr><td class="mono"><a href="../reference/traces_text.py">traces_text.py</a>, <a href="../reference/traces_geometry.py">traces_geometry.py</a></td><td>Write the traces the browser core must reproduce; each has a <code>--check</code> that rebuilds them in memory and compares bytes</td></tr>
+                    <tr><td class="mono">golden/make_unicode_v1.py, make_vocab_v0.py, make_vocab_v1.py, make_l1_instances_v1.py</td><td>Write the pins. Each has a <code>--check</code> that recomputes and compares; those that need cached data report &ldquo;skipped&rdquo; (exit 2), never &ldquo;passed&rdquo;, without it</td></tr>
+                    <tr><td class="mono">tests/</td><td>A pytest suite for every module, and <code>bert_oracle.py</code>: an independent N<sub>B</sub> written with Python&rsquo;s own Unicode functions, which N<sub>B</sub> must match word for word under Python 3.13</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The pins</h3>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Pin</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Unicode 15.1 table</td><td><a href="../reference/golden/unicode_15_1_v1.meta.json"><code>golden/unicode_15_1_v1.json</code></a>: 142,624 bytes, SHA-256 <span class="mono">30bed6fb&hellip;06712229</span>, exported from CPython 3.13&rsquo;s <code>unicodedata</code> 15.1.0, Unicode License v3. Before writing it, the script checks that the table alone reproduces <code>str.lower</code> and NFD on every code point</td></tr>
+                    <tr><td>V0 &ldquo;lex0&rdquo;</td><td><a href="../reference/golden/vocab_v0.meta.json"><code>golden/vocab_v0_lex0.txt</code></a>: 8,192 entries, 55,648 bytes, SHA-256 <span class="mono">df227056&hellip;9f9ca1ff</span>. Trained on L1&rsquo;s instance (a) (117,659 glosses, 1,711,206 words, 55,425 distinct) by Amendment 1&rsquo;s algorithm: 5 specials, an alphabet of 64 code points in both forms (128 entries), then 8,059 merges, stopped at 8,192 entries. The alphabet is ASCII, so under V0 a word with a non-ASCII letter is <code>[UNK]</code></td></tr>
+                    <tr><td>V1 bert-base-uncased</td><td><a href="../reference/golden/vocab_v1.meta.json"><code>vocab_v1.meta.json</code></a>: revision <span class="mono">86b5e09</span>, <code>vocab.txt</code> 231,508 bytes, SHA-256 <span class="mono">07eced37&hellip;992038a3</span>, 30,522 entries, Apache-2.0. The file sits in the cache, outside git; only its hash is committed. It is pinned, so L1&rsquo;s second vocabulary cell is in force</td></tr>
+                    <tr><td>L1&rsquo;s instance lists</td><td><a href="../reference/golden/l1_instances_v1.meta.json"><code>l1_instances_v1.meta.json</code></a>: (a) 117,659, (b) 16,622, (c) 20,520, (d) 2,000 strings, each list pinned by its count and an order-sensitive SHA-256. Hashing is not using them: nothing was normalised or tokenized to make the pin</td></tr>
+                    <tr><td>SHD-CCP&rsquo;s <code>hurwitz.py</code></td><td>Imported read-only for L7(e) and refused unless its SHA-256 is <span class="mono">cecb6dcc&hellip;f1b244e9</span></td></tr>
+                    <tr><td>WordNet 3.0, UD EWT, the stress set</td><td>Pinned in Phase 0 (<a href="evidence.html#pins">Explainer 8</a>)</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The traces for Phase 2</h3>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>File</th><th>What the browser core must reproduce</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="../reference/traces/normalise_v1.txt">traces/normalise_v1.txt</a></td><td>N<sub>B</sub> on 88 hand-picked edge cases (Final_Sigma contexts, U+0130, Hangul, canonical ordering, CJK, controls, Co, Cn failing closed, invalid UTF-8, long words, the empty string) and 300 synthetic strings from <code>Rng(8000 + i)</code>: input bytes, result, normalised text, and every word with its byte span</td></tr>
+                    <tr><td class="mono"><a href="../reference/traces/wordpiece_v1.txt">traces/wordpiece_v1.txt</a></td><td>WordPiece pieces with ids and byte spans on the 381 valid cases, under V0 and under V1, and each vocabulary&rsquo;s id-stream length and SHA-256</td></tr>
+                    <tr><td class="mono"><a href="../reference/traces/address_v1.txt">traces/address_v1.txt</a></td><td>The letter rule and its two controls on 200 cases from <code>Rng(8300 + i)</code>, and the 13,767 words of the verb forest with their SHA-256</td></tr>
+                    <tr><td class="mono"><a href="../reference/traces/points_v1.txt">traces/points_v1.txt</a></td><td>300 words from <code>Rng(8000 + i)</code>: each word&rsquo;s D6 id and its exact points in H&sup3;, H&sup2;, H&sup2; at t = 3/4 (with its greedy decode), F3, F3*, F2 and F2*, in lowest terms</td></tr>
+                    <tr><td class="mono"><a href="../reference/traces/rank_v1.txt">traces/rank_v1.txt</a></td><td>20 verb-forest queries from <code>Rng(8100 + i)</code>: rank-list SHA-256, exact graph-edge and closure APs and neighbour ranks, in H&sup3; and H&sup2;</td></tr>
+                    <tr><td class="mono"><a href="../reference/results/l3f-python.txt">results/l3f-python.txt</a></td><td>L3(f)&rsquo;s Python side: the 2,000 sampled nouns with their words and points, and the SHA-256 of the canonical point list of all 82,115</td></tr>
+                </tbody>
+            </table></div>
+            <p>Two families of modules are imported in place and never modified: Hyperbolic Oracles&rsquo; <code>hpstep</code> (<code>prng</code>, <code>problems</code>, <code>decode3d</code>) and Engram Mind&rsquo;s Eye&rsquo;s <code>engram</code> (<code>ttmpt</code>, <code>address</code>). Amendment 1 (item 6) and Amendment 2 (item 3) make the first the deciding implementation of the H&sup3; tree: L3(e) in H&sup3; is decided by hpstep&rsquo;s <code>decode_exact</code>, not by this package&rsquo;s faster integer decoder (<a href="architecture.html#place">placement in Explainer 3</a>).</p>
+        </section>
+
+        <section class="chapter" id="reviews">
+            <div class="chapter-num">04</div>
+            <h2>Checked twice before it counted</h2>
+            <p class="chapter-intro">Before the decisive run, each track had an adversarial review: four reviewers, and two skeptics for every finding. Amendment 2 records that they worked by independent reimplementation, on unregistered data. <a href="../PREREGISTRATION.md">Amendment 3</a> corrects that for the text track: its checks compared the Python N<sub>B</sub> and WordPiece with Python oracles over L1&rsquo;s instances (a)&ndash;(c), and retrained V0 on (a) as registered. That is not L1&rsquo;s metric, which compares runtimes, and it decided nothing.</p>
+            <div class="grid-2">
+                <div class="card"><h4>The text-track review</h4>
+                    <p><strong>Rebuilt independently:</strong> a naive V0 trainer rebuilt V0 byte for byte. An independent N<sub>B</sub> oracle agreed on every L1 instance and on 6.7 million code-point contexts. WordPiece agreed on every instance, for V0 and V1. No mismatch. (These L1 instances were not a decision: L1 compares the reference with Node and Chromium, which Phase 2 did; <a href="browser-core.html#l1">Explainer 10</a>.)</p>
+                    <p><strong>Confirmed and fixed (20c3320):</strong> <code>traces_text.py --check</code> skipped the whole check when V1 was not cached; it now always compares the normaliser trace and the V0 lines. The guard against platform Unicode now covers every Unicode-dependent <code>str</code> method, called or referenced, in <code>normalise</code>, <code>unicode_tables</code> and <code>wordpiece</code>. L1&rsquo;s four instance lists were pinned. <code>make_unicode_v1.py --check</code> compares the whole meta. <code>bert_oracle.py</code> states which control-character rule it follows.</p>
+                </div>
+                <div class="card"><h4>The geometry-track review</h4>
+                    <p><strong>Rebuilt independently:</strong> trees in Fractions, the flat arms, pessimistic ranking, the id codec and L7. They agreed without a mismatch, and the review found no code defect.</p>
+                    <p><strong>Confirmed and fixed (8d845c7):</strong> the integer decoder&rsquo;s test used only tree points; it now runs on real off-tree points with forced ties. The runner&rsquo;s L7(e) control was mislabelled: the registered control (doubled-coordinate products not divided by 2<sup>L</sup>) is now a module function with its own test, and the runner uses it; the product without SHD-CCP&rsquo;s final halving stays as a reported second control. Map A reads N<sub>B</sub> punctuation from the pinned table, not from the interpreter. The H&sup2; denominator test covers n = 1&ndash;6, as its docstring says.</p>
+                </div>
+            </div>
+            <p>Amendment 2 sums up what the reviews confirmed as gaps in tests and pins; in every rebuild, the independent code agreed with the reference. All fixes were committed, and the dry run was repeated on the fixed code, before Amendment 2 and before the decisive run.</p>
+            <h3>Amendment 2: a disclosure and an erratum</h3>
+            <div class="callout note"><span class="label">A disclosure</span>
+                <p>While the geometry modules were being written, a builder&rsquo;s timing script ran L3&rsquo;s <code>certify</code> and the prefix check of L3(d) over all 82,115 noun words, to measure their cost. In Amendment 2&rsquo;s words: &ldquo;Its outcome was neither reported nor looked at, and no code was changed after it.&rdquo; Both checks are exact, deterministic and all-or-nothing, with nothing to tune, and the decisive run recomputed them. It is recorded under the common rule &ldquo;Reporting&rdquo;.</p>
+            </div>
+            <div class="callout note"><span class="label">An erratum</span>
+                <p>Amendment 1 said in a parenthesis that &ldquo;BERT drops every C category&rdquo;. That is wrong for google-research/bert, whose <code>_is_control</code> drops only Cc and Cf; it is Hugging Face transformers&rsquo; copy of the BasicTokenizer that drops every C category. The rule in force does not change: N<sub>B</sub> drops Cc, Cf and Co, and keeps Cn so that a token holding an unassigned code point fails closed. It is the stated rule, and no L1 instance contains a Co code point. <a href="architecture.html#normalise">Explainer 3</a>&rsquo;s Phase 0 text, &ldquo;Cc, Cf&rdquo;, described google&rsquo;s BERT; it now states the rule in force, as Amendment 2 said it would.</p>
+            </div>
+            <p>Amendment 2 also lists the readings fixed in the code (for instance: L3&rsquo;s truncation control gives every child one letter, the digit min(k, 4); a query without graph-edge neighbours is left out of the paired differences and counted, and there were none among the nouns or mammals; L7&rsquo;s trivial eigenvalues are the top of the spectrum and, for a bipartite graph, the bottom). Nothing registered was changed.</p>
+        </section>
+
+        <section class="chapter" id="l2">
+            <div class="chapter-num">05</div>
+            <h2>L2 &middot; engram/1 is not a token id</h2>
+            <p class="chapter-intro">engram/1 is Engram Mind&rsquo;s Eye&rsquo;s 64-bit key for a text. D4 keeps it as a compatibility checksum, never as an input. L2 tests the reason: on WordNet&rsquo;s lemmas, too many types share a key. <span class="tag t-SUPPORTED">supported</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Registered</th><th>As run</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Instances</strong></td><td>Every distinct lemma of the four WordNet index files, &ldquo;_&rdquo; read as a space, through N<sub>B</sub>, deduplicated: 147,306 strings before N<sub>B</sub>, 147,305 types after (two strings became one type; none failed closed, none was empty)</td></tr>
+                    <tr><td><strong>Metric</strong></td><td>Collision share = types in a key class of size &ge; 2, over all types</td></tr>
+                    <tr><td><strong>Control</strong></td><td>A 64-bit SHA-256-prefix key on the same types must give 0 collisions; a Python/Node table mismatch voids the test</td></tr>
+                    <tr><td><strong>Decision</strong></td><td>Supported if the share is &ge; 0.01 and the control gives 0 collisions</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Result</th><th class="num">Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Collision share (exact 912/1733)</td><td class="num">77,520 / 147,305 = 52.6%</td></tr>
+                    <tr><td>Control: SHA-256-prefix key collisions</td><td class="num">0</td></tr>
+                    <tr><td>Python and Node key tables (SHA-256 of the table)</td><td class="num">identical, fb871ccd&hellip;1c1f1379</td></tr>
+                    <tr><td>Key classes &middot; of size &ge; 2</td><td class="num">92,978 &middot; 23,193</td></tr>
+                    <tr><td>Largest class = the zero key <span class="mono">0000000000000000</span></td><td class="num">371 types (0.25%)</td></tr>
+                    <tr><td>All-digit types, all on the zero key</td><td class="num">131</td></tr>
+                    <tr><td>Anagram classes (same letters A&ndash;Z, other characters ignored) &middot; types in them</td><td class="num">6,666 &middot; 15,025</td></tr>
+                    <tr><td>Reported, not decided: V0&rsquo;s 8,192 entries sharing a key (exact 2137/4096)</td><td class="num">52.2%, in 1,345 classes</td></tr>
+                </tbody>
+            </table></div>
+            <p>The share is 52.6%, far above the 1% the claim needs, and the control gives no collision, so L2 is supported. In plain terms, more than half of WordNet&rsquo;s lemma types cannot be told apart from some other type by their engram/1 key.</p>
+            <h3>Why so many: the key keeps only parity</h3>
+            <p><code>crystallize</code> in <code>ttmpt_core_v1.js</code> upper-cases the text, skips every character that is not A&ndash;Z, and XORs a fixed 64-cell pattern for each remaining letter into an accumulator. So letter order does not matter, every non-letter is ignored, and a letter that occurs twice cancels itself. The key depends only on which letters occur an odd number of times.</p>
+            <ul>
+                <li><strong>The zero key</strong> holds every type in which each letter occurs an even number of times, and every type without letters. Its first entries, sorted: &ldquo;. 22&rdquo;, &ldquo;0&rdquo;, &ldquo;1&rdquo;, &ldquo;10&rdquo;, &ldquo;100&rdquo;, &ldquo;1000&rdquo;, &hellip; (N<sub>B</sub> splits punctuation into words of its own, so the lemma .22 becomes the type &ldquo;. 22&rdquo;). Any type like &ldquo;noon&rdquo;, with every letter twice, lands there too.</li>
+                <li><strong>Anagram classes</strong> share a key because they have the same letters. Two from <code>claims.json</code>: &ldquo;' hood&rdquo; and &ldquo;hood&rdquo;, which differ only in an apostrophe; and a class of 14 that runs from &ldquo;. 22 caliber&rdquo;, &ldquo;. 22 calibre&rdquo; and &ldquo;. 38 caliber&rdquo; to &ldquo;caliber&rdquo; and &ldquo;calibre&rdquo;: digits and punctuation do not count, and caliber and calibre use the same letters.</li>
+                <li><strong>Parity classes</strong> go much further. The key cannot tell &ldquo;tot&rdquo; from &ldquo;o&rdquo;: the two t&rsquo;s cancel. Any two types with the same set of odd-count letters collide, whatever their other letters.</li>
+            </ul>
+            <div class="callout limit"><span class="label">The registered prediction was wrong</span>
+                <p>L2&rsquo;s prediction read: &ldquo;Supported, with a share between 2% and 10%: anagram classes (dog/god), words in which every letter appears an even number of times and numerals (all on the zero key), and types that differ only in non-letters.&rdquo; The share is 52.6%, five times the top of that band.</p>
+                <p>The prediction named the right mechanisms but not the main one. The anagram classes, which already include the numerals and the types that differ only in non-letters, hold 15,025 types: 10.2%, about the band&rsquo;s top. The other 62,495 types in shared classes (77,520 &minus; 15,025) share a key with types made of different letters, because the key keeps only the parity of each letter&rsquo;s count. The prediction counted anagrams and the zero key, and missed that any two types with the same set of odd-count letters share a key. The decision does not depend on the prediction: the rule asks for at least 1%, and the miss is reported as a miss.</p>
+            </div>
+            <p>What L2 does not say: engram/1 keeps its role as a checksum and as Engram Mind&rsquo;s Eye&rsquo;s compatibility key (D4). The Lexicon&rsquo;s token ids come from the vocabulary, and its addresses from the L3 rule (<a href="architecture.html#ids">ids in Explainer 3</a>).</p>
+        </section>
+
+        <section class="chapter" id="l3">
+            <div class="chapter-num">06</div>
+            <h2>L3 &middot; An exact address for every noun</h2>
+            <p class="chapter-intro">Under the L3 rule every WordNet noun synset gets a reduced word in the norm-5 tree, and every word an exact point in H&sup3; and in H&sup2;. All 82,115 pass every part decided in Phase 1. <span class="tag t-SUPPORTED">supported</span> <span style="color:var(--muted);font-size:0.9rem">(Python side: (a)&ndash;(e) and (g))</span></p>
+            <p><strong>The rule</strong> (<a href="architecture.html#address">Explainer 3</a>): the spanning parent is the first <code>@</code> or <code>@i</code> pointer; entity.n.01 sits at the word [0]; children are ordered by synset offset; child k of a node with c children takes m = max(1, &lceil;log&#8325;&nbsp;c&rceil;) letters, the base-5 digits of k.</p>
+            <div class="table-wrap"><table style="min-width:680px">
+                <thead><tr><th>Part</th><th>What is checked, on every noun synset</th><th class="num">Failures</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">(a)</td><td>Its word is distinct from every other synset&rsquo;s</td><td class="num">0</td></tr>
+                    <tr><td class="mono">(b)</td><td>The word decodes back to the synset (inverse table lookup)</td><td class="num">0</td></tr>
+                    <tr><td class="mono">(c)</td><td><code>certifyWord</code>: the integer quaternion has norm exactly 5<sup>len</sup>, right division returns the word, and the word is reduced (hpstep&rsquo;s <code>word_quaternion</code>, <code>right_divide</code>, <code>is_reduced</code>)</td><td class="num">0</td></tr>
+                    <tr><td class="mono">(d)</td><td>u is a spanning-tree ancestor of v exactly when word(u) is a proper prefix of word(v), checked by walking every word through a trie of all words</td><td class="num">0</td></tr>
+                    <tr><td class="mono">(e)</td><td>The exact point lies on the sheet and decodes exactly back to the word: in H&sup3; by hpstep&rsquo;s <code>decode_exact</code> (the integer decoder agrees on 82,115/82,115), in H&sup2; at t = 11/13 with 0 decoding ties</td><td class="num">0</td></tr>
+                    <tr><td class="mono">(f)</td><td>Python and JavaScript give the same words and exact points</td><td class="num">0, in Phase 2</td></tr>
+                    <tr><td class="mono">(g)</td><td>The D6 id code round-trips every word it covers: id59 covers 74,630 words (&le; 25 letters), id64 78,550 (&le; 27); longer words are reported as not covered, not as failures</td><td class="num">0</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The four controls broke, as they had to</h3>
+            <div class="table-wrap"><table style="min-width:600px">
+                <thead><tr><th>Control</th><th>Must</th><th class="num">Measured</th></tr></thead>
+                <tbody>
+                    <tr><td>1 &middot; Zero-letter variant: a single child gets no letters</td><td>break injectivity</td><td class="num">11,978 nodes share a word</td></tr>
+                    <tr><td>2 &middot; Truncation variant: children past the fifth folded into the fifth</td><td>break injectivity</td><td class="num">74,220 nodes share a word</td></tr>
+                    <tr><td>3 &middot; Float placement with float decoding</td><td>fail on a word longer than 12 letters</td><td class="num">67,989 of 71,454 words fail</td></tr>
+                    <tr><td>4 &middot; The H&sup2; tree at t = 3/4</td><td>fail exact decoding</td><td class="num">19,796 of 82,115 words fail</td></tr>
+                </tbody>
+            </table></div>
+            <p>The controls show that the test can see failure. Without the max(1,&nbsp;&middot;) or with fixed branching, addresses collide. Floats do not survive WordNet&rsquo;s depth: 95% of the words longer than 12 letters fail to decode, as spike S1 led the registration to expect. And the H&sup3; boost does not work in the plane, as spike S2 found on synthetic words (<a href="evidence.html#s1">S1</a>, <a href="evidence.html#s2">S2</a>).</p>
+            <h3>Word lengths, id coverage and bits</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Reported</th><th class="num">Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Longest word &middot; mean length (exact 301,680/16,423)</td><td class="num">36 letters &middot; 18.37</td></tr>
+                    <tr><td>Words of &le; 25 letters (id59, kernel 0xA&rsquo;s tile)</td><td class="num">74,630 = 90.88%</td></tr>
+                    <tr><td>Words of &le; 27 letters (id64)</td><td class="num">78,550 = 95.66%</td></tr>
+                    <tr><td>Words of more than 12 letters</td><td class="num">71,454</td></tr>
+                    <tr><td>Nodes with more than 5 &middot; more than 25 children &middot; most children</td><td class="num">3,291 &middot; 396 &middot; 659</td></tr>
+                    <tr><td>Largest numerator / denominator per coordinate, H&sup3;</td><td class="num">184 / 102 bits</td></tr>
+                    <tr><td>Largest numerator / denominator per coordinate, H&sup2;</td><td class="num">252 / 142 bits</td></tr>
+                </tbody>
+            </table></div>
+            <p>The registration said that a larger minority of noun words than of verb words may pass 25 or 27 letters, and that the share would be reported. It is 9.1% beyond 25 letters (7,485 words) and 4.3% beyond 27 (3,565), against 0.04% and none for the verbs in spike S3. A word longer than 25 letters needs a continuation tile in SHD-CCP kernel 0xA (<a href="../proposals/SHD-CCP-kernel-hyperbolic-address.md">the proposal</a>). Points cost more than spike S1&rsquo;s depth-28 budget (139/79 bits on random words), because noun words reach 36 letters, and 7<sup>36</sup> alone takes 102 bits.</p>
+            <p><strong>Timings</strong> (&ldquo;~&rdquo;, this container): the exact points of all nouns took 0.33&nbsp;s in H&sup3; and 0.45&nbsp;s in H&sup2; with this package&rsquo;s prefix-sharing builders; hpstep&rsquo;s <code>point_exact</code> took 1.04&nbsp;ms per point; hpstep&rsquo;s exact decoding of all 82,115 words took 50.6&nbsp;s, and the H&sup2; decoding 2.5&nbsp;s. The whole of L3 took 86.5&nbsp;s.</p>
+            <div class="callout deep"><span class="label">Part (f), decided in Phase 2</span>
+                <p>L3(f) asks whether Python and JavaScript give the same words and points. Phase 1 wrote the Python side: the canonical point list of all 82,115 nouns (one line per noun and tree, every coordinate in lowest terms) has SHA-256 <span class="mono" style="overflow-wrap:anywhere">eb22bf00689ec86da05f0f4ba6338abc0ba0a1549ada844a134cbce154a3ebc6</span>, and the 2,000 sampled nodes, node i = <code>Rng(1000 + i).below(82115)</code>, are written line by line in <a href="../reference/results/l3f-python.txt">results/l3f-python.txt</a>. This package&rsquo;s H&sup3; points equal hpstep&rsquo;s <code>point_exact</code> on all 2,000. The browser core had to give the same hash and the same lines. In Phase 2 it did: Node&rsquo;s canonical point list has this SHA-256 and all 2,000 lines are equal, so L3(f), and with it L3, is supported (<a href="browser-core.html#l3f">Explainer 10</a>).</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="l5">
+            <div class="chapter-num">07</div>
+            <h2>L5 &middot; Hyperbolic against flat</h2>
+            <p class="chapter-intro">Does the training-free exact tree reconstruct the noun hierarchy better in hyperbolic space than the same construction at curvature 0? At d = 2 and 3, on both instance sets, by the registered rule: yes. <span class="tag t-SUPPORTED">supported</span></p>
+            <h3>The arms and the rule</h3>
+            <ul>
+                <li><strong>H3, H2</strong>: the exact trees of L3, ranked by the exact Lorentz product.</li>
+                <li><strong>F3, F2</strong>: the same words, directions and step rule in R&sup3; and R&sup2; with unit edges, ranked by exact squared distance. <strong>F3*, F2*</strong>: a flat fractal tree, the same directions with edge length (1/4)<sup>k</sup> into a word of k + 1 letters.</li>
+                <li><strong>S3</strong> (control): H3 with words shuffled among synsets of equal word length, 20 permutations on the mammals and 5 on the nouns. <strong>K3</strong> (control): content-hash words, <code>engram_core.encode</code> of the first 8 bytes of SHA-256 of the first lemma, 28 letters each.</li>
+                <li><strong>Instances</strong>: the 1,176 synsets of the mammal spanning subtree, each a query against the other 1,175; and the 1,000-query noun sample, each against the other 82,114.</li>
+                <li><strong>Metric</strong>: graph-edge MAP (the neighbours are the spanning parent and the children), pessimistic ties. Closure MAP, mean rank, distortion and bits are reported. The effect is the mean paired AP difference with its 95% bootstrap interval.</li>
+                <li><strong>Decision</strong>: supported if the intervals of H3 &minus; F3, H3 &minus; F3*, H2 &minus; F2 and H2 &minus; F2* all lie above 0 on both sets; refuted if any lies entirely at or below 0; inconclusive otherwise. <strong>Controls</strong>: the intervals of H3 &minus; S3 and H3 &minus; K3 must lie above 0 on both sets, or the metric cannot see hierarchy and the test is void.</li>
+            </ul>
+            <h3>Every arm, both sets</h3>
+            <p>MAP and distortion are rounded to 4 decimals; mean rank pools every (query, neighbour) pair. For S3 the graph-edge MAP is the mean over permutations and the other columns give the range over permutations. Distortion is registered for H3, H2, F3 and F2 only, and bits for the six construction arms.</p>
+            <h4>The mammals: 1,176 nodes, 1,176 queries</h4>
+            <div class="table-wrap"><table style="min-width:880px">
+                <thead><tr><th>Arm</th><th style="min-width:170px">What it is</th><th class="num">Graph-edge<br>MAP</th><th class="num">Closure<br>MAP</th><th class="num">Mean rank,<br>graph-edge</th><th class="num">Mean rank,<br>closure</th><th class="num">Distortion</th><th class="num">Bits per node,<br>mean / max</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><strong>H3</strong></td><td>exact H&sup3; tree (t = 3/4)</td><td class="num">0.6907</td><td class="num">0.3059</td><td class="num">2.91</td><td class="num">66.89</td><td class="num">0.1822</td><td class="num">644.3 / 811</td></tr>
+                    <tr><td class="mono"><strong>H2</strong></td><td>exact H&sup2; tree (t = 11/13)</td><td class="num">0.7187</td><td class="num">0.3063</td><td class="num">2.74</td><td class="num">68.49</td><td class="num">0.1199</td><td class="num">652.7 / 815</td></tr>
+                    <tr><td class="mono"><strong>F3</strong></td><td>flat R&sup3;, unit edges</td><td class="num">0.1099</td><td class="num">0.0600</td><td class="num">36.59</td><td class="num">194.54</td><td class="num">0.5938</td><td class="num">8.8 / 12</td></tr>
+                    <tr><td class="mono"><strong>F2</strong></td><td>flat R&sup2;, unit edges</td><td class="num">0.0422</td><td class="num">0.0346</td><td class="num">70.91</td><td class="num">212.55</td><td class="num">0.6052</td><td class="num">107.0 / 167</td></tr>
+                    <tr><td class="mono"><strong>F3*</strong></td><td>flat fractal R&sup3;, edges (1/4)<sup>k</sup></td><td class="num">0.6420</td><td class="num">0.2583</td><td class="num">28.88</td><td class="num">219.45</td><td class="num">&mdash;</td><td class="num">205.0 / 262</td></tr>
+                    <tr><td class="mono"><strong>F2*</strong></td><td>flat fractal R&sup2;, edges (1/4)<sup>k</sup></td><td class="num">0.4081</td><td class="num">0.1984</td><td class="num">37.91</td><td class="num">226.48</td><td class="num">&mdash;</td><td class="num">261.0 / 348</td></tr>
+                    <tr><td class="mono"><strong>S3 <span style="color:var(--muted)">(20 perm.)</span></strong></td><td>H3, words shuffled within each length</td><td class="num">0.0186</td><td class="num">0.0246&ndash;<br>0.0298</td><td class="num">441.68&ndash;<br>479.33</td><td class="num">329.89&ndash;<br>368.43</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+                    <tr><td class="mono"><strong>K3</strong></td><td>H3, content-hash words (28 letters)</td><td class="num">0.0068</td><td class="num">0.0142</td><td class="num">588.31</td><td class="num">476.89</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <h4>The nouns: 82,115 nodes, 1,000 queries</h4>
+            <div class="table-wrap"><table style="min-width:880px">
+                <thead><tr><th>Arm</th><th style="min-width:170px">What it is</th><th class="num">Graph-edge<br>MAP</th><th class="num">Closure<br>MAP</th><th class="num">Mean rank,<br>graph-edge</th><th class="num">Mean rank,<br>closure</th><th class="num">Distortion</th><th class="num">Bits per node,<br>mean / max</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><strong>H3</strong></td><td>exact H&sup3; tree (t = 3/4)</td><td class="num">0.5679</td><td class="num">0.1577</td><td class="num">5.94</td><td class="num">1,693.08</td><td class="num">0.1955</td><td class="num">405.3 / 811</td></tr>
+                    <tr><td class="mono"><strong>H2</strong></td><td>exact H&sup2; tree (t = 11/13)</td><td class="num">0.5901</td><td class="num">0.1567</td><td class="num">6.58</td><td class="num">1,619.66</td><td class="num">0.1301</td><td class="num">426.1 / 887</td></tr>
+                    <tr><td class="mono"><strong>F3</strong></td><td>flat R&sup3;, unit edges</td><td class="num">0.0069</td><td class="num">0.0023</td><td class="num">1,870.43</td><td class="num">14,152.42</td><td class="num">0.7497</td><td class="num">7.3 / 13</td></tr>
+                    <tr><td class="mono"><strong>F2</strong></td><td>flat R&sup2;, unit edges</td><td class="num">0.0019</td><td class="num">0.0010</td><td class="num">3,609.77</td><td class="num">18,351.35</td><td class="num">0.7281</td><td class="num">41.0 / 167</td></tr>
+                    <tr><td class="mono"><strong>F3*</strong></td><td>flat fractal R&sup3;, edges (1/4)<sup>k</sup></td><td class="num">0.5001</td><td class="num">0.1348</td><td class="num">79.44</td><td class="num">11,304.14</td><td class="num">&mdash;</td><td class="num">125.0 / 262</td></tr>
+                    <tr><td class="mono"><strong>F2*</strong></td><td>flat fractal R&sup2;, edges (1/4)<sup>k</sup></td><td class="num">0.3189</td><td class="num">0.1074</td><td class="num">104.32</td><td class="num">14,817.30</td><td class="num">&mdash;</td><td class="num">135.6 / 348</td></tr>
+                    <tr><td class="mono"><strong>S3 <span style="color:var(--muted)">(5 perm.)</span></strong></td><td>H3, words shuffled within each length</td><td class="num">0.0005</td><td class="num">0.0013&ndash;<br>0.0015</td><td class="num">27,353.37&ndash;<br>30,091.75</td><td class="num">20,509.00&ndash;<br>22,811.61</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+                    <tr><td class="mono"><strong>K3</strong></td><td>H3, content-hash words (28 letters)</td><td class="num">0.0001</td><td class="num">0.0003</td><td class="num">41,535.42</td><td class="num">40,482.33</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The intervals</h3>
+            <figure>
+                <div style="max-width:600px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 8px 4px">
+<svg class="fp" viewBox="0 0 420 300" role="img" aria-labelledby="fp-title fp-desc">
+<title id="fp-title">L5 effect intervals on graph-edge AP</title>
+<desc id="fp-desc">Mean paired difference in graph-edge average precision, with its 95% bootstrap interval, for the four registered comparisons and the two controls, on the mammals and on the noun sample. Every interval lies above zero.</desc>
+<style>.fp text{font-family:Inter,system-ui,sans-serif;font-size:12px;fill:var(--muted,#94a3b8)}.fp .fp-lbl{fill:var(--text,#e2e8f0);font-family:var(--mono,monospace)}.fp .fp-head{font-family:var(--mono,monospace);font-size:10px;letter-spacing:1.5px;fill:var(--faint,#64748b)}.fp .fp-grid{stroke:var(--line-strong,rgba(34,211,238,.38));stroke-opacity:.45;stroke-width:1}.fp .fp-zero{stroke:var(--text,#e2e8f0);stroke-width:1.4}.fp .fp-m{stroke:var(--cyan,#22d3ee);fill:var(--cyan,#22d3ee)}.fp .fp-n{stroke:var(--gold,#f5c542);fill:var(--gold,#f5c542)}.fp .fp-ci{stroke-width:2;stroke-linecap:round;fill:none}.fp .fp-dot{stroke:var(--panel,#0b1222);stroke-width:1.5}.fp .fp-hit{fill:transparent}.fp g.fp-row:hover .fp-hit{fill:var(--line,rgba(34,211,238,.16))}@media (max-width:520px){.fp text{font-size:13px}.fp .fp-head{font-size:12px;fill:var(--muted,#94a3b8)}}</style>
+<g transform="translate(8,16)"><circle class="fp-m fp-dot" cx="5" cy="0" r="4"/><text x="15" y="4">Mammals, 1,176 queries</text><rect class="fp-n fp-dot" x="172" y="-4" width="8" height="8"/><text x="186" y="4">Nouns, 1,000 queries</text></g>
+<line class="fp-grid" x1="213.3" y1="34" x2="213.3" y2="258"/>
+<line class="fp-grid" x1="276.9" y1="34" x2="276.9" y2="258"/>
+<line class="fp-grid" x1="340.4" y1="34" x2="340.4" y2="258"/>
+<line class="fp-grid" x1="404.0" y1="34" x2="404.0" y2="258"/>
+<line class="fp-zero" x1="149.8" y1="34" x2="149.8" y2="258"/>
+<text class="fp-head" x="8" y="48">REGISTERED</text>
+<g class="fp-row"><title>H3 &minus; F3: Mammals 0.581 [0.562, 0.599]; Nouns 0.561 [0.538, 0.584]</title><rect class="fp-hit" x="0" y="56" width="420" height="28" rx="4"/><text class="fp-lbl" x="100" y="74" text-anchor="end">H3 &minus; F3</text><path class="fp-m fp-ci" d="M328.5 60v8M328.5 64H340.0M340.0 60v8"/><circle class="fp-m fp-dot" cx="334.3" cy="64" r="4"/><path class="fp-n fp-ci" d="M320.7 72v8M320.7 76H335.3M335.3 72v8"/><rect class="fp-n fp-dot" x="324.1" y="72" width="8" height="8"/></g>
+<g class="fp-row"><title>H3 &minus; F3*: Mammals 0.049 [0.042, 0.055]; Nouns 0.068 [0.062, 0.074]</title><rect class="fp-hit" x="0" y="88" width="420" height="28" rx="4"/><text class="fp-lbl" x="100" y="106" text-anchor="end">H3 &minus; F3*</text><path class="fp-m fp-ci" d="M163.2 92v8M163.2 96H167.3M167.3 92v8"/><circle class="fp-m fp-dot" cx="165.3" cy="96" r="4"/><path class="fp-n fp-ci" d="M169.3 104v8M169.3 108H173.4M173.4 104v8"/><rect class="fp-n fp-dot" x="167.3" y="104" width="8" height="8"/><text x="183.4" y="106">smallest margin: 0.049 and 0.068</text></g>
+<g class="fp-row"><title>H2 &minus; F2: Mammals 0.677 [0.659, 0.694]; Nouns 0.588 [0.565, 0.611]</title><rect class="fp-hit" x="0" y="120" width="420" height="28" rx="4"/><text class="fp-lbl" x="100" y="138" text-anchor="end">H2 &minus; F2</text><path class="fp-m fp-ci" d="M359.1 124v8M359.1 128H370.3M370.3 124v8"/><circle class="fp-m fp-dot" cx="364.8" cy="128" r="4"/><path class="fp-n fp-ci" d="M329.4 136v8M329.4 140H343.9M343.9 136v8"/><rect class="fp-n fp-dot" x="332.7" y="136" width="8" height="8"/></g>
+<g class="fp-row"><title>H2 &minus; F2*: Mammals 0.311 [0.297, 0.325]; Nouns 0.271 [0.257, 0.286]</title><rect class="fp-hit" x="0" y="152" width="420" height="28" rx="4"/><text class="fp-lbl" x="100" y="170" text-anchor="end">H2 &minus; F2*</text><path class="fp-m fp-ci" d="M244.1 156v8M244.1 160H253.0M253.0 156v8"/><circle class="fp-m fp-dot" cx="248.5" cy="160" r="4"/><path class="fp-n fp-ci" d="M231.5 168v8M231.5 172H240.6M240.6 168v8"/><rect class="fp-n fp-dot" x="232.0" y="168" width="8" height="8"/></g>
+<text class="fp-head" x="8" y="192">CONTROLS</text>
+<g class="fp-row"><title>H3 &minus; S3: Mammals 0.672 [0.653, 0.691]; Nouns 0.567 [0.544, 0.590]</title><rect class="fp-hit" x="0" y="200" width="420" height="28" rx="4"/><text class="fp-lbl" x="100" y="218" text-anchor="end">H3 &minus; S3</text><path class="fp-m fp-ci" d="M357.3 204v8M357.3 208H369.5M369.5 204v8"/><circle class="fp-m fp-dot" cx="363.3" cy="208" r="4"/><path class="fp-n fp-ci" d="M322.7 216v8M322.7 220H337.4M337.4 216v8"/><rect class="fp-n fp-dot" x="326.1" y="216" width="8" height="8"/></g>
+<g class="fp-row"><title>H3 &minus; K3: Mammals 0.684 [0.664, 0.704]; Nouns 0.568 [0.544, 0.591]</title><rect class="fp-hit" x="0" y="232" width="420" height="28" rx="4"/><text class="fp-lbl" x="100" y="250" text-anchor="end">H3 &minus; K3</text><path class="fp-m fp-ci" d="M360.9 236v8M360.9 240H373.4M373.4 236v8"/><circle class="fp-m fp-dot" cx="367.1" cy="240" r="4"/><path class="fp-n fp-ci" d="M322.8 248v8M322.8 252H337.5M337.5 248v8"/><rect class="fp-n fp-dot" x="326.2" y="248" width="8" height="8"/></g>
+<text x="149.8" y="274" text-anchor="middle">0</text>
+<text x="213.3" y="274" text-anchor="middle">0.2</text>
+<text x="276.9" y="274" text-anchor="middle">0.4</text>
+<text x="340.4" y="274" text-anchor="middle">0.6</text>
+<text x="404.0" y="274" text-anchor="middle">0.8</text>
+<text x="404" y="294" text-anchor="end">mean difference in graph-edge AP, with 95% interval</text>
+</svg>
+                </div>
+                <figcaption>Each row is one paired comparison of graph-edge AP: hyperbolic minus flat (registered) or H3 minus a control, averaged over the queries, with its 95% percentile bootstrap interval (10,000 resamples, seed 7) between the end ticks. Circles: the 1,176 mammal queries; squares: the 1,000 noun queries. The vertical line is 0. Every interval is narrow and lies to its right. Hover a row for its numbers; the table below holds them too.</figcaption>
+            </figure>
+            <div class="table-wrap"><table style="min-width:600px">
+                <thead><tr><th>Comparison</th><th>Role</th><th class="num">Mammals: mean [95% CI]</th><th class="num">Nouns: mean [95% CI]</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">H3 &minus; F3</td><td>registered comparison</td><td class="num">0.581 [0.562, 0.599]</td><td class="num">0.561 [0.538, 0.584]</td></tr>
+                    <tr><td class="mono">H3 &minus; F3*</td><td>registered comparison</td><td class="num">0.049 [0.042, 0.055]</td><td class="num">0.068 [0.062, 0.074]</td></tr>
+                    <tr><td class="mono">H2 &minus; F2</td><td>registered comparison</td><td class="num">0.677 [0.659, 0.694]</td><td class="num">0.588 [0.565, 0.611]</td></tr>
+                    <tr><td class="mono">H2 &minus; F2*</td><td>registered comparison</td><td class="num">0.311 [0.297, 0.325]</td><td class="num">0.271 [0.257, 0.286]</td></tr>
+                    <tr><td class="mono">H3 &minus; S3</td><td>control: must lie above 0</td><td class="num">0.672 [0.653, 0.691]</td><td class="num">0.567 [0.544, 0.590]</td></tr>
+                    <tr><td class="mono">H3 &minus; K3</td><td>control: must lie above 0</td><td class="num">0.684 [0.664, 0.704]</td><td class="num">0.568 [0.544, 0.591]</td></tr>
+                </tbody>
+            </table></div>
+            <p>All eight registered intervals lie above 0, so L5 is supported. Both controls score far below H3 on both sets, so the metric does see the hierarchy and the test is not void: words shuffled within each length, or hashed from the lemma, keep almost nothing of it.</p>
+            <h3>What it means, and what it does not</h3>
+            <ul>
+                <li><strong>It means</strong> that, given the same words, directions and step rule, the hyperbolic tree ranks each synset&rsquo;s parent and children ahead of the other synsets better than either flat construction does, at d = 2 and d = 3, on the mammals and on the nouns, by an amount the bootstrap resolves.</li>
+                <li><strong>F3* comes close.</strong> The flat fractal tree, whose edges shrink by 1/4 per letter, reaches 0.6420 against H3&rsquo;s 0.6907 on the mammals and 0.5001 against 0.5679 on the nouns. The margins, 0.049 and 0.068, are small, but their intervals ([0.042, 0.055] and [0.062, 0.074]) lie clearly above 0. Its graph-edge mean rank is ten to thirteen times H3&rsquo;s (28.88 against 2.91; 79.44 against 5.94), which suggests that the neighbours it does not rank near the top fall far down the list.</li>
+                <li><strong>H2 slightly beats H3</strong> on graph-edge MAP (0.7187 against 0.6907 on the mammals, 0.5901 against 0.5679 on the nouns), with lower distortion, while its graph-edge mean rank is lower on the mammals and higher on the nouns. No comparison between H2 and H3 was registered and no interval was computed for it, so this is an observation, not a finding.</li>
+                <li><strong>Closure MAP is much lower</strong>: 0.1577 (H3) and 0.1567 (H2) on the nouns, about 0.31 on the mammals. The closure protocol counts every ancestor and every descendant as a neighbour, and a distance-based tree is likely to put distant ones farther away than nearby siblings and cousins (an explanation, not measured here). The closure numbers are reported and decide nothing; they are never compared with graph-edge numbers (<a href="benchmarks.html#stage1">the two protocols in Explainer 7</a>).</li>
+                <li><strong>Sala et al.&rsquo;s 0.989 is not reached.</strong> The registration reports the nouns&rsquo; graph-edge MAP against Sala et al.&rsquo;s combinatorial 0.989 in 2 dimensions at about 500 bits, and predicted that this rule falls short. It does: 0.5901 in H2 and 0.5679 in H3, on the 1,000-query sample. The expected cause is the virtual letters: under a node with more than 5 children, siblings that share a virtual prefix sit as close as the parent or closer (spike S3 on verbs: 0.9974 on one-letter edges, 0.32&ndash;0.43 on longer ones; <a href="evidence.html#s3">Explainer 8</a>). This comparison is not part of L5&rsquo;s decision (<a href="alternatives.html#baselines">baselines in Explainer 5</a>).</li>
+            </ul>
+            <div class="callout note"><span class="label">Fractional ties, reported since Phase 4</span>
+                <p>The Common rules ask for fractional-tie values (each query&rsquo;s AP averaged over every order inside each exact tie class) beside the pessimistic ones, never used to decide, and Phase 1 reported only the pessimistic ones: an omission Amendment 10 item 17 recorded. Phase 4 computed them for every arm above, with Phase 1&rsquo;s own code and draws, in <a href="../reference/results/fractional-ties.md">results/fractional-ties.md</a>; every pessimistic value recomputed there equals the published one, and L5 stays decided as recorded. Where the exact tree ties, the difference is large: H3&rsquo;s graph-edge MAP is 0.6907 pessimistic and 0.7701 fractional on the mammals (488 of the 1,176 queries depend on the order inside a tie class), and 0.5679 and 0.6377 on the nouns. H2 barely moves (0.7187 and 0.7189 on the mammals), and F3* not at all.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="l7">
+            <div class="chapter-num">08</div>
+            <h2>L7 &middot; One tree, three readings</h2>
+            <p class="chapter-intro">The same reduced word is an address, an exact H&sup3; point and a vertex of SHD-CCP RFC 03&rsquo;s LPS Ramanujan graph X(5, q). For q = 13, 17 and 29 every exact part holds and the spectra are Ramanujan. <span class="tag t-SUPPORTED">supported</span></p>
+            <ul>
+                <li><strong>(a)</strong> The LPS map &phi;<sub>q</sub> sends 1&nbsp;&plusmn;&nbsp;2i, 1&nbsp;&plusmn;&nbsp;2j, 1&nbsp;&plusmn;&nbsp;2k to 2&times;2 matrices mod q; the projective Cayley graph has q(q&sup2;&nbsp;&minus;&nbsp;1) vertices and is bipartite when (5|q) = &minus;1, q(q&sup2;&nbsp;&minus;&nbsp;1)/2 when (5|q) = 1, and is always 6-regular, connected and inverse-closed.</li>
+                <li><strong>(b)</strong> Reducing a word&rsquo;s quaternion mod q gives the vertex reached by walking the word, on 11,182 words per q: 10,000 random words from <code>Rng(1000 + i)</code> and the L3 words of the 1,182 mammal closure-set synsets.</li>
+                <li><strong>(c)</strong> Distinct reduced words of length &le; r = &lfloor;(g&nbsp;&minus;&nbsp;1)/2&rfloor; reach distinct vertices, every such word checked.</li>
+                <li><strong>(d)</strong> Every eigenvalue other than &plusmn;6 has |&lambda;| &le; 2&radic;5 &minus; 10<sup>&minus;9</sup> (float64 <code>eigvalsh</code> on the dense adjacency).</li>
+                <li><strong>(e)</strong> Our word quaternion equals SHD-CCP&rsquo;s <code>HurwitzQuaternion</code> product in doubled coordinates, halved, on 2,182 words: 1,000 from <code>Rng(2000 + i)</code> and the 1,182 mammal addresses.</li>
+            </ul>
+            <div class="table-wrap"><table style="min-width:900px">
+                <thead><tr><th class="num">q</th><th class="num">&iota;</th><th class="num">(5|q)</th><th class="num">Vertices</th><th>Bipartite</th><th class="num">Diameter</th><th class="num">Girth g</th><th class="num">r</th><th class="num">Words &le; r<br>&rarr; vertices</th><th class="num">(b)<br>failures</th><th class="num">Largest<br>nontrivial |&lambda;|</th><th class="num">Margin<br>to 2&radic;5</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">13</td><td class="num">5</td><td class="num">&minus;1</td><td class="num">2,184<br>= q(q&sup2;&minus;1)</td><td>yes</td><td class="num">7</td><td class="num">8</td><td class="num">3</td><td class="num">187 &rarr; 187</td><td class="num">0 of 11,182</td><td class="num">4.249721</td><td class="num">0.222415</td></tr>
+                    <tr><td class="num">17</td><td class="num">4</td><td class="num">&minus;1</td><td class="num">4,896<br>= q(q&sup2;&minus;1)</td><td>yes</td><td class="num">9</td><td class="num">8</td><td class="num">3</td><td class="num">187 &rarr; 187</td><td class="num">0 of 11,182</td><td class="num">4.308919</td><td class="num">0.163217</td></tr>
+                    <tr><td class="num">29</td><td class="num">12</td><td class="num">+1</td><td class="num">12,180<br>= q(q&sup2;&minus;1)/2</td><td>no</td><td class="num">8</td><td class="num">9</td><td class="num">4</td><td class="num">937 &rarr; 937</td><td class="num">0 of 11,182</td><td class="num">4.442016</td><td class="num">0.030120</td></tr>
+                </tbody>
+            </table></div>
+            <p>Every graph is 6-regular, connected and inverse-closed, with the expected vertex count. The words of length &le; r include the empty word. The trivial eigenvalues are +6 once at every q and &minus;6 once at q = 13 and 17, the bipartite graphs; at q = 29 the bottom of the spectrum is &minus;4.4107. L7(e) holds on all 2,182 words (SHD-CCP&rsquo;s <code>hurwitz.py</code>, SHA-256 <span class="mono">cecb6dcc&hellip;f1b244e9</span>, imported read-only). The smallest margin, 0.030120 at q = 29, is far above the registered 10<sup>&minus;9</sup>. The dense eigenvalue computation took 0.25&nbsp;s, 2.4&nbsp;s and 43.9&nbsp;s on this container (&ldquo;~&rdquo;). The girths, r and largest nontrivial |&lambda;| match what spike S5 measured on synthetic words (<a href="evidence.html#s5">Explainer 8</a>).</p>
+            <h3>The controls</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Control</th><th>Must</th><th class="num">q = 13</th><th class="num">q = 17</th><th class="num">q = 29</th></tr></thead>
+                <tbody>
+                    <tr><td>&phi; with &iota; = 2</td><td>break (b) on a word</td><td class="num">10,867 of 11,182</td><td class="num">10,877 of 11,182</td><td class="num">10,879 of 11,182</td></tr>
+                    <tr><td>A 4-generator subset</td><td>fail 6-regularity</td><td class="num">not 6-regular</td><td class="num">not 6-regular</td><td class="num">not 6-regular</td></tr>
+                </tbody>
+            </table></div>
+            <p>For (e), the registered control multiplies the doubled-coordinate generators as plain integer quaternions and compares without dividing by 2<sup>L</sup>: it differs on 2,182 of 2,182 words. SHD-CCP&rsquo;s product without its final halving, reported as a second control, differs on all 2,182 too.</p>
+            <h3>How the noun addresses spread over the vertices</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th class="num">q</th><th class="num">Vertices hit by the 82,115 noun addresses</th><th class="num">Largest load</th><th class="num">An even spread</th></tr></thead>
+                <tbody>
+                    <tr><td class="num">13</td><td class="num">2,184 of 2,184</td><td class="num">59</td><td class="num">37.6 per vertex</td></tr>
+                    <tr><td class="num">17</td><td class="num">4,896 of 4,896</td><td class="num">33</td><td class="num">16.8 per vertex</td></tr>
+                    <tr><td class="num">29</td><td class="num">12,167 of 12,180</td><td class="num">18</td><td class="num">6.7 per vertex</td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout limit"><span class="label">A shard key, never integrity</span>
+                <p>The vertex of a word is a cheap, well-spread key: every vertex is hit at q = 13 and 17, and all but 13 at q = 29, with the largest load at most twice the even share at q = 13 and 17 and under three times at q = 29. But words longer than r share vertices, and must, since 82,115 words land on at most 12,180 of them. LPS Cayley hashes also have known collision attacks. So the registration fixes the reduction as a shard key, never as an integrity check; integrity comes from SHA-256 and RFC 6962 manifests (<a href="shdccp.html#lps">Explainer 2</a>, <a href="../proposals/SHD-CCP-RFC03-exact-Qh-and-LPS.md">the RFC 03 proposal</a>).</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">09</div>
+            <h2>What this does not show</h2>
+            <p class="chapter-intro">Three claims, and L3 on its Python side, are decided in Python, on WordNet. That is narrower than it may sound.</p>
+            <ul>
+                <li><strong>Nothing about language models.</strong> No claim here is about an encoder, pretraining or a downstream task. Stage-2 to Stage-4 claims are registered by amendment before any code for them (<a href="benchmarks.html">Explainer 7</a>).</li>
+                <li><strong>Only the Python side.</strong> The common rule says the browser core must reproduce the reference&rsquo;s traces line for line before a claim decided in the reference is shown as holding in the browser. Byte identity across Python, Node and Chromium (L1), the same words and points in JavaScript (L3(f)) and identical exact rankings across engines (L4(a)) compare the reference with <code>lexicon_core.js</code>; L4(b), the float64 test on noun queries, was decided with them in Phase 2 (<a href="browser-core.html">Explainer 10</a>).</li>
+                <li><strong>One sense per synset, one parent per node.</strong> An address is one synset in the spanning tree, without context. The 2,213 nouns with several parents keep only their first <code>@</code> or <code>@i</code> parent in the address (closure MAP still counts every ancestor). <code>##</code> pieces get orthographic addresses (map A).</li>
+                <li><strong>L5 is against the same construction at curvature 0.</strong> It is not a comparison with learned embeddings (L6, Phase 4) or with published systems, it is decided on graph-edge MAP, and on the nouns it uses a 1,000-query sample.</li>
+                <li><strong>L7(d) is numerical.</strong> The spectra are float64 eigenvalues with a margin of at least 10<sup>&minus;9</sup>, which the smallest margin, 0.030120, clears by far; the exact parts (a), (b), (c) and (e) are checked case by case.</li>
+                <li><strong>L2 is about token ids only.</strong> engram/1 keeps its role as a checksum. And V0&rsquo;s alphabet is the 64 ASCII code points of the glosses, so under V0 a word with a non-ASCII letter is <code>[UNK]</code>: a limit of V0&rsquo;s coverage, which does not bear on L1&rsquo;s byte identity.</li>
+                <li><strong>Timings belong to this container.</strong> Every &ldquo;~&rdquo; number would move on another machine; no claim in Phase 1 is decided on time.</li>
+            </ul>
+        </section>
+
+        <section class="chapter" id="next">
+            <div class="chapter-num">10</div>
+            <h2>Phase 2, planned and done</h2>
+            <p class="chapter-intro">The plan at the end of Phase 1: the browser core, <code>lexicon_core.js</code>, on the shared cores unchanged, would reproduce the reference&rsquo;s traces line for line, and then decide L1, L3(f) and L4(a, b). Phase 2 has done both (<a href="browser-core.html">Explainer 10</a>).</p>
+            <ol class="steps">
+                <li><strong>Reproduce the traces.</strong> The normaliser on 388 cases, WordPiece under V0 and V1 with both id-stream SHA-256s, the letter rule and the verb forest, 300 words&rsquo; exact points in every arm, and 20 queries&rsquo; rank lists and APs (<a href="#built">chapter 3</a>), as the common rule &ldquo;Authority&rdquo; requires.</li>
+                <li><strong>L1</strong> in Node and in headless Chromium: identical normalised bytes, tokens, ids, byte offsets and id-stream SHA-256 against the reference on all four instance lists (117,659, 16,622, 20,520 and 2,000 strings), for V0 and, now that it is pinned, for V1. Its controls: the platform&rsquo;s own normaliser, shortest-match WordPiece and accent stripping off must each differ (<a href="architecture.html#normalise">Explainer 3</a>, <a href="benchmarks.html#stage0">Stage 0 in Explainer 7</a>).</li>
+                <li><strong>L3(f)</strong>: the same canonical point list SHA-256, <span class="mono">eb22bf00&hellip;54a3ebc6</span>, and the same 2,000 sampled lines.</li>
+                <li><strong>L4(a)</strong>: identical rank lists, and MAP and mean rank equal as exact rationals, in H&sup3; and H&sup2;, on the mammals and noun queries 0&ndash;199. <strong>L4(b)</strong>: a float64 inversion of an exactly strictly ordered pair on at least one of the 1,000 noun queries. L4&rsquo;s controls: float32 ranking must invert, and an acosh evaluator with index tie-breaking must differ where exact ties exist.</li>
+            </ol>
+            <div class="callout note"><span class="label">What Phase 2 found</span>
+                <p>Parity first: <code>tests/parity-lexicon.cjs</code> passed 18,667 of 18,667 lines in Node, 18,578 of them reproducing the five traces of <a href="#built">chapter 3</a>. Then one decisive run, on the code committed at a1fe9a8. <strong>L1</strong> is <span class="tag t-SUPPORTED">supported</span> in all four cells (V0 and V1, each in Node and in Chromium): 0 of 156,801 instances differ, and every id-stream SHA-256 is equal. <strong>L3(f)</strong> is <span class="tag t-SUPPORTED">supported</span>: the canonical point list has the SHA-256 above, and all 2,000 sampled lines are equal. <strong>L4(a)</strong> is <span class="tag t-SUPPORTED">supported</span>: every rank list and every exact MAP and mean rank is equal in Python and Node. <strong>L4(b)</strong> is <span class="tag t-SUPPORTED">supported</span>: float64 inverts an exactly ordered pair in 997 of the 1,000 noun queries. Every control failed as required. The whole account is in <a href="browser-core.html">Explainer 10</a>.</p>
+            </div>
+            <p>Then Phase 3 decided L8&ndash;L11 (shards, manifests, the hardened importer, verification time), all supported (<a href="chains.html">Explainer 11</a>), and Phase 4 decided L6 and L4(c) (learned embeddings), all supported, L6(c) against its registered prediction (<a href="learned.html">Explainer 12</a>; <a href="../index.html#roadmap">the roadmap</a>). The network is wider than in Phase 0: huggingface.co is reachable, which is how V1 was pinned, while osf.io file downloads still are not; BabyLM is also published on Hugging Face.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="evidence.html">&larr; Spikes and Claims</a>
+                <a class="btn btn-ghost" href="browser-core.html">The Browser Core and Its Parity &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 9 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a> &middot; <a href="../reference/README.md">Reference README</a> &middot; <a href="../reference/results/claims.md">Results</a></footer>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-2d.html&quot;,&quot;label&quot;:&quot;Lexicon 2D: the tree in the disk&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Type a sentence: tokens, addresses and exact H² points; decode, precision, LCA paths&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-3d.html&quot;,&quot;label&quot;:&quot;Lexicon 3D: the tree in the ball&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Segments A and B in H³: frames, X(5, q) vertices, the coupler as a check&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;reference.html&quot;,&quot;label&quot;:&quot;The Python Reference and Its Results&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 9: the Phase 1 reference, L2, L3, L5 and L7 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core and Its Parity&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 10: lexicon_core.js, live parity, L1, L3(f) and L4(a, b) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;chains.html&quot;,&quot;label&quot;:&quot;Language Biochains, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 11: shards, records, the manifest and the signed verifier; L8-L11 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;learned.html&quot;,&quot;label&quot;:&quot;Learned Geometry, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 12: learned Lorentz vs Euclidean, the exact tree; L6 and L4(c) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 13: every panel of lexicon-2d.html, the shard and Engram panels&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 14: every panel of lexicon-3d.html; frames, X(5, q), the coupler&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>
