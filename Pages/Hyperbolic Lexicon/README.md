@@ -1,6 +1,7 @@
 # Hyperbolic Lexicon · SHD-CCP integration and a staged hyperbolic BERT front end
 
-**Status: Phase 4 done (learned embeddings); Phase 5 (the 2D and 3D pages, ending at the Stage-1 gate) is next.**
+**Status: Phase 5 done (the 2D and 3D pages); the Stage-1 gate, a review with the user before any encoder code, is
+next.**
 Of the eleven claims registered in `PREREGISTRATION.md`, Phase 1's one decisive run supported L2, L5 and L7, and L3
 on its Python side (parts (a)–(e) and (g)). Phase 2's one decisive run supported L1, L3(f), which completes L3, and
 L4(a) and (b). Phase 3's one decisive run supported L8 (for the JS grower and for the Python port), L9, L10 and L11.
@@ -9,10 +10,14 @@ put the engrams-on median near the 250 ms bar (below). Phase 4's one decisive ru
 L4(c), which completes L4; L6(c) was supported against its registered prediction of refuted (below). So all eleven
 registered claims are supported, each in full. Three predictions were wrong, and they stay on record: L2's band,
 L11's band and L6(c). Learned static embeddings of the mammal hierarchy exist now; no encoder or language model does,
-and the Stage-2 lexical claims the plan listed for Phase 4 have not been registered.
+and the Stage-2 lexical claims the plan listed for Phase 4 have not been registered. Phase 5 built the two pages,
+[`lexicon-2d.html`](lexicon-2d.html) (the exact H² tree in the Poincaré disk) and [`lexicon-3d.html`](lexicon-3d.html)
+(the exact H³ tree in the Poincaré ball), with a shard panel and an Engram Mind's Eye session import; it decides no
+claim (below).
 
-Open [`index.html`](index.html) for the hub: the system map, the explainer library, the roadmap, the claims ledger
-with the results of Phases 1 to 4, and the decisions. [`summary.html`](summary.html) is the whole analysis on one page.
+Open [`index.html`](index.html) for the hub: the pages, the system map, the explainer library, the roadmap, the claims
+ledger with the results of Phases 1 to 4, and the decisions. [`summary.html`](summary.html) is the whole analysis on
+one page.
 
 ## The question
 
@@ -639,17 +644,112 @@ node reference/run_l6_node.cjs                          # the Node re-evaluation
 
 `reference/README.md` lists every module, option and results file.
 
-### What is next
+### Left open after Phase 4
 
-- **Phase 5, the 2D and 3D pages:** `lexicon-2d.html` (the exact H² tree in the Poincaré disk) and `lexicon-3d.html`
-  (the exact H³ tree in the ball), a shard panel and an Engram session import; then the Stage-1 gate, a review of
-  L1–L11 before any encoder code.
 - **Not done in Phase 4:** the Stage-2 lexical claims the roadmap listed for it (HyperLex, the hypernymy suite,
   SimLex and the rest) were not registered. They remain to be registered by amendment before any code for them.
 - **Carried over from Phase 3's plan:** the SHDGEV01 golden-vector suites of
   [`proposals/SHD-CCP-golden-vectors.md`](proposals/SHD-CCP-golden-vectors.md) (`make_shdgev_v1.py`). They decide no
   claim and were not written. The proposals are to be sent with the measured numbers
   ([`proposals/README.md`](proposals/README.md)).
+
+## Phase 5: the 2D and 3D pages
+
+Phase 5 built the two pages the roadmap promised, their manuals and their tests. It decides no claim: the pages show
+machinery that Phases 1–4 decided, on `lexicon_core.js` and the shared cores unchanged.
+[`explainers/page-2d.html`](explainers/page-2d.html) (Explainer 13) and [`explainers/page-3d.html`](explainers/page-3d.html)
+(Explainer 14) explain every panel and how each page is tested.
+
+### What was built
+
+- **[`lexicon-2d.html`](lexicon-2d.html), the exact H² tree in the Poincaré disk** ("The Lexicon in the Disk"), in the
+  style of Engram Mind's Eye's 2D page. Type a sentence and see its tokens (N_B, WordPiece V0, ids, map A), their
+  addresses and their exact points, drawn through an exact chart. Click a point to decode it exactly; the precision
+  panel shows the bits per coordinate in H² and H³ and the letters float64 would keep; paths through the lowest common
+  ancestor are drawn, with the tree path against the geodesic in H² and H³. It moves up, back, to the origin or to the
+  selection, searches, spreads and pages through siblings and children; it lists the eight nearest drawn points by
+  exact keys; and it can draw one of L6's measured learned tables (`learned-lorentz-d2-lr1-s0`, the 1,182 mammals)
+  beside the exact tree, for comparison.
+- **[`lexicon-3d.html`](lexicon-3d.html), the exact H³ tree in the Poincaré ball** ("The Lexicon in the Ball").
+  Segments A and B go in as a BERT-style pair (`[CLS] A [SEP] B [SEP]`). Each token sits at its exact point with the
+  frame of its quaternion (Hyperbolic Oracles' `twin3d.js` `rotOfQuat`), and one address is read three ways: the word
+  and its ids, the exact H³ point and its decoding, and its X(5, q) vertex for q = 13, 17 and 29 (L7). Engram Mind's
+  Eye's `Coupler` binds the two segments as an integrity check only, with a same-chirality control and a skip tamper.
+- **Shared by both pages** (`assets/hl-panels.js`): a shard panel that grows, signs (ATTEST/1 in WebCrypto) and
+  verifies a language shard with the core's chain section, as Explainer 11's lab does, with `LADDR/1` recomputed from
+  the page's own data (the engine's `shard.run` can also take the pinned string), and seven of L10's tamper classes (T1–T4, T7–T9) to try, each rejected; an Engram Mind's Eye panel
+  that reads the session Engram Mind's Eye keeps in this browser, or an export, and draws its words; and a checks
+  panel.
+- **The page engine**, `assets/hl-pages.js` (`LexiconPages`): the core's own L3 rule and map A run on the pages' data
+  ("wn-lite"), the named tree a page draws, bounded views, exact charts (an isometry computed in BigInt, floats only at
+  the last step), lowest common ancestors and paths, decoding and precision readings, X(5, q) for display, the coupler
+  on a pair, the shard flow and the Engram import. It lives in its own file; `lexicon_core.js` is byte for byte
+  unchanged, and parity stays 22,586 of 22,586.
+- **The data**, written by `reference/golden/make_wordnet_view_v1.cjs` (with `--check`): `data/wordnet_nouns_v1.js`
+  (every noun synset in offset order, its first lemma and its L3 spanning parent) and `data/wordnet_map_a_v1.js` (the
+  verb forest and the WordNet index rows of V0's entries, what map A reads), each beginning with the WordNet licence
+  verbatim. The generator parses its own output with the engine's parsers and refuses to write unless the noun words
+  give the canonical point list (`eb22bf00…`), the verb words their trace line, map A on that data equals map A on the
+  full archive for all 8,192 V0 entries, and the address table's root is `LADDR/1`'s (`30b17bc3…`). As it loads, each
+  page checks both texts against their pins, and its noun words, verb words and map A against the records.
+- **The pages trace**, `reference/traces_pages.py`, writes `reference/traces/pages_v1.txt` (1,326 lines): ten sentences
+  and three pairs through the Python reference, which the engine regenerates line for line.
+- **Tests:** `tests/pages-lexicon.cjs` (the engine in Node), `tests/pages-chromium-2d.cjs` and
+  `tests/pages-chromium-3d.cjs` (each page and its manual in Chromium), all in `tests/all.cjs`.
+
+### How to open the pages
+
+Open `lexicon-2d.html` or `lexicon-3d.html` from the hub, or straight from disk: the data reach the page as script
+files, with no `fetch`, so `file://` works as well as http (for example `python3 -m http.server` at the repository
+root, then `/Pages/Hyperbolic%20Lexicon/lexicon-2d.html`). Only the site bar needs http: it is a module script, which
+browsers block on `file://`. The 2D page keeps its sentence in the address (`#q=`), the 3D page its pair (`#a=&b=`),
+and both keep their settings in this browser (`hyperbolic-lexicon/pages/1`). A page loads its engine and data in
+about 0.6–0.8 s in Chromium; checking every noun's points (`eb22bf00…`) takes 2.2–2.6 s, and recomputing `LADDR/1`
+about 0.5 s.
+
+### Sizes
+
+| File | Bytes | Gzipped (gzip -6) |
+| --- | --- | --- |
+| `data/wordnet_nouns_v1.js` | 2,549,905 | 836,759 |
+| `data/wordnet_map_a_v1.js` | 567,400 | 185,162 |
+| `assets/hl-pages.js` · `hl-panels.js` · `hl-app.css` | 65,749 · 31,441 · 15,693 | 22,637 · 9,751 · 4,402 |
+| `lexicon-2d.html` · `assets/lexicon-2d.js` · `.css` | 16,840 · 60,623 · 3,509 | 4,257 · 18,780 · 1,390 |
+| `lexicon-3d.html` · `assets/lexicon-3d.js` · `.css` | 16,946 · 52,953 · 3,853 | 4,456 · 17,362 · 1,464 |
+
+With the shared cores and the other data files, the 2D page loads 4.2 MB (1.37 MB gzipped) and the 3D page 4.1 MB
+(1.32 MB gzipped). Each data file stays under the generator's 4,000,000-byte limit.
+
+### How it was checked
+
+- **`node tests/pages-lexicon.cjs`:** 62 of 62 checks, about 40 s. Every pin against its record; `load()` from the
+  wrappers alone (about 0.7 s in Node); map A on the pages' data equal to the full archive's, the address table and
+  the canonical point list recomputed; all 1,326 lines of the pages trace regenerated by the engine; every map A word
+  decoded back in H² and H³; 2,000 random LCA pairs and 500 exact charts; the views' budgets and paging; the shard
+  accepted and its tampers rejected; the Engram import; and the core's parity.
+- **`node tests/pages-chromium-2d.cjs`:** 134 of 134. **`node tests/pages-chromium-3d.cjs`:** 285 of 285. Each serves
+  the repository over http on a free port and also opens the page by `file://`, at 1440×900, 1024×768 and 390×844,
+  dark and light: no page or console error (over `file://`, the site bar's blocked module aside), no horizontal
+  scroll, ready within 20 s, light-mode text contrast at least 4.5:1. Then each page's tokens, addresses, exact
+  points, bits, decodings, navigation, LCA readouts, X(5, q) tables, coupler counts, shard verdicts and Engram
+  imports are compared with the engine run in Node. Without Playwright and its Chromium both exit 2, reported as
+  skipped.
+- **The data and the trace:** `make_wordnet_view_v1.cjs --check` and `traces_pages.py --check` rebuild both and
+  compare bytes. The site bar (`install-page-chrome.mjs --check`) and `tests/links.cjs` cover the four new pages.
+
+### What the pages are not
+
+They decide no claim, and they are not semantic similarity: nearness on the disk or in the ball is nearness in
+WordNet's spanning hierarchy as the L3 rule reads it, and a piece has one sense, without context. Every value in the
+panels is exact; positions on screen are floats taken after an exact isometry, for display only. The pages run on V0
+only and draw a neighbourhood, never the whole tree. The 3D page couples the first 192 tokens of a pair (the coupler
+slows sharply with length), and its coupler is an integrity check, not a model. The 3D page's optional view of
+Engram Mind's Eye's own packet frame beside the Lexicon's was not built.
+
+### What is next: the Stage-1 gate
+
+Phase 5 ends at the Stage-1 gate: a review with the user of L1–L11, their results and what Phases 1–5 built, before
+any encoder code is written.
 
 ## Roadmap
 
@@ -660,7 +760,8 @@ node reference/run_l6_node.cjs                          # the Node re-evaluation
 | 2 · Browser core | `lexicon_core.js` at line-for-line trace parity; the data files; the Python and Node/Chromium runners; Amendments 4 and 5; a review; a dry run, then one decisive run: L1, L3(f), L4(a, b) supported | here · **done** |
 | 3 · Records and biochains | The grower in JS and Python, the records, the RFC 6962 manifest, the exact weave, the hardened, attested verifier, the chain trace; Amendments 7 and 8; a review; dry runs, then one decisive run: L8, L9, L10, L11 supported. The SHDGEV01 golden-vector suites were not written and are carried over | here · **done** |
 | 4 · Learned embeddings | The numpy float64 trainer, the exact evaluator of snapped tables, the runner, the core's exact ranking of snapped tables; Amendments 10, 11 and 12; a review; a dry run and registered tuning, then one decisive run: L6 and L4(c) supported, L6(c) against its prediction; the Node re-evaluation. The Stage-2 lexical claims were not registered and remain to be registered by amendment | here · **done** |
-| 5 · The 2D and 3D pages | `lexicon-2d.html`, `lexicon-3d.html`, shard panel, Engram import; then the Stage-1 gate, reviewed before any encoder code | here · next |
+| 5 · The 2D and 3D pages | `lexicon-2d.html` (the exact H² tree in the disk) and `lexicon-3d.html` (the exact H³ tree in the ball), a shared shard panel and Engram import, the page engine and its WordNet data, the pages trace, Explainers 13 and 14, the engine's Node tests and both pages' Chromium tests | here · **done** |
+| Stage-1 gate | A review with the user of L1–L11, their results and what Phases 1–5 built, before any encoder code | here · **next** |
 | 6 · CPU encoder | 1–10M parameters; claims L12–L15 by amendment; BabyLM strict-small | here (BabyLM from Hugging Face; osf.io's file downloads are blocked), or your machine |
 | 7 · GPU track | BERT-mini/small, BabyLM 100M, GLUE, HiT | your hardware |
 | 8 · Integration | engram/2 in Engram Mind's Eye; proposals delivered | here |
@@ -727,6 +828,11 @@ Open choices with defaults:
   they are scored on, so it measures how well each geometry fits that relation, not generalisation to held-out
   edges. It shows nothing about lexical semantics (the Stage-2 claims are not registered) or about a language
   model.
+- **What Phase 5 shows.** Nothing new is decided. The pages show, in the browser, machinery the claims decided: a
+  sentence's tokens and ids, their addresses, their exact points in H² and H³ decoded back, the bits that exactness
+  costs, the X(5, q) vertex of an address, and a language shard grown, signed and verified. The engine's outputs equal
+  the reference's pages trace line for line, and each page's numbers equal the engine's in Node, on one Node release
+  and one Chromium build on one Linux container.
 - **What Hyperbolic Oracles already found.** Its C1 ("hyperbolic beats flat" for PolyStep optimisation) was refuted.
   The literature finds clear gains only on explicit hierarchies, and modest or none on general NLP.
 - **What this system bets on.** Representation of hierarchies in low dimensions, and certification: exactness,
@@ -743,14 +849,16 @@ Open choices with defaults:
 | `index.html` | The hub |
 | `summary.html` | The analysis on one page (also the shareable page) |
 | `PREREGISTRATION.md` | L1–L11, D1–D12, common rules, shared instances, Amendments 1–12 |
-| `explainers/` | 1 analysis · 2 shdccp · 3 architecture · 4 biochains · 5 alternatives · 6 tracks · 7 benchmarks · 8 evidence · 9 reference · 10 browser-core · 11 chains · 12 learned |
+| `lexicon-2d.html`, `lexicon-3d.html` | The 2D and 3D pages (Phase 5) |
+| `explainers/` | 1 analysis · 2 shdccp · 3 architecture · 4 biochains · 5 alternatives · 6 tracks · 7 benchmarks · 8 evidence · 9 reference · 10 browser-core · 11 chains · 12 learned · 13 page-2d · 14 page-3d |
 | `lexicon_core.js` | The browser core (Phase 2), its chain section (Phase 3) and its exact ranking of snapped tables (Phase 4), on the shared cores unchanged |
-| `data/` | The pinned Unicode 15.1 table and V0 as script files, for the pages (`reference/golden/make_js_data_v1.cjs`) |
+| `data/` | The pinned Unicode 15.1 table and V0 as script files, for the pages (`reference/golden/make_js_data_v1.cjs`); L6's view for Explainer 12 (`make_l6_view_v1.py`); the pages' WordNet data, with the WordNet licence (`make_wordnet_view_v1.cjs`, Phase 5) |
 | `assets/hl.css`, `assets/hl-map.js` | Shared style; the system map (Hyperbolic Oracles' renderer, renamed) |
+| `assets/hl-pages.js`, `hl-panels.js`, `hl-app.css`, `lexicon-2d.*`, `lexicon-3d.*` | The pages' engine (`LexiconPages`), their shared panels (shard, Engram, checks) and style, and each page's own script and style (Phase 5) |
 | `reference/` | The Python reference (Phase 1; the chain modules, Phase 3; the trainer and the L6 modules, Phase 4): pins (`golden/`), modules (`lexicon/`), tests, traces, `run_claims.py`, the Phase 2 runner `run_claims_js.cjs`, the Phase 3 runner `run_claims_phase3.cjs` (with `run_claims_phase3.py`), the Phase 4 runner `run_claims_phase4.py` with `settings.json` (the frozen rates), the Node re-evaluation `run_l6_node.cjs`, `fractional_ties.py`, and their results; see `reference/README.md` |
 | `spikes/` | S1–S7 with captured outputs, and the L1 stress set |
 | `proposals/` | Documents for SHD-CCP, BioChain-AI and Owl Academy, never applied; the kernel check |
-| `tests/` | `parity-lexicon.cjs` (the browser core against the traces), `chain-lexicon.cjs` (the chain section's checks beyond the trace), `bridges-lexicon.cjs` (Engram Mind's Eye imports the Lexicon's shards), `links.cjs`, `spikes.cjs`, `all.cjs`; `l1-harness.html`, the page the Phase 2 runner opens in Chromium |
+| `tests/` | `parity-lexicon.cjs` (the browser core against the traces), `chain-lexicon.cjs` (the chain section's checks beyond the trace), `bridges-lexicon.cjs` (Engram Mind's Eye imports the Lexicon's shards), `pages-lexicon.cjs` (the page engine in Node), `pages-chromium-2d.cjs` and `pages-chromium-3d.cjs` (the pages in Chromium), `links.cjs`, `spikes.cjs`, `all.cjs`; `l1-harness.html`, the page the Phase 2 runner opens in Chromium |
 
 ## How to check
 
@@ -764,11 +872,15 @@ It runs:
 - the chain section's checks (`tests/chain-lexicon.cjs`), Engram's import of the Lexicon's shards
   (`tests/bridges-lexicon.cjs`), and the Owl Academy and BioChain-AI compatibility pin
   (`make_biomesh_compat_v1.cjs --check`, skipped without those checkouts beside this repository);
+- the pages: their WordNet data (`make_wordnet_view_v1.cjs --check`), the page engine in Node
+  (`tests/pages-lexicon.cjs`), and both pages in Chromium (`tests/pages-chromium-2d.cjs` and `pages-chromium-3d.cjs`,
+  skipped without Playwright);
 - this folder's links and spike reruns;
 - the site bar;
 - the WordNet and EWT pins;
 - the Python reference: its fast pytest suite, the five pin checks (Unicode 15.1, the table against the official
-  UCD 15.1.0 files, V0 retrained, V1, the L1 instance lists) and the three trace checks (text, geometry and L6);
+  UCD 15.1.0 files, V0 retrained, V1, the L1 instance lists) and the four trace checks (text, geometry, L6 and the
+  pages);
 - the kernel check. Checks are reported as skipped, never passed, without the data cache or an SHD-CCP checkout.
 
 It does not run `run_claims.py`, `run_claims_js.cjs`, `run_claims_phase3.cjs`, `run_claims_phase4.py`,

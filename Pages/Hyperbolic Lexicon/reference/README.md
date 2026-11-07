@@ -33,6 +33,12 @@ Amendment 11 that changes no result, and `run_l6_node.cjs` (`09a8afa`) re-ranked
 every value equal. With Phase 4 all eleven registered claims are supported. Explainer 12,
 [`../explainers/learned.html`](../explainers/learned.html), tells Phase 4's story.
 
+Phase 5 built the 2D and 3D pages and decides no claim. The reference gained one trace for them, `traces_pages.py`,
+whose 1,326 lines the page engine (`../assets/hl-pages.js`) regenerates in Node (`../tests/pages-lexicon.cjs`), and
+the pins gained `golden/make_wordnet_view_v1.cjs`, the pages' WordNet data as script files. Explainers 13 and 14,
+[`../explainers/page-2d.html`](../explainers/page-2d.html) and [`../explainers/page-3d.html`](../explainers/page-3d.html),
+are the pages' manuals.
+
 ## The authority rule
 
 - **Exact stages:** the Python reference decides the claims for the exact stages (normaliser, tokenizer, ids, addresses,
@@ -43,7 +49,8 @@ every value equal. With Phase 4 all eleven registered claims are supported. Expl
   decided L8(d), L9 and L10's verdicts, and the JS equalled it on every record, root, proof and verdict. In Phase 4
   the reference decided L6 and L4(c), and Node, with `lexicon_core.js` unchanged, re-ranked the 50 measured snapped
   tables and the exact arm with every exact MAP, LBENCH/1 hash, mean rank and tie count equal (`run_l6_node.cjs`,
-  reported).
+  reported). In Phase 5 the page engine, on `lexicon_core.js` unchanged, regenerates the pages trace
+  (`traces/pages_v1.txt`) line for line, 1,326 of 1,326 (`../tests/pages-lexicon.cjs`); it decides nothing.
 - **Compatibility with Owl Academy and BioChain-AI:** their own JavaScript is the authority (claim L8(a, b)), run
   unchanged from their checkouts by name-grab (Owl Academy at `7f45f35`, BioChain-AI at `c975161`).
 - **Learned embeddings (Phase 4):** the numpy float64 trainer (`lexicon/embed.py`) is the authority for the learned
@@ -68,6 +75,7 @@ every value equal. With Phase 4 all eleven registered claims are supported. Expl
 | `golden/nb_spec_v1.txt` | N_B's specification as Amendment 1 item 1 wrote it, with Amendment 2's readings, verbatim: the file whose SHA-256 is `LVOCAB/1`'s normaliserSpecSha (Amendment 7 item 3). `lexicon/records.py` and `lexicon_core.js` refuse it unless its hash is the pinned one. (Phase 3) |
 | `golden/make_biomesh_compat_v1.cjs`, `golden/biomesh_compat_v1.json` | `lexicon_core.js`'s `growSync` against Owl Academy's and BioChain-AI's own `growBiochain` (run unchanged by name-grab from their checkouts), engrams off and on, on 13 unregistered texts: `Rng(8000 + i)` synthetic shards, seven edge texts and the first two verb gloss shards. All 26 records equal both growers' in all fifteen fields, and both `verifyIntegrity`s accept them. `node golden/make_biomesh_compat_v1.cjs <Owl-Academy> <BioChain-AI> --check` recomputes (about 2 minutes) and exits 2 when a checkout is missing. (Phase 3) |
 | `golden/check_ucd_v1.py`, `golden/ucd_15_1_v1.meta.json` | The pinned table checked field by field against the official UCD 15.1.0 files (UnicodeData, SpecialCasing, DerivedCoreProperties, DerivedAge), pinned at unicode-org/unicodetools `b9144701` and fetched from GitHub, since unicode.org is blocked here: equal in every field (categories, decompositions, combining classes, lowercase, both Final_Sigma sets, whitespace, Hangul). Without `--check` it fetches once into the cache and writes the meta; `--check` compares. Run as `python3 -B -I`. (After Phase 2's run, `5e1681c`) |
+| `golden/make_wordnet_view_v1.cjs` | Writes `../data/wordnet_nouns_v1.js` (every noun synset in offset order with its first lemma and L3 spanning parent; 2,549,905 bytes) and `../data/wordnet_map_a_v1.js` (the verb forest and the WordNet index rows of V0's entries, what map A reads; 567,400 bytes), the 2D and 3D pages' WordNet data as script files, each beginning with the WordNet licence verbatim. It parses its own output back with the page engine's parsers and refuses to write unless the noun words give the canonical point list (`eb22bf00…`), the verb words their trace line, map A on that data equals map A on the full archive for all 8,192 V0 entries, and the address table's root is `LADDR/1`'s (`30b17bc3…`). `--check` rebuilds in memory and compares bytes (about 6 s; exit 2 without the archive). (Phase 5) |
 | `golden/l6_protocol_v1.txt` | Amendment 10 verbatim, from its heading, with LF line ends and a final LF (A10.12): the file whose SHA-256, `1267ebb2…`, every `LBENCH/1` record carries as its protocolSha. `tests/test_l6.py` pins it against `../PREREGISTRATION.md`. (Phase 4) |
 
 Every check exits 0 on a match, 1 on a mismatch and 2 "skipped" when its data is not cached. Fetch the data once:
@@ -192,6 +200,9 @@ python3 -B traces_chain.py --check                     # rebuild the chain trace
 python3 -B traces_chain.py                             # rewrite the chain trace
 python3 -B traces_l6.py --check                        # rebuild the L6 trace (snapped toy tables, ranked exactly) and compare
 python3 -B traces_l6.py                                # rewrite the L6 trace
+python3 -B traces_pages.py --check                     # rebuild the pages trace (the page engine's outputs) and compare
+python3 -B traces_pages.py                             # rewrite the pages trace
+node golden/make_wordnet_view_v1.cjs --check           # rebuild the pages' WordNet data files and compare
 python3 -B fractional_ties.py                          # A10.17: Phase 1's and 2's fractional-tie MAPs into
                                                        # results/fractional-ties.json and .md (about 5 minutes; decides nothing)
 ```
@@ -223,7 +234,13 @@ python3 -B fractional_ties.py                          # A10.17: Phase 1's and 2
   tables, case i from `Rng(8000 + i)`, float tables snapped at 2^−32 and at A10.10's coarse 2^−8 and integer tables
   with planted exact ties and binary64 near-ties, ranked exactly by `lexicon/learned.py` (APs, ranks, rank-list
   SHA-256s, MAPs, mean ranks, ties); `../tests/parity-lexicon.cjs` regenerates it in `lexicon_core.js` line for line,
-  and `test_learned.py` and `../tests/all.cjs` run its `--check`. Each `--check` rebuilds in memory and compares bytes:
+  and `test_learned.py` and `../tests/all.cjs` run its `--check`. `traces_pages.py` (Phase 5) writes
+  `traces/pages_v1.txt`, 1,326 lines: ten fixed sentences and three fixed BERT-style pairs through the reference (N_B
+  and WordPiece on V0, map A, D6 ids and certification, exact H³ and H² points, decoding, bits, the letters that
+  survive float64 storage, consecutive tokens' synset LCA, exact cosh and chart coordinates, X(5, q) vertices), the
+  coupler on each pair's segments with its control, seven words' engram/1 keys, and 100 random words `Rng(8400 + i)`
+  on the three X(5, q) graphs; `../tests/pages-lexicon.cjs` regenerates it with the page engine line for line, and
+  `../tests/all.cjs` runs its `--check`. Each `--check` rebuilds in memory and compares bytes:
   exit 0 equal, 1 different, 2 skipped when the data it needs is not cached (the L6 trace needs none). Each file
   documents its format in its `#` header. Nothing in them decides a claim.
 - **Fractional ties** (A10.17). `fractional_ties.py` computes the fractional-tie MAPs (A10.11's formula) that Phase 1

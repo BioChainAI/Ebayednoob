@@ -1,0 +1,63 @@
+/* Hyperbolic Lexicon, the 3D page (lexicon-3d.html). Loads after hl-app.css, which holds every colour token and the
+   shared classes; this file adds the grid areas and a few page pieces (the twin row, the binding strip, the segment
+   marks), coloured only through hl-app.css's tokens. Segment A is drawn in --sky, segment B in --amber. */
+.board3d { grid-template-areas: "view" "input" "sel" "twin" "tokens" "shard" "engram" "checks"; }
+/* Departure from the Phase 5 spec's grid (measured: the selected-point panel is far taller than the input panel, so
+   the spec's areas left a tall gap under the view): from 900 px the selected point keeps a column of its own beside
+   the input and the twin system (900-1359) or beside the tokens and the twin system (1360 and up). */
+@media (min-width: 900px) {
+    .board3d { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "view view" "input sel" "twin sel" "tokens tokens" "shard engram" "checks checks"; align-items: start; }
+}
+@media (min-width: 1360px) {
+    .board3d { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "view view input" "view view sel" "tokens tokens sel" "twin twin sel" "shard engram checks"; }
+    #p-twin .twin-row { max-width: 520px; }
+}
+#p-view { grid-area: view; }
+#p-input { grid-area: input; }
+#p-sel { grid-area: sel; }
+#p-twin { grid-area: twin; }
+#p-tokens { grid-area: tokens; }
+#p-shard { grid-area: shard; }
+#p-engram { grid-area: engram; }
+#p-checks { grid-area: checks; }
+
+#cv-view { cursor: grab; touch-action: pan-y; }
+#cv-view:active { cursor: grabbing; }
+.search3 { flex: 1 1 180px; min-width: 0; display: flex; }
+.search3 input { width: 100%; }
+
+/* segments A and B */
+.seg-a { --c: var(--sky); } .seg-b { --c: var(--amber); }
+.seg-label { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); margin: 8px 0 4px; }
+.seg-key { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--c); color: var(--c); font: 600 0.72rem var(--mono); }
+.pair-toks { gap: 6px 5px; }
+.pair-toks .tw3 { display: inline-flex; flex-direction: column; max-width: 100%; }
+.pair-toks .seg-band { background: var(--c); }
+.pair-toks .tok small b { color: var(--c); font-weight: 600; }
+
+/* one address, three readings */
+.sel3 h3.mini:first-child { margin-top: 2px; }
+.sel3 .kv { margin: 2px 0 4px; }
+.sel3 .word { display: block; margin: 2px 0 4px; }
+.sel3 .anc { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.sel3 .anc .chip { font-size: 0.7rem; padding: 1px 8px; }
+.sel3 .coords { font: 0.74rem var(--mono); overflow-wrap: anywhere; }
+.sel3 .nowrap { white-space: nowrap; }
+.sel3 .coords div { padding: 1px 0; }
+.sel3 textarea.copybox { width: 100%; min-height: 72px; font: 0.7rem var(--mono); background: var(--field); color: var(--text); border: 1px solid var(--field-line); border-radius: 8px; }
+.sel-grid { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-start; }
+.sel-grid .kv { flex: 1 1 220px; }
+.sel-grid canvas.cv { flex: 0 0 auto; width: 150px; }
+#cv-lps { max-width: 320px; }
+
+/* the twin system */
+.twin-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.twin-row figure { margin: 0; }
+.twin-row figcaption { font: 0.72rem var(--mono); color: var(--faint); margin-top: 4px; text-align: center; }
+.bind3 { display: flex; flex-wrap: wrap; gap: 3px; }
+.bind3 i { display: block; width: 14px; height: 14px; border-radius: 3px; background: var(--emerald); border: 2px solid var(--c); opacity: 0.9; }
+.bind3 i.no { background: var(--rose); }
+.bind3 i.skip { box-shadow: 0 0 0 2px var(--fuchsia); }
+
+#tok-table tr.seg1 td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+#tok-table tr.seg0 td:first-child { box-shadow: inset 3px 0 0 var(--sky); }

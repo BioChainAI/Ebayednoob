@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 3D Page Manual - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 14 of Hyperbolic Lexicon, Phase 5: the manual of lexicon-3d.html. Segments A and B go in as a BERT-style pair; every token sits at its exact address in the H³ tree, drawn in the Poincaré ball through an exact recentring chart; each token carries the frame of its quaternion; one address is read three ways (the word, the exact H³ point and its decoding, the X(5, q) vertex); Engram Mind's Eye's coupler binds the two segments as an integrity check only; a shard panel and an Engram Mind's Eye import are shared with the 2D page. Every panel, control and number, and how the page is tested. It decides no claim.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 14 &middot; Phase 5</div>
+    <h1>The 3D Page Manual</h1>
+    <p class="lede">The 3D page, <a href="../lexicon-3d.html"><code>lexicon-3d.html</code></a>, takes two segments as a BERT-style pair and shows every token at its exact address in the H&sup3; tree, drawn in the Poincar&eacute; ball. Each token carries the frame of its quaternion. The selected address is read three ways: as a word, as an exact H&sup3; point that decodes back, and as a vertex of X(5, q). Engram Mind&rsquo;s Eye&rsquo;s coupler binds the two segments. This manual covers every panel and control, where each number comes from, and how the page is tested. The page decides nothing.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="../lexicon-3d.html">Open the 3D page</a>
+        <a class="btn btn-ghost" href="#view">The view</a>
+        <a class="btn btn-ghost" href="#readings">One address, three readings</a>
+        <a class="btn btn-ghost" href="#coupler">The coupler</a>
+        <a class="btn btn-ghost" href="#limits">What it is not</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">decides: <b>nothing</b> &middot; built on L1, L3, L4, L7, L8&ndash;L11</span>
+        <span class="stat">default pair: <b>17</b> tokens, centre <b>organism.n</b></span>
+        <span class="stat">engine and data checked at load in <b>~0.7&ndash;1.0 s</b></span>
+        <span class="stat">Chromium: <b>3 widths &times; 2 schemes &times; http and file://</b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#view">2. The view</a></li>
+            <li><a href="#pair">3. Segments A and B</a></li>
+            <li><a href="#frames">4. A frame per token</a></li>
+            <li><a href="#readings">5. One address, three readings</a></li>
+            <li><a href="#coupler">6. The coupler binds A and B</a></li>
+            <li><a href="#decode">7. Click to decode in H&sup3;</a></li>
+            <li><a href="#shared">8. The shared panels</a></li>
+            <li><a href="#tested">9. How it is tested</a></li>
+            <li><a href="#limits">10. What it is not</a></li>
+        </ol>
+    </nav>
+    <main style="font-variant-ligatures:none">
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#view">The view</a></li><li><a href="#pair">Segments A and B</a></li>
+            <li><a href="#frames">A frame per token</a></li><li><a href="#readings">One address, three readings</a></li><li><a href="#coupler">The coupler binds A and B</a></li>
+            <li><a href="#decode">Click to decode in H&sup3;</a></li><li><a href="#shared">The shared panels</a></li><li><a href="#tested">How it is tested</a></li>
+            <li><a href="#limits">What it is not</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">Phase 5 builds the two pages that Explainer 3 designed in Phase 0 (<a href="architecture.html#pages">its pages chapter</a>): <a href="../lexicon-2d.html">the 2D page</a>, with the exact H&sup2; tree in the disk, and this one, with the exact H&sup3; tree in the ball. Both stand on claims already decided, and neither decides one.</p>
+            <div data-hl-map="focus" data-node="pages"></div>
+            <ul>
+                <li><strong>L1.</strong> The pre-processing front end (N<sub>B</sub>, WordPiece V0, ids, offsets) is byte-identical in Python, Node and Chromium. The page tokenises with that front end.</li>
+                <li><strong>L3.</strong> Every noun synset has an exact, invertible, certified address in the norm-5 tree, with exact points in H&sup3; and H&sup2;. The page draws those points and decodes them.</li>
+                <li><strong>L4.</strong> Exact ranking is identical across engines, and float64 is not certifiable at WordNet depth. That is why the picture is drawn from an exact chart, and why the page reports how many letters survive float64.</li>
+                <li><strong>L7.</strong> One tree, three readings: address, H&sup3; point and X(5, q) vertex. Chapter 5 shows all three for the selected address.</li>
+                <li><strong>L8&ndash;L11.</strong> Language shards, the corpus manifest and the hardened verifier. The shard panel runs that code on this page&rsquo;s data.</li>
+            </ul>
+            <p>The page runs on <a href="../lexicon_core.js"><code>lexicon_core.js</code></a>, loaded unchanged. This is the core on which L1, L3(f), L4 and L8&ndash;L11 were decided; <code>node tests/parity-lexicon.cjs</code> still gives 22,586/22,586. The page engine, <a href="../assets/hl-pages.js"><code>assets/hl-pages.js</code></a> (<code>LexiconPages</code>), composes the core with Hyperbolic Oracles&rsquo; <code>hyperbolic_core.js</code>, <code>decoder3d.js</code> and <code>twin3d.js</code> and Engram Mind&rsquo;s Eye&rsquo;s <code>engram_core.js</code>. The panels both pages share are in <a href="../assets/hl-panels.js"><code>assets/hl-panels.js</code></a>. This page&rsquo;s own files only draw and ask:</p>
+            <ul>
+                <li><a href="../lexicon-3d.html"><code>lexicon-3d.html</code></a>, the page;</li>
+                <li><a href="../assets/lexicon-3d.js"><code>assets/lexicon-3d.js</code></a>, its script;</li>
+                <li><a href="../assets/lexicon-3d.css"><code>assets/lexicon-3d.css</code></a>, its layout;</li>
+                <li><a href="../tests/pages-chromium-3d.cjs"><code>tests/pages-chromium-3d.cjs</code></a>, its test (chapter 9).</li>
+            </ul>
+            <p>The WordNet data reach the page as two script wrappers, with no <code>fetch</code>, so the page works from <code>file://</code> as well as over http. At load the page checks both texts against their pins, runs the core&rsquo;s L3 rule and map A on them, and compares the results with the decisive runs&rsquo; records. Explainer 13 describes <a href="page-2d.html#data">the data and its checks</a>.</p>
+            <div class="callout plain"><span class="label">Phase 5 decides nothing</span>
+                <p>Every number on the page is computed in your browser by the code that the claims were decided on, and the tests compare those numbers with Node&rsquo;s. Phase 5 ends at the Stage-1 gate: a review with the user before any encoder code is written.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="view">
+            <div class="chapter-num">02</div>
+            <h2>The view</h2>
+            <p class="chapter-intro">The 82,115 noun synsets (and the 8,192 V0 tokens and 13,767 verb synsets beside them) cannot be drawn at once. The view shows a bounded neighbourhood of one named node, the <em>centre</em>, in the centre&rsquo;s own exact chart. You move by recentring.</p>
+            <h3>What is drawn</h3>
+            <p><code>Lex.view(centre)</code> lists the drawn nodes. Its rules are the same as on the 2D page:</p>
+            <ul>
+                <li>every named ancestor of the centre;</li>
+                <li>up to 24 siblings and 48 children, with paging;</li>
+                <li>four grandchildren for each of the first 12 children, when the centre has at most 48 children;</li>
+                <li>the pair&rsquo;s tokens, plus a shard&rsquo;s tokens or an Engram session&rsquo;s words when you ask for them;</li>
+                <li>the named nodes on each lowest-common-ancestor path.</li>
+            </ul>
+            <p>The budget is 400 nodes. For the default pair, the centre is organism.n (00004475), the lowest common ancestor of its noun tokens. The view then holds 89 named nodes and 182 virtual letters.</p>
+            <p>Edges are drawn letter by letter. Each letter of a word is one geodesic step of length ln 7 = 1.9459 in the tree, and the page samples each step on its H&sup3; geodesic. A step after the first letter of a multi-letter edge ends on a <em>virtual</em> prefix: one of the L3 rule&rsquo;s extra digits for families of more than five. These virtual prefixes are drawn as gold dots. A dashed edge passes named nodes that the view does not draw (an extra token joined to its nearest drawn ancestor).</p>
+            <h3>The exact chart, then floats</h3>
+            <p><code>Lex.chart(3, centre)</code> sends every drawn point x to M<sub>c</sub><sup>&minus;1</sup>x. Here M<sub>c</sub> is the centre&rsquo;s integer frame from the tree, and M<sub>c</sub><sup>&minus;1</sup> = J M<sub>c</sub><sup>T</sup> J. The result is computed in BigInt: integer numerators over the product of the two denominators. The centre lands exactly on (D, 0, 0, 0), and the parent lands on the negative x-axis. Floats enter only at the last step:</p>
+            <ul>
+                <li>the distance d, from the exact cosh, correctly rounded;</li>
+                <li>a unit direction u, from the three spatial numerators.</li>
+            </ul>
+            <p>So the resting picture is exact up to its final rounding, at any depth. Far from the centre, the float point is accurate only as a picture; this is L4&rsquo;s finding. The readout shows how long the chart took: a few milliseconds (3&ndash;11 ms for the default pair in these tests).</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Mode</th><th>Radius of a point at distance d</th><th>What it shows</th></tr></thead>
+                <tbody>
+                    <tr><td>Poincar&eacute; ball (default)</td><td>r = tanh(d / 2s), with the rim drawn; s is the spread, &times;1 to &times;6, default &times;3</td><td>The conformal picture at s = 1. Hyperbolic lengths shrink toward the rim, so the far tree crowds there. dog.n is 25.5 from organism and sits at r = 0.9996 at &times;3.</td></tr>
+                    <tr><td>radius = distance</td><td>r = d / (1.04 &times; the largest drawn d)</td><td>Distances read straight off the radius, as on Engram Mind&rsquo;s Eye&rsquo;s 3D page. Far tokens line up along the parent&rsquo;s direction.</td></tr>
+                </tbody>
+            </table></div>
+            <p>From the centre, everything outside its subtree lies behind its parent, along the negative x-axis. Tokens of other roots (for example the, ##ased and [CLS], 24&ndash;36 from organism) therefore share one spot at the rim, and they share one label there too; a token within a few pixels of the selected one is named in the selection&rsquo;s label. To see them, press Origin.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Control</th><th>Does</th></tr></thead>
+                <tbody>
+                    <tr><td>drag</td><td>Turns the view: yaw and pitch with a mouse. On touch, a horizontal drag turns the yaw and the page still scrolls; the pitch slider covers the rest.</td></tr>
+                    <tr><td>click</td><td>Selects the nearest drawn point within 12 px (chapter 5)</td></tr>
+                    <tr><td>double-click, long press</td><td>Selects the point and centres the view on it</td></tr>
+                    <tr><td>Up, Back, Origin, Centre on selection</td><td>Centres on the centre&rsquo;s named parent, the previous centre (a history of 50), the empty word, or the selection</td></tr>
+                    <tr><td>search</td><td>Prefix match on first lemmas and V0 pieces (<code>Lex.search</code>); Enter selects the first match and centres on it</td></tr>
+                    <tr><td>view, spread, + and &minus;, pitch</td><td>The mode, the spread, zoom (also Ctrl + wheel, or a trackpad pinch) and pitch. All are float display transforms, applied after the exact chart.</td></tr>
+                    <tr><td>frames, tree, labels, paths, turn</td><td>Toggles: the token frames (chapter 4); the edges and virtual letters; the labels; the gold lowest-common-ancestor paths; a slow turn about the vertical (off by default when the system asks for reduced motion)</td></tr>
+                    <tr><td>&#9664; siblings &hellip; &#9654;, &#9664; children &hellip; &#9654;</td><td>Pages through a centre&rsquo;s siblings or children when there are more than the view holds</td></tr>
+                </tbody>
+            </table></div>
+            <p>The paths join consecutive distinct synset tokens of the pair, in BERT order, through their lowest common ancestor. Each path is drawn letter by letter up from one token and down to the next. For the default pair, dog&ndash;cat meets at carnivore.n and cat&ndash;tree meets at organism.n. dog and cat share 24 letters, but carnivore has 23: the longest common prefix ends inside a multi-letter edge. The 2D page&rsquo;s LCA panel gives the tree path against the geodesic: dog&ndash;cat is 7 letters, a tree path of 13.62 against a geodesic of 9.06 in H&sup3;.</p>
+            <div class="callout note"><span class="label">Why canvas, not WebGL</span>
+                <p>The renderer is the one used on Engram Mind&rsquo;s Eye&rsquo;s 3D page and on Hyperbolic PolyStep&rsquo;s 3D pages: plain canvas 2D, with yaw and pitch, perspective 1/(1 &minus; 0.18 z) and back-to-front painting with depth fade. It needs no library, no CDN and no GPU, so the page works offline and from <code>file://</code>. A few hundred points and their geodesics are well within what canvas 2D can draw each frame.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="pair">
+            <div class="chapter-num">03</div>
+            <h2>Segments A and B</h2>
+            <p class="chapter-intro">BERT-style models read two segments at once. This page does the same, so that the two can be compared and bound (chapter 6).</p>
+            <p>The pair goes in as <code>[CLS] A [SEP] B [SEP]</code>. If B has no tokens, it goes in as <code>[CLS] A [SEP]</code>. Each segment is normalised by N<sub>B</sub> and split by WordPiece V0 on its own (<code>Lex.analyse(A, { pair: [A, B] })</code>). Segment id 0 covers <code>[CLS]</code>, A and the first <code>[SEP]</code>. Segment id 1 covers B and the last <code>[SEP]</code>. The specials have no byte span. B&rsquo;s spans count from B&rsquo;s first byte.</p>
+            <ul>
+                <li><strong>The chips.</strong> Each shows its piece, its V0 id and its segment id. Its colour is its root, and the band under it is its segment: A in sky, B in amber. Click a chip to select its token.</li>
+                <li><strong>The readout.</strong> The token counts per segment, the synset tokens, <code>[UNK]</code>s, and any words N<sub>B</sub> refused (code points unassigned in Unicode 15.1).</li>
+                <li><strong>The id stream.</strong> The LEB128 stream of the pair&rsquo;s ids, with its SHA-256.</li>
+                <li><strong>The examples.</strong> &ldquo;The dog chased the cat.&rdquo; / &ldquo;The cat climbed the tree.&rdquo; (17 tokens, the default); &ldquo;Is oxygen a gas?&rdquo; / &ldquo;Yes, and so is nitrogen.&rdquo; (16); &ldquo;She can run.&rdquo; with B empty (6).</li>
+                <li><strong>The address.</strong> The pair is kept in the address as <code>#a=&hellip;&amp;b=&hellip;</code>, so a link opens the same pair; a new pair typed into the address bar is analysed at once.</li>
+            </ul>
+            <p>Every token is placed by map A, as on the 2D page:</p>
+            <ul>
+                <li>specials, digits and punctuation go to root 5, and ## pieces are spelled under root 3;</li>
+                <li>an entry that WordNet indexes takes the part of speech with the most tagged senses (ties: noun, verb, adjective, adverb). A noun or verb lands on its first sense&rsquo;s synset; an adjective or adverb is spelled under root 2;</li>
+                <li>every other entry is spelled under root 4.</li>
+            </ul>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Root</th><th>Holds</th><th>Default pair</th></tr></thead>
+                <tbody>
+                    <tr><td>0 &middot; noun</td><td>entity.n.01 and its tree</td><td>dog, cat, cat, tree</td></tr>
+                    <tr><td>1 &middot; verb</td><td>the verb forest, under a virtual root</td><td>&ndash;</td></tr>
+                    <tr><td>2 &middot; adj/adv</td><td>adjective and adverb lemmas, spelled</td><td>&ndash;</td></tr>
+                    <tr><td>3 &middot; ##</td><td>## pieces, spelled</td><td>##ased, ##bed</td></tr>
+                    <tr><td>4 &middot; other</td><td>other whole words, spelled</td><td>the (&times;4), ch, clim</td></tr>
+                    <tr><td>5 &middot; special</td><td>specials, digits and punctuation</td><td>[CLS], [SEP] (&times;2), . (&times;2)</td></tr>
+                </tbody>
+            </table></div>
+            <p>One sense, no context: in &ldquo;The cat sat.&rdquo;, sat lands on Saturday.n (15164570), because that is its first index entry. This is map A&rsquo;s rule, shown as it is.</p>
+        </section>
+
+        <section class="chapter" id="frames">
+            <div class="chapter-num">04</div>
+            <h2>A frame per token</h2>
+            <p class="chapter-intro">A token&rsquo;s word has a position, its H&sup3; point, and also a frame: the rotation R(q) of its quaternion q.</p>
+            <p>The quaternion is q = <code>HPCore.P.wordQuaternion(word)</code>, the product of the letters&rsquo; generators 1 &plusmn; 2i, 1 &plusmn; 2j, 1 &plusmn; 2k. Its norm is exactly 5<sup>n</sup> for a word of n letters. R(q) = <code>twin3d.js</code>&rsquo;s <code>rotOfQuat(q)</code>, computed in exact rationals, and the selected-point panel shows &ldquo;R<sup>T</sup>R = I exactly &#10003;&rdquo;. For dog.n, q = (&minus;1048546839, &minus;140429198, 2329719522, 950692754), the norm is 5<sup>27</sup>, and R(q) is a turn of 134.8&deg;.</p>
+            <p>The frame is not the position. Two tokens can sit near each other in the tree and carry very different frames, because each letter turns the frame as well as moving the point. The coupler (chapter 6) composes the frames.</p>
+            <h3>How the frames are drawn</h3>
+            <p>The engine&rsquo;s <code>Chart.frameAxes(x)</code> gives the endpoints of three arms of hyperbolic length 0.6 at x, mapped into the chart. Near the centre these arms are visible. Far from it, the ball shrinks them below a pixel: dog.n is 25.5 from organism.n, where an arm of 0.6 covers about 10<sup>&minus;4</sup> of the radius at spread &times;3, almost all of it radial. Their sideways part is also lost to float rounding.</p>
+            <p>So the page draws each token&rsquo;s frame as a small triad of fixed screen size. The triad is turned exactly as the frame is turned at that point of the conformal Poincar&eacute; ball:</p>
+            <ul>
+                <li>take the chart isometry T = M<sub>c</sub><sup>&minus;1</sup>L<sub>x</sub>, with L<sub>x</sub> the boost to x&rsquo;s exact point;</li>
+                <li>split T as L<sub>y</sub>K, where L<sub>y</sub> is the boost to y = T e<sub>0</sub> and K is a rotation (a boost&rsquo;s differential at the ball&rsquo;s centre is a scalar);</li>
+                <li>draw K&rsquo;s spatial block applied to R(q)&rsquo;s three columns.</li>
+            </ul>
+            <p>T, L<sub>y</sub> and K are exact rationals; floats enter only at the end. At the centre, these directions equal <code>frameAxes</code>&rsquo;s; the Chromium test checks this to 10<sup>&minus;9</sup>. Arms pointing away from you are drawn fainter. Where several tokens share one spot (the far spelled tokens), only one triad is drawn there.</p>
+            <p>The two twin triads and the triad in the selected-point panel turn with the view, as on Engram&rsquo;s page. Their arms are red, green and blue, for R(q)&rsquo;s columns e<sub>1</sub>, e<sub>2</sub> and e<sub>3</sub>.</p>
+            <div class="callout note"><span class="label">An engine request</span>
+                <p>The page computes K with the core&rsquo;s integer frame (<code>LC.h3Frames</code>, as <code>Lex.chart</code> uses it) and <code>hyperbolic_core.js</code>&rsquo;s exact boost. That is a few lines in <code>assets/lexicon-3d.js</code>. The page engine could offer it as <code>Chart.frameDirs(x)</code>.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="readings">
+            <div class="chapter-num">05</div>
+            <h2>One address, three readings</h2>
+            <p class="chapter-intro">L7 registered one tree with three readings, and showed that they agree: the address as a word, its exact point in H&sup3;, and its vertex in the LPS Cayley graph X(5, q). The selected-point panel shows all three for whatever you select: a token chip, a table row, or a point in the view.</p>
+            <h3>The word</h3>
+            <ul>
+                <li><strong>Name and kind.</strong> Its name, kind and offset; the tokens of the pair that map to it; the V0 ids it holds (161 addresses are shared, by 338 entries); its named depth and its length.</li>
+                <li><strong>The letters.</strong> They are grouped by named edges, with virtual letters in gold.</li>
+                <li><strong>The ids.</strong> The D6 id (<code>wordId</code>), id59 (words of up to 25 letters) and id64 (up to 27).</li>
+                <li><strong>The certificate.</strong> It has three parts: the norm is 5<sup>n</sup>, right division returns the word, and the word is reduced.</li>
+                <li><strong>The ancestors.</strong> Each named ancestor is a chip; click one to centre on it.</li>
+            </ul>
+            <h3>The H&sup3; point</h3>
+            <ul>
+                <li><strong>Coordinates.</strong> The four exact coordinates in lowest terms, with their numerator and denominator bits (<code>LC.coordBits</code>), and the point&rsquo;s bits over the one denominator 7<sup>n</sup> (<code>LC.pointBits</code>).</li>
+                <li><strong>Distances.</strong> The exact cosh of the distance from the origin and from the centre.</li>
+                <li><strong>Decoding.</strong> Chapter 7.</li>
+                <li><strong>float64.</strong> How many leading letters survive when the exact point is stored in float64 (each coordinate correctly rounded) and decoded exactly.</li>
+                <li><strong>copy exact.</strong> Copies the full point, as <code>key H3 p/q,&hellip;</code>.</li>
+            </ul>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Token</th><th>Letters</th><th>H&sup3; point bits</th><th>H&sup2; point bits</th><th>Letters kept in float64 (H&sup3; / H&sup2;)</th></tr></thead>
+                <tbody>
+                    <tr><td>dog.n (02084071)</td><td>27</td><td>601 (coordinates 138/76, 138/76, 122/68, 95/54)</td><td>579</td><td>11 / 11</td></tr>
+                    <tr><td>cat.n (02121620)</td><td>26</td><td>578</td><td>564</td><td>12 / 8</td></tr>
+                    <tr><td>tree.n (13104059)</td><td>20</td><td>440</td><td>467</td><td>11 / 8</td></tr>
+                    <tr><td>the (spelled, root 4)</td><td>10</td><td>202</td><td>241</td><td>10 / 10</td></tr>
+                    <tr><td>[CLS] (root 5)</td><td>4</td><td>68</td><td>92</td><td>4 / 4</td></tr>
+                </tbody>
+            </table></div>
+            <h3>The X(5, q) vertex</h3>
+            <p>For q = 13, 17 and 29 the panel gives:</p>
+            <ul>
+                <li>the vertex number, in BFS order from the identity with the generators in <code>P.GENS</code> order, as <code>reference/lexicon/lps.py</code> numbers it;</li>
+                <li>its canonical 2&times;2 matrix mod q;</li>
+                <li>its distance from the identity vertex;</li>
+                <li>the vertex reached by walking the word&rsquo;s letters, which equals the reduction of q mod p (L7(b)). The engine checks this for every word it shows.</li>
+            </ul>
+            <p>For dog.n:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>q</th><th>Vertices</th><th>Diameter</th><th>Girth &middot; r</th><th>dog.n&rsquo;s vertex</th><th>Matrix</th><th>From the identity</th></tr></thead>
+                <tbody>
+                    <tr><td>13</td><td>2,184</td><td>7</td><td>8 &middot; 3</td><td>186</td><td>[1 5; 5 1]</td><td>3</td></tr>
+                    <tr><td>17</td><td>4,896</td><td>9</td><td>8 &middot; 3</td><td>1277</td><td>[1 8; 2 10]</td><td>5</td></tr>
+                    <tr><td>29</td><td>12,180</td><td>8</td><td>9 &middot; 4</td><td>6582</td><td>[1 24; 4 14]</td><td>6</td></tr>
+                </tbody>
+            </table></div>
+            <p>The engine builds each graph the first time it is asked (about 60 ms for all three in Node), and refuses it unless its size, diameter and girth equal L7&rsquo;s record.</p>
+            <p><strong>Collisions.</strong> X(5, q) is injective on reduced words of up to r = &lfloor;(girth &minus; 1)/2&rfloor; letters (L7(c)). Longer words can share a vertex, because the graph is finite and the tree is not: dog.n&rsquo;s 27 letters land on one of 2,184 vertices. The &ldquo;sharing&rdquo; column counts the pair&rsquo;s distinct tokens that share a vertex with another of them. For the default pair it is 0 at every q.</p>
+            <p><strong>The ball canvas.</strong> It draws the 37 vertices within distance 2 of the selected vertex: 1 + 6 + 30. Since the girth is at least 8, this ball is a tree. The six edges from the centre are labelled with the generator that leads outward (i, I, j, J, k, K, as Engram names them). The last two letters of the word&rsquo;s walk are drawn in gold. Other tokens of the pair whose vertex falls inside the ball are ringed and named. The q chips choose the graph.</p>
+            <p>X(5, q) is shown for display only. It is a shard key at most, never integrity: LPS Cayley hashes have known collision attacks (<a href="architecture.html#limits">Explainer 3, &ldquo;Honest limits&rdquo;</a>).</p>
+        </section>
+
+        <section class="chapter" id="coupler">
+            <div class="chapter-num">06</div>
+            <h2>The coupler binds A and B</h2>
+            <p class="chapter-intro">Engram Mind&rsquo;s Eye binds the two speakers of a dialogue with a coupler, and its claim E5 decided the law. Here the same coupler, <code>EngramCore.Coupler</code>, binds the pair&rsquo;s two segments.</p>
+            <p>Structure 1 stands for segment A and structure 2 for segment B. The tokens are taken in BERT order. For each token, with w its word quaternion, both structures turn by the mirror law:</p>
+            <ul>
+                <li>q<sub>1</sub> &larr; w q<sub>1</sub></li>
+                <li>q<sub>2</sub> &larr; q<sub>2</sub> w&#772;</li>
+            </ul>
+            <p>Then the binding B = q<sub>2</sub>q<sub>1</sub> is checked in exact arithmetic (<code>Lex.couple</code>). Under the mirror law, w&#772;w = |w|&sup2; is a scalar, so B never changes.</p>
+            <ul>
+                <li><strong>The triads.</strong> Two triads show R(q<sub>1</sub>) and R(q<sub>2</sub>) after the last token.</li>
+                <li><strong>The strip.</strong> It has one square per check: green while B is unchanged, rose when it moves. Each square is outlined in its token&rsquo;s segment colour.</li>
+                <li><strong>The readout.</strong> &ldquo;binding held 17/17 &middot; twists A 9, B 8&rdquo; for the default pair; <code>#p-twin[data-held]</code> carries the same count for the tests. The exact quaternions grow with every letter, and the cost grows faster than the number of tokens (on the sample paragraph, 192 tokens take about 0.07 s in Node and 0.13 s under the same-chirality control; 256 take 0.13 s and 0.30 s, 384 about 0.4 s and 1.1 s), so a longer pair is coupled over its first 192 tokens, and the readout says so.</li>
+                <li><strong>The control: same chirality.</strong> Uses q<sub>2</sub> &larr; q<sub>2</sub> w, the control E5 registered. B moves at once: 0/17 for the default pair.</li>
+                <li><strong>The tamper.</strong> &ldquo;Skip one twist on structure 2&rdquo; puts q<sub>2</sub> back to its value before the chosen token&rsquo;s twist, so that token&rsquo;s w reaches structure 1 only. Every check from that token on fails: skipping token 5 gives 5/17, strip <code>11111000000000000</code>.</li>
+            </ul>
+            <div class="callout limit"><span class="label">A binding check only</span>
+                <p>The strip shows that the two segments&rsquo; structures were updated as mirror images, in exact arithmetic. It is not a feature of the text and not a security mechanism. It cannot tell which tokens were in A and which in B, and it says nothing about meaning. Integrity is carried by SHA-256 records: the shard panel&rsquo;s chain, with its signed verifier.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="decode">
+            <div class="chapter-num">07</div>
+            <h2>Click to decode in H&sup3;</h2>
+            <p class="chapter-intro">Clicking a drawn point selects that word, and the panel decodes its exact point back to letters.</p>
+            <p>Decoding is greedy: at each step, the decoder chooses the child direction the point lies furthest along. Two decoders run on the point:</p>
+            <ul>
+                <li><strong><code>h3DecodeInt</code></strong>, the core&rsquo;s integer decoder, works on the integer numerators over 7<sup>n</sup>. It takes about 0.1 ms in Node.</li>
+                <li><strong><code>decodeExact</code></strong>, Hyperbolic Oracles&rsquo; <code>decoder3d.js</code> through <code>LC.h3DecodeExact</code>, works in exact rationals. Amendment 4 item 4 names it the authority for L3(e). It takes 0.2&ndash;2.4 ms in Node for the default pair&rsquo;s tokens, depending on length.</li>
+            </ul>
+            <p>The panel marks each decoder, and says &ldquo;decodes back &#10003;&rdquo; only when the integer decoder returns the stored word and the authority agrees. <code>#p-sel[data-decoded]</code> is <code>ok</code> or <code>bad</code>.</p>
+            <p>In H&sup3; this is proved, not only measured. Hyperbolic Oracles proves that greedy decoding returns every node at every depth when the step&rsquo;s boost has t &gt; 1/&radic;2 (its E2; see <a href="architecture.html#place">Explainer 3&rsquo;s chapter on exact points</a>). The H&sup3; tree uses t = 3/4. L3 also checked every noun.</p>
+            <p>Only drawn points are decoded. A click lands on a float pixel, which cannot name a deep word, so the page selects the nearest drawn exact point (within 12 px) and decodes that.</p>
+        </section>
+
+        <section class="chapter" id="shared">
+            <div class="chapter-num">08</div>
+            <h2>The shared panels</h2>
+            <p class="chapter-intro">Three panels come from <code>hl-panels.js</code> and work the same on both pages. Explainer 13 describes them in full: <a href="page-2d.html#shard">the shard panel</a>, <a href="page-2d.html#engram">Engram Mind&rsquo;s Eye sessions</a> and <a href="page-2d.html#data">the data and its checks</a>.</p>
+            <ul>
+                <li><strong>Shard.</strong> Grows, signs and verifies a language shard from the pair (A and B joined by a line break), the sample paragraph, or your own text. It follows Explainer 11&rsquo;s lab, with one change: LADDR/1 is recomputed from this page&rsquo;s data. Its addrTableRoot must equal the decisive run&rsquo;s <span class="mono">30b17bc3&hellip;</span>, and its hash must equal <span class="mono">83f09be9&hellip;</span>. The tampers T1&ndash;T4 and T7&ndash;T9 break the package, and each is rejected at a named check. &ldquo;Show its tokens in the tree&rdquo; adds the shard&rsquo;s tokens to the view and centres on their lowest common ancestor. The panel decides nothing: L8&ndash;L11 were decided in Phase 3.</li>
+                <li><strong>Engram Mind&rsquo;s Eye.</strong> Reads a session from this browser&rsquo;s storage (read only, when the pages share an origin), from a file, or from pasted text. Engram&rsquo;s own checks run on it. The packet table shows each packet&rsquo;s engram/1 key beside its Lexicon address. Anagrams such as CAT, ACT and TAC share one key and have three addresses (cat.n, act.v, and tantalum.n with ##c). On this page, &ldquo;with the next as A and B&rdquo; takes a human turn and the STRIX reply after it as segments A and B, so Engram&rsquo;s human/STRIX twin becomes the page&rsquo;s segment pair. &ldquo;Show the whole session in the tree&rdquo; draws the session&rsquo;s words coloured by speaker and sized by count.</li>
+                <li><strong>Checks.</strong> The four load checks. &ldquo;Recompute LADDR/1&rdquo; is about half a second of work, done in short steps (the shard panel starts it once the page is idle, and both reuse it). &ldquo;Check every noun&rsquo;s points&rdquo; writes L3(f)&rsquo;s canonical point list of all 82,115 nouns and compares it with <span class="mono">eb22bf00&hellip;</span>; it takes several seconds and about 100 MB of memory.</li>
+            </ul>
+            <p>The page keeps only conveniences in this browser&rsquo;s storage: the last pair and the view&rsquo;s toggles, under <code>hyperbolic-lexicon/pages/1</code>. Every access is guarded. Engram&rsquo;s key is only ever read.</p>
+        </section>
+
+        <section class="chapter" id="tested">
+            <div class="chapter-num">09</div>
+            <h2>How it is tested</h2>
+            <p class="chapter-intro">The engine is tested in Node by <code>tests/pages-lexicon.cjs</code> (62/62), including <code>reference/traces/pages_v1.txt</code>, the Python reference&rsquo;s trace of the engine&rsquo;s outputs. This page is tested in Chromium against that engine.</p>
+            <p><a href="../tests/pages-chromium-3d.cjs"><code>tests/pages-chromium-3d.cjs</code></a> opens the page and this manual at 1440&times;900, 1024&times;768 and 390&times;844, each in dark and light, over http (a static server at the repository root on a free port) and over <code>file://</code>.</p>
+            <p>On every run it requires:</p>
+            <ul>
+                <li>no page errors and no console errors (blocked web fonts aside);</li>
+                <li>no horizontal scroll;</li>
+                <li><code>body[data-ready="ok"]</code> within 20 s;</li>
+                <li>in light mode, body text contrast of at least 4.5:1.</li>
+            </ul>
+            <p>It compares the page with <code>LexiconPages.load()</code> in Node:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Group</th><th>Checked</th></tr></thead>
+                <tbody>
+                    <tr><td>pairs</td><td>Five pairs, through <code>#a=&amp;b=</code> and through the textareas: the token count with specials, and every token&rsquo;s piece, segment and address. The exact H&sup3; point of every token in the page equals Node&rsquo;s, coordinate for coordinate.</td></tr>
+                    <tr><td>selection</td><td>A chip, a table row and a click on the canvas each set <code>data-selected</code>, and the point decodes back. The X(5, q) table (vertex, matrix, distance, walk) and the drawn ball&rsquo;s vertex equal Node&rsquo;s for q = 13, 17 and 29, and &ldquo;copy exact&rdquo; gives Node&rsquo;s exact point.</td></tr>
+                    <tr><td>view</td><td>Up, Back, Origin, Centre on selection, search and a double-click move <code>data-centre</code> as Node predicts. Paging through city.n&rsquo;s 659 children draws Node&rsquo;s second page. The frames toggle, a drag (yaw and pitch), the mode and the spread change the canvas pixels, and switching the colour scheme repaints the canvas in the other scheme&rsquo;s tokens. The LCA readout names Node&rsquo;s ancestors. The frame directions at the centre equal <code>Chart.frameAxes</code>&rsquo;s.</td></tr>
+                    <tr><td>touch</td><td>On a 390 px touch screen, a tap selects the nearest point and a horizontal swipe turns the yaw; the canvas leaves vertical swipes to the page.</td></tr>
+                    <tr><td>state</td><td>The pair is written to the address; after a reload the pair and a toggle are kept. A 3,490-character pair (756 tokens) is analysed and drawn with every frame in under a second, and coupled over its first 192 tokens.</td></tr>
+                    <tr><td>twin</td><td>17/17 under the mirror law. The control and the skip tamper give Node&rsquo;s held counts and Node&rsquo;s strip.</td></tr>
+                    <tr><td>panels</td><td>The shard panel accepts &ldquo;The dog chased the cat up the tree.&rdquo;, with LADDR/1 recomputed, and rejects T8. The Engram panel imports a v2 export made in Node (CAT, ACT and TAC marked), makes one turn segment A, and loads a turn pair as A and B. After a reload it finds a session put in the origin&rsquo;s storage, and leaves that storage unchanged.</td></tr>
+                </tbody>
+            </table></div>
+            <p>The full run passes 285/285 checks in about 76 s on this container, over the test&rsquo;s own static server and over <code>python3 -m http.server</code>. It exits 2 when Playwright or Chromium cannot launch. Screenshots are written only when <code>HL_SHOTS</code> names a scratch directory, and are never committed.</p>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">10</div>
+            <h2>What it is not</h2>
+            <p class="chapter-intro">A view of decided results, not a new result.</p>
+            <ul>
+                <li><strong>No learned d = 3 cloud, and no fence shells.</strong> Explainer 3&rsquo;s Phase 0 plan listed both, and Phase 5 left them out. The d = 3 tables would need a new data file from <code>reference/results/l6-tables</code>, and the fence is display only and already lives on Engram Mind&rsquo;s Eye&rsquo;s 3D page.</li>
+                <li><strong>Not semantic similarity.</strong> The tree is WordNet&rsquo;s spanning hierarchy: each synset under its first hypernym or instance-hypernym pointer, the one the addresses use. Closure and other hypernyms are not shown, and a word gets one sense, with no context.</li>
+                <li><strong>Positions and frames are drawn in floats.</strong> The chart is exact, and only the picture is rounded. The frames are drawn at a fixed size (chapter 4).</li>
+                <li><strong>No decoding of an arbitrary clicked location.</strong> Only drawn exact points are decoded.</li>
+                <li><strong>V0 only.</strong> V1 lives in the cache, not the repository. Glosses are not shipped.</li>
+                <li><strong>Not WebGL.</strong> The renderer is canvas 2D (chapter 2).</li>
+                <li><strong>The coupler is an integrity check of the binding only.</strong> It is not a security mechanism; the integrity of records is carried by the shard panel&rsquo;s SHA-256 chain and signed verifier (chapter 6).</li>
+                <li><strong>Not a claim.</strong> The page demonstrates the code that decided L1, L3, L4, L7 and L8&ndash;L11, and decides nothing itself. The Stage-1 gate comes next.</li>
+            </ul>
+            <div class="pager">
+                <a class="btn btn-ghost" href="page-2d.html">&larr; The 2D Page Manual</a>
+                <a class="btn btn-ghost" href="../index.html">Back to the hub &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 14 &middot; <a href="../index.html">Hub</a> &middot; <a href="../lexicon-3d.html">The 3D page</a> &middot; <a href="../lexicon-2d.html">The 2D page</a> &middot; <a href="../README.md">README</a> &middot; <a href="../reference/README.md">Reference README</a></footer>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-2d.html&quot;,&quot;label&quot;:&quot;Lexicon 2D: the tree in the disk&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Type a sentence: tokens, addresses and exact H² points; decode, precision, LCA paths&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-3d.html&quot;,&quot;label&quot;:&quot;Lexicon 3D: the tree in the ball&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Segments A and B in H³: frames, X(5, q) vertices, the coupler as a check&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;reference.html&quot;,&quot;label&quot;:&quot;The Python Reference and Its Results&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 9: the Phase 1 reference, L2, L3, L5 and L7 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core and Its Parity&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 10: lexicon_core.js, live parity, L1, L3(f) and L4(a, b) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;chains.html&quot;,&quot;label&quot;:&quot;Language Biochains, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 11: shards, records, the manifest and the signed verifier; L8-L11 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;learned.html&quot;,&quot;label&quot;:&quot;Learned Geometry, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 12: learned Lorentz vs Euclidean, the exact tree; L6 and L4(c) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 13: every panel of lexicon-2d.html, the shard and Engram panels&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 14: every panel of lexicon-3d.html; frames, X(5, q), the coupler&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

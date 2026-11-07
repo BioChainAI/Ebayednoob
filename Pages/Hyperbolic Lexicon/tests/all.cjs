@@ -8,7 +8,9 @@
 // this folder's links and spike reruns, the site bar, the WordNet and EWT pins, the Python reference (its fast pytest
 // suite; the Unicode 15.1 table, V0 retrained, V1 and the L1 instance lists against their pins, the Unicode table
 // against the official UCD 15.1.0 files; the text, geometry and L6 traces rebuilt and compared byte for byte), and the
-// 0xA kernel against SHD-CCP's own Ontology tooling.
+// 0xA kernel against SHD-CCP's own Ontology tooling. Phase 5 adds the pages' WordNet data (make_wordnet_view_v1.cjs
+// --check), the page engine's Node checks (tests/pages-lexicon.cjs), its trace (traces_pages.py --check) and both pages
+// in Chromium (tests/pages-chromium-2d.cjs and pages-chromium-3d.cjs, about two minutes; skipped without Playwright).
 // A check whose data or checkout is missing exits 2 and is reported as skipped, never as passed; pytest's own exit 2
 // (interrupted, or an error while collecting) counts as a failure. Exits 1 if any check fails.
 'use strict';
@@ -30,8 +32,12 @@ const RUNS = [
     ['lexicon', 'browser core parity (traces)', ['node', L + 'tests/parity-lexicon.cjs', '--quiet']],
     ['lexicon', 'JS data wrappers', ['node', L + 'reference/golden/make_js_data_v1.cjs', '--check']],
     ['lexicon', 'L6 view data (Explainer 12)', [...PY, L + 'reference/golden/make_l6_view_v1.py', '--check']],
+    ['lexicon', 'WordNet data of the 2D and 3D pages', ['node', L + 'reference/golden/make_wordnet_view_v1.cjs', '--check']],
     ['lexicon', 'chain: records, tampers, signing', ['node', L + 'tests/chain-lexicon.cjs']],
     ['lexicon', 'Engram imports Lexicon shards', ['node', L + 'tests/bridges-lexicon.cjs']],
+    ['lexicon', 'page engine (2D and 3D pages)', ['node', L + 'tests/pages-lexicon.cjs']],
+    ['pages', 'the 2D page in Chromium', ['node', L + 'tests/pages-chromium-2d.cjs']],
+    ['pages', 'the 3D page in Chromium', ['node', L + 'tests/pages-chromium-3d.cjs']],
     ['pins', 'Owl and BioChain-AI growers (compat)', ['node', L + 'reference/golden/make_biomesh_compat_v1.cjs', '../Owl-Academy', '../BioChain-AI', '--check']],
     ['lexicon', 'links and the ways in', ['node', L + 'tests/links.cjs']],
     ['lexicon', 'spike reruns', ['node', L + 'tests/spikes.cjs', ...(process.argv.includes('--all') ? ['--all'] : [])]],
@@ -49,6 +55,7 @@ const RUNS = [
     ['traces', 'text (normaliser, WordPiece)', [...PY, L + 'reference/traces_text.py', '--check']],
     ['traces', 'geometry (address, points, rank)', [...PY, L + 'reference/traces_geometry.py', '--check']],
     ['traces', 'L6 (snapped toy tables, exact ranks)', [...PY, L + 'reference/traces_l6.py', '--check']],
+    ['traces', 'pages (the page engine\'s outputs)', [...PY, L + 'reference/traces_pages.py', '--check']],
     ['shdccp', 'kernel 0xA with SHD-CCP\'s tooling', ['python3', '-B', '-I', L + 'proposals/check_kernel.py']],
 ];
 
