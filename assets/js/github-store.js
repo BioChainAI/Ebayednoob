@@ -1,23 +1,85 @@
 // Minimal GitHub contents API client used by the Studios to keep a permanent archive of every
 // published article and publication in the repository (content/...). The token is a
-// fine-grained personal access token with "Contents: read and write" on this repository only;
-// it is kept in this browser's localStorage and never sent anywhere except api.github.com.
+// fine-grained personal access token with "Contents: read and write" on this repository only.
+// It is kept in this module's memory for the current page only: it is never written to browser
+// storage, and reloading or leaving the page forgets it. It is sent nowhere except api.github.com.
+// Owner, repository and branch are remembered in localStorage (they are not secret).
 
 const SETTINGS_KEY = "ebayednoob-github-settings";
 export const DEFAULT_REPO = { owner: "BioChainAI", repo: "Ebayednoob", branch: "main" };
+const KEPT = ["owner", "repo", "branch"];
 
-export function loadGitHubSettings() {
+let pageToken = ""; // this page only
+
+function readStored() {
     try {
-        return { ...DEFAULT_REPO, token: "", ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") };
+        const v = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+        return v && typeof v === "object" && !Array.isArray(v) ? v : {};
     } catch {
-        return { ...DEFAULT_REPO, token: "" };
+        return {};
     }
 }
 
-export function saveGitHubSettings(s) {
+function writeStored(v) {
     try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify({ owner: s.owner, repo: s.repo, branch: s.branch, token: s.token }));
-    } catch { /* storage unavailable */ }
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(v));
+    } catch {
+        try { localStorage.removeItem(SETTINGS_KEY); } catch { /* storage unavailable */ }
+    }
+}
+
+// Earlier versions kept the token with these settings. Remove it as soon as this module loads, keep
+// owner/repo/branch, and leave a flag so the Studio's GitHub dialog can say so once.
+(function removeStoredToken() {
+    let raw = null;
+    try {
+        raw = localStorage.getItem(SETTINGS_KEY);
+    } catch {
+        return; // storage unavailable
+    }
+    if (raw === null) return;
+    let v = null;
+    try {
+        v = JSON.parse(raw);
+    } catch { /* unreadable */ }
+    if (!v || typeof v !== "object" || Array.isArray(v)) {
+        try { localStorage.removeItem(SETTINGS_KEY); } catch { /* storage unavailable */ }
+        return;
+    }
+    if (!("token" in v)) return;
+    const next = {};
+    for (const k of KEPT) if (typeof v[k] === "string") next[k] = v[k];
+    if (v.token) next.tokenRemoved = true;
+    writeStored(next);
+})();
+
+export function loadGitHubSettings() {
+    const stored = readStored();
+    const s = { ...DEFAULT_REPO };
+    for (const k of KEPT) if (typeof stored[k] === "string" && stored[k]) s[k] = stored[k];
+    return { ...s, token: pageToken };
+}
+
+// Remembers owner/repo/branch in this browser; the token (if given) is kept for this page only. A pending
+// "token removed" notice is kept until the Studio has shown it.
+export function saveGitHubSettings(s) {
+    if ("token" in s) pageToken = String(s.token || "");
+    const next = { owner: s.owner, repo: s.repo, branch: s.branch };
+    if (readStored().tokenRemoved) next.tokenRemoved = true;
+    writeStored(next);
+}
+
+export function forgetToken() {
+    pageToken = "";
+}
+
+// True once if an earlier version's stored token was removed from this browser.
+export function takeTokenRemovedNotice() {
+    const stored = readStored();
+    if (!stored.tokenRemoved) return false;
+    delete stored.tokenRemoved;
+    writeStored(stored);
+    return true;
 }
 
 export const isConnected = (s = loadGitHubSettings()) => !!(s.token && s.owner && s.repo);

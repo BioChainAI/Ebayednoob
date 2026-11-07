@@ -7,9 +7,10 @@
 import { auth, onAuthStateChanged, getAdminStatus } from "../assets/js/firebase.js";
 import { loadAll, saveItem, deleteItem, loadArticleSyncConfig } from "../assets/js/research-store.js";
 import { renderMarkdown, plainText, wordCount, readingMinutes, toFrontMatter } from "../assets/js/markdown.js";
-import { loadGitHubSettings, saveGitHubSettings, isConnected, testConnection, putText, putFile, bytesToBase64, updateJson, rawUrl } from "../assets/js/github-store.js";
+import { loadGitHubSettings, saveGitHubSettings, forgetToken, takeTokenRemovedNotice, isConnected, testConnection, putText, putFile, bytesToBase64, updateJson, rawUrl } from "../assets/js/github-store.js";
 import { slugify, toList } from "../assets/js/feed-core.js";
 import { $, $$, esc, fmtDate, timeAgo, toast, resolveLink, SITE_ROOT, CROSSPOST_PLATFORMS } from "../assets/js/ui.js";
+import { moveLegacyKeys } from "../assets/js/storage-keys.js";
 
 const KIND = document.body.dataset.kind === "publications" ? "publications" : "articles";
 const IS_ARTICLE = KIND === "articles";
@@ -27,7 +28,8 @@ const state = {
     filter: "all",
     q: "",
     lastSavedAt: null,
-    substackOrigin: "https://biochainai.substack.com"
+    substackOrigin: "https://biochainai.substack.com",
+    tokenRemoved: false // set once an admin has signed in (see the access gate)
 };
 
 function blankDoc() {
@@ -61,6 +63,9 @@ onAuthStateChanged(auth, async (user) => {
     }
     $("#st-gate").classList.add("hidden");
     $("#st-app").classList.remove("hidden");
+    // Taken only now, so a signed-out visit does not use up the notice before an admin has seen it.
+    state.tokenRemoved = takeTokenRemovedNotice();
+    if (state.tokenRemoved) toast(TOKEN_REMOVED_NOTE, "info");
     try {
         const { config } = await loadArticleSyncConfig();
         const sub = config.sources.find((s) => s.platform === "substack" && s.url);
@@ -71,7 +76,7 @@ onAuthStateChanged(auth, async (user) => {
     const found = state.items.find((x) => x.id === wanted);
     if (found) openDoc(found);
     else restoreBackupOrNew();
-    setMode(localStore("studio-mode") || "split");
+    setMode(localStore("ebayednoob-studio-mode") || "split");
 });
 
 // ---------- Archive ----------
@@ -141,6 +146,8 @@ $("#st-toggle-archive").addEventListener("click", () => {
 
 // ---------- Editor ----------
 
+moveLegacyKeys("localStorage", ["studio-mode", "studio-backup:*"]);
+
 function localStore(key, value) {
     try {
         if (value === undefined) return localStorage.getItem(key);
@@ -150,17 +157,17 @@ function localStore(key, value) {
         return null;
     }
 }
-const backupKey = () => `studio-backup:${KIND}:${state.doc.id || "new"}`;
+const backupKey = () => `ebayednoob-studio-backup:${KIND}:${state.doc.id || "new"}`;
 
 function restoreBackupOrNew() {
     openDoc(blankDoc());
-    const raw = localStore(`studio-backup:${KIND}:new`);
+    const raw = localStore(`ebayednoob-studio-backup:${KIND}:new`);
     if (!raw) return;
     try {
         const b = JSON.parse(raw);
         if (b.title || b.body) {
             if (confirm(`Restore the unsaved ${NOUN} “${b.title || "(untitled)"}” from this browser?`)) openDoc({ ...blankDoc(), ...b, id: null });
-            else localStore(`studio-backup:${KIND}:new`, null);
+            else localStore(`ebayednoob-studio-backup:${KIND}:new`, null);
         }
     } catch { /* ignore broken backup */ }
 }
@@ -376,7 +383,7 @@ function setMode(mode) {
     $$("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
     $("#st-write-pane").classList.toggle("hidden", mode === "preview");
     $("#st-preview-pane").classList.toggle("hidden", mode === "write");
-    localStore("studio-mode", mode);
+    localStore("ebayednoob-studio-mode", mode);
     refreshPreview();
 }
 $$("[data-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
@@ -464,8 +471,8 @@ function renderDetails() {
         ${crosspostFields}
         <section class="space-y-2 border-t border-gray-800 pt-4">
             <h3 class="text-sm font-semibold text-gray-200">GitHub archive</h3>
-            ${gh?.path ? `<p class="text-xs text-gray-400">Archived at <a class="text-teal-300 hover:underline break-all" target="_blank" rel="noopener noreferrer" href="${esc(gh.htmlUrl || "#")}">${esc(gh.path)}</a> ${gh.committedAt ? `· ${esc(timeAgo(gh.committedAt))}` : ""}${gh.commitUrl ? ` · <a class="text-teal-300 hover:underline" target="_blank" rel="noopener noreferrer" href="${esc(gh.commitUrl)}">commit</a>` : ""}</p>` : `<p class="text-xs text-gray-400">Not archived yet. Publishing commits it to <code>content/${KIND}/</code>.</p>`}
-            ${!isConnected() ? `<p class="text-xs text-amber-300">GitHub is not connected in this browser.</p>` : ""}
+            ${gh?.path ? `<p class="text-xs text-gray-400">Archived at <a class="text-teal-300 hover:underline break-all" target="_blank" rel="noopener noreferrer" href="${esc(resolveLink(gh.htmlUrl) || "#")}">${esc(gh.path)}</a> ${gh.committedAt ? `· ${esc(timeAgo(gh.committedAt))}` : ""}${gh.commitUrl ? ` · <a class="text-teal-300 hover:underline" target="_blank" rel="noopener noreferrer" href="${esc(resolveLink(gh.commitUrl))}">commit</a>` : ""}</p>` : `<p class="text-xs text-gray-400">Not archived yet. Publishing commits it to <code>content/${KIND}/</code>.</p>`}
+            ${!isConnected() ? `<p class="text-xs text-amber-300">GitHub is not connected on this page.</p>` : ""}
             ${d.status === "published" ? `<button id="d-commit" class="btn btn-ghost btn-sm" ${isConnected() ? "" : "disabled"}>Commit latest version</button>` : ""}
         </section>
         <section class="space-y-2 border-t border-gray-800 pt-4">
@@ -774,21 +781,25 @@ $("#st-sync-all").addEventListener("click", async () => {
     toast(`Archived ${done.length} ${NOUN}(s) on GitHub.`, "success");
 });
 
+const TOKEN_NOTE = "The token is kept for this page only: reloading or leaving the page forgets it.";
+const TOKEN_REMOVED_NOTE = "A GitHub token saved in this browser by an earlier version of the Studio has been removed. Paste it again when you need it; it is now kept for this page only.";
+
 function openGitHubDialog() {
     const s = loadGitHubSettings();
     $("#gh-owner").value = s.owner;
     $("#gh-repo").value = s.repo;
     $("#gh-branch").value = s.branch;
     $("#gh-token").value = s.token;
-    $("#gh-status").textContent = isConnected(s) ? "A token is saved in this browser." : "Not connected.";
+    $("#gh-status").textContent = state.tokenRemoved ? TOKEN_REMOVED_NOTE : isConnected(s) ? `Connected. ${TOKEN_NOTE}` : `Not connected. ${TOKEN_NOTE}`;
+    state.tokenRemoved = false;
     $("#gh-dialog").showModal();
 }
 $("#st-github").addEventListener("click", openGitHubDialog);
 $$("#gh-dialog [data-close]").forEach((b) => (b.onclick = () => $("#gh-dialog").close()));
 $("#gh-forget").addEventListener("click", () => {
-    saveGitHubSettings({ ...loadGitHubSettings(), token: "" });
+    forgetToken();
     $("#gh-token").value = "";
-    $("#gh-status").textContent = "Token removed from this browser.";
+    $("#gh-status").textContent = "Token forgotten. Paste it again to archive on GitHub from this page.";
     renderDetails();
 });
 $("#gh-form").addEventListener("submit", async (e) => {
@@ -798,7 +809,7 @@ $("#gh-form").addEventListener("submit", async (e) => {
     try {
         const repo = await testConnection(s);
         saveGitHubSettings(s);
-        $("#gh-status").innerHTML = `<span class="text-emerald-300">Connected to ${esc(repo.full_name)} with write access.</span>`;
+        $("#gh-status").innerHTML = `<span class="text-emerald-300">Connected to ${esc(repo.full_name)} with write access.</span> ${esc(TOKEN_NOTE)}`;
         renderDetails();
         renderArchive();
     } catch (err) {
