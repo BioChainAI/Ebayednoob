@@ -871,7 +871,12 @@ It runs:
 - the browser core's parity (`tests/parity-lexicon.cjs`, the chain and L6 traces included) and the data files' check;
 - the chain section's checks (`tests/chain-lexicon.cjs`), Engram's import of the Lexicon's shards
   (`tests/bridges-lexicon.cjs`), and the Owl Academy and BioChain-AI compatibility pin
-  (`make_biomesh_compat_v1.cjs --check`, skipped without those checkouts beside this repository);
+  (`make_biomesh_compat_v1.cjs --check`). Since the integration overhaul (E1) the pin compares content, not commits:
+  `biomesh_compat_v1.json` must reproduce from the pinned content of both `biomesh.js` files (found by SHA-256 in the
+  checkouts or their git history), and the current growers must give its records and verdicts, and each verifier its
+  pinned code's verdicts on a differential set (one field of a record altered at a time, legacy records, the grow
+  cap; BioChain-AI's also Owl's); changed commits and files are NOTE lines, and `sameAsOwl` is reported as `bodiesMatch`, function by function. It is skipped, never passed,
+  without the checkouts (`OWL_ACADEMY_DIR`, `BIOCHAIN_AI_DIR`, else beside this repository) or the pinned content;
 - the pages: their WordNet data (`make_wordnet_view_v1.cjs --check`), the page engine in Node
   (`tests/pages-lexicon.cjs`), and both pages in Chromium (`tests/pages-chromium-2d.cjs` and `pages-chromium-3d.cjs`,
   skipped without Playwright);
@@ -880,8 +885,14 @@ It runs:
 - the WordNet and EWT pins;
 - the Python reference: its fast pytest suite, the five pin checks (Unicode 15.1, the table against the official
   UCD 15.1.0 files, V0 retrained, V1, the L1 instance lists) and the four trace checks (text, geometry, L6 and the
-  pages);
-- the kernel check. Checks are reported as skipped, never passed, without the data cache or an SHD-CCP checkout.
+  pages) and, since E1, the chain trace (`traces_chain.py --check`);
+- the kernel check, and the fast suite's one test that reads SHD-CCP's `hurwitz.py` (`test_lps.py::test_hurwitz_read_only`,
+  left out of the fast suite so that it needs no checkout). Checks are reported as skipped, never passed, without the
+  data cache or an SHD-CCP checkout; `--strict` (the CI workflows) counts a skip as a failure.
+
+The summary reads "N pass, M partial, K skipped" (`scripts/lib/runner.cjs`): a check that ran only in part, such as
+`tests/parity-lexicon.cjs` without the V1 vocabulary or WordNet (exit 3), counts as a failure unless `--allow-partial`
+is given; `-j N` runs N checks at a time. The root `tests/run-all.cjs` runs this list with the other systems'.
 
 It does not run `run_claims.py`, `run_claims_js.cjs`, `run_claims_phase3.cjs`, `run_claims_phase4.py`,
 `run_l6_node.cjs`, `fractional_ties.py` or the slow tests; see "How to run the reference", "How to run Phase 2", "How

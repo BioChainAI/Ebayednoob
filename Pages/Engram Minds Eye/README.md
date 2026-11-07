@@ -31,7 +31,15 @@
   Hyperbolic Oracles (*Elsewhere*) and Geometric Calculator (*Simulations*) menus, a note and a map node on the
   Hyperbolic Oracles hub, and the names Engram uses from each core recorded in that folder's README. `tests/links.cjs`
   checks every link and way in (31/31, with three controls); `tests/all.cjs` runs every Node check of this system and
-  of the cores it loads, then the site bar and the pins (15/15). Explainer 10.
+  of the cores it loads, then the site bar and the pins (15/15 at Phase 8). Explainer 10.
+- **Integration overhaul (E1):** the pins compare content, not commits: each v1 file is rebuilt from the pinned
+  source content (found by SHA-256 in the checkout or its git history) and must match byte for byte, and Owl
+  Academy's current code must give v1's results, and the pinned and current verifiers the same verdicts on a
+  differential set (one field of a record altered at a time, legacy records, the grow cap); an upstream commit that
+  leaves that code's behaviour alone passes with NOTE lines, a name defined differently in `biomesh-core.js` and
+  `biomesh.js` fails, and a missing checkout or pinned content is skipped, never passed
+  (`reference/golden/owl_extract.cjs`, `biochain_v1.provenance.json`). `tests/all.cjs` also runs the Lexicon's two checks of this folder (see *Used by*),
+  the Oracles names the pages use (`tests/core-names.cjs`), the extractor's own test and the Python reference.
 
 Open [`index.html`](index.html) for the hub: system map, explainer library, roadmap, claims ledger and decisions.
 
@@ -281,6 +289,24 @@ only as a compatibility checksum, and grows its language data as `shdccp/2` shar
 `importBiochain`. An engram/2 key would be registered in this folder by amendment, once the Lexicon's address
 claims are decided.
 
+## Used by
+
+[Hyperbolic Lexicon](../Hyperbolic%20Lexicon/README.md) (`Pages/Hyperbolic Lexicon/`) loads two of this folder's
+files unchanged, by relative path, in Node and in its pages, and its shards come back here through `importBiochain`.
+`scripts/cores.json` records these names, and `scripts/check-cores.mjs` fails when a consumer uses a name the core
+does not have or one the manifest does not list. Renaming or changing one of them breaks the Lexicon: run its checks
+with this folder's (`tests/all.cjs` here runs the two below).
+
+| File | What the Hyperbolic Lexicon uses | Checked by |
+| --- | --- | --- |
+| `engram_core.js` | `lexicon_core.js`: `chainQuaternion`, `qprod`, `qeq`, `qnorm`, `unfold`, `packetQuaternions`, `tokenizeBiomesh`, `hexLsb`, `crystallize`, `computeJ`, `L`; its pages (`assets/hl-pages.js`): `importAny`, `detectImport`, `verifyBiochain`, `liveOf`, `Coupler`, `hexLsb`; its shards: `importBiochain` | `../Hyperbolic Lexicon/tests/chain-lexicon.cjs`, `../Hyperbolic Lexicon/tests/bridges-lexicon.cjs` |
+| `biochain_v1.js` | `lexicon_core.js`: `CHUNK`, `MAX_GROW_BYTES`, `SEGMENTS`, `STREAM_VERSION`, `crystalQuat`, `crystallizeBytes`, `encodeChunk`, `decodeChunk`, `frameStream`, `popcountEven`, `qmul`, `qn`, `quatHex`; its pages: `decodeChunk` | the same two, and `make_biomesh_compat_v1.cjs --check` (`bodiesMatch` against Owl's grower) |
+| `reference/engram/` | its Python reference imports `engram.address` and `engram.ttmpt` in place | the Lexicon's pytest suite |
+| `reference/golden/owl_eye.cjs` | `grab`, by its decided runner `run_claims_phase3.cjs`, its spikes and `test_attest.py` (kept unchanged; new code uses `owl_extract.cjs`) | the Lexicon's runs and tests |
+
+engram_core.js changes only by addition (decision D4 of the integration overhaul): `importBiochain` and
+`verifyBiochain` stay as they are, and the v1 pins are never edited (a new pin is a `_v2` file beside them).
+
 ## Files
 
 | Path | Holds |
@@ -315,7 +341,11 @@ claims are decided.
 | `reference/run_followups.py`, `reference/run_e11.cjs`, `reference/results/followups.*`, `e11.json` | The follow-up claims of Amendment 2 and their record |
 | `explainers/follow-ups.html` | Explainer 9: E10 and E11, how they were registered and decided |
 | `tests/links.cjs` | Every relative link and anchor in the folder's pages and on the map, every site-bar menu file, and the ways in from the rest of the site (31 checks, three of them controls) |
-| `tests/all.cjs` | Every Node check in one command: the five cores Engram loads, its own suites, the site bar, and the four pins (skipped, not passed, without an Owl-Academy checkout) |
+| `tests/all.cjs` | Every check in one command: the five cores Engram loads, its own suites, the Lexicon's checks of Engram, the site bar, the extractor, the Python reference and the four pins (skipped, never passed, without an Owl-Academy checkout); statuses from `scripts/lib/runner.cjs` |
+| `reference/golden/owl_extract.cjs` | What the pins share: taking Owl's code by name (`grab`, `constStatement`, `SYNC`, `CONST_NAMES`; top-level declarations, brackets matched outside comments, strings and regular expressions), finding a source by SHA-256 in the working tree or git history, function hashes, a vm sandbox without `process` or `require` (with deterministic timers), the differential set (`tamperSet`, `differential`), and `checkPin` (reproduction, live contract, NOTE lines, exit 0, 1 or 2) |
+| `biochain_v1.provenance.json` | For each Owl Academy and BioChain-AI file the v1 pins were made from: its SHA-256 and the commit that wrote it (the v1 headers name one commit for several files) |
+| `tests/owl-extract.cjs` | The extractor without any checkout: the sandbox against Node's encoders and SHA-256, its timers; three harmless upstream edits; the differential set against `verifyBiochain`; `findSource`; `locate` with identical and conflicting copies; and `checkPin` end to end on a scratch repository (pinned commit 0, unrelated commit 0, same behaviour 0, v1 results kept but the differential set changed 1, behaviour change 1, a conflicting core copy 1, missing 2) |
+| `tests/core-names.cjs` | Every name the two pages take from the shared cores exists in them, with a control |
 | `explainers/integration.html` | Explainer 10: the ways in, what the system stands on, one command, and what to do when something upstream changes |
 | `reference/run_claims.py`, `reference/results/` | The decisive runs: `claims.json`, `claims.md`, `claims-console.txt` |
 | `reference/README.md`, `reference/requirements.txt` | How to run the reference; numpy and pytest |

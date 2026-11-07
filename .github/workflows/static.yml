@@ -8,6 +8,11 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      skip_checks:
+        description: "Emergency only: deploy without check-cores and the orbital-core test (record the skip in the decision log)"
+        type: boolean
+        default: false
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -30,18 +35,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      # The shared cores as recorded in scripts/cores.json, and orbital_core.js's own test (under a minute). Skipped only
+      # by the workflow_dispatch input skip_checks, in an emergency; the skip is written to the run's summary below.
+      - name: Core manifest and the orbital core
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_checks) }}
+        run: |
+          node scripts/check-cores.mjs
+          node scripts/geometric-build/tests/orbital-core.cjs
+      - name: Record a skipped check
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_checks }}
+        env:
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+        run: |
+          echo "::warning::Deployed without check-cores and the orbital-core test (workflow_dispatch input skip_checks). Record this skip in the decision log."
+          echo "Deployed without check-cores and the orbital-core test (skip_checks, run by $ACTOR at $SHA). Record this skip in the decision log." >> "$GITHUB_STEP_SUMMARY"
       # Adds the site bar (Home, Simulations and Manuals menus, sign-in, social links) to the pages in scripts/page-chrome-targets.json,
       # so a calculator export pushed without it still deploys with it.
       - name: Add site chrome to listed pages
         run: node scripts/install-page-chrome.mjs
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           # Upload entire repository
           path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -1,6 +1,6 @@
 // Pins LATTICE-SEED/1, the lattice seed of Owl Academy's Biomesh Mind's Eye 3D, for the 3D page's import (Phase 5).
 //
-//   node "Pages/Engram Minds Eye/reference/golden/make_lattice_v1.cjs" <path to an Owl-Academy checkout> [--check]
+//   node "Pages/Engram Minds Eye/reference/golden/make_lattice_v1.cjs" [<path to an Owl-Academy checkout>] [--check]
 //
 // From mage_tower/Biomesh_Mind_Eye_3D.html, unchanged, it takes the SHD-CCP word codec and the seed hash: M64,
 // PAR_MASK, popcountEven, packWord, unpackWord, fold32, canonicalSeed and collectHashOf (the page's comment says the
@@ -11,42 +11,49 @@
 //                                hash, whether it matches, and each node's parity
 // The seeds: a 40-node seed with two chains; a 12-node seed with a data crystal (r = 1) and one word whose parity bit
 // was flipped after packing; and the first seed with one node word changed after hashing.
-// With --check it compares both files with what Owl Academy's code gives now instead of writing them.
+// Both are v1 pins and frozen: without --check they are written only when absent.
+//
+// --check compares content, not commits (owl_extract.cjs's checkPin): both files rebuilt from the pinned content of the
+// page (found by SHA-256 in the checkout or its git history) must match byte for byte, else, if that content is not
+// found, the check is skipped (exit 2); and the page's current code must give the same seeds and verdicts (everything
+// but the provenance), else it fails (exit 1). Changed bodies or files with the same results are NOTE lines.
+// The checkout defaults to OWL_ACADEMY_DIR, else ../Owl-Academy (scripts/lib/siblings.cjs). Owl's code runs in a vm
+// context without process or require.
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const X = require('./owl_extract.cjs');
+const siblings = require('../../../../scripts/lib/siblings.cjs');
 
 const ARGS = process.argv.slice(2), CHECK = ARGS.includes('--check');
-const OWL = path.resolve(ARGS.find(x => !x.startsWith('--')) || path.join(__dirname, '..', '..', '..', '..', '..', 'Owl-Academy'));
+const OWL = path.resolve(ARGS.find(x => !x.startsWith('--')) || siblings.dir('Owl-Academy'));
 const REL = 'mage_tower/Biomesh_Mind_Eye_3D.html', PAGE = path.join(OWL, REL);
-if (!fs.existsSync(PAGE)) { console.error(`missing ${PAGE}: pass the path of an Owl-Academy checkout`); process.exit(2); }
 const SYSTEM = path.join(__dirname, '..', '..');
 const OUT_JS = path.join(SYSTEM, 'lattice_seed_v1.js'), OUT_JSON = path.join(__dirname, 'lattice_seed_v1.json');
 const C = require(path.join(SYSTEM, '..', 'Hyperbolic Oracles', 'hyperbolic_core.js'));
-let commit = null;
-try { commit = execFileSync('git', ['-C', OWL, 'log', '-1', '--format=%H', '--', REL]).toString().trim(); } catch (e) { /* not a git checkout */ }
-const src = fs.readFileSync(PAGE, 'utf8');
 const sha256 = s => require('crypto').createHash('sha256').update(s).digest('hex');
+const NAMES = ['popcountEven', 'crystallize', 'fold64', 'packWord', 'unpackWord', 'fold32', 'canonicalSeed', 'collectHashOf'];
 
-function grabFn(name) {
-    const i = src.indexOf(`function ${name}(`);
-    if (i < 0) throw new Error(`${name} not found`);
-    let j = src.indexOf('{', i), depth = 0;
-    for (; j < src.length; j++) { if (src[j] === '{') depth++; else if (src[j] === '}' && --depth === 0) break; }
-    return src.slice(i, j + 1);
-}
-function grabLine(start) {
-    const i = src.indexOf(start);
-    if (i < 0) throw new Error(`${start} not found`);
-    return src.slice(i, src.indexOf('\n', i));
-}
-const pieces = [grabLine('const M64 = '), grabLine('const PAR_MASK = '), grabFn('popcountEven'), grabFn('crystallize'), grabFn('fold64'),
-    grabFn('packWord'), grabFn('unpackWord'), grabFn('fold32'), grabFn('canonicalSeed'), grabFn('collectHashOf')];
-const body = pieces.join('\n');
-const L = new Function(body + '\nreturn { packWord, unpackWord, fold32, canonicalSeed, collectHashOf, crystallizeBytes: crystallize };')();
+// Both files from the page's source and the commit recorded in them: { js, json, seeds }
+function build(src, commit) {
+    function grabFn(name) {
+        const i = src.indexOf(`function ${name}(`);
+        if (i < 0) throw new Error(`${name} not found`);
+        let j = src.indexOf('{', i), depth = 0;
+        for (; j < src.length; j++) { if (src[j] === '{') depth++; else if (src[j] === '}' && --depth === 0) break; }
+        return src.slice(i, j + 1);
+    }
+    function grabLine(start) {
+        const i = src.indexOf(start);
+        if (i < 0) throw new Error(`${start} not found`);
+        return src.slice(i, src.indexOf('\n', i));
+    }
+    const pieces = [grabLine('const M64 = '), grabLine('const PAR_MASK = '), grabFn('popcountEven'), grabFn('crystallize'), grabFn('fold64'),
+        grabFn('packWord'), grabFn('unpackWord'), grabFn('fold32'), grabFn('canonicalSeed'), grabFn('collectHashOf')];
+    const body = pieces.join('\n');
+    const L = X.sandbox().compile([], body + '\nreturn { packWord, unpackWord, fold32, canonicalSeed, collectHashOf, crystallizeBytes: crystallize };')();
 
-const js = `// LATTICE-SEED/1, version 1: generated by reference/golden/make_lattice_v1.cjs from Owl-Academy
+    const js = `// LATTICE-SEED/1, version 1: generated by reference/golden/make_lattice_v1.cjs from Owl-Academy
 // ${REL}${commit ? ` (commit ${commit.slice(0, 7)})` : ''}. Do not edit: run the script again, and --check to compare.
 // The SHD-CCP 64-bit word codec and the seed hash, verbatim: a word is form (63..60) · parity (59) · spin (58..56) ·
 // quat32 (55..24) · payload16 (23..8) · freq (7..3) · amp (2..0), the parity bit making the popcount of the other 63
@@ -63,39 +70,54 @@ return { source: ${JSON.stringify({ repository: 'BioChainAI/Owl-Academy', commit
 });
 `;
 
-// ---- three seeds, made the way the page makes them (collectSeed), from deterministic node fields
-function makeSeed(shape, params, count, rngSeed, n, chains, gen) {
-    const rng = new C.Rng(gen), nodes = [];
-    for (let i = 0; i < n; i++) {
-        const quat = [0, 1, 2, 3].map(() => rng.below(256));
-        nodes.push({ i: 2 * i + 1, w: L.packWord(1 + rng.below(7), rng.below(8), quat, rng.below(65536), rng.below(32), rng.below(8)) });
+    // ---- three seeds, made the way the page makes them (collectSeed), from deterministic node fields
+    function makeSeed(shape, params, count, rngSeed, n, chains, gen) {
+        const rng = new C.Rng(gen), nodes = [];
+        for (let i = 0; i < n; i++) {
+            const quat = [0, 1, 2, 3].map(() => rng.below(256));
+            nodes.push({ i: 2 * i + 1, w: L.packWord(1 + rng.below(7), rng.below(8), quat, rng.below(65536), rng.below(32), rng.below(8)) });
+        }
+        const s = { v: 1, shape, params, count, rngSeed, nodes, chains: chains.map(c => c.map(k => nodes[k].i)) };
+        return s;
     }
-    const s = { v: 1, shape, params, count, rngSeed, nodes, chains: chains.map(c => c.map(k => nodes[k].i)) };
-    return s;
-}
-const hashOf = s => '0x' + L.fold32(L.canonicalSeed(s)).toString(16).padStart(8, '0');
-const A = makeSeed('64-Cell', { seedWord: 'STRIX', cubeScale: 10, fractalLevel: 2 }, 128, 9100, 40,
-    [Array.from({ length: 20 }, (_, k) => k), Array.from({ length: 20 }, (_, k) => 20 + k)], 9100);
-A.hash = hashOf(A);
-const B = makeSeed('Toroid', { toroidMajorRadius: 35, toroidTubeRadius: 12 }, 64, 9101, 12, [Array.from({ length: 12 }, (_, k) => k)], 9101);
-B.nodes[3] = { i: B.nodes[3].i, w: L.crystallizeBytes(Array.from(new TextEncoder().encode('MIND EYE'))), r: 1 };
-B.nodes[7] = { i: B.nodes[7].i, w: (BigInt('0x' + B.nodes[7].w) ^ (1n << 59n)).toString(16).toUpperCase().padStart(16, '0') };
-B.hash = hashOf(B);
-const T = JSON.parse(JSON.stringify(A));
-T.nodes[5].w = L.packWord(2, 3, [1, 2, 3, 4], 777, 5, 6);              // changed after hashing
-const seeds = [['two chains', A], ['a crystal and a broken word', B], ['changed after hashing', T]].map(([name, s]) => {
-    const text = JSON.stringify(s), parsed = JSON.parse(text), re = L.collectHashOf(parsed);
-    return { name, text, owl: { recomputed: re, hash_ok: re === parsed.hash, parity_ok: parsed.nodes.map(nd => L.unpackWord(nd.w).parityOk),
-        fields: parsed.nodes.map(nd => { const u = L.unpackWord(nd.w); return [u.form, u.spin, u.quat32, u.payload16, u.freq, u.amp]; }) } };
-});
-const json = JSON.stringify({ format: 'lattice_seed_v1_golden', version: 1, source: { repository: 'BioChainAI/Owl-Academy', commit, file: REL, sha256: sha256(src) },
-    note: 'Seeds built with the page\'s own packWord, crystallize(bytes) and hash, as JSON.stringify(seed); "owl" is what the page\'s collectHashOf and unpackWord say of each.', seeds }, null, 1) + '\n';
+    const hashOf = s => '0x' + L.fold32(L.canonicalSeed(s)).toString(16).padStart(8, '0');
+    const A = makeSeed('64-Cell', { seedWord: 'STRIX', cubeScale: 10, fractalLevel: 2 }, 128, 9100, 40,
+        [Array.from({ length: 20 }, (_, k) => k), Array.from({ length: 20 }, (_, k) => 20 + k)], 9100);
+    A.hash = hashOf(A);
+    const B = makeSeed('Toroid', { toroidMajorRadius: 35, toroidTubeRadius: 12 }, 64, 9101, 12, [Array.from({ length: 12 }, (_, k) => k)], 9101);
+    B.nodes[3] = { i: B.nodes[3].i, w: L.crystallizeBytes(Array.from(new TextEncoder().encode('MIND EYE'))), r: 1 };
+    B.nodes[7] = { i: B.nodes[7].i, w: (BigInt('0x' + B.nodes[7].w) ^ (1n << 59n)).toString(16).toUpperCase().padStart(16, '0') };
+    B.hash = hashOf(B);
+    const T = JSON.parse(JSON.stringify(A));
+    T.nodes[5].w = L.packWord(2, 3, [1, 2, 3, 4], 777, 5, 6);              // changed after hashing
+    const seeds = [['two chains', A], ['a crystal and a broken word', B], ['changed after hashing', T]].map(([name, s]) => {
+        const text = JSON.stringify(s), parsed = JSON.parse(text), re = L.collectHashOf(parsed);
+        return { name, text, owl: { recomputed: re, hash_ok: re === parsed.hash, parity_ok: parsed.nodes.map(nd => L.unpackWord(nd.w).parityOk),
+            fields: parsed.nodes.map(nd => { const u = L.unpackWord(nd.w); return [u.form, u.spin, u.quat32, u.payload16, u.freq, u.amp]; }) } };
+    });
+    const json = JSON.stringify({ format: 'lattice_seed_v1_golden', version: 1, source: { repository: 'BioChainAI/Owl-Academy', commit, file: REL, sha256: sha256(src) },
+        note: 'Seeds built with the page\'s own packWord, crystallize(bytes) and hash, as JSON.stringify(seed); "owl" is what the page\'s collectHashOf and unpackWord say of each.', seeds }, null, 1) + '\n';
 
-if (CHECK) {
-    const a = fs.existsSync(OUT_JS) && fs.readFileSync(OUT_JS, 'utf8') === js, b = fs.existsSync(OUT_JSON) && fs.readFileSync(OUT_JSON, 'utf8') === json;
-    console.log(`lattice_seed_v1.js ${a ? 'matches' : 'DIFFERS from'} Owl Academy; lattice_seed_v1.json ${b ? 'matches' : 'DIFFERS from'} Owl Academy`);
-    process.exit(a && b ? 0 : 1);
+    return { js, json, seeds };
 }
-fs.writeFileSync(OUT_JS, js);
-fs.writeFileSync(OUT_JSON, json);
-console.log(`wrote lattice_seed_v1.js and lattice_seed_v1.json (${seeds.map(s => `${s.name}: hash ${s.owl.hash_ok ? 'ok' : 'mismatch'}, ${s.owl.parity_ok.filter(x => !x).length} broken parity`).join('; ')}); Owl-Academy ${commit ? commit.slice(0, 7) : '(no git)'}`);
+
+const recorded = fs.existsSync(OUT_JSON) ? JSON.parse(fs.readFileSync(OUT_JSON, 'utf8')).source : null;
+if (CHECK) {
+    if (!recorded) { console.log('FAIL  lattice_seed_v1.json is missing: run without --check'); process.exit(1); }
+    X.checkPin({
+        name: 'make_lattice_v1 (lattice_seed_v1.js, lattice_seed_v1.json)',
+        repo: { name: 'Owl-Academy', root: OWL },
+        sources: [{ file: REL, sha256: recorded.sha256, names: NAMES }],
+        outputs: [{ label: 'lattice_seed_v1.js', path: OUT_JS }, { label: 'lattice_seed_v1.json', path: OUT_JSON }],
+        build: async (S, mode) => { const b = build(S[REL], mode === 'reproduction' ? recorded.commit : null); return [b.js, b.json]; },
+        behaviour: texts => X.stripKeys(JSON.parse(texts[1]), ['source']),
+        bodies: [{ file: REL, names: NAMES, pinned: () => X.findSource(OWL, REL, recorded.sha256, X.hints('Owl-Academy', REL)).src }],
+        commitNotes: () => { const c = X.lastCommit(OWL, [REL]); return c && recorded.commit && c !== recorded.commit ? [`the last commit to touch the page is ${c.slice(0, 7)}; v1 recorded ${recorded.commit.slice(0, 7)}`] : []; },
+    }).catch(e => { console.error(e); process.exit(1); });
+} else {
+    if (!fs.existsSync(PAGE)) { console.error(`missing ${PAGE}: pass the path of an Owl-Academy checkout`); process.exit(2); }
+    const commit = X.lastCommit(OWL, [REL]);
+    const b = build(fs.readFileSync(PAGE, 'utf8'), commit);
+    const w1 = X.writeFrozen(OUT_JS, b.js), w2 = X.writeFrozen(OUT_JSON, b.json);
+    console.log(`lattice_seed_v1.js ${w1}, lattice_seed_v1.json ${w2} (${b.seeds.map(s => `${s.name}: hash ${s.owl.hash_ok ? 'ok' : 'mismatch'}, ${s.owl.parity_ok.filter(x => !x).length} broken parity`).join('; ')}); Owl-Academy ${commit ? commit.slice(0, 7) : '(no git)'}`);
+}

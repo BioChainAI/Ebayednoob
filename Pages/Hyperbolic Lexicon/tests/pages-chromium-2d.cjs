@@ -26,6 +26,7 @@ const http = require('http');
 const path = require('path');
 
 const HL = path.resolve(__dirname, '..'), ROOT = path.resolve(HL, '../..');
+const siblings = require('../../../scripts/lib/siblings.cjs');      // PLAYWRIGHT_CHROMIUM, else /opt/pw-browsers/chromium
 const PAGE = 'Pages/Hyperbolic Lexicon/lexicon-2d.html', MANUAL = 'Pages/Hyperbolic Lexicon/explainers/page-2d.html';
 const argShots = process.argv.indexOf('--shots'), SHOTS = argShots > 0 ? path.resolve(process.argv[argShots + 1]) : null;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
@@ -223,8 +224,9 @@ async function behaviour(pg, errs, tag, full) {
 
 (async () => {
     let browser;
-    try { browser = await pw.chromium.launch(); } catch (e) {
-        try { browser = await pw.chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }); } catch (e2) { console.log(`skipped: Chromium cannot launch (${e.message.split('\n')[0]})`); process.exit(2); }
+    const exe = siblings.chromium();
+    try { browser = await pw.chromium.launch(exe ? { executablePath: exe } : {}); } catch (e) {
+        try { browser = await pw.chromium.launch(); } catch (e2) { console.log(`skipped: Chromium cannot launch (${e.message.split('\n')[0]})`); process.exit(2); }
     }
     const server = BASE ? null : await serve(ROOT), port = server ? server.address().port : null;
     const HTTP = p => (BASE || `http://127.0.0.1:${port}/`) + enc(p), FILE = p => 'file://' + enc(path.join(ROOT, p));

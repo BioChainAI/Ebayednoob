@@ -3,6 +3,7 @@ own JavaScript (tests/owl_biomesh.cjs, by name-grab), V8's Math.hypot / toFixed 
 shdccp_kernel.py (run as python3 -B -I), spike S4's printed values for the verb and adjective gloss shards, and
 independent oracles. Unregistered data only: seeds 70000 + i, hand-made strings, and S4's gloss shards (the dry runs).
 """
+import importlib.util
 import json
 import os
 import struct
@@ -16,9 +17,12 @@ from lexicon import chain as C
 from hpstep.prng import Rng
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-HOME = os.path.dirname(lexicon.REPO)
-OWL = os.path.join(HOME, 'Owl-Academy')
-BIOCHAIN = os.path.join(HOME, 'BioChain-AI')
+# the checkouts: OWL_ACADEMY_DIR and BIOCHAIN_AI_DIR, else beside the repository (scripts/lib/siblings.py)
+_spec = importlib.util.spec_from_file_location('ebayednoob_siblings', os.path.join(lexicon.REPO, 'scripts', 'lib', 'siblings.py'))
+siblings = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(siblings)
+OWL = siblings.dir('Owl-Academy')
+BIOCHAIN = siblings.dir('BioChain-AI')
 NODE_OK = subprocess.run(['node', '--version'], capture_output=True).returncode == 0
 
 
@@ -30,9 +34,11 @@ def node(script, payload):
 
 def owl_biomesh(req):
     if not (NODE_OK and os.path.isdir(OWL) and os.path.isdir(BIOCHAIN)):
-        pytest.skip('needs node and the Owl-Academy and BioChain-AI checkouts beside the repository')
+        pytest.skip('needs node and the Owl-Academy and BioChain-AI checkouts (OWL_ACADEMY_DIR, BIOCHAIN_AI_DIR)')
     r = subprocess.run(['node', os.path.join(HERE, 'owl_biomesh.cjs'), OWL, BIOCHAIN], input=json.dumps(req),
                        capture_output=True, text=True)
+    if r.returncode == 2:  # a checkout or the pinned content is missing (e.g. a shallow clone): skipped, never passed
+        pytest.skip(r.stderr.strip())
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
 

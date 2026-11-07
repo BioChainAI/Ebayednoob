@@ -1,0 +1,110 @@
+# The repository's checks on every pull request and on pushes to main (overhaul F22). Branches are checked through
+# their pull requests, so a push to a branch with an open pull request runs the checks once, not twice.
+# It runs tests/run-all.cjs with the "ci" profile: every suite that needs no sibling checkout (the Oracles, Engram and
+# Lexicon suites, the Python references, the site checks, the core manifest, the contracts, both pages in Chromium).
+# The checks against Owl-Academy, BioChain-AI and SHD-CCP run nightly in cross-repo.yml.
+# The Lexicon's downloads (WordNet, UD English EWT, bert-base-uncased's vocabulary, the UCD 15.1 files) come from the
+# Actions cache, keyed by the files that pin them; on a miss the existing fetch scripts download them, and the cache
+# is saved only when every download succeeded. With the downloads present the run is strict (a skipped or partial
+# check is a failure: every prerequisite is installed here); only when they are missing is partial allowed.
+# Actions are pinned to commits (the tag in the comment); Playwright is installed outside the checkout, so the site
+# checks never scan its files.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Python packages (cached)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.13-${{ hashFiles('Pages/*/reference/requirements.txt') }}
+
+      - name: Install the Python references' packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "torch==2.14.1" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r "Pages/Hyperbolic Oracles/reference/requirements.txt"
+          python -m pip install -r "Pages/Engram Minds Eye/reference/requirements.txt"
+          python -m pip install -r "Pages/Hyperbolic Lexicon/reference/requirements.txt"
+          # the Lexicon's ATTEST/1 reference (lexicon/attest.py) verifies signatures with cryptography
+          python -m pip install "cryptography==50.0.1"
+
+      - name: Chromium for the page checks
+        # outside the checkout: a node_modules in the working tree would be scanned by the site checks
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pw" --no-save --no-package-lock playwright@1.63.0
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+
+      - name: The Lexicon's downloads (cached)
+        id: hlcache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/hyperbolic-lexicon
+          key: hl-cache-${{ hashFiles('Pages/Hyperbolic Lexicon/reference/golden/wordnet_v1.cjs', 'Pages/Hyperbolic Lexicon/reference/golden/ewt_v1.meta.json', 'Pages/Hyperbolic Lexicon/reference/golden/vocab_v1.meta.json', 'Pages/Hyperbolic Lexicon/reference/golden/ucd_15_1_v1.meta.json') }}
+
+      - name: Fetch the downloads on a cache miss
+        id: fetch
+        if: steps.hlcache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          node "Pages/Hyperbolic Lexicon/reference/golden/make_wordnet_v1.cjs"
+          node "Pages/Hyperbolic Lexicon/reference/golden/make_ewt_v1.cjs"
+          python3 -B "Pages/Hyperbolic Lexicon/reference/golden/make_vocab_v1.py"
+          python3 -B -I "Pages/Hyperbolic Lexicon/reference/golden/check_ucd_v1.py" --check
+          git diff --exit-code -- "Pages/Hyperbolic Lexicon/reference/golden"
+
+      # saved only when every download succeeded, so a partial set is never stored under the key
+      - name: Save the downloads
+        if: steps.hlcache.outputs.cache-hit != 'true' && steps.fetch.outcome == 'success'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/hyperbolic-lexicon
+          key: ${{ steps.hlcache.outputs.cache-primary-key }}
+
+      - name: All checks (profile ci)
+        env:
+          # partial is allowed only when the downloads are neither cached nor fetched; otherwise the run is strict
+          ALLOW_PARTIAL: ${{ (steps.hlcache.outputs.cache-hit != 'true' && steps.fetch.outcome != 'success') && '--allow-partial' || '' }}
+          STRICT: ${{ (steps.hlcache.outputs.cache-hit == 'true' || steps.fetch.outcome == 'success') && '--strict' || '' }}
+          # the site bar is added at deploy time (static.yml), so a push to main may lack it: checked on pull requests only
+          SKIP_SITE_BAR: ${{ github.event_name != 'pull_request' && '--skip-tag site-bar' || '' }}
+        run: node tests/run-all.cjs --profile ci -j 2 $ALLOW_PARTIAL $STRICT $SKIP_SITE_BAR
+
+      - name: Cores changed by this pull request
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: node scripts/check-cores.mjs --base "origin/$BASE_REF"

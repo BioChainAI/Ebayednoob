@@ -36,7 +36,9 @@
 //                 trace line must fail exactly one line.
 // Implements PREREGISTRATION.md Amendment 4 item 8 (every Phase 1 trace reproduced line for line in Node before any
 // decisive run), for Phase 3 the same for the chain trace (Amendment 7), for Phase 4 the traces that Amendment 10 item 11
-// asks for before the Node re-evaluation, and the common rule "Authority". Exits 1 if any line fails; skipped lines are counted, never passed.
+// asks for before the Node re-evaluation, and the common rule "Authority". Exits 1 if any line fails; skipped lines are
+// counted, never passed: 3 when some lines were skipped (a missing cache) and the others passed, 2 when nothing ran,
+// 0 only when every line ran and passed.
 // Uses only trace data (seeds 8000 + i and the traces' hand-picked cases), seeds 70000 + i, exhaustive short words and
 // the verb forest: no registered L1 instance is touched, and no noun word or point is built; no mammal (L6) data is read.
 'use strict';
@@ -854,6 +856,7 @@ function runAll(sections) {
     }
     const r = runAll([...pinSections, ...LC.paritySections(traces, vocabs, wn), decoderSection, behaviourSection, guardSection, ...geometrySections, ...chainSections(chainGot), ...LC.l6ParitySections(traces, l6Run()), l6Section]);
     const bad = r.fail + (chainGot && chainGot.error ? 1 : 0);
-    console.log(`\nParity: ${r.pass}/${r.pass + bad} lines pass${bad ? `, ${bad} FAIL` : ''}${r.skip ? `, ${r.skip} skipped` : ''}  (${Date.now() - t0} ms, ${LC.version}, Node ${process.versions.node})`);
-    process.exit(bad ? 1 : 0);
+    const code = bad ? 1 : r.skip ? (r.pass ? 3 : 2) : 0;          // 3: partial (some lines skipped), 2: nothing ran
+    console.log(`\nParity: ${r.pass}/${r.pass + bad} lines pass${bad ? `, ${bad} FAIL` : ''}${r.skip ? `, ${r.skip} skipped${code === 3 ? ' (partial)' : ''}` : ''}  (${Date.now() - t0} ms, ${LC.version}, Node ${process.versions.node})`);
+    process.exit(code);
 })();
