@@ -172,10 +172,18 @@ def test_registered_steps_refuse_without_the_definitions_amendment(monkeypatch, 
                                                       'clean': True, 'sys_path_outside_scope': []})
     cfg = RS.make_cfg('registered', 2)
     cfg.results = str(tmp_path / 'results')
+    full = open(S2D.PREREGISTRATION, encoding='utf-8').read()
+    sha = hashlib.sha256(open(RS.MANIFEST_FILE, 'rb').read()).hexdigest()
+    # the committed file holds the definitions amendment (Amendment 14 froze the manifest); the refusal is tested on
+    # the file as it stood before it, Amendments 1-13
+    assert RS.definitions_amendment(full, sha, 13) == 14
+    cut = full.find('\n### Amendment 14 ')
+    text = full[:cut + 1] if cut >= 0 else full
+    before = tmp_path / 'prereg-1-13.md'
+    before.write_text(text, encoding='utf-8')
+    monkeypatch.setattr(S2D, 'PREREGISTRATION', str(before))
     with pytest.raises(RS.Refused, match='definitions amendment'):
         RS.start(cfg, 'decisive', str(tmp_path / 'console.txt'))
-    text = open(S2D.PREREGISTRATION, encoding='utf-8').read()
-    sha = hashlib.sha256(open(RS.MANIFEST_FILE, 'rb').read()).hexdigest()
     fake = text + f'\n### Amendment 14 · 2026-11-08, Stage 2, the definitions amendment\n\nManifest `{sha}`.\n'
     assert RS.frozen_in_amendment(fake, sha, 13) == 14
     assert RS.definitions_amendment(fake, sha, 13) == 14
