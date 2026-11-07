@@ -199,3 +199,80 @@ def compile_kernels():
     st.below_many([3, 5])
     st.shuffle_fresh(5)
     st.negatives(np.array([0]), 2, np.array([0, 2]), np.array([1, 2]))
+
+
+# ================================================================ Stage 2: L14's implicit negatives (A13.10.2)
+# Added for Stage 2; nothing above is changed. On U_@ (n = 74,401) NN(u) is not materialised: lexicon.embed's
+# ImplicitMap holds R(u) = sorted({u} | parents(u) | children(u)) per node as shift_i = R(u)_i - i (A13.10.2), and
+# NN(u)[j] = j + #{i : shift_i <= j}. The draws are A10.3's, call for call: per anchor in order, k times
+# j = below(|NN(u)|), the same _below calls on the same bounds as _negatives makes on an explicit table, so the
+# stream (and its final state) is the explicit table's; only where the j-th non-neighbour is read differs.
+# tests/test_stage2_train.py checks the kernel against a pure-Python replay on hpstep.prng.Rng output for output
+# (below's rejection paths included), against Stream.negatives on materialised instances, and train() bit for bit.
+#
+#     _negatives_implicit(s, anchors, k, n, r_ptr, shift)     the kernel
+#     ImplicitStream(seed, imap) / ImplicitStream(state=..., imap=imap) / ImplicitStream.from_state(state, imap)
+#             a Stream whose negatives(anchors, k, ptr, flat) ignores ptr and flat and reads imap
+#     compile_implicit_kernels()                               compile_kernels() and the implicit kernel, once
+@njit(cache=False)
+def _negatives_implicit(s, anchors, k, n, r_ptr, shift):
+    """For each anchor u in order: m = n - (r_ptr[u + 1] - r_ptr[u]) = |NN(u)| (an error if m < 1); then k times
+    j = below(m) and out = j + (the number of entries of u's shift segment that are <= j), by binary search.
+    Independent, with replacement. below() raises if m > 2**32, as _negatives does."""
+    out = np.empty((anchors.shape[0], k), dtype=np.int64)
+    for r in range(anchors.shape[0]):
+        u = anchors[r]
+        p = r_ptr[u]
+        q = r_ptr[u + 1]
+        m = n - (q - p)
+        if m < 1:
+            raise ValueError('an anchor without non-neighbours')
+        mu = np.uint64(m)
+        for t in range(k):
+            j = np.int64(_below(s, mu))
+            lo = p
+            hi = q
+            while lo < hi:                      # the first index of the segment whose shift exceeds j
+                mid = (lo + hi) // 2
+                if shift[mid] <= j:
+                    lo = mid + 1
+                else:
+                    hi = mid
+            out[r, t] = j + (lo - p)
+    return out
+
+
+class ImplicitStream(Stream):
+    """Stream with the implicit non-neighbour map of A13.10.2: the same generator, state and calls as Stream, except
+    that negatives(anchors, k, ptr, flat) ignores ptr and flat (the Instance's placeholders) and draws through imap
+    (any object with n, r_ptr and shift as lexicon.embed.ImplicitMap holds them). Train with the unchanged
+    embed.train(inst, ..., stream_cls=lambda seed: ImplicitStream(seed, imap)) or embed.train_implicit."""
+    name = NAME + ', implicit non-neighbour map (A13.10.2)'
+
+    def __init__(self, seed=0, imap=None, state=None):
+        if imap is None:
+            raise TypeError('ImplicitStream needs the implicit map')
+        super().__init__(seed, state)
+        n = int(imap.n)
+        r_ptr = np.ascontiguousarray(imap.r_ptr, dtype=np.int64)
+        shift = np.ascontiguousarray(imap.shift, dtype=np.int64)
+        if n < 1 or r_ptr.shape != (n + 1,) or int(r_ptr[-1]) != shift.shape[0]:
+            raise ValueError('the map needs r_ptr of n + 1 entries ending at len(shift)')
+        self.imap, self.n, self.r_ptr, self.shift = imap, n, r_ptr, shift
+
+    @classmethod
+    def from_state(cls, state, imap=None):
+        return cls(state=tuple(state), imap=imap)
+
+    def negatives(self, anchors, k, ptr=None, flat=None):
+        anchors = np.ascontiguousarray(anchors, dtype=np.int64)
+        if anchors.size and (int(anchors.min()) < 0 or int(anchors.max()) >= self.n):
+            raise ValueError(f'an anchor outside 0..{self.n - 1}')
+        return _negatives_implicit(self.s, anchors, int(k), self.n, self.r_ptr, self.shift)
+
+
+def compile_implicit_kernels():
+    """compile_kernels() and the implicit kernel (on a throwaway state), so a run's clocks exclude compilation."""
+    compile_kernels()
+    _negatives_implicit(Stream(state=(1, 2, 3, 4)).s, np.array([0], dtype=np.int64), 2, 3,
+                        np.array([0, 1, 2, 3], dtype=np.int64), np.array([0, 0, 0], dtype=np.int64))

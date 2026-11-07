@@ -547,3 +547,271 @@ def engine_string():
     env = environment()
     return f"python-{env['python']}/numpy-{env['numpy']}/numba-{env['numba']}"
 
+
+# ================================================================ Stage 2: L14's training additions (A13.10)
+# Added for Stage 2; nothing above is changed and train() is used as it stands. A13.10 trains A10's protocol on
+# WordNet's direct noun '@' edges: U_@ in offset order (n = 74,401) and its E = 75,850 (child, parent) pairs. The
+# explicit non-neighbour table of nonneighbour_csr would hold about 44 GB there, so NN(u) is read through an implicit
+# map (A13.10.2) and drawn by lexicon.stream.ImplicitStream, whose draws are A10.3's, call for call:
+#
+#     ImplicitMap(n, r_ptr, shift), ImplicitMap.from_related(n, related)
+#             R(u) = sorted({u} | related[u]); shift_i = R(u)_i - i; NN(u)[j] = j + #{i : shift_i <= j}
+#     implicit_instance(name, n, pairs, related) -> (Instance, ImplicitMap)    _instance's implicit counterpart
+#     direct_graph(wn, pos), direct_instance(wn, pos='noun') -> (Instance, ImplicitMap, offsets)
+#             A13.10.1 (U_@ and E); pos='verb' gives A13.13's dry graph
+#     shuffled_implicit_instance(n, E, seed) -> (Instance, ImplicitMap)         A13.10.6's edge-shuffled instance
+#     train_implicit(inst, imap, geometry, d, lr, seed, ...)                     train() with ImplicitStream(seed, imap)
+#     floor_table_snapped(seed, n, d, geometry) -> (X, N)                        A13.10.6's floors, snapped
+#     loss_mean(epoch_loss, a, b), converged(epoch_loss)                         A13.10.7
+#     drop_epoch(epoch_loss)                                                     A13.11's reported 95% epoch
+#
+# Seeds are parameters everywhere: the registered values (training 0-4, tuning 9000-9011, edge pairs and floors
+# 2600 + s, and the dry run's +3000) are passed only by the step that draws them (A13.12); tests pass 95200 + i.
+# An Instance returned here carries placeholders, not a table: nn_ptr = zeros(n + 1) and nn_flat = zeros(0), so every
+# anchor has |NN(u)| = 0 through them and any explicit draw (Stream.negatives, PyStream.negatives, replay_states with
+# inst.nn_sizes()) raises before it draws, instead of reading out of bounds. Sizes come from the map: imap.sizes().
+# (The build spec, section 10, says "zero-length" placeholders; numba's _negatives does not check bounds, so a
+# zero-length nn_ptr would let a run started without ImplicitStream read memory it does not own.)
+STAGE2_N, STAGE2_E = 74401, 75850                  # A13 notation and item 9: U_@ and its direct edges E
+# A13.12's L14 seeds, as constants only: a function takes the seed as a parameter, and only the step that uses a
+# registered value passes it (tests check these values and draw 95200 + i)
+L14_SEEDS = {
+    'registered': {'training': (0, 1, 2, 3, 4), 'tuning': tuple(range(9000, 9012)), 'edge_floor_base': 2600},
+    'dry': {'training': (3000, 3001, 3002, 3003, 3004), 'tuning': tuple(range(12000, 12012)), 'edge_floor_base': 5600},
+}
+CONVERGENCE_WINDOWS = ((0, 9), (890, 899), (990, 999))     # A13.10.7: m(0, 9), m(890, 899), m(990, 999)
+DROP_SHARE = 0.95                                  # A13.11: the epoch at which a run reaches 95% of its loss drop
+
+
+class ImplicitMap:
+    """A13.10.2's implicit non-neighbour map over the nodes 0..n-1.
+
+    r_ptr  int64[n + 1], r_ptr[0] = 0: node u's segment is shift[r_ptr[u]:r_ptr[u + 1]], one entry per element of R(u)
+    shift  int64[sum |R(u)|]: shift_i = R(u)_i - i for R(u) strictly increasing, so each segment is non-decreasing
+
+    NN(u) is range(n) minus R(u), ascending: size(u) = n - |R(u)|, and NN(u)[j] = j + #{i : shift_i <= j} (one binary
+    search), for 0 <= j < size(u). from_related puts u into R(u), so NN(u) never holds u. explicit(u) materialises
+    NN(u) for tests; nothing in training does."""
+
+    def __init__(self, n, r_ptr, shift):
+        n = int(n)
+        r_ptr = np.ascontiguousarray(r_ptr, dtype=np.int64)
+        shift = np.ascontiguousarray(shift, dtype=np.int64)
+        if n < 1 or r_ptr.shape != (n + 1,) or shift.ndim != 1:
+            raise ValueError('an implicit map needs n >= 1, r_ptr of n + 1 entries and a flat shift array')
+        lengths = np.diff(r_ptr)
+        if int(r_ptr[0]) != 0 or int(r_ptr[-1]) != shift.shape[0] or (lengths < 0).any():
+            raise ValueError('r_ptr must run from 0 to len(shift) without decreasing')
+        rel = self._related_flat(r_ptr, shift, lengths)
+        if rel.size and (int(rel.min()) < 0 or int(rel.max()) >= n):
+            raise ValueError('R(u) must lie in 0..n-1')
+        seg = np.repeat(np.arange(n, dtype=np.int64), lengths)
+        same = seg[1:] == seg[:-1]
+        if (rel[1:][same] <= rel[:-1][same]).any():
+            raise ValueError('each R(u) must be strictly increasing (each shift segment non-decreasing)')
+        self.n, self.r_ptr, self.shift = n, r_ptr, shift
+
+    @staticmethod
+    def _related_flat(r_ptr, shift, lengths):
+        """R(u)_i = shift_i + i, segment by segment, as one flat array."""
+        start = np.repeat(r_ptr[:-1], lengths)
+        return shift + (np.arange(shift.shape[0], dtype=np.int64) - start)
+
+    @classmethod
+    def from_related(cls, n, related):
+        """R(u) = sorted({u} | related[u]) for u = 0..n-1 (related[u]: any iterable of node indices)."""
+        n = int(n)
+        if len(related) != n:
+            raise ValueError('related needs one entry per node')
+        r_ptr = np.zeros(n + 1, dtype=np.int64)
+        flat = []
+        for u in range(n):
+            r = sorted({u}.union(int(x) for x in related[u]))
+            if r[0] < 0 or r[-1] >= n:
+                raise ValueError(f'R({u}) leaves 0..{n - 1}')
+            flat.extend(x - i for i, x in enumerate(r))
+            r_ptr[u + 1] = r_ptr[u] + len(r)
+        return cls(n, r_ptr, np.array(flat, dtype=np.int64))
+
+    @property
+    def entries(self):
+        """The stored entries: n + 1 pointers and sum |R(u)| shifts (A13.16: n + 2E shifts for a direct-edge map)."""
+        return self.r_ptr.shape[0] + self.shift.shape[0]
+
+    @property
+    def nbytes(self):
+        return self.r_ptr.nbytes + self.shift.nbytes
+
+    def segment(self, u):
+        return self.shift[self.r_ptr[u]:self.r_ptr[u + 1]]
+
+    def related(self, u):
+        """R(u), ascending."""
+        seg = self.segment(u)
+        return seg + np.arange(seg.shape[0], dtype=np.int64)
+
+    def size(self, u):
+        """|NN(u)| = n - |R(u)|."""
+        return self.n - int(self.r_ptr[u + 1] - self.r_ptr[u])
+
+    def sizes(self):
+        """|NN(u)| for every node, int64[n]: the nn_sizes of pystream.replay_states."""
+        return self.n - np.diff(self.r_ptr)
+
+    def nn(self, u, j):
+        """NN(u)[j] = j + #{i : shift_i <= j} (j an int or an int array, each 0 <= j < size(u))."""
+        jj = np.asarray(j, dtype=np.int64)
+        if jj.size and (int(jj.min()) < 0 or int(jj.max()) >= self.size(u)):
+            raise IndexError(f'NN({u}) has {self.size(u)} entries')
+        out = jj + np.searchsorted(self.segment(u), jj, side='right')
+        return int(out) if out.ndim == 0 else out
+
+    def explicit(self, u):
+        """NN(u) materialised (tests): every node not in R(u), ascending, int64."""
+        keep = np.ones(self.n, dtype=bool)
+        keep[self.related(u)] = False
+        return np.flatnonzero(keep).astype(np.int64)
+
+
+def implicit_instance(name, n, pairs, related):
+    """_instance's implicit counterpart: positives = pairs sorted by (anchor, positive), as int64[E, 2]; NN(u) = every
+    node but those in {u} | related[u], through an ImplicitMap; every anchor must have |NN(u)| >= 1 (A10.2: no
+    fallback exists). Returns (Instance with the placeholders described above, ImplicitMap)."""
+    n = int(n)
+    pos = np.array(sorted((int(a), int(b)) for a, b in pairs), dtype=np.int64).reshape(-1, 2)
+    if pos.size and (int(pos.min()) < 0 or int(pos.max()) >= n):
+        raise ValueError(f'a pair leaves 0..{n - 1}')
+    imap = ImplicitMap.from_related(n, related)
+    anchors = np.unique(pos[:, 0])
+    sizes = imap.sizes()
+    if len(anchors) and int(sizes[anchors].min()) < 1:
+        bad = [int(u) for u in anchors if sizes[u] < 1]
+        raise ValueError(f'anchors without non-neighbours: {bad[:5]} (item 2: no fallback exists)')
+    inst = Instance(name, n, pos, np.zeros(n + 1, dtype=np.int64), np.zeros(0, dtype=np.int64))
+    return inst, imap
+
+
+def direct_graph(wn, pos='noun'):
+    """The '@' graph of one part of speech: (offsets, edges). offsets are the synsets incident to an '@' pointer (both
+    ends), sorted (offset order); edges are the distinct (child, parent) offset pairs of every '@' pointer, sorted.
+    '@i' (instance hypernym) is not '@' (A13 notation: the hypernym graph without instance links). An '@' pointer
+    whose target is not a synset of the same part of speech is refused."""
+    syn = wn['synsets'][pos]
+    edges = set()
+    for o, s in syn.items():
+        for sym, p, _ in s.ptrs:
+            if sym == '@':
+                if p not in syn:
+                    raise ValueError(f'{pos} {o}: an @ pointer to {p}, outside {pos}')
+                edges.add((o, p))
+    edges = sorted(edges)
+    offsets = sorted({x for e in edges for x in e})
+    return offsets, edges
+
+
+def direct_instance(wn, pos='noun', name=None):
+    """A13.10.1: S = U_@ in offset order (n = 74,401 for nouns); the positives are E's (child index, parent index)
+    pairs in that order (75,850; the child is the anchor); NN(u) = S minus ({u} | parents(u) | children(u)), the
+    training relation's complement with no closure taken, through ImplicitMap. pos='verb' gives A13.13's dry graph
+    (13,542 nodes, 13,239 edges; the isolated verbs are not in it). Returns (Instance, ImplicitMap, offsets)."""
+    offsets, edges = direct_graph(wn, pos)
+    index = {o: i for i, o in enumerate(offsets)}
+    n = len(offsets)
+    pairs = [(index[c], index[p]) for c, p in edges]
+    related = [set() for _ in range(n)]
+    for c, p in pairs:
+        related[c].add(p)
+        related[p].add(c)
+    # READING (A13.10.1 names no training-instance label): 'wordnet30-<pos>-at-direct', recorded as Run.instance only;
+    # the instance itself is named by the SHA-256 of its offsets (offsets_sha), U_@'s 9af5a81a... for nouns (A13.9)
+    inst, imap = implicit_instance(name or f'wordnet30-{pos}-at-direct', n, pairs, related)
+    return inst, imap, tuple(offsets)
+
+
+def shuffled_implicit_instance(n, E, seed, name=None):
+    """A13.10.6's edge-shuffled instance: the pairs of l6.edge_pairs_seed(seed, n, E) (A10.9's rule from one fresh
+    Rng(seed): a = below(n), b = below(n), rejecting a = b and any unordered pair already held, until E pairs; held in
+    order of (a, b)) as positives, and NN'(a) = every node other than a paired with a in neither order (R(a) = {a} |
+    partners(a)), through ImplicitMap. The registered seed is 2600 + s (dry 5600 + s); the training draws then come
+    from ImplicitStream(s, imap). Returns (Instance, ImplicitMap)."""
+    from . import l6
+    pairs = l6.edge_pairs_seed(seed, n, E)
+    partners = [set() for _ in range(int(n))]
+    for a, b in pairs:
+        partners[a].add(b)
+        partners[b].add(a)
+    return implicit_instance(name or f'edge-shuffled-{seed}', n, pairs, partners)
+
+
+def train_implicit(inst, imap, geometry, d, lr, seed, **kwargs):
+    """train(inst, geometry, d, lr, seed, stream_cls=lambda s: ImplicitStream(s, imap), ...), unchanged: the run reads
+    one ImplicitStream(seed, imap) in item 3's order. The kernels are compiled first, so the run's clocks exclude it."""
+    if 'stream_cls' in kwargs:
+        raise TypeError('train_implicit sets stream_cls itself')
+    if imap.n != inst.n:
+        raise ValueError(f'the map has {imap.n} nodes, the instance {inst.n}')
+    from . import stream as S
+    S.compile_implicit_kernels()
+    return train(inst, geometry, d, lr, seed, stream_cls=lambda s: S.ImplicitStream(s, imap), **kwargs)
+
+
+def floor_table_snapped(seed, n, d, geometry):
+    """A13.10.6's floor: the initial table of item 3 from a fresh Rng(seed) (l6.floor_table: Rng's own random(),
+    node-major, Lorentz x0 = sqrt(1 + Sigma_seq x_k^2)), left untrained, and its dyadic integers (learned.snap at
+    2^-32). The registered seed is 2600 + i (dry 5600 + i). Returns (X, N)."""
+    from . import l6
+    from . import learned
+    X = l6.floor_table(seed, n, d, geometry)
+    return X, learned.snap(X, geometry)
+
+
+def loss_mean(epoch_loss, a, b):
+    """A13.10.7's m(a, b): the mean of the recorded epoch losses (A10.5) of epochs a..b, both included, in float64.
+    READING (A13.10.7, "the mean ... in float64"; the build spec fixes "numpy float64 mean of the slice"): numpy's
+    float64 mean, which for a float64 vector is np.add.reduce (numpy's pairwise sum) and one division by the count;
+    it is written so here because this module's code names no .mean (tests/test_embed.py's scan), and
+    tests/test_stage2_train.py checks it equal to np.mean bit for bit. This is a decision on the record, not the
+    trainer's arithmetic, which keeps its sequential sums."""
+    x = np.asarray(epoch_loss, dtype=np.float64)
+    if x.ndim != 1 or not 0 <= a <= b or b >= x.shape[0]:
+        raise ValueError(f'epochs {a}..{b} of {x.shape[0]} recorded')
+    w = np.ascontiguousarray(x[a:b + 1])
+    return float(np.add.reduce(w) / w.shape[0])
+
+
+def converged(epoch_loss):
+    """A13.10.7: a run has converged iff m(0, 9) - m(990, 999) > 0 and
+    m(890, 899) - m(990, 999) <= (m(0, 9) - m(990, 999)) / 100, in float64 (m: loss_mean).
+    It reads the losses only; whether the run diverged (no table) is decided apart (A10.5), and both conditions are
+    needed where A13 asks for both. READING (A13.10.7, the windows name epochs 0-999): a run that recorded fewer than
+    1,000 epochs (a diverged run stops early) has no m(990, 999) and has not converged; more than 1,000 is not this
+    protocol's run and is refused."""
+    x = np.asarray(epoch_loss, dtype=np.float64)
+    if x.ndim != 1 or x.shape[0] > EPOCHS:
+        raise ValueError(f'{x.shape[0]} epoch losses: the protocol records {EPOCHS}')
+    if x.shape[0] < EPOCHS:
+        return False
+    (a0, b0), (a1, b1), (a2, b2) = CONVERGENCE_WINDOWS
+    first, late, last = loss_mean(x, a0, b0), loss_mean(x, a1, b1), loss_mean(x, a2, b2)
+    drop = first - last
+    return bool(drop > 0.0 and late - last <= drop / 100)
+
+
+def drop_epoch(epoch_loss, share=DROP_SHARE):
+    """A13.11's reported diagnostic: the first epoch e at which the run has reached `share` (95%) of its loss drop.
+    READING (A13.11, "the epoch at which each run reaches 95% of its loss drop"; A13.10.7 names the drop): with
+    drop = m(0, 9) - m(990, 999), the first e with m(0, 9) - loss[e] >= share * drop, in float64; None when the run
+    recorded fewer than 1,000 epochs or drop <= 0 (no drop to reach). Reported only; it decides nothing."""
+    x = np.asarray(epoch_loss, dtype=np.float64)
+    if x.ndim != 1 or x.shape[0] > EPOCHS:
+        raise ValueError(f'{x.shape[0]} epoch losses: the protocol records {EPOCHS}')
+    if x.shape[0] < EPOCHS:
+        return None
+    (a0, b0), _, (a2, b2) = CONVERGENCE_WINDOWS
+    first = loss_mean(x, a0, b0)
+    drop = first - loss_mean(x, a2, b2)
+    if not drop > 0.0:
+        return None
+    target = share * drop
+    hit = np.flatnonzero(first - x >= target)
+    return int(hit[0]) if hit.size else None

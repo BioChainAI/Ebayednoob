@@ -121,6 +121,19 @@ Built in Phase 4 (L6 and L4(c); Amendment 10, cited A10.n):
 | `lexicon/learned.py` | Snapping to 2^−32 (A10.6), exact ranking of snapped tables through `rank._ap_and_ranks`, float64 ranking (A10.10), fractional-tie AP, the rank structure, displacement, bits and the distances for distortion (A10.11) |
 | `lexicon/l6.py` | Seeds, tuning jobs and the lr choice, control 1's relabelling, control 2's pairs, the floors, intervals, presence, the decisions of L6 and L4(c), `LBENCH/1` (A10.12), the protocol pin (`golden/l6_protocol_v1.txt`) and the lr-freeze lookup |
 
+Built in Stage 2 (L12–L15; Amendment 13, cited A13.n; in progress, nothing scored yet):
+
+| Module | Holds |
+| --- | --- |
+| `lexicon/stage2data.py` | The pins of A13.2 and their store; word readers (pass 1) and gold readers (pass 2, refused until `open_gold()`) in separate functions; the count checks of A13.9; the protocol pin (`golden/stage2_protocol_v1.txt`) |
+| `lexicon/senses.py` | N_S, the universes U_full and U_@ (the `@` graph), S_U(w), coverage, pair sets, word types, HiT's names, the reported sense rules |
+| `lexicon/wngraph.py` | WN with no geometry (A(x), up, D, G_WN, Sym_WN, Dep_WN) and the reported WN-U, ST, letter tree and WN-LCh |
+| `lexicon/scores2.py` | Points per arm (H3, H2, F, K3, S-full, W, S3, learned), exact input tuples, certified values at 120 and 240 digits, the comparison, tie classes, Φ, Dep°, G_root, the reported forms |
+| `lexicon/stats2.py` | ρ on average ranks, the word-level, row and cluster bootstraps, AP, RR, macro RR, accuracy, F1, the suite's threshold protocol, the bands and the decisions of L12–L15 |
+| `lexicon/hit.py` | HiT's rows and names, the verifier, the closure check, HIT-R and the dry split, the within-row control's slots |
+| `lexicon/glove.py` | GloVe 6B's text members as exact decimals, the exact cosine key, coverage counts |
+| `lexicon/embed.py`, `lexicon/stream.py` (added functions only) | L14's implicit non-neighbour map and its stream, the direct-edge and edge-shuffled instances, floors, convergence (A13.10) |
+
 Beside them, `traces_l6.py` writes `traces/l6_v1.txt`, the L6 trace the browser core must reproduce before it
 re-evaluates the measured snapped tables (A10.11), and `fractional_ties.py` writes `results/fractional-ties.json` and
 `.md`, A10.17's fractional-tie values for Phases 1 and 2 (both under "How to run" below).
@@ -310,6 +323,61 @@ node run_l6_node.cjs                                     # the Node re-evaluatio
   (`09a8afa`).
 - **Registered steps repeat only from their commits.** `--measure` refuses unless the only paths changed since
   tuning's commit are the four A10.14 names, so a repeat of the decisive run starts from `515a4a1`.
+
+## Stage 2: L12–L15 (in progress)
+
+`run_claims_stage2.py` runs Amendment 13's order of work (A13.15). Amendment 13 is committed alone (`b3a5003`); the
+code and its tests are being built (step 2); nothing has been scored on any Stage-2 set, and no registered seed has been
+drawn.
+
+```
+python3 -B run_claims_stage2.py --selftest --out <dir> [--dry]   # the whole pipeline (time, tune, settings, decisive)
+                                                         # on tests/stage2_synth.py's synthetic world, seeds 95200 + i,
+                                                         # a 400-resample bootstrap (about 25 s on 2 workers; --dry: the
+                                                         # dry run's shape, verbs and sealing); decides nothing, writes
+                                                         # only under <dir>
+python3 -B run_claims_stage2.py --dry                    # step 3, the dry run (A13.13): verbs, every seed + 3000; dry
+                                                         # tuning, its settings, the dry decisive run: results/dry/, and
+                                                         # every value on a human-rated set in the sealed cache file
+python3 -B run_claims_stage2.py --time                   # before step 5: two epochs per L14 cell on U_@ (seeds 95500 + i);
+                                                         # projects the registered total and refuses above 11 h or the disk
+python3 -B run_claims_stage2.py --tune                   # step 5, registered tuning: HiT val only; results/tuning-stage2.json
+python3 -B run_claims_stage2.py --write-settings         # settings-stage2.json; prints its SHA-256 for the lr freeze (step 6)
+python3 -B run_claims_stage2.py --decisive               # step 7, the one decisive run of L12-L15
+```
+
+- **The order of work** (A13.15): this code and its tests on synthetic data, the dry data and seeds 95200 + i, then
+  an adversarial review (seeds 95600 + i); the dry run on the committed code; the definitions amendment (the READINGs,
+  the instance manifest's SHA-256, the GloVe counts, the dry diagnostics); `--time`; registered tuning on a clean tree;
+  the lr-freeze amendment; the decisive run at its commit; the write-up.
+- **Blind two-pass scoring** (A13.8). Pass 1 (the functions marked `@pass1`) reads only word, POS, MEN-tag and fold
+  columns and HiT's names, and writes per (instance, arm, form, sense rule, table) a gzip TSV of tie-class codes
+  keyed by row number, the SHA-256 of its 120-digit value stream and a side file of the values that took the 240-digit
+  path or sit in a numerical tie. Pass 2 opens the gold, runs the label and TYPE count checks, selects BD-dir's True
+  rows, reads each code file only after checking its SHA-256 and computes every metric, control and decision.
+- **Rules.** `--workers W` (1–4, default 4); training in a spawn pool (numba in the workers only), pass-1 scoring in a
+  fork pool. Registered `--tune` and `--decisive` refuse an unclean tree (Phase 4's check, scope and repetitions), and
+  refuse until an amendment after 13 holds the instance manifest's SHA-256; `--tune` also needs a `--time` record
+  within 11 h and the disk; `--decisive` refuses unless only `PREREGISTRATION.md`, `settings-stage2.json`,
+  `results/tuning-stage2.json` and tuning's console changed since tuning's commit and the lr-freeze amendment holds
+  the settings' SHA-256, and it rebuilds the instance manifest from the pinned files and refuses another. Before
+  `--dry`, `--tune` and `--decisive` the disk pre-flight refuses a projection above the free space less 2 GB. The load
+  average is recorded at every start and every 10 minutes. `--allow-dirty` is the dry run's only.
+- **Resume.** Each finished job (a training run, or a pass-1 job with its code and side files) is a line of
+  `runs.jsonl` in `~/.cache/hyperbolic-lexicon/stage2-run/<mode>/`; a restart at the same HEAD and code reuses the
+  lines whose files still have their SHA-256s, and lists every start.
+- **Files.** `results/stage2-time.json`; `results/tuning-stage2.json` and `stage2-tuning-console.txt`;
+  `settings-stage2.json`; `results/claims-stage2.json` and `.md`, `stage2-console.txt`, `lbench-stage2.txt` (one
+  `LBENCH/1` record per evaluated instance, arm, form, rule and table, in A13.14's 24-field layout with claim field
+  `L12/1`–`L15/1` or `stage2/1`; `run_claims_stage2.parse_lbench` selects the layout by the claim field, and
+  `l6.parse_lbench` still accepts `L6/1` only), `stage2-manifest.json` (the SHA-256 of every pass-1 code file, value
+  stream and side file), `stage2-codes/` and `stage2-tables/` (each committed only if together at most 50 MB); the
+  same under `results/dry/` without the sealed values, which go to `~/.cache/hyperbolic-lexicon/stage2/dry-sealed/
+  values.json`. Every other code file, side file and table stays in the cache.
+- **Tests:** `tests/test_stage2_runner.py` (the rules, LBENCH/1, the disk pre-flight and budget refusals, blindness by
+  import inspection, a gold-reader spy and poisoned gold fields, the dry seal; slow: the self-test end to end in both
+  shapes, its resume and its determinism, and the word-level counts and pair sets on the pinned files against the
+  instance manifest).
 
 ## Results
 

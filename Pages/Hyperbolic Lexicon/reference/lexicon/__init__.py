@@ -28,7 +28,7 @@ Modules (Phase 3, Amendment 7):
     attest          ATTEST/1 with `cryptography`: P1363 <-> DER, the registry snapshot, BioChain's identity port (L10)
     verify          packages, the hardened verifier and the T1-T9 tamper helpers (L10, L11)
 
-Modules (Phase 4, Amendment 10; in progress):
+Modules (Phase 4, Amendment 10):
     stream          the training stream: hpstep.prng's xoshiro128** and splitmix32 copied line for line into numba
                     kernels (next_u32, random, below, shuffle; init draws, epoch shuffles, negatives), numba pinned
     pystream        the same calls on hpstep.prng.Rng itself (no numba), and replay_states (item 1's replay check)
@@ -40,6 +40,20 @@ Modules (Phase 4, Amendment 10; in progress):
                     L4(c), LBENCH/1, the protocol pin and the lr-freeze lookup (items 7-9, 12)
     (../run_claims_phase4.py is the runner: --tune, --write-settings, --measure, --dry, --selftest; numba is
     imported only in its worker processes)
+
+Modules (Stage 2, Amendment 13; in progress, nothing scored yet):
+    stage2data      the pins of A13.2 and their store; word readers (pass 1) and gold readers (pass 2) kept apart;
+                    the count checks of A13.9; the protocol pin (golden/stage2_protocol_v1.txt)
+    senses          N_S, U_full and U_@ (the '@' graph), S_U(w), coverage, pair sets, word types, HiT's names
+    wngraph         WordNet's own graph read with no geometry (G_WN, Sym_WN, Dep_WN) and its reported variants
+    scores2         points per arm, exact input tuples, certified values, the comparison, tie classes, Phi, Dep°
+    stats2          rho on average ranks, the word-level, row and cluster bootstraps, AP, RR, accuracy, F1, bands,
+                    the decisions of L12-L15
+    hit             HiT's rows and names, the verifier, the closure check, HIT-R and the dry split
+    glove           GloVe 6B's text members as exact decimals and the exact cosine key
+    embed, stream   (functions added) L14's implicit non-neighbour map, its stream, floors and convergence
+    (../run_claims_stage2.py is the runner: --time, --dry, --tune, --write-settings, --decisive and --selftest, with
+    blind two-pass scoring; tests/stage2_synth.py is the self-test's synthetic world)
 
 Hyperbolic Oracles' exact modules (hpstep: prng, problems, decode3d) and Engram Mind's Eye's (engram: ttmpt,
 address) are imported in place, unchanged, from their reference folders.
