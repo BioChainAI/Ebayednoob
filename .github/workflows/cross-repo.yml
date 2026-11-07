@@ -1,0 +1,102 @@
+# Nightly (and on demand): Ebayednoob's checks against the three upstream repositories at their main branches
+# (overhaul F20). Each is checked out beside this repository with its full history, so the pin checks can find the
+# pinned source content in git history after upstream commits; every pin compares content: the v1 files must reproduce
+# from the pinned content and the current code must give v1's results. A changed commit or file is a NOTE line, not a
+# failure. It runs tests/run-all.cjs with the "cross-repo" profile: the four Engram pins, the Lexicon's compat pin (with
+# the same WordNet cache as check.yml), test_attest.py and test_chain.py, and the 0xA kernel against SHD-CCP's tooling.
+# The run is strict: with the checkouts guaranteed, a skipped check means a broken setup, so it fails. It only reads
+# the Lexicon's download cache (check.yml saves it, complete); on a miss it fetches WordNet for this run alone.
+# Actions are pinned to commits (the tag in the comment); no checkout keeps credentials.
+# The three repositories are public; if one becomes private, a read-only token for it is needed here.
+name: Cross-repository checks
+
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cross-repo
+  cancel-in-progress: false
+
+jobs:
+  cross-repo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Ebayednoob
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: Ebayednoob
+          persist-credentials: false
+
+      - name: Checkout Owl-Academy (main, full history)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: BioChainAI/Owl-Academy
+          ref: main
+          fetch-depth: 0
+          path: Owl-Academy
+          persist-credentials: false
+
+      - name: Checkout BioChain-AI (main, full history)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: BioChainAI/BioChain-AI
+          ref: main
+          fetch-depth: 0
+          path: BioChain-AI
+          persist-credentials: false
+
+      - name: Checkout SHD-CCP (main, full history)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: BioChainAI/SHD-CCP
+          ref: main
+          fetch-depth: 0
+          path: SHD-CCP
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Python packages
+        run: |
+          python -m pip install --upgrade pip
+          # PyYAML: SHD-CCP's Agent_Tooling/ontology.py (check_kernel.py) imports yaml (its requirements.txt: pyyaml>=6)
+          python -m pip install -r "Ebayednoob/Pages/Hyperbolic Lexicon/reference/requirements.txt" "cryptography==50.0.1" "pyyaml==6.0.3"
+
+      # read only: check.yml saves this cache, and only when every download is in it
+      - name: The Lexicon's downloads (cached)
+        id: hlcache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/hyperbolic-lexicon
+          key: hl-cache-${{ hashFiles('Ebayednoob/Pages/Hyperbolic Lexicon/reference/golden/wordnet_v1.cjs', 'Ebayednoob/Pages/Hyperbolic Lexicon/reference/golden/ewt_v1.meta.json', 'Ebayednoob/Pages/Hyperbolic Lexicon/reference/golden/vocab_v1.meta.json', 'Ebayednoob/Pages/Hyperbolic Lexicon/reference/golden/ucd_15_1_v1.meta.json') }}
+
+      - name: Fetch WordNet on a cache miss
+        if: steps.hlcache.outputs.cache-hit != 'true'
+        working-directory: Ebayednoob
+        run: node "Pages/Hyperbolic Lexicon/reference/golden/make_wordnet_v1.cjs"
+
+      - name: Upstream heads
+        # fails when a checkout is missing (the assignment carries rev-parse's exit status)
+        run: for r in Owl-Academy BioChain-AI SHD-CCP; do h=$(git -C "$r" rev-parse --short HEAD); echo "$r $h"; done
+
+      - name: Checks against the upstream repositories (profile cross-repo)
+        working-directory: Ebayednoob
+        env:
+          OWL_ACADEMY_DIR: ${{ github.workspace }}/Owl-Academy
+          BIOCHAIN_AI_DIR: ${{ github.workspace }}/BioChain-AI
+          SHD_CCP_DIR: ${{ github.workspace }}/SHD-CCP
+        run: node tests/run-all.cjs --profile cross-repo --strict -j 2

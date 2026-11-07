@@ -25,6 +25,7 @@ SHD-CCP's hurwitz.py is imported read-only: sys.dont_write_bytecode is set first
 sys.path explicitly, and the file's SHA-256 must be the pinned one. hpstep.problems is imported in place.
 """
 import hashlib
+import importlib.util
 import math
 import os
 import sys
@@ -35,7 +36,17 @@ from hpstep.problems import GENS, INV, children, qmul, word_quaternion
 
 QS = (13, 17, 29)
 TWO_SQRT5 = 2 * math.sqrt(5)
-SHDCCP_SRC = '/home/user/SHD-CCP/Geometric_Engine/ecosystem/SHD-CCP/geometric-engine/src'
+def _shdccp_dir():
+    """SHD_CCP_DIR, else the SHD-CCP checkout beside this repository (scripts/lib/siblings.py; the path only: the
+    file's SHA-256, HURWITZ_SHA256 below, stays the content pin)."""
+    lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'scripts', 'lib', 'siblings.py')
+    spec = importlib.util.spec_from_file_location('ebayednoob_siblings', lib)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.dir('SHD-CCP')
+
+
+SHDCCP_SRC = os.path.join(_shdccp_dir(), 'Geometric_Engine', 'ecosystem', 'SHD-CCP', 'geometric-engine', 'src')
 HURWITZ_FILE = os.path.join(SHDCCP_SRC, 'geometric_engine', 'hurwitz.py')
 HURWITZ_SHA256 = 'cecb6dccb4f3757dcdb7ec96994e30a5d6c2fc2f973234b51e7e86ecf1b244e9'   # spike S5's read
 IDENT = (1, 0, 0, 1)

@@ -32,6 +32,7 @@ const path = require('path');
 const http = require('http');
 const crypto = require('crypto');
 const SYS = path.join(__dirname, '..'), ROOT = path.resolve(SYS, '..', '..');
+const siblings = require(path.join(ROOT, 'scripts', 'lib', 'siblings.cjs'));      // PLAYWRIGHT_CHROMIUM, else /opt/pw-browsers/chromium
 const LP = require(path.join(SYS, 'assets', 'hl-pages.js'));
 const LC = require(path.join(SYS, 'lexicon_core.js'));
 const EC = require(path.join(ROOT, 'Pages', 'Engram Minds Eye', 'engram_core.js'));
@@ -376,7 +377,7 @@ async function manualRun(browser, base, w, h, scheme) {
 
 (async () => {
     let browser;
-    const exe = fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined;
+    const exe = siblings.chromium();
     try { browser = await pw.chromium.launch(exe ? { executablePath: exe } : {}); } catch (e) { console.log(`skip  Chromium checks (Chromium cannot launch: ${e.message.split('\n')[0]})`); process.exit(2); }
     let server = null, httpBase = process.env.HL_BASE || '';
     if (!httpBase) { server = await serve(ROOT); httpBase = `http://127.0.0.1:${server.address().port}/`; }
