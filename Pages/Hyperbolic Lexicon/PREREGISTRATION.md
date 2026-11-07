@@ -2542,3 +2542,487 @@ executed; parsing ran under `python3 -B -I`; no repository file was written and 
 - Whether hyperbolic geometry helps a language model: Stages 3 and 4, by amendment.
 - G's order is certified by square roots at 120 and 240 digits, not computed in rationals; ties at the 240-digit bound
   are a registered part of the metric, read as exact ties (item 6).
+
+### Amendment 14 · 2026-11-07, Stage 2, the definitions after the dry run
+
+Written on 2026-11-07, after the dry run of A13.13 and before the timing projection, registered tuning and any decisive
+evaluation. It is the definitions amendment of A13.15 step 4. The code is 841b90c; dry tuning and the dry decisive step
+ran on it, and their record was committed in 05d467d. ae6e6d3 then merged a tooling commit of the integration
+overhaul (pin checks, test runners, CI workflows, path helpers): it changes no Stage-2 module, and `lexicon/lps.py`
+changes only how it finds the SHD-CCP checkout (its SHA-256 pin of `hurwitz.py` is unchanged), so only the code hash
+the runner records moves; item 6's dry rerun runs on it. It changes no definition of Amendment 13 (item 4). It states the
+readings fixed in the code (item 1), freezes the instance manifest and states the counts A13 leaves to it (item 2),
+gives the dry run's diagnostics (item 3), classifies what the builders and reviewers flagged (item 5), and states the
+consequence for the protocol file and the one code commit that follows this amendment, which changes no definition
+(item 6); item 7 lists what ran. Its date and reasons follow A10.14: it is dated, it comes before registered tuning,
+and it says what was known.
+- *Known.* The visible dry record (A13.13): crashes, count checks, whether each control failed as required,
+  convergence, timings, tie counts, dry tuning's val scores, and L14's values on the verb graph and its split. There
+  the dry L14(a) is void (controls 1–2), and each of its four (d, setting) cells had five present seeds with lo > 0.
+  Beyond A13.13's list, the record names each control's gold-chosen strongest permutation on the sealed sets (item 3,
+  *the seal*).
+- *Not known.* The sealed file (SHA-256 `7ba50e016172955f4052d488711a9f561c47fb3d20540e7c0136f1648dd28936`) has not
+  been opened: no metric value, interval or verdict on a human-rated or human-labelled set has been seen. Nothing has
+  been scored on HL, BD, WB, SL, MEN, WSR, HiT val or test, or any reported set, and no registered seed has been drawn.
+
+**1. Readings fixed in the code** (each marked `READING`). The runner records its own as `stage2-runner-1` to `-51`
+(runner-N below) in its records' `readings`: the tuning record holds all 51, and the decisive record all but runner-7,
+which only the tuning step records. Its inline markers restate them. None changes a definition. Runner-34 is stated
+as item 6's commit makes it.
+- *Data, pins and the manifest* (`stage2data`, `glove`, `hit`, `golden/make_stage2_v1.py`):
+  - a rating or a GloVe component is an exact decimal (optional minus, digits, optional fraction and exponent), read
+    exactly; NaN, a leading + or a space is refused;
+  - a byte-order mark or a blank line is refused; trailing spaces are kept and refused by each format's field checks;
+  - HyperLex's random-split file has `hyperlex-all.txt`'s header and its own fold, `test`; its POS column selects the
+    541 nouns; in `hyperlex_rnd.tsv` label is TYPE and score AVG_SCORE, read by the gold reader only;
+  - "464 rows whose reverse is a row": (y, x), as N_S forms, is the pair of some row;
+  - BD's "6 repeated pairs and 3 self-pairs" compare the raw word fields (as N_S forms 17 pairs repeat; reported);
+  - WS-353's distinct ordered pairs compare N_S forms (`combined.tab` capitalises some words);
+  - WB's BLESS concept compares the words as given; BD's and WB's cluster keys are the raw fields of the rows covered in
+    U_full;
+  - A13.9's closure counts use strict `@` ∪ `@i` ancestors with U_full senses; a spanning ancestor is a strict ancestor
+    on L3's spanning-parent chain; a shared synset is neither;
+  - the protocol file is A10's section, then A13's, as `l6.amendment_section` gives them, with nothing between;
+  - the manifest's row count and N_S-pair hash cover the rows the selection keeps, before coverage; each universe's
+    covered rows follow with their own count and hash;
+  - GloVe coverage uses the 300-d member's vocabulary (the 50-d member's is checked equal), recorded for every word set;
+  - BD-dir has no manifest entry: pass 2 chooses its rows by label among BD's covered rows;
+  - EVAL test "as distinct ordered pairs": each N_S pair is represented by its first row; pass 2 drops and counts the
+    pairs with both labels;
+  - HIT-R's two negative streams (random, hard) each run over the val rows, then the test rows, in split order.
+- *Senses and graphs* (`senses`, `wngraph`):
+  - noun morphy: exception candidates first, then the endings, each applied once; NLTK's early return on an exception
+    entry is not followed;
+  - Nickel & Kiela 2018's sp and lp are the distance to the nearest root (U_@ has 12 roots, the verb graph 334) and the
+    height, both on E; H3 and H2 are read on the same nodes;
+  - the dry graph's virtual root has one edge from each parentless verb, so D(x) = up(x, v-root) and a parentless verb
+    has D = 1;
+  - ST on the verb forest is the spanning forest under the virtual root, whose word (1,) counts as a node.
+- *Scores and order* (`scores2`):
+  - "differ by more than the sum of their bounds" compares the exact difference of the two decimals with the exact sum
+    of the bounds, unrounded;
+  - Dep°'s "pairs in the top tie class of G" are the pairs whose G ties under the certified comparison with the kept
+    maximum;
+  - in NK17, u is s (the sense of x) and v is t, with A13.5's Poincaré norms on hyperboloid tables;
+  - "Poincaré norms round to 1.0 in float64": the exact norm rounded once to binary64 through 60 digits;
+  - F1's θ is the smallest value of its val tie class; a test value is positive when it compares ≥ θ.
+- *Statistics and decisions* (`stats2`):
+  - an interval's estimate is the exact difference evaluated at 60 digits and rounded once to binary64;
+  - a cluster resample with no True row counts that AP as 0 and is counted, as ci_rho counts an undefined ρ;
+  - a resample of the macro-RR bootstrap is the mean over its C draws of each drawn group's mean RR, in binary64;
+  - L13's label permutations follow A13.12's convention for the gold permutations (row k takes the value of row π[k]);
+  - a shuffle band "in float64": each ρ rounded to binary64, their `math.fsum` divided by 20;
+  - the suite protocol with no in-vocabulary validation row floors at the lowest in-vocabulary test code (flagged; the
+    registered folds have validation rows);
+  - L12(d)'s failing side: every end of [−0.02, +0.02] the interval passes is reported; "both" occurs only when (d) is
+    inconclusive;
+  - L15 control 2's "the part that uses the set": a set of (a) and its GloVe intersection in (b) are different pair
+    sets, each voiding its own part.
+- *Trainer and convergence* (`embed`; `stream` has none):
+  - A11.4's five trainer readings carry over unchanged (signed zeros at a guard hit; a NaN z is a guard hit; the
+    largest distance; the norm of η·A; the epoch loss);
+  - the direct-edge instance is labelled `wordnet30-<pos>-at-direct` in the run record only, and is identified by its
+    offsets' SHA-256;
+  - A13.10.7's m(a, b) is numpy's float64 mean of the slice (pairwise sum, one division), equal to `np.mean` bit for
+    bit;
+  - a run with fewer than 1,000 recorded epochs (it diverged) has not converged; more than 1,000 is refused;
+  - the 95% epoch is the first e with m(0, 9) − loss(e) ≥ 0.95·(m(0, 9) − m(990, 999)); there is none without a drop.
+- *The runner:*
+  - 1: the clean-tree check (this folder and the reference folders of Hyperbolic Oracles and Engram Mind's Eye) lists
+    only the step's own outputs, before each pool and before writing; `--allow-dirty` is for the dry run only;
+  - 2: a finished job is reused only at the same HEAD and configuration, with every file at its recorded SHA-256;
+  - 3: the value stream is the 120-digit decimal's text (certified and uncertified forms) or the key's (exact keys);
+    direction files stream forward then reverse, HiT files slot by slot;
+  - 4: itemScoresSha hashes the uncompressed TSV; the gzip file's SHA-256 is checked before pass 2 reads it;
+  - 5: scoreForm is G, Grev, DepG, Dep, Sym, Groot, dist, cos, LCh, NK17 or product; senseRule is max, first, gensim
+    or `-`;
+  - 6: at most four workers; the replays share the training pool;
+  - 7: a tuning run's score is the exact mean of its mean val RR in the two settings, from one tie-class list of the 21
+    slots;
+  - 8: the time projection takes training and replays from two measured epochs per cell (lr 1, seeds 95500–95504) and
+    A13.16's estimates for the rest; the disk projection is code lines × 6 B plus the tables;
+  - 9: instanceIds add -at, -glove, -dir, -random/-hard and -relabelled to the manifest's names; dry sets keep their
+    pins' names;
+  - 10: a decided dry slot without its own dry set takes the nearest one, marked stand-in: WB takes HyperLex's verb
+    detection set, L15(a)'s MEN takes MEN's v–v rows, WSR takes SimLex's verbs within GloVe; G_root is not read in the
+    dry run (no entity.n.01 among the verbs);
+  - 11: the dry split is HIT-R's construction on the verb graph with n_val = ⌊0.05·|T|⌋ = 1,092;
+  - 12: F1 reads one code file of each measured table's HiT val and test values (one tie-class list); θ is the val code
+    of best val F1, ties to the smallest;
+  - 13: a restart that finds tuning finished leaves `tuning-stage2.json` and the settings unchanged;
+  - 14: `settings-stage2.json` holds the two geometry keys (each d a grid string or null) and a `tuning` key (file,
+    HEAD, SHA-256);
+  - 15: a tuning table missing from the cache, or changed, stops the decisive run; A10.9's retraining is not carried
+    over;
+  - 16: an empty GloVe direction set would score 0, flagged; it cannot occur on the registered data;
+  - 17: L14's seeds are indexed j = 0–4 in the decision;
+  - 18: the morphy rule changes no HL row (every pair-set word is in the index raw); the count is recorded;
+  - 19: the relabelled tails and |ΔRR| use numpy's binary64 arccosh and sqrt;
+  - 20: a row's closure bit: some sense pairing with t a strict `@`/`@i` ancestor of s, senses in the instance's
+    universe, in each direction;
+  - 21: the strongest permutation has the largest exact point estimate of its own metric, ties to the smaller i;
+  - 22: the load average is sampled at every start, at each phase's start and end, and every 10 minutes while a pool
+    waits;
+  - 23: BD's AP reads one tie-class list of the forward values, BD-dir one of forward and reverse; pass 2 selects the
+    True rows;
+  - 24: Nickel & Kiela 2018's diagnostic is the exact ρ between r and sp/(sp + lp) over U_@ (dry: the verb graph), for
+    every learned table and H3, H2;
+  - 25: NK17 on a table without x0 (learned Euclidean; F3, F3\*, F2, F2\*) uses its Euclidean norm and distance, as P17
+    read its Euclidean embeddings;
+  - 26: the measured tables are read by G on BD, WB and BD-dir covered in U_@, with exact Lorentz − Euclidean
+    differences and no interval;
+  - 27: the suite's detection protocol gives an uncovered test row its arm's lowest in-vocabulary validation code; it
+    does not run on the dry sets;
+  - 28: the vocabulary an arm misses is a count, a hash and the rows; no word is written;
+  - 29: H3 against each measured table on HL-at, with the word-level and row intervals;
+  - 30: L15 control 2 bands every arm of L15's Arms on each set it reads: on SL and MEN the six, K3 and each S-full_i
+    and W_i, under Sym; on the GloVe sets H3 with Sym and GloVe 300-d;
+  - 31: the definitions amendment is the earliest amendment after 13 that holds the manifest's SHA-256; A11.4's
+    exactly-one rule binds the lr-freeze amendment only;
+  - 32: `--time`, `--dry`, `--tune` and `--decisive` refuse an interpreter without `-B` and `-I`; the self-test and
+    `--write-settings` read nothing fetched;
+  - 33: the relabelled tails, |ΔRR|, Nickel & Kiela 2018's diagnostic and the seven labels' radius ranks are computed
+    in pass 2 from tables whose SHA-256 is checked, reading no gold;
+  - 34: A13.11's L12 grid is L12's 48 arms (the six, WN, K3, each S-full_i and each W_i) × 7 scores × 4 sense rules =
+    1,344 cells, each scored, an alias or n/a; S3's 5 arms and the chain's 3 stay at G with the maximum (at 841b90c the
+    grid had 8 arms and 224 cells, and S-full_i and W_i also stayed at G with the maximum; item 5);
+  - 35: gensim's rule on WN takes the pair of largest Sym_WN (least WN-path), ties to the first in (i, j) order;
+  - 36: L13 reports WN by G_WN, and GloVe's cosine AP on BD's and WB's GloVe-covered rows;
+  - 37: the closure bits are pass-1 files per scored set, read by pass 2 after their SHA-256 check; the non-closure
+    positives are the True rows with forward bit 0;
+  - 38: L14(b)'s count of HL-at rows that are E edges for some sense pairing (x the child), the reverse and the counts
+    by TYPE beside it;
+  - 39: two differences agree in sign when both are > 0 or both ≤ 0; three or more disagreeing seeds are flagged
+    "stated";
+  - 40: WN-LCh is scored wherever WN-path is, and their tie-class lists are compared;
+  - 41: DECISION_SPEC (69 comparisons) and CONTROL_SPEC (10 controls) must equal spec_from_a13's parse of A13 before
+    scoring, and every decided value is recomputed from the files after pass 2; any difference stops the run;
+  - 42: each run's full loss curve is a cached `.loss.json` held by SHA-256; the record keeps every 10th epoch and the
+    last;
+  - 43: the committed code-file group is the files a decided comparison reads (strongest permutations resolved) and
+    the measured tables on HiT test and HL-at, not the band controls' permutation files;
+  - 44: the HL split agreement is checked at pass 2's start; a difference withholds HL-split's values and the run goes
+    on;
+  - 45: the dry record shows L14's values on the verb graph and its split by a whitelist; HL-at's stay sealed;
+  - 46: tuning reads WordNet and HiT's names, train and val only;
+  - 47: the disk projection before tuning counts the decisive run's exact-arm code lines;
+  - 48: spec_from_a13 parses A13 alone and refuses while a later protocol file exists (item 6);
+  - 49: every edge-shuffle cell is reported, marked present or not;
+  - 50: a failed wiring check in a sealed run names comparisons without values; the values go to a sealed side file;
+  - 51: "AP without the 3 self-pairs" drops the rows whose raw word fields are equal (exactly 3, or the run stops); the
+    N_S variant is reported beside it.
+
+**2. The instance manifest, GloVe coverage, and the counts A13 leaves to this amendment.**
+- *The manifest.* `reference/golden/stage2_instances_v1.meta.json`, committed in e91e02d and unchanged at 841b90c and
+  05d467d, has SHA-256 `3f2db2f67435b684b152daa9204df4c2011f79f9eab28b12eee1093b4dc0ff16`. It is frozen here (A13.2);
+  registered tuning and the decisive run find this amendment by that hash (runner-31) and refuse another manifest.
+- *GloVe coverage* (`glove.6B.300d.txt`: 400,001 words, 460 holding `_`; the 50-d vocabulary equal): the rows covered
+  in U_full with both N_S words in GloVe (A13.3), below. L15 control 2's bands from these frozen counts: WSR
+  5/√(20·244) = 0.0716; HL within GloVe 5/√(20·2,161) = 0.0241; MEN within GloVe 0.0250, as registered.
+
+| Set | Covered | In GloVe | Word types in GloVe |
+| --- | --- | --- | --- |
+| HL nouns (L15(b), HL within GloVe) | 2,163 | 2,162 | 1,842 of 1,843 |
+| MEN n–n (L15(b)) | 2,005 | 2,005 | 645 |
+| WSR (L15(b)) | 245 | 245 | 335 |
+| BD test (L13 control 3 reads its True rows, chosen in pass 2) | 12,365 | 12,339 | — |
+| SL nouns; WB test (reported) | 666; 1,493 | 666; 1,493 | 751; — |
+| WS-353 similarity; combined; LEDS test; EVAL test; BiBLESS (reported) | 197; 344; 2,495; 10,362; 1,658 | all | — |
+| Shwartz test; HyperLex random-split test (reported) | 17,073; 541 | 16,590; 541 | — |
+
+- *HiT val* (A13.9; counted from its names for this amendment): 29,383 rows with 10 + 10 negatives each; 2,104 distinct
+  positives; every positive in E's closure and none a direct edge of E; no negative in the closure; 3 rows hold the
+  child among their random negatives and none among the hard; 22 rows repeat a random negative and 7 a hard one, none
+  with fewer than 9 distinct. A13.9 makes each a check (item 5); from item 6's commit on, tuning reproduces them before
+  its first metric, and the decisive run again.
+- *Dry counts* (A13.13). HyperLex's verbs: 453 rows, 452 covered in `index.verb` and in the verb graph, 390 word
+  types, 304 word1 clusters, 201 hyp rows (TYPE, pass 2). SimLex's verbs: 222, all covered, 170 word types. MEN's v–v
+  rows: 29, all covered, 22 word types. All three lie wholly within GloVe. The verb `@` graph: 13,542 nodes, 13,239
+  direct edges, 21,840 indirect pairs, 334 roots, 225 isolated verbs left out; budget
+  `1000,20,50,50,265000,661950000`; the dry split 1,092 val and 1,092 test rows. P = `Rng(3007)` over 13,542 nodes has
+  SHA-256 `feda2bd82e61f511aeaa3781fa863fdbf99cd7014dd6f57db5edf3a97de0195c`.
+
+**3. The dry run's diagnostics** (A13.15 steps 3–4).
+- *What ran and what held.* Dry tuning ran 13:39–14:06Z (1,623 s) and the decisive step 14:06–14:38Z (1,925 s), both
+  at 841b90c; the decisive step ran with dry tuning's three outputs not yet committed. No crash; every count check
+  equal; the wiring check matched 141 decided comparisons and 321 control values; both replays
+  (tuning-lorentz-d3-lr0.03-s12000, measured-lorentz-d3-lr10-s3000) reached their runs' generator states; both
+  pre-flight retrains equalled tuning's float SHA-256s; L14's closure check passed in both settings. Failed as required:
+  L12's controls 1–4, L13's 1–3, L14's 3 and 4, L15's 2 and 3. Did not: L14's controls 1 and 2, and L15's control 1.
+- *Not run dry.* A13.13 says that every report runs. These A13.11 reports have no dry set, and their code ran only in
+  the runner's self-test on synthetic data, so it first meets real data in step 7: G_root (runner-10); HIT-R, whose
+  construction ran only as the dry split; the suite's detection protocol (runner-27) and its 1,000 × 2% protocol
+  (WBLESS and BiBLESS accuracy); LEDS, EVAL and Shwartz test; WS-353 similarity and combined; the HyperLex random split
+  and its agreement check (runner-44). This deviates from A13.13's "every report runs"; none of them decides anything.
+- *L14 control 1.* One of the 88 trained tables (48 tuning, 20 measured, 20 edge-shuffled) exceeded
+  H₁₁/11 + 1/50 = 449047/1524600: tuning-euclid-d3-lr10-s12010, mean RR 1795247/6054048 = 0.296537, by 0.002002.
+  - *Diagnosis: chance at the dry size; no evaluator defect.* An independent reader reproduced all 168 visible exact
+    values it could compare (the measured tables' and floors' mean RR, the 88 relabelled per-row means).
+  - No row of any table ties among slots 0–10, so the control's null is the same for every table: mean H₁₁/11, SD
+    0.0077902 at 1,092 rows. The band is 2.57 SD above it: 0.5947% per table, and 25.5% that at least one of the 88
+    tables, which share one slot vector, exceeds it. The 88 values fit that joint null (p ≈ 0.19).
+  - Not recomputed: the values that depend on j, P and the split, which need the dry seeds 5620, 3007 and 4500–4502.
+    The independent check of step 8 may draw them, with P's SHA-256 (item 2) as the receipt.
+- *L14 control 2.* Nine of the 88 (5 tuning, 2 measured, 2 edge-shuffled) exceeded the same band, by
+  0.000855–0.008768.
+  - *Diagnosis: chance at the dry size.* The dry split has about 336 positives (expected from the verb graph's T), the
+    largest about 6% of its rows. On the measured tables' visible 200-permutation tails the macro mean has SD 0.0125
+    and pooled mean 0.27408 (H₁₁/11 = 0.27453). The band lies about 1.6 SD above it there: 223 of the 4,000 tail
+    values exceed it (5.6% per table), so at least one of 88 tables exceeds it with probability 88%, and nine or more
+    with 18%. Each measured table's value under P lies inside its own tail.
+  - *An observation on the dry tails,* which changes no rule. Under a shared permutation the measured tables' macro
+    means are weakly correlated: 0.17 on average, 0.38 within a geometry and about 0 across; their per-row means
+    correlate 0.24. A13 argues control 2's band per table, and says "since P is shared the tables breach together" of
+    the per-row mean on HiT test, whose seven largest positives hold 2.8–12.8% of its rows each; the dry split's
+    largest hold about 6% at most, and nothing here is carried over to HiT test. For the macro mean, which decides, the
+    dry tails show tables that do not breach together, so the chance of a void adds up over the tables (item 4).
+- *L15 control 1.* The visible record holds one boolean; which of its six intervals did not lie above 0 is sealed
+  until step 7.
+  - *Diagnosis: size, almost surely.* MEN's slot ran on MEN's v–v rows (29 rows, 22 word types), which A13.13 names for
+    (b) only and runner-10 made the stand-in. There a word-level interval of a difference of ρ has half-width 0.8–0.9,
+    and the strongest of 20 permutations sits about 0.35 above their mean with no signal. In a synthetic model with
+    the real word reuse (seeds 95600 + i) the control does not fail as required there with probability ≥ 0.99 for any
+    ρ(H3) ≤ 0.8. On SimLex's 222 verb rows (170 types) the half-widths are 0.27–0.31, and it does not fail as required
+    with probability ≥ 0.75 for ρ(H3) ≤ 0.4.
+  - The visible evidence rules out the obvious defects. The Sym codes are oriented (the 15 SimLex verb rows whose words
+    share a synset take the top code in every arm that keeps synsets' points), and L12's and L13's controls, which use
+    the same strongest-of-20 rule, failed as required.
+- *The word-level interval.* A13.7 calls it "mildly conservative". On these sparse pair sets it is more so: a row's
+  resample weight m(x)·m(y) has variance about 3, against 1 for a row bootstrap, and in the synthetic model its
+  intervals were 1.72–1.82 times the row bootstrap's and 1.57–1.82 times the true spread (1.64 on SimLex's nouns, 1.60
+  on MEN's n–n rows). This bears on every ci_rho decision, most on the bands of L12(d) and L15(a). Disclosed; the unit
+  is unchanged (item 4).
+- *Convergence.* 24 of the 48 dry tuning runs failed A13.10.7. In each of the 12 ineligible (cell, rate) pairs of the
+  table below both seeds failed, their ratios within 0.11 point (ratio = (m(890, 899) − m(990, 999))/(m(0, 9) −
+  m(990, 999)); converged iff the drop is positive and the ratio ≤ 1%). No run diverged; guard hits occurred only in
+  Lorentz d = 2 at rates ≥ 1, 0–3 per run.
+  - *Cause: the budget, as L14's Risks foresaw.* A node gets about one positive row per epoch (E/n = 0.978; mammals
+    5.53), so the slow rates are still descending at epoch 999. Euclidean stays on the ln 51 plateau until the rate
+    summed over epochs reaches about 73–80 (rate 0.03 would need about 2,500 epochs); Lorentz at 0.03 descends almost
+    linearly (a straight line gives 10.1%).
+  - All 20 measured and 20 edge-shuffled runs at 10 converged (measured ratios 0.01–0.29%). The record's "40 of 42 runs
+    converged" counts the two pre-flight retrains, which repeat tuning's (euclid, 2, 0.03, 12000) and (lorentz, 2,
+    0.03, 12000) bit for bit and fail as those did; they decide nothing about convergence.
+  - *A reading named here:* A13.10.7's "≤" passes a rising tail. 11 edge-shuffled runs and one tuning run ended with
+    m(890, 899) < m(990, 999), at most −3.06% of their drop; an edge-shuffled run need only exist.
+  - *U_@.* Per node and epoch it gives the verb graph's signal (E/n 1.019; 2.04 against 1.96 positive incidences; 51.0
+    against 48.9 negative hits; largest hub 402 against 401), and the compute survey's U_@ burn-in losses (A13.19)
+    match the dry curves within 3% for Lorentz. Synthetic graphs of either shape, trained by the registered trainer
+    for 1,000 epochs (seeds 95600 + i), gave the dry verdicts in every cell tried, and runs at 10 converged
+    (−0.13% to 0.13%). The likely outcome on U_@ is the same ineligible rates and 10 in every cell.
+  - *The residual risk is divergence at 10.* On the mammals every Euclidean cell diverged at 10, at epoch 23, and
+    Lorentz d = 2 at epochs 295–505 (A11.2). U_@ spreads a hub's rows thinner: its largest hub sits in about 0.27 rows
+    of a batch, against 1.5 on the verb graph, where nothing diverged, and about nine (mammal.n.01) on the mammals.
+    Lorentz d = 2 is the cell at risk: its U_@-shaped twin did not diverge at 10 but had 41 guard hits (the verbs 0–3).
+  - *What a lost run costs.* Tuning screens a rate on two seeds, and the mammals' Lorentz divergences came late, so a
+    measured run can still diverge, or fail to converge, at the frozen rate. It then removes its seed for both arms at
+    that d (L14, Decision), and (a) and (b) cannot be supported at that d.
+
+| Cell | Not converged (ratio, %) | Eligible | Chosen |
+| --- | --- | --- | --- |
+| Lorentz d = 2 | 0.03 (9.3), 0.1 (7.7), 0.3 (2.5) | 1, 3, 10 | 10 |
+| Lorentz d = 3 | 0.03 (10.0), 0.1 (8.3) | 0.3, 1, 3, 10 | 10 |
+| Euclidean d = 2 | 0.03 (31), 0.1 (71), 0.3 (3.8–3.9), 1 (1.3–1.4) | 3, 10 | 10 |
+| Euclidean d = 3 | 0.03 (32), 0.1 (71), 0.3 (2.4) | 1, 3, 10 | 10 |
+
+- *Tuning at the grid's end.* Dry tuning chose 10, the grid's top, in every cell, and the grid was not extended (A10.8,
+  A13.10.5). The convergence gate excluded Euclidean's untrained 0.03 tables (loss still ln 51 at epoch 999), whose dry
+  val means (0.5505 at d = 2, 0.6634 at d = 3) exceeded those of every eligible rate (0.5335 and 0.5920 at 10).
+  Reported only; nothing here is changed on a value.
+- *Ties.* No chained tie. Pass 1 wrote 915 code files (5,589,064 lines); 12,214 values took the 240-digit path, all
+  in numerical ties between distinct input tuples, in 482 tie classes; Φ's maximum made 21,069 comparisons at 240
+  digits and found 7,800 numerical ties.
+- *Time.* The dry run took 3,548 s (0.99 h) against A13.16's 1.0 h, its pools packed at 98–99%. Its wall time was 1.21
+  (tuning) and 1.30 (decisive training) times its CPU time, because another workload shared the container (load
+  average up to 10.24 at 14:28:54Z).
+  - The registered projection is 9.13 h with A13.16's per-epoch figures, and 9.8 h at 1.10 times them, as measured
+    for one cell in a nearly quiet container (a U_@-sized synthetic Lorentz d = 3 run: 1.46 s of wall and 1.45 s of CPU
+    per epoch, against A13.16's 1.32 s). Both include A13.16's 1.0 h row for the dry run, already spent. The runner
+    refuses (above 11 h) once the measured per-epoch walls reach 1.29 times A13.16's figures (1.27 if the replays slow
+    too), which the dry decisive step's contention exceeds.
+  - Beyond the projection the run adds packing (0.2 h), the learned tables' pass 1 beyond A13.16's 0.6 h (about
+    0.74 h, so 0.14 h) and pass 2 beyond its share of the exact-arms row (0.1–0.5 h). In a quiet container that is
+    about 9.6–10.0 h in all at A13.16's figures, and about 10.2–10.7 h at 1.10, of the 12 h available. A load that
+    starts after the two-epoch projection is not seen by it.
+  - So A13.16's condition carries the margin: steps 5 and 7 run with no other session's work in the container, and
+    their load-average samples show it.
+- *Disk.* The dry projections (41.7 MB tuning, 88.6 MB decisive) were within 2% of the about 133 MB written. Snapped
+  texts ran 10–13% over the projection (31.7–45.5 bytes per line against 30), code files 26% under (4.75 gzip bytes
+  per line against 6), and the loss curves are not projected. Free space fell to 4.83 GB while another workload wrote
+  about 10 GB; 13.7 GB is free as this is written. The registered run projects about 1.5 GB and needs about 3.5 GB free.
+- *The seal* held for every metric value, interval and verdict on a human-rated or human-labelled set: the sealed file
+  was not opened. Two things go beyond A13.13's list of what the dry record shows; both are disclosed, and neither
+  decides anything.
+  - (i) The code exposed the identity of each control's gold-chosen strongest permutation, in the wiring's provenance
+    and in the committed code files' names: HL S-full-18 and W-7, BD (and WB, its stand-in) S-full-18 and W-0, BD-dir
+    S-full-17 and W-7, SL S-full-8 and W-10, MEN S-full-12 and W-6. Each is the largest of 20 point estimates against
+    the sealed gold (A13.7), so each carries up to log₂ 20 ≈ 4.3 bits about the sealed ratings or labels. They were seen
+    in writing this amendment. They concern the dry permutations 5400 + i and 5420 + i, not the registered 2400 + i
+    and 2420 + i.
+  - (ii) The committed dry code files (A13.14's size rule) and the public rating files would together reproduce every
+    sealed value; the seal binds this project's work. Neither was used.
+
+**4. Definition changes: none.** A13.15 step 4 permits a change only in answer to a failure seen in steps 2–3. Each
+failure, and why it changes nothing:
+- *A crash, a count mismatch, a chained tie, a projected time or disk overrun:* none in the dry run (item 3). The
+  findings of step 2's review were code fixes (item 7) that changed no definition.
+- *L14 control 1 did not fail as required.* No change: the registered band is far from chance. At HiT test's 29,383
+  rows the null SD is 0.0015018 and the band 13.3 SD above H₁₁/11; one table exceeds it by chance with probability at
+  most 10^−36.7, one of 88 at most 10^−34.7. HiT test's repeated negatives and child rows can only lower this.
+- *L14 control 2 did not fail as required.* No change, by a judgement stated here.
+  - At HiT test's 2,110 positives the band lies 4.0–4.1 SD above the expectation under a model calibrated on the dry
+    tails (SD 0.0049–0.0050; 100,000 synthetic tables per setting, seeds 95600 + i), 3.8 SD under A13's radius-only
+    model and 3.57 SD at A13's own bound (SD 0.0056). With the macro's right skew that is about 4.5·10^−5 per table
+    calibrated, 1.1·10^−4 radius-only and about 2.5·10^−4 at the bound.
+  - The calibration rests on the 20 measured tables' tails, all trained at 10, and pins V_b (the covariance of the RR
+    of two rows that share a positive) loosely: at the dry size a model with V_b = 0 gives a macro SD of 0.0122 against
+    the 0.0125 observed (the per-row tail gives V_b = 0.027). 48 of the 88 tables are tuning tables, eight of them
+    Euclidean at 0.03 and 0.1, untrained or barely trained (loss 3.65–3.93 at epoch 999, against ln 51 = 3.93), for
+    which the radius-only model may fit better; one of them, tuning-euclid-d2-lr0.03-s12001, was among the three
+    largest dry exceedances.
+  - The tables are weakly correlated (item 3), so the risk adds up over them. The chance that at least one of up to 88
+    null tables voids L14 is about 0.4% (0.2–0.7%) with every table calibrated (the two calibrated settings pooled;
+    0.5%, 0.2–1.1%, at a = 1.0 alone), about 1% radius-only and about 2% at the bound. The realistic figure is about
+    0.5–1%.
+  - A13 missed this multiplicity: it argued the band per table. The risk is accepted rather than loosening the band to
+    H₁₁/11 + 1/40 for control 2 alone (4.46 SD at A13's bound; under about 0.1% over 88 tables). That band would let a
+    leak worth up to 0.025 of macro RR pass instead of 0.02, and it would be chosen after the dry outcome is known.
+  - A void stands whatever the reported values show. They help a reader tell a tail event from a leak (A13): the
+    per-row relabelled mean of every trained table under P, and, for the measured tables only, the seven labels'
+    radius ranks and the 200-permutation tails. A tuning or edge-shuffled table that exceeds the band has no tail of
+    its own.
+  - Also not taken: 20 exact permutations (about 1.8 h per 20 permutations of the 88 tables, A13.16), and deciding on
+    the binary64 tail (measured tables only, registered as a report).
+- *L15 control 1 did not fail as required.* No change; the power A13 registered is accepted.
+  - At the registered sizes the word-level half-width is 0.16–0.18 on SimLex's 666 nouns (751 types) and 0.10–0.12 on
+    MEN's 2,005 n–n rows (645 types), and the strongest-of-20 lift is about 0.07 and 0.05. In the synthetic model of
+    item 3, the probability that the control does not fail as required on a set, voiding all of L15(a), is in three
+    scenarios (base: the controls carry no signal; polysemy: a polysemy channel shared by the gold and every control,
+    true control ρ 0.10; heavy: larger word effects; 200 repetitions per SimLex cell, 150 per MEN cell, a dash where
+    the scenario cannot reach that ρ):
+
+| ρ(H3) | SL base | SL polysemy | SL heavy | MEN base | MEN polysemy | MEN heavy |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.2 | 0.960 | 1.000 | 0.925 | 0.107 | 1.000 | 0.347 |
+| 0.3 | 0.290 | 0.920 | 0.320 | 0.000 | 0.067 | 0.000 |
+| 0.4 | 0.000 | 0.110 | 0.005 | 0.000 | 0.000 | 0.000 |
+| 0.5 | 0.000 | 0.000 | — | 0.000 | 0.000 | — |
+
+  - ρ(H3) under Sym on SL and MEN has not been measured. 0.513 is WordNet-path's on SimLex's nouns (path2vec), not
+    H3's; A13 itself expects H3 to fall below WordNet's own graph through bend artefacts (L12(d)), and expects a weak
+    WordNet signal on MEN (L15(b) predicts that GloVe beats H3 there).
+  - So the control voids (a) with substantial probability at ρ(H3) ≈ 0.2–0.3 on MEN and about 0.3 on SL, where the sets
+    do see WordNet's structure. The cause is power, not a blind set: the word-level unit, about 1.6 times the true
+    spread at these sizes (item 3), and the selection lift. The control does so at signals a less conservative test
+    would accept. A void of all of L15(a) in the registered run is a live outcome.
+  - That risk is accepted, as A13 registered the rule. Not taken: the mean of the 20 permutations, the row unit, a
+    variance factor, or leaving MEN out or deciding per set. Each would weaken a control made strict on purpose and
+    would be chosen while its sealed dry outcome exists, and the first two would part L15 from L12 and L13, which use
+    the same rule. The selection-aware maximum (taken inside each resample) is stricter, so it cannot answer this
+    failure. The dry failure itself is a size artefact of the stand-ins (item 3), which no change at the registered
+    sizes would answer.
+- *24 tuning runs did not converge.* No change. Every measured and edge-shuffled run converged, and the gate removed
+  exactly the runs still descending. L14 stays stated at item 10.3's 1,000 epochs.
+  - More epochs are unaffordable: Euclidean 0.03 needs about 2,500 to leave its plateau, about 17 h of training
+    against A13.16's 11 h, and 1,250 epochs would put the projection at about 10.9 h.
+  - Dropping 0.03 and 0.1 would change L14's "same … rate grid", to save about 1.1 h. It is left to a later amendment,
+    and only if the registered projection exceeds 11 h (A13.16: "any cut is an amendment, not a runner option").
+  - The grid is never extended (A13.10.5).
+  - Changing A13.10.7's window or threshold would tune a gate after seeing what it passed. No dry ratio lay within 0.1
+    point of 1%: the nearest were 0.87% and 1.32%.
+
+**5. Clarifications flagged by the builders and reviewers.** Each is a reading and none changes a definition, except one
+exclusion in the code that is not a reading, which item 6's commit undoes (the L12 grid's arms). The one change proposed
+(the trace seeds) is refused, for want of a failure to name.
+- *NK17 on flat tables* (runner-25): A13.5 defines NK17 by Poincaré norms, which flat tables lack; they are read with
+  their Euclidean norm and distance, as P17 read its Euclidean embeddings. Reported only.
+- *The L12 grid's arms* (runner-34). A13.11's "every arm under every score of item 5 and every sense rule of item 3"
+  is read as L12's arms (A13 L12, Arms). S3 and the chain (WN-U, ST, the letter tree) are reported arms of A13.4, not
+  L12's, and A13.11 lists them after it as reports of their own; their 8 arms stay at G with the maximum. S-full and W
+  are among L12's arms ("the controls K3, S-full and W, on H3 with G"), each S-full_i and W_i places words on H3's
+  points, so that every form can read it as it reads K3, and runner-30 reads each of them as an arm of L15. 841b90c
+  left these 40 arms at G with the maximum to save cost: a narrowing of a reported item, which A13.15 step 4 permits
+  only in answer to a named failure, and none applies. Item 6's commit scores them.
+- *Tuning's count checks against A13.9* (runner-46): A13.10.5's "touches no other Stage-2 set" governs tuning, which
+  makes WordNet's and HiT's counts (the names, train equal to E, and val's: from item 6's commit on, all of item 2's);
+  the decisive run makes every count of A13.9 before its first metric.
+- *HiT val's counts* (A13.9). A13.9's lead-in, "Before any metric the runner reproduces each count exactly; a mismatch
+  stops the run", governs val's counts as well as test's; its val sentence says when they are made and where they are
+  stated. 841b90c could not check them, since they were unknown when it was built: its COUNTS holds test's counts and
+  val's rows, negatives and closure, and records the rest in `hit_detail` unchecked. Item 6's commit adds item 2's val
+  counts to COUNTS, so tuning, the first step to compute a val metric, reproduces them. For test, A13 L14's "Every test
+  pair is in T" makes 0 direct edges a check; for val, item 2's 0 is one.
+- *The Node traces' seeds:* `Rng(8000 + i)`, as A13.1 says. A13.1 names that draw, so A13.12's "No other draw is made"
+  is read together with it. 8000 + i is A1.10's trace family ("which no claim uses"), drawn by the earlier phases'
+  traces, not a new family, and A13.12 needs no change. The tests' 95200 + i is not used for them: that would change
+  A13.1's text with no failure to name. The traces are written in step 8 (A13.1).
+- *The diagnoses' seeds* (item 7). A13.12 gives 95600 + i, i < 300, to "the review (unregistered)" and then says "No
+  other draw is made". The review family is read as covering this amendment's diagnoses of the dry run as well as step
+  2's review: both review the code and its outputs, on synthetic data, and decide nothing. Every seed the diagnoses
+  drew has i < 300 (the largest is 95756), and a seed drawn twice decides nothing.
+- *spec_from_a13 and a later protocol file* (runner-48): no definition changes here, so no `stage2_protocol_v2.txt`
+  exists and the wiring check stands on v1 (item 6).
+- *L12(d)'s "both" sides* (`stats2.l12_failing_side`): every end the interval passes is reported; "both" only when (d)
+  is inconclusive, since a refuted interval lies wholly outside the band on one side.
+- *L15 control 2's "every arm"* (runner-30): each S-full_i and W_i on SL and MEN is an arm. The band is five standard
+  errors of a 20-permutation mean (a row permutation gives ρ variance exactly 1/(n − 1)), so a sound arm exceeds it by
+  chance about 6·10^−7 of the time per (arm, set) by the normal tail, under 10^−4 over all 100 banded pairs.
+- *Where pass 2's diagnostics are computed* (runner-33): A13.8's "pass 2 computes every metric from pass 1's files
+  alone" governs the metrics; the reported values A13 defines outside those files are computed in pass 2 from tables
+  whose SHA-256 is checked, reading no gold.
+- *F1's joint list* (runner-12): A13.6 takes one tie-class list where a metric compares values, and F1 compares test
+  values with a θ chosen on val.
+- *The scope of -B -I* (runner-32): the four steps that parse fetched files are held to it; the self-test and
+  `--write-settings` parse nothing fetched.
+- *The definitions-amendment lookup* (runner-31): this amendment is found by the manifest's SHA-256 (item 2); a later
+  amendment may restate it.
+
+**6. The protocol file, and the code commit that follows.** No definition changes, so there is no
+`stage2_protocol_v2.txt`. protocolSha stays `1c96a4b8d562634ef9e28a3be77221490b3bbce6a7821d7546521ea3c2a18d88`
+(Amendment 10, then Amendment 13), and spec_from_a13, DECISION_SPEC and CONTROL_SPEC stand. This amendment is
+committed alone. One commit follows it before registered tuning. It changes no definition and no decided comparison;
+it brings the code to A13's text where 841b90c fell short of it:
+- L12_GRID scores each S-full_i and W_i (item 5), and runner-34's text says so: 560 more scored cells on HL, about
+  1.2 M code lines (about 7 MB) and an estimated 0.1–0.2 h of pass 1, which the exact arms' estimated 0.3–0.4 h keeps
+  within about 0.1 h of A13.16's 0.5 h row;
+- COUNTS holds HiT val's counts of item 2, promoted from `hit_detail` as test's are, so that tuning reproduces them
+  before its first metric (A13.9; item 5);
+- tests on synthetic data cover both, the runner's self-test included.
+
+The dry run is then rerun on that commit, as A13.15 step 3 asks of a fix, with its values on human-rated sets sealed
+as before; it is expected to reproduce 05d467d's trained tables (by SHA-256), counts and control outcomes and to add
+only the new cells, and a difference is reported and resolved before tuning. Its record is committed before tuning,
+and its sealed file, like 05d467d's, is opened after step 7. Registered tuning and the decisive run use that commit's
+code.
+
+If a later amendment changes a definition, that amendment is committed alone first. A separate commit then follows,
+before the step it governs:
+- it writes `stage2_protocol_v2.txt` (Amendment 10, Amendment 13 and that amendment, verbatim from their headings, LF
+  line ends and a final LF);
+- it pins that file's SHA-256 in `stage2data` and its test, and records carry it from then on (A13.14);
+- it teaches spec_from_a13 the amending sentences, so that runner-48's refusal lifts for that text alone;
+- it changes the affected constant (DECISION_SPEC, CONTROL_SPEC or the grid).
+
+**7. What ran between Amendment 13 and this amendment** (Common rules, "Reporting").
+- *The code* (613721d, e91e02d, 841b90c) was built on synthetic data, WordNet's verbs and unregistered seeds 95200 + i.
+  - The fetch script checked every pin, GloVe's members included, and wrote the manifest; the count checks ran.
+  - The adversarial review had four reviewers with independent implementations of the certified order, the statistics
+    and bootstraps, the data and blind passes, and the implicit map and runner, and two skeptics per finding (seeds
+    95600 + i). It found no defect in the decisions. Seven minor findings were fixed in e91e02d (item 5 names five of
+    them, plus the dry 320-anchor check and the test seed family).
+  - A completeness critic closed 18 of 19 gaps in 841b90c; the 19th, the Node traces, waits for step 8. Mutated
+    runners (geometries or arms swapped, the row bootstrap in place of the word-level one) were all stopped by the
+    wiring check.
+- *The dry run* (item 3), committed in 05d467d.
+- *Three diagnoses for this amendment,* drawing from the review family (item 5). None opened the sealed file or its
+  folder, scored a registered instance, computed a GloVe score or a human-gold metric, drew a registered or dry seed,
+  ran `--tune`, `--decisive`, `--time` or `--dry`, or wrote to the repository.
+  - *L14 controls 1–2.* It read the dry split's G code files on the verb graph, WordNet's verb and noun T, and A13's
+    HiT test profile, and simulated with seeds 95600 + i (i ≤ 15, 106 and 156).
+  - *L15 control 1.* It counted SimLex's and MEN's word columns through the pass-1 readers (the manifest's counts),
+    read the committed dry SL and MEN Sym code files and `index.verb` for the orientation check, and simulated with
+    seeds 95600–95723.
+  - *Tuning and convergence.* It read the 90 dry loss curves in the cache and the compute survey's U_@ probes (seed
+    95040, A13.19), counted on WordNet, and trained synthetic graphs with seeds 95600–95633.
+  - Some of these seeds served more than one diagnosis; none decides anything.
+- *This draft* counted HiT val's names (item 2): no table, no score.
