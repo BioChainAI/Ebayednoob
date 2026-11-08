@@ -3026,3 +3026,243 @@ before the step it governs:
     95040, A13.19), counted on WordNet, and trained synthetic graphs with seeds 95600–95633.
   - Some of these seeds served more than one diagnosis; none decides anything.
 - *This draft* counted HiT val's names (item 2): no table, no score.
+
+### Amendment 15 · 2026-11-08, Stage 2, the learning rates frozen before any measured run
+
+Written on 2026-11-08, after registered tuning and before any measured run of L14 and any decisive evaluation. Tuning
+ran at b2ba411 (the timing projection's commit) on a committed tree whose only changed path was tuning's own console
+(item 5), and its record was committed in 60345b4. This is the lr-freeze amendment of A13.15 step 6: it fixes the rates
+in `reference/settings-stage2.json` and lists every tuning run from `reference/results/tuning-stage2.json` (A13.10.5).
+It changes no definition and nothing else. Item 1 gives the rates, item 2 every run, item 3 what tuning previews of L14,
+item 4 what ran between Amendment 14 and this amendment, item 5 tuning's three starts and the container's suspension,
+item 6 the load and the environment, and item 7 what is not known. This amendment and `settings-stage2.json` are
+committed together, so the paths changed since b2ba411 are the four A13.15 step 7 allows.
+- *Known.* Tuning scored HiT multi-hop val (29,383 rows) by G on its 48 tables and, beyond its count checks and its
+  replay, computed nothing else (A13.10.5). That previews part of L14(a)'s outcome: Lorentz against Euclidean mean RR on
+  HiT val, at the tuning seeds 9000–9011 (item 3).
+- *Not known.* Nothing has been scored on HL, BD, WB, SL, MEN, WSR, HiT test or any reported set. Neither dry sealed
+  file has been opened. The measured runs (seeds 0–4) have not run.
+
+**1. The frozen rates.** `reference/settings-stage2.json` has SHA-256
+f7823bdf55efbef7eb2dbf5951f46bc323bd44cd04c4e4176a4efd4c480c2dc4. It was written by
+`python3 -B -I run_claims_stage2.py --write-settings` from `reference/results/tuning-stage2.json`, whose SHA-256 is
+`9aa41e74442df22b35288517688c539cd2a57ecfed3fb1b773ed380779fcd829`, and it names that file, its SHA-256 and tuning's
+HEAD (runner-14). It is committed with this amendment, which is the only amendment that holds its SHA-256 (A11.4's rule,
+as the decisive run applies it).
+
+| Geometry | d = 2 | d = 3 |
+| --- | --- | --- |
+| Lorentz | 10 | 10 |
+| Euclidean | 10 | 10 |
+
+- Every cell has a rate, so every cell has measured and edge-shuffled runs.
+- *Tuning at the grid's end* (Amendment 14 item 3). Every cell chose 10, the grid's top, and the grid was not extended
+  (A10.8; A13.10.5, "the grid is never extended"). In every cell the means of the eligible rates rise with the rate
+  (table below), so tuning does not show where they would stop rising. No rate above 10 was tried.
+- *The closest choice,* by the difference of the two largest eligible means: Euclidean d = 2, where 10 had mean 0.476949
+  and 3 had 0.443919, a difference of 0.033031. The others: Euclidean d = 3 0.068579, Lorentz d = 3 0.112271 and Lorentz
+  d = 2 0.167506, each 10 against 3. No tie arose: in every cell the eligible means are distinct, so A13.10.5's ties to
+  the smaller rate did not apply.
+- *The exact means of the frozen rates* (A13.10.5's score of a rate): Lorentz d = 2 711970591/814496760, d = 3
+  344222471/407248380; Euclidean d = 2 155389513/325798704, d = 3 628579823/1085995680.
+- *The convergence gate decided both Euclidean choices,* as in the dry run (Amendment 14 item 3). The four Euclidean
+  runs at 0.03 stayed on the ln 51 plateau: m(0, 9) − m(990, 999) is 1.8·10^−5 at d = 2 and 2.7·10^−5 at d = 3 (both
+  seeds), against 0.70–0.81 for Lorentz at 0.03, and their ratios are 32.0–32.1%. Yet their scores, 0.575679 and
+  0.558037 at d = 2 and 0.712768 and 0.718746 at d = 3 (means 0.566858 and 0.715757), exceed the mean of every eligible
+  Euclidean rate. Without the gate both Euclidean cells would have chosen 0.03. No ineligible Lorentz run scored above
+  its cell's frozen mean. Reported only; nothing here is changed on a value.
+
+Means of the eligible rates (A13.10.5); a dash marks an ineligible rate, and the frozen rate's mean is in bold:
+
+| Cell | 0.03 | 0.1 | 0.3 | 1 | 3 | 10 | Frozen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Lorentz d = 2 | — | — | — | 0.587414 | 0.706617 | **0.874123** | `10` |
+| Lorentz d = 3 | — | — | 0.589269 | 0.669900 | 0.732969 | **0.845240** | `10` |
+| Euclidean d = 2 | — | — | — | — | 0.443919 | **0.476949** | `10` |
+| Euclidean d = 3 | — | — | — | 0.506004 | 0.510226 | **0.578805** | `10` |
+
+**2. Every tuning run.**
+- *Values.* Each run's mean val RR in the random setting and in the hard setting (G on HiT multi-hop val, 29,383 rows,
+  pessimistic ties), and its score, the exact mean of the two (A13.10.5; runner-7), to six decimals. Each run's exact
+  fractions, float and snapped SHA-256, generator state, loss curve and diagnostics are in `tuning-stage2.json`.
+- *Seeds.* Rate k of the grid ran on seeds 9000 + 2k and 9001 + 2k: 0.03 on 9000–9001, 0.1 on 9002–9003, 0.3 on
+  9004–9005, 1 on 9006–9007, 3 on 9008–9009 and 10 on 9010–9011. In each row the first line is the first seed.
+- *Ratio* is (m(890, 899) − m(990, 999))/(m(0, 9) − m(990, 999)) in percent, m as Amendment 14 item 1 reads it; a run
+  converged iff m(0, 9) − m(990, 999) > 0 and the ratio is at most 1% (A13.10.7). The record keeps every 10th epoch's
+  loss, so the ratios were computed from each run's full cached loss curve, whose SHA-256 the record holds (runner-42);
+  each agrees with the record's `converged`.
+- *Eligible:* neither run diverged and both converged (A13.10.5).
+- *Convergence.* 24 of the 48 runs did not converge: both seeds of each of the 12 ineligible (cell, rate) pairs, their
+  two ratios within 0.15 point of each other. The ineligible rates are the dry run's in every cell (Amendment 14
+  item 3's table), as that item expected. The converged runs' ratios lie between 0.04% and 0.94%, all positive, so no
+  converged run ended with a rising tail (the reading Amendment 14 item 3 names). Unlike the dry run, where no ratio lay
+  within 0.1 point of 1% (Amendment 14 item 4), two did: Lorentz d = 3 at 0.3 (0.918% and 0.939%, eligible). The nearest
+  failing ratios are Euclidean d = 2 at 1 (1.387% and 1.316%). Either rate counted the other way would leave every
+  choice as it is.
+- *Divergence and guard hits.* No run diverged: all 48 ran 1,000 epochs. Guard hits occurred only in Lorentz d = 2: 1 at
+  0.3 (seed 9004; 9005 none); 11 and 11 at 1; 11 and 15 at 3; 19 and 23 at 10; every other run had none. Amendment 14
+  item 3 named Lorentz d = 2 as the cell at risk of divergence at 10.
+- *The replay.* `tuning-lorentz-d3-lr0.03-s9000` was replayed with `hpstep.prng.Rng` over all 1,000 epochs (A13.10.9).
+  It ended in the run's state, [3319147630, 2441964160, 3544927668, 4041511136]: equal.
+- *Time.* The 48 runs took 55,398 s of wall time in all, run four at a time (3.85 h shared over four processes, against
+  the timing projection's 3.89 h for tuning). Per epoch: Lorentz d = 2 1.254–1.282 s, d = 3 1.466–1.509 s, Euclidean
+  d = 2 0.821–0.862 s, d = 3 0.996–1.027 s, against the projection's 1.240, 1.561, 0.749 and 1.115 s. The replay took
+  3,164.2 s (3.164 s per epoch, against 3.349 s) and HiT val's pass 1 241.5 s. Elapsed time: item 5.
+
+| Cell | lr | Seeds | RR random | RR hard | Score | Ratio, % | Eligible |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Lorentz d = 2 | 0.03 | 9000<br>9001 | 0.659484<br>0.561685 | 0.276735<br>0.249089 | 0.468110<br>0.405387 | 9.232<br>9.242 | no |
+| Lorentz d = 2 | 0.1 | 9002<br>9003 | 0.639791<br>0.640679 | 0.267807<br>0.266816 | 0.453799<br>0.453747 | 7.635<br>7.630 | no |
+| Lorentz d = 2 | 0.3 | 9004<br>9005 | 0.703959<br>0.663151 | 0.280807<br>0.265625 | 0.492383<br>0.464388 | 2.399<br>2.415 | no |
+| Lorentz d = 2 | 1 | 9006<br>9007 | 0.843564<br>0.845714 | 0.326395<br>0.333984 | 0.584979<br>0.589849 | 0.526<br>0.508 | yes |
+| Lorentz d = 2 | 3 | 9008<br>9009 | 0.950559<br>0.961435 | 0.443942<br>0.470531 | 0.697250<br>0.715983 | 0.760<br>0.753 | yes |
+| Lorentz d = 2 | 10 | 9010<br>9011 | 0.950888<br>0.956535 | 0.789022<br>0.800048 | 0.869955<br>0.878291 | 0.141<br>0.087 | yes |
+| Lorentz d = 3 | 0.03 | 9000<br>9001 | 0.693528<br>0.710296 | 0.268590<br>0.269534 | 0.481059<br>0.489915 | 10.005<br>10.012 | no |
+| Lorentz d = 3 | 0.1 | 9002<br>9003 | 0.731434<br>0.717262 | 0.272786<br>0.270167 | 0.502110<br>0.493715 | 8.156<br>8.177 | no |
+| Lorentz d = 3 | 0.3 | 9004<br>9005 | 0.859469<br>0.884887 | 0.302456<br>0.310263 | 0.580962<br>0.597575 | 0.918<br>0.939 | yes |
+| Lorentz d = 3 | 1 | 9006<br>9007 | 0.972528<br>0.970474 | 0.368493<br>0.368104 | 0.670511<br>0.669289 | 0.385<br>0.372 | yes |
+| Lorentz d = 3 | 3 | 9008<br>9009 | 0.967429<br>0.959649 | 0.510818<br>0.493979 | 0.739124<br>0.726814 | 0.157<br>0.178 | yes |
+| Lorentz d = 3 | 10 | 9010<br>9011 | 0.961821<br>0.955731 | 0.741838<br>0.721568 | 0.851830<br>0.838649 | 0.049<br>0.044 | yes |
+| Euclidean d = 2 | 0.03 | 9000<br>9001 | 0.591623<br>0.573342 | 0.559736<br>0.542733 | 0.575679<br>0.558037 | 32.093<br>32.040 | no |
+| Euclidean d = 2 | 0.1 | 9002<br>9003 | 0.540254<br>0.515101 | 0.370225<br>0.344459 | 0.455239<br>0.429780 | 69.695<br>69.742 | no |
+| Euclidean d = 2 | 0.3 | 9004<br>9005 | 0.552941<br>0.530691 | 0.286675<br>0.270753 | 0.419808<br>0.400722 | 3.519<br>3.504 | no |
+| Euclidean d = 2 | 1 | 9006<br>9007 | 0.596010<br>0.639479 | 0.283696<br>0.305649 | 0.439853<br>0.472564 | 1.387<br>1.316 | no |
+| Euclidean d = 2 | 3 | 9008<br>9009 | 0.576383<br>0.620860 | 0.282127<br>0.296305 | 0.429255<br>0.458582 | 0.819<br>0.776 | yes |
+| Euclidean d = 2 | 10 | 9010<br>9011 | 0.635352<br>0.628681 | 0.323298<br>0.320467 | 0.479325<br>0.474574 | 0.525<br>0.613 | yes |
+| Euclidean d = 3 | 0.03 | 9000<br>9001 | 0.731274<br>0.735143 | 0.694262<br>0.702349 | 0.712768<br>0.718746 | 32.091<br>32.102 | no |
+| Euclidean d = 3 | 0.1 | 9002<br>9003 | 0.556900<br>0.556989 | 0.332791<br>0.336668 | 0.444845<br>0.446828 | 69.657<br>69.509 | no |
+| Euclidean d = 3 | 0.3 | 9004<br>9005 | 0.645806<br>0.706789 | 0.274818<br>0.306119 | 0.460312<br>0.506454 | 2.332<br>2.328 | no |
+| Euclidean d = 3 | 1 | 9006<br>9007 | 0.735182<br>0.709112 | 0.302716<br>0.277006 | 0.518949<br>0.493059 | 0.706<br>0.714 | yes |
+| Euclidean d = 3 | 3 | 9008<br>9009 | 0.730844<br>0.732016 | 0.290671<br>0.287375 | 0.510758<br>0.509695 | 0.349<br>0.377 | yes |
+| Euclidean d = 3 | 10 | 9010<br>9011 | 0.781217<br>0.803921 | 0.350685<br>0.379397 | 0.565951<br>0.591659 | 0.160<br>0.154 | yes |
+
+**3. What tuning previews of L14** (A13.15: HiT val is scored in step 5 and otherwise only in step 7, for A13.11's
+reported F1). At the frozen rate, 10 in every cell, both geometries trained on seeds 9010 and 9011. Mean val RR at the
+frozen rates, and Lorentz − Euclidean, the exact differences rounded:
+
+| d | Setting | Lorentz | Euclidean | Lorentz − Euclidean | Difference, seed 9010 | Difference, seed 9011 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | random | 0.953712 | 0.632016 | 0.321695 | 0.315536 | 0.327854 |
+| 2 | hard | 0.794535 | 0.321883 | 0.472652 | 0.465724 | 0.479581 |
+| 3 | random | 0.958776 | 0.792569 | 0.166207 | 0.180604 | 0.151810 |
+| 3 | hard | 0.731703 | 0.365041 | 0.366662 | 0.391153 | 0.342171 |
+
+- Lorentz is ahead in every d, setting and seed, by more in the hard setting than in the random one, and by more at
+  d = 2 than at d = 3.
+- Every eligible Lorentz rate's mean exceeds every eligible Euclidean rate's at the same d; at d = 3 narrowly (0.589269
+  at Lorentz 0.3 against 0.578805 at Euclidean 10).
+- The Euclidean tables at 0.03 that the gate excluded (item 1) come closer: at d = 3 their mean RR in the hard setting
+  is 0.698306, against Lorentz's 0.731703 at 10.
+- This decides nothing. L14(a) is decided on HiT test, which tuning did not read, at seeds 0–4 and the frozen rates, by
+  A13's rule on each (d, setting)'s per-row intervals, after controls 1–4 and the closure check, and a seed counts only
+  if it is present (L14, Decision). L14(b), on HyperLex, has no preview. As for L6 in Amendment 11, tuning shows part of
+  the outcome before the decisive run, and the decisive run decides it.
+
+**4. What ran between Amendment 14 and this amendment** (Common rules, "Reporting"). The commits after 513e079
+(Amendment 14), in order; they are all the commits between 513e079 and 60345b4, and the work after tuning follows them.
+ae6e6d3, the tooling merge, came before Amendment 14, which states it.
+- *9550eea, the code commit of Amendment 14 item 6.* L12_GRID scores each S-full_i and W_i (runner-34); COUNTS holds HiT
+  val's counts of Amendment 14 item 2 (runner-46), which every tuning start then reproduced; tests on synthetic data
+  cover both. It touched `lexicon/hit.py`, `run_claims_stage2.py` and four test files, and no definition.
+- *The dry rerun* (A13.15 step 3 after a fix, as Amendment 14 item 6 asks): `--dry --workers 4` at 9550eea, dry tuning
+  from 17:51:23Z and the dry decisive step 18:16:10–18:46:25Z; its record was committed in 5acbbb7. It reproduced
+  05d467d: every trained and snapped table, decision code file, count, visible value and control outcome is equal. The
+  new L12 cells add 560 HL code files and 560 sealed records (1,180 against 620). The other differences are times,
+  process ids, load samples, free disk, HEAD, the label (Amendments 1–14), the cache's list of starts (the first dry
+  run's start and its own), the two edited readings (runner-34, runner-46), totals that grow with those cells, and the
+  SHA-256s that follow from these (the dry tuning record's, the dry settings' and the sealed file's). Its values on
+  human-rated sets went to a new sealed file, SHA-256
+  `9c9eac2c8122f1f228b76be34cef189c4fd2429b93dd4e3b48046a37cda79d64`. The runner writes one fixed path, so the first dry
+  run's sealed file (`7ba50e01…`, Amendment 14) was first moved aside, unopened, to
+  `~/.cache/hyperbolic-lexicon/stage2/dry-sealed-05d467d/`. Neither has been opened; both are opened after step 7.
+- *93a5a8e, a test-only fix.* `test_registered_steps_refuse_without_the_definitions_amendment` read the committed
+  PREREGISTRATION.md and expected no definitions amendment in it; Amendment 14 holds the manifest's SHA-256, so the
+  decisive step no longer refused there. The test now checks that the committed file's definitions amendment is 14 and
+  tests the refusal on the file as it stood before it. The runner and the lexicon modules are unchanged. Amendment 14
+  item 6 announced one commit before registered tuning; this is a second one, test-only. It was written in a separate
+  worktree of the code and committed there at 17:52Z (c709992, a local branch), during the dry rerun, then cherry-picked
+  after 5acbbb7. So the dry rerun ran on 9550eea's tree with only its own outputs changed, and tuning ran 9550eea's
+  runner and modules (`git diff 9550eea b2ba411` changes one test file and results files only).
+- *b2ba411, the timing projection* (A13.16; runner-8): `--time` at 93a5a8e, 18:47:58Z, 23 s; two epochs per cell on
+  seeds 95500–95504 (A13.12). Per epoch (wall, four processes at once): Lorentz d = 2 1.240 s, d = 3 1.561 s, Euclidean
+  d = 2 0.749 s, d = 3 1.115 s; the replay 3.349 s. The projected total was 9.93 h against 11 h (tuning 3.89 h, decisive
+  training 3.38 h, replays 0.47 h, exact arms 0.50 h, tuning evaluation 0.10 h, decisive evaluation 0.60 h, and A13.16's
+  1.0 h for the dry run, already spent), and the disk 1.50 GB (4,650,221 code lines of the exact arms) against 13.31 GB
+  free: both within, so tuning ran.
+- *Tuning* at b2ba411 (items 2 and 5); its record and console were committed in 60345b4. `--write-settings` then wrote
+  `settings-stage2.json` from the committed record (item 1).
+- *This amendment's sources.* Items 1–3 and tuning's own figures in items 5–7 come from `tuning-stage2.json`,
+  `settings-stage2.json`, tuning's console and the 48 cached loss curves (each checked against the record's SHA-256).
+  The rest of items 4–6 come from `results/stage2-time.json` and its console, the dry records and consoles in git, git's
+  log and reflog, the cache's journal of finished jobs (`runs.jsonl`) and the kernel log. The drafting recomputed every
+  value from those files: no table, no score, no draw. An adversarial check then read the same files and the dry records
+  from git and recomputed every value independently. Both, and a final recheck, imported `run_claims_stage2` or
+  `lexicon.l6` (under `python3 -B -I`) only to test the amendment lookups on a copy of PREREGISTRATION.md with this
+  amendment appended: no table, no score, no draw, no sealed file.
+
+**5. Tuning's three starts, and the container's suspension.** All three ran `--tune --workers 4` at b2ba411 in
+environment b44f374b1412. The record lists them; the committed console holds all three, one after another.
+- *Start 1, 18:48:40Z.* It passed the count checks and started the training pool, and was stopped deliberately by the
+  agent running the step, within about 20 s, before any job finished: it had been launched under a 2-hour limit of the
+  session's command tool, which would have killed it mid-run. Nothing it computed was kept; start 2 found no finished
+  job.
+- *Start 2, 18:49:01Z,* detached from the session. 20 of the 49 training jobs finished, the last at 20:54:53Z: the
+  replay and 19 tuning runs (the 12 of Lorentz d = 3, and Euclidean d = 3 at 0.03, 0.1, 0.3 and at 1 on seed 9006). The
+  container was then suspended for inactivity, because no task of the session was running to keep it awake. That came
+  after 20:54:54Z, the last finished job's line in the cache's journal, and before about 20:58Z:
+  `tuning-euclid-d3-lr1-s9007`, started at about 20:40:56Z, would have finished by 20:57:32–20:58:03Z at the twelve
+  Euclidean d = 3 runs' wall times (996–1,027 s), and has no line. The container was restored from a snapshot at
+  22:20:52Z (the kernel log reads "virtual machine fork"), and the restore ended start 2's processes. The four jobs then
+  in flight were lost. The console does not name them, but the pool starts jobs in a fixed order (the longest estimate
+  first, then by key), so they were `tuning-euclid-d3-lr1-s9007`, `-lr10-s9010`, `-lr10-s9011` and `-lr3-s9008`, the
+  first four that start 3 ran.
+- *Start 3, 22:22:12Z.* It reused the 20 finished jobs, as runner-2 allows (the same HEAD and configuration, every file
+  at its recorded SHA-256), ran the other 29 runs from their first epoch and HiT val's pass 1, and wrote the record at
+  00:43:28Z. The record marks the 19 reused runs `resumed`.
+- *What the restarts change.* No value: a run's bits depend only on its seed and the code (the dry rerun reproduced
+  every dry table bit for bit, item 4), every run records the same environment, the reused files were checked by
+  SHA-256, and the replay of a start-2 run reached its state. The decisive run's two pre-flight retrains (A13.10.9),
+  (euclid, 2, `0.03`, 9000) and (lorentz, 2, `0.03`, 9000), repeat runs trained in start 3.
+- *The tree.* Start 1 found it clean. Starts 2 and 3 found one changed path, tuning's console, written by the earlier
+  starts, which runner-1 allows as the step's own output; the checks before each pool and before writing found the same,
+  and no start was marked.
+- *Elapsed time.* Start 2 trained for 7,552.9 s up to its last finished job; start 3 took 8,476.6 s (training
+  22:22:31–00:39:08Z, pass 1 00:39:08–00:43:10Z). The suspension cost the time from 20:54:53Z to 22:22:12Z and the
+  in-flight jobs' work.
+
+**6. Load and environment.** A13.16 asks that no other workload run during steps 5 and 7, and that the record hold the
+load average.
+- *Samples.* Every sample taken while four workers trained read a one-minute load of 4.00–4.13: 12 in start 2 and 12 in
+  start 3. At the starts it read 0.80 (start 1), 0.65 (start 2) and 0.11 (start 3, after the restore); the 15-minute
+  averages of starts 1 and 2 (3.56, 3.47) still held the dry rerun and the overhaul's last test run (below). As
+  start 3's pool drained it fell to 1.0 (00:35:03Z) and 1.16; HiT val's pass 1, four processes for 241.5 s, ended at
+  3.71. The record holds 18 of start 3's 19 samples; the last (3.11, at the end) was taken after the record was written.
+  It and starts 1 and 2's samples are in the console.
+- *Other work in the container.* The integration overhaul's agents worked in other repositories' worktrees here. Their
+  last test run ended at 18:41Z. A flag raised at 18:47:52Z, before the timing projection, stopped their heavy commands
+  for the rest of tuning; one sub-second offline unit test ran at 18:52Z, during start 2's training. So A13.16's
+  condition, and Amendment 14 item 3's "no other session's work in the container", held for heavy work only, not to the
+  letter: the flag stopped heavy commands, any light commands of those sessions were not recorded, and one test ran
+  during step 5. The load samples (4.00–4.13 while four workers trained) are the evidence that nothing else added a
+  sustained load.
+- *Checks.* Every start reproduced tuning's count checks (WordNet and HiT val, with Amendment 14 item 2's val counts;
+  runner-46): all equal. Disk pre-flight: 0.371 GB to write against 13.31 GB free (13.21 GB at start 3). The record
+  holds the 51 readings runner-1 to runner-51 and no development mark.
+- *Environment.* Python 3.13.18, numpy 2.5.3, numba 0.68.1, llvmlite 0.50.0 and glibc 2.39; numpy's SIMD dispatch
+  X86_V3, X86_V4, AVX512_ICL and AVX512_SPR; Linux 6.18.44 on 4 CPUs. The environment SHA prefix is b44f374b1412 at
+  every start and in every run, as in the dry run, the dry rerun and the timing projection.
+
+**7. What is not known.**
+- Whether a measured run at 10 diverges or fails to converge. Tuning screened 10 on two seeds per cell and none
+  diverged, but Lorentz d = 2 had 19 and 23 guard hits there, and on the mammals Lorentz d = 2 diverged late at 10
+  (A11.2). A lost run removes its seed for both arms at its d (L14, Decision; Amendment 14 item 3).
+- Where the scores would peak: they still rise at 10 in every cell, and the grid is never extended.
+- Whether item 3's preview holds on HiT test, at seeds 0–4, under L14's intervals and controls. Nothing is known of
+  L14(b).
+- Why G ranks HiT val's candidates so well on the Euclidean tables at 0.03, whose loss barely moved (item 1). It was not
+  examined: tuning computes nothing else, and this amendment changes nothing. Those tables and the Euclidean ones at 0.1
+  (loss 3.55–3.67 at epoch 999, against ln 51 = 3.9318) are among the 48 tuning tables that controls 1 and 2 read in
+  step 7, where Amendment 14 item 4 weighs control 2's risk.
+- The exact time of the suspension (item 5 bounds it).
+- What added the small excess over 4.00 (at most 0.13) in 10 of the 24 load samples taken while four workers trained
+  (item 6): not recorded.
