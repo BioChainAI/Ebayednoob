@@ -17,6 +17,11 @@
 // growers giving v1's records; the checkouts default to OWL_ACADEMY_DIR and BIOCHAIN_AI_DIR, else beside this
 // repository: scripts/lib/siblings.cjs). The fast pytest suite leaves out test_lps.py::test_hurwitz_read_only, which
 // reads SHD-CCP's hurwitz.py: it runs as its own check, tagged "siblings" like the kernel check.
+// Stage 2's write-up (A13.15 step 8) adds the Node re-evaluation of Amendment 13 item 1 (lexicon_stage2.js, beside the
+// unedited lexicon_core.js): its trace (traces_stage2.py --check, and tests/parity-stage2.cjs --trace, line for line)
+// and the decisive pass-1 code files re-rendered and compared by SHA-256 (tests/parity-stage2.cjs --codes, about three
+// minutes on four workers, tagged "slow"; skipped without the Stage-2 cache, which CI's cache does not hold, so it is
+// optional: a skip stays a skip under --strict).
 // A check whose data or checkout is missing exits 2 and is reported as skipped, never as passed; one that ran only in
 // part (tests/parity-lexicon.cjs without a cache) exits 3 and is reported as partial; pytest's own exit 2 (interrupted,
 // or an error while collecting) counts as a failure. The summary is "N pass, M partial, K skipped"
@@ -37,6 +42,8 @@ const RUNS = [
     ['cores', 'Engram browser core', ['node', E + 'tests/parity-engram.cjs']],
     ['cores', 'Engram bridges (biochain codec)', ['node', E + 'tests/bridges.cjs']],
     ['lexicon', 'browser core parity (traces)', ['node', L + 'tests/parity-lexicon.cjs', '--quiet']],
+    ['lexicon', 'Stage 2 re-evaluation: the trace (A13.1)', ['node', L + 'tests/parity-stage2.cjs', '--trace', '--quiet']],
+    ['lexicon', 'Stage 2 re-evaluation: decisive code files', ['node', L + 'tests/parity-stage2.cjs', '--codes', '--quiet'], { tags: ['slow'], optional: true }],
     ['lexicon', 'JS data wrappers', ['node', L + 'reference/golden/make_js_data_v1.cjs', '--check']],
     ['lexicon', 'L6 view data (Explainer 12)', [...PY, L + 'reference/golden/make_l6_view_v1.py', '--check']],
     ['lexicon', 'WordNet data of the 2D and 3D pages', ['node', L + 'reference/golden/make_wordnet_view_v1.cjs', '--check']],
@@ -69,6 +76,7 @@ const RUNS = [
     ['traces', 'L6 (snapped toy tables, exact ranks)', [...PY, L + 'reference/traces_l6.py', '--check']],
     ['traces', 'pages (the page engine\'s outputs)', [...PY, L + 'reference/traces_pages.py', '--check']],
     ['traces', 'chain (grower, records, RFC 6962, attestation)', [...PY, L + 'reference/traces_chain.py', '--check']],
+    ['traces', 'Stage 2 (exact keys, certified order, tie classes)', [...PY, L + 'reference/traces_stage2.py', '--check'], { python: ['numpy'] }],
     ['shdccp', 'kernel 0xA with SHD-CCP\'s tooling', ['python3', '-B', '-I', L + 'proposals/check_kernel.py', siblings.dir('SHD-CCP')], { tags: ['siblings'] }],
 ];
 module.exports = { RUNS };
