@@ -2,7 +2,8 @@
 
     python3 -B -I "Pages/Hyperbolic Lexicon/proposals/check_kernel.py" [path to an SHD-CCP checkout]
 
-The SHD-CCP checkout defaults to the one beside this repository (../SHD-CCP). Nothing is written into it: run with
+The SHD-CCP checkout defaults to SHD_CCP_DIR, else the one beside this repository (../SHD-CCP; scripts/lib/siblings.py).
+Nothing is written into it: run with
 python3 -B -I so no __pycache__ appears, and the kernel is copied into a temporary mirror of the registry's
 01_Incubator_Experimental/proposed_codex/ folder, because the linter reads a kernel's stage from its path.
 
@@ -10,6 +11,7 @@ Runs lint_kernel (keys, Form/Domain agreement, status allowed in the incubator, 
 two implemented validation suites, layout_integrity and glass_box_round_trip. Exits 0 when all pass, 1 on any
 problem, and 2 (skipped) when no SHD-CCP checkout is found.
 """
+import importlib.util
 import json
 import shutil
 import sys
@@ -18,7 +20,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 KERNEL = HERE / "kernel_0xA_hyperbolic_address.json"
-default = HERE.parents[3] / "SHD-CCP"
+_spec = importlib.util.spec_from_file_location("ebayednoob_siblings", HERE.parents[2] / "scripts" / "lib" / "siblings.py")
+siblings = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(siblings)
+default = Path(siblings.dir("SHD-CCP"))
 shd = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else default
 tooling = shd / "SHD-CCP_Kernel_Ontology" / "Agent_Tooling"
 if not (tooling / "ontology.py").exists():

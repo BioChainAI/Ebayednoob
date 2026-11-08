@@ -85,7 +85,31 @@ published piece; **Archive all published to GitHub** backfills anything not yet 
 
 GitHub connection: in a Studio press **GitHub** and paste a fine-grained personal access token limited to this
 repository with **Contents: Read and write** (add **Actions: Read and write** to start the article sync from the
-Control Panel). The token stays in that browser only.
+Control Panel, which asks for the token when you press a "Run now" button). The token is kept in the page's memory
+only: it is never written to browser storage, reloading or leaving the page forgets it, and **Forget now** drops it
+at once. Owner, repository and branch are remembered in this browser. A token saved in the browser by an earlier
+version is removed the first time the home page, the Control Panel or a Studio loads (each loads
+`assets/js/github-store.js` as a separate module, so this does not depend on Firebase loading). The Studio says so
+once, after an admin signs in.
+
+## Sign-in, browser storage and page policy
+
+- **Sign-in lasts for the tab.** `assets/js/firebase.js` and `index.html` set up Firebase Auth with session
+  persistence: the sign-in is kept in the tab's sessionStorage and ends when the tab closes. A Google sign-in that an
+  earlier version saved in localStorage is moved into the tab once. The anonymous sign-ins that the learning hubs keep
+  (with their saved progress) are not read or moved. Pages opened from the home page open without an opener, so they
+  do not inherit the sign-in.
+- **Storage keys** of this site start with `ebayednoob-` (Engram and the Lexicon use `engram-minds-eye/` and
+  `hyperbolic-lexicon/`); no page clears a whole storage area. `node scripts/checks/storage-policy.cjs` checks both.
+- **Content-Security-Policy.** `index.html` and the three Control Panel pages carry a CSP `<meta>` that lists every
+  host they load scripts, styles, fonts and data from. When you add a CDN script, a feed source or a CORS relay that
+  the Control Panel reads from the browser, add its host to that page's policy (the daily scan runs in GitHub Actions
+  and is not affected). On hosts that also serve script gadgets (www.google.com, ajax.googleapis.com and the AngularJS
+  paths of the public CDNs) list exact files, not a folder or the whole host. `node scripts/checks/sri.cjs` checks
+  that each external tag is allowed by the policy, rejects such folder or host sources, and lists the remaining debt
+  (tags without `integrity=`, inline code).
+- These measures keep the token and the sign-in for a shorter time and limit where a page may load from and send
+  data to. They do not make it safe to run untrusted scripts on the same pages.
 
 Cross-posting: the Studio copies the piece with formatting for LinkedIn, Substack, X Articles and Medium, opens
 their editors, and records the resulting URLs so the Articles page shows one entry with "Also read on" buttons.

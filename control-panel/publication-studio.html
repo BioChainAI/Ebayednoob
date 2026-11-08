@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Content-Security-Policy: lists every host this page loads from. Keep it in step with the tags below
+         (scripts/checks/sri.cjs checks that each external tag is allowed here). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+          script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js https://www.gstatic.com/firebasejs/11.9.1/ https://apis.google.com;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css;
+          font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/fonts/;
+          img-src 'self' data: blob: https:;
+          connect-src 'self' https://api.github.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com;
+          frame-src https://ebayednoob-github.firebaseapp.com https://accounts.google.com;
+          object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publication Studio - Ebayednoob</title>
     <meta name="robots" content="noindex">
@@ -117,7 +127,7 @@
     <dialog id="gh-dialog" class="bg-gray-900 text-gray-100 border border-gray-700 rounded-xl p-0 w-[min(32rem,calc(100vw-2rem))]">
         <form id="gh-form" method="dialog" class="p-6 space-y-3">
             <h2 class="text-lg font-semibold">GitHub archive</h2>
-            <p class="text-sm text-gray-400">Published pieces are committed to <code>content/</code> in the repository, building a permanent archive that also deploys with the site. Create a <a class="text-teal-300 hover:underline" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">fine-grained token</a> for this repository only, with <b>Contents: Read and write</b> (add <b>Actions: Read and write</b> to run the article sync from the Control Panel). It is stored only in this browser.</p>
+            <p class="text-sm text-gray-400">Published pieces are committed to <code>content/</code> in the repository, building a permanent archive that also deploys with the site. Create a <a class="text-teal-300 hover:underline" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">fine-grained token</a> for this repository only, with <b>Contents: Read and write</b> (add <b>Actions: Read and write</b> to run the article sync from the Control Panel). The token is kept for this page only: it is never saved in the browser, and reloading or leaving the page forgets it.</p>
             <div class="grid grid-cols-3 gap-2">
                 <div><label class="lbl" for="gh-owner">Owner</label><input id="gh-owner" class="field" required></div>
                 <div><label class="lbl" for="gh-repo">Repository</label><input id="gh-repo" class="field" required></div>
@@ -126,13 +136,16 @@
             <div><label class="lbl" for="gh-token">Token</label><input id="gh-token" type="password" class="field" autocomplete="off" placeholder="github_pat_…"></div>
             <p id="gh-status" class="text-sm text-gray-400"></p>
             <div class="flex justify-between gap-2">
-                <button type="button" id="gh-forget" class="btn btn-ghost btn-sm">Forget token</button>
+                <button type="button" id="gh-forget" class="btn btn-ghost btn-sm" title="Forget the token on this page now">Forget now</button>
                 <div class="flex gap-2"><button type="button" data-close class="btn btn-ghost btn-sm">Close</button><button type="submit" class="btn btn-primary btn-sm">Save &amp; test</button></div>
             </div>
         </form>
     </dialog>
 
     <input id="st-file" type="file" class="hidden">
+    <!-- Loaded on its own (it imports nothing), so a token saved by an earlier version is removed even when the
+         Firebase modules of the main script cannot load. -->
+    <script type="module" src="../assets/js/github-store.js"></script>
     <script type="module" src="studio.js"></script>
 </body>
 </html>

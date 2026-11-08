@@ -24,7 +24,7 @@
     </div>
     <div class="hero-stats">
         <span class="stat">Phases <b>0</b>&ndash;<b>8</b> done</span>
-        <span class="stat"><code>tests/all.cjs</code>: <b>15/15</b> checks</span>
+        <span class="stat"><code>tests/all.cjs</code>: <b>20/20</b> checks</span>
         <span class="stat"><code>tests/links.cjs</code>: <b>31/31</b>, three of them controls</span>
         <span class="stat"><b>5</b> shared cores loaded unchanged</span>
     </div>
@@ -93,44 +93,60 @@
                 </tbody>
             </table></div>
             <p>The browser core checks one of these assumptions as it loads: if <code>hyperbolic_core.js</code>&rsquo;s clock schedule ever differs from Engram&rsquo;s, <code>engram_core.js</code> refuses to start and says so. The rest are checked by the parity lines, which compare exact values with the Python reference. A change in a core&rsquo;s results shows up as failing lines, never as a page that quietly does something different.</p>
+            <h3 id="used-by">Who stands on it</h3>
+            <p>The Hyperbolic Lexicon loads two of this folder&rsquo;s files unchanged and sends its shards back through <code>importBiochain</code>. <code>scripts/cores.json</code> records every name each consumer uses, and <code>scripts/check-cores.mjs</code> fails when a consumer uses a name the core lacks or the manifest does not list. <code>tests/all.cjs</code> runs the Lexicon&rsquo;s two checks of this folder, so a change here that breaks the Lexicon fails here first.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>File</th><th>Used by</th><th>What it uses</th><th>Checked by</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">engram_core.js</td><td>Hyperbolic Lexicon: <code>lexicon_core.js</code>, its pages</td><td><code>chainQuaternion</code>, <code>qprod</code>, <code>qeq</code>, <code>qnorm</code>, <code>unfold</code>, <code>packetQuaternions</code>, <code>tokenizeBiomesh</code>, <code>hexLsb</code>, <code>crystallize</code>, <code>computeJ</code>, <code>L</code>; the pages: <code>importAny</code>, <code>detectImport</code>, <code>verifyBiochain</code>, <code>liveOf</code>, <code>Coupler</code>; its shards: <code>importBiochain</code></td><td><code>chain-lexicon.cjs</code> (30 checks), <code>bridges-lexicon.cjs</code> (40)</td></tr>
+                    <tr><td class="mono">biochain_v1.js</td><td>Hyperbolic Lexicon: <code>lexicon_core.js</code>, its pages</td><td><code>CHUNK</code>, <code>MAX_GROW_BYTES</code>, <code>SEGMENTS</code>, <code>STREAM_VERSION</code>, <code>crystalQuat</code>, <code>crystallizeBytes</code>, <code>encodeChunk</code>, <code>decodeChunk</code>, <code>frameStream</code>, <code>popcountEven</code>, <code>qmul</code>, <code>qn</code>, <code>quatHex</code></td><td>the same two; <code>make_biomesh_compat_v1.cjs --check</code> reports its bodies against Owl&rsquo;s grower</td></tr>
+                    <tr><td class="mono">reference/engram/</td><td>Hyperbolic Lexicon&rsquo;s Python reference</td><td><code>engram.address</code>, <code>engram.ttmpt</code>, imported in place</td><td>the Lexicon&rsquo;s pytest suite</td></tr>
+                </tbody>
+            </table></div>
+            <p><code>engram_core.js</code> changes only by addition, and the <code>_v1</code> pins are never edited: a new pin is a <code>_v2</code> file beside them (decision D4 of the integration overhaul).</p>
         </section>
 
         <section class="chapter" id="check">
             <div class="chapter-num">04</div>
             <h2>One command</h2>
-            <p class="chapter-intro"><code>tests/all.cjs</code> runs every Node check of the system and of the cores it loads, then the site bar and the four pins.</p>
+            <p class="chapter-intro"><code>tests/all.cjs</code> runs every check of the system and of the cores it loads, the Lexicon&rsquo;s checks of Engram, the site bar, the Python reference and the four pins. <code>-j N</code> runs them N at a time; the root <code>tests/run-all.cjs</code> runs this list with the other systems&rsquo;.</p>
             <div class="out" style="white-space:pre-wrap">node "Pages/Engram Minds Eye/tests/all.cjs"
-<span class="k">pass  cores   orbital_core.js                     18/18 checks pass</span>
-<span class="k">pass  cores   hyperbolic_core.js parity           169/169 trace lines match</span>
-<span class="k">pass  cores   decoder3d.js parity                 28/28 decoder lines match</span>
-<span class="k">pass  cores   twin3d.js parity                    21/21 twin lines match</span>
-<span class="k">pass  cores   fence.js parity                     101/101 fence lines match</span>
-<span class="k">pass  engram  browser core against the reference  849/849 lines; 27/27 behaviour checks</span>
-<span class="k">pass  engram  the 2D page engine                  26/26 checks pass</span>
-<span class="k">pass  engram  the 3D page engine                  19/19 checks pass</span>
-<span class="k">pass  engram  the bridges                         34/34 checks pass</span>
-<span class="k">pass  engram  links and the ways in               31/31 link checks pass</span>
-<span class="k">pass  site    the site bar on every page</span>
-<span class="k">pass  pins    engram/1 golden corpus              engram_v1.json matches Owl Academy</span>
-<span class="k">pass  pins    STRIX library and exports           both match Owl Academy</span>
-<span class="k">pass  pins    LATTICE-SEED/1                      both match Owl Academy</span>
-<span class="k">pass  pins    the bridges to Owl Academy          both match Owl Academy</span>
-<span class="good">15/15 checks pass</span>  <span class="k">(about 75 s, most of it the twin trace)</span></div>
-            <p>The pins regenerate every pinned file from Owl Academy&rsquo;s code and compare them with the committed files. They need an Owl-Academy checkout: by default the one next to this repository, or a path given as the argument. Without one they are reported as <em>skipped</em>, never as passed. The Python reference has its own 45 tests:</p>
-            <div class="out">cd "Pages/Engram Minds Eye/reference" &amp;&amp; python3 -m pytest -q tests</div>
+<span class="k">pass    cores     orbital_core.js                           18/18 checks pass</span>
+<span class="k">pass    cores     hyperbolic_core.js parity                 169/169 trace lines match</span>
+<span class="k">pass    cores     decoder3d.js parity                       28/28 decoder lines match</span>
+<span class="k">pass    cores     twin3d.js parity                          21/21 twin lines match</span>
+<span class="k">pass    cores     fence.js parity                           101/101 fence lines match</span>
+<span class="k">pass    engram    browser core against the reference        849/849 lines; 27/27 behaviour checks</span>
+<span class="k">pass    engram    the 2D page engine                        26/26 checks pass</span>
+<span class="k">pass    engram    the 3D page engine                        19/19 checks pass</span>
+<span class="k">pass    engram    the bridges                               34/34 checks pass</span>
+<span class="k">pass    engram    links and the ways in                     32/32 link checks pass</span>
+<span class="k">pass    engram    Oracles names the pages use               every core name the pages use exists</span>
+<span class="k">pass    used-by   Lexicon chain on biochain_v1/engram_core  30/30 checks pass</span>
+<span class="k">pass    used-by   Lexicon shards imported by Engram         40/40 checks pass</span>
+<span class="k">pass    site      the site bar on every page</span>
+<span class="k">pass    pins      the extractor (owl_extract.cjs)           the extractor holds</span>
+<span class="k">pass    reference pytest (Engram reference)                 45 passed</span>
+<span class="k">pass    pins      engram/1 golden corpus                    v1 reproduces and the live contract holds</span>
+<span class="k">pass    pins      STRIX library and exports                 v1 reproduces and the live contract holds</span>
+<span class="k">pass    pins      LATTICE-SEED/1                            v1 reproduces and the live contract holds</span>
+<span class="k">pass    pins      the bridges to Owl Academy                v1 reproduces and the live contract holds</span>
+<span class="good">20 pass, 0 partial, 0 skipped</span>  <span class="k">(about 90 s, half of it the twin trace)</span></div>
+            <p>The pins compare content, not commits. Each one rebuilds its <code>_v1</code> files from the pinned source content, which it finds by SHA-256 in the Owl-Academy checkout or, after upstream commits, in its git history (<code>biochain_v1.provenance.json</code> names the commits), and the result must match byte for byte. Then it runs Owl Academy&rsquo;s current code on the same inputs, and the records and verdicts must equal the pinned ones. An upstream commit that changes a file but not that behaviour passes, with <code>NOTE</code> lines naming what moved; a change in behaviour fails. The checkout is the one next to this repository, <code>OWL_ACADEMY_DIR</code>, or a path given as the argument. Without it, or when the pinned content is not in its history (a shallow clone), a pin is reported as <em>skipped</em>, never as passed. The Python reference&rsquo;s 45 tests run in the same command.</p>
             <p><code>tests/links.cjs</code> checks every relative <code>href</code> and <code>src</code> in the folder&rsquo;s pages and explainers, and every <code>#anchor</code> against the ids of the page it points to. It also checks every link on the system map, every file in every site-bar menu set, and each way in from the table above. It finds the folder&rsquo;s pages itself, so a new page is covered without editing the test. Its three controls must come out right on every run: a missing file and a missing anchor must be caught, and a real anchor must pass.</p>
         </section>
 
         <section class="chapter" id="change">
             <div class="chapter-num">05</div>
             <h2>When something changes</h2>
-            <p class="chapter-intro">Five kinds of change, and what each one needs.</p>
+            <p class="chapter-intro">Six kinds of change, and what each one needs.</p>
             <div class="table-wrap"><table>
                 <thead><tr><th>Change</th><th>Do</th></tr></thead>
                 <tbody>
                     <tr><td>Code inside a segment of <code>orbital_core.js</code></td><td>Rebuild with <code>build.py</code>. <code>rebuild-identical.sh</code> lists the orbital pages that moved; commit them if the move was intended. Then run <code>tests/all.cjs</code>. If an engram result changes, port the change to <code>reference/engram/orbital.py</code> too, regenerate the traces (<code>run_traces.py</code>) and commit both together. The parity check will not let the two drift apart.</td></tr>
                     <tr><td>One of Hyperbolic Oracles&rsquo; four cores</td><td>Run that core&rsquo;s parity test, then <code>tests/all.cjs</code>. The names Engram depends on are listed in Hyperbolic Oracles&rsquo; README under &ldquo;Used by&rdquo;. Renaming one breaks this system.</td></tr>
-                    <tr><td>Owl Academy changes its engram code</td><td>The pins&rsquo; <code>--check</code> fails and names the file. Keep the <code>_v1</code> files as they are: they define engram/1, LATTICE-SEED/1 and the version 1 session format that existing chains, seeds and exports rely on. Pin the new version beside them as <code>_v2</code>, with its own script. If a claim is to rest on it, register an amendment first, as with Amendments 1 and 2.</td></tr>
+                    <tr><td>Owl Academy changes its engram code</td><td>If the code the pins take behaves as before, they pass and print <code>NOTE provenance</code> or a <code>NOTE body changed</code> line: <code>behaviour identical</code> when a differential set (records with one field altered, the grow cap) gave the pinned code&rsquo;s verdicts too, <code>same results on the v1 inputs</code> when only v1&rsquo;s inputs were run. Nothing needs doing. If its behaviour changes, the live contract fails and names the first field or input that differs; so does a name defined differently in <code>biomesh-core.js</code> and <code>biomesh.js</code>, since the pages would run the copy the pins do not. Keep the <code>_v1</code> files as they are: they define engram/1, LATTICE-SEED/1 and the version 1 session format that existing chains, seeds and exports rely on. Pin the new version beside them as <code>_v2</code>, with its own script. If a claim is to rest on it, register an amendment first, as with Amendments 1 and 2.</td></tr>
+                    <tr><td>A shared core here or in Hyperbolic Oracles</td><td><code>node scripts/check-cores.mjs</code> fails until <code>scripts/cores.json</code> is updated in the same change (<code>--update</code>) and the consumers&rsquo; suites pass; CI runs both on every pull request. A frozen core or a v1 pin changes only by the user&rsquo;s decision: on a pull request <code>--base</code> fails unless <code>cores.json</code> records it on that core as <code>"sanctioned": { "sha256": &hellip;, "reason": &hellip; }</code>.</td></tr>
                     <tr><td>A menu or the site bar</td><td>Edit <code>scripts/page-chrome-targets.json</code> (four-space indent, final newline), run <code>node scripts/install-page-chrome.mjs</code>, then <code>--check</code>. The bar is part of the four built orbital pages, so <code>rebuild-identical.sh</code> will show them as moved: commit the reinstalled pages.</td></tr>
                     <tr><td>A new module or page here</td><td>The five things on <a href="../index.html#conventions">the hub</a>: the code, an explainer, a node on the map, a ledger row for anything it claims, and tests. Add its test to <code>tests/all.cjs</code>. <code>tests/links.cjs</code> picks up the new page itself.</td></tr>
                 </tbody>

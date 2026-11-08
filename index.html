@@ -3,6 +3,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Content-Security-Policy: lists every host this page loads from. Keep it in step with the tags below
+         (scripts/checks/sri.cjs checks that each external tag is allowed here). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+          script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js https://www.gstatic.com/firebasejs/11.9.1/ https://apis.google.com;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src 'self' https://fonts.gstatic.com;
+          img-src 'self' data: https://placehold.co https://www.google.com/images/cleardot.gif;
+          connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com;
+          frame-src https://ebayednoob-github.firebaseapp.com https://accounts.google.com;
+          object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ebayednoob - Ethical GAI</title>
     
@@ -261,11 +271,15 @@
         </footer>
     </div>
 
+    <!-- Removes a GitHub token that an earlier version of the Studio saved in this browser (assets/js/github-store.js
+         imports nothing, so this runs even when the Firebase modules below cannot load). -->
+    <script type="module" src="assets/js/github-store.js"></script>
+
     <!-- Firebase and Main Logic Script -->
     <script type="module">
         // --- Firebase services ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { initializeAuth, browserSessionPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
@@ -280,9 +294,18 @@
 
         // --- Firebase Initialization ---
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        // Sign-in lasts for this tab only, set up as in assets/js/firebase.js: a Google sign-in saved in localStorage by
+        // an earlier version is moved into this tab once, and the learning hubs' anonymous sign-ins are left alone.
+        try {
+            const key = `firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`;
+            const saved = JSON.parse(localStorage.getItem(key) || "null");
+            if (saved && typeof saved === "object" && !saved.isAnonymous) {
+                if (sessionStorage.getItem(key) === null) sessionStorage.setItem(key, JSON.stringify(saved));
+                localStorage.removeItem(key);
+            }
+        } catch { /* storage unavailable */ }
+        const auth = initializeAuth(app, { persistence: browserSessionPersistence, popupRedirectResolver: browserPopupRedirectResolver });
         const db = getFirestore(app);
-        setPersistence(auth, browserLocalPersistence);
 
         // --- Global DOM Element References ---
         const contentArea = document.getElementById('content-area');
@@ -413,7 +436,7 @@
                 event.preventDefault(); 
                 const filePath = tutorialButton.getAttribute('data-load-path');
                 if (filePath) {
-                    window.open(filePath, '_blank');
+                    window.open(filePath, '_blank', 'noopener');
                     location.reload();
                 }
             }

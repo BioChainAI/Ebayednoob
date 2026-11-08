@@ -10,7 +10,7 @@ import {
     doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { startBackground } from "../assets/js/background.js";
-import { isConnected, dispatchWorkflow } from "../assets/js/github-store.js";
+import { isConnected, dispatchWorkflow, loadGitHubSettings, saveGitHubSettings } from "../assets/js/github-store.js";
 import { loadAll, saveItem, deleteItem, importSeed, loadFeedConfig, saveFeedConfig, loadArticleSyncConfig, saveArticleSyncConfig, COLLECTIONS } from "../assets/js/research-store.js";
 import { DEFAULT_ARTICLE_SYNC, PLATFORMS, normalizeArticleConfig, syncArticles, groupArticles, mergeArticleItems, fetchPlan, fetchArticleMeta, detectPlatform } from "../assets/js/article-sync.js";
 import { DEFAULT_FEED_CONFIG, SOURCE_TYPES, normalizeConfig, scanFeed, toList, slugify, safeUrl } from "../assets/js/feed-core.js";
@@ -283,26 +283,44 @@ function route() {
 }
 window.addEventListener("hashchange", route);
 
-// "Run now" buttons: start the sync workflow through the GitHub API when a token with
-// Actions access is saved (Studio → GitHub); otherwise open the workflow page.
-document.addEventListener("click", async (e) => {
-    const b = e.target.closest("[data-run-sync]");
-    if (!b) return;
-    if (!isConnected()) {
-        window.open(FEED_WORKFLOW_URL, "_blank", "noopener");
-        toast("On GitHub, press “Run workflow”. Connect GitHub in a Studio to start it from here.", "info");
-        return;
-    }
-    b.disabled = true;
+// "Run now" buttons: start the sync workflow through the GitHub API with a token that has
+// Actions access. The token is asked for on this page and kept for this page only; without one,
+// the workflow page on GitHub opens instead.
+let runButton = null;
+async function runSync(b) {
+    if (b) b.disabled = true;
     try {
         await dispatchWorkflow("update-research-feed.yml");
-        toast("Sync started. Results appear on the site in a few minutes.", "success");
+        toast("Sync started. Results appear on the site in a few minutes. The token is kept for this page only.", "success");
     } catch (err) {
         toast(`${err.message}. The token may need “Actions: Read and write”.`, "error");
         window.open(FEED_WORKFLOW_URL, "_blank", "noopener");
     } finally {
-        b.disabled = false;
+        if (b) b.disabled = false;
     }
+}
+document.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-run-sync]");
+    if (!b) return;
+    if (isConnected()) return runSync(b);
+    runButton = b;
+    $("#gh-run-token").value = "";
+    $("#gh-run-dialog").showModal();
+});
+$("#gh-run-github").addEventListener("click", () => {
+    $("#gh-run-dialog").close();
+    window.open(FEED_WORKFLOW_URL, "_blank", "noopener");
+    toast("On GitHub, press “Run workflow”.", "info");
+});
+$("#gh-run-cancel").addEventListener("click", () => $("#gh-run-dialog").close());
+$("#gh-run-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const token = $("#gh-run-token").value.trim();
+    if (!token) return;
+    $("#gh-run-token").value = "";
+    $("#gh-run-dialog").close();
+    saveGitHubSettings({ ...loadGitHubSettings(), token });
+    runSync(runButton);
 });
 
 const heading = (title, sub = "", actions = "") => `
@@ -878,7 +896,7 @@ async function renderArticleSources() {
                         <button data-hide="${esc(a.id)}" class="btn btn-ghost btn-sm">Hide</button>
                     </div>
                 </div>
-                <ul class="mt-1 text-xs space-y-0.5">${a.members.map((m) => `<li><span class="${m.platform === "linkedin" ? "text-blue-300" : "text-gray-400"}">${esc(PLATFORMS[m.platform]?.label || m.platform)}</span> · <a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer" class="text-teal-300 hover:underline break-all">${esc(m.url)}</a>${m.manual ? " <span class='text-gray-500'>(set by hand)</span>" : ""}</li>`).join("")}</ul>
+                <ul class="mt-1 text-xs space-y-0.5">${a.members.map((m) => `<li><span class="${m.platform === "linkedin" ? "text-blue-300" : "text-gray-400"}">${esc(PLATFORMS[m.platform]?.label || m.platform)}</span> · <a href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener noreferrer" class="text-teal-300 hover:underline break-all">${esc(m.url)}</a>${m.manual ? " <span class='text-gray-500'>(set by hand)</span>" : ""}</li>`).join("")}</ul>
                 ${unmatched ? `<p class="text-xs text-amber-300 mt-1">No LinkedIn version found, so this is not shown on the site. Save it as an article with its LinkedIn URL, or add the URL to an existing article's cross-posts.</p>` : ""}
             </li>`;
         return `
@@ -1160,7 +1178,7 @@ async function renderAutomation() {
                 <div class="panel p-5">
                     <h2 class="font-semibold mb-3">Test scan: ${res.items.length} items (latest ${res.latest.length} shown)</h2>
                     <ul class="text-sm space-y-1 mb-4">${res.sourceStatus.map((s) => `<li class="flex gap-2"><span class="status-dot mt-1.5 ${s.ok ? "bg-emerald-400" : "bg-red-500"}"></span><span><b>${esc(s.name)}</b>: ${s.ok ? `${s.count} items in ${s.ms} ms` : esc(s.error)}${s.ok && s.error ? ` <span class="text-amber-300">(${esc(s.error)})</span>` : ""}</span></li>`).join("")}</ul>
-                    <ol class="text-sm space-y-2 list-decimal pl-5">${res.latest.map((it) => `<li><a class="text-teal-300 hover:underline" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">${esc(it.title)}</a> <span class="text-gray-500">· ${esc(fmtDate(it.published))} · ${esc(it.source.name)} · ${esc(it.topics.join(", "))}</span></li>`).join("")}</ol>
+                    <ol class="text-sm space-y-2 list-decimal pl-5">${res.latest.map((it) => `<li><a class="text-teal-300 hover:underline" href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer">${esc(it.title)}</a> <span class="text-gray-500">· ${esc(fmtDate(it.published))} · ${esc(it.source.name)} · ${esc(it.topics.join(", "))}</span></li>`).join("")}</ol>
                 </div>`;
         } else if (t.id === "au-export") {
             download("feed-config.json", normalizeConfig(draft));

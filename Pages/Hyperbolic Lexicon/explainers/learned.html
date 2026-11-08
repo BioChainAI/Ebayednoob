@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learned Geometry, Measured - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 12 of Hyperbolic Lexicon, Phase 4: learned Lorentz and Euclidean embeddings of the WordNet mammal closure (1,182 synsets, 6,542 closure edges), trained by a numpy float64 trainer at d = 2, 3, 5, 10 and 50, snapped to 2^-32 and ranked exactly. After Amendment 10 fixed the definitions and Amendment 11 froze the tuned rates, one decisive run supported L6(a) (Lorentz ahead of Euclidean by 0.72 to 0.75 closure AP at d = 2 and 3), L6(b) (at d = 50 Euclidean is ahead), L6(c) (the exact H3 tree keeps graph edges better than learned Lorentz at d = 3, against its registered prediction of refuted), L6(d) (learned Lorentz ranks the closure far better than the exact tree) and L4(c) (snapping moves no MAP by more than 9.37e-6). A live lab draws two of the learned tables and ranks them exactly in your browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 12 &middot; Phase 4</div>
+    <h1>Learned Geometry, Measured</h1>
+    <p class="lede">Phase 4 trained what Explainer 5 set up in Phase 0 as the learned baseline: Lorentz and Euclidean embeddings of the WordNet mammal closure at matched dimension, in a numpy float64 trainer, snapped to a 2<sup>&minus;32</sup> grid and ranked exactly. The definitions came before the code, the rates were tuned and frozen before any measured run, and one run decided L6 and L4(c). All five parts are supported under their registered rules; L6(c) against its own prediction, which said refuted, and this page says why. On this page your browser draws two of the learned tables and ranks them exactly.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#glance">The five decisions</a>
+        <a class="btn btn-ghost" href="#lab">The mammals in the disk</a>
+        <a class="btn btn-ghost" href="#wrong">The wrong prediction</a>
+        <a class="btn btn-ghost" href="#limits">What this does not show</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">decided: <b>L6(a)&ndash;(d), L4(c)</b> &middot; all supported</span>
+        <span class="stat">(a): Lorentz &minus; Euclidean closure AP <b>+0.72 to +0.75</b></span>
+        <span class="stat">(c): exact <b>0.6907</b> against learned <b>0.46</b>, predicted refuted</span>
+        <span class="stat">L4(c): largest |&Delta;MAP| <b>9.37&times;10<sup>&minus;6</sup></b></span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#order">2. How Phase 4 was ordered</a></li>
+            <li><a href="#protocol">3. The protocol</a></li>
+            <li class="part">Live</li>
+            <li><a href="#lab">4. The mammals in the disk</a></li>
+            <li class="part">Results</li>
+            <li><a href="#l6ab">5. L6(a, b) &middot; Lorentz against Euclidean</a></li>
+            <li><a href="#l6cd">6. L6(c, d) &middot; The exact tree against learned</a></li>
+            <li><a href="#l4c">7. L4(c) &middot; Snapping costs nothing</a></li>
+            <li><a href="#controls">8. The controls</a></li>
+            <li><a href="#ties">9. Fractional ties</a></li>
+            <li class="part">Limits</li>
+            <li><a href="#limits">10. What this does not show</a></li>
+            <li><a href="#next">11. Next: Phase 5</a></li>
+        </ol>
+    </nav>
+    <main style="font-variant-ligatures:none">
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#order">How Phase 4 was ordered</a></li><li><a href="#protocol">The protocol</a></li>
+            <li><a href="#lab">The mammals in the disk</a></li>
+            <li><a href="#l6ab">L6(a, b) &middot; Lorentz against Euclidean</a></li><li><a href="#l6cd">L6(c, d) &middot; The exact tree against learned</a></li>
+            <li><a href="#l4c">L4(c) &middot; Snapping costs nothing</a></li><li><a href="#controls">The controls</a></li><li><a href="#ties">Fractional ties</a></li>
+            <li><a href="#limits">What this does not show</a></li><li><a href="#next">Next: Phase 5</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">Stage F of the front end is a learned table: one point per synset, trained so that a synset&rsquo;s relatives sit near it. Explainer 5 set it up as baseline B1, learned static hyperbolic embeddings, against which the training-free exact tree is measured; Explainer 6 put its trainer on the CPU track. Phase 4 built it and decided the two claims about it. This page&rsquo;s focus node is the static embeddings.</p>
+            <div data-hl-map="focus" data-node="embed"></div>
+            <p>The code is in <code>reference/</code>: the trainer <a href="../reference/lexicon/embed.py"><code>lexicon/embed.py</code></a> (549 lines), its stream <a href="../reference/lexicon/stream.py"><code>stream.py</code></a> (201, a numba copy of the shared <code>Rng</code>) and <a href="../reference/lexicon/pystream.py"><code>pystream.py</code></a> (91, the same calls on <code>hpstep.prng.Rng</code>), the snapping and exact evaluation <a href="../reference/lexicon/learned.py"><code>learned.py</code></a> (633), the controls, intervals and decisions <a href="../reference/lexicon/l6.py"><code>l6.py</code></a> (746), and the runner <a href="../reference/run_claims_phase4.py"><code>run_claims_phase4.py</code></a> (2,230). The browser core&rsquo;s exact ranking of snapped tables is the Phase 4 section of <a href="../lexicon_core.js"><code>lexicon_core.js</code></a> (lines 1,573&ndash;1,837 of its 3,205: <code>SnapArm</code>, <code>evaluateSnapped</code> and the L6 trace), and <a href="../reference/run_l6_node.cjs"><code>run_l6_node.cjs</code></a> (416) re-ranked the measured tables in Node. Every number on this page comes from <a href="../reference/results/claims-phase4.json">results/claims-phase4.json</a> (summarised in <a href="../reference/results/claims-phase4.md">claims-phase4.md</a>), <a href="../reference/results/tuning.json">tuning.json</a>, <a href="../reference/results/l6-node.json">l6-node.json</a> (<a href="../reference/results/l6-node.md">.md</a>), <a href="../reference/results/fractional-ties.json">fractional-ties.json</a> (<a href="../reference/results/fractional-ties.md">.md</a>), the dry run in <a href="../reference/results/dry/claims-phase4.md">results/dry/</a>, <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a> (L4, L6, Amendments 10, 11 and 12), the commit messages and the source files; the lab&rsquo;s values come from your own browser. Where this page and those files differ, the files win.</p>
+            <div class="callout plain"><span class="label">How to read this page</span>
+                <p><span class="tag t-SUPPORTED">supported</span> means what the registered decision rule says, and nothing more. L6 is statistical: per seed, the paired per-node differences in average precision between two tables, their mean and a 95% bootstrap interval, in each of five seeds, read by the rule of each part. L4(c) is exact: a largest difference of MAPs, computed as rationals, against 1/1000. A <strong>prediction</strong> was written with each claim; it is not part of the rule, and one of this phase&rsquo;s was wrong.</p>
+                <p>Decimals are rounded from the exact values in the record. Times belong to this container and decide nothing; they are marked &ldquo;~&rdquo; where they stand alone.</p>
+            </div>
+            <dl class="gloss">
+                <dt>Closure set S</dt><dd>mammal.n.01 (01861778) and every noun with it among its hypernym and instance-hypernym ancestors: 1,182 synsets, in offset order, with 6,542 (node, ancestor) pairs inside S. SHA-256 of its offsets <span class="mono">c4748ce2&hellip;</span>.</dd>
+                <dt>Closure MAP</dt><dd>Every node is a query against the other 1,181. Its neighbours are its closure ancestors and descendants inside S (13,084 query&ndash;neighbour pairs). The MAP is the mean of the 1,182 average precisions.</dd>
+                <dt>Graph-edge MAP</dt><dd>The neighbours are the spanning parent (the first hypernym or instance-hypernym pointer) and the spanning children, inside S: 2,350 pairs over 1,176 queries. Six nodes have their spanning parent outside S and no children in S; they have no AP and stay candidates.</dd>
+                <dt>Pessimistic ties</dt><dd>A neighbour tied exactly with a non-neighbour ranks after it (the Common rules). Fractional ties average the AP over every order inside each tie class; they are reported, never used to decide.</dd>
+                <dt>Learned table</dt><dd>1,182 rows of float64 after epoch 999 of a run: a Lorentz row (x<sub>0</sub>, x<sub>1</sub>, &hellip;, x<sub>d</sub>) on the hyperboloid, a Euclidean row (x<sub>1</sub>, &hellip;, x<sub>d</sub>).</dd>
+                <dt>Snapped table</dt><dd>The table on the 2<sup>&minus;32</sup> grid, as integers n: for Lorentz, of the Poincar&eacute; point p = x/(1 + x<sub>0</sub>), n = &lfloor;2<sup>32</sup>p + 1/2&rfloor; by <code>fence.dyadic</code>, stepped in at the rim; for Euclidean, n = &lfloor;2<sup>32</sup>x + 1/2&rfloor; of the float read exactly. Its text, a line <code>offset n_1 &hellip; n_d</code> per node, is committed and named by its SHA-256.</dd>
+                <dt>&kappa; key</dt><dd>For a query u and candidate v of a snapped Lorentz table, &kappa;<sub>u</sub>(v) = |n<sub>u</sub> &minus; n<sub>v</sub>|&sup2;/(4<sup>32</sup> &minus; |n<sub>v</sub>|&sup2;): an exact rational that orders and ties the candidates exactly as the Lorentz product of the lifted points does (A10.6). A Euclidean table&rsquo;s key is |n<sub>u</sub> &minus; n<sub>v</sub>|&sup2;.</dd>
+                <dt>Cell, seed</dt><dd>A cell is a geometry and a dimension: Lorentz or Euclidean at d = 2, 3, 5, 10 or 50, ten in all. A run is a cell, a learning rate and a seed; its draws come from one <code>Rng(seed)</code>.</dd>
+                <dt>Interval</dt><dd>Per seed, the 95% percentile bootstrap of the mean per-node paired AP difference, 10,000 resamples with numpy&rsquo;s <code>default_rng(7)</code>, started afresh for each interval (A10.7).</dd>
+                <dt>Seed present</dt><dd>A seed counts for a part when the tables it compares exist (no run diverged) and control 2 is established for their cells at that seed, that is, both runs of its pair exist (A10.7; Amendment 11 item 4). A failing control 2 does not drop a seed; it voids all of L6. A part is supported only with all five seeds present.</dd>
+                <dt>Exact arm</dt><dd>L3&rsquo;s H&sup3; words of S, placed exactly by the reference&rsquo;s <code>h3tree.py</code> (hpstep.decode3d&rsquo;s octahedral tree; <code>decoder3d.js</code>&rsquo;s pointExact is its JavaScript twin, against which the Node re-evaluation checked the arm&rsquo;s lines) and ranked by exact Lorentz products: the training-free tree, with no seed.</dd>
+                <dt>Dry run</dt><dd>The whole pipeline on the closure set of solid.n.01 (1,232 nouns, 5,696 closure edges), every seed +3000 (A10.13). It decides nothing.</dd>
+                <dt>Decisive run</dt><dd>The one run that decides: <code>run_claims_phase4.py --measure --workers 4</code>, on the code committed at 515a4a1.</dd>
+            </dl>
+            <h3 id="glance">The five decisions at a glance</h3>
+            <div class="table-wrap"><table style="min-width:860px">
+                <thead><tr><th>Claim</th><th>What it says</th><th>Decision</th><th>Result, per seed (0&ndash;4)</th><th>Controls that must show their weakness</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="#l6ab"><strong>L6(a)</strong></a></td><td>Learned Lorentz beats learned Euclidean on closure MAP at d = 2 and d = 3</td><td><span class="tag t-SUPPORTED">supported</span></td><td>Lorentz &minus; Euclidean closure AP: means +0.7159 to +0.7524 at d = 2 and +0.7284 to +0.7523 at d = 3; every lower end above 0 (at least +0.6990). The predicted gap of at least 0.2 holds: 0.7256 and 0.7424</td><td rowspan="4">1. Label shuffle: the largest relabelled closure MAP over 316 trained tables is 0.018803 (must be &le; 0.05). 2. Edge-shuffled training scores below true training in all 50 cell&ndash;seed pairs, closure and graph-edge (every interval above 0). 3. Random floors, reported. L6 is not void (<a href="#controls">chapter 8</a>)</td></tr>
+                    <tr><td class="mono"><a href="#l6ab"><strong>L6(b)</strong></a></td><td>At d = 50 the advantage vanishes</td><td><span class="tag t-SUPPORTED">supported</span><br><span style="color:var(--muted);font-size:0.82rem">Euclidean ahead</span></td><td>Means &minus;0.0313 to &minus;0.0328, every interval entirely below 0, which the rule counts as support: Euclidean&rsquo;s closure MAP is 0.99997, Lorentz&rsquo;s about 0.968</td></tr>
+                    <tr><td class="mono"><a href="#l6cd"><strong>L6(c)</strong></a></td><td>The training-free exact H&sup3; tree has graph-edge MAP at least that of learned Lorentz at d = 3</td><td><span class="tag t-SUPPORTED">supported</span><br><span style="color:var(--muted);font-size:0.82rem">predicted refuted</span></td><td>Exact &minus; learned graph-edge AP: means +0.2138 to +0.2324, lower ends at least +0.1916 (the rule needs &ge; &minus;0.01). Exact 0.690653 against learned 0.458&ndash;0.477</td></tr>
+                    <tr><td class="mono"><a href="#l6cd"><strong>L6(d)</strong></a></td><td>Learned Lorentz at d = 3 has higher closure MAP than the exact H&sup3; tree</td><td><span class="tag t-SUPPORTED">supported</span></td><td>Learned &minus; exact closure AP: means +0.6445 to +0.6655, lower ends at least +0.6301. Learned 0.950&ndash;0.971 against exact 0.305408</td></tr>
+                    <tr><td class="mono"><a href="#l4c"><strong>L4(c)</strong></a></td><td>Learned tables snapped to 2<sup>&minus;32</sup> and ranked exactly have MAP within 0.001 of float64 evaluation</td><td><span class="tag t-SUPPORTED">supported</span></td><td>40 tables (measured and edge-shuffled, d = 2 and 3), closure and graph-edge: the largest |&Delta;MAP| is 9.37&times;10<sup>&minus;6</sup>; none above 1/1000</td><td>L4&rsquo;s own, read by A10.10 to cover (c): control 2 showed its weakness in Phase 2 on the same evaluator</td></tr>
+                </tbody>
+            </table></div>
+            <p>With these, all eleven registered claims are supported: L1&ndash;L11, L3 and L4 in full (Phase 1 in <a href="reference.html">Explainer 9</a>, Phase 2 in <a href="browser-core.html">Explainer 10</a>, Phase 3 in <a href="chains.html">Explainer 11</a>). Three predictions were wrong, and all three are on record: L2&rsquo;s share (2&ndash;10% predicted, 52.6% measured), L11&rsquo;s time (about 50&ndash;150 ms predicted, 155.4 ms measured) and L6(c)&rsquo;s outcome (refuted predicted, supported measured; <a href="#wrong">chapter 6</a>). The Node re-evaluation found every exact value of the 50 measured tables equal to the record, which the Common rules (&ldquo;Authority&rdquo;) ask for before a page shows L6 or L4(c) as holding.</p>
+        </section>
+
+        <section class="chapter" id="order">
+            <div class="chapter-num">02</div>
+            <h2>How Phase 4 was ordered</h2>
+            <p class="chapter-intro">Definitions first, then code, a review, a full dry run with an independent check, then registered tuning and the amendment that froze its rates, then one decisive run on the code as committed. Ten commits on 2026-11-06 (times in UTC, from git) record the order.</p>
+            <ol class="steps">
+                <li><strong>43265cf &middot; 10:51 &middot; Amendment 10, before any code for L6 and L4(c).</strong> Written before any trainer, evaluator or runner existed, with nothing trained, ranked or evaluated on the mammal sets: the protocol (positives, non-neighbours, draw order, initialisation, schedule, loss and both steps), the numerics (binary64 throughout, no BLAS, the snap and the exact keys) and the statistics (the intervals and the decision mechanics). It read the registered tuning as rate k on seed block k, 240 runs; chose the solid.n.01 closure set as dry data by criteria fixed before choosing; listed every design probe; and recorded an omission: Phases 1 and 2 never reported the fractional-tie values the Common rules ask for (item 17). Nothing registered was changed.</li>
+                <li><strong>272a50d &middot; 12:50 &middot; The code,</strong> built on synthetic graphs and unregistered seeds (80000 + i) only: the stream, the trainer with a second slow implementation and a 60-digit oracle in its tests, the evaluators, the runner, <code>lexicon_core.js</code>&rsquo;s exact ranking of snapped tables with its trace (<code>traces/l6_v1.txt</code>), and the A10.17 supplement. &ldquo;fast pytest 295 passed, &hellip; parity 22,585/22,585, links 47/47, all.cjs 26/26&rdquo;, in its message.</li>
+                <li><strong>e0477fb &middot; 15:16 &middot; Review fixes, before the dry run.</strong> Four reviewers, with independent reimplementations of the trainer and the evaluator, mutants of the runner and two skeptics per finding, found no defect in the stream, the trainer or the decisions. Seven minor findings were confirmed and fixed: among them the Euclidean snap, now exactly &lfloor;2<sup>32</sup>x + 1/2&rfloor; (a float shortcut was one unit off at one double per K), the environment recorded per run and per start, and a wider clean-tree check.</li>
+                <li><strong>78c661d &middot; 16:54 &middot; Dry tuning</strong> on solid.n.01: 240 runs, 5,867 s (~) on 4 workers; its replay with <code>hpstep.prng.Rng</code> ended in the run&rsquo;s state.</li>
+                <li><strong>a780bb5 &middot; 17:42 &middot; The dry measure,</strong> 2,833 s (~): dry verdicts L6(a)&ndash;(d) and L4(c) all supported, on dry data, deciding nothing. Then an independent check of the dry record, two verifiers with their own ranking, intervals and A10.7 rules, about 29,700 comparisons: every exact MAP, interval, verdict, control, tuning choice, receipt and table hash equal; two dry runs retrained from scratch matched bit for bit. The only differences were 77 reported diagnostic values off by at most 2 ulps, which their binary64 reading accounts for (Amendment 11 item 3).</li>
+                <li><strong>7c1806c &middot; 19:57 &middot; Registered tuning</strong> at a780bb5 on a clean tree: 240 runs on the mammal closure set, 6,089 s (~) on 4 workers. The replay of <code>tuning-lorentz-d3-lr0.03-s9000</code> with <code>hpstep.prng.Rng</code> over 1,000 epochs ended in the run&rsquo;s state (EQUAL). Only closure MAP was computed.</li>
+                <li><strong>515a4a1 &middot; 19:58 &middot; Amendment 11, the rates frozen</strong> in <code>reference/settings.json</code> (SHA-256 <span class="mono">058e1900&hellip;</span>): Lorentz 1 at every d; Euclidean 0.1 at d = 2, 3 and 5, 1 at d = 10 and 3 at d = 50. It lists every tuning run and discloses what ran between Amendment 10 and tuning, among it the A10.17 supplement (below). &ldquo;The measured runs use seeds 0&ndash;4 and have not run.&rdquo;</li>
+                <li><strong>The decisive run &middot; started 19:58:57</strong> at 515a4a1, the only paths changed since tuning&rsquo;s commit being the four A10.14 allows (<code>PREREGISTRATION.md</code>, <code>settings.json</code>, <code>tuning.json</code> and tuning&rsquo;s console). In one pool of 153 jobs it trained the measured and edge-shuffled tables and the floors, retrained two tuning jobs (their float tables equalled tuning&rsquo;s bit for bit) and replayed measured (Lorentz, 3, seed 0) with <code>hpstep.prng.Rng</code> (equal); then it computed P = <code>Rng(7)</code> for the first time, and it checked the tree was clean three times. 3,051 s (~).</li>
+                <li><strong>b6f3b9d &middot; 20:50 &middot; The results,</strong> as they came out: <code>claims-phase4.json</code> and <code>.md</code>, the console log, 367 LBENCH/1 receipts and 141 files of snapped and float tables in <code>results/l6-tables/</code>.</li>
+                <li><strong>5c846c5 &middot; 21:26 &middot; Amendment 12, an erratum to Amendment 11.</strong> An independent check of the decisive record found one wrong sentence (below) and no other difference among its decisions, intervals, controls, tuning choices, receipts and table hashes.</li>
+                <li><strong>09a8afa &middot; 21:26 &middot; The Node re-evaluation</strong> (run at 21:23:09, 117 s ~): <code>lexicon_core.js</code>, unchanged, regenerated the L6 trace (2,585/2,585 lines), rebuilt S from the WordNet archive and re-ranked the 50 measured snapped tables and the exact arm: 50/50 tables and the exact arm equal in every field; 0 of 118,200 per-query APs differ.</li>
+            </ol>
+            <h3>What Amendment 10 fixed</h3>
+            <div class="table-wrap"><table style="min-width:680px">
+                <thead><tr><th>Item</th><th>What it fixes</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono">1 &middot; code</td><td><code>embed.py</code> trains; <code>stream.py</code> computes <code>Rng</code>&rsquo;s stream in numba and nothing else, tested output for output against <code>hpstep.prng</code>; <code>learned.py</code> snaps and ranks; <code>l6.py</code> decides. MAPs are decided by the Python reference&rsquo;s <code>rank</code> functions, unchanged. No BLAS; every run single-threaded</td></tr>
+                    <tr><td class="mono">2 &middot; instance</td><td>The 6,542 positives (u, v), v an ancestor of u, one direction; NN(u), the non-neighbours, the complement of u&rsquo;s closure; the neighbour sets; the exact arm</td></tr>
+                    <tr><td class="mono">3&ndash;5 &middot; training</td><td>The order of the draws; the initialisation; 1,000 epochs of 131 batches; the loss and both steps in binary64 without fused multiply-add; divergence and the diagnostics (<a href="#protocol">chapter 3</a>)</td></tr>
+                    <tr><td class="mono">6 &middot; snapping</td><td>The float and snapped tables&rsquo; bytes and hashes, the snaps, the &kappa; key, the metrics through <code>rank._ap_and_ranks</code></td></tr>
+                    <tr><td class="mono">7 &middot; intervals</td><td>Paired differences, <code>ci_mean</code>, the comparisons in float64, seeds present, each part&rsquo;s rule, precedence, prediction (a)&rsquo;s gap</td></tr>
+                    <tr><td class="mono">8 &middot; tuning</td><td>Rate k on seed block k, 240 runs; scores by exact closure MAP alone; the choice; the lr-freeze amendment; 50 measured runs</td></tr>
+                    <tr><td class="mono">9 &middot; controls</td><td>One permutation P = <code>Rng(7)</code>, computed once, in the decisive run; the edge-shuffled pairs from <code>Rng(2000 + s)</code>; the floors; the disclosed 1&ndash;2% risk that P voids L6 by chance</td></tr>
+                    <tr><td class="mono">10 &middot; L4(c)</td><td>The 40 tables; MAP(float64) without acosh; the reported 2<sup>&minus;8</sup> snap and displacement</td></tr>
+                    <tr><td class="mono">11&ndash;12 &middot; reported, LBENCH/1</td><td>Mean rank, fractional-tie MAP, distortion, bits, times, further intervals, the geoopt cross-check, the Node re-evaluation; the receipt&rsquo;s 22 fields</td></tr>
+                    <tr><td class="mono">13&ndash;14 &middot; dry runs, order</td><td>solid.n.01 with seeds +3000; build, review, dry run, tuning, freeze, one decisive run; a defect found after tuning only by an amendment that says so</td></tr>
+                    <tr><td class="mono">15 &middot; sources</td><td>Where each constant comes from: Nickel &amp; Kiela&rsquo;s papers, their released script, or this project (<a href="#protocol">chapter 3</a>)</td></tr>
+                    <tr><td class="mono">16&ndash;17 &middot; disclosures</td><td>Every source read and every probe run before the amendment, none on the mammal sets; the known Phase 1 values; the fractional-tie omission of Phases 1&ndash;2</td></tr>
+                </tbody>
+            </table></div>
+            <h3>Six labels to note</h3>
+            <p><strong>&ldquo;Amendments 1&ndash;11&rdquo;.</strong> The decisive record and the Node re-evaluation&rsquo;s both say they ran &ldquo;with PREREGISTRATION.md with Amendments 1-11&rdquo;. That was true: Amendment 12 was committed at 21:26:23, after both had run. The Node runner was uncommitted when it ran, which its record lists (<code>?? reference/run_l6_node.cjs</code>); it was committed with its output in 09a8afa, and the <code>lexicon_core.js</code> it ran was the one committed at b6f3b9d.</p>
+            <p><strong>The A10.17 supplement ran before tuning.</strong> A10.17 asked for the fractional-tie values of Phases 1 and 2, on those runs&rsquo; own code and data; A10.14 says nothing may be ranked on the mammal sets before registered tuning. The supplement ran during the build (at 43265cf, again at 272a50d after a fix to <code>learned.py</code>, every value unchanged), so it ranked Phase 1&rsquo;s arms on the mammal spanning subtree first. It trained nothing, evaluated no L6 table, did not rank S and did not compute P, and its values were published in Phases 1 and 2 except the fractional ones, which decide nothing. Amendment 11 item 3 discloses the conflict.</p>
+            <p><strong>Tuning previews the outcome.</strong> As A10.14 says, tuning on the mammals shows Lorentz against Euclidean closure MAP before any measured run: at its seeds 9000&ndash;9023 the chosen Lorentz rates scored 0.885&ndash;0.968 and the Euclidean ones 0.167&ndash;0.99997. That is why every line of code and the whole dry run came before it.</p>
+            <p><strong>The dry run saw (c) come out supported.</strong> On solid.n.01, about half an hour before registered tuning began (the dry measure ended at about 17:42, tuning started at 18:15:39) and about two hours before the decisive run, the dry run&rsquo;s exact tree scored graph-edge MAP 0.619361 against learned Lorentz d = 3 at 0.497&ndash;0.520, and its verdict on (c) was supported. Dry data decide nothing; (c)&rsquo;s prediction is registered text, which no amendment edits, and it was left as it stood.</p>
+            <p><strong>Amendment 11&rsquo;s closest choice.</strong> Amendment 11 item 1 named Lorentz d = 2 the closest tuning choice (rates 1 and 3: 0.884987 and 0.884130, 0.000857 apart). By that same measure Euclidean d = 50 is closer (rates 3 and 1: 0.999973 and 0.999840, 0.000133). Amendment 12 corrects the sentence; it decides nothing, since A10.8 picks each cell&rsquo;s rate by the larger exact mean alone.</p>
+            <p><strong>The geoopt cross-check was not run.</strong> D9 names geoopt as a cross-check of the Lorentz step. torch could not be installed through the proxy (download.pytorch.org refused; PyPI&rsquo;s Linux wheel pulls more than 1 GB of CUDA wheels), as A10.11 foresaw; the tests carry a 60-digit decimal recomputation of one step and finite-difference gradients in its place. It would have been a tolerance, never a decision.</p>
+        </section>
+
+        <section class="chapter" id="protocol">
+            <div class="chapter-num">03</div>
+            <h2>The protocol</h2>
+            <p class="chapter-intro">L6 registered the training as Nickel and Kiela&rsquo;s. Amendment 6 found that its constants mix Nickel and Kiela&rsquo;s Poincar&eacute; paper (P17) with their released script and add one of this project&rsquo;s own (1,000 epochs), and A10.15 says where every constant comes from, P18 included. Each run is a function of the geometry, d, the rate, the seed and the instance alone.</p>
+            <h3>The training rule</h3>
+            <div class="table-wrap"><table style="min-width:760px">
+                <thead><tr><th>Element</th><th>The rule (A10.2&ndash;5)</th><th>Where it comes from (A10.15)</th></tr></thead>
+                <tbody>
+                    <tr><td>Positives</td><td>The 6,542 pairs (u, v) with v a closure ancestor of u, in one direction: u is the anchor</td><td>The script&rsquo;s (child, ancestor) orientation</td></tr>
+                    <tr><td>Negatives</td><td>50 per row, drawn uniformly <em>with replacement</em> from NN(u), every node but u, its ancestors and its descendants (49&ndash;1,180 per anchor; placental.n.01 has 49), in every epoch, burn-in included</td><td>50: the script&rsquo;s <code>train-nouns.sh</code>. The undirected closure: P18 &sect;4.1. Uniform, with replacement: <strong>this project</strong>. The script draws descendants as negatives; not followed, since the metric scores them as neighbours</td></tr>
+                    <tr><td>Initialisation</td><td>x<sub>ik</sub> = (2&middot;random() &minus; 1)&middot;10<sup>&minus;3</sup>, node by node; Lorentz then x<sub>0</sub> = &radic;(1 + &Sigma;x<sub>k</sub>&sup2;). Both geometries start from the same spatial numbers</td><td>P17 &sect;3.2 (and P18 p. 4): U(&minus;0.001, 0.001)</td></tr>
+                    <tr><td>Schedule</td><td>1,000 epochs; a fresh permutation of the positives each epoch; batches of 50, the last of 42 kept: 131 batches, 131,000 steps</td><td>Batch 50: <code>train-nouns.sh</code>. The permutation and the short batch: the script&rsquo;s <code>graph_dataset.pyx</code>. 1,000 epochs: <strong>this project</strong> (the script runs 1,500; neither paper gives a count)</td></tr>
+                    <tr><td>Burn-in</td><td>Epochs 0&ndash;19 at lr/10, then lr; no momentum, decay, clip or max-norm</td><td>The rate lr/10: P17 &sect;3.2. 20 epochs: <code>train-nouns.sh</code>. The script&rsquo;s own burn-in (lr &times; 0.01 with 5 negatives drawn by degree) is not followed</td></tr>
+                    <tr><td>Loss</td><td>A softmax over &minus;d of the 51 candidates, the positive inside: &#8467; = d<sub>0</sub> + log &Sigma;<sub>j</sub> e<sup>&minus;d<sub>j</sub></sup>, averaged over the batch</td><td>The script&rsquo;s code: the positive inside (<code>energy_function.py</code> line 48) and the batch mean (<code>F.cross_entropy</code>&rsquo;s default)</td></tr>
+                    <tr><td>Lorentz distance</td><td>arcosh of the Lorentz product, computed as log1p(t + &radic;(t(t + 2))); a product &le; 1 is a guard hit with no gradient; no derivative floor</td><td>P18. The script&rsquo;s floor of 10<sup>&minus;5</sup> under the derivative is not followed</td></tr>
+                    <tr><td>Lorentz step</td><td>The Minkowski gradient, its tangent projection, the exact exp map; x<sub>0</sub> then recomputed from the spatial coordinates; no clip</td><td>P18 eqs. 6, 9 and 10, Algorithm 1. x<sub>0</sub> recomputed: geoopt and the script. The script clips the step at 1; not followed</td></tr>
+                    <tr><td>Euclidean distance and step</td><td>The squared distance |u &minus; v|&sup2;; plain SGD, x &larr; x &minus; &eta;A</td><td>P17 p. 5 and the script&rsquo;s <code>euclidean.py</code>; &ldquo;SGD&rdquo; as registered</td></tr>
+                    <tr><td>Gradients</td><td>To the anchor, the positive and every negative, repeats summed; every node met in a batch takes one step, from the table as it stood at the batch&rsquo;s start</td><td>The script&rsquo;s <code>rsgd.py</code> lines 53&ndash;57</td></tr>
+                    <tr><td>Arithmetic</td><td>IEEE-754 binary64, round to nearest, no fused multiply-add; every sum left to right; no BLAS. Bit identity is promised on the build machine only</td><td><strong>This project</strong> (A10.4); a second, slow trainer in plain Python floats equals it byte for byte</td></tr>
+                    <tr><td>Generator</td><td>One <code>Rng(seed)</code> per run, read in a fixed order: initialisation, each epoch&rsquo;s permutation, then the negatives batch by batch</td><td><strong>This project</strong>: the shared xoshiro128** of <code>hpstep.prng</code>, copied into numba line for line</td></tr>
+                    <tr><td>The table kept</td><td>The table after epoch 999; a non-finite table after any epoch ends the run as diverged, with no table and no MAP</td><td><strong>This project</strong>. The script keeps its lowest-loss checkpoint; not followed</td></tr>
+                </tbody>
+            </table></div>
+            <p>P17 is Nickel and Kiela&rsquo;s Poincar&eacute; paper (arXiv:1705.08039v2), P18 their Lorentz paper (arXiv:1806.03417v2), and the script facebookresearch/poincare-embeddings at dff101b. Also not followed from the script: negatives drawn without replacement and padded, the always-on max-norm of 10<sup>6</sup>, initial ranges of &plusmn;10<sup>&minus;5</sup> (Lorentz) and &plusmn;10<sup>&minus;4</sup> (Euclidean), and five Hogwild threads. The only mammal number found in the literature, P17&rsquo;s Figure 2 (Poincar&eacute;, d = 5: MAP 0.927), is not comparable: its instance is unknown, its ranking directed and its ties not pessimistic. No claim compares against it.</p>
+            <h3>The evaluation</h3>
+            <ul>
+                <li><strong>Snap, then rank exactly.</strong> Each table is snapped to 2<sup>&minus;32</sup> (the glossary&rsquo;s snapped table) and every node ranked against the other 1,181 by the &kappa; key (Lorentz) or the exact squared distance (Euclidean), with <code>rank._ap_and_ranks</code> unchanged: pessimistic APs, MAP and pooled mean rank as exact rationals.</li>
+                <li><strong>Per seed, per part.</strong> The per-node AP differences of the two tables, in offset order (1,182 for closure, 1,176 for graph-edge); their mean and 95% interval. The exact arm has no seed, so its APs enter every seed&rsquo;s comparison.</li>
+                <li><strong>The rules, as registered.</strong> (a) at each of d = 2, 3: supported if the interval lies above 0 in all five seeds; refuted if the mean is &le; 0 in three or more. (b) at d = 50: supported if every interval lies within [&minus;0.02, +0.02] or entirely below 0; refuted if above +0.02 in three or more. (c) supported if every lower end is &ge; &minus;0.01; refuted if the mean is below &minus;0.05 in three or more. (d) supported if every interval lies above 0; refuted if the mean is &le; 0 in three or more. Otherwise inconclusive; a failed control voids all four. No multiplicity correction is registered, and none is applied.</li>
+                <li><strong>Tuning</strong> (A10.8): in each of the ten cells, rate k of {0.03, 0.1, 0.3, 1, 3, 10} trained on seeds 9000 + 4k to 9003 + 4k; the rate with the largest exact mean closure MAP over its four runs is frozen, the smaller on a tie; a rate with a diverged run is not eligible. Measured runs use seeds 0&ndash;4.</li>
+            </ul>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Tuning, mean closure MAP of four runs</th><th class="num">0.03</th><th class="num">0.1</th><th class="num">0.3</th><th class="num">1</th><th class="num">3</th><th class="num">10</th></tr></thead>
+                <tbody>
+                    <tr><td>Lorentz d = 2</td><td class="num">0.227940</td><td class="num">0.296830</td><td class="num">0.573959</td><td class="num"><strong>0.884987</strong></td><td class="num">0.884130</td><td class="num">diverged &times;4</td></tr>
+                    <tr><td>Lorentz d = 3</td><td class="num">0.252473</td><td class="num">0.422143</td><td class="num">0.916422</td><td class="num"><strong>0.961827</strong></td><td class="num">0.927831</td><td class="num">0.848202</td></tr>
+                    <tr><td>Lorentz d = 5</td><td class="num">0.275444</td><td class="num">0.649637</td><td class="num">0.941990</td><td class="num"><strong>0.967564</strong></td><td class="num">0.931211</td><td class="num">0.856591</td></tr>
+                    <tr><td>Lorentz d = 10</td><td class="num">0.314710</td><td class="num">0.726946</td><td class="num">0.948738</td><td class="num"><strong>0.967804</strong></td><td class="num">0.933893</td><td class="num">0.861726</td></tr>
+                    <tr><td>Lorentz d = 50</td><td class="num">0.374534</td><td class="num">0.760018</td><td class="num">0.947487</td><td class="num"><strong>0.967860</strong></td><td class="num">0.937506</td><td class="num">0.868199</td></tr>
+                    <tr><td>Euclidean d = 2</td><td class="num">0.108615</td><td class="num"><strong>0.166889</strong></td><td class="num">0.156837</td><td class="num">0.156116</td><td class="num">0.139754</td><td class="num">diverged &times;4</td></tr>
+                    <tr><td>Euclidean d = 3</td><td class="num">0.168306</td><td class="num"><strong>0.218726</strong></td><td class="num">0.206724</td><td class="num">0.206521</td><td class="num">0.193973</td><td class="num">diverged &times;4</td></tr>
+                    <tr><td>Euclidean d = 5</td><td class="num">0.256342</td><td class="num"><strong>0.294311</strong></td><td class="num">0.288973</td><td class="num">0.289414</td><td class="num">0.277995</td><td class="num">diverged &times;4</td></tr>
+                    <tr><td>Euclidean d = 10</td><td class="num">0.374314</td><td class="num">0.463161</td><td class="num">0.492301</td><td class="num"><strong>0.496754</strong></td><td class="num">0.417665</td><td class="num">diverged &times;4</td></tr>
+                    <tr><td>Euclidean d = 50</td><td class="num">0.780164</td><td class="num">0.999290</td><td class="num">0.999694</td><td class="num">0.999840</td><td class="num"><strong>0.999973</strong></td><td class="num">diverged &times;4</td></tr>
+                </tbody>
+            </table></div>
+            <p>Bold: the frozen rate. Every run at rate 10 diverged in the Euclidean cells (all at epoch 23) and in Lorentz d = 2 (at epochs 375, 295, 327 and 505); no cell chose an end of the grid. Each run&rsquo;s exact MAP, float and snapped SHA-256 and generator state are in <code>tuning.json</code>, and Amendment 11 prints every run to four decimals.</p>
+            <h3>Planned and measured cost</h3>
+            <div class="table-wrap"><table style="min-width:600px">
+                <thead><tr><th></th><th>Phase 0&rsquo;s estimate (<a href="tracks.html#cpu">Explainer 6</a>)</th><th>Measured (~, 4 workers)</th></tr></thead>
+                <tbody>
+                    <tr><td>One run</td><td>about 1 minute</td><td>Lorentz 45&ndash;46 s at d = 2 to 345&ndash;350 s at d = 50; Euclidean 30&ndash;31 s to 268&ndash;270 s (measured tables)</td></tr>
+                    <tr><td>All runs</td><td>about 290, tuning included; about 1&ndash;5 h</td><td>340 trained: 240 in tuning, 6,089 s; 100 in the decisive run (50 measured, 50 edge-shuffled) with two pre-flight retrains, 3,051 s in all with the evaluations and control 1. The dry run: 5,867 s and 2,833 s more</td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="lab">
+            <div class="chapter-num">04</div>
+            <h2>The mammals in the disk</h2>
+            <p class="chapter-intro">Two of the 50 measured tables, as the decisive run snapped and committed them: learned Lorentz and learned Euclidean at d = 2, seed 0. The Lorentz table is drawn in the Poincar&eacute; disk (p = n/2<sup>32</sup>), the Euclidean one in the plane. Pick a mammal, by clicking or tapping it or by name, and <code>lexicon_core.js</code> ranks every other mammal against it exactly, in both tables, here.</p>
+            <div class="lab" id="disk-lab">
+                <div class="lab-title">Lab &middot; two learned tables, ranked exactly in your browser</div>
+                <div class="out" id="lab-status">Loading the core and the tables&hellip;</div>
+                <div class="lab-row">
+                    <label for="lab-find">Find a mammal <input id="lab-find" type="search" autocomplete="off" spellcheck="false" placeholder="dog, whale, tusker&hellip;" style="font:0.85rem var(--mono);padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;width:min(14em,52vw)"></label>
+                    <span id="lab-matches" style="display:inline-flex;flex-wrap:wrap;gap:6px"></span>
+                </div>
+                <div class="lab-row">
+                    <label for="lab-spread">Spread the disk <input type="range" id="lab-spread" min="1" max="10" step="0.5" value="5"> <span id="lab-spread-v" class="mono">&times;5</span></label>
+                    <label for="lab-centre"><input type="checkbox" id="lab-centre"> centre the disk on the mammal picked</label>
+                    <label for="lab-edges"><input type="checkbox" id="lab-edges" checked> spanning-tree edges</label>
+                    <button class="chip" type="button" id="lab-clear">clear</button>
+                </div>
+                <div class="duo" style="margin-top:10px">
+                    <div class="pane"><h5>Learned Lorentz &middot; d = 2 &middot; Poincar&eacute; disk</h5><canvas class="lab-canvas" id="cv-lorentz" width="480" height="480" aria-label="The learned Lorentz table at d = 2, seed 0, drawn in the Poincaré disk; click or tap a mammal to pick it"></canvas></div>
+                    <div class="pane"><h5>Learned Euclidean &middot; d = 2 &middot; the plane</h5><canvas class="lab-canvas" id="cv-euclid" width="480" height="480" aria-label="The learned Euclidean table at d = 2, seed 0, drawn in the plane; click or tap a mammal to pick it"></canvas></div>
+                </div>
+                <div id="lab-legend" style="display:flex;flex-wrap:wrap;gap:4px 14px;font-size:0.8rem;color:var(--muted);margin:8px 2px 4px"></div>
+                <div class="out" id="lab-node">Pick a mammal: click or tap a point, or find one by name.</div>
+                <div class="table-wrap"><table class="compact" style="min-width:560px">
+                    <thead><tr><th>Ranked against the other 1,181, exactly</th><th>Learned Lorentz, d = 2</th><th>Learned Euclidean, d = 2</th></tr></thead>
+                    <tbody id="lab-ap"><tr><td colspan="3" style="color:var(--muted)">no mammal picked</td></tr></tbody>
+                </table></div>
+                <h4>Recompute each table&rsquo;s MAP</h4>
+                <p style="font-size:0.88rem;color:#cbd5e1;margin:0.3rem 0">All 1,182 queries, each ranked against the other 1,181 by the same exact keys, closure and graph-edge, in short slices so that the page stays responsive. The result is compared, as a fraction in lowest terms, with the record&rsquo;s.</p>
+                <div class="lab-row">
+                    <button class="chip on" type="button" id="map-lorentz">Recompute the Lorentz MAPs</button>
+                    <button class="chip on" type="button" id="map-euclid">Recompute the Euclidean MAPs</button>
+                </div>
+                <div class="out" id="map-out-lorentz"><span class="k">Lorentz</span> not computed yet; the record: closure 0.889203, graph-edge 0.435848</div>
+                <div class="out" id="map-out-euclid" style="margin-top:8px"><span class="k">Euclidean</span> not computed yet; the record: closure 0.171146, graph-edge 0.223374</div>
+                <div class="out" id="map-out-both" style="margin-top:8px;display:none"></div>
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0">How it is computed. The tables are the committed snapped texts <code>results/l6-tables/learned-lorentz-d2-s0.snap.txt.gz</code> and <code>learned-euclid-d2-s0.snap.txt.gz</code>, carried to the page by <a href="../data/l6_view_v1.js"><code>data/l6_view_v1.js</code></a> with each synset&rsquo;s first lemma and parents. A Lorentz table is <code>SnapArm(N, 'lorentz')</code>: candidates ordered by &kappa;<sub>u</sub>(v), compared by BigInt cross-multiplication; a Euclidean one, <code>SnapArm(N, 'euclid')</code>, by |n<sub>u</sub> &minus; n<sub>v</sub>|&sup2;. Each query goes through <code>rankQuery</code> and the MAP through <code>mapExact</code>, the functions <code>evaluateSnapped</code> and the Node re-evaluation use. Closure neighbours are rebuilt from the closure parents, graph-edge neighbours from the spanning parents. A rank is 1 plus the non-neighbours nearer than that neighbour, ties pessimistic (these two tables have none). Drawing alone uses floats: the disk&rsquo;s points are n/2<sup>32</sup>, moved, when asked, by the hyperbolic isometry that brings the mammal picked to the centre, then spread as Explainer 3&rsquo;s lab does (at &times;s each distance from the centre is drawn divided by s, directions kept; at &times;1 the picture is the true disk, where almost every point lies on the rim). Edges are drawn straight.</p>
+            </div>
+            <div class="callout note"><span class="label">How the lab gets its tables, and what it checks</span>
+                <p>A page here uses no fetch, so it works from <code>file://</code> as well as over HTTP: <a href="../reference/golden/make_l6_view_v1.py"><code>reference/golden/make_l6_view_v1.py</code></a> writes <code>data/l6_view_v1.js</code> from the two committed snapped texts, <code>claims-phase4.json</code> and the WordNet archive, after checking that S, its closure and graph-edge neighbour sets and both tables are the decisive run&rsquo;s; its <code>--check</code> rebuilds the file and compares the bytes. On load the page checks the file&rsquo;s JSON text against its SHA-256; rebuilds S&rsquo;s offsets and checks their SHA-256 (<span class="mono">c4748ce2&hellip;</span>), the 6,542 closure edges and the neighbour counts against the record; rebuilds each snapped text from the integers and checks its SHA-256 against the run&rsquo;s <code>snap_sha</code>; and checks each recorded MAP text against its LBENCH/1 hash. The MAPs it computes are compared with those texts. The first lemmas and parents are WordNet 3.0&rsquo;s, under the WordNet licence (<a href="../reference/golden/LICENSE-WORDNET.txt">its notice</a>).</p>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li><strong>mammal</strong> sits at the centre of the disk, 0.21 from the origin in hyperbolic distance. Every other node is its closure neighbour, so its closure AP is 1 in both tables, whatever the geometry.</li>
+                    <li><strong>Samoyed</strong>, a leaf six steps down: closure AP 0.948 in the Lorentz table, 0.112 in the Euclidean one. In the disk its nearest candidates are spitz, its parent, then carnivore, mammal and placental, ancestors at every level; in the plane they are other breeds of dog, none of them its closure neighbour but spitz, second.</li>
+                    <li><strong>dog</strong>, with 189 descendants: 0.621 in the Lorentz table and 0.987 in the Euclidean one. The plane serves hubs and fails leaves; 889 of the 1,182 nodes are leaves. Recompute both MAPs and the lab counts the queries each table ranks better.</li>
+                    <li><strong>lion</strong>: its spanning parent, big cat, ranks 7th in the disk, behind three of its ancestors (mammal, placental, carnivore), one of its descendants (lion cub, whose spanning parent lies outside S) and two nodes outside its closure. Training made every ancestor a positive with the same weight, so the parent has no special place: this is L6(c) on one query (<a href="#wrong">chapter 6</a>).</li>
+                    <li><strong>tusker</strong>, a child of mammal with no children of its own: 0.5 in the disk (mammal ranks 2nd), 0.0038 in the plane (261st).</li>
+                    <li><strong>Centre the disk on Samoyed.</strong> Every other mammal then crowds into one narrow direction: seen from a leaf near the rim, the rest of the tree lies far off, toward the origin. The hyperbolic plane gives each branch room by putting it far from every other.</li>
+                    <li><strong>Spread &times;1</strong> shows the true disk: the farthest point of this table lies 16.7 from the origin (the record&rsquo;s max_radius), within 2&times;10<sup>&minus;7</sup> of the rim in the Poincar&eacute; coordinates that were snapped.</li>
+                </ul>
+            </div>
+            <div class="callout limit"><span class="label">What this lab is, and is not</span>
+                <p>It runs the functions the Node re-evaluation ran, on two of the tables it checked, and recomputes their MAPs; your browser&rsquo;s numbers decide nothing. L6 was decided by the Python reference on all 50 measured tables, five seeds a cell; these are two tables of one seed, at the dimension where the geometries differ most. Its drawings are pictures in floats; only the ranking is exact. A Euclidean table in two dimensions is a plane with no centre; it is drawn around the origin, at one scale.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="l6ab">
+            <div class="chapter-num">05</div>
+            <h2>L6(a, b) &middot; Lorentz against Euclidean</h2>
+            <p class="chapter-intro">At d = 2 and 3, learned Lorentz embeddings rank the mammal closure far better than learned Euclidean ones: about 0.72 to 0.75 more closure AP per query, in every seed. At d = 50 the order reverses and Euclidean is ahead by about 0.032. <span class="tag t-SUPPORTED">(a) supported</span> <span class="tag t-SUPPORTED">(b) supported</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Registered</th><th>As run</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Instances</strong></td><td>S, 1,182 queries for closure; learned Lorentz and Euclidean tables at d = 2, 3, 5, 10 and 50, seeds 0&ndash;4, each cell at its frozen rate: 50 tables, none diverged</td></tr>
+                    <tr><td><strong>Metric</strong></td><td>Closure AP, exact on the snapped tables; per seed the paired differences Lorentz &minus; Euclidean and their 95% interval</td></tr>
+                    <tr><td><strong>Decision</strong></td><td>(a) at d = 2 and 3, (b) at d = 50, by the rules of <a href="#protocol">chapter 3</a>; d = 5 and 10 reported</td></tr>
+                    <tr><td><strong>Seeds present</strong></td><td>5 of 5 for every part: no run diverged, so control 2 is established in every cell and seed (and it holds in all 50)</td></tr>
+                </tbody>
+            </table></div>
+            <figure>
+                <div style="max-width:620px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 8px 4px">
+<svg class="cx" viewBox="0 0 420 401" role="img" aria-labelledby="cx-title cx-desc">
+<title id="cx-title">L6(a) and (b): Lorentz minus Euclidean closure AP, per seed, at d = 2, 3, 5, 10 and 50</title>
+<desc id="cx-desc">Each row is one seed: the mean of the per-node paired closure AP differences, learned Lorentz minus learned Euclidean, with its 95% bootstrap interval. At d = 2 and 3 every interval lies near +0.72 to +0.75, far above 0; at d = 5 near +0.68 and at d = 10 near +0.47 (reported); at d = 50 every interval lies just below 0, near -0.03.</desc>
+<style>.cx text{font-family:Inter,system-ui,sans-serif;font-size:11px;fill:var(--muted,#94a3b8)}.cx .cx-g{fill:var(--text,#e2e8f0);font-weight:600}.cx .cx-s{font-size:10px}.cx .cx-grid{stroke:var(--line-strong,rgba(34,211,238,.38));stroke-opacity:.35;stroke-width:1}.cx .cx-zero{stroke:var(--muted,#94a3b8);stroke-opacity:.8;stroke-width:1.2}.cx .cx-band{fill:var(--muted,#94a3b8);fill-opacity:.12}.cx .cx-w{stroke-width:2;stroke-linecap:round}.cx .cx-w.dec{stroke:#1aa3c2}.cx .cx-w.rep{stroke:#64748b}.cx .cx-d.dec{fill:#1aa3c2;stroke:#0b1222;stroke-width:1.5}.cx .cx-d.rep{fill:#94a3b8;stroke:#0b1222;stroke-width:1.5}.cx .cx-hit{fill:transparent}.cx g.cx-row:hover .cx-hit{fill:var(--line,rgba(34,211,238,.16))}@media (max-width:520px){.cx text{font-size:13px}.cx .cx-s{font-size:12px}}</style>
+<rect class="cx-band" x="123.4" y="34" width="13.7" height="329"/>
+<line class="cx-grid" x1="96.0" y1="34" x2="96.0" y2="363"/><text x="96.0" y="377" text-anchor="middle">&#8722;0.1</text>
+<line class="cx-zero" x1="130.2" y1="34" x2="130.2" y2="363"/><text x="130.2" y="377" text-anchor="middle">0</text>
+<line class="cx-grid" x1="198.7" y1="34" x2="198.7" y2="363"/><text x="198.7" y="377" text-anchor="middle">0.2</text>
+<line class="cx-grid" x1="267.1" y1="34" x2="267.1" y2="363"/><text x="267.1" y="377" text-anchor="middle">0.4</text>
+<line class="cx-grid" x1="335.6" y1="34" x2="335.6" y2="363"/><text x="335.6" y="377" text-anchor="middle">0.6</text>
+<line class="cx-grid" x1="404.0" y1="34" x2="404.0" y2="363"/><text x="404.0" y="377" text-anchor="middle">0.8</text>
+<g transform="translate(96,16)"><circle class="cx-d dec" cx="5" cy="-4" r="3.6"/><text x="13" y="0">decides (a), (b)</text><circle class="cx-d rep" cx="140" cy="-4" r="3.6"/><text x="148" y="0">reported</text></g>
+<text class="cx-g" x="6" y="48">d = 2</text><text x="6" y="60" class="cx-s">(a)</text>
+<g class="cx-row"><title>d = 2, seed 0: Lorentz &#8722; Euclidean closure AP, mean +0.7181, 95% interval [+0.7013, +0.7347] (closure MAP 0.889203 against 0.171146)</title><rect class="cx-hit" x="0" y="39.5" width="420" height="11"/><text x="90" y="48.5" text-anchor="end" class="cx-s">s0</text><line class="cx-w dec" x1="370.2" y1="45" x2="381.6" y2="45"/><circle class="cx-d dec" cx="376.0" cy="45" r="3.6"/></g>
+<g class="cx-row"><title>d = 2, seed 1: Lorentz &#8722; Euclidean closure AP, mean +0.7524, 95% interval [+0.7363, +0.7682] (closure MAP 0.909782 against 0.157408)</title><rect class="cx-hit" x="0" y="50.5" width="420" height="11"/><text x="90" y="59.5" text-anchor="end" class="cx-s">s1</text><line class="cx-w dec" x1="382.2" y1="56" x2="393.1" y2="56"/><circle class="cx-d dec" cx="387.7" cy="56" r="3.6"/></g>
+<g class="cx-row"><title>d = 2, seed 2: Lorentz &#8722; Euclidean closure AP, mean +0.7172, 95% interval [+0.7010, +0.7335] (closure MAP 0.876359 against 0.159110)</title><rect class="cx-hit" x="0" y="61.5" width="420" height="11"/><text x="90" y="70.5" text-anchor="end" class="cx-s">s2</text><line class="cx-w dec" x1="370.1" y1="67" x2="381.2" y2="67"/><circle class="cx-d dec" cx="375.7" cy="67" r="3.6"/></g>
+<g class="cx-row"><title>d = 2, seed 3: Lorentz &#8722; Euclidean closure AP, mean +0.7159, 95% interval [+0.6990, +0.7325] (closure MAP 0.883042 against 0.167149)</title><rect class="cx-hit" x="0" y="72.5" width="420" height="11"/><text x="90" y="81.5" text-anchor="end" class="cx-s">s3</text><line class="cx-w dec" x1="369.4" y1="78" x2="380.9" y2="78"/><circle class="cx-d dec" cx="375.2" cy="78" r="3.6"/></g>
+<g class="cx-row"><title>d = 2, seed 4: Lorentz &#8722; Euclidean closure AP, mean +0.7242, 95% interval [+0.7080, +0.7401] (closure MAP 0.897142 against 0.172927)</title><rect class="cx-hit" x="0" y="83.5" width="420" height="11"/><text x="90" y="92.5" text-anchor="end" class="cx-s">s4</text><line class="cx-w dec" x1="372.5" y1="89" x2="383.5" y2="89"/><circle class="cx-d dec" cx="378.1" cy="89" r="3.6"/></g>
+<text class="cx-g" x="6" y="115">d = 3</text><text x="6" y="127" class="cx-s">(a)</text>
+<g class="cx-row"><title>d = 3, seed 0: Lorentz &#8722; Euclidean closure AP, mean +0.7439, 95% interval [+0.7270, +0.7601] (closure MAP 0.964599 against 0.220680)</title><rect class="cx-hit" x="0" y="106.5" width="420" height="11"/><text x="90" y="115.5" text-anchor="end" class="cx-s">s0</text><line class="cx-w dec" x1="379.0" y1="112" x2="390.3" y2="112"/><circle class="cx-d dec" cx="384.8" cy="112" r="3.6"/></g>
+<g class="cx-row"><title>d = 3, seed 1: Lorentz &#8722; Euclidean closure AP, mean +0.7284, 95% interval [+0.7112, +0.7448] (closure MAP 0.949911 against 0.221554)</title><rect class="cx-hit" x="0" y="117.5" width="420" height="11"/><text x="90" y="126.5" text-anchor="end" class="cx-s">s1</text><line class="cx-w dec" x1="373.6" y1="123" x2="385.1" y2="123"/><circle class="cx-d dec" cx="379.5" cy="123" r="3.6"/></g>
+<g class="cx-row"><title>d = 3, seed 2: Lorentz &#8722; Euclidean closure AP, mean +0.7452, 95% interval [+0.7284, +0.7617] (closure MAP 0.965984 against 0.220769)</title><rect class="cx-hit" x="0" y="128.5" width="420" height="11"/><text x="90" y="137.5" text-anchor="end" class="cx-s">s2</text><line class="cx-w dec" x1="379.5" y1="134" x2="390.9" y2="134"/><circle class="cx-d dec" cx="385.3" cy="134" r="3.6"/></g>
+<g class="cx-row"><title>d = 3, seed 3: Lorentz &#8722; Euclidean closure AP, mean +0.7424, 95% interval [+0.7259, +0.7587] (closure MAP 0.968414 against 0.225976)</title><rect class="cx-hit" x="0" y="139.5" width="420" height="11"/><text x="90" y="148.5" text-anchor="end" class="cx-s">s3</text><line class="cx-w dec" x1="378.7" y1="145" x2="389.9" y2="145"/><circle class="cx-d dec" cx="384.3" cy="145" r="3.6"/></g>
+<g class="cx-row"><title>d = 3, seed 4: Lorentz &#8722; Euclidean closure AP, mean +0.7523, 95% interval [+0.7354, +0.7684] (closure MAP 0.970952 against 0.218669)</title><rect class="cx-hit" x="0" y="150.5" width="420" height="11"/><text x="90" y="159.5" text-anchor="end" class="cx-s">s4</text><line class="cx-w dec" x1="381.9" y1="156" x2="393.2" y2="156"/><circle class="cx-d dec" cx="387.7" cy="156" r="3.6"/></g>
+<text class="cx-g" x="6" y="182">d = 5</text><text x="6" y="194" class="cx-s">reported</text>
+<g class="cx-row"><title>d = 5, seed 0: Lorentz &#8722; Euclidean closure AP, mean +0.6768, 95% interval [+0.6600, +0.6931] (closure MAP 0.967929 against 0.291163); reported, deciding nothing</title><rect class="cx-hit" x="0" y="173.5" width="420" height="11"/><text x="90" y="182.5" text-anchor="end" class="cx-s">s0</text><line class="cx-w rep" x1="356.1" y1="179" x2="367.4" y2="179"/><circle class="cx-d rep" cx="361.8" cy="179" r="3.6"/></g>
+<g class="cx-row"><title>d = 5, seed 1: Lorentz &#8722; Euclidean closure AP, mean +0.6777, 95% interval [+0.6611, +0.6937] (closure MAP 0.969022 against 0.291355); reported, deciding nothing</title><rect class="cx-hit" x="0" y="184.5" width="420" height="11"/><text x="90" y="193.5" text-anchor="end" class="cx-s">s1</text><line class="cx-w rep" x1="356.5" y1="190" x2="367.6" y2="190"/><circle class="cx-d rep" cx="362.1" cy="190" r="3.6"/></g>
+<g class="cx-row"><title>d = 5, seed 2: Lorentz &#8722; Euclidean closure AP, mean +0.6799, 95% interval [+0.6632, +0.6962] (closure MAP 0.970575 against 0.290672); reported, deciding nothing</title><rect class="cx-hit" x="0" y="195.5" width="420" height="11"/><text x="90" y="204.5" text-anchor="end" class="cx-s">s2</text><line class="cx-w rep" x1="357.2" y1="201" x2="368.5" y2="201"/><circle class="cx-d rep" cx="362.9" cy="201" r="3.6"/></g>
+<g class="cx-row"><title>d = 5, seed 3: Lorentz &#8722; Euclidean closure AP, mean +0.6743, 95% interval [+0.6574, +0.6905] (closure MAP 0.966848 against 0.292539); reported, deciding nothing</title><rect class="cx-hit" x="0" y="206.5" width="420" height="11"/><text x="90" y="215.5" text-anchor="end" class="cx-s">s3</text><line class="cx-w rep" x1="355.2" y1="212" x2="366.5" y2="212"/><circle class="cx-d rep" cx="361.0" cy="212" r="3.6"/></g>
+<g class="cx-row"><title>d = 5, seed 4: Lorentz &#8722; Euclidean closure AP, mean +0.6767, 95% interval [+0.6598, +0.6930] (closure MAP 0.969538 against 0.292858); reported, deciding nothing</title><rect class="cx-hit" x="0" y="217.5" width="420" height="11"/><text x="90" y="226.5" text-anchor="end" class="cx-s">s4</text><line class="cx-w rep" x1="356.0" y1="223" x2="367.4" y2="223"/><circle class="cx-d rep" cx="361.8" cy="223" r="3.6"/></g>
+<text class="cx-g" x="6" y="249">d = 10</text><text x="6" y="261" class="cx-s">reported</text>
+<g class="cx-row"><title>d = 10, seed 0: Lorentz &#8722; Euclidean closure AP, mean +0.4718, 95% interval [+0.4558, +0.4870] (closure MAP 0.969244 against 0.497401); reported, deciding nothing</title><rect class="cx-hit" x="0" y="240.5" width="420" height="11"/><text x="90" y="249.5" text-anchor="end" class="cx-s">s0</text><line class="cx-w rep" x1="286.2" y1="246" x2="296.9" y2="246"/><circle class="cx-d rep" cx="291.7" cy="246" r="3.6"/></g>
+<g class="cx-row"><title>d = 10, seed 1: Lorentz &#8722; Euclidean closure AP, mean +0.4746, 95% interval [+0.4585, +0.4897] (closure MAP 0.968758 against 0.494134); reported, deciding nothing</title><rect class="cx-hit" x="0" y="251.5" width="420" height="11"/><text x="90" y="260.5" text-anchor="end" class="cx-s">s1</text><line class="cx-w rep" x1="287.1" y1="257" x2="297.8" y2="257"/><circle class="cx-d rep" cx="292.6" cy="257" r="3.6"/></g>
+<g class="cx-row"><title>d = 10, seed 2: Lorentz &#8722; Euclidean closure AP, mean +0.4729, 95% interval [+0.4568, +0.4884] (closure MAP 0.969979 against 0.497055); reported, deciding nothing</title><rect class="cx-hit" x="0" y="262.5" width="420" height="11"/><text x="90" y="271.5" text-anchor="end" class="cx-s">s2</text><line class="cx-w rep" x1="286.5" y1="268" x2="297.3" y2="268"/><circle class="cx-d rep" cx="292.1" cy="268" r="3.6"/></g>
+<g class="cx-row"><title>d = 10, seed 3: Lorentz &#8722; Euclidean closure AP, mean +0.4684, 95% interval [+0.4524, +0.4836] (closure MAP 0.967838 against 0.499476); reported, deciding nothing</title><rect class="cx-hit" x="0" y="273.5" width="420" height="11"/><text x="90" y="282.5" text-anchor="end" class="cx-s">s3</text><line class="cx-w rep" x1="285.0" y1="279" x2="295.7" y2="279"/><circle class="cx-d rep" cx="290.5" cy="279" r="3.6"/></g>
+<g class="cx-row"><title>d = 10, seed 4: Lorentz &#8722; Euclidean closure AP, mean +0.4741, 95% interval [+0.4580, +0.4896] (closure MAP 0.969053 against 0.494946); reported, deciding nothing</title><rect class="cx-hit" x="0" y="284.5" width="420" height="11"/><text x="90" y="293.5" text-anchor="end" class="cx-s">s4</text><line class="cx-w rep" x1="286.9" y1="290" x2="297.8" y2="290"/><circle class="cx-d rep" cx="292.5" cy="290" r="3.6"/></g>
+<text class="cx-g" x="6" y="316">d = 50</text><text x="6" y="328" class="cx-s">(b)</text>
+<g class="cx-row"><title>d = 50, seed 0: Lorentz &#8722; Euclidean closure AP, mean -0.0317, 95% interval [-0.0365, -0.0270] (closure MAP 0.968313 against 0.999977)</title><rect class="cx-hit" x="0" y="307.5" width="420" height="11"/><text x="90" y="316.5" text-anchor="end" class="cx-s">s0</text><line class="cx-w dec" x1="117.7" y1="313" x2="121.0" y2="313"/><circle class="cx-d dec" cx="119.4" cy="313" r="3.6"/></g>
+<g class="cx-row"><title>d = 50, seed 1: Lorentz &#8722; Euclidean closure AP, mean -0.0326, 95% interval [-0.0375, -0.0280] (closure MAP 0.967344 against 0.999975)</title><rect class="cx-hit" x="0" y="318.5" width="420" height="11"/><text x="90" y="327.5" text-anchor="end" class="cx-s">s1</text><line class="cx-w dec" x1="117.4" y1="324" x2="120.6" y2="324"/><circle class="cx-d dec" cx="119.1" cy="324" r="3.6"/></g>
+<g class="cx-row"><title>d = 50, seed 2: Lorentz &#8722; Euclidean closure AP, mean -0.0328, 95% interval [-0.0377, -0.0281] (closure MAP 0.967176 against 0.999971)</title><rect class="cx-hit" x="0" y="329.5" width="420" height="11"/><text x="90" y="338.5" text-anchor="end" class="cx-s">s2</text><line class="cx-w dec" x1="117.3" y1="335" x2="120.6" y2="335"/><circle class="cx-d dec" cx="119.0" cy="335" r="3.6"/></g>
+<g class="cx-row"><title>d = 50, seed 3: Lorentz &#8722; Euclidean closure AP, mean -0.0313, 95% interval [-0.0361, -0.0268] (closure MAP 0.968667 against 0.999974)</title><rect class="cx-hit" x="0" y="340.5" width="420" height="11"/><text x="90" y="349.5" text-anchor="end" class="cx-s">s3</text><line class="cx-w dec" x1="117.9" y1="346" x2="121.1" y2="346"/><circle class="cx-d dec" cx="119.5" cy="346" r="3.6"/></g>
+<g class="cx-row"><title>d = 50, seed 4: Lorentz &#8722; Euclidean closure AP, mean -0.0320, 95% interval [-0.0369, -0.0273] (closure MAP 0.967982 against 0.999975)</title><rect class="cx-hit" x="0" y="351.5" width="420" height="11"/><text x="90" y="360.5" text-anchor="end" class="cx-s">s4</text><line class="cx-w dec" x1="117.6" y1="357" x2="120.9" y2="357"/><circle class="cx-d dec" cx="119.3" cy="357" r="3.6"/></g>
+<text x="404" y="397" text-anchor="end">closure AP, learned Lorentz &#8722; learned Euclidean (shaded: &#177;0.02)</text>
+</svg>
+                </div>
+                <figcaption>One row per seed: the mean of the 1,182 per-node differences (a dot) and its 95% interval (a bar). At d = 2 and 3 the bars sit near +0.72 to +0.75, far above 0; at d = 50 every bar lies just left of 0, outside the shaded &plusmn;0.02 band, which (b)&rsquo;s rule also counts as support. The intervals are about 0.03 wide, so most bars are hardly wider than their dots. Hover a row for its values; the tables below hold them.</figcaption>
+            </figure>
+            <div class="table-wrap"><table class="compact" style="min-width:760px">
+                <thead><tr><th>Deciding comparison</th><th class="num">seed 0</th><th class="num">seed 1</th><th class="num">seed 2</th><th class="num">seed 3</th><th class="num">seed 4</th></tr></thead>
+                <tbody>
+                    <tr><td>(a) closure, Lorentz &minus; Euclidean, d = 2</td><td class="num">+0.7181<br><span style="color:var(--muted)">[+0.7013, +0.7347]</span></td><td class="num">+0.7524<br><span style="color:var(--muted)">[+0.7363, +0.7682]</span></td><td class="num">+0.7172<br><span style="color:var(--muted)">[+0.7010, +0.7335]</span></td><td class="num">+0.7159<br><span style="color:var(--muted)">[+0.6990, +0.7325]</span></td><td class="num">+0.7242<br><span style="color:var(--muted)">[+0.7080, +0.7401]</span></td></tr>
+                    <tr><td>(a) closure, Lorentz &minus; Euclidean, d = 3</td><td class="num">+0.7439<br><span style="color:var(--muted)">[+0.7270, +0.7601]</span></td><td class="num">+0.7284<br><span style="color:var(--muted)">[+0.7112, +0.7448]</span></td><td class="num">+0.7452<br><span style="color:var(--muted)">[+0.7284, +0.7617]</span></td><td class="num">+0.7424<br><span style="color:var(--muted)">[+0.7259, +0.7587]</span></td><td class="num">+0.7523<br><span style="color:var(--muted)">[+0.7354, +0.7684]</span></td></tr>
+                    <tr><td>(b) closure, Lorentz &minus; Euclidean, d = 50</td><td class="num">&minus;0.0317<br><span style="color:var(--muted)">[&minus;0.0365, &minus;0.0270]</span></td><td class="num">&minus;0.0326<br><span style="color:var(--muted)">[&minus;0.0375, &minus;0.0280]</span></td><td class="num">&minus;0.0328<br><span style="color:var(--muted)">[&minus;0.0377, &minus;0.0281]</span></td><td class="num">&minus;0.0313<br><span style="color:var(--muted)">[&minus;0.0361, &minus;0.0268]</span></td><td class="num">&minus;0.0320<br><span style="color:var(--muted)">[&minus;0.0369, &minus;0.0273]</span></td></tr>
+                    <tr><td>(c) graph-edge, exact &minus; Lorentz d = 3</td><td class="num">+0.2138<br><span style="color:var(--muted)">[+0.1916, +0.2359]</span></td><td class="num">+0.2324<br><span style="color:var(--muted)">[+0.2110, +0.2541]</span></td><td class="num">+0.2194<br><span style="color:var(--muted)">[+0.1972, +0.2415]</span></td><td class="num">+0.2233<br><span style="color:var(--muted)">[+0.2022, +0.2450]</span></td><td class="num">+0.2322<br><span style="color:var(--muted)">[+0.2110, +0.2529]</span></td></tr>
+                    <tr><td>(d) closure, Lorentz d = 3 &minus; exact</td><td class="num">+0.6592<br><span style="color:var(--muted)">[+0.6451, +0.6727]</span></td><td class="num">+0.6445<br><span style="color:var(--muted)">[+0.6301, +0.6584]</span></td><td class="num">+0.6606<br><span style="color:var(--muted)">[+0.6462, +0.6743]</span></td><td class="num">+0.6630<br><span style="color:var(--muted)">[+0.6490, +0.6763]</span></td><td class="num">+0.6655<br><span style="color:var(--muted)">[+0.6515, +0.6790]</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>Each cell: the mean, and below it the interval. In every one of the 25 intervals the mean lies inside it. The (c) and (d) rows belong to <a href="#l6cd">chapter 6</a>.</p>
+            <h3>The MAPs behind them</h3>
+            <div class="table-wrap"><table class="compact" style="min-width:760px">
+                <thead><tr><th>Learned table, closure MAP<br><span style="color:var(--muted);font-weight:400">graph-edge MAP below</span></th><th class="num">rate</th><th class="num">seed 0</th><th class="num">seed 1</th><th class="num">seed 2</th><th class="num">seed 3</th><th class="num">seed 4</th></tr></thead>
+                <tbody>
+                    <tr><td>Lorentz d = 2</td><td class="num">1</td><td class="num">0.889203<br><span style="color:var(--muted)">0.435848</span></td><td class="num">0.909782<br><span style="color:var(--muted)">0.450571</span></td><td class="num">0.876359<br><span style="color:var(--muted)">0.432120</span></td><td class="num">0.883042<br><span style="color:var(--muted)">0.434068</span></td><td class="num">0.897142<br><span style="color:var(--muted)">0.448395</span></td></tr>
+                    <tr><td>Lorentz d = 3</td><td class="num">1</td><td class="num">0.964599<br><span style="color:var(--muted)">0.476903</span></td><td class="num">0.949911<br><span style="color:var(--muted)">0.458278</span></td><td class="num">0.965984<br><span style="color:var(--muted)">0.471298</span></td><td class="num">0.968414<br><span style="color:var(--muted)">0.467310</span></td><td class="num">0.970952<br><span style="color:var(--muted)">0.458420</span></td></tr>
+                    <tr><td>Lorentz d = 5 <span style="color:var(--muted);font-size:0.8rem">reported</span></td><td class="num">1</td><td class="num">0.967929<br><span style="color:var(--muted)">0.462000</span></td><td class="num">0.969022<br><span style="color:var(--muted)">0.451724</span></td><td class="num">0.970575<br><span style="color:var(--muted)">0.450984</span></td><td class="num">0.966848<br><span style="color:var(--muted)">0.457642</span></td><td class="num">0.969538<br><span style="color:var(--muted)">0.452347</span></td></tr>
+                    <tr><td>Lorentz d = 10 <span style="color:var(--muted);font-size:0.8rem">reported</span></td><td class="num">1</td><td class="num">0.969244<br><span style="color:var(--muted)">0.444941</span></td><td class="num">0.968758<br><span style="color:var(--muted)">0.447645</span></td><td class="num">0.969979<br><span style="color:var(--muted)">0.456548</span></td><td class="num">0.967838<br><span style="color:var(--muted)">0.454509</span></td><td class="num">0.969053<br><span style="color:var(--muted)">0.454316</span></td></tr>
+                    <tr><td>Lorentz d = 50</td><td class="num">1</td><td class="num">0.968313<br><span style="color:var(--muted)">0.449858</span></td><td class="num">0.967344<br><span style="color:var(--muted)">0.447834</span></td><td class="num">0.967176<br><span style="color:var(--muted)">0.459265</span></td><td class="num">0.968667<br><span style="color:var(--muted)">0.452467</span></td><td class="num">0.967982<br><span style="color:var(--muted)">0.445952</span></td></tr>
+                    <tr><td>Euclidean d = 2</td><td class="num">0.1</td><td class="num">0.171146<br><span style="color:var(--muted)">0.223374</span></td><td class="num">0.157408<br><span style="color:var(--muted)">0.196009</span></td><td class="num">0.159110<br><span style="color:var(--muted)">0.201609</span></td><td class="num">0.167149<br><span style="color:var(--muted)">0.220003</span></td><td class="num">0.172927<br><span style="color:var(--muted)">0.253720</span></td></tr>
+                    <tr><td>Euclidean d = 3</td><td class="num">0.1</td><td class="num">0.220680<br><span style="color:var(--muted)">0.349004</span></td><td class="num">0.221554<br><span style="color:var(--muted)">0.347448</span></td><td class="num">0.220769<br><span style="color:var(--muted)">0.352691</span></td><td class="num">0.225976<br><span style="color:var(--muted)">0.368912</span></td><td class="num">0.218669<br><span style="color:var(--muted)">0.335260</span></td></tr>
+                    <tr><td>Euclidean d = 5 <span style="color:var(--muted);font-size:0.8rem">reported</span></td><td class="num">0.1</td><td class="num">0.291163<br><span style="color:var(--muted)">0.543375</span></td><td class="num">0.291355<br><span style="color:var(--muted)">0.550406</span></td><td class="num">0.290672<br><span style="color:var(--muted)">0.540049</span></td><td class="num">0.292539<br><span style="color:var(--muted)">0.545717</span></td><td class="num">0.292858<br><span style="color:var(--muted)">0.543713</span></td></tr>
+                    <tr><td>Euclidean d = 10 <span style="color:var(--muted);font-size:0.8rem">reported</span></td><td class="num">1</td><td class="num">0.497401<br><span style="color:var(--muted)">0.670047</span></td><td class="num">0.494134<br><span style="color:var(--muted)">0.666836</span></td><td class="num">0.497055<br><span style="color:var(--muted)">0.667948</span></td><td class="num">0.499476<br><span style="color:var(--muted)">0.680384</span></td><td class="num">0.494946<br><span style="color:var(--muted)">0.654565</span></td></tr>
+                    <tr><td>Euclidean d = 50</td><td class="num">3</td><td class="num">0.999977<br><span style="color:var(--muted)">0.850050</span></td><td class="num">0.999975<br><span style="color:var(--muted)">0.851543</span></td><td class="num">0.999971<br><span style="color:var(--muted)">0.850407</span></td><td class="num">0.999974<br><span style="color:var(--muted)">0.853607</span></td><td class="num">0.999975<br><span style="color:var(--muted)">0.851156</span></td></tr>
+                    <tr><td>Exact H&sup3; tree (no seed)</td><td class="num">&ndash;</td><td class="num" colspan="5">0.305408 &nbsp;/&nbsp; <span style="color:var(--muted)">0.690653</span></td></tr>
+                </tbody>
+            </table></div>
+            <ul>
+                <li><strong>Lorentz levels off; Euclidean climbs.</strong> Learned Lorentz reaches a closure MAP of 0.950&ndash;0.971 at d = 3 and stays at 0.967&ndash;0.971 up to d = 50. Learned Euclidean climbs with the dimension: about 0.17 at d = 2, 0.22 at d = 3, 0.29 at d = 5, 0.50 at d = 10 and 0.99997 at d = 50, where its pooled closure mean rank is 1.25&ndash;1.29 (Lorentz d = 50: 17.8&ndash;18.4).</li>
+                <li><strong>(b)&rsquo;s word &ldquo;vanishes&rdquo;.</strong> The registered rule supports (b) when the d = 50 interval lies within &plusmn;0.02 or entirely below 0. Every interval lies below 0: means &minus;0.0313 to &minus;0.0328, upper ends at most &minus;0.0268. So the support here is not a tie: at d = 50 Euclidean is ahead.</li>
+                <li><strong>Reported, d = 5 and 10.</strong> Lorentz &minus; Euclidean closure AP: +0.6743 to +0.6799 at d = 5 and +0.4684 to +0.4746 at d = 10, every interval above 0. On graph-edge AP, reported at every d, Lorentz is ahead at d = 2 (+0.19 to +0.25) and 3 (+0.10 to +0.13) and behind from d = 5 (&minus;0.08 to &minus;0.10) to d = 50 (&minus;0.39 to &minus;0.41).</li>
+                <li><strong>Where the tables sit.</strong> The farthest point of a Lorentz table lies 16.4&ndash;17.3 from the origin in hyperbolic distance at d = 2, 13.1&ndash;14.1 at d = 3 and about 12 from d = 5 on; of a Euclidean table, 2.8&ndash;3.1 at d = 2 and 4.7 at d = 50 (max_radius in the record). No run had a guard hit.</li>
+            </ul>
+            <p><strong>The predictions</strong> were (a) &ldquo;supported, with a closure-MAP gap of at least 0.2 at d = 2 and d = 3 (the direction of Nickel &amp; Kiela)&rdquo; and (b) &ldquo;supported&rdquo;. Both held. The gap, the mean over the seeds of the MAP difference (A10.7), is 0.725557 at d = 2 and 0.742442 at d = 3. Nickel and Kiela&rsquo;s own figures (P17 Table 1: Poincar&eacute; 0.823 against Euclidean 0.024 at 5 dimensions, on all nouns) are another instance and protocol, and are not compared.</p>
+        </section>
+
+        <section class="chapter" id="l6cd">
+            <div class="chapter-num">06</div>
+            <h2>L6(c, d) &middot; The exact tree against learned</h2>
+            <p class="chapter-intro">The training-free exact H&sup3; tree and learned Lorentz at d = 3 are each better at a different job. The tree keeps direct parents and children closer (graph-edge MAP 0.691 against about 0.46); the learned table keeps the whole closure closer (about 0.96 against 0.305). <span class="tag t-SUPPORTED">(c) supported</span> <span class="tag t-SUPPORTED">(d) supported</span> <span style="color:var(--muted);font-size:0.9rem">(c) against its registered prediction</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Registered</th><th>As run</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Arms</strong></td><td>The exact arm: L3&rsquo;s H&sup3; words of S, placed exactly, no training and no seed. Learned Lorentz at d = 3, seeds 0&ndash;4, rate 1</td></tr>
+                    <tr><td><strong>Metric</strong></td><td>(c) graph-edge AP, exact &minus; learned, 1,176 queries; (d) closure AP, learned &minus; exact, 1,182 queries; per seed, paired, with the interval</td></tr>
+                    <tr><td><strong>Decision</strong></td><td>(c) supported if every lower end is &ge; &minus;0.01; (d) supported if every interval lies above 0</td></tr>
+                </tbody>
+            </table></div>
+            <figure>
+                <div style="max-width:620px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 8px 4px">
+<svg class="dx" viewBox="0 0 420 277" role="img" aria-labelledby="dx-title dx-desc">
+<title id="dx-title">Closure MAP against graph-edge MAP for the exact H&sup3; tree and the learned tables</title>
+<desc id="dx-desc">For each arm, its closure MAP (circle) and graph-edge MAP (diamond), learned tables at the mean of their five seeds. The exact tree scores 0.69 on graph edges and 0.31 on the closure; learned Lorentz scores about 0.89 to 0.97 on the closure and 0.44 to 0.47 on graph edges at every d; learned Euclidean rises with d on both, to 0.99997 and 0.85 at d = 50.</desc>
+<style>.dx text{font-family:Inter,system-ui,sans-serif;font-size:11px;fill:var(--muted,#94a3b8)}.dx .dx-l{fill:var(--text,#e2e8f0)}.dx .dx-l.key{font-weight:700}.dx .dx-grid{stroke:var(--line-strong,rgba(34,211,238,.38));stroke-opacity:.35;stroke-width:1}.dx .dx-link{stroke:var(--muted,#94a3b8);stroke-opacity:.55;stroke-width:2}.dx .cl{fill:#1aa3c2;stroke:#0b1222;stroke-width:1.5}.dx .ge{fill:#b8860b;stroke:#0b1222;stroke-width:1.5}.dx .dx-hit{fill:transparent}.dx g.dx-row:hover .dx-hit{fill:var(--line,rgba(34,211,238,.16))}.dx .dx-sep{stroke:var(--line,rgba(34,211,238,.16));stroke-width:1}@media (max-width:520px){.dx text{font-size:13px}}</style>
+<g transform="translate(118,16)"><circle class="cl" cx="5" cy="-4" r="4.5"/><text x="14" y="0">closure MAP</text><path class="ge" d="M125,-9.5 L130.5,-4 L125,1.5 L119.5,-4 Z"/><text x="135" y="0">graph-edge MAP</text></g>
+<line class="dx-grid" x1="118.0" y1="30" x2="118.0" y2="243"/><text x="118.0" y="257" text-anchor="middle">0</text>
+<line class="dx-grid" x1="175.2" y1="30" x2="175.2" y2="243"/><text x="175.2" y="257" text-anchor="middle">0.2</text>
+<line class="dx-grid" x1="232.4" y1="30" x2="232.4" y2="243"/><text x="232.4" y="257" text-anchor="middle">0.4</text>
+<line class="dx-grid" x1="289.6" y1="30" x2="289.6" y2="243"/><text x="289.6" y="257" text-anchor="middle">0.6</text>
+<line class="dx-grid" x1="346.8" y1="30" x2="346.8" y2="243"/><text x="346.8" y="257" text-anchor="middle">0.8</text>
+<line class="dx-grid" x1="404.0" y1="30" x2="404.0" y2="243"/><text x="404.0" y="257" text-anchor="middle">1</text>
+<g class="dx-row"><title>Exact H&sup3; tree (training-free, no seed): closure MAP 0.305408, graph-edge MAP 0.690653</title><rect class="dx-hit" x="0" y="34.0" width="420" height="19"/><text class="dx-l key" x="110" y="47.5" text-anchor="end">Exact H&sup3; tree</text><line class="dx-link" x1="205.3" y1="43.5" x2="315.5" y2="43.5"/><path class="ge" d="M315.5,38.0 L321.0,43.5 L315.5,49.0 L310.0,43.5 Z"/><circle class="cl" cx="205.3" cy="43.5" r="4.5"/></g>
+<line class="dx-sep" x1="0" y1="53.0" x2="420" y2="53.0"/>
+<g class="dx-row"><title>Lorentz d = 2, seeds 0-4: closure MAP 0.889203, 0.909782, 0.876359, 0.883042, 0.897142 (mean 0.8911); graph-edge MAP 0.435848, 0.450571, 0.432120, 0.434068, 0.448395 (mean 0.4402)</title><rect class="dx-hit" x="0" y="53.0" width="420" height="19"/><text class="dx-l" x="110" y="66.5" text-anchor="end">Lorentz d = 2</text><line class="dx-link" x1="243.9" y1="62.5" x2="372.9" y2="62.5"/><path class="ge" d="M243.9,57.0 L249.4,62.5 L243.9,68.0 L238.4,62.5 Z"/><circle class="cl" cx="372.9" cy="62.5" r="4.5"/></g>
+<g class="dx-row"><title>Lorentz d = 3, seeds 0-4: closure MAP 0.964599, 0.949911, 0.965984, 0.968414, 0.970952 (mean 0.9640); graph-edge MAP 0.476903, 0.458278, 0.471298, 0.467310, 0.458420 (mean 0.4664)</title><rect class="dx-hit" x="0" y="72.0" width="420" height="19"/><text class="dx-l key" x="110" y="85.5" text-anchor="end">Lorentz d = 3</text><line class="dx-link" x1="251.4" y1="81.5" x2="393.7" y2="81.5"/><path class="ge" d="M251.4,76.0 L256.9,81.5 L251.4,87.0 L245.9,81.5 Z"/><circle class="cl" cx="393.7" cy="81.5" r="4.5"/></g>
+<g class="dx-row"><title>Lorentz d = 5, seeds 0-4: closure MAP 0.967929, 0.969022, 0.970575, 0.966848, 0.969538 (mean 0.9688); graph-edge MAP 0.462000, 0.451724, 0.450984, 0.457642, 0.452347 (mean 0.4549)</title><rect class="dx-hit" x="0" y="91.0" width="420" height="19"/><text class="dx-l" x="110" y="104.5" text-anchor="end">Lorentz d = 5</text><line class="dx-link" x1="248.1" y1="100.5" x2="395.1" y2="100.5"/><path class="ge" d="M248.1,95.0 L253.6,100.5 L248.1,106.0 L242.6,100.5 Z"/><circle class="cl" cx="395.1" cy="100.5" r="4.5"/></g>
+<g class="dx-row"><title>Lorentz d = 10, seeds 0-4: closure MAP 0.969244, 0.968758, 0.969979, 0.967838, 0.969053 (mean 0.9690); graph-edge MAP 0.444941, 0.447645, 0.456548, 0.454509, 0.454316 (mean 0.4516)</title><rect class="dx-hit" x="0" y="110.0" width="420" height="19"/><text class="dx-l" x="110" y="123.5" text-anchor="end">Lorentz d = 10</text><line class="dx-link" x1="247.2" y1="119.5" x2="395.1" y2="119.5"/><path class="ge" d="M247.2,114.0 L252.7,119.5 L247.2,125.0 L241.7,119.5 Z"/><circle class="cl" cx="395.1" cy="119.5" r="4.5"/></g>
+<g class="dx-row"><title>Lorentz d = 50, seeds 0-4: closure MAP 0.968313, 0.967344, 0.967176, 0.968667, 0.967982 (mean 0.9679); graph-edge MAP 0.449858, 0.447834, 0.459265, 0.452467, 0.445952 (mean 0.4511)</title><rect class="dx-hit" x="0" y="129.0" width="420" height="19"/><text class="dx-l" x="110" y="142.5" text-anchor="end">Lorentz d = 50</text><line class="dx-link" x1="247.0" y1="138.5" x2="394.8" y2="138.5"/><path class="ge" d="M247.0,133.0 L252.5,138.5 L247.0,144.0 L241.5,138.5 Z"/><circle class="cl" cx="394.8" cy="138.5" r="4.5"/></g>
+<line class="dx-sep" x1="0" y1="148.0" x2="420" y2="148.0"/>
+<g class="dx-row"><title>Euclidean d = 2, seeds 0-4: closure MAP 0.171146, 0.157408, 0.159110, 0.167149, 0.172927 (mean 0.1655); graph-edge MAP 0.223374, 0.196009, 0.201609, 0.220003, 0.253720 (mean 0.2189)</title><rect class="dx-hit" x="0" y="148.0" width="420" height="19"/><text class="dx-l" x="110" y="161.5" text-anchor="end">Euclidean d = 2</text><line class="dx-link" x1="165.3" y1="157.5" x2="180.6" y2="157.5"/><path class="ge" d="M180.6,152.0 L186.1,157.5 L180.6,163.0 L175.1,157.5 Z"/><circle class="cl" cx="165.3" cy="157.5" r="4.5"/></g>
+<g class="dx-row"><title>Euclidean d = 3, seeds 0-4: closure MAP 0.220680, 0.221554, 0.220769, 0.225976, 0.218669 (mean 0.2215); graph-edge MAP 0.349004, 0.347448, 0.352691, 0.368912, 0.335260 (mean 0.3507)</title><rect class="dx-hit" x="0" y="167.0" width="420" height="19"/><text class="dx-l" x="110" y="180.5" text-anchor="end">Euclidean d = 3</text><line class="dx-link" x1="181.4" y1="176.5" x2="218.3" y2="176.5"/><path class="ge" d="M218.3,171.0 L223.8,176.5 L218.3,182.0 L212.8,176.5 Z"/><circle class="cl" cx="181.4" cy="176.5" r="4.5"/></g>
+<g class="dx-row"><title>Euclidean d = 5, seeds 0-4: closure MAP 0.291163, 0.291355, 0.290672, 0.292539, 0.292858 (mean 0.2917); graph-edge MAP 0.543375, 0.550406, 0.540049, 0.545717, 0.543713 (mean 0.5447)</title><rect class="dx-hit" x="0" y="186.0" width="420" height="19"/><text class="dx-l" x="110" y="199.5" text-anchor="end">Euclidean d = 5</text><line class="dx-link" x1="201.4" y1="195.5" x2="273.8" y2="195.5"/><path class="ge" d="M273.8,190.0 L279.3,195.5 L273.8,201.0 L268.3,195.5 Z"/><circle class="cl" cx="201.4" cy="195.5" r="4.5"/></g>
+<g class="dx-row"><title>Euclidean d = 10, seeds 0-4: closure MAP 0.497401, 0.494134, 0.497055, 0.499476, 0.494946 (mean 0.4966); graph-edge MAP 0.670047, 0.666836, 0.667948, 0.680384, 0.654565 (mean 0.6680)</title><rect class="dx-hit" x="0" y="205.0" width="420" height="19"/><text class="dx-l" x="110" y="218.5" text-anchor="end">Euclidean d = 10</text><line class="dx-link" x1="260.0" y1="214.5" x2="309.0" y2="214.5"/><path class="ge" d="M309.0,209.0 L314.5,214.5 L309.0,220.0 L303.5,214.5 Z"/><circle class="cl" cx="260.0" cy="214.5" r="4.5"/></g>
+<g class="dx-row"><title>Euclidean d = 50, seeds 0-4: closure MAP 0.999977, 0.999975, 0.999971, 0.999974, 0.999975 (mean 0.99997); graph-edge MAP 0.850050, 0.851543, 0.850407, 0.853607, 0.851156 (mean 0.8514)</title><rect class="dx-hit" x="0" y="224.0" width="420" height="19"/><text class="dx-l" x="110" y="237.5" text-anchor="end">Euclidean d = 50</text><line class="dx-link" x1="361.5" y1="233.5" x2="404.0" y2="233.5"/><path class="ge" d="M361.5,228.0 L367.0,233.5 L361.5,239.0 L356.0,233.5 Z"/><circle class="cl" cx="404.0" cy="233.5" r="4.5"/></g>
+<text x="404" y="273" text-anchor="end">MAP (learned: the mean of seeds 0&#8211;4)</text>
+</svg>
+                </div>
+                <figcaption>Closure MAP (circle) and graph-edge MAP (diamond) of each arm; learned tables at the mean of their five seeds, whose values are in the tooltips and in chapter 5&rsquo;s table. In bold, the two arms (c) and (d) compare. The exact tree and learned Euclidean at d = 2 to 10 have a graph-edge MAP above their closure MAP; learned Lorentz at every d, and Euclidean at d = 50, the reverse. Learned Lorentz holds a graph-edge MAP of 0.43&ndash;0.48 at every d; learned Euclidean passes the exact tree on graph edges only at d = 50.</figcaption>
+            </figure>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th></th><th class="num">Exact H&sup3; tree</th><th class="num">Learned Lorentz d = 3, seeds 0&ndash;4</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Graph-edge MAP</strong> (decides (c))</td><td class="num"><strong>0.690653</strong></td><td class="num"><strong>0.458278&ndash;0.476903</strong></td></tr>
+                    <tr><td><strong>Closure MAP</strong> (decides (d))</td><td class="num"><strong>0.305408</strong></td><td class="num"><strong>0.949911&ndash;0.970952</strong></td></tr>
+                    <tr><td>Pooled mean rank, graph-edge; closure</td><td class="num">2.909 (6,837/2,350); 68.127</td><td class="num">15.06&ndash;19.04; 15.07&ndash;22.35</td></tr>
+                    <tr><td>Exact ties (candidates minus distinct keys, summed over queries)</td><td class="num">47,375, in 1,179 queries</td><td class="num">0</td></tr>
+                    <tr><td>Bits per node, mean and max</td><td class="num">643.3; 811</td><td class="num">303.6&ndash;304.3; 321</td></tr>
+                    <tr><td>Distortion, mean |d/(&tau;&middot;d<sub>T</sub>) &minus; 1|</td><td class="num">0.1826 (&tau; = ln 7)</td><td class="num">0.2752&ndash;0.2896 (&tau; the median)</td></tr>
+                </tbody>
+            </table></div>
+            <p>The deciding intervals are the (c) and (d) rows of chapter 5&rsquo;s table: exact &minus; learned graph-edge AP +0.2138 to +0.2324, lower ends +0.1916 to +0.2110; learned &minus; exact closure AP +0.6445 to +0.6655, lower ends +0.6301 to +0.6515. The exact arm&rsquo;s graph-edge MAP is Phase 1&rsquo;s value on the same 1,176 queries, as A10.16 had shown it could be at most: the six extra candidates are non-neighbours of every query, and since the MAP is equal as a rational, no AP fell; in every query they ranked behind every graph-edge neighbour.</p>
+            <p><strong>Reported, beyond d = 3.</strong> The exact tree&rsquo;s graph-edge AP is above learned Lorentz&rsquo;s at every d (exact &minus; learned means +0.21 to +0.26) and above learned Euclidean&rsquo;s at d = 2, 3 and 5; at d = 10 the means are +0.010 to +0.036 and one seed&rsquo;s lower end is &minus;0.0085; at d = 50 learned Euclidean is ahead, with a graph-edge MAP of 0.850&ndash;0.854 (exact &minus; learned &minus;0.159 to &minus;0.163). On the closure the exact tree is below learned Lorentz at every d and learned Euclidean at d = 10 and 50, and above learned Euclidean at d = 2, 3 and 5 (learned &minus; exact &minus;0.013 to &minus;0.148).</p>
+            <h3 id="wrong">The wrong prediction, and why</h3>
+            <div class="callout limit"><span class="label">L6(c): predicted refuted, measured supported</span>
+                <p>The prediction was fixed in Phase 0 by a rule set with the design and applied to spike S3 on the disjoint verb forest: &ldquo;supported if S3&rsquo;s exact-tree graph-edge MAP on verbs is &ge; 0.90, otherwise refuted&rdquo;. S3 measured 0.6309, so the registered prediction read <strong>refuted</strong> (<a href="evidence.html#s3">Explainer 8</a>). The rule judged the exact tree against a fixed bar, and so took for granted that learned Lorentz embeddings keep graph edges well, near that bar, and that a tree held back by its virtual letters (siblings that share a virtual prefix sit as close as the parent, or closer) would fall below them.</p>
+                <p>They do not keep graph edges. The training signal is the closure: each of a node&rsquo;s ancestors is a positive with the same weight, so mammal.n.01 and placental.n.01 are pulled toward a node as hard as its direct parent is, and its siblings are negatives no more than any other non-neighbour. Trained on the closure, the learned tables rank ancestors and descendants alike; the direct parent and children are a few among them. Their graph-edge MAP is 0.458&ndash;0.477 at d = 3 and 0.432&ndash;0.462 at every other d, and their pooled graph-edge mean rank 15.06&ndash;19.04 against the exact tree&rsquo;s 2.909. The exact tree, low for the reason S3 found, is still well above: 0.690653.</p>
+                <p>The decision follows the rule, not the prediction: (c) is supported. The prediction stays on record as wrong, beside L2&rsquo;s and L11&rsquo;s. The lab shows it on one query: lion&rsquo;s parent ranks 7th in the disk, behind three of its ancestors and three other nodes.</p>
+            </div>
+            <p><strong>(d)&rsquo;s prediction</strong>, &ldquo;supported: learning pulls ancestors toward the origin, which closure ranking rewards&rdquo;, held. The record decides the outcome and measures no mechanism. The lab shows where one table puts its nodes: pick a mammal and it gives the distance from the origin. In the lab&rsquo;s Lorentz table (d = 2, seed 0), mammal.n.01 and placental.n.01, the two most general, sit 0.21 and 0.30 from it, and every other node at 2.7 or more; in the d = 3 table of seed 0, which (d) compares, 0.13, 0.17 and 2.85 or more.</p>
+        </section>
+
+        <section class="chapter" id="l4c">
+            <div class="chapter-num">07</div>
+            <h2>L4(c) &middot; Snapping costs nothing at 2<sup>&minus;32</sup></h2>
+            <p class="chapter-intro">Every learned table at d = 2 and 3, snapped to the 2<sup>&minus;32</sup> grid and ranked exactly, has the MAP its unsnapped float64 table has, to within 9.37&times;10<sup>&minus;6</sup>: about a hundred times under the bar. A coarse 2<sup>&minus;8</sup> grid, reported, moves the Lorentz tables&rsquo; closure MAP by up to 0.60. <span class="tag t-SUPPORTED">supported</span></p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Registered</th><th>As run</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Instances</strong></td><td>40 tables (A10.10): the 20 measured and 20 edge-shuffled tables at d = 2 and 3, seeds 0&ndash;4, both geometries. Floors and tuning tables are not included</td></tr>
+                    <tr><td><strong>Metric</strong></td><td>Per table, |MAP(snapped, exact) &minus; MAP(float64)|, closure and graph-edge, the larger; exact rationals compared exactly with 1/1000 and 1/100. MAP(float64) ranks the unsnapped table by keys in binary64 without fused multiply-add (Lorentz x<sub>0</sub>y<sub>0</sub> &minus; x<sub>1</sub>y<sub>1</sub> &minus; &hellip;, Euclidean &Sigma;(x<sub>k</sub> &minus; y<sub>k</sub>)&sup2;), equal keys pessimistic, no acosh</td></tr>
+                    <tr><td><strong>Decision</strong></td><td>Supported if the largest is &le; 1/1000; refuted if any exceeds 1/100; otherwise inconclusive</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table class="compact" style="min-width:720px">
+                <thead><tr><th>Tables (5 seeds each)</th><th class="num">Largest |&Delta;MAP|<br>at 2<sup>&minus;32</sup></th><th class="num">Largest snap<br>displacement</th><th class="num">|&Delta;MAP| at 2<sup>&minus;8</sup>,<br>closure</th><th class="num">|&Delta;MAP| at 2<sup>&minus;8</sup>,<br>graph-edge</th><th class="num">Exact ties<br>at 2<sup>&minus;8</sup></th></tr></thead>
+                <tbody>
+                    <tr><td>Learned Lorentz d = 2</td><td class="num"><strong>9.37&times;10<sup>&minus;6</sup></strong></td><td class="num">1.565&times;10<sup>&minus;3</sup></td><td class="num">0.5802&ndash;0.6004</td><td class="num">0.0739&ndash;0.0846</td><td class="num">371,186&ndash;385,929</td></tr>
+                    <tr><td>Learned Lorentz d = 3</td><td class="num">1.73&times;10<sup>&minus;7</sup></td><td class="num">8.87&times;10<sup>&minus;5</sup></td><td class="num">0.3978&ndash;0.4168</td><td class="num">0.0258&ndash;0.0390</td><td class="num">89,849&ndash;106,335</td></tr>
+                    <tr><td>Learned Euclidean d = 2</td><td class="num">0</td><td class="num">1.64&times;10<sup>&minus;10</sup></td><td class="num">0.0013&ndash;0.0026</td><td class="num">0.0041&ndash;0.0068</td><td class="num">49,850&ndash;93,743</td></tr>
+                    <tr><td>Learned Euclidean d = 3</td><td class="num">0</td><td class="num">1.96&times;10<sup>&minus;10</sup></td><td class="num">0.0000&ndash;0.0012</td><td class="num">0.0003&ndash;0.0040</td><td class="num">2,460&ndash;3,598</td></tr>
+                    <tr><td>Edge-shuffled, all four cells</td><td class="num">0</td><td class="num">&le; 1.86&times;10<sup>&minus;7</sup></td><td class="num">&le; 0.0004</td><td class="num">&le; 0.0005</td><td class="num">4,047&ndash;74,390</td></tr>
+                </tbody>
+            </table></div>
+            <p>Only eight of the 40 tables move at all, all learned Lorentz: the five at d = 2 and three at d = 3 (by 7.6&times;10<sup>&minus;10</sup> to 1.7&times;10<sup>&minus;7</sup>). The Euclidean and edge-shuffled tables keep their float MAP exactly. No snapped table has an exact tie and no float table a float tie. The displacement of a Lorentz table is a hyperbolic distance, of a Euclidean one a Euclidean distance (A10.10); they are reported side by side, not compared.</p>
+            <ul>
+                <li><strong>Why Lorentz at d = 2 moves most.</strong> Its points lie far out: 16.4&ndash;17.3 from the origin, which in the Poincar&eacute; coordinates that are snapped is within about 2&times;10<sup>&minus;7</sup> of the rim. There one step of 2<sup>&minus;32</sup> is a larger hyperbolic distance (up to 1.565&times;10<sup>&minus;3</sup> here) than near the centre, and some candidates that were nearly equally far change places. At d = 3 the points lie less far out (13.1&ndash;14.1), and the largest displacement is about eighteen times smaller.</li>
+                <li><strong>Why 2<sup>&minus;8</sup> breaks the same tables.</strong> On a grid of 2<sup>&minus;8</sup> the Lorentz points near the rim fall onto a few grid points: 371,186&ndash;385,929 exact ties at d = 2 (tie counts are candidates minus distinct keys, summed over the 1,182 queries), and pessimistic ties cost 0.58&ndash;0.60 of closure MAP. The Euclidean tables, spread over a few units, keep most of their order even on that grid.</li>
+                <li><strong>Bits.</strong> A snapped point costs 236.9&ndash;237.5 bits on average (at most 257) for learned Lorentz at d = 2 and 95.2&ndash;95.5 (at most 100) for Euclidean, as the lifted rational point and as n over 2<sup>32</sup> respectively; the exact tree&rsquo;s points cost 643.3 (at most 811).</li>
+                <li><strong>Every other table, reported.</strong> At d = 5, 10 and 50 the measured and edge-shuffled tables move by at most 2.4&times;10<sup>&minus;8</sup>, and the floors by at most 1.9&times;10<sup>&minus;8</sup>.</li>
+                <li><strong>In Node.</strong> The re-evaluation ranked the 50 measured snapped tables again with <code>SnapArm</code> and <code>evaluateSnapped</code>: every exact MAP equal as p/q, every LBENCH/1 hash equal, 0 of 118,200 per-query APs different. It checks the snapped side; MAP(float64) was computed by the Python reference alone.</li>
+            </ul>
+            <details><summary style="cursor:pointer;color:var(--muted);font-size:0.88rem">All 40 tables</summary>
+                <div class="table-wrap"><table class="compact" style="min-width:760px">
+                    <thead><tr><th>Table</th><th class="num">|&Delta;MAP| closure</th><th class="num">|&Delta;MAP| graph-edge</th><th class="num">Displacement</th><th class="num">2<sup>&minus;8</sup> closure</th><th class="num">2<sup>&minus;8</sup> graph-edge</th><th class="num">Ties exact / float</th><th class="num">Ties at 2<sup>&minus;8</sup></th></tr></thead>
+                    <tbody>
+                        <tr><td class="mono">learned-lorentz-d2-s0</td><td class="num">4.01&times;10<sup>-6</sup></td><td class="num">3.73&times;10<sup>-6</sup></td><td class="num">1.23&times;10<sup>-3</sup></td><td class="num">0.5936</td><td class="num">0.0743</td><td class="num">0 / 0</td><td class="num">376,317</td></tr>
+                        <tr><td class="mono">learned-lorentz-d2-s1</td><td class="num">9.37&times;10<sup>-6</sup></td><td class="num">5.55&times;10<sup>-6</sup></td><td class="num">1.56&times;10<sup>-3</sup></td><td class="num">0.6004</td><td class="num">0.0776</td><td class="num">0 / 0</td><td class="num">385,929</td></tr>
+                        <tr><td class="mono">learned-lorentz-d2-s2</td><td class="num">6.27&times;10<sup>-8</sup></td><td class="num">3.26&times;10<sup>-8</sup></td><td class="num">8.56&times;10<sup>-4</sup></td><td class="num">0.5802</td><td class="num">0.0846</td><td class="num">0 / 0</td><td class="num">371,186</td></tr>
+                        <tr><td class="mono">learned-lorentz-d2-s3</td><td class="num">7.21&times;10<sup>-9</sup></td><td class="num">6.16&times;10<sup>-9</sup></td><td class="num">5.57&times;10<sup>-4</sup></td><td class="num">0.5830</td><td class="num">0.0739</td><td class="num">0 / 0</td><td class="num">377,262</td></tr>
+                        <tr><td class="mono">learned-lorentz-d2-s4</td><td class="num">8.60&times;10<sup>-8</sup></td><td class="num">1.57&times;10<sup>-8</sup></td><td class="num">6.10&times;10<sup>-4</sup></td><td class="num">0.5892</td><td class="num">0.0815</td><td class="num">0 / 0</td><td class="num">382,191</td></tr>
+                        <tr><td class="mono">learned-lorentz-d3-s0</td><td class="num">0</td><td class="num">0</td><td class="num">3.39&times;10<sup>-5</sup></td><td class="num">0.3978</td><td class="num">0.0390</td><td class="num">0 / 0</td><td class="num">89,849</td></tr>
+                        <tr><td class="mono">learned-lorentz-d3-s1</td><td class="num">7.64&times;10<sup>-10</sup></td><td class="num">0</td><td class="num">3.30&times;10<sup>-5</sup></td><td class="num">0.4026</td><td class="num">0.0273</td><td class="num">0 / 0</td><td class="num">100,449</td></tr>
+                        <tr><td class="mono">learned-lorentz-d3-s2</td><td class="num">0</td><td class="num">0</td><td class="num">8.87&times;10<sup>-5</sup></td><td class="num">0.4076</td><td class="num">0.0303</td><td class="num">0 / 0</td><td class="num">106,335</td></tr>
+                        <tr><td class="mono">learned-lorentz-d3-s3</td><td class="num">0</td><td class="num">1.73&times;10<sup>-7</sup></td><td class="num">3.91&times;10<sup>-5</sup></td><td class="num">0.4026</td><td class="num">0.0258</td><td class="num">0 / 0</td><td class="num">99,264</td></tr>
+                        <tr><td class="mono">learned-lorentz-d3-s4</td><td class="num">1.98&times;10<sup>-9</sup></td><td class="num">0</td><td class="num">3.37&times;10<sup>-5</sup></td><td class="num">0.4168</td><td class="num">0.0382</td><td class="num">0 / 0</td><td class="num">102,788</td></tr>
+                        <tr><td class="mono">learned-euclid-d2-s0</td><td class="num">0</td><td class="num">0</td><td class="num">1.62&times;10<sup>-10</sup></td><td class="num">0.0013</td><td class="num">0.0041</td><td class="num">0 / 0</td><td class="num">70,932</td></tr>
+                        <tr><td class="mono">learned-euclid-d2-s1</td><td class="num">0</td><td class="num">0</td><td class="num">1.60&times;10<sup>-10</sup></td><td class="num">0.0026</td><td class="num">0.0068</td><td class="num">0 / 0</td><td class="num">93,743</td></tr>
+                        <tr><td class="mono">learned-euclid-d2-s2</td><td class="num">0</td><td class="num">0</td><td class="num">1.61&times;10<sup>-10</sup></td><td class="num">0.0024</td><td class="num">0.0064</td><td class="num">0 / 0</td><td class="num">68,772</td></tr>
+                        <tr><td class="mono">learned-euclid-d2-s3</td><td class="num">0</td><td class="num">0</td><td class="num">1.62&times;10<sup>-10</sup></td><td class="num">0.0015</td><td class="num">0.0045</td><td class="num">0 / 0</td><td class="num">65,737</td></tr>
+                        <tr><td class="mono">learned-euclid-d2-s4</td><td class="num">0</td><td class="num">0</td><td class="num">1.64&times;10<sup>-10</sup></td><td class="num">0.0018</td><td class="num">0.0059</td><td class="num">0 / 0</td><td class="num">49,850</td></tr>
+                        <tr><td class="mono">learned-euclid-d3-s0</td><td class="num">0</td><td class="num">0</td><td class="num">1.91&times;10<sup>-10</sup></td><td class="num">0.0002</td><td class="num">0.0013</td><td class="num">0 / 0</td><td class="num">3,598</td></tr>
+                        <tr><td class="mono">learned-euclid-d3-s1</td><td class="num">0</td><td class="num">0</td><td class="num">1.96&times;10<sup>-10</sup></td><td class="num">0.0000</td><td class="num">0.0003</td><td class="num">0 / 0</td><td class="num">2,591</td></tr>
+                        <tr><td class="mono">learned-euclid-d3-s2</td><td class="num">0</td><td class="num">0</td><td class="num">1.93&times;10<sup>-10</sup></td><td class="num">0.0004</td><td class="num">0.0022</td><td class="num">0 / 0</td><td class="num">2,460</td></tr>
+                        <tr><td class="mono">learned-euclid-d3-s3</td><td class="num">0</td><td class="num">0</td><td class="num">1.96&times;10<sup>-10</sup></td><td class="num">0.0012</td><td class="num">0.0040</td><td class="num">0 / 0</td><td class="num">2,562</td></tr>
+                        <tr><td class="mono">learned-euclid-d3-s4</td><td class="num">0</td><td class="num">0</td><td class="num">1.96&times;10<sup>-10</sup></td><td class="num">0.0003</td><td class="num">0.0014</td><td class="num">0 / 0</td><td class="num">2,541</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d2-s0</td><td class="num">0</td><td class="num">0</td><td class="num">5.85&times;10<sup>-8</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">61,385</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d2-s1</td><td class="num">0</td><td class="num">0</td><td class="num">7.39&times;10<sup>-8</sup></td><td class="num">0.0001</td><td class="num">0.0001</td><td class="num">0 / 0</td><td class="num">67,323</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d2-s2</td><td class="num">0</td><td class="num">0</td><td class="num">4.85&times;10<sup>-8</sup></td><td class="num">0.0003</td><td class="num">0.0001</td><td class="num">0 / 0</td><td class="num">74,390</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d2-s3</td><td class="num">0</td><td class="num">0</td><td class="num">5.12&times;10<sup>-8</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">64,938</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d2-s4</td><td class="num">0</td><td class="num">0</td><td class="num">7.49&times;10<sup>-8</sup></td><td class="num">0.0000</td><td class="num">0.0004</td><td class="num">0 / 0</td><td class="num">44,888</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d3-s0</td><td class="num">0</td><td class="num">0</td><td class="num">1.63&times;10<sup>-7</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">9,445</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d3-s1</td><td class="num">0</td><td class="num">0</td><td class="num">1.71&times;10<sup>-7</sup></td><td class="num">0.0000</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">12,985</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d3-s2</td><td class="num">0</td><td class="num">0</td><td class="num">1.03&times;10<sup>-7</sup></td><td class="num">0.0000</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">12,987</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d3-s3</td><td class="num">0</td><td class="num">0</td><td class="num">1.86&times;10<sup>-7</sup></td><td class="num">0.0001</td><td class="num">0.0001</td><td class="num">0 / 0</td><td class="num">16,524</td></tr>
+                        <tr><td class="mono">edge-shuffled-lorentz-d3-s4</td><td class="num">0</td><td class="num">0</td><td class="num">1.78&times;10<sup>-7</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">4,725</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d2-s0</td><td class="num">0</td><td class="num">0</td><td class="num">1.61&times;10<sup>-10</sup></td><td class="num">0.0000</td><td class="num">0.0001</td><td class="num">0 / 0</td><td class="num">21,135</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d2-s1</td><td class="num">0</td><td class="num">0</td><td class="num">1.62&times;10<sup>-10</sup></td><td class="num">0.0001</td><td class="num">0.0005</td><td class="num">0 / 0</td><td class="num">20,826</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d2-s2</td><td class="num">0</td><td class="num">0</td><td class="num">1.63&times;10<sup>-10</sup></td><td class="num">0.0000</td><td class="num">0.0001</td><td class="num">0 / 0</td><td class="num">21,307</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d2-s3</td><td class="num">0</td><td class="num">0</td><td class="num">1.62&times;10<sup>-10</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">21,811</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d2-s4</td><td class="num">0</td><td class="num">0</td><td class="num">1.60&times;10<sup>-10</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">19,661</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d3-s0</td><td class="num">0</td><td class="num">0</td><td class="num">1.93&times;10<sup>-10</sup></td><td class="num">0.0000</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">4,047</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d3-s1</td><td class="num">0</td><td class="num">0</td><td class="num">1.91&times;10<sup>-10</sup></td><td class="num">0.0000</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">4,113</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d3-s2</td><td class="num">0</td><td class="num">0</td><td class="num">1.96&times;10<sup>-10</sup></td><td class="num">0.0000</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">4,068</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d3-s3</td><td class="num">0</td><td class="num">0</td><td class="num">1.99&times;10<sup>-10</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">4,139</td></tr>
+                        <tr><td class="mono">edge-shuffled-euclid-d3-s4</td><td class="num">0</td><td class="num">0</td><td class="num">1.91&times;10<sup>-10</sup></td><td class="num">0.0001</td><td class="num">0.0000</td><td class="num">0 / 0</td><td class="num">4,175</td></tr>
+                    </tbody>
+                </table></div>
+            </details>
+            <p><strong>The prediction</strong> was &ldquo;supported&rdquo;, and it held. Amendment 10&rsquo;s design probes had found that snapping moved toy tables&rsquo; MAP by at most 1.3&times;10<sup>&minus;6</sup> (A10.16); the largest change on the mammals, 9.37&times;10<sup>&minus;6</sup>, is about seven times that and about a hundred times under the bar.</p>
+        </section>
+
+        <section class="chapter" id="controls">
+            <div class="chapter-num">08</div>
+            <h2>The controls, and what they rule out</h2>
+            <p class="chapter-intro">Controls 1 and 2 are broken variants that must show their weakness, or L6 is void; both did. Control 3, the untrained floor, is reported and decides nothing. The first is the one A10.9 named a risk before any run: one fixed permutation could void L6 by chance.</p>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Control</th><th>Must</th><th>Measured</th><th>What it rules out</th></tr></thead>
+                <tbody>
+                    <tr><td>1 &middot; Label shuffle: one permutation P = <code>Rng(7)</code>, computed for the first time in the decisive run; the node with index P[i] takes the point of row i</td><td>Every trained table, relabelled, scored against the true closure: closure MAP &le; 1/20</td><td><strong>Holds.</strong> 316 tables (216 finite tuning tables, 50 measured, 50 edge-shuffled); the largest 0.018803 (edge-shuffled Lorentz d = 50, seed 3); measured tables at most 0.016447</td><td>An evaluator that scores well whatever the labels: a leak from the labels or the offsets into the ranking</td></tr>
+                    <tr><td>2 &middot; Edge-shuffled training: 6,542 random pairs from <code>Rng(2000 + s)</code>, trained by the same rule at the cell&rsquo;s rate</td><td>True &minus; shuffled AP, closure and graph-edge, interval above 0, in every cell and seed</td><td><strong>Holds</strong> in all 50 pairs. Lowest lower ends: closure +0.1318, graph-edge +0.1745 (both Euclidean d = 2, seed 1). Shuffled tables score closure MAP 0.0129&ndash;0.0161, graph-edge 0.0049&ndash;0.0098</td><td>A score that training on 6,542 random pairs would earn: from the number of positives and steps, or the geometry alone. The random pairs do not keep node degrees, so a degree effect is not ruled out</td></tr>
+                    <tr><td>3 &middot; Floors: each cell&rsquo;s initial table from <code>Rng(2000 + i)</code>, untrained</td><td>Reported</td><td>Closure MAP 0.0132&ndash;0.0165, graph-edge 0.0053&ndash;0.0094; a random ranking&rsquo;s expected MAP, from the neighbour counts alone: 0.014957 and 0.007320</td><td>Nothing by rule; it shows where &ldquo;learned nothing&rdquo; lies</td></tr>
+                </tbody>
+            </table></div>
+            <ul>
+                <li><strong>The disclosed risk did not happen.</strong> mammal.n.01 and placental.n.01 neighbour 1,181 and 1,132 nodes; had P handed either label to the point of a general node in a well-trained table, nearly every query would have gained a neighbour near the top (A10.9). P gave mammal.n.01&rsquo;s label to row 321 (Samoyed, 02111889, 6 closure neighbours) and placental.n.01&rsquo;s to row 116 (dugong, 02074367, 4).</li>
+                <li><strong>P is not in the tail.</strong> Reported: under 200 further permutations <code>Rng(2100 + j)</code>, the highest relabelled closure MAP of any measured table is 0.0443, none above 0.05, and P sits among them (for learned Lorentz d = 2, seed 0: 184th from the top).</li>
+                <li><strong>L4(c)&rsquo;s controls are L4&rsquo;s.</strong> Control 2 (a float evaluator with acosh distances and index tie-breaking must change an AP on a query with an exact tie) names no part; A10.10 reads it, as Amendment 5 did, to cover (c). It showed its weakness in Phase 2 on <code>rank._ap_and_ranks</code>, the evaluator (c) uses unchanged (487 of 488 tied queries). No control was added.</li>
+            </ul>
+            <p>The controls test the evaluator and the training signal, not the tuning: every cell&rsquo;s rate was chosen on the same instance, at other seeds (<a href="#limits">chapter 10</a>).</p>
+        </section>
+
+        <section class="chapter" id="ties">
+            <div class="chapter-num">09</div>
+            <h2>Fractional ties: what the pessimistic rule costs the exact tree</h2>
+            <p class="chapter-intro">Pessimistic ties decide; fractional ties are reported. The learned tables have no tie, so the two values are equal for them. The exact tree has 47,375, and the rule costs it 0.079 of graph-edge MAP. No decision of this phase depends on which rule is read.</p>
+            <div class="table-wrap"><table style="min-width:600px">
+                <thead><tr><th>L6&rsquo;s exact arm (S, 1,182 nodes)</th><th class="num">Pessimistic (decides)</th><th class="num">Fractional (reported)</th><th class="num">Difference</th></tr></thead>
+                <tbody>
+                    <tr><td>Graph-edge MAP, 1,176 queries</td><td class="num">0.690653</td><td class="num">0.770081</td><td class="num">0.079428</td></tr>
+                    <tr><td>Closure MAP, 1,182 queries</td><td class="num">0.305408</td><td class="num">0.330472</td><td class="num">0.025064</td></tr>
+                </tbody>
+            </table></div>
+            <p>A fractional-tie AP averages the AP over every order inside each exact tie class, computed exactly (A10.11; its formula was checked against brute force over every order on 400 synthetic key lists). Read fractionally, (c)&rsquo;s gap would widen, from about 0.22 to about 0.30, and (d)&rsquo;s would narrow, from about 0.66 to about 0.63; neither comes near its rule&rsquo;s threshold. Where the exact tree&rsquo;s ties come from, spike S1 found in Phase 0: exact neighbour and non-neighbour ties wherever virtual letters occur (L4&rsquo;s prediction quotes it).</p>
+            <h3>The supplement for Phases 1 and 2 (A10.17)</h3>
+            <p>Amendment 10 item 17 recorded that Phases 1 and 2 ranked with exact ties and reported only the pessimistic values, though the Common rules ask for both. The supplement (<a href="../reference/results/fractional-ties.md">fractional-ties.md</a>) rebuilt Phase 1&rsquo;s L5 arms and Phase 2&rsquo;s L4(a) rank lists with those runs&rsquo; own code and draws, checked that every pessimistic value equals the published one, and added the fractional ones. It decides nothing, and L5 and L4(a) stay decided as recorded. Selected rows:</p>
+            <div class="table-wrap"><table class="compact" style="min-width:700px">
+                <thead><tr><th>Set, arm</th><th class="num">Graph-edge MAP,<br>pessimistic</th><th class="num">Graph-edge MAP,<br>fractional</th><th class="num">Queries<br>that differ</th><th class="num">Closure MAP,<br>pessimistic</th><th class="num">Closure MAP,<br>fractional</th></tr></thead>
+                <tbody>
+                    <tr><td>Mammal spanning subtree (1,176), H&sup3;</td><td class="num">0.6907</td><td class="num">0.7701</td><td class="num">488</td><td class="num">0.3059</td><td class="num">0.3311</td></tr>
+                    <tr><td>Mammals, H&sup2;</td><td class="num">0.7187</td><td class="num">0.7189</td><td class="num">28</td><td class="num">0.3063</td><td class="num">0.3063</td></tr>
+                    <tr><td>Mammals, F3 (flat, same construction)</td><td class="num">0.1099</td><td class="num">0.1820</td><td class="num">1,152</td><td class="num">0.0600</td><td class="num">0.0838</td></tr>
+                    <tr><td>Mammals, F3* (flat fractal)</td><td class="num">0.6420</td><td class="num">0.6420</td><td class="num">0</td><td class="num">0.2583</td><td class="num">0.2583</td></tr>
+                    <tr><td>Mammals, K3 (content-hash words)</td><td class="num">0.0068</td><td class="num">0.0068</td><td class="num">40</td><td class="num">0.0142</td><td class="num">0.0142</td></tr>
+                    <tr><td>Nouns (1,000 queries), H&sup3;</td><td class="num">0.5679</td><td class="num">0.6377</td><td class="num">400</td><td class="num">0.1577</td><td class="num">0.1712</td></tr>
+                    <tr><td>Nouns, H&sup2;</td><td class="num">0.5901</td><td class="num">0.5903</td><td class="num">16</td><td class="num">0.1567</td><td class="num">0.1567</td></tr>
+                </tbody>
+            </table></div>
+            <p>L5&rsquo;s decision, hyperbolic against flat, compared H&sup3; with F3 and F3*: read fractionally, H&sup3;&rsquo;s graph-edge MAP on the mammals rises by 0.079 and F3&rsquo;s by 0.072, F3*&rsquo;s not at all, so the MAPs keep their order. The mammal H&sup3; row&rsquo;s graph-edge values are those of L6&rsquo;s exact arm: the same 1,176 queries. The supplement ran before registered tuning, as chapter 2 records.</p>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">10</div>
+            <h2>What this does not show</h2>
+            <p class="chapter-intro">Five supported parts about one hierarchy, one protocol and one machine. They say a good deal about how geometry and training shape a learned table, and nothing about language.</p>
+            <ul>
+                <li><strong>WordNet mammals only.</strong> One instance: 1,182 synsets, nine levels deep, nearly a tree (one node has two parents inside S). Other hierarchies, deeper or wider, all nouns, verbs, are new tests.</li>
+                <li><strong>Reconstruction, not link prediction.</strong> Every closure edge that is scored was trained on. (a), (b) and (d) measure how well each geometry fits the relation it was given, not whether it predicts an edge it never saw. No edge was held out.</li>
+                <li><strong>No lexical meaning.</strong> The tables place synset ids. Lemmas, glosses and the way words are used play no part, and no word&rsquo;s meaning is tested.</li>
+                <li><strong>The Stage-2 lexical claims were not registered.</strong> The roadmap listed them for Phase 4 by amendment: HyperLex, a hypernymy suite, SimLex-999 and the other similarity and relatedness controls (<a href="benchmarks.html#stage2">Explainer 7</a>). No such amendment was written, and no code for them exists. They remain to be registered by amendment before any code for them.</li>
+                <li><strong>One protocol, one tuning.</strong> The protocol is this project&rsquo;s own, after Nickel and Kiela&rsquo;s papers and script (A10.15); another protocol may order the geometries differently, and these numbers are not comparable with theirs. Each cell&rsquo;s rate was tuned on the same instance at other seeds, on closure MAP alone, from a six-point grid. Under A10.8&rsquo;s reading of &ldquo;in blocks of four&rdquo;, each rate ran on its own block of four seeds (240 runs, not every rate on all 24 seeds, 1,440 runs). So rates were compared across different seeds, and the two closest choices (Euclidean d = 50, 0.000133; Lorentz d = 2, 0.000857) could fall the other way on other seeds.</li>
+                <li><strong>(c) is one comparison.</strong> It sets the exact tree against learned Lorentz at d = 3, as registered. Learned Euclidean at d = 50 has a graph-edge MAP of 0.850&ndash;0.854, above the exact tree&rsquo;s 0.691 (reported). A learned table trained on graph edges rather than the closure was not part of L6.</li>
+                <li><strong>One machine.</strong> Python 3.13.18, numpy 2.5.3, numba 0.68.1, glibc 2.39, 4 CPUs; bit identity is promised on this build machine only, and the record names its environment. The geoopt cross-check was not run.</li>
+                <li><strong>Snapping at 2<sup>&minus;32</sup> only.</strong> L4(c) says that this grid keeps the ranking of these tables; it says nothing about whether a table is good, and a coarse grid does not keep it.</li>
+                <li><strong>The lab</strong> draws two tables of one seed and recomputes their MAPs with the functions the Node re-evaluation used. It demonstrates the code and decides nothing.</li>
+            </ul>
+        </section>
+
+        <section class="chapter" id="next">
+            <div class="chapter-num">11</div>
+            <h2>Next: Phase 5</h2>
+            <p class="chapter-intro">With L6 and L4(c) decided, every Stage-1 claim is supported. Phase 5 builds the two pages Explainer 3 designed in Phase 0 (<a href="architecture.html#pages">its pages chapter</a>), and ends at the Stage-1 gate.</p>
+            <ol class="steps">
+                <li><strong>The 2D page.</strong> <code>lexicon-2d.html</code>: the exact H&sup2; tree (t = 11/13) in the Poincar&eacute; disk, every noun at its exact address.</li>
+                <li><strong>The 3D page.</strong> <code>lexicon-3d.html</code>: the exact H&sup3; tree in the ball.</li>
+                <li><strong>A shard panel and an Engram session import.</strong></li>
+                <li><strong>The Stage-1 gate.</strong> All eleven claims, L1&ndash;L11, decided and reviewed before any encoder code is written (<a href="../index.html#roadmap">the roadmap</a>).</li>
+            </ol>
+            <p>The Stage-2 lexical claims are not part of Phase 5. They are to be registered by amendment, with instances, controls, rules and predictions, before any code for them.</p>
+            <div class="pager">
+                <a class="btn btn-ghost" href="chains.html">&larr; Language Biochains, Measured</a>
+                <a class="btn btn-ghost" href="page-2d.html">The 2D Page Manual &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 12 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a> &middot; <a href="../reference/README.md">Reference README</a> &middot; <a href="../reference/results/claims-phase4.md">Results</a></footer>
+<script src="../../../scripts/geometric-build/orbital_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/hyperbolic_core.js"></script>
+<script src="../../Hyperbolic%20Oracles/decoder3d.js"></script>
+<script src="../data/l6_view_v1.js"></script>
+<script src="../lexicon_core.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const good = s => `<span class="good">${s}</span>`, bad = s => `<span class="bad">${s}</span>`;
+    const comma = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const now = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+    const later = () => new Promise(r => setTimeout(r, 0));
+    const errText = e => esc((e && e.message) || e);
+    const status = $('lab-status');
+    const LC = window.LexiconCore, TEXT = (window.LexiconData || {}).l6_view_v1;
+    const GEOS = ['lorentz', 'euclid'], NAME = { lorentz: 'Lorentz', euclid: 'Euclidean' };
+    const stop = msg => { status.innerHTML = bad(msg); document.querySelectorAll('#disk-lab button, #disk-lab input').forEach(b => { b.disabled = true; }); };
+    if (!LC) return stop('The core did not load (the lab needs orbital_core.js, hyperbolic_core.js, decoder3d.js and lexicon_core.js beside it), so it cannot run. Open this page from its place in the repository.');
+    if (typeof TEXT !== 'string') return stop('data/l6_view_v1.js did not load, so the lab has no tables. Open this page from its place in the repository.');
+
+    // the decisive run's values the lab checks against (results/claims-phase4.json, its LBENCH/1 records, l6-node.json)
+    const RUN = {
+        textSha: '38fc6aac0e52c3fd4d38ba54688774efc8077e7f417b138bdf1c310008780655',   // data/l6_view_v1.js's JSON text
+        instanceSha: 'c4748ce2fc8d4137846c76186c5fa02d9060597b59b8975f8fdc4ae6e476b4ca', n: 1182, E: 6542, closurePairs: 13084, graphPairs: 2350,
+        graphless: ['01322508', '01322604', '01322898', '01322983', '01323068', '01862399'], root: '01861778',
+        lorentz: { key: 'learned-lorentz-d2-lr1-s0', snapSha: 'c835347422030711abee83b8c039894d720dda700044fbe75d94231651cac4ac',
+            closureMapSha: 'e75df1a5b7d84e5ab5160120fd41cc7bafc05df542878dc3d5d6ca244deb3df0', graphMapSha: '0f6fa1a27d506786bd11f4708f6c088de805d5b02e2683250f0615877f83f157', closure: '0.889203', graph: '0.435848' },
+        euclid: { key: 'learned-euclid-d2-lr0.1-s0', snapSha: '09c5a21634058fb1c7b39cc119a5cef840f4998e3b9e964005c0ed53a10e9890',
+            closureMapSha: 'ad2c64191244462d4840ad98e50b8142697bbdad7e7675bb5530b32cf30b36f0', graphMapSha: '625bb1211aebf35e994a5cb2a517e7cd9b5c857a39aa5028d9da8bb617d5311a', closure: '0.171146', graph: '0.223374' },
+    };
+    const sha = s => LC.sha256Hex(LC.textBytes(s));
+    const eq = (a, b, what) => (a === b ? good(`= ${what}`) : bad(`&ne; ${what}`));
+
+    // ------------------------------------------------------------------ the data: S, its relations, the two tables
+    let V;
+    try { V = JSON.parse(TEXT); } catch (e) { return stop('data/l6_view_v1.js does not hold JSON: ' + errText(e)); }
+    const textSha = sha(TEXT);
+    const n = V.nodes.length, off = V.nodes.map(x => x[0]), lemma = V.nodes.map(x => x[1]), par = V.nodes.map(x => x[2]), sp = V.nodes.map(x => x[3]);
+    const root = off.indexOf(RUN.root);
+    // closure ancestors inside S, from the closure parents (an ancestor of an outside parent is never in S)
+    const anc = new Array(n);
+    const ancOf = i => {
+        if (!anc[i]) { const s = new Set(); anc[i] = s; for (const p of par[i]) { s.add(p); for (const a of ancOf(p)) s.add(a); } }
+        return anc[i];
+    };
+    for (let i = 0; i < n; i++) ancOf(i);
+    const desc = off.map(() => new Set());
+    for (let i = 0; i < n; i++) for (const a of anc[i]) desc[a].add(i);
+    const closureNb = off.map((_, i) => [...new Set([...anc[i], ...desc[i]])].sort((a, b) => a - b));
+    const kids = off.map(() => []);
+    sp.forEach((p, i) => { if (p >= 0) kids[p].push(i); });
+    const graphNb = off.map((_, i) => kids[i].concat(sp[i] >= 0 ? [sp[i]] : []).sort((a, b) => a - b));
+    const closureChildren = off.map(() => []);
+    par.forEach((ps, i) => ps.forEach(p => closureChildren[p].push(i)));
+    const depth = off.map(() => -1);
+    if (root >= 0) { depth[root] = 0; const q = [root]; while (q.length) { const u = q.shift(); for (const v of closureChildren[u]) if (depth[v] < 0) { depth[v] = depth[u] + 1; q.push(v); } } }
+    const E = anc.reduce((s, a) => s + a.size, 0), cPairs = closureNb.reduce((s, x) => s + x.length, 0), gPairs = graphNb.reduce((s, x) => s + x.length, 0);
+    const graphless = off.filter((_, i) => !graphNb[i].length);
+    const instSha = sha(off.join('\n'));
+    const T = {};
+    try {
+        for (const g of GEOS) {
+            const tb = V.tables[g], N = tb.rows.map(r => r.map(x => BigInt(x)));
+            T[g] = { tb, N, arm: new LC.SnapArm(N, g), snapSha: sha(LC.snapText(off, N)), pts: tb.rows.map(r => [r[0] / 4294967296, r[1] / 4294967296]),
+                mapOk: { closure: sha(tb.map.closure.pq) === RUN[g].closureMapSha, graph: sha(tb.map.graph.pq) === RUN[g].graphMapSha } };
+        }
+    } catch (e) { return stop('The core refused a table: ' + errText(e)); }
+    const originDist = T.lorentz.pts.map(([x, y]) => { const r = Math.hypot(x, y); return Math.log((1 + r) / (1 - r)); });
+    const sameList = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+    const checksOk = textSha === RUN.textSha && instSha === RUN.instanceSha && n === RUN.n && E === RUN.E && cPairs === RUN.closurePairs && gPairs === RUN.graphPairs
+        && sameList(graphless, RUN.graphless) && GEOS.every(g => T[g].snapSha === RUN[g].snapSha && T[g].mapOk.closure && T[g].mapOk.graph);
+    status.innerHTML = `<span class="k">core</span> ${esc(LC.version)} &nbsp; <span class="k">data</span> JSON text ${comma(TEXT.length)} bytes, SHA-256 ${esc(textSha.slice(0, 16))}&hellip; ${eq(textSha, RUN.textSha, 'the pin')}` +
+        `<br><span class="k">S</span> ${comma(n)} synsets, offsets&rsquo; SHA-256 ${esc(instSha.slice(0, 16))}&hellip; ${eq(instSha, RUN.instanceSha, 'the record&rsquo;s')}; ${comma(E)} closure edges ${eq(E, RUN.E, 'the record&rsquo;s')}; ` +
+        `${comma(cPairs)} closure and ${comma(gPairs)} graph-edge (query, neighbour) pairs ${eq(cPairs === RUN.closurePairs && gPairs === RUN.graphPairs, true, 'the Node re-evaluation&rsquo;s')}; ` +
+        `${graphless.length} without graph-edge neighbours ${eq(sameList(graphless, RUN.graphless), true, 'the record&rsquo;s six')}` +
+        GEOS.map(g => `<br><span class="k">${esc(RUN[g].key)}</span> snapped text rebuilt from the integers, SHA-256 ${esc(T[g].snapSha.slice(0, 16))}&hellip; ${eq(T[g].snapSha, RUN[g].snapSha, 'the run&rsquo;s snap_sha')}; ` +
+            `the record&rsquo;s MAP texts ${eq(T[g].mapOk.closure && T[g].mapOk.graph, true, 'its LBENCH/1 hashes')}`).join('') +
+        (checksOk ? '' : '<br>' + bad('A check failed: the drawings below still work, but the values are not the decisive run&rsquo;s.'));
+
+    // ------------------------------------------------------------------ drawing
+    const cv = { lorentz: $('cv-lorentz'), euclid: $('cv-euclid') };
+    const DEPTH_BIN = d => Math.min(4, Math.floor(Math.max(0, d) / 2));
+    const DEPTH_COL = ['#cde2fb', '#86b6ef', '#3987e5', '#256abf', '#184f95'];   // depths 0-1, 2-3, 4-5, 6-7, 8-9: one hue, light to dark
+    const ANC = '#c4870f', DESC = '#b450d8', SEL = '#f8fafc', DIM = 'rgba(71,85,105,0.55)';
+    const st = { sel: -1, hover: { lorentz: -1, euclid: -1 }, spread: 5, centre: false, edges: true };
+    const eMax = Math.max(...T.euclid.pts.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y))));
+    $('lab-legend').innerHTML = DEPTH_COL.map((c, k) => `<span><span class="dot" style="background:${c}"></span>depth ${2 * k}&ndash;${2 * k + 1}</span>`).join('') +
+        `<span><span class="dot" style="background:${ANC}"></span>closure ancestor</span><span><span class="dot" style="background:${DESC}"></span>closure descendant</span>` +
+        `<span><span class="dot" style="background:transparent;border:2px solid ${SEL};width:12px;height:12px"></span>spanning parent or child (graph-edge neighbour)</span>` +
+        '<span style="flex-basis:100%">Depth: hypernym steps below mammal.n.01 inside S. With a mammal picked, every other point is grey.</span>';
+
+    function diskPoint(p, a) {
+        let x = p[0], y = p[1];
+        if (a) {                                       // the isometry z -> (z - a)/(1 - conj(a) z), which moves a to 0
+            const nx = x - a[0], ny = y - a[1], dx = 1 - (a[0] * x + a[1] * y), dy = -(a[0] * y - a[1] * x), den = dx * dx + dy * dy;
+            x = (nx * dx + ny * dy) / den; y = (ny * dx - nx * dy) / den;
+        }
+        const r = Math.hypot(x, y);
+        if (!(r > 0)) return [0, 0];
+        const rr = st.spread === 1 ? Math.min(r, 1) : Math.tanh(Math.atanh(Math.min(r, 1 - 1e-16)) / st.spread);
+        return [x / r * rr, y / r * rr];
+    }
+    function prep(c) {
+        const W = Math.max(160, Math.round(c.clientWidth || 360)), dpr = Math.min(2, window.devicePixelRatio || 1);
+        if (c._w !== W || c._dpr !== dpr) { c._w = W; c._dpr = dpr; c.width = Math.round(W * dpr); c.height = Math.round(W * dpr); }
+        const ctx = c.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, W);
+        return { ctx, W };
+    }
+    function positions(g, W) {
+        const R = W / 2 - 10, cx = W / 2, cy = W / 2;
+        if (g === 'lorentz') {
+            const a = st.centre && st.sel >= 0 ? T.lorentz.pts[st.sel] : null;
+            return T.lorentz.pts.map(p => { const q = diskPoint(p, a); return [cx + R * q[0], cy - R * q[1]]; });
+        }
+        const s = (R - 4) / eMax;
+        return T.euclid.pts.map(p => [cx + s * p[0], cy - s * p[1]]);
+    }
+    const label = (ctx, text, x, y, W) => {
+        ctx.font = '600 12px Inter, system-ui, sans-serif';
+        const w = ctx.measureText(text).width, tx = Math.min(Math.max(4, x + 8), W - w - 4), ty = Math.min(Math.max(14, y - 8), W - 6);
+        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(2,6,23,0.9)'; ctx.strokeText(text, tx, ty);
+        ctx.fillStyle = '#f8fafc'; ctx.fillText(text, tx, ty);
+    };
+    function draw(g) {
+        const c = cv[g], { ctx, W } = prep(c), P = positions(g, W), R = W / 2 - 10, cx = W / 2, cy = W / 2, sel = st.sel;
+        c._pos = P;
+        if (g === 'lorentz') { ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke(); }
+        else {
+            ctx.strokeStyle = 'rgba(51,65,85,0.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, 8); ctx.lineTo(cx, W - 8); ctx.moveTo(8, cy); ctx.lineTo(W - 8, cy); ctx.stroke();
+            ctx.fillStyle = '#64748b'; ctx.font = '11px Inter, system-ui, sans-serif'; const s = (R - 4) / eMax;
+            ctx.fillText('1', cx + s - 3, cy + 13); ctx.beginPath(); ctx.moveTo(cx + s, cy - 3); ctx.lineTo(cx + s, cy + 3); ctx.stroke();
+        }
+        const rad = Math.max(1.7, W / 230);
+        if (st.edges) {
+            ctx.strokeStyle = sel >= 0 ? 'rgba(71,85,105,0.18)' : 'rgba(100,116,139,0.30)'; ctx.lineWidth = 0.7; ctx.beginPath();
+            for (let i = 0; i < n; i++) if (sp[i] >= 0) { ctx.moveTo(P[i][0], P[i][1]); ctx.lineTo(P[sp[i]][0], P[sp[i]][1]); }
+            ctx.stroke();
+        }
+        const dot = (i, col, r) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P[i][0], P[i][1], r, 0, 2 * Math.PI); ctx.fill(); };
+        if (sel < 0) {
+            const order = off.map((_, i) => i).sort((a, b) => depth[b] - depth[a]);
+            for (const i of order) dot(i, DEPTH_COL[DEPTH_BIN(depth[i])], i === root ? rad + 2 : rad);
+        } else {
+            for (let i = 0; i < n; i++) if (i !== sel && !anc[sel].has(i) && !desc[sel].has(i)) dot(i, DIM, rad * 0.85);
+            for (const i of desc[sel]) dot(i, DESC, rad);
+            for (const i of anc[sel]) dot(i, ANC, rad + 0.6);
+            ctx.strokeStyle = 'rgba(248,250,252,0.85)'; ctx.lineWidth = 1.4;
+            for (const j of graphNb[sel]) { ctx.beginPath(); ctx.moveTo(P[sel][0], P[sel][1]); ctx.lineTo(P[j][0], P[j][1]); ctx.stroke(); }
+            ctx.lineWidth = 1.6;
+            for (const j of graphNb[sel]) { ctx.beginPath(); ctx.arc(P[j][0], P[j][1], rad + 3, 0, 2 * Math.PI); ctx.stroke(); }
+            dot(sel, SEL, rad + 2.6);
+            ctx.strokeStyle = '#020617'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(P[sel][0], P[sel][1], rad + 2.6, 0, 2 * Math.PI); ctx.stroke();
+            label(ctx, lemma[sel].replace(/_/g, ' '), P[sel][0], P[sel][1], W);
+        }
+        const h = st.hover[g];
+        if (h >= 0 && h !== sel) {
+            ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(P[h][0], P[h][1], rad + 3.5, 0, 2 * Math.PI); ctx.stroke();
+            label(ctx, lemma[h].replace(/_/g, ' ') + (g === 'lorentz' ? `  (${originDist[h].toFixed(2)} from the origin)` : ''), P[h][0], P[h][1], W);
+        }
+    }
+    let raf = 0;
+    const redraw = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; GEOS.forEach(draw); }); };
+    function nearestAt(g, ev, maxPx) {
+        const c = cv[g], P = c._pos; if (!P) return -1;
+        const b = c.getBoundingClientRect(), x = (ev.clientX - b.left) * (c._w / b.width), y = (ev.clientY - b.top) * (c._w / b.height);
+        let best = -1, bd = maxPx * maxPx;
+        for (let i = 0; i < n; i++) { const dx = P[i][0] - x, dy = P[i][1] - y, d = dx * dx + dy * dy; if (d <= bd) { bd = d; best = i; } }
+        return best;
+    }
+    for (const g of GEOS) {
+        const c = cv[g];
+        c.addEventListener('pointermove', ev => { if (ev.pointerType === 'touch') return; const i = nearestAt(g, ev, 10); if (i !== st.hover[g]) { st.hover[g] = i; redraw(); } });
+        c.addEventListener('pointerleave', () => { if (st.hover[g] >= 0) { st.hover[g] = -1; redraw(); } });
+        c.addEventListener('click', ev => { const i = nearestAt(g, ev, 16); if (i >= 0) pick(i); });
+    }
+    $('lab-spread').addEventListener('input', e => { st.spread = +e.target.value; $('lab-spread-v').textContent = '×' + st.spread; redraw(); });
+    $('lab-centre').addEventListener('change', e => { st.centre = e.target.checked; redraw(); });
+    $('lab-edges').addEventListener('change', e => { st.edges = e.target.checked; redraw(); });
+    $('lab-clear').addEventListener('click', () => pick(-1));
+    window.addEventListener('resize', redraw);
+
+    // ------------------------------------------------------------------ one query, ranked exactly in both tables
+    const nameOf = i => `<a href="#" data-pick="${i}">${esc(lemma[i].replace(/_/g, ' '))}</a>`;
+    const relation = (u, v) => (sp[u] === v ? ['parent', ANC] : sp[v] === u ? ['child', DESC] : anc[u].has(v) ? ['ancestor', ANC] : desc[u].has(v) ? ['descendant', DESC] : null);
+    const apText = a => {
+        if (a === null || a === undefined) return '<span style="color:var(--muted)">none: no graph-edge neighbour</span>';
+        const t = LC.qOrDash(a), [p, q] = t.split('/');
+        return `<strong>${a.toNumber().toFixed(6)}</strong> <span style="color:var(--muted)" title="${esc(t.length > 400 ? t.slice(0, 400) + '…' : t)}">(${t.length <= 15 ? '= ' + esc(t) : `${p.length} digits over ${q.length}`})</span>`;
+    };
+    function nearestList(g, u, k) {
+        const keys = T[g].arm.keys(u), idx = [];
+        for (let v = 0; v < n; v++) if (v !== u) idx.push(v);
+        idx.sort((a, b) => (keys[a] < keys[b] ? -1 : keys[a] > keys[b] ? 1 : a - b));
+        return idx.slice(0, k).map(v => { const r = relation(u, v); return `<li>${nameOf(v)}${r ? ` <span style="color:${r[1]};font-size:0.78rem">${r[0]}</span>` : ''}</li>`; }).join('');
+    }
+    function pick(u) {
+        st.sel = u;
+        const out = $('lab-node'), body = $('lab-ap');
+        if (u < 0) { out.innerHTML = 'Pick a mammal: click or tap a point, or find one by name.'; body.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">no mammal picked</td></tr>'; redraw(); return; }
+        const nb = closureNb[u].length, spText = sp[u] >= 0 ? nameOf(sp[u]) : '<span style="color:var(--muted)">outside S</span>';
+        out.innerHTML = `<span class="k">synset</span> <strong>${esc(lemma[u].replace(/_/g, ' '))}</strong> ${esc(off[u])} &nbsp; <span class="k">depth</span> ${depth[u]} &nbsp; <span class="k">closure</span> ${anc[u].size} ancestor${anc[u].size === 1 ? '' : 's'} and ${comma(desc[u].size)} descendant${desc[u].size === 1 ? '' : 's'} in S: ${comma(nb)} neighbour${nb === 1 ? '' : 's'}, ${comma(n - 1 - nb)} non-neighbour${n - 1 - nb === 1 ? '' : 's'}` +
+            `<br><span class="k">spanning parent</span> ${spText} &nbsp; <span class="k">children in S</span> ${kids[u].length} &nbsp; <span class="k">graph-edge neighbours</span> ${graphNb[u].length}` +
+            ` &nbsp; <span class="k">in the disk</span> ${originDist[u].toFixed(2)} from the origin (hyperbolic distance, from the snapped point, in floats)`;
+        const t0 = now(), R = {};
+        for (const g of GEOS) R[g] = LC.rankQuery(T[g].arm, u, [closureNb, graphNb]);
+        const ms = now() - t0;
+        const row = (head, f) => `<tr><td>${head}</td>${GEOS.map(g => `<td>${f(g)}</td>`).join('')}</tr>`;
+        const worst = g => { const r = R[g].ranks[0]; if (!r.length) return '&ndash;'; const top = r.filter(x => x <= 1).length; return `${comma(Math.max(...r))} at worst; ${comma(top)} of ${comma(r.length)} at rank 1`; };
+        const parentRank = g => { if (sp[u] < 0) return '<span style="color:var(--muted)">outside S</span>'; const k = graphNb[u].indexOf(sp[u]); return `${comma(R[g].ranks[1][k])}`; };
+        body.innerHTML = row('<strong>Closure AP</strong>', g => apText(R[g].ap[0])) +
+            row('Graph-edge AP', g => apText(R[g].ap[1])) +
+            row('Closure neighbours&rsquo; ranks', worst) +
+            row('The spanning parent&rsquo;s graph-edge rank', parentRank) +
+            row('Nearest 8 candidates', g => `<ol style="margin:0;padding-left:1.3rem;font-size:0.86rem">${nearestList(g, u, 8)}</ol>`) +
+            `<tr><td colspan="3" style="font-size:0.8rem;color:var(--muted)">Both tables ranked exactly in ~${ms.toFixed(1)} ms in this browser. A rank is 1 plus the non-neighbours nearer than that neighbour.</td></tr>`;
+        redraw();
+    }
+    document.getElementById('disk-lab').addEventListener('click', e => {
+        const a = e.target.closest('[data-pick]'); if (!a) return;
+        e.preventDefault(); pick(+a.dataset.pick);
+    });
+
+    // ------------------------------------------------------------------ find by lemma
+    const norm = s => s.toLowerCase().replace(/[_\s]+/g, ' ').trim();
+    const lemN = lemma.map(norm), findIn = $('lab-find'), matches = $('lab-matches');
+    const parentName = i => (par[i].length ? lemma[par[i][0]].replace(/_/g, ' ') : 'the root');
+    function find(q) {
+        q = norm(q);
+        if (!q) return [];
+        const ex = [], pre = [], sub = [];
+        lemN.forEach((l, i) => { if (l === q) ex.push(i); else if (l.startsWith(q)) pre.push(i); else if (l.includes(q)) sub.push(i); });
+        return ex.concat(pre, sub);
+    }
+    function showMatches() {
+        const m = find(findIn.value);
+        matches.innerHTML = !findIn.value.trim() ? '' : !m.length ? '<span style="font-size:0.85rem;color:var(--muted)">no first lemma matches</span>'
+            : m.slice(0, 10).map(i => `<button class="chip" type="button" data-pick="${i}">${esc(lemma[i].replace(/_/g, ' '))} <span style="color:var(--muted)">&middot; ${esc(parentName(i))}</span></button>`).join('') +
+              (m.length > 10 ? `<span style="font-size:0.8rem;color:var(--muted)">and ${m.length - 10} more</span>` : '');
+    }
+    findIn.addEventListener('input', showMatches);
+    findIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const m = find(findIn.value); if (m.length) pick(m[0]); } });
+
+    // ------------------------------------------------------------------ the full MAPs, in slices
+    const busy = {}, done = {};
+    async function recompute(g) {
+        if (busy[g]) return;
+        busy[g] = true;
+        const btn = $('map-' + g), out = $('map-out-' + g), arm = T[g].arm, apsC = new Array(n), apsG = new Array(n);
+        btn.disabled = true;
+        const t0 = now();
+        let u = 0;
+        try {
+            while (u < n) {
+                const t1 = now();
+                while (u < n && now() - t1 < 24) { const r = LC.rankQuery(arm, u, [closureNb, graphNb]); apsC[u] = r.ap[0]; apsG[u] = r.ap[1]; u++; }
+                const pct = (100 * u / n).toFixed(1);
+                out.innerHTML = `<span class="k">${NAME[g]}</span> ranking query ${comma(u)} of ${comma(n)}&hellip;` +
+                    `<div style="height:6px;border-radius:3px;background:#1e293b;margin-top:6px;overflow:hidden"><div style="height:6px;width:${pct}%;background:#1aa3c2"></div></div>`;
+                await later();
+            }
+            const secs = (now() - t0) / 1000, rec = V.tables[g].map;
+            const res = ['closure', 'graph'].map(m => {
+                const q = LC.mapExact(m === 'closure' ? apsC : apsG), t = LC.mapText(q), h = LC.mapSha(q), [p, d] = t.split('/');
+                const same = t === rec[m].pq, hashOk = h === RUN[g][m + 'MapSha'];
+                return { m, q, t, h, p, d, ok: same && hashOk && q.toNumber().toFixed(6) === RUN[g][m],
+                    html: `<span class="k">${m === 'closure' ? 'closure MAP' : 'graph-edge MAP'}</span> <strong>${q.toNumber().toFixed(6)}</strong> = ${p.length}-digit p over ${d.length}-digit q &nbsp; ` +
+                        `${same ? good('= the record&rsquo;s p/q, digit for digit') : bad('&ne; the record&rsquo;s p/q')} &nbsp; <span class="k">SHA-256</span> ${esc(h.slice(0, 16))}&hellip; ${eq(h, RUN[g][m + 'MapSha'], 'LBENCH/1&rsquo;s ' + (m === 'closure' ? 'closureMapSha' : 'graphMapSha'))}` };
+            });
+            done[g] = apsC;
+            out.innerHTML = `<span class="k">${NAME[g]} (${esc(RUN[g].key)})</span> ${comma(n)} queries in ~${secs.toFixed(1)} s ` + (res.every(r => r.ok) ? good('equal to the decisive run') : bad('not equal to the decisive run')) +
+                res.map(r => '<br>' + r.html).join('') +
+                `<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--muted)">the closure MAP as p/q</summary><div style="max-height:9em;overflow:auto;margin-top:4px">${esc(res[0].t)}</div></details>`;
+            if (done.lorentz && done.euclid) compareBoth();
+        } catch (e) {
+            out.innerHTML = bad(errText(e));
+        } finally { busy[g] = false; btn.disabled = false; }
+    }
+    function compareBoth() {
+        let l = 0, e = 0, same = 0, leaves = 0, leavesL = 0;
+        for (let u = 0; u < n; u++) {
+            const c = done.lorentz[u].cmp(done.euclid[u]);
+            if (c > 0) l++; else if (c < 0) e++; else same++;
+            if (!desc[u].size) { leaves++; if (c > 0) leavesL++; }
+        }
+        const box = $('map-out-both');
+        box.style.display = '';
+        box.innerHTML = `<span class="k">query by query, closure AP, exact</span> the Lorentz table ranks ${comma(l)} queries better, the Euclidean table ${comma(e)}, and ${same} tie` +
+            `<br><span class="k">leaves</span> (no descendant in S): ${comma(leaves)}; the Lorentz table ranks ${comma(leavesL)} of them better`;
+    }
+    for (const g of GEOS) $('map-' + g).addEventListener('click', () => recompute(g));
+
+    redraw();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-2d.html&quot;,&quot;label&quot;:&quot;Lexicon 2D: the tree in the disk&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Type a sentence: tokens, addresses and exact H² points; decode, precision, LCA paths&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-3d.html&quot;,&quot;label&quot;:&quot;Lexicon 3D: the tree in the ball&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Segments A and B in H³: frames, X(5, q) vertices, the coupler as a check&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;reference.html&quot;,&quot;label&quot;:&quot;The Python Reference and Its Results&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 9: the Phase 1 reference, L2, L3, L5 and L7 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core and Its Parity&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 10: lexicon_core.js, live parity, L1, L3(f) and L4(a, b) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;chains.html&quot;,&quot;label&quot;:&quot;Language Biochains, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 11: shards, records, the manifest and the signed verifier; L8-L11 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;learned.html&quot;,&quot;label&quot;:&quot;Learned Geometry, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 12: learned Lorentz vs Euclidean, the exact tree; L6 and L4(c) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 13: every panel of lexicon-2d.html, the shard and Engram panels&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 14: every panel of lexicon-3d.html; frames, X(5, q), the coupler&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;lexical.html&quot;,&quot;label&quot;:&quot;The Lexical Claims, Decided&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 15: Stage 2, L12-L15 on HyperLex, BLESS, HiT, SimLex and MEN; two parts refuted&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

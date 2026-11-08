@@ -1,0 +1,89 @@
+== python3 -B run_claims.py --phase2
+L1 (Phase 2) ...
+  L1 records reproduce the traces: 762/762 lines (V0, V1)
+  L1 (a): 117659 instances
+    V0: list defa6cc33dc2e19e..., id stream 87493312e7b213ae..., HF differs on 0
+    V1: list 7aa8d14fac64ff74..., id stream afa37940c1890a33..., HF differs on 0
+  L1 (b): 16622 instances
+    V0: list 5b60a59e2a9a8b84..., id stream 88dd74b7af2ce96e..., HF differs on 0
+    V1: list 027e76a49a057bbb..., id stream 1ca97639b6250c9b..., HF differs on 0
+  L1 (c): 20520 instances
+    V0: list ec44644403ebfb72..., id stream a97e775de8bb1864..., HF differs on 0
+    V1: list 2849500c23be688b..., id stream ebb579b2d8fe03cf..., HF differs on 28
+  L1 (d): 2000 instances
+    V0: list 83916d1a4c64b7a0..., id stream d59109f0fc292e1d..., HF differs on 29
+    V1: list 5fbea5ff13f2e25d..., id stream ad34b5bfb37ea2be..., HF differs on 29
+L1: decided by the Node and Chromium runners against these digests; controls 2 and 3 show their weakness in every cell (69.1 s)
+L4 (Phase 2) ...
+  L4(a) mammals H3: graph MAP 0.690653, closure MAP 0.305932, rank lists 6426f70fdeffb377... (0.4 s)
+  L4(a) mammals H2: graph MAP 0.718723, closure MAP 0.306331, rank lists 05872a2115071e54... (0.4 s)
+  L4(a) nouns H3: graph MAP 0.553253, closure MAP 0.138801, rank lists 5d5d9cafb4b206fa... (5.7 s)
+  L4(a) nouns H2: graph MAP 0.572214, closure MAP 0.138116, rank lists c2ca94116a6d8fde... (7.9 s)
+  L4(b) nouns H3: 990/1000 queries with an inversion, 4978009 inversions, 152072 float ties (19.0 s)
+  L4(b) nouns H2: 993/1000 queries with an inversion, 8969341 inversions, 1715 float ties (25.3 s)
+  L4 control 1 (float32, mammals H3): 1137/1176 queries with an inversion; 902886 non-finite keys
+  L4 control 2 (acosh with index ties): shows its weakness, 487/488 tied queries differ
+L4: (a) decided against Node; (b) supported (63.8 s)
+wrote results/phase2-python.json and .md
+
+real	2m14.977s
+user	4m58.550s
+sys	0m3.343s
+exit 0
+
+== node run_claims_js.cjs
+Phase 2, JavaScript engines: against results/phase2-python.json (started 2026-11-05 19:29:58 UTC)
+1. parity (tests/parity-lexicon.cjs) and the data wrappers ...
+   Parity: 18667/18667 lines pass  (13019 ms, lexicon-browser-1, Node 22.23.4)
+   data/*.js: data/unicode_15_1_v1.js 30bed6fbc1fe…, data/vocab_v0_lex0.js df22705601de… equal the pins
+2. L1: the instance lists and vocabularies ...
+   a 117659 (bc86a44d55ee…), b 16622 (2bdf1644aea0…), c 20520 (3ccd5076d104…), d 2000 (aabb7bef0eb5…) equal Python's inputs; vocabularies V0, V1
+   Node a: 117659 instances
+     V0: 0 differing instances; list equal; id stream equal (15.8 s for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (15.8 s for both vocabularies)
+   Node b: 16622 instances
+     V0: 0 differing instances; list equal; id stream equal (2.1 s for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (2.1 s for both vocabularies)
+   Node c: 20520 instances
+     V0: 0 differing instances; list equal; id stream equal (0.5 s for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (0.5 s for both vocabularies)
+     control 1: the platform differs from the reference on 725/20520; table list equal
+   Node d: 2000 instances
+     V0: 0 differing instances; list equal; id stream equal (0.3 s for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (0.3 s for both vocabularies)
+3. L1 in Chromium (and L4(a)'s small set) ...
+   Chromium 153.0.8010.12 (Playwright 1.63.0); the page's newest assigned Unicode marker: 17.0
+   Chromium a: 117659 instances
+     V0: 0 differing instances; list equal; id stream equal (12 s in the page for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (12 s in the page for both vocabularies)
+   Chromium b: 16622 instances
+     V0: 0 differing instances; list equal; id stream equal (1.9 s in the page for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (1.9 s in the page for both vocabularies)
+   Chromium c: 20520 instances
+     V0: 0 differing instances; list equal; id stream equal (0.4 s in the page for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (0.4 s in the page for both vocabularies)
+     control 1: the platform differs from the reference on 725/20520; table list equal
+   Chromium d: 2000 instances
+     V0: 0 differing instances; list equal; id stream equal (0.3 s in the page for both vocabularies)
+     V1: 0 differing instances; list equal; id stream equal (0.3 s in the page for both vocabularies)
+   Chromium L4(a) mammals H3: 0 differing rank lists, exact values equal
+   Chromium L4(a) mammals H2: 0 differing rank lists, exact values equal
+4. L3(f) in Node ...
+   canonical point list equal (eb22bf00689ec86d…); 2000/2000 sampled lines equal: supported
+5. L4 in Node ...
+   Node L4(a) mammals H3: 0/1176 differing rank lists, exact MAPs and mean ranks equal (1.7 s)
+   Node L4(a) mammals H2: 0/1176 differing rank lists, exact MAPs and mean ranks equal (1.9 s)
+   Node L4(a) nouns H3: 0/200 differing rank lists, exact MAPs and mean ranks equal (28.3 s)
+   Node L4(a) nouns H2: 0/200 differing rank lists, exact MAPs and mean ranks equal (35.2 s)
+   Node L4(b) nouns H3: 990/1000 queries with an inversion (Python 990), 4978009 inversions (Python 4978009) (86.8 s)
+   Node L4(b) nouns H2: 993/1000 queries with an inversion (Python 993), 8969341 inversions (Python 8969341) (109.4 s)
+   Node L4 control 1 (float32, mammals H3): 1137/1176 queries with an inversion (Python 1137)
+   Node L4 control 2 (acosh, index ties): shows its weakness, 487/488 tied queries differ (Python 487/488)
+
+L1 supported (4 of 4 cells run; V0 Node supported, V0 Chromium supported, V1 Node supported, V1 Chromium supported); L3(f) supported; L4(a) supported; L4(b) supported (the reference)
+wrote results/claims-phase2.json and .md (411.4 s)
+
+real	6m51.602s
+user	6m39.579s
+sys	0m16.938s
+exit 0

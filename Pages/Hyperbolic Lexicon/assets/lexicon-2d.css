@@ -1,0 +1,52 @@
+/* Hyperbolic Lexicon, the 2D page (lexicon-2d.html; Phase 5). Loads after hl-app.css and uses its tokens and classes;
+   this file adds the board's layout, the disk's touch handling, the bits chart's two series colours (validated with the
+   dataviz checks, dark against #0b1222 and light against #ffffff) and the chart tooltip. */
+:root { --bits-h2: #3987e5; --bits-h3: #d95926; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bits-h2: #2a78d6; --bits-h3: #eb6834; } }
+:root[data-theme="light"] { --bits-h2: #2a78d6; --bits-h3: #eb6834; }
+
+.board { grid-template-areas: "input" "disk" "sel" "prec" "tokens" "lca" "shard" "engram" "checks"; }
+@media (min-width: 900px) {
+    .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas: "input input" "disk disk" "sel prec" "tokens tokens" "lca checks" "shard engram"; }
+}
+@media (min-width: 1360px) {
+    .board { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 1fr);
+        grid-template-areas: "input disk sel" "tokens disk sel" "lca prec shard" "checks prec engram"; align-items: start; }
+}
+#p-input { grid-area: input; }
+#p-disk { grid-area: disk; }
+#p-sel { grid-area: sel; }
+#p-prec { grid-area: prec; }
+#p-tokens { grid-area: tokens; }
+#p-lca { grid-area: lca; }
+#p-shard { grid-area: shard; }
+#p-engram { grid-area: engram; }
+#p-checks { grid-area: checks; }
+
+#cv-disk { touch-action: pan-y; cursor: grab; }
+#cv-disk.dragging { cursor: grabbing; }
+#p-disk[data-mode="learned"] .exact-only { display: none; }
+#p-disk .lbl { font-size: 0.8rem; }
+#p-disk .readout, #p-disk .legend { margin-top: 6px; }
+#find { width: min(18em, 100%); }
+.find-out:empty { display: none; }
+#b-up, #b-back, #b-origin, #b-centre { min-width: 3.2em; }
+#lca-a, #lca-b { max-width: min(16em, 70vw); }
+#tok-table td.word-cell { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
+.mini-details { margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
+.mini-details summary { cursor: pointer; }
+.tip { position: absolute; pointer-events: none; z-index: 2; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line-strong);
+    background: var(--panel); color: var(--text); font: 0.74rem var(--mono); white-space: nowrap; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); }
+.tip b { color: var(--text-strong); font-weight: 600; }
+.tip .key { display: inline-block; width: 10px; height: 2px; vertical-align: middle; margin-right: 5px; background: var(--c); }
+.sw-bar { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
+.crumbs { font: 0.78rem var(--mono); line-height: 1.7; overflow-wrap: anywhere; }
+.crumbs button, .linkish { font: inherit; color: var(--cyan); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.crumbs button:hover, .linkish:hover { color: var(--text-strong); }
+.crumbs .gt { color: var(--faint); padding: 0 3px; }
+.sel-name { font: 600 1rem var(--mono); color: var(--text-strong); overflow-wrap: anywhere; }
+.big { font: 0.74rem var(--mono); overflow-wrap: anywhere; word-break: break-all; }
+textarea.copybox { width: 100%; min-height: 70px; font: 0.72rem var(--mono); background: var(--field); color: var(--text); border: 1px solid var(--field-line); border-radius: 8px; padding: 6px; margin-top: 6px; }
+ol.near { margin: 4px 0 0; padding-left: 1.4rem; font: 0.76rem var(--mono); }
+ol.near li { padding: 1px 0; }
