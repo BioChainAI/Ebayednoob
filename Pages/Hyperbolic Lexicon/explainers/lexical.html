@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lexical Claims, Decided - Hyperbolic Lexicon</title>
+    <meta name="description" content="Explainer 15 of Hyperbolic Lexicon, Stage 2: the lexical claims L12-L15, registered by Amendment 13 before any code and decided by one run. On HyperLex, the exact trees beat curvature 0 and their is-a score carries ancestry and direction, but WordNet's own graph beats the H3 tree (L12(d) refuted). On BLESS and WBLESS the exact trees beat curvature 0 in detection and direction (L13). Trained on WordNet's direct edges, learned Lorentz beats learned Euclidean at d = 2 and 3 (L14). On similarity and relatedness curvature 0 does not match the exact trees (L15(a) refuted), and GloVe beats H3 on relatedness while H3 beats GloVe on HyperLex (L15(b)). Every control failed as required. A live panel re-reads the record and applies each registered rule again.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/hl.css">
+    <script src="../assets/hl-map.js"></script>
+    <style>
+        .forest { overflow-x: auto; margin: 1rem 0; border: 1px solid var(--line); border-radius: 12px; background: rgba(2, 6, 23, 0.85); padding: 6px; }
+        .forest svg { display: block; width: 100%; min-width: 560px; height: auto; }
+        .forest .none { color: var(--muted); font-size: 0.85rem; padding: 8px; }
+        .forest .scroll-hint { display: none; color: var(--muted); font-size: 0.8rem; margin: 2px 6px 4px; }
+        @media (max-width: 640px) { .forest .scroll-hint { display: block; } }
+        .panel-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+        .verdict-row td { white-space: nowrap; }
+        td.mono { white-space: nowrap; }
+    </style>
+</head>
+<body data-root="../">
+<header class="hero">
+    <div class="eyebrow">Hyperbolic Lexicon &middot; Explainer 15 &middot; Stage 2</div>
+    <h1>The Lexical Claims, Decided</h1>
+    <p class="lede">Stage 2 asked four questions of the exact trees and of learned embeddings, on word pairs that people rated or labelled. Amendment 13 registered the claims, their controls and their rules before any code existed. One run decided them. <span data-v="sum.supported">9</span> of the <span data-v="sum.parts">11</span> parts are supported and <span data-v="sum.refuted">2</span> are refuted: WordNet&rsquo;s own graph tracks graded type-of better than the H&sup3; tree (L12(d)), and curvature 0 does not match the exact trees on similarity and relatedness (L15(a)). Every control failed as required. Below, your browser re-reads the record and applies each registered rule again.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="#glance">The decisions</a>
+        <a class="btn btn-ghost" href="#panel">The record, re-read</a>
+        <a class="btn btn-ghost" href="#controls">The controls</a>
+        <a class="btn btn-ghost" href="#limits">What this does not show</a>
+        <a class="btn btn-ghost" href="../index.html#ledger">Claims ledger</a>
+    </div>
+    <div class="hero-stats">
+        <span class="stat">decided: <b>L12&ndash;L15</b> &middot; <span data-v="sum.supported">9</span> supported, <span data-v="sum.refuted">2</span> refuted</span>
+        <span class="stat">L12(d): H3 &minus; WN <b><span data-v="L12.d.H3-WN">−0.160603 [−0.220516, −0.112235]</span></b></span>
+        <span class="stat">L14: Lorentz ahead in <b><span data-v="L14.a.ahead">20</span> of <span data-v="L14.a.cells">20</span></b> HiT comparisons</span>
+        <span class="stat">one run, <b><span data-v="run.hours">4.63</span> h</b> &middot; <span data-v="run.lbench">1,848</span> receipts</span>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="toc" aria-label="Contents">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#where">1. Where this sits</a></li>
+            <li><a href="#asked">2. What was asked</a></li>
+            <li><a href="#glance">3. The decisions at a glance</a></li>
+            <li class="part">Results</li>
+            <li><a href="#l12">4. L12 &middot; Graded type-of</a></li>
+            <li><a href="#l13">5. L13 &middot; Detection and direction</a></li>
+            <li><a href="#l14">6. L14 &middot; Learned Lorentz and Euclidean</a></li>
+            <li><a href="#l15">7. L15 &middot; Similarity and relatedness</a></li>
+            <li><a href="#controls">8. The controls</a></li>
+            <li class="part">How</li>
+            <li><a href="#order">9. How it was decided</a></li>
+            <li><a href="#dry">10. What the dry sealed files showed</a></li>
+            <li class="part">Live</li>
+            <li><a href="#panel">11. The record, re-read in your browser</a></li>
+            <li class="part">Limits</li>
+            <li><a href="#limits">12. What this does not show</a></li>
+        </ol>
+    </nav>
+    <main style="font-variant-ligatures:none">
+        <details class="toc-mobile"><summary>Contents</summary><ol>
+            <li><a href="#where">Where this sits</a></li><li><a href="#asked">What was asked</a></li><li><a href="#glance">The decisions at a glance</a></li>
+            <li><a href="#l12">L12 &middot; Graded type-of</a></li><li><a href="#l13">L13 &middot; Detection and direction</a></li>
+            <li><a href="#l14">L14 &middot; Learned Lorentz and Euclidean</a></li><li><a href="#l15">L15 &middot; Similarity and relatedness</a></li>
+            <li><a href="#controls">The controls</a></li><li><a href="#order">How it was decided</a></li><li><a href="#dry">What the dry sealed files showed</a></li>
+            <li><a href="#panel">The record, re-read</a></li><li><a href="#limits">What this does not show</a></li></ol></details>
+
+        <section class="chapter" id="where">
+            <div class="chapter-num">01</div>
+            <h2>Where this sits</h2>
+            <p class="chapter-intro">The benchmark ladder&rsquo;s Stage 2 is lexical semantics: what people judge about pairs of words. Stage 1 asked whether the exact trees are faithful copies of WordNet. Stage 2 asks whether that copy tracks human judgements, and where a flat construction or a corpus does better. This page&rsquo;s focus node is Stage 2&rsquo;s lexical claims.</p>
+            <div data-hl-map="focus" data-node="lexical"></div>
+            <p>The code is in <code>reference/</code>: the loaders and pins <a href="../reference/lexicon/stage2data.py"><code>lexicon/stage2data.py</code></a>, the sense rule <a href="../reference/lexicon/senses.py"><code>senses.py</code></a>, WordNet&rsquo;s graph <a href="../reference/lexicon/wngraph.py"><code>wngraph.py</code></a>, the scores and their certified order <a href="../reference/lexicon/scores2.py"><code>scores2.py</code></a>, the statistics and decision rules <a href="../reference/lexicon/stats2.py"><code>stats2.py</code></a>, HiT&rsquo;s rows <a href="../reference/lexicon/hit.py"><code>hit.py</code></a>, GloVe <a href="../reference/lexicon/glove.py"><code>glove.py</code></a>, and the runner <a href="../reference/run_claims_stage2.py"><code>run_claims_stage2.py</code></a>. The browser&rsquo;s re-evaluation is <a href="../lexicon_stage2.js"><code>lexicon_stage2.js</code></a>, beside the unedited <code>lexicon_core.js</code>, run by <a href="../tests/parity-stage2.cjs"><code>tests/parity-stage2.cjs</code></a>.</p>
+            <p>Every number on this page is read from <a href="../data/stage2_view_v1.js"><code>data/stage2_view_v1.js</code></a>. <a href="../reference/golden/make_stage2_view_v1.py"><code>make_stage2_view_v1.py</code></a> writes it from the decisive record <a href="../reference/results/claims-stage2.json">results/claims-stage2.json</a> (summary <a href="../reference/results/claims-stage2.md">claims-stage2.md</a>), <a href="../reference/results/stage2-manifest.json">stage2-manifest.json</a>, <a href="../reference/results/tuning-stage2.json">tuning-stage2.json</a>, <a href="../reference/settings-stage2.json">settings-stage2.json</a>, the visible dry record <a href="../reference/results/dry/claims-stage2.json">results/dry/claims-stage2.json</a> and the dry runs&rsquo; two sealed files, opened in step 8 and committed as gzip copies in <a href="../reference/results/dry/stage2-sealed/values-5acbbb7.json.gz">results/dry/stage2-sealed/</a> (each checked against the SHA-256 that names it). Point at a number to see the file and the path it comes from. The page fills each number from that file when it loads, and the generator&rsquo;s <code>--check</code> fails if the page as written differs. The rules are in <a href="../PREREGISTRATION.md">PREREGISTRATION.md</a>: Amendment 13 (the claims, items 1&ndash;21), 14 (the definitions after the dry run) and 15 (the frozen rates). Amendment 16, written with this page, records errata: the Node file&rsquo;s name, one sentence of Amendment 14 on L14&rsquo;s estimates, three readings the independent check made explicit, and a figure of Amendment 14 that the sealed file corrects. It changes no rule and no result. Where this page and those files differ, the files win.</p>
+            <div class="callout plain"><span class="label">How to read this page</span>
+                <p><span class="tag t-SUPPORTED">supported</span> and <span class="tag t-REFUTED">refuted</span> mean what the registered rule says and nothing more. Each rule reads 95% bootstrap intervals of a difference between two arms. A <strong>prediction</strong> was registered with each claim. It is not part of the rule, and this page marks each one <span class="tag t-ESTABLISHED">right</span>, <span class="tag t-CONJECTURAL">wrong</span> or <span class="tag t-HEURISTIC">partly</span>.</p>
+                <p>An interval is written as estimate [2.5%, 97.5%]. Decimals are rounded from the record&rsquo;s values.</p>
+            </div>
+            <dl class="gloss">
+                <dt>H3, H2</dt><dd>The exact trees: L3&rsquo;s training-free points of every noun synset in H&sup3; and H&sup2;, with the origin o at the empty word&rsquo;s point.</dd>
+                <dt>F3, F3*, F2, F2*</dt><dd>The same construction at curvature 0 (L5&rsquo;s flat arms): the same words, placed in flat space. F collides on its lattice; F* shrinks each level.</dd>
+                <dt>WN</dt><dd>WordNet&rsquo;s own hypernym graph, with no geometry.</dd>
+                <dt>G</dt><dd>The is-a score of a sense pair (s, t): r(s) &minus; r(t) &minus; d(s, t), with r the distance from o. It is at most 0, and exactly 0 when t lies on the path from o to s. A word pair takes the largest G over its senses (the maximum over senses).</dd>
+                <dt>Sym, Dep&deg;</dt><dd>Sym is &minus;d(s, t): it gives (x, y) and (y, x) one score. Dep&deg; is the depth gap r(s) &minus; r(t) of the senses G chose.</dd>
+                <dt>K3, S-full, W</dt><dd>Controls on H3&rsquo;s points. K3: words from a content hash. S-full<sub>i</sub>: the points shuffled among synsets. W<sub>i</sub>: the senses shuffled among words of equal polysemy. Twenty of each; a control is read against its strongest permutation.</dd>
+                <dt>&rho;</dt><dd>Spearman&rsquo;s rank correlation with average ranks for ties, computed from exact integer sums.</dd>
+                <dt>Word-level interval</dt><dd>For a difference of &rho;: it resamples words, not rows, because one word sits in many pairs. It is wider than a row bootstrap: in Amendment 14&rsquo;s synthetic model (item 3) it was about 1.6&ndash;1.8 times the true spread. The row bootstrap is reported beside it and decides nothing.</dd>
+                <dt>AP, direction accuracy</dt><dd>AP: the average precision of the True rows when every row is ranked by G, with ties counted against the True row. Direction accuracy: the share of hypernym pairs with G(x, y) strictly above G(y, x).</dd>
+                <dt>RR</dt><dd>On HiT, the reciprocal rank of a child&rsquo;s held-out ancestor among it and its 10 negatives, ties counted against it.</dd>
+                <dt>Cluster interval</dt><dd>For BLESS and WBLESS: it resamples the concepts the rows were built from.</dd>
+            </dl>
+        </section>
+
+        <section class="chapter" id="asked">
+            <div class="chapter-num">02</div>
+            <h2>What was asked</h2>
+            <p class="chapter-intro">Four claims, registered by Amendment 13 on 2026-11-07 before any Stage-2 module existed. The Python reference decides all four.</p>
+            <ul>
+                <li><strong>L12, graded type-of.</strong> On HyperLex&rsquo;s <span data-v="L12.n">2,163</span> noun pairs, rated 0&ndash;6 for &ldquo;x is a type of y&rdquo; and read by G: (a) H3 and H2 track the ratings better than F3, F3*, F2 and F2*; (b) G beats the depth gap Dep&deg;, so the tree carries ancestry beyond generality; (c) G beats Sym, so it carries direction beyond similarity; (d) H3 tracks them as well as WordNet&rsquo;s own graph, within &plusmn;0.02.</li>
+                <li><strong>L13, detection and direction.</strong> On the hypernymy suite&rsquo;s BLESS and WBLESS test folds, H3 and H2 beat curvature 0 in (a) BLESS detection AP, (b) WBLESS detection AP and (c) BLESS direction accuracy.</li>
+                <li><strong>L14, learned geometry.</strong> Trained on WordNet&rsquo;s 75,850 direct noun hypernym edges at d = 2 and 3, learned Lorentz embeddings beat learned Euclidean ones, both read by G: (a) on HiT&rsquo;s multi-hop test, with random and with hard negatives; (b) on HyperLex&rsquo;s nouns.</li>
+                <li><strong>L15, similarity and relatedness.</strong> (a) Read by Sym, curvature 0 does as well as the exact trees on SimLex&rsquo;s nouns and MEN&rsquo;s noun pairs: the hyperbolic gain in &rho; is at most 0.02. (b) GloVe&rsquo;s 300-d cosine beats H3 on relatedness (MEN and WordSim&rsquo;s relatedness pairs), and H3 beats GloVe on HyperLex.</li>
+            </ul>
+            <p>Each claim has controls that must fail as required. If one does not, the parts it names are void, and a void part decides nothing. Apart from tuning&rsquo;s scores on HiT&rsquo;s validation split (<a href="#l14">chapter 6</a>), no metric of any arm had been computed on any of these sets before the decisive run. One count was a partial preview: Amendment 13 counted, by HyperLex TYPE, which pairs are WordNet closure pairs before L12(d) was written. It says so (A13.20), and the record flags L12(d) as &ldquo;<span data-v="L12.d.flag">registered after a partial preview (A13.20)</span>&rdquo;.</p>
+        </section>
+
+        <section class="chapter" id="glance">
+            <div class="chapter-num">03</div>
+            <h2>The decisions at a glance</h2>
+            <p class="chapter-intro">The record&rsquo;s verdicts, with the registered prediction for each part. Every control failed as required, so no part is void.</p>
+            <div class="table-wrap"><table style="min-width:860px">
+                <thead><tr><th>Part</th><th>What it says</th><th>Decision</th><th>Result</th><th>Predicted</th><th>Graded</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono"><a href="#l12">L12(a)</a></td><td>H beats F on HyperLex, four cells</td><td><span class="tag t-SUPPORTED" data-v="L12.a" data-kind="verdict">supported</span></td><td><span data-v="L12.a.above">4</span> of <span data-v="L12.a.cells">4</span> intervals above 0; lowest lower end <span data-v="L12.a.minLo">+0.313005</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L12.a" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l12">L12(b)</a></td><td>G beats Dep&deg;, in H3 and H2</td><td><span class="tag t-SUPPORTED" data-v="L12.b" data-kind="verdict">supported</span></td><td><span data-v="L12.b.above">2</span> of <span data-v="L12.b.cells">2</span> above 0; lowest lower end <span data-v="L12.b.minLo">+0.054986</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L12.b" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l12">L12(c)</a></td><td>G beats Sym, in H3 and H2</td><td><span class="tag t-SUPPORTED" data-v="L12.c" data-kind="verdict">supported</span></td><td><span data-v="L12.c.above">2</span> of <span data-v="L12.c.cells">2</span> above 0; lowest lower end <span data-v="L12.c.minLo">+0.308581</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L12.c" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l12d">L12(d)</a></td><td>H3 within &plusmn;0.02 of WordNet&rsquo;s graph</td><td><span class="tag t-REFUTED" data-v="L12.d" data-kind="verdict">refuted</span><br><span style="color:var(--muted);font-size:0.82rem">flagged (A13.20)</span></td><td>H3 &minus; WN <span data-v="L12.d.H3-WN">−0.160603 [−0.220516, −0.112235]</span>: below the band</td><td>refuted, on the low side</td><td><span class="tag t-ESTABLISHED" data-v="pred.L12.d" data-kind="pred">right</span><br><span style="color:var(--muted);font-size:0.82rem">its width: <span class="tag t-CONJECTURAL" data-v="pred.L12.dHalfwidth" data-kind="pred">wrong</span></span></td></tr>
+                    <tr><td class="mono"><a href="#l13">L13(a)</a></td><td>H beats F, BLESS detection AP</td><td><span class="tag t-SUPPORTED" data-v="L13.a" data-kind="verdict">supported</span></td><td><span data-v="L13.a.above">4</span> of <span data-v="L13.a.cells">4</span> above 0; lowest lower end <span data-v="L13.a.minLo">+0.624829</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L13.a" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l13">L13(b)</a></td><td>H beats F, WBLESS detection AP</td><td><span class="tag t-SUPPORTED" data-v="L13.b" data-kind="verdict">supported</span></td><td><span data-v="L13.b.above">4</span> of <span data-v="L13.b.cells">4</span> above 0; lowest lower end <span data-v="L13.b.minLo">+0.362911</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L13.b" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l13">L13(c)</a></td><td>H beats F, BLESS direction</td><td><span class="tag t-SUPPORTED" data-v="L13.c" data-kind="verdict">supported</span></td><td><span data-v="L13.c.above">4</span> of <span data-v="L13.c.cells">4</span> above 0; lowest lower end <span data-v="L13.c.minLo">+0.304385</span></td><td>supported; an F* cell the likeliest inconclusive one</td><td><span class="tag t-ESTABLISHED" data-v="pred.L13.c" data-kind="pred">right</span><br><span style="color:var(--muted);font-size:0.82rem">F*: <span class="tag t-CONJECTURAL" data-v="pred.L13.cFstar" data-kind="pred">wrong</span></span></td></tr>
+                    <tr><td class="mono"><a href="#l14">L14(a)</a></td><td>Lorentz beats Euclidean on HiT test, d = 2 and 3, random and hard</td><td><span class="tag t-SUPPORTED" data-v="L14.a" data-kind="verdict">supported</span></td><td><span data-v="L14.a.above">20</span> of <span data-v="L14.a.cells">20</span> seed intervals above 0; lowest lower end <span data-v="L14.a.minLo">+0.174691</span></td><td>supported, with a larger gap than (b)</td><td><span class="tag t-ESTABLISHED" data-v="pred.L14.a" data-kind="pred">right</span><br><span style="color:var(--muted);font-size:0.82rem">larger gap: <span class="tag t-HEURISTIC" data-v="pred.L14.gapAB" data-kind="pred">partly</span></span></td></tr>
+                    <tr><td class="mono"><a href="#l14">L14(b)</a></td><td>Lorentz beats Euclidean on HyperLex</td><td><span class="tag t-SUPPORTED" data-v="L14.b" data-kind="verdict">supported</span></td><td><span data-v="L14.b.above">10</span> of <span data-v="L14.b.cells">10</span> seed intervals above 0; lowest lower end <span data-v="L14.b.minLo">+0.126876</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L14.b" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l15">L15(a)</a></td><td>Curvature 0 does as well under Sym: gain at most 0.02</td><td><span class="tag t-REFUTED" data-v="L15.a" data-kind="verdict">refuted</span></td><td><span data-v="L15.a.above">8</span> of <span data-v="L15.a.cells">8</span> intervals have lo &gt; +0.02; lowest lower end <span data-v="L15.a.minLo">+0.034313</span></td><td>refuted, at least on SimLex</td><td><span class="tag t-ESTABLISHED" data-v="pred.L15.a" data-kind="pred">right</span></td></tr>
+                    <tr><td class="mono"><a href="#l15">L15(b)</a></td><td>GloVe beats H3 on relatedness; H3 beats GloVe on HyperLex</td><td><span class="tag t-SUPPORTED" data-v="L15.b" data-kind="verdict">supported</span></td><td><span data-v="L15.b.above">3</span> of <span data-v="L15.b.cells">3</span> above 0; lowest lower end <span data-v="L15.b.minLo">+0.023564</span></td><td>supported</td><td><span class="tag t-ESTABLISHED" data-v="pred.L15.b" data-kind="pred">right</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>Every decision above was made by the Python reference. Amendment 13 item 1 also asks for a browser check before a page shows a Stage-2 claim as holding: the browser core must reproduce the decisive code files. It names <code>lexicon_core.js</code>; the integration overhaul&rsquo;s decision D4 keeps that file unedited, so the code is in <code>lexicon_stage2.js</code> beside it. In step 8, <code>lexicon_stage2.js</code> re-rendered all <span data-v="run.decisionFiles">106</span> decision files of A13.14 (<span data-v="run.decisionFiles.exact">66</span> exact-arm files, <span data-v="run.decisionFiles.hit_test">20</span> learned tables on HiT test and <span data-v="run.decisionFiles.hl_at">20</span> on HyperLex; <span data-v="run.decisionLines">12,685,235</span> lines) from the pinned word lists, WordNet and the committed snapped tables, and every file&rsquo;s text matched the manifest&rsquo;s SHA-256. So these decisions are shown as holding. Those <span data-v="run.decisionFiles">106</span> files are the group A13.14 names: the exact-arm files that any of the <span data-v="run.comparisons">141</span> decided comparisons reads, and the measured tables&rsquo; files on HiT test and HyperLex. Files that only controls read were not re-rendered in Node: L14&rsquo;s edge-shuffled tables (control 3 compares them in <span data-v="run.comparisons.L14c3">60</span> of the <span data-v="run.comparisons">141</span> comparisons), its tuning tables and relabelled points (controls 1 and 2), and GloVe&rsquo;s files for the controls 3 of L13 and L15. The independent check reproduced those with its own Python code (<a href="#limits">chapter 12</a>; Amendment 16 item 1).</p>
+        </section>
+
+        <section class="chapter" id="l12">
+            <div class="chapter-num">04</div>
+            <h2>L12 &middot; Graded type-of on HyperLex</h2>
+            <p class="chapter-intro">HyperLex asks people how much x is a type of y. The exact trees track those ratings far better than their flat twins, and their score G carries both ancestry and direction. But WordNet&rsquo;s own graph tracks them better still.</p>
+            <p>Each arm scores the <span data-v="L12.n">2,163</span> noun pairs (they hold <span data-v="L12.V">1,843</span> distinct words), and each score is correlated with the mean rating.</p>
+            <div class="table-wrap"><table style="min-width:620px">
+                <thead><tr><th>Arm (G, maximum over senses)</th><th class="num">&rho;</th><th>Note</th></tr></thead>
+                <tbody>
+                    <tr><td>H3</td><td class="num"><span data-v="L12.rho.H3">0.624924</span></td><td>the exact tree in H&sup3;</td></tr>
+                    <tr><td>H2</td><td class="num"><span data-v="L12.rho.H2">0.620716</span></td><td>the exact tree in H&sup2;</td></tr>
+                    <tr><td>F3</td><td class="num"><span data-v="L12.rho.F3">0.173168</span></td><td rowspan="4">curvature 0</td></tr>
+                    <tr><td>F3*</td><td class="num"><span data-v="L12.rho.F3*">0.216920</span></td></tr>
+                    <tr><td>F2</td><td class="num"><span data-v="L12.rho.F2">0.054840</span></td></tr>
+                    <tr><td>F2*</td><td class="num"><span data-v="L12.rho.F2*">0.211128</span></td></tr>
+                    <tr><td>WN</td><td class="num"><span data-v="L12.rho.WN">0.785527</span></td><td>WordNet&rsquo;s graph, no geometry</td></tr>
+                    <tr><td>K3</td><td class="num"><span data-v="L12.rho.K3">0.097928</span></td><td>control: no hierarchy</td></tr>
+                    <tr><td>H3 by Dep&deg; &middot; by Sym</td><td class="num"><span data-v="L12.rho.H3/DepG">0.450602</span> &middot; <span data-v="L12.rho.H3/Sym">0.225535</span></td><td rowspan="2">for (b) and (c)</td></tr>
+                    <tr><td>H2 by Dep&deg; &middot; by Sym</td><td class="num"><span data-v="L12.rho.H2/DepG">0.452892</span> &middot; <span data-v="L12.rho.H2/Sym">0.210319</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Part</th><th>Difference</th><th>Word-level interval (decides)</th><th>Row bootstrap (reported)</th></tr></thead>
+                <tbody>
+                    <tr><td rowspan="4">(a) <span class="tag t-SUPPORTED" data-v="L12.a" data-kind="verdict">supported</span></td><td>&rho;(H3) &minus; &rho;(F3)</td><td class="mono"><span data-v="L12.a.H3-F3">+0.451756 [+0.366321, +0.537456]</span></td><td class="mono"><span data-v="L12.a.H3-F3.row">[+0.412466, +0.490905]</span></td></tr>
+                    <tr><td>&rho;(H3) &minus; &rho;(F3*)</td><td class="mono"><span data-v="L12.a.H3-F3*">+0.408004 [+0.317121, +0.502786]</span></td><td class="mono"><span data-v="L12.a.H3-F3*.row">[+0.371912, +0.443928]</span></td></tr>
+                    <tr><td>&rho;(H2) &minus; &rho;(F2)</td><td class="mono"><span data-v="L12.a.H2-F2">+0.565876 [+0.468303, +0.652605]</span></td><td class="mono"><span data-v="L12.a.H2-F2.row">[+0.522615, +0.608590]</span></td></tr>
+                    <tr><td>&rho;(H2) &minus; &rho;(F2*)</td><td class="mono"><span data-v="L12.a.H2-F2*">+0.409588 [+0.313005, +0.506924]</span></td><td class="mono"><span data-v="L12.a.H2-F2*.row">[+0.372121, +0.446802]</span></td></tr>
+                    <tr><td rowspan="2">(b) <span class="tag t-SUPPORTED" data-v="L12.b" data-kind="verdict">supported</span></td><td>H3: &rho;(G) &minus; &rho;(Dep&deg;)</td><td class="mono"><span data-v="L12.b.H3">+0.174322 [+0.061545, +0.292732]</span></td><td class="mono"><span data-v="L12.b.H3.row">[+0.125265, +0.222235]</span></td></tr>
+                    <tr><td>H2: &rho;(G) &minus; &rho;(Dep&deg;)</td><td class="mono"><span data-v="L12.b.H2">+0.167824 [+0.054986, +0.287257]</span></td><td class="mono"><span data-v="L12.b.H2.row">[+0.118842, +0.215620]</span></td></tr>
+                    <tr><td rowspan="2">(c) <span class="tag t-SUPPORTED" data-v="L12.c" data-kind="verdict">supported</span></td><td>H3: &rho;(G) &minus; &rho;(Sym)</td><td class="mono"><span data-v="L12.c.H3">+0.399389 [+0.308581, +0.487686]</span></td><td class="mono"><span data-v="L12.c.H3.row">[+0.365521, +0.433175]</span></td></tr>
+                    <tr><td>H2: &rho;(G) &minus; &rho;(Sym)</td><td class="mono"><span data-v="L12.c.H2">+0.410397 [+0.320309, +0.497834]</span></td><td class="mono"><span data-v="L12.c.H2.row">[+0.376480, +0.444836]</span></td></tr>
+                    <tr><td>(d) <span class="tag t-REFUTED" data-v="L12.d" data-kind="verdict">refuted</span></td><td>&rho;(H3) &minus; &rho;(WN)</td><td class="mono"><span data-v="L12.d.H3-WN">−0.160603 [−0.220516, −0.112235]</span></td><td class="mono"><span data-v="L12.d.H3-WN.row">[−0.182059, −0.140491]</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="forest" data-forest="L12" role="img" aria-label="L12's intervals"></div>
+            <h3>The predictions</h3>
+            <ul>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L12.rhoH3" data-kind="pred">right</span> &rho;(H3) between 0.45 and 0.70: it is <span data-v="L12.rho.H3">0.624924</span>.</li>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L12.Fgap" data-kind="pred">right</span> Every F arm at least 0.10 below &rho;(H3): the smallest gap is <span data-v="pred.L12.FgapMin">0.408</span>. In F a bent path&rsquo;s deficit grows with its legs and the lattice collides, so ancestors at one depth mix with non-ancestors at another.</li>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L12.a" data-kind="pred">right</span> <span class="tag t-ESTABLISHED" data-v="pred.L12.b" data-kind="pred">right</span> <span class="tag t-ESTABLISHED" data-v="pred.L12.c" data-kind="pred">right</span> (a), (b) and (c) supported.</li>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L12.d" data-kind="pred">right</span> (d) refuted on the low side. The direction was right.</li>
+                <li><span class="tag t-CONJECTURAL" data-v="pred.L12.dHalfwidth" data-kind="pred">wrong</span> The size was not. The word-level half-width was predicted at 0.015&ndash;0.026; it is <span data-v="L12.d.halfwidth">0.054</span> (the row bootstrap&rsquo;s is <span data-v="L12.d.rowHalfwidth">0.021</span>). The estimate, <span data-v="L12.d.H3-WN">−0.160603 [−0.220516, −0.112235]</span>, is also far larger than the 0.02&ndash;0.04 the prediction put on the 46 hyp pairs whose closure link is not a spanning one; it said the bends would add to that, without a size.</li>
+            </ul>
+            <h3 id="l12d">Why (d) is refuted, and what that rests on</h3>
+            <p>The interval lies entirely below the band [&minus;0.02, +0.02], which is what refutes (d): its upper end, <span data-v="L12.d.hi">−0.112235</span>, is <span data-v="L12.d.hiMargin">0.092235</span> below the band&rsquo;s low end. Its lower end, <span data-v="L12.d.lo">−0.220516</span>, passes that end by <span data-v="L12.d.excess">0.200516</span> (the record&rsquo;s failing excess). A chain of reported arms shows where the gap opens. Each step keeps G and the maximum over senses and changes one thing:</p>
+            <div class="table-wrap"><table style="min-width:600px">
+                <thead><tr><th>Step (reported)</th><th class="num">&rho;</th><th>What changes</th></tr></thead>
+                <tbody>
+                    <tr><td>WN</td><td class="num"><span data-v="L12.chain.WN">0.785527</span></td><td>WordNet&rsquo;s graph, with its multiple parents</td></tr>
+                    <tr><td>WN-U</td><td class="num"><span data-v="L12.chain.WN-U">0.715703</span></td><td>aside: the same graph, read without direction</td></tr>
+                    <tr><td>ST</td><td class="num"><span data-v="L12.chain.ST">0.738586</span></td><td>the spanning tree: one parent each (<span data-v="L12.chain.WN~ST">0.047</span> below WN)</td></tr>
+                    <tr><td>letter tree</td><td class="num"><span data-v="L12.chain.letter">0.733715</span></td><td>the address words&rsquo; letter tree (<span data-v="L12.chain.ST~letter">0.005</span> below ST)</td></tr>
+                    <tr><td>H3</td><td class="num"><span data-v="L12.chain.H3">0.624924</span></td><td>the words placed in H&sup3; (<span data-v="L12.chain.letter~H3">0.109</span> below the letter tree)</td></tr>
+                </tbody>
+            </table></div>
+            <p>Most of the gap opens in the last step. That is where the embedding bends a path, and a spanning ancestor then loses a little G. Amendment 13 named this loss but did not size it.</p>
+            <div class="callout note"><span class="label">The tie reading behind (d)</span>
+                <p>WN&rsquo;s G takes only <span data-v="L12.classes.WN">13</span> distinct values on these pairs; H3&rsquo;s takes <span data-v="L12.classes.H3">1,939</span>. &rho; is decided with average ranks for ties (A13.7). Breaking each arm&rsquo;s ties against the ratings gives the tie-pessimistic &rho;, and breaking them with the ratings the tie-optimistic one. WN&rsquo;s range is <span data-v="L12.tie.WN.pess">0.495551</span> to <span data-v="L12.tie.WN.opt">0.933593</span>; H3&rsquo;s is <span data-v="L12.tie.H3.pess">0.620763</span> to <span data-v="L12.tie.H3.opt">0.628662</span>. Under the pessimistic reading H3 would lead WN. A13.7 chose average ranks in advance, with this case named as the reason: a pessimistic reading would decide (d) by the arms&rsquo; tie counts. So this is not a deviation, but (d) does rest on it.</p>
+            </div>
+            <p>G&rsquo;s known limits show too. Two words that share a synset score G = 0, the largest value. In H3 those pairs form the top class on their own, above every ancestor pair, whose G the embedding&rsquo;s bends push below 0; in WN, where an ancestor also scores 0, they tie. Either way synonyms rank with or above the type-of pairs. Within the hyp strata, G runs against the ratings: H3&rsquo;s &rho; in hyp-1 to hyp-4 is <span data-v="L12.strata.H3.hyp-1">−0.066406</span>, <span data-v="L12.strata.H3.hyp-2">−0.046884</span>, <span data-v="L12.strata.H3.hyp-3">−0.221226</span> and <span data-v="L12.strata.H3.hyp-4">−0.188723</span> (reported), because every ancestor sits near 0.</p>
+        </section>
+
+        <section class="chapter" id="l13">
+            <div class="chapter-num">05</div>
+            <h2>L13 &middot; Detection and direction on BLESS and WBLESS</h2>
+            <p class="chapter-intro">The exact trees find hypernym pairs and their direction well. Their flat twins sit near chance, and F2 and F2* fall below it in places: F2&rsquo;s BLESS AP is <span data-v="L13.ap.BD.F2">0.091665</span> against a chance level of <span data-v="L13.pi.BD">0.096563</span>, and F2* picks the right direction on <span data-v="L13.acc.F2*">0.438023</span> of the pairs. So H &minus; F here mostly measures H against a near-chance baseline, and the gaps describe F as much as H.</p>
+            <p>BLESS&rsquo;s test fold has <span data-v="L13.n.a">12,365</span> covered rows, <span data-v="L13.true.BD">1,194</span> of them True, in <span data-v="L13.clusters.a">200</span> concept clusters. WBLESS has <span data-v="L13.n.b">1,493</span> rows, <span data-v="L13.true.WB">764</span> True, in <span data-v="L13.clusters.b">192</span> clusters. Direction uses BLESS&rsquo;s <span data-v="L13.n.c">1,194</span> True rows.</p>
+            <div class="table-wrap"><table style="min-width:620px">
+                <thead><tr><th>Arm (G)</th><th class="num">BLESS AP</th><th class="num">WBLESS AP</th><th class="num">BLESS direction (rows right)</th></tr></thead>
+                <tbody>
+                    <tr><td>H3</td><td class="num"><span data-v="L13.ap.BD.H3">0.789238</span></td><td class="num"><span data-v="L13.ap.WB.H3">0.970157</span></td><td class="num"><span data-v="L13.acc.H3">0.979899</span> (<span data-v="L13.accn.H3">1,170</span>)</td></tr>
+                    <tr><td>H2</td><td class="num"><span data-v="L13.ap.BD.H2">0.801070</span></td><td class="num"><span data-v="L13.ap.WB.H2">0.970611</span></td><td class="num"><span data-v="L13.acc.H2">0.983250</span> (<span data-v="L13.accn.H2">1,174</span>)</td></tr>
+                    <tr><td>F3</td><td class="num"><span data-v="L13.ap.BD.F3">0.105501</span></td><td class="num"><span data-v="L13.ap.WB.F3">0.569475</span></td><td class="num"><span data-v="L13.acc.F3">0.628141</span> (<span data-v="L13.accn.F3">750</span>)</td></tr>
+                    <tr><td>F3*</td><td class="num"><span data-v="L13.ap.BD.F3*">0.136583</span></td><td class="num"><span data-v="L13.ap.WB.F3*">0.557491</span></td><td class="num"><span data-v="L13.acc.F3*">0.603015</span> (<span data-v="L13.accn.F3*">720</span>)</td></tr>
+                    <tr><td>F2</td><td class="num"><span data-v="L13.ap.BD.F2">0.091665</span></td><td class="num"><span data-v="L13.ap.WB.F2">0.515804</span></td><td class="num"><span data-v="L13.acc.F2">0.518425</span> (<span data-v="L13.accn.F2">619</span>)</td></tr>
+                    <tr><td>F2*</td><td class="num"><span data-v="L13.ap.BD.F2*">0.121592</span></td><td class="num"><span data-v="L13.ap.WB.F2*">0.536872</span></td><td class="num"><span data-v="L13.acc.F2*">0.438023</span> (<span data-v="L13.accn.F2*">523</span>)</td></tr>
+                    <tr><td>share of True rows (chance AP)</td><td class="num"><span data-v="L13.pi.BD">0.096563</span></td><td class="num"><span data-v="L13.pi.WB">0.511721</span></td><td class="num">&mdash;</td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Cell</th><th>(a) BLESS AP</th><th>(b) WBLESS AP</th><th>(c) BLESS direction</th></tr></thead>
+                <tbody>
+                    <tr><td>H3 &minus; F3</td><td class="mono"><span data-v="L13.a.H3-F3">+0.683738 [+0.654393, +0.713618]</span></td><td class="mono"><span data-v="L13.b.H3-F3">+0.400682 [+0.362911, +0.432217]</span></td><td class="mono"><span data-v="L13.c.H3-F3">+0.351759 [+0.304385, +0.399163]</span></td></tr>
+                    <tr><td>H3 &minus; F3*</td><td class="mono"><span data-v="L13.a.H3-F3*">+0.652656 [+0.624829, +0.681090]</span></td><td class="mono"><span data-v="L13.b.H3-F3*">+0.412666 [+0.385307, +0.439142]</span></td><td class="mono"><span data-v="L13.c.H3-F3*">+0.376884 [+0.343593, +0.410442]</span></td></tr>
+                    <tr><td>H2 &minus; F2</td><td class="mono"><span data-v="L13.a.H2-F2">+0.709405 [+0.681430, +0.737730]</span></td><td class="mono"><span data-v="L13.b.H2-F2">+0.454806 [+0.426190, +0.480855]</span></td><td class="mono"><span data-v="L13.c.H2-F2">+0.464824 [+0.414858, +0.514643]</span></td></tr>
+                    <tr><td>H2 &minus; F2*</td><td class="mono"><span data-v="L13.a.H2-F2*">+0.679478 [+0.652498, +0.706789]</span></td><td class="mono"><span data-v="L13.b.H2-F2*">+0.433739 [+0.408648, +0.457732]</span></td><td class="mono"><span data-v="L13.c.H2-F2*">+0.545226 [+0.513709, +0.576344]</span></td></tr>
+                    <tr><td>Decision</td><td><span class="tag t-SUPPORTED" data-v="L13.a" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L13.b" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L13.c" data-kind="verdict">supported</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="forest" data-forest="L13" role="img" aria-label="L13's intervals"></div>
+            <h3>The predictions</h3>
+            <ul>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L13.a" data-kind="pred">right</span> <span class="tag t-ESTABLISHED" data-v="pred.L13.b" data-kind="pred">right</span> <span class="tag t-ESTABLISHED" data-v="pred.L13.c" data-kind="pred">right</span> (a), (b) and (c) supported.</li>
+                <li><span class="tag t-CONJECTURAL" data-v="pred.L13.cFstar" data-kind="pred">wrong</span> &ldquo;F* is the likeliest inconclusive cell of (c)&rdquo;. Both F* cells are well above 0 (lowest lower end <span data-v="pred.L13.cFstarLo">+0.343593</span>). F2* gets the direction right on <span data-v="L13.accn.F2*">523</span> of the <span data-v="L13.n.c">1,194</span> pairs, below one half, and F2 on <span data-v="L13.accn.F2">619</span>. The reason the prediction gave, that a prefix&rsquo;s radius is usually below its extension&rsquo;s, does not show here.</li>
+            </ul>
+            <div class="callout limit"><span class="label">The flat arms are close to chance</span>
+                <p>On BLESS the F arms&rsquo; AP lies at <span data-v="L13.ap.BD.Frange">0.091665 to 0.136583</span>, beside the chance level <span data-v="L13.pi.BD">0.096563</span>; on WBLESS at <span data-v="L13.ap.WB.Frange">0.515804 to 0.569475</span>, beside <span data-v="L13.pi.WB">0.511721</span>. So the decided gaps compare H with a near-chance baseline. The controls (<a href="#controls">chapter 8</a>) compare H with arms that lose the hierarchy, and those gaps are just as large. For orientation only, as A13 registered it: Roller et al.&rsquo;s spmi scores .76 / .96 / .96 for BLESS AP, WBLESS AP and BLESS direction, and HypeCones .81 / .98 / .94; H3 scores <span data-v="L13.ap.BD.H3">0.789238</span> / <span data-v="L13.ap.WB.H3">0.970157</span> / <span data-v="L13.acc.H3">0.979899</span>. These are not comparable: their folds were never released, uncovered rows are dropped here, and the trees are built from WordNet, which also built most of the positives.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="l14">
+            <div class="chapter-num">06</div>
+            <h2>L14 &middot; Learned Lorentz against learned Euclidean</h2>
+            <p class="chapter-intro">Both geometries were trained on WordNet&rsquo;s direct noun edges only, then asked about ancestors two or more steps up. Lorentz wins every comparison, at both dimensions, by wide margins.</p>
+            <p>The rows of HiT&rsquo;s test (<span data-v="L14.n.hit">29,383</span>) each hold a child, an indirect ancestor held out of training, and 10 random and 10 hard negatives. HiT draws the hard negatives from the child&rsquo;s siblings. (b) reads the same tables on the <span data-v="L14.n.hl">2,153</span> HyperLex rows whose words lie in the training graph. Five seeds (0&ndash;4) per geometry and dimension, rate 10 everywhere (Amendment 15).</p>
+            <div class="table-wrap"><table style="min-width:620px">
+                <thead><tr><th>Cell</th><th class="num">Lorentz</th><th class="num">Euclidean</th><th class="num">Lorentz &minus; Euclidean</th><th>Decision</th></tr></thead>
+                <tbody>
+                    <tr><td>(a) d = 2, random &middot; mean RR</td><td class="num"><span data-v="L14.rr.d2/random.lorentz">0.956590</span></td><td class="num"><span data-v="L14.rr.d2/random.euclid">0.660182</span></td><td class="num"><span data-v="L14.rr.d2/random.gap">+0.296408</span></td><td><span class="tag t-SUPPORTED" data-v="L14.a.d2/random" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>(a) d = 2, hard &middot; mean RR</td><td class="num"><span data-v="L14.rr.d2/hard.lorentz">0.804474</span></td><td class="num"><span data-v="L14.rr.d2/hard.euclid">0.336069</span></td><td class="num"><span data-v="L14.rr.d2/hard.gap">+0.468405</span></td><td><span class="tag t-SUPPORTED" data-v="L14.a.d2/hard" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>(a) d = 3, random &middot; mean RR</td><td class="num"><span data-v="L14.rr.d3/random.lorentz">0.955719</span></td><td class="num"><span data-v="L14.rr.d3/random.euclid">0.749144</span></td><td class="num"><span data-v="L14.rr.d3/random.gap">+0.206574</span></td><td><span class="tag t-SUPPORTED" data-v="L14.a.d3/random" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>(a) d = 3, hard &middot; mean RR</td><td class="num"><span data-v="L14.rr.d3/hard.lorentz">0.726563</span></td><td class="num"><span data-v="L14.rr.d3/hard.euclid">0.335124</span></td><td class="num"><span data-v="L14.rr.d3/hard.gap">+0.391439</span></td><td><span class="tag t-SUPPORTED" data-v="L14.a.d3/hard" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>(b) d = 2 &middot; mean &rho; on HyperLex</td><td class="num"><span data-v="L14.rho.d2.lorentz">0.482037</span></td><td class="num"><span data-v="L14.rho.d2.euclid">0.157682</span></td><td class="num"><span data-v="L14.rho.d2.gap">+0.324355</span></td><td><span class="tag t-SUPPORTED" data-v="L14.b.d2" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>(b) d = 3 &middot; mean &rho; on HyperLex</td><td class="num"><span data-v="L14.rho.d3.lorentz">0.494037</span></td><td class="num"><span data-v="L14.rho.d3.euclid">0.238121</span></td><td class="num"><span data-v="L14.rho.d3.gap">+0.255916</span></td><td><span class="tag t-SUPPORTED" data-v="L14.b.d3" data-kind="verdict">supported</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>Means over the five seeds. A cell is supported when all five seeds are present and each seed&rsquo;s interval lies above 0. All <span data-v="L14.a.cells">20</span> HiT intervals and all <span data-v="L14.b.cells">10</span> HyperLex intervals do:</p>
+            <div class="table-wrap"><table class="compact" style="min-width:760px">
+                <thead><tr><th>(a) Seed</th><th>d = 2, random</th><th>d = 2, hard</th><th>d = 3, random</th><th>d = 3, hard</th></tr></thead>
+                <tbody>
+                    <tr><td>0</td><td class="mono"><span data-v="L14.a.d2/random.s0">+0.285316 [+0.281157, +0.289430]</span></td><td class="mono"><span data-v="L14.a.d2/hard.s0">+0.450051 [+0.445046, +0.455000]</span></td><td class="mono"><span data-v="L14.a.d3/random.s0">+0.205747 [+0.201975, +0.209611]</span></td><td class="mono"><span data-v="L14.a.d3/hard.s0">+0.391719 [+0.386640, +0.396831]</span></td></tr>
+                    <tr><td>1</td><td class="mono"><span data-v="L14.a.d2/random.s1">+0.316292 [+0.312273, +0.320375]</span></td><td class="mono"><span data-v="L14.a.d2/hard.s1">+0.486315 [+0.481581, +0.491007]</span></td><td class="mono"><span data-v="L14.a.d3/random.s1">+0.215865 [+0.212072, +0.219685]</span></td><td class="mono"><span data-v="L14.a.d3/hard.s1">+0.409492 [+0.404350, +0.414578]</span></td></tr>
+                    <tr><td>2</td><td class="mono"><span data-v="L14.a.d2/random.s2">+0.279870 [+0.275727, +0.283902]</span></td><td class="mono"><span data-v="L14.a.d2/hard.s2">+0.446015 [+0.441095, +0.451009]</span></td><td class="mono"><span data-v="L14.a.d3/random.s2">+0.178339 [+0.174691, +0.182072]</span></td><td class="mono"><span data-v="L14.a.d3/hard.s2">+0.381627 [+0.376357, +0.387048]</span></td></tr>
+                    <tr><td>3</td><td class="mono"><span data-v="L14.a.d2/random.s3">+0.293680 [+0.289605, +0.297714]</span></td><td class="mono"><span data-v="L14.a.d2/hard.s3">+0.473132 [+0.468279, +0.477967]</span></td><td class="mono"><span data-v="L14.a.d3/random.s3">+0.210631 [+0.206748, +0.214585]</span></td><td class="mono"><span data-v="L14.a.d3/hard.s3">+0.386223 [+0.380943, +0.391429]</span></td></tr>
+                    <tr><td>4</td><td class="mono"><span data-v="L14.a.d2/random.s4">+0.306881 [+0.302928, +0.310840]</span></td><td class="mono"><span data-v="L14.a.d2/hard.s4">+0.486514 [+0.481788, +0.491259]</span></td><td class="mono"><span data-v="L14.a.d3/random.s4">+0.222290 [+0.218271, +0.226285]</span></td><td class="mono"><span data-v="L14.a.d3/hard.s4">+0.388133 [+0.383054, +0.393225]</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table class="compact" style="min-width:420px">
+                <thead><tr><th>(b) Seed</th><th>d = 2</th><th>d = 3</th></tr></thead>
+                <tbody>
+                    <tr><td>0</td><td class="mono"><span data-v="L14.b.d2.s0">+0.316821 [+0.212232, +0.420832]</span></td><td class="mono"><span data-v="L14.b.d3.s0">+0.220881 [+0.126876, +0.309236]</span></td></tr>
+                    <tr><td>1</td><td class="mono"><span data-v="L14.b.d2.s1">+0.285241 [+0.186487, +0.386932]</span></td><td class="mono"><span data-v="L14.b.d3.s1">+0.254431 [+0.174591, +0.331099]</span></td></tr>
+                    <tr><td>2</td><td class="mono"><span data-v="L14.b.d2.s2">+0.366185 [+0.257133, +0.480721]</span></td><td class="mono"><span data-v="L14.b.d3.s2">+0.292658 [+0.200027, +0.376545]</span></td></tr>
+                    <tr><td>3</td><td class="mono"><span data-v="L14.b.d2.s3">+0.313935 [+0.203011, +0.425013]</span></td><td class="mono"><span data-v="L14.b.d3.s3">+0.256050 [+0.146138, +0.368295]</span></td></tr>
+                    <tr><td>4</td><td class="mono"><span data-v="L14.b.d2.s4">+0.339592 [+0.239928, +0.434629]</span></td><td class="mono"><span data-v="L14.b.d3.s4">+0.255562 [+0.174471, +0.333623]</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="forest" data-forest="L14" role="img" aria-label="L14's per-seed intervals"></div>
+            <h3>The predictions</h3>
+            <ul>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L14.a" data-kind="pred">right</span> <span class="tag t-ESTABLISHED" data-v="pred.L14.b" data-kind="pred">right</span> (a) and (b) supported. Amendment 13 held this with low confidence and named inconclusive as a likely alternative. The outcome is cleaner than predicted.</li>
+                <li><span class="tag t-HEURISTIC" data-v="pred.L14.gapAB" data-kind="pred">partly</span> &ldquo;A larger gap in (a) than in (b)&rdquo;. It holds in <span data-v="pred.L14.gapABcount">2</span> of the four HiT cells: with hard negatives (<span data-v="pred.L14.gapA.d2/hard">+0.468405</span> and <span data-v="pred.L14.gapA.d3/hard">+0.391439</span>, against (b)&rsquo;s <span data-v="pred.L14.gapB.d2">+0.324355</span> and <span data-v="pred.L14.gapB.d3">+0.255916</span>), not with random ones (<span data-v="pred.L14.gapA.d2/random">+0.296408</span> and <span data-v="pred.L14.gapA.d3/random">+0.206574</span>). The two gaps are in different units, RR and &rho;, so the comparison is loose either way.</li>
+            </ul>
+            <h3>Against tuning&rsquo;s preview</h3>
+            <p>Tuning scored HiT&rsquo;s validation rows, at other seeds, so it previewed (a) before the measured runs (Amendment 15 item 3). The test agrees with it in every respect it showed: Lorentz ahead everywhere, more so with hard negatives, more so at d = 2. (b) had no preview.</p>
+            <div class="table-wrap"><table style="min-width:560px">
+                <thead><tr><th>Cell</th><th class="num">Validation gap (tuning, rate 10)</th><th class="num">Test gap (decisive)</th></tr></thead>
+                <tbody>
+                    <tr><td>d = 2, random</td><td class="num"><span data-v="tun.prev.d2/random.gap">+0.321695</span></td><td class="num"><span data-v="L14.rr.d2/random.gap">+0.296408</span></td></tr>
+                    <tr><td>d = 2, hard</td><td class="num"><span data-v="tun.prev.d2/hard.gap">+0.472652</span></td><td class="num"><span data-v="L14.rr.d2/hard.gap">+0.468405</span></td></tr>
+                    <tr><td>d = 3, random</td><td class="num"><span data-v="tun.prev.d3/random.gap">+0.166207</span></td><td class="num"><span data-v="L14.rr.d3/random.gap">+0.206574</span></td></tr>
+                    <tr><td>d = 3, hard</td><td class="num"><span data-v="tun.prev.d3/hard.gap">+0.366662</span></td><td class="num"><span data-v="L14.rr.d3/hard.gap">+0.391439</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="callout note"><span class="label">Two things to know</span>
+                <p><strong>Against hard negatives, Euclidean barely separates the ancestor.</strong> Training never sees the negatives; the same tables are read in both settings. Its mean RR with hard negatives is <span data-v="L14.rr.hardEuclidRange">0.318469 to 0.365971</span> per table. At d = 3, seed 0, its true table is even slightly worse than its edge-shuffled partner (<a href="#controls">chapter 8</a>, control 3). Amendment 13 registered control 3 so that this case does not void the part.</p>
+                <p><strong>(b) is not held out.</strong> HyperLex drew many of its pairs as WordNet edges: <span data-v="L14.hlEdges">418</span> of the <span data-v="L14.n.hl">2,153</span> rows are training edges for some sense pairing (reported, as A13 asked). So (b) measures how training on the edges carries over to graded judgements, not generalisation to unseen pairs.</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="l15">
+            <div class="chapter-num">07</div>
+            <h2>L15 &middot; Similarity and relatedness</h2>
+            <p class="chapter-intro">Phase 0 expected a flat distributional space to win here. With the same WordNet information in both arms, it does not: the exact trees beat curvature 0 by much more than 0.02, so (a) is refuted. Against a corpus space, each side wins where it should.</p>
+            <div class="table-wrap"><table style="min-width:560px">
+                <thead><tr><th>Arm (Sym, maximum over senses)</th><th class="num">SimLex nouns (<span data-v="L15.n.SL">666</span>)</th><th class="num">MEN noun pairs (<span data-v="L15.n.MEN">2,005</span>)</th></tr></thead>
+                <tbody>
+                    <tr><td>H3</td><td class="num"><span data-v="L15.rho.SL.H3">0.589185</span></td><td class="num"><span data-v="L15.rho.MEN.H3">0.394799</span></td></tr>
+                    <tr><td>H2</td><td class="num"><span data-v="L15.rho.SL.H2">0.582609</span></td><td class="num"><span data-v="L15.rho.MEN.H2">0.400265</span></td></tr>
+                    <tr><td>F3</td><td class="num"><span data-v="L15.rho.SL.F3">0.337341</span></td><td class="num"><span data-v="L15.rho.MEN.F3">0.156337</span></td></tr>
+                    <tr><td>F3*</td><td class="num"><span data-v="L15.rho.SL.F3*">0.363484</span></td><td class="num"><span data-v="L15.rho.MEN.F3*">0.301520</span></td></tr>
+                    <tr><td>F2</td><td class="num"><span data-v="L15.rho.SL.F2">0.191205</span></td><td class="num"><span data-v="L15.rho.MEN.F2">0.122020</span></td></tr>
+                    <tr><td>F2*</td><td class="num"><span data-v="L15.rho.SL.F2*">0.360626</span></td><td class="num"><span data-v="L15.rho.MEN.F2*">0.294601</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>(a) <span class="tag t-REFUTED" data-v="L15.a" data-kind="verdict">refuted</span></th><th>SimLex: interval (decides)</th><th>row bootstrap</th><th>MEN: interval (decides)</th><th>row bootstrap</th></tr></thead>
+                <tbody>
+                    <tr><td>&rho;(H3) &minus; &rho;(F3)</td><td class="mono"><span data-v="L15.a.SL/H3-F3">+0.251843 [+0.146815, +0.356256]</span></td><td class="mono"><span data-v="L15.a.SL/H3-F3.row">[+0.194029, +0.310083]</span></td><td class="mono"><span data-v="L15.a.MEN/H3-F3">+0.238462 [+0.168336, +0.309502]</span></td><td class="mono"><span data-v="L15.a.MEN/H3-F3.row">[+0.202081, +0.276354]</span></td></tr>
+                    <tr><td>&rho;(H3) &minus; &rho;(F3*)</td><td class="mono"><span data-v="L15.a.SL/H3-F3*">+0.225700 [+0.119025, +0.333397]</span></td><td class="mono"><span data-v="L15.a.SL/H3-F3*.row">[+0.167211, +0.286681]</span></td><td class="mono"><span data-v="L15.a.MEN/H3-F3*">+0.093279 [+0.034313, +0.155472]</span></td><td class="mono"><span data-v="L15.a.MEN/H3-F3*.row">[+0.065183, +0.121356]</span></td></tr>
+                    <tr><td>&rho;(H2) &minus; &rho;(F2)</td><td class="mono"><span data-v="L15.a.SL/H2-F2">+0.391403 [+0.261742, +0.519386]</span></td><td class="mono"><span data-v="L15.a.SL/H2-F2.row">[+0.319619, +0.463000]</span></td><td class="mono"><span data-v="L15.a.MEN/H2-F2">+0.278245 [+0.192758, +0.362548]</span></td><td class="mono"><span data-v="L15.a.MEN/H2-F2.row">[+0.234619, +0.321670]</span></td></tr>
+                    <tr><td>&rho;(H2) &minus; &rho;(F2*)</td><td class="mono"><span data-v="L15.a.SL/H2-F2*">+0.221983 [+0.114264, +0.329887]</span></td><td class="mono"><span data-v="L15.a.SL/H2-F2*.row">[+0.162969, +0.283409]</span></td><td class="mono"><span data-v="L15.a.MEN/H2-F2*">+0.105665 [+0.043908, +0.170315]</span></td><td class="mono"><span data-v="L15.a.MEN/H2-F2*.row">[+0.076366, +0.134678]</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>(a) would be supported if every interval had hi &le; +0.02 and is refuted if any has lo &gt; +0.02. All <span data-v="L15.a.above">8</span> do, so the verdict does not rest on one cell. The tightest is MEN H3 &minus; F3*, with lower end <span data-v="L15.a.minLo">+0.034313</span>. The word-level intervals are the wide ones; the row bootstrap&rsquo;s, reported, are narrower still.</p>
+            <p><strong>Why.</strong> The flat lattice collides: F3 has <span data-v="L15.classes.SL/F3">42</span> distinct values on SimLex&rsquo;s pairs against H3&rsquo;s <span data-v="L15.classes.SL/H3">420</span>, and <span data-v="L15.classes.MEN/F3">97</span> on MEN&rsquo;s against <span data-v="L15.classes.MEN/H3">1,730</span>. Pairs at different WordNet distances get the same flat distance. F* avoids the collisions (<span data-v="L15.classes.SL/F3*">573</span> and <span data-v="L15.classes.MEN/F3*">1,890</span> values) but compresses depth; it comes closer to H on MEN.</p>
+            <div class="table-wrap"><table style="min-width:620px">
+                <thead><tr><th>(b) <span class="tag t-SUPPORTED" data-v="L15.b" data-kind="verdict">supported</span></th><th class="num">&rho;(GloVe)</th><th class="num">&rho;(H3, Sym)</th><th>Difference, word-level interval</th></tr></thead>
+                <tbody>
+                    <tr><td>MEN within GloVe (<span data-v="L15.n.MEN-glove">2,005</span>): GloVe &minus; H3</td><td class="num"><span data-v="L15.b.rho.MEN.GloVe">0.760517</span></td><td class="num"><span data-v="L15.b.rho.MEN.H3">0.394799</span></td><td class="mono"><span data-v="L15.b.MEN">+0.365718 [+0.276143, +0.455861]</span></td></tr>
+                    <tr><td>WordSim relatedness (<span data-v="L15.n.WSR-glove">245</span>): GloVe &minus; H3</td><td class="num"><span data-v="L15.b.rho.WSR.GloVe">0.580236</span></td><td class="num"><span data-v="L15.b.rho.WSR.H3">-0.004288</span></td><td class="mono"><span data-v="L15.b.WSR">+0.584524 [+0.284892, +0.858283]</span></td></tr>
+                    <tr><td>HyperLex within GloVe (<span data-v="L15.n.HL-glove">2,162</span>): H3 &minus; GloVe</td><td class="num"><span data-v="L15.b.rho.HL.GloVe">0.116495</span></td><td class="num"><span data-v="L15.b.rho.HL.H3">0.226030</span></td><td class="mono"><span data-v="L15.b.HL">+0.109535 [+0.023564, +0.193084]</span></td></tr>
+                </tbody>
+            </table></div>
+            <div class="forest" data-forest="L15" role="img" aria-label="L15's intervals"></div>
+            <h3>The predictions</h3>
+            <ul>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L15.a" data-kind="pred">right</span> &ldquo;(a) refuted, at least on SimLex.&rdquo; It is refuted on MEN as well.</li>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L15.aMENsmaller" data-kind="pred">right</span> &ldquo;On MEN the gain is smaller&rdquo;: each MEN estimate is below its SimLex twin.</li>
+                <li><span class="tag t-CONJECTURAL" data-v="pred.L15.aMENwider" data-kind="pred">wrong</span> &ldquo;MEN&rsquo;s word reuse widens its intervals.&rdquo; <span data-v="pred.L15.MENwider">0</span> of the four MEN intervals are wider than SimLex&rsquo;s: their widths are <span data-v="pred.L15.width.MEN">0.121 to 0.170</span> against SimLex&rsquo;s <span data-v="pred.L15.width.SL">0.209 to 0.258</span>. MEN has three times the rows, which outweighs its reuse.</li>
+                <li><span class="tag t-ESTABLISHED" data-v="pred.L15.b" data-kind="pred">right</span> (b) supported. HyperLex&rsquo;s leg, predicted less certain, is the narrowest: lower end <span data-v="L15.b.minLo">+0.023564</span>. On WordSim&rsquo;s relatedness pairs H3 by Sym carries almost nothing (<span data-v="L15.b.rho.WSR.H3">-0.004288</span>): WordNet holds taxonomy, a corpus holds association.</li>
+            </ul>
+            <p>Read with L12(a): curvature makes the tree a more faithful copy of WordNet for similarity and relatedness too, not only for type-of. One caution from sets that decide nothing: on WordSim&rsquo;s small sets the gain over F* is not visible. For example H3 &minus; F3* is <span data-v="L15.rep.WSC/H3-F3*">−0.013690 [−0.159305, +0.123223]</span> on WordSim combined and <span data-v="L15.rep.WSR/H3-F3*">−0.041615 [−0.240357, +0.153700]</span> on its relatedness pairs.</p>
+        </section>
+
+        <section class="chapter" id="controls">
+            <div class="chapter-num">08</div>
+            <h2>The controls, and what they rule out</h2>
+            <p class="chapter-intro">Each control breaks one thing a claim depends on and must then show the weakness. All of them did, so no part is void. L14&rsquo;s closure check, a positive control, passed.</p>
+            <div class="table-wrap"><table style="min-width:860px">
+                <thead><tr><th>Control</th><th>What must happen</th><th>Measured</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>L12</strong> 1 &middot; hierarchy removed</td><td>H3 &minus; K3 and H3 &minus; S-full* above 0</td><td>K3 <span data-v="L12.c1.K3">+0.526997 [+0.396770, +0.644590]</span>; S-full-<span data-v="L12.c1.i">18</span> <span data-v="L12.c1.S-full*">+0.531326 [+0.432922, +0.623247]</span></td></tr>
+                    <tr><td>L12 2 &middot; senses scrambled</td><td>H3 &minus; W* above 0</td><td>W-<span data-v="L12.c2.i">10</span> <span data-v="L12.c2.W*">+0.576757 [+0.473004, +0.672506]</span></td></tr>
+                    <tr><td>L12 3 &middot; roles reversed</td><td>H3 read as G(x, y) minus H3 read as G(y, x), above 0</td><td><span data-v="L12.c3">+0.722705 [+0.606055, +0.827362]</span></td></tr>
+                    <tr><td>L12 4 &middot; ratings shuffled</td><td>|mean &rho;| of 20 shuffles &le; <span data-v="L12.c4.band">0.024045</span> for each of seven arms</td><td>largest <span data-v="L12.c4.maxabs">0.014040</span> (<span data-v="L12.c4.maxarm">F3</span>)</td></tr>
+                    <tr><td><strong>L13</strong> 1 &middot; hierarchy removed, senses scrambled</td><td>H3 &minus; K3, &minus; S-full*, &minus; W* above 0 in (a), (b) and (c)</td><td><span data-v="L13.c1.above">9</span> of <span data-v="L13.c1.n">9</span> above 0; lowest lower end <span data-v="L13.c1.minLo">+0.309210</span></td></tr>
+                    <tr><td>L13 2 &middot; labels shuffled</td><td>mean AP of 20 shuffles &le; share of True + 1/50, exactly</td><td>across the six arms, BLESS <span data-v="L13.c2.BD.min">0.095542</span>&ndash;<span data-v="L13.c2.BD.max">0.098119</span> against <span data-v="L13.c2.BD.bound">0.116563</span>; WBLESS <span data-v="L13.c2.WB.min">0.508088</span>&ndash;<span data-v="L13.c2.WB.max">0.520061</span> against <span data-v="L13.c2.WB.bound">0.531721</span>; <span data-v="L13.c2.held">12</span> of <span data-v="L13.c2.n">12</span> hold</td></tr>
+                    <tr><td>L13 3 &middot; a symmetric score on direction</td><td>accuracy exactly 0: every pair ties, and a tie is wrong</td><td>Sym on H3 <span data-v="L13.c3.Sym-H3">0</span>; GloVe <span data-v="L13.c3.GloVe">0</span></td></tr>
+                    <tr><td><strong>L14</strong> 1 &middot; labels shuffled within each row</td><td>mean RR &le; H<sub>11</sub>/11 + 1/50 = <span data-v="L14.band">0.294534</span> for every trained table</td><td><span data-v="L14.c1.held">88</span> of <span data-v="L14.c1.n">88</span> hold; largest <span data-v="L14.c1.max">0.278323</span> (<span data-v="L14.c1.maxKey">shuffled-euclid-d3-lr10-s0</span>)</td></tr>
+                    <tr><td>L14 2 &middot; points relabelled</td><td>macro mean RR &le; the same band, for every trained table</td><td><span data-v="L14.c2.held">88</span> of <span data-v="L14.c1.n">88</span> hold; largest <span data-v="L14.c2.max">0.287305</span> (<span data-v="L14.c2.maxKey">shuffled-lorentz-d3-lr10-s3</span>)</td></tr>
+                    <tr><td>L14 3 &middot; edge-shuffled training</td><td>true &minus; shuffled above 0 in at least one geometry, per d, metric and seed</td><td><span data-v="L14.c3.pass">30</span> of <span data-v="L14.c3.n">30</span> pass; <span data-v="L14.c3.approx">1</span> cell &ldquo;true &asymp; shuffled&rdquo;</td></tr>
+                    <tr><td>L14 4 &middot; ratings shuffled</td><td>|mean &rho;| &le; <span data-v="L14.c4.band">0.024101</span> per measured table</td><td>largest <span data-v="L14.c4.maxabs">0.010623</span> of <span data-v="L14.c4.n">20</span></td></tr>
+                    <tr><td>L14 closure check (must pass)</td><td>closure of the training edges ranks every test row first</td><td>failing rows: random <span data-v="L14.closure.random">0</span>, hard <span data-v="L14.closure.hard">0</span></td></tr>
+                    <tr><td><strong>L15</strong> 1 &middot; hierarchy and senses visible</td><td>H3 &minus; K3, &minus; S-full*, &minus; W* above 0 on SimLex and MEN</td><td><span data-v="L15.c1.above">6</span> of <span data-v="L15.c1.n">6</span> above 0; lowest lower end <span data-v="L15.c1.minLo">+0.239137</span></td></tr>
+                    <tr><td>L15 2 &middot; ratings shuffled</td><td>|mean &rho;| within 5/&radic;(20(n &minus; 1)) for every arm and set</td><td><span data-v="L15.c2.held">100</span> of <span data-v="L15.c2.n">100</span> hold; closest <span data-v="L15.c2.worst">MEN S-full-13</span>, <span data-v="L15.c2.worstMean">0.012653</span> against <span data-v="L15.c2.worstBand">0.024975</span></td></tr>
+                    <tr><td>L15 3 &middot; GloVe vectors shuffled</td><td>|mean &rho;| within the same band</td><td>MEN <span data-v="L15.c3.MEN-glove">−0.005602</span>, WordSim <span data-v="L15.c3.WSR-glove">−0.006289</span>, HyperLex <span data-v="L15.c3.HL-glove">0.002299</span></td></tr>
+                </tbody>
+            </table></div>
+            <h3>Two controls that worked as designed</h3>
+            <p><strong>L14 control 2 needed its macro mean.</strong> Under a relabelling, every row whose positive is one synset shares that synset&rsquo;s new point, and a few general synsets hold large shares of the rows. Amendment 13 therefore averaged first over each positive synset. The per-row mean, reported, exceeds the band in <span data-v="L14.c2.rowOver">21</span> of the <span data-v="L14.c1.n">88</span> tables (<span data-v="L14.c2.rowOverMeasured">5</span> of them measured), up to <span data-v="L14.c2.rowMax">0.392249</span>. The registered macro mean stays inside the band in every table. Under a per-row reading, L14 would have been void.</p>
+            <p><strong>L14 control 3 needed &ldquo;at least one cell&rdquo;.</strong> At d = 3, seed 0, hard negatives, the true Euclidean table scores <span data-v="L14.c3.approxCi">−0.006931 [−0.011760, −0.002228]</span> against its edge-shuffled partner: &ldquo;true &asymp; shuffled&rdquo;. The Lorentz cell there is <span data-v="L14.c3.approxOther">+0.494018 [+0.489724, +0.498405]</span>. Amendment 13 wrote this rule so that a losing arm that learns nothing does not void the part, which would shield the prediction from refutation. Under Phase 4&rsquo;s every-cell reading (A10.9), (a) would have been void.</p>
+            <p><strong>The strongest permutations.</strong> Each S-full and W control is read against the one of its 20 permutations with the largest score. For L12 those are S-full-<span data-v="L12.c1.i">18</span> (&rho; <span data-v="L12.c1.irho">0.093598</span>) and W-<span data-v="L12.c2.i">10</span> (&rho; <span data-v="L12.c2.irho">0.048168</span>); for L15 on SimLex <span data-v="L15.c1.SL.S-full*.arm">S-full-12</span> and <span data-v="L15.c1.SL.W*.arm">W-10</span>, on MEN <span data-v="L15.c1.MEN.S-full*.arm">S-full-15</span> and <span data-v="L15.c1.MEN.W*.arm">W-18</span>.</p>
+        </section>
+
+        <section class="chapter" id="order">
+            <div class="chapter-num">09</div>
+            <h2>How it was decided</h2>
+            <p class="chapter-intro">Definitions first, then code, a review, a dry run with its human-rated values sealed, the definitions amendment, tuning, the amendment that froze its rates, and one decisive run on the code as committed (A13.15). Times are UTC, from git and the records.</p>
+            <ol class="steps">
+                <li><strong>b3a5003 &middot; 2026-11-07 07:13 &middot; Amendment 13, committed alone.</strong> The four claims, their arms, scores, statistics, controls, predictions and order of work, before any Stage-2 module existed. Before it, surveys downloaded and counted the candidate sets but scored nothing; one count was a partial preview of L12(d), named in A13.20.</li>
+                <li><strong>613721d, e91e02d, 841b90c &middot; 09:41&ndash;13:38 &middot; The code and its review.</strong> Built on synthetic data, WordNet&rsquo;s verbs and unregistered seeds. An adversarial review with independent implementations of the certified order, the statistics, the data and the runner found no defect in the decisions; its minor findings were fixed. The decision wiring was pinned to Amendment 13&rsquo;s own sentences; the run checks its <span data-v="run.comparisons">141</span> decided comparisons and <span data-v="run.controlValues">321</span> control values against them.</li>
+                <li><strong>05d467d &middot; 14:40 &middot; The dry run</strong> on WordNet&rsquo;s verbs, with the dry seeds. Every value on a human-rated or human-labelled set went into a sealed file, unopened. The visible record showed three controls that did not fail as required (L14 controls 1 and 2, L15 control 1), and dry tuning chose the grid&rsquo;s top rate in every cell.</li>
+                <li><strong>513e079 &middot; 17:16 &middot; Amendment 14, the definitions after the dry run.</strong> It changed no definition. It stated the runner&rsquo;s readings, froze the instance manifest, and diagnosed the three controls as chance and size at the dry sizes. It accepted the registered risk of a void rather than loosen a band after seeing a dry outcome.</li>
+                <li><strong>9550eea, 5acbbb7 &middot; 17:50&ndash;18:47 &middot; One code commit and the dry rerun.</strong> The commit scores every S-full<sub>i</sub> and W<sub>i</sub> in L12&rsquo;s reported grid and checks HiT validation&rsquo;s counts; no decided comparison changed. The rerun reproduced the first dry run&rsquo;s every table, file, count, visible value and control outcome, and wrote a new sealed file. The first was moved aside unopened. A test-only fix (93a5a8e) followed.</li>
+                <li><strong>b2ba411 &middot; 18:48 &middot; The timing projection:</strong> a projected <span data-v="tun.projection">9.93</span> h in all (the dry run&rsquo;s hour included) against an 11 h limit, so tuning could start.</li>
+                <li><strong>60345b4 &middot; 2026-11-08 00:43 &middot; Registered tuning,</strong> at b2ba411: <span data-v="tun.runs">48</span> runs (four cells, six rates, two seeds each), scored on HiT&rsquo;s <span data-v="tun.rows">29,383</span> validation rows. It took <span data-v="tun.starts">3</span> starts. Start 1 (<span data-v="tun.start1">18:48:40</span>) was stopped on purpose within seconds, before any job finished, because it ran under a time limit that would have killed it. Start 2 (<span data-v="tun.start2">18:49:01</span>) ran until the container was suspended for inactivity; the restore ended its processes, and the jobs in flight were lost. Start 3 (<span data-v="tun.start3">22:22:12</span>) reused the finished jobs, checked by SHA-256 (<span data-v="tun.resumed">19</span> tuning runs and the replay), and ran the rest. A run&rsquo;s bits depend only on its seed and the code, so the restarts changed no value. <span data-v="tun.converged">24</span> of the <span data-v="tun.runs">48</span> runs converged; none diverged; the replay with <code>hpstep.prng.Rng</code> ended <span data-v="tun.replay">equal</span>.</li>
+                <li><strong>6b6ec09 &middot; 01:21 &middot; Amendment 15, the rates frozen</strong> in <code>settings-stage2.json</code>: 10 in every cell, the grid&rsquo;s top. The grid is never extended, so where the scores would peak is unknown. The closest choice was <span data-v="tun.closest">Euclidean d = 2</span>, by <span data-v="tun.closestGap">0.033031</span>. The convergence gate decided both Euclidean cells: their slowest rate scored higher but had not left its starting plateau.</li>
+                <li><strong>The decisive run, started <span data-v="run.started">2026-11-08 01:21:12 UTC</span></strong> at 6b6ec09, in one start. It refused unless only the four allowed paths had changed since tuning. It checked every count, rebuilt the instance manifest equal, replayed one measured run (equal), retrained the two pre-flight jobs (equal to tuning&rsquo;s), computed L14&rsquo;s relabelling for the first time, and wrote <span data-v="run.files">1,635</span> code files (<span data-v="run.lines">172,892,141</span> lines). <span data-v="run.converged">40</span> of its <span data-v="run.runs">42</span> training runs converged; the two that did not are the pre-flight retrains of rate 0.03, as in tuning. <span data-v="run.hours">4.63</span> h.</li>
+                <li><strong>5d32f47 &middot; 05:59 &middot; The record, as it came out:</strong> <code>claims-stage2.json</code> and <code>.md</code>, <span data-v="run.lbench">1,848</span> LBENCH/1 receipts, the manifest of every code file&rsquo;s SHA-256, the console, and the <span data-v="run.snapped">20</span> measured snapped tables (<span data-v="run.snappedMB">26.2</span> MB). The decision code files total <span data-v="run.decisionMB">68.8</span> MB, above A13.14&rsquo;s 50 MB rule, so they are committed by hash only.</li>
+                <li><strong>Step 8, this write-up.</strong> An independent check recomputed every decided value from the code files and the data with its own code and found the record equal. The Node re-evaluation reproduced the decision files (<a href="#glance">chapter 3</a>). The sealed files were opened and committed (<a href="#dry">chapter 10</a>). Amendment 16 records the errata.</li>
+            </ol>
+            <div class="callout deep"><span class="label">What the independent check made explicit (Amendment 16)</span>
+                <p>None changes a value or a decision. The first corrects a sentence of Amendment 14; the other two are conventions the registration leaves open, now stated.</p>
+                <ul>
+                    <li><strong>L14&rsquo;s estimates.</strong> Amendment 14 item 1 says an interval&rsquo;s estimate is the exact difference evaluated at 60 digits and rounded once to binary64. That holds for the &rho;, AP and accuracy differences. For the intervals over HiT&rsquo;s rows (L14(a) and the RR cells of control 3), the record reports <code>rank.ci_mean</code>&rsquo;s own estimate instead: the float64 mean of the per-row differences, each RR rounded first, as A13.7 registered (&ldquo;<code>rank.ci_mean</code>, unchanged&rdquo;). The two differ in the last bit or two. Amendment 16 corrects Amendment 14&rsquo;s sentence.</li>
+                    <li><strong>L13&rsquo;s AP intervals.</strong> A resampled AP sums its terms in float64. The record sums them with numpy&rsquo;s pairwise sum; a correctly rounded sum moves a few interval ends by a bit or two, none at six decimals. A13.7 says only &ldquo;in float64&rdquo;.</li>
+                    <li><strong>The tie bounds of &rho;</strong> (reported) break every tie of the arm, including rows tied in both the arm and the ratings.</li>
+                </ul>
+            </div>
+            <h3>Tuning at the grid&rsquo;s top</h3>
+            <p>The score of a rate is the mean of its two runs&rsquo; RR with random and hard negatives. Only rates whose runs both converged are eligible. In every cell the eligible means still rise at 10:</p>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Cell</th><th class="num">0.03</th><th class="num">0.1</th><th class="num">0.3</th><th class="num">1</th><th class="num">3</th><th class="num">10</th><th>Frozen</th></tr></thead>
+                <tbody>
+                    <tr><td>Lorentz d = 2</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num"><span data-v="tun.lorentz-2.1">0.587414</span></td><td class="num"><span data-v="tun.lorentz-2.3">0.706617</span></td><td class="num"><strong><span data-v="tun.lorentz-2.10">0.874123</span></strong></td><td class="mono"><span data-v="tun.lorentz-2.chosen">10</span></td></tr>
+                    <tr><td>Lorentz d = 3</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num"><span data-v="tun.lorentz-3.0.3">0.589269</span></td><td class="num"><span data-v="tun.lorentz-3.1">0.669900</span></td><td class="num"><span data-v="tun.lorentz-3.3">0.732969</span></td><td class="num"><strong><span data-v="tun.lorentz-3.10">0.845240</span></strong></td><td class="mono"><span data-v="tun.lorentz-3.chosen">10</span></td></tr>
+                    <tr><td>Euclidean d = 2</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num"><span data-v="tun.euclid-2.3">0.443919</span></td><td class="num"><strong><span data-v="tun.euclid-2.10">0.476949</span></strong></td><td class="mono"><span data-v="tun.euclid-2.chosen">10</span></td></tr>
+                    <tr><td>Euclidean d = 3</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num"><span data-v="tun.euclid-3.1">0.506004</span></td><td class="num"><span data-v="tun.euclid-3.3">0.510226</span></td><td class="num"><strong><span data-v="tun.euclid-3.10">0.578805</span></strong></td><td class="mono"><span data-v="tun.euclid-3.chosen">10</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>A dash marks a rate whose runs did not converge in 1,000 epochs. Bold: the frozen rate.</p>
+        </section>
+
+        <section class="chapter" id="dry">
+            <div class="chapter-num">10</div>
+            <h2>What the dry sealed files showed</h2>
+            <p class="chapter-intro">The dry run used WordNet&rsquo;s verbs, so that nothing decided was seen. Its values on human-rated sets stayed sealed until the decisive run had finished (A13.13). Step 8 opened both sealed files and committed them as gzip copies (<a href="../reference/results/dry/stage2-sealed/values-5acbbb7.json.gz">the rerun&rsquo;s</a>, <a href="../reference/results/dry/stage2-sealed/values-05d467d.json.gz">the first run&rsquo;s</a>), so the dry values here come from committed files.</p>
+            <p>Each file has the SHA-256 that names it: the rerun&rsquo;s is named in the visible dry record, the first run&rsquo;s in Amendment 14. Their claims are <span data-v="dry.firstEqual">equal</span>. The first holds <span data-v="dry.lbench1">620</span> sealed LBENCH/1 receipts and the rerun <span data-v="dry.lbench">1,180</span>, the difference being the new grid cells. The dry sets were small stand-ins: HyperLex&rsquo;s <span data-v="dry.n.HL">452</span> verb pairs (also the detection stand-in for BLESS and WBLESS), SimLex&rsquo;s <span data-v="dry.n.SL">222</span> verb pairs, MEN&rsquo;s <span data-v="dry.n.MEN">29</span> verb&ndash;verb pairs (<span data-v="dry.types.MEN">22</span> words), and SimLex&rsquo;s verbs within GloVe for WordSim.</p>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Part</th><th>Dry, before controls</th><th>Dry</th><th>Registered</th></tr></thead>
+                <tbody>
+                    <tr><td>L12(a)</td><td><span class="tag t-SUPPORTED" data-v="dry.L12.a.before" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="dry.L12.a" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L12.a" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L12(b)</td><td><span class="tag t-SUPPORTED" data-v="dry.L12.b.before" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="dry.L12.b" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L12.b" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L12(c)</td><td><span class="tag t-MIXED" data-v="dry.L12.c.before" data-kind="verdict">inconclusive</span></td><td><span class="tag t-MIXED" data-v="dry.L12.c" data-kind="verdict">inconclusive</span></td><td><span class="tag t-SUPPORTED" data-v="L12.c" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L12(d)</td><td><span class="tag t-MIXED" data-v="dry.L12.d.before" data-kind="verdict">inconclusive</span></td><td><span class="tag t-MIXED" data-v="dry.L12.d" data-kind="verdict">inconclusive</span></td><td><span class="tag t-REFUTED" data-v="L12.d" data-kind="verdict">refuted</span></td></tr>
+                    <tr><td>L13(a)</td><td><span class="tag t-SUPPORTED" data-v="dry.L13.a.before" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="dry.L13.a" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L13.a" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L13(b)</td><td><span class="tag t-SUPPORTED" data-v="dry.L13.b.before" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="dry.L13.b" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L13.b" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L13(c)</td><td><span class="tag t-SUPPORTED" data-v="dry.L13.c.before" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="dry.L13.c" data-kind="verdict">supported</span></td><td><span class="tag t-SUPPORTED" data-v="L13.c" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L14(a)</td><td><span class="tag t-SUPPORTED" data-v="dry.L14.a.before" data-kind="verdict">supported</span></td><td><span class="tag t-MIXED" data-v="dry.L14.a" data-kind="verdict">void</span></td><td><span class="tag t-SUPPORTED" data-v="L14.a" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L14(b)</td><td><span class="tag t-SUPPORTED" data-v="dry.L14.b.before" data-kind="verdict">supported</span></td><td><span class="tag t-MIXED" data-v="dry.L14.b" data-kind="verdict">void</span></td><td><span class="tag t-SUPPORTED" data-v="L14.b" data-kind="verdict">supported</span></td></tr>
+                    <tr><td>L15(a)</td><td><span class="tag t-REFUTED" data-v="dry.L15.a.before" data-kind="verdict">refuted</span></td><td><span class="tag t-MIXED" data-v="dry.L15.a" data-kind="verdict">void</span></td><td><span class="tag t-REFUTED" data-v="L15.a" data-kind="verdict">refuted</span></td></tr>
+                    <tr><td>L15(b)</td><td><span class="tag t-MIXED" data-v="dry.L15.b.before" data-kind="verdict">inconclusive</span></td><td><span class="tag t-MIXED" data-v="dry.L15.b" data-kind="verdict">inconclusive</span></td><td><span class="tag t-SUPPORTED" data-v="L15.b" data-kind="verdict">supported</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>L14(a)&rsquo;s dry values, on the verb graph and its split, and its controls there (1, 2, the closure check and control 3&rsquo;s RR cells) are WordNet data and were visible all along; controls 1 and 2 voided it (<span data-v="dry.L14.c1.held">87</span> and <span data-v="dry.L14.c2.held">79</span> of <span data-v="dry.L14.c1.n">88</span> tables held). L14(b), on HyperLex&rsquo;s verbs, was sealed with its ratings-based controls, like every other dry value in this table. Before the voids, three dry parts differ from the registered ones. On the verbs, G gains little over Sym (L12(c): H3 <span data-v="dry.L12.c.H3">+0.070389 [−0.018617, +0.171168]</span>). WordNet is level with H3 on the verbs (L12(d): <span data-v="dry.L12.d.H3-WN">−0.008904 [−0.069285, +0.047977]</span>) and far ahead on the nouns. L15(b) was inconclusive on two legs. The WordSim stand-in (SimLex&rsquo;s verbs within GloVe) is a similarity set, on which H3 leads GloVe in estimate only: GloVe &minus; H3 is <span data-v="dry.L15.b.WSR">−0.235418 [−0.512251, +0.052860]</span>, an interval that crosses 0. And the <span data-v="dry.n.MEN">29</span>-row MEN leg, <span data-v="dry.L15.b.MEN">+0.269150 [−0.627574, +1.132392]</span>, says nothing either way.</p>
+            <h3>L15 control 1: Amendment 14&rsquo;s diagnosis, checked</h3>
+            <p>The visible dry record said only that L15 control 1 did not fail as required. Amendment 14 diagnosed size, &ldquo;almost surely&rdquo;: MEN&rsquo;s stand-in has <span data-v="dry.n.MEN">29</span> rows, where a word-level interval is very wide. The sealed values bear that out. All three MEN legs failed, and all three SimLex legs held:</p>
+            <div class="table-wrap"><table style="min-width:720px">
+                <thead><tr><th>Leg</th><th>Dry (verbs)</th><th class="num">Half-width</th><th>Registered (nouns)</th><th class="num">Half-width</th></tr></thead>
+                <tbody>
+                    <tr><td>SimLex H3 &minus; K3</td><td class="mono"><span data-v="dry.L15.c1.SL.K3">+0.382158 [+0.083644, +0.676847]</span></td><td class="num"><span data-v="dry.L15.c1.SL.K3.hw">0.297</span></td><td class="mono"><span data-v="L15.c1.SL.K3">+0.537568 [+0.374862, +0.697053]</span></td><td class="num"><span data-v="L15.c1.SL.K3.hw">0.161</span></td></tr>
+                    <tr><td>SimLex H3 &minus; S-full*</td><td class="mono"><span data-v="dry.L15.c1.SL.S-full*">+0.289614 [+0.034003, +0.537366]</span></td><td class="num"><span data-v="dry.L15.c1.SL.S-full*.hw">0.252</span></td><td class="mono"><span data-v="L15.c1.SL.S-full*">+0.495191 [+0.354274, +0.635538]</span></td><td class="num"><span data-v="L15.c1.SL.S-full*.hw">0.141</span></td></tr>
+                    <tr><td>SimLex H3 &minus; W*</td><td class="mono"><span data-v="dry.L15.c1.SL.W*">+0.410633 [+0.127721, +0.690491]</span></td><td class="num"><span data-v="dry.L15.c1.SL.W*.hw">0.281</span></td><td class="mono"><span data-v="L15.c1.SL.W*">+0.611906 [+0.449475, +0.764111]</span></td><td class="num"><span data-v="L15.c1.SL.W*.hw">0.157</span></td></tr>
+                    <tr><td>MEN H3 &minus; K3</td><td class="mono"><span data-v="dry.L15.c1.MEN.K3">+0.039902 [−0.832059, +0.805202]</span></td><td class="num"><span data-v="dry.L15.c1.MEN.K3.hw">0.819</span></td><td class="mono"><span data-v="L15.c1.MEN.K3">+0.408242 [+0.296270, +0.517291]</span></td><td class="num"><span data-v="L15.c1.MEN.K3.hw">0.111</span></td></tr>
+                    <tr><td>MEN H3 &minus; S-full*</td><td class="mono"><span data-v="dry.L15.c1.MEN.S-full*">−0.085806 [−1.025030, +0.672455]</span></td><td class="num"><span data-v="dry.L15.c1.MEN.S-full*.hw">0.849</span></td><td class="mono"><span data-v="L15.c1.MEN.S-full*">+0.339798 [+0.239137, +0.440552]</span></td><td class="num"><span data-v="L15.c1.MEN.S-full*.hw">0.101</span></td></tr>
+                    <tr><td>MEN H3 &minus; W*</td><td class="mono"><span data-v="dry.L15.c1.MEN.W*">−0.155639 [−0.723732, +0.455424]</span></td><td class="num"><span data-v="dry.L15.c1.MEN.W*.hw">0.590</span></td><td class="mono"><span data-v="L15.c1.MEN.W*">+0.354840 [+0.249738, +0.459061]</span></td><td class="num"><span data-v="L15.c1.MEN.W*.hw">0.105</span></td></tr>
+                </tbody>
+            </table></div>
+            <p>Two details differ from Amendment 14&rsquo;s figures. It gave a word-level half-width of 0.8&ndash;0.9 on MEN&rsquo;s stand-in; the W* leg&rsquo;s is narrower, and so are the four dry L15(a) cells on MEN (<span data-v="dry.L15.a.MEN.hwRange">0.655 to 0.744</span>). Amendment 16 item 4 records the measured half-widths. And its model gave SimLex at least a 0.75 chance of voiding the control when &rho;(H3) is at most 0.4; the dry &rho;(H3) on SimLex was <span data-v="dry.L15.rho.SL.H3">0.387478</span>, and all three SimLex legs held, the less likely outcome. Neither changes the diagnosis.</p>
+            <h3>Dry beside registered (verbs against nouns: orientation only)</h3>
+            <div class="table-wrap"><table style="min-width:640px">
+                <thead><tr><th>Value</th><th>Dry (verbs)</th><th>Registered (nouns)</th></tr></thead>
+                <tbody>
+                    <tr><td>L12 &rho;: H3 / WN</td><td class="mono"><span data-v="dry.L12.rho.H3">0.644285</span> / <span data-v="dry.L12.rho.WN">0.653189</span></td><td class="mono"><span data-v="L12.rho.H3">0.624924</span> / <span data-v="L12.rho.WN">0.785527</span></td></tr>
+                    <tr><td>L12(a) H3 &minus; F3*</td><td class="mono"><span data-v="dry.L12.a.H3-F3*">+0.211185 [+0.093381, +0.340704]</span></td><td class="mono"><span data-v="L12.a.H3-F3*">+0.408004 [+0.317121, +0.502786]</span></td></tr>
+                    <tr><td>L12(b) H3</td><td class="mono"><span data-v="dry.L12.b.H3">+0.640349 [+0.443096, +0.834050]</span></td><td class="mono"><span data-v="L12.b.H3">+0.174322 [+0.061545, +0.292732]</span></td></tr>
+                    <tr><td>L12(c) H3</td><td class="mono"><span data-v="dry.L12.c.H3">+0.070389 [−0.018617, +0.171168]</span></td><td class="mono"><span data-v="L12.c.H3">+0.399389 [+0.308581, +0.487686]</span></td></tr>
+                    <tr><td>L12(d) H3 &minus; WN</td><td class="mono"><span data-v="dry.L12.d.H3-WN">−0.008904 [−0.069285, +0.047977]</span></td><td class="mono"><span data-v="L12.d.H3-WN">−0.160603 [−0.220516, −0.112235]</span></td></tr>
+                    <tr><td>L13 AP of H3 (BLESS; dry: the stand-in)</td><td class="mono"><span data-v="dry.L13.ap.H3">0.649065</span></td><td class="mono"><span data-v="L13.ap.BD.H3">0.789238</span></td></tr>
+                    <tr><td>L13(a) H3 &minus; F3</td><td class="mono"><span data-v="dry.L13.a.H3-F3">+0.232616 [+0.186297, +0.283994]</span></td><td class="mono"><span data-v="L13.a.H3-F3">+0.683738 [+0.654393, +0.713618]</span></td></tr>
+                    <tr><td>L13 direction: H3 / F3</td><td class="mono"><span data-v="dry.L13.acc.H3">0.865000</span> / <span data-v="dry.L13.acc.F3">0.495000</span></td><td class="mono"><span data-v="L13.acc.H3">0.979899</span> / <span data-v="L13.acc.F3">0.628141</span></td></tr>
+                    <tr><td>L14(a) d = 2, random: per-seed estimates</td><td class="mono"><span data-v="dry.L14.a.d2/random.estRange">+0.229188 to +0.262857</span></td><td class="mono"><span data-v="L14.a.d2/random.estRange">+0.279870 to +0.316292</span></td></tr>
+                    <tr><td>L14(b) d = 2: per-seed estimates</td><td class="mono"><span data-v="dry.L14.b.d2.estRange">+0.179040 to +0.242879</span></td><td class="mono"><span data-v="L14.b.d2.estRange">+0.285241 to +0.366185</span></td></tr>
+                    <tr><td>L15 &rho;(H3) by Sym: SimLex / MEN</td><td class="mono"><span data-v="dry.L15.rho.SL.H3">0.387478</span> / <span data-v="dry.L15.rho.MEN.H3">0.181684</span></td><td class="mono"><span data-v="L15.rho.SL.H3">0.589185</span> / <span data-v="L15.rho.MEN.H3">0.394799</span></td></tr>
+                    <tr><td>L15(a) SimLex H2 &minus; F2</td><td class="mono"><span data-v="dry.L15.a.SL/H2-F2">+0.349395 [+0.106964, +0.589871]</span></td><td class="mono"><span data-v="L15.a.SL/H2-F2">+0.391403 [+0.261742, +0.519386]</span></td></tr>
+                    <tr><td>L15(b) HyperLex, H3 &minus; GloVe</td><td class="mono"><span data-v="dry.L15.b.HL">+0.355078 [+0.177772, +0.526120]</span></td><td class="mono"><span data-v="L15.b.HL">+0.109535 [+0.023564, +0.193084]</span></td></tr>
+                </tbody>
+            </table></div>
+        </section>
+
+        <section class="chapter" id="panel">
+            <div class="chapter-num">11</div>
+            <h2>The record, re-read in your browser</h2>
+            <p class="chapter-intro">This panel reads <code>data/stage2_view_v1.js</code>, checks its SHA-256, and applies each registered rule to the record&rsquo;s intervals again. It also re-grades the predictions and re-checks the controls&rsquo; bands. It decides nothing: the Python reference decided, and the files win.</p>
+            <div class="lab" id="record-lab" data-json-sha="06c35eca77a98f0f3021f6c53b7ff20d7e13389580cb38697ca963e60ecadb93">
+                <div class="lab-title">Live &middot; the decisions, recomputed from the record&rsquo;s intervals</div>
+                <div class="out" id="lab-status">Loading the view&hellip;</div>
+                <div class="lab-row" role="group" aria-label="Claim">
+                    <button class="chip on" type="button" data-claim="L12">L12</button>
+                    <button class="chip" type="button" data-claim="L13">L13</button>
+                    <button class="chip" type="button" data-claim="L14">L14</button>
+                    <button class="chip" type="button" data-claim="L15">L15</button>
+                    <label for="lab-row"><input type="checkbox" id="lab-row"> use the row bootstrap where the record has one (reported; decides nothing)</label>
+                </div>
+                <div class="forest" id="lab-forest" role="img" aria-label="The chosen claim's intervals"></div>
+                <div class="table-wrap"><table style="min-width:640px">
+                    <thead><tr><th>Part</th><th>Registered rule</th><th>The rule, applied here</th><th>The record</th><th></th></tr></thead>
+                    <tbody id="lab-rules"></tbody>
+                </table></div>
+                <div class="out" id="lab-controls"></div>
+                <div class="out" id="lab-preds" style="margin-top:10px"></div>
+            </div>
+            <div class="callout tryit"><span class="label">Try it</span>
+                <ul>
+                    <li>Pick L12 and tick the row bootstrap. Every interval narrows (for (d), the half-width falls from <span data-v="L12.d.halfwidth">0.054</span> to <span data-v="L12.d.rowHalfwidth">0.021</span>), and no verdict changes.</li>
+                    <li>Pick L15. Its threshold is +0.02, not 0. The MEN F* cells sit closest to it, still above.</li>
+                    <li>Pick L14. Each line is one seed of one cell; the rule needs all five of a cell above 0.</li>
+                </ul>
+            </div>
+            <div class="callout limit"><span class="label">What this panel is, and is not</span>
+                <p>It re-applies the rules to intervals the record already holds. It does not resample anything, and it cannot recompute a &rho; or an AP: the rated sets are not committed (most state no licence), only their hashes. The browser&rsquo;s own check of the scores is the Node re-evaluation of the code files (<a href="#glance">chapter 3</a>).</p>
+            </div>
+        </section>
+
+        <section class="chapter" id="limits">
+            <div class="chapter-num">12</div>
+            <h2>What this does not show</h2>
+            <p class="chapter-intro">Amendment 13 item 21 listed what none of this decides. The results add a few limits of their own.</p>
+            <ul>
+                <li><strong>Discovery, or knowledge beyond WordNet.</strong> Every arm reads WordNet, and HyperLex&rsquo;s TYPE, most of BLESS&rsquo;s positives and all of HiT were built from it. L12&ndash;L14 say what curvature and learning do with the same information. L15(b) compares two sources of information, not two geometries.</li>
+                <li><strong>Senses in context, verbs and adjectives, words outside WordNet.</strong> The decided sets are nouns. Verbs appear only in the dry run.</li>
+                <li><strong>Learned geometry beyond this setting.</strong> Tables trained on the closure or all nouns, d &ge; 5, the instance-only synsets, other trainers, and readings from a base point other than the origin. The rates sit at the grid&rsquo;s top, and where the scores would peak is unknown.</li>
+                <li><strong>Comparison with published numbers.</strong> Subsets, WordNet versions, folds, rules for missing words and trainers all differ. Every literature number here is orientation.</li>
+                <li><strong>The sets not decided:</strong> SemEval-2018 Task 9, HiT&rsquo;s mixed-hop split, LEDS, EVALution, Shwartz and BiBLESS (the last four reported only).</li>
+                <li><strong>Whether hyperbolic geometry helps a language model.</strong> That is for Stages 3 and 4, by amendment.</li>
+                <li><strong>Exactness.</strong> G is ordered by square roots certified at 120 and 240 digits, not computed in rationals. Values within the 240-digit bound count as ties; that rule is part of the metric (A13.6).</li>
+                <li><strong>One run, one machine.</strong> One decisive run in one container. The word-level intervals are conservative (Amendment 14 item 3); L12(d) and L15(a) are refuted even so.</li>
+                <li><strong>L12(d) rests on average ranks.</strong> A13.7 registered them, and the reason; under tie-pessimistic &rho; the order of H3 and WN would flip (<a href="#l12d">chapter 4</a>).</li>
+                <li><strong>L13 compares H with near-chance flat arms.</strong> The large gaps describe F as much as H.</li>
+                <li><strong>The browser check covers A13.14&rsquo;s decision files.</strong> The Node re-evaluation reproduced all <span data-v="run.decisionFiles">106</span>: the exact-arm files the decided comparisons read and the measured tables&rsquo; files. Files that only controls read were not re-rendered in Node: L14&rsquo;s edge-shuffled tables (compared in control 3), its tuning tables and relabelled points (controls 1 and 2), and GloVe&rsquo;s files for the controls 3 of L13 and L15. Amendment 16 item 1 lists every file not rendered. The independent check reproduced these with its own Python code.</li>
+            </ul>
+            <div class="pager">
+                <a class="btn btn-ghost" href="page-3d.html">&larr; The 3D Page Manual</a>
+                <a class="btn btn-ghost" href="../index.html#roadmap">The roadmap &rarr;</a>
+            </div>
+        </section>
+    </main>
+</div>
+<footer>Hyperbolic Lexicon &middot; Explainer 15 &middot; <a href="../index.html">Hub</a> &middot; <a href="../README.md">README</a> &middot; <a href="../PREREGISTRATION.md">Preregistration</a> &middot; <a href="../reference/README.md">Reference README</a> &middot; <a href="../reference/results/claims-stage2.md">Results</a></footer>
+<script src="../data/stage2_view_v1.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const good = s => `<span class="good">${esc(s)}</span>`;   // plain text in, escaped
+    const bad = s => `<span class="bad">${esc(s)}</span>`;
+    const MINUS = '−';
+    const fmt = (x, d) => (x < 0 ? MINUS : '') + Math.abs(x).toFixed(d === undefined ? 6 : d);
+    const sgn = (x, d) => (x < 0 ? MINUS : '+') + Math.abs(x).toFixed(d === undefined ? 6 : d);
+    const lab = $('record-lab'), status = $('lab-status');
+    const TEXT = (window.LexiconData || {}).stage2_view_v1;
+    const VERDICT_CLASS = { supported: 't-SUPPORTED', refuted: 't-REFUTED' };
+    const PRED_CLASS = { right: 't-ESTABLISHED', wrong: 't-CONJECTURAL', partly: 't-HEURISTIC' };
+    const stop = msg => {
+        status.innerHTML = bad(msg);
+        lab.querySelectorAll('button, input').forEach(b => { b.disabled = true; });
+    };
+    if (typeof TEXT !== 'string') return stop('data/stage2_view_v1.js did not load, so the page shows its numbers as written and the panel cannot run. Open this page from its place in the repository.');
+
+    // SHA-256 (FIPS 180-4) of an ASCII string, one byte per character
+    const K = new Uint32Array([
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2]);
+    function sha256Ascii(s) {
+        const n = s.length, words = ((n + 8) >> 6) * 16 + 16, M = new Uint32Array(words), w = new Uint32Array(64);
+        for (let i = 0; i < n; i++) M[i >> 2] |= (s.charCodeAt(i) & 0xff) << (24 - 8 * (i & 3));
+        M[n >> 2] |= 0x80 << (24 - 8 * (n & 3));
+        M[words - 2] = Math.floor(n / 0x20000000);
+        M[words - 1] = (n * 8) >>> 0;
+        const H = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+        const ror = (x, k) => (x >>> k) | (x << (32 - k));
+        for (let b = 0; b < words; b += 16) {
+            for (let t = 0; t < 64; t++) {
+                if (t < 16) w[t] = M[b + t];
+                else {
+                    const x = w[t - 15], y = w[t - 2];
+                    w[t] = (w[t - 16] + (ror(x, 7) ^ ror(x, 18) ^ (x >>> 3)) + w[t - 7] + (ror(y, 17) ^ ror(y, 19) ^ (y >>> 10))) | 0;
+                }
+            }
+            let a = H[0], c1 = H[1], c2 = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+            for (let t = 0; t < 64; t++) {
+                const t1 = (h + (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;
+                const t2 = ((ror(a, 2) ^ ror(a, 13) ^ ror(a, 22)) + ((a & c1) ^ (a & c2) ^ (c1 & c2))) | 0;
+                h = g; g = f; f = e; e = (d + t1) | 0; d = c2; c2 = c1; c1 = a; a = (t1 + t2) | 0;
+            }
+            H[0] += a; H[1] += c1; H[2] += c2; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
+        }
+        return Array.from(H, x => x.toString(16).padStart(8, '0')).join('');
+    }
+
+    let V;
+    try { V = JSON.parse(TEXT); } catch (e) { return stop('data/stage2_view_v1.js does not hold JSON: ' + ((e && e.message) || e)); }
+    const ascii = !/[^\x00-\x7f]/.test(TEXT);
+    const textSha = ascii ? sha256Ascii(TEXT) : '';
+    const pin = lab.getAttribute('data-json-sha') || '';
+
+    // ------------------------------------------------------------------ every number on the page, from the view
+    const VALS = V.values || {}, SRCS = V.sources || {};
+    const setTag = (el, kind, text) => {
+        const map = kind === 'verdict' ? VERDICT_CLASS : PRED_CLASS;
+        for (const c of Object.values(VERDICT_CLASS).concat(Object.values(PRED_CLASS), ['t-MIXED'])) el.classList.remove(c);
+        el.classList.add(map[text] || (kind === 'verdict' ? 't-MIXED' : 't-HEURISTIC'));
+    };
+    let filled = 0;
+    const differed = [], missing = [];
+    document.querySelectorAll('[data-v]').forEach(el => {
+        const k = el.getAttribute('data-v'), v = VALS[k];
+        if (!v) { missing.push(k); return; }
+        if (el.textContent !== v[0]) differed.push(k);
+        el.textContent = v[0];
+        const s = SRCS[v[1]];
+        el.title = (s ? s.file : v[1]) + ': ' + v[2];
+        const kind = el.getAttribute('data-kind');
+        if (kind) setTag(el, kind, v[0]);
+        filled++;
+    });
+
+    // ------------------------------------------------------------------ the registered rules, again
+    const BAND = 0.02;
+    const verdict = (sup, ref) => (sup && ref ? 'inconclusive' : sup ? 'supported' : ref ? 'refuted' : 'inconclusive');
+    const pick = (c, row) => (row && c.rowLo !== undefined ? { est: c.est, lo: c.rowLo, hi: c.rowHi, row: true } : { est: c.est, lo: c.lo, hi: c.hi, row: false });
+    function ruleVerdict(rule, cells, row) {
+        if (rule === 'seeds') {
+            const sub = cells.map(c => {
+                const ss = c.seeds.map(s => pick(s, row));
+                return verdict(ss.length === 5 && ss.every(s => s.lo > 0), ss.filter(s => s.est <= 0).length >= 3);
+            });
+            return verdict(sub.every(v => v === 'supported'), sub.some(v => v === 'refuted'));
+        }
+        const cs = cells.map(c => pick(c, row));
+        if (rule === 'above0') return verdict(cs.every(c => c.lo > 0), cs.some(c => c.hi <= 0));
+        if (rule === 'band') return verdict(cs.every(c => c.lo >= -BAND && c.hi <= BAND), cs.some(c => c.lo > BAND || c.hi < -BAND));
+        if (rule === 'gain') return verdict(cs.every(c => c.hi <= BAND), cs.some(c => c.lo > BAND));
+        throw new Error('unknown rule ' + rule);
+    }
+    const RULE_TEXT = {
+        above0: 'supported if every interval lies above 0; refuted if any lies entirely at or below 0',
+        band: 'supported if the interval lies within [−0.02, +0.02]; refuted if it lies entirely outside',
+        gain: 'supported if every interval has hi ≤ +0.02; refuted if any has lo > +0.02',
+        seeds: 'per cell, supported if all five seeds lie above 0; refuted if three or more estimates are ≤ 0; the part needs every cell',
+    };
+    // what a cell says for its part: 1 supports, -1 refutes, 0 neither
+    function says(rule, c) {
+        if (rule === 'band') return c.lo >= -BAND && c.hi <= BAND ? 1 : (c.lo > BAND || c.hi < -BAND) ? -1 : 0;
+        if (rule === 'gain') return c.hi <= BAND ? 1 : c.lo > BAND ? -1 : 0;
+        if (rule === 'seeds') return c.lo > 0 ? 1 : c.est <= 0 ? -1 : 0;
+        return c.lo > 0 ? 1 : c.hi <= 0 ? -1 : 0;
+    }
+
+    // ------------------------------------------------------------------ interval charts (one row per cell, or per seed)
+    const PART_NAMES = {
+        L12: { a: '(a) H − F', b: '(b) G − Dep°', c: '(c) G − Sym', d: '(d) H3 − WN' },
+        L13: { a: '(a) BLESS AP', b: '(b) WBLESS AP', c: '(c) BLESS direction' },
+        L14: { a: '(a) HiT test, RR', b: '(b) HyperLex, ρ' },
+        L15: { a: '(a) H − F, Sym', b: '(b) GloVe and H3' },
+    };
+    function rowsOf(claim, row) {
+        const out = [];
+        const parts = V.claims[claim].parts;
+        for (const p of Object.keys(parts)) {
+            const P = parts[p];
+            out.push({ head: PART_NAMES[claim][p] || p, verdict: ruleVerdict(P.rule, P.cells, row), rule: P.rule });
+            for (const c of P.cells) {
+                if (P.rule === 'seeds') for (const s of c.seeds) out.push(Object.assign({ label: c.name + ' · seed ' + s.s, rule: P.rule }, pick(s, row)));
+                else out.push(Object.assign({ label: c.name, rule: P.rule }, pick(c, row)));
+            }
+        }
+        return out;
+    }
+    const COL = { 1: '#34d399', '-1': '#fb7185', 0: '#fbbf24' };
+    function forestSVG(rows) {
+        const cells = rows.filter(r => !r.head);
+        const rules = new Set(cells.map(r => r.rule));
+        const marks = [0];
+        if (rules.has('band')) marks.push(-BAND, BAND);
+        if (rules.has('gain')) marks.push(BAND);
+        let lo = Math.min(...cells.map(r => r.lo), ...marks), hi = Math.max(...cells.map(r => r.hi), ...marks);
+        const pad = (hi - lo) * 0.04 || 0.05;
+        lo -= pad; hi += pad;
+        const W = 760, L = 200, R = 16, RH = 17, TOP = 26;
+        const H = TOP + rows.length * RH + 10;
+        const x = v => L + (v - lo) / (hi - lo) * (W - L - R);
+        const span = hi - lo, step = span > 1.2 ? 0.25 : span > 0.6 ? 0.1 : span > 0.25 ? 0.05 : 0.02;
+        let s = `<svg viewBox="0 0 ${esc(W)} ${esc(H)}" xmlns="http://www.w3.org/2000/svg" font-family="Fira Code, monospace" font-size="11">`;
+        for (let t = Math.ceil(lo / step) * step; t <= hi + 1e-12; t += step) {
+            const tx = x(t).toFixed(1), lab = Math.abs(t) < 1e-12 ? '0' : sgn(t, step < 0.05 ? 2 : 2);
+            s += `<line x1="${tx}" y1="${TOP - 6}" x2="${tx}" y2="${H - 6}" stroke="#1e293b"/><text x="${tx}" y="${TOP - 10}" fill="#64748b" text-anchor="middle">${esc(lab)}</text>`;
+        }
+        for (const m of marks) {
+            const mx = x(m).toFixed(1);
+            s += `<line x1="${mx}" y1="${TOP - 6}" x2="${mx}" y2="${H - 6}" stroke="${m === 0 ? '#94a3b8' : '#f5c542'}" stroke-dasharray="${m === 0 ? '' : '4 3'}"/>`;
+        }
+        rows.forEach((r, i) => {
+            const y = TOP + i * RH + RH / 2;
+            if (r.head) {
+                s += `<text x="4" y="${(y + 4).toFixed(1)}" fill="#f8fafc" font-weight="600">${esc(r.head)}</text>` +
+                    `<text x="${W - R}" y="${(y + 4).toFixed(1)}" fill="${r.verdict === 'supported' ? '#6ee7b7' : r.verdict === 'refuted' ? '#fca5a5' : '#fde68a'}" text-anchor="end">${esc(r.verdict)}</text>`;
+                return;
+            }
+            const c = COL[says(r.rule, r)];
+            s += `<text x="14" y="${(y + 4).toFixed(1)}" fill="#cbd5e1">${esc(r.label)}</text>` +
+                `<line x1="${x(r.lo).toFixed(1)}" y1="${y.toFixed(1)}" x2="${x(r.hi).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${c}" stroke-width="2.4"/>` +
+                `<circle cx="${x(r.est).toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="${c}"><title>${esc(r.label + ': ' + sgn(r.est) + ' [' + sgn(r.lo) + ', ' + sgn(r.hi) + ']' + (r.row ? ' (row bootstrap)' : ''))}</title></circle>`;
+        });
+        s += '</svg>';
+        return s;
+    }
+    const LEGEND = '<div class="scroll-hint">The chart is wider than this screen: swipe it sideways to see every interval.</div><div class="map-legend" style="margin:4px 6px"><span style="--c:#34d399">supports its part</span><span style="--c:#fb7185">refutes it</span><span style="--c:#fbbf24">neither</span><span style="--c:#94a3b8">0</span><span class="dashed" style="--c:#f5c542">&plusmn;0.02</span></div>';
+    document.querySelectorAll('[data-forest]').forEach(el => {
+        const c = el.getAttribute('data-forest');
+        if (V.claims[c]) el.innerHTML = forestSVG(rowsOf(c, false)) + LEGEND;
+    });
+
+    // ------------------------------------------------------------------ controls, again
+    const yes = b => (b ? 'fails as required' : 'does NOT fail as required');
+    function controlChecks(claim) {
+        const C = V.controls[claim], out = [];
+        const above = list => list.every(c => c.lo > 0);
+        if (claim === 'L12') {
+            out.push(['control 1', above(C.control1)], ['control 2', above(C.control2)], ['control 3', above(C.control3)],
+                ['control 4', Object.values(C.control4.means).every(m => Math.abs(m) <= C.control4.band)]);
+        } else if (claim === 'L13') {
+            out.push(['control 1', ['a', 'b', 'c'].every(p => above(C.control1[p]))],
+                ['control 2 (in float64; the record compares exactly)', Object.values(C.control2).every(v => v.mean <= v.bound)],
+                ['control 3', Object.values(C.control3).every(v => v.accuracy === '0/1')]);
+        } else if (claim === 'L14') {
+            out.push(['control 1 (in float64; the record compares exactly)', Object.values(C.control1).every(v => v <= C.band)],
+                ['control 2 (likewise)', Object.values(C.control2).every(v => v <= C.band)],
+                ['closure check (must pass)', C.closureFailingRows.random === 0 && C.closureFailingRows.hard === 0],
+                ['control 3', C.control3.every(r => r.lorentz.lo > 0 || r.euclid.lo > 0)],
+                ['control 4', Object.values(C.control4.means).every(m => Math.abs(m) <= C.control4.band)]);
+        } else if (claim === 'L15') {
+            out.push(['control 1', ['SL', 'MEN'].every(st => above(C.control1[st]))],
+                ['control 2', C.control2.every(e => Math.abs(e.mean) <= e.band)],
+                ['control 3', Object.values(C.control3).every(e => Math.abs(e.mean) <= e.band)]);
+        }
+        const rec = V.claims[claim].controls;
+        const recAll = Object.values(rec).every(Boolean);
+        const word = (n, ok) => (/closure/.test(n) ? (ok ? 'passes' : 'does NOT pass') : yes(ok));
+        return `<span class="k">${esc(claim)} controls, re-checked</span> ` + out.map(([n, ok]) => `${esc(n)}: ${ok ? good(word(n, ok)) : bad(word(n, ok))}`).join('; ') +
+            `<br><span class="k">the record</span> ${recAll ? good('every control fails as required, so no part is void') : bad('a control did not fail as required')}`;
+    }
+
+    // ------------------------------------------------------------------ predictions, re-graded from the view's numbers
+    const grade = b => (b === true ? 'right' : b === false ? 'wrong' : 'partly');
+    function regrade(p) {
+        const A = V.arms, cl = V.claims;
+        const part = (c, q) => cl[c].parts[q];
+        const meanEst = cs => cs.reduce((s, c) => s + c.est, 0) / cs.length;
+        switch (p.key) {
+            case 'L12.rhoH3': return A.L12.H3 >= 0.45 && A.L12.H3 <= 0.70;
+            case 'L12.Fgap': return ['F3', 'F3*', 'F2', 'F2*'].every(a => A.L12.H3 - A.L12[a] >= 0.10);
+            case 'L12.dHalfwidth': { const c = part('L12', 'd').cells[0], h = (c.hi - c.lo) / 2; return h >= 0.015 && h <= 0.026; }
+            case 'L12.d': return part('L12', 'd').verdict === 'refuted' && part('L12', 'd').failingSide === 'low';
+            case 'L13.cFstar': return part('L13', 'c').cells.filter(c => /\*$/.test(c.name)).some(c => !(c.lo > 0) && !(c.hi <= 0));
+            case 'L14.gapAB': {
+                const b = {};
+                part('L14', 'b').cells.forEach(c => { b[c.name] = meanEst(c.seeds); });
+                const n = part('L14', 'a').cells.filter(c => meanEst(c.seeds) > b[c.name.slice(0, 2)]).length;
+                return n === 4 ? true : n === 0 ? false : null;
+            }
+            case 'L15.a': return part('L15', 'a').verdict === 'refuted' && part('L15', 'a').cells.filter(c => c.name.startsWith('SL/')).every(c => c.lo > BAND);
+            case 'L15.aMENsmaller': case 'L15.aMENwider': {
+                const cs = part('L15', 'a').cells, sl = {}, men = {};
+                cs.forEach(c => { const [st, k] = c.name.split('/'); (st === 'SL' ? sl : men)[k] = c; });
+                const ks = Object.keys(sl);
+                return p.key === 'L15.aMENsmaller' ? ks.every(k => men[k].est < sl[k].est) : ks.every(k => men[k].hi - men[k].lo > sl[k].hi - sl[k].lo);
+            }
+            default: {
+                const m = /^(L1[2-5])\.([abcd])$/.exec(p.key);
+                if (m) return part(m[1], m[2]).verdict === (m[1] === 'L15' && m[2] === 'a' ? 'refuted' : 'supported');
+                return undefined;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ the panel
+    const st = { claim: 'L12', row: false };
+    function render() {
+        $('lab-forest').innerHTML = forestSVG(rowsOf(st.claim, st.row)) + LEGEND;
+        const parts = V.claims[st.claim].parts;
+        $('lab-rules').innerHTML = Object.keys(parts).map(p => {
+            const P = parts[p], mine = ruleVerdict(P.rule, P.cells, st.row), reg = ruleVerdict(P.rule, P.cells, false);
+            const hasRow = P.cells.some(c => c.rowLo !== undefined || (c.seeds && c.seeds.some(s => s.rowLo !== undefined)));
+            const note = st.row ? (hasRow ? ' <span style="color:var(--muted)">(row bootstrap, reported)</span>' : ' <span style="color:var(--muted)">(no row bootstrap: the registered interval)</span>') : '';
+            const match = reg === P.beforeControls;
+            return `<tr class="verdict-row"><td class="mono">${esc(st.claim)}(${esc(p)})</td><td style="white-space:normal">${esc(RULE_TEXT[P.rule])}</td>` +
+                `<td><span class="tag ${VERDICT_CLASS[mine] || 't-MIXED'}">${esc(mine)}</span>${note}</td>` +
+                `<td><span class="tag ${VERDICT_CLASS[P.verdict] || 't-MIXED'}">${esc(P.verdict)}</span></td>` +
+                `<td class="mono">${match ? good('= the record') : bad('\u2260 the record')}</td></tr>`;
+        }).join('');
+        $('lab-controls').innerHTML = controlChecks(st.claim);
+        const preds = V.predictions.filter(p => p.claim === st.claim);
+        $('lab-preds').innerHTML = `<span class="k">${esc(st.claim)} predictions, re-graded from the view&rsquo;s numbers</span>` + preds.map(p => {
+            const g = regrade(p), mine = g === undefined ? null : grade(g), theirs = grade(p.right);
+            return `<br>${esc(p.test)}: <strong>${esc(mine || theirs)}</strong>` + (mine === null ? '' : mine === theirs ? ' ' + good('= the view') : ' ' + bad('\u2260 the view (' + theirs + ')'));
+        }).join('');
+        lab.querySelectorAll('[data-claim]').forEach(b => b.classList.toggle('on', b.getAttribute('data-claim') === st.claim));
+    }
+    lab.querySelectorAll('[data-claim]').forEach(b => b.addEventListener('click', () => { st.claim = b.getAttribute('data-claim'); render(); }));
+    $('lab-row').addEventListener('change', e => { st.row = !!e.target.checked; render(); });
+
+    const nParts = Object.values(V.claims).reduce((n, c) => n + Object.keys(c.parts).length, 0);
+    const allMatch = Object.keys(V.claims).every(c => Object.values(V.claims[c].parts).every(P => ruleVerdict(P.rule, P.cells, false) === P.beforeControls));
+    const src = V.sources.rec || {};
+    status.innerHTML = `<span class="k">view</span> JSON text ${esc(TEXT.length.toLocaleString('en'))} characters, SHA-256 ${esc(textSha.slice(0, 16))}&hellip; ` +
+        (textSha && textSha === pin ? good('= the pin on this panel') : bad('\u2260 the pin on this panel: the view is not the one this page was written for')) +
+        `<br><span class="k">record</span> ${esc(src.file || '')} at ${esc((src.head || '').slice(0, 7))}, ${esc(src.label || '')}` +
+        `<br><span class="k">rules</span> every part&rsquo;s verdict follows from its cells by the registered rule: ${allMatch ? good(`yes, in all ${esc(nParts)} parts`) : bad('no')}` +
+        `<br><span class="k">this page</span> ${esc(filled)} numbers filled from the view; ` +
+        (differed.length || missing.length ? bad(`${differed.length} differed from the page as written and ${missing.length} have no value`) : good('every one equal to the page as written'));
+    render();
+})();
+</script>
+<!-- page-chrome:start -->
+<script type="module" src="../../../assets/js/page-chrome.js" data-position="top" data-menus="[{&quot;label&quot;:&quot;Lexicon&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../index.html&quot;,&quot;label&quot;:&quot;Hyperbolic Lexicon hub&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Analysis, system map, roadmap, claims ledger and decisions&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../summary.html&quot;,&quot;label&quot;:&quot;The analysis in one page&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;SHD-CCP integration and a staged hyperbolic BERT, in brief&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-2d.html&quot;,&quot;label&quot;:&quot;Lexicon 2D: the tree in the disk&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Type a sentence: tokens, addresses and exact H² points; decode, precision, LCA paths&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;../lexicon-3d.html&quot;,&quot;label&quot;:&quot;Lexicon 3D: the tree in the ball&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;Segments A and B in H³: frames, X(5, q) vertices, the coupler as a check&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Manuals&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;analysis.html&quot;,&quot;label&quot;:&quot;What We Have Made, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 1: our stack judged for language; engram/1; precision&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;shdccp.html&quot;,&quot;label&quot;:&quot;SHD-CCP: Three Layers, One Bridge&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 2: eight layouts, Form IDs, LPS = X(5,q), proposals&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;architecture.html&quot;,&quot;label&quot;:&quot;A Hyperbolic BERT Front End&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 3: stages A-H, exact H² and H³ trees, the encoder&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;biochains.html&quot;,&quot;label&quot;:&quot;Growing Language Biochains&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 4: shards, records, manifests, two tiers, hardened import&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;alternatives.html&quot;,&quot;label&quot;:&quot;The Alternatives, Each With a Role&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 5: main routes, baselines, controls, later, rejected&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;tracks.html&quot;,&quot;label&quot;:&quot;Three Compute Tracks&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 6: browser, CPU and GPU, and how they compare&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;benchmarks.html&quot;,&quot;label&quot;:&quot;The Benchmark Ladder&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 7: Stages 0-4, metrics, graded baselines, licences&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;evidence.html&quot;,&quot;label&quot;:&quot;Spikes and Claims&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 8: spikes S1-S7 and the preregistered L1-L11&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;reference.html&quot;,&quot;label&quot;:&quot;The Python Reference and Its Results&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 9: the Phase 1 reference, L2, L3, L5 and L7 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;browser-core.html&quot;,&quot;label&quot;:&quot;The Browser Core and Its Parity&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 10: lexicon_core.js, live parity, L1, L3(f) and L4(a, b) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;chains.html&quot;,&quot;label&quot;:&quot;Language Biochains, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 11: shards, records, the manifest and the signed verifier; L8-L11 decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;learned.html&quot;,&quot;label&quot;:&quot;Learned Geometry, Measured&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 12: learned Lorentz vs Euclidean, the exact tree; L6 and L4(c) decided&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-2d.html&quot;,&quot;label&quot;:&quot;The 2D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 13: every panel of lexicon-2d.html, the shard and Engram panels&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;page-3d.html&quot;,&quot;label&quot;:&quot;The 3D Page Manual&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 14: every panel of lexicon-3d.html; frames, X(5, q), the coupler&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;},{&quot;href&quot;:&quot;lexical.html&quot;,&quot;label&quot;:&quot;The Lexical Claims, Decided&quot;,&quot;icon&quot;:&quot;book&quot;,&quot;note&quot;:&quot;Explainer 15: Stage 2, L12-L15 on HyperLex, BLESS, HiT, SimLex and MEN; two parts refuted&quot;,&quot;section&quot;:&quot;Hyperbolic Lexicon&quot;}]},{&quot;label&quot;:&quot;Elsewhere&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;items&quot;:[{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/index.html&quot;,&quot;label&quot;:&quot;Engram Mind's Eye&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;engram/1, the SHD-CCP codec and the bridges to Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Engram%20Minds%20Eye/explainers/bridges.html&quot;,&quot;label&quot;:&quot;The Bridges&quot;,&quot;icon&quot;:&quot;eye&quot;,&quot;note&quot;:&quot;Biochains in and out of Owl Academy&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/index.html&quot;,&quot;label&quot;:&quot;Hyperbolic PolyStep&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The norm-5 tree, exact H² and H³, PolyStep&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Hyperbolic%20Oracles/claude-fence-3d.html&quot;,&quot;label&quot;:&quot;The Fence in 3D&quot;,&quot;icon&quot;:&quot;hyper&quot;,&quot;note&quot;:&quot;The 0.7 Claude fence in H³&quot;,&quot;section&quot;:&quot;Built on&quot;},{&quot;href&quot;:&quot;../../Geometric%20Calculator/index.html&quot;,&quot;label&quot;:&quot;Geometric Harmonics Calculator&quot;,&quot;icon&quot;:&quot;engine&quot;,&quot;note&quot;:&quot;The orbital core's home&quot;,&quot;section&quot;:&quot;Built on&quot;}]}]"></script>
+<!-- page-chrome:end -->
+</body>
+</html>

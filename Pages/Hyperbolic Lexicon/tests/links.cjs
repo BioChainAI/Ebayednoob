@@ -4,6 +4,9 @@
 //
 // 1. Every relative href and src in the folder's pages and explainers names a file that exists, and every #anchor
 //    names an id in its target page. The markdown documents' relative links resolve too.
+//    Every amendment the pages, the map and the READMEs cite ("Amendment N", "Amendments M-N", "AN.k", "AN item k")
+//    is one PREREGISTRATION.md already holds (its last "### Amendment N" heading), so a page never cites an amendment
+//    before it is committed.
 // 2. Every href and explainer on the system map (assets/hl-map.js) resolves the same way.
 // 3. The site's ways in: the catalog card in pages.html; the site-bar menus (every file in every menu set exists, the
 //    hyperbolic-lexicon set covers every page here, and the Lexicon is in the Hyperbolic Oracles, Engram Mind's Eye
@@ -68,6 +71,24 @@ for (const doc of docs) {
     const links = [...md.matchAll(/\]\(([^)\s]+)\)/g)].map(m => m[1]);
     const bad = links.map(h => [h, check(path.dirname(file), h, file)]).filter(([, why]) => why).map(([h, why]) => `${h}: ${why}`);
     line('docs', `${rel(file)}: ${links.length} links`, bad.length === 0, bad.join('; '));
+}
+
+// every amendment cited is one the preregistration holds
+{
+    const prereg = fs.readFileSync(path.join(HERE, 'PREREGISTRATION.md'), 'utf8');
+    const heads = [...prereg.matchAll(/^### Amendment (\d+)\b/gm)].map(m => Number(m[1]));
+    const last = heads.length ? Math.max(...heads) : 0;
+    const cited = file => {
+        const t = fs.readFileSync(file, 'utf8').replace(/<!-- page-chrome:start -->[\s\S]*?<!-- page-chrome:end -->/, '');
+        const nums = [];
+        for (const m of t.matchAll(/\bAmendments?\s+(\d+)(?:\s*(?:&ndash;|\u2013|-|to)\s*(\d+))?/g)) nums.push(Number(m[1]), Number(m[2] || 0));
+        for (const m of t.matchAll(/\bA(\d{1,2})(?:\.\d|\s+item\b)/g)) nums.push(Number(m[1]));
+        return nums;
+    };
+    const files = [...pages, path.join(HERE, 'assets/hl-map.js'), path.join(HERE, 'README.md'), path.join(HERE, 'reference/README.md')];
+    const over = files.map(f => [f, cited(f).filter(n => n > last)]).filter(([, ns]) => ns.length);
+    line('amend', `every amendment cited (${files.length} files) is in PREREGISTRATION.md (Amendments 1-${last})`, last > 0 && over.length === 0,
+        over.map(([f, ns]) => `${rel(f)} cites Amendment ${[...new Set(ns)].join(', ')}`).join('; '));
 }
 
 // ---- 2. the system map

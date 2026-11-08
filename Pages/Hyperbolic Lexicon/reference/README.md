@@ -39,6 +39,18 @@ the pins gained `golden/make_wordnet_view_v1.cjs`, the pages' WordNet data as sc
 [`../explainers/page-2d.html`](../explainers/page-2d.html) and [`../explainers/page-3d.html`](../explainers/page-3d.html),
 are the pages' manuals.
 
+In Stage 2 (the benchmark ladder's lexical semantics), the reference gained the modules of L12–L15 and
+`run_claims_stage2.py` (below). Amendment 13 registered the claims before any code (`b3a5003`). The code was built on
+synthetic data, WordNet's verbs and unregistered seeds (`613721d`), fixed after an adversarial review (`e91e02d`,
+`841b90c`) and dry-run with its values on human-rated sets sealed (`05d467d`); Amendment 14 followed (`513e079`), then
+its code commit and the dry rerun (`9550eea`, `5acbbb7`), the timing projection (`b2ba411`), registered tuning
+(`60345b4`) and Amendment 15, which froze the rates (`6b6ec09`). Then `run_claims_stage2.py --decisive` ran once at that
+commit (16,673 s on 4 workers; record `5d32f47`). L12(a)–(c), L13, L14 and L15(b) are supported, L12(d) and L15(a)
+refuted, every part as predicted; every control failed as required, and no claim is void. An independent check
+recomputed every decided value and found none different, and `../lexicon_stage2.js` re-rendered the decisive code
+files in Node byte for byte (below). Explainer 15, [`../explainers/lexical.html`](../explainers/lexical.html), tells
+Stage 2's story.
+
 ## The authority rule
 
 - **Exact stages:** the Python reference decides the claims for the exact stages (normaliser, tokenizer, ids, addresses,
@@ -51,6 +63,11 @@ are the pages' manuals.
   tables and the exact arm with every exact MAP, LBENCH/1 hash, mean rank and tie count equal (`run_l6_node.cjs`,
   reported). In Phase 5 the page engine, on `lexicon_core.js` unchanged, regenerates the pages trace
   (`traces/pages_v1.txt`) line for line, 1,326 of 1,326 (`../tests/pages-lexicon.cjs`); it decides nothing.
+- **Stage 2 (L12–L15):** the reference decides every part (A13.1; D9 for the trainer). Afterwards Node, with
+  `../lexicon_stage2.js` beside `lexicon_core.js` (which stays unedited, decision D4 of the integration overhaul;
+  Amendment 16 records the file name as an erratum to A13.1), regenerates `traces/stage2_v1.txt` line for line and
+  re-renders the 106 decision code files of A13.14 byte for byte, compared by the SHA-256 of their text
+  (`../tests/parity-stage2.cjs`). It decides nothing; with it, the browser may show L12–L15's verdicts as holding.
 - **Compatibility with Owl Academy and BioChain-AI:** their own JavaScript is the authority (claim L8(a, b)), run
   unchanged from their checkouts by name-grab (Owl Academy at `7f45f35`, BioChain-AI at `c975161`).
 - **Learned embeddings (Phase 4):** the numpy float64 trainer (`lexicon/embed.py`) is the authority for the learned
@@ -77,6 +94,9 @@ are the pages' manuals.
 | `golden/check_ucd_v1.py`, `golden/ucd_15_1_v1.meta.json` | The pinned table checked field by field against the official UCD 15.1.0 files (UnicodeData, SpecialCasing, DerivedCoreProperties, DerivedAge), pinned at unicode-org/unicodetools `b9144701` and fetched from GitHub, since unicode.org is blocked here: equal in every field (categories, decompositions, combining classes, lowercase, both Final_Sigma sets, whitespace, Hangul). Without `--check` it fetches once into the cache and writes the meta; `--check` compares. Run as `python3 -B -I`. (After Phase 2's run, `5e1681c`) |
 | `golden/make_wordnet_view_v1.cjs` | Writes `../data/wordnet_nouns_v1.js` (every noun synset in offset order with its first lemma and L3 spanning parent; 2,549,905 bytes) and `../data/wordnet_map_a_v1.js` (the verb forest and the WordNet index rows of V0's entries, what map A reads; 567,400 bytes), the 2D and 3D pages' WordNet data as script files, each beginning with the WordNet licence verbatim. It parses its own output back with the page engine's parsers and refuses to write unless the noun words give the canonical point list (`eb22bf00…`), the verb words their trace line, map A on that data equals map A on the full archive for all 8,192 V0 entries, and the address table's root is `LADDR/1`'s (`30b17bc3…`). `--check` rebuilds in memory and compares bytes (about 6 s; exit 2 without the archive). (Phase 5) |
 | `golden/l6_protocol_v1.txt` | Amendment 10 verbatim, from its heading, with LF line ends and a final LF (A10.12): the file whose SHA-256, `1267ebb2…`, every `LBENCH/1` record carries as its protocolSha. `tests/test_l6.py` pins it against `../PREREGISTRATION.md`. (Phase 4) |
+| `golden/make_stage2_v1.py`, `golden/stage2_pins_v1.json`, `golden/stage2_instances_v1.meta.json` | Stage 2's sets (A13.2): HyperLex, the hypernymy suite, EVALution's upstream, HiT's WordNet multi-hop split, SimLex-999, MEN, WordSim-353 and GloVe 6B, each pinned by size and SHA-256 (archives by member) and fetched once into its own folder under `~/.cache/hyperbolic-lexicon/stage2/`; only hashes are committed. `--check` fetches what is missing and verifies every pin (`--no-fetch` verifies only); `--manifest` writes the instance manifest (rows, coverage, pair sets, clusters and word types of every instance) and `--check-manifest` rebuilds and compares. Run as `python3 -B -I`. (Stage 2) |
+| `golden/stage2_protocol_v1.txt` | Amendment 10, then Amendment 13, verbatim from their headings, with LF line ends and a final LF (A13.14): the file whose SHA-256, `1c96a4b8…`, every Stage-2 `LBENCH/1` record carries as its protocolSha, pinned by a test against `../PREREGISTRATION.md`. (Stage 2) |
+| `golden/make_stage2_view_v1.py` | Writes `../data/stage2_view_v1.js`, Explainer 15's data, from the committed record, tuning and dry records and the dry runs' sealed files (their committed gzip copies in `results/dry/stage2-sealed/`), each checked by SHA-256; `--check` rebuilds and compares, and also checks every `data-v` number in `../explainers/lexical.html`; it reads committed files only. `--copy-sealed` wrote the copies from the cache once. (Stage 2's write-up) |
 
 Every check exits 0 on a match, 1 on a mismatch and 2 "skipped" when its data is not cached. Fetch the data once:
 
@@ -121,7 +141,7 @@ Built in Phase 4 (L6 and L4(c); Amendment 10, cited A10.n):
 | `lexicon/learned.py` | Snapping to 2^−32 (A10.6), exact ranking of snapped tables through `rank._ap_and_ranks`, float64 ranking (A10.10), fractional-tie AP, the rank structure, displacement, bits and the distances for distortion (A10.11) |
 | `lexicon/l6.py` | Seeds, tuning jobs and the lr choice, control 1's relabelling, control 2's pairs, the floors, intervals, presence, the decisions of L6 and L4(c), `LBENCH/1` (A10.12), the protocol pin (`golden/l6_protocol_v1.txt`) and the lr-freeze lookup |
 
-Built in Stage 2 (L12–L15; Amendment 13, cited A13.n; in progress, nothing scored yet):
+Built in Stage 2 (L12–L15; Amendment 13, cited A13.n):
 
 | Module | Holds |
 | --- | --- |
@@ -324,11 +344,15 @@ node run_l6_node.cjs                                     # the Node re-evaluatio
 - **Registered steps repeat only from their commits.** `--measure` refuses unless the only paths changed since
   tuning's commit are the four A10.14 names, so a repeat of the decisive run starts from `515a4a1`.
 
-## Stage 2: L12–L15 (in progress)
+## Stage 2: L12–L15
 
-`run_claims_stage2.py` runs Amendment 13's order of work (A13.15). Amendment 13 is committed alone (`b3a5003`); the
-code and its tests are being built (step 2); nothing has been scored on any Stage-2 set, and no registered seed has been
-drawn.
+`run_claims_stage2.py` runs Amendment 13's order of work (A13.15), and ran in it (the commits are listed in
+`../README.md`): the self-test while building; the dry run on WordNet's verbs at `841b90c` (`05d467d`) and its rerun at
+Amendment 14's code commit `9550eea` (`5acbbb7`: dry tuning 1,487 s, the dry decisive step 1,815 s); `--time` at
+`93a5a8e` (23 s; 9.93 h projected against 11 h; committed as `b2ba411`); registered tuning at `b2ba411` (48 runs and the replay, in three starts
+around a container suspension, Amendment 15 item 5; `60345b4`); `--write-settings`, whose output Amendment 15 froze
+(`6b6ec09`); and the decisive run at `6b6ec09` (16,673 s; `5d32f47`), which decided L12–L15. The decisions are under
+"Results" below.
 
 ```
 python3 -B -I run_claims_stage2.py --selftest --out <dir> [--dry]   # the whole pipeline (time, tune, settings,
@@ -344,7 +368,14 @@ python3 -B -I run_claims_stage2.py --time                # before step 5: two ep
 python3 -B -I run_claims_stage2.py --tune                # step 5, registered tuning: reads WordNet and HiT val only (its
                                                          # counts too); results/tuning-stage2.json
 python3 -B -I run_claims_stage2.py --write-settings      # settings-stage2.json; prints its SHA-256 for the lr freeze (step 6)
-python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decisive run of L12-L15
+python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decisive run of L12-L15 (16,673 s on 4 workers)
+python3 -B traces_stage2.py --check                      # the Stage-2 trace rebuilt and compared (about 2 s)
+python3 -B traces_stage2.py                              # rewrite traces/stage2_v1.txt
+node ../tests/parity-stage2.cjs --trace                  # lexicon_stage2.js regenerates the trace line for line
+node ../tests/parity-stage2.cjs --codes                  # the 106 decision files re-rendered in Node and compared (134 s
+                                                         # wall on 4 workers; exit 2, skipped, without the cache)
+node ../tests/parity-stage2.cjs --codes --group reported # the 624 further certified and exact-key files
+python3 -B -I golden/make_stage2_view_v1.py --check      # Explainer 15's data rebuilt from the record and compared
 ```
 
 - **The order of work** (A13.15): this code and its tests on synthetic data, the dry data and seeds 95200 + i, then
@@ -398,7 +429,40 @@ python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decis
   20 measured tables on HiT test and HL-at, READING stage2-runner-43) and `stage2-tables/` (each committed only if
   together at most 50 MB); the same under `results/dry/` without the sealed values, which go to
   `~/.cache/hyperbolic-lexicon/stage2/dry-sealed/values.json` (L14's values on the verb graph and its split stay
-  visible). Every other code file, side file and table stays in the cache.
+  visible). Every other code file, side file and table stays in the cache. In the decisive run the decision files came
+  to 68.8 MB (106 files), over the rule, so they are committed by their hashes only and `results/stage2-codes/` does
+  not exist; the 20 measured snapped texts came to 26.2 MB and are committed in `results/stage2-tables/`. The first dry
+  run's sealed file (code `841b90c`, record `05d467d`) is in the cache as
+  `~/.cache/hyperbolic-lexicon/stage2/dry-sealed-05d467d/values.json`, beside the rerun's; both were opened after the decisive run (A13.15 step 8), and both hash to the SHA-256
+  their visible records give (`7ba50e01…` and `9c9eac2c…`). Step 8 committed both as gzip copies,
+  `results/dry/stage2-sealed/values-05d467d.json.gz` and `values-5acbbb7.json.gz` (written by
+  `golden/make_stage2_view_v1.py --copy-sealed`; the SHA-256 of each decompressed copy is the named one), so
+  Explainer 15's dry values come from committed files.
+- **The trace** (A13.1). `traces_stage2.py` writes `traces/stage2_v1.txt`, 3,129 lines: 18 cases, case i from
+  `Rng(8000 + i)` only (eight letter-tree cases on the six exact arms, four learned Lorentz and Euclidean cases, one
+  planted case per certified form with near-ties from 10^−40 to 10^−300 and chained ties, and two input cases: K3, N_S,
+  S-full, W, WordNet's integers and GloVe's exact key), scored exactly as pass 1 scores. W's map takes the case's seed,
+  8000 + i, a second generator of the same family. `../tests/parity-stage2.cjs --trace` regenerates it in
+  `../lexicon_stage2.js` line for line, and `../tests/all.cjs` runs both.
+- **The Node re-evaluation** (A13.1; reported, deciding nothing). `../tests/parity-stage2.cjs --codes` checks every
+  input against its pin (the sets and archive members, WordNet, U_@, the instance manifest's rows and pairs, the 20
+  committed snapped tables, and each cached code and side file against `results/stage2-manifest.json`), then re-renders
+  each decision file of A13.14 (66 exact-arm files, and the 20 measured tables' G on HiT test and on HL within U_@) from
+  the word columns, WordNet and the snapped tables alone, with exact rationals and square roots at 1,024 bits, and
+  compares its text's SHA-256 and line count with the manifest, its counts with `files_metrics`, and its 240-digit
+  values with the side file. All 106 are equal (12,685,235 lines); with `--group reported`, 624 more (730 in all,
+  14,734,884 lines, 302 s wall). The gzip bytes differ (Node bundles its own zlib), so the comparison is the text's
+  SHA-256, LBENCH/1's itemScoresSha. Not rendered: the forms ordered by 120-digit decimals of ln (NK17, product,
+  WN-LCh), the closure bits, the reported arms WN-U, ST, letter and S3, the files of other instances and the floor
+  tables' files; nor the files only controls read (L14's edge-shuffled tables, compared in control 3, its tuning tables
+  and relabelled points, and GloVe's files for the controls 3 of L13 and L15: `BD-dir-glove` and the GloVe-vec
+  permutations), which the independent check reproduced in Python (Amendment 16 item 1).
+- **Verifying the record.** The pass-1 code and side files stay in `~/.cache/hyperbolic-lexicon/stage2-run/registered/`
+  (1,635 each); `results/stage2-manifest.json` names each with its gzip and text SHA-256 and line count, and the
+  record's receipts hold the manifest's SHA-256 and that of `lbench-stage2.txt`. Each LBENCH/1 receipt carries its
+  file's text SHA-256 (itemScoresSha) and the SHA-256 of its exact metric (ρ as `Σab|Σa²|Σb²`, AP, accuracy and mean
+  RR as `p/q`), so a reader can check a value against the file without the reference. An independent check (A13.15
+  step 8) did so for every decided value and found none different.
 - **Tests:** `tests/test_stage2_runner.py` (the rules, LBENCH/1, the disk pre-flight and budget refusals, blindness by
   import inspection, a gold-reader spy and poisoned gold fields, the dry seal; slow: the self-test end to end in both
   shapes, its resume and its determinism, and the word-level counts and pair sets on the pinned files against the
@@ -429,7 +493,16 @@ python3 -B -I run_claims_stage2.py --decisive            # step 7, the one decis
 | `results/l6-tables/` | 141 files: the gzipped snapped texts of the 50 measured and 50 edge-shuffled tables, the float64 bytes of L4(c)'s 40, and the exact arm's lines |
 | `results/l6-node.json`, `.md` | The Node re-evaluation (A10.11; 2026-11-06, `lexicon_core.js` as committed at `b6f3b9d`, committed as `09a8afa`; reported, deciding nothing): the L6 trace first, then every measured table's and the exact arm's exact MAPs, LBENCH/1 hashes, mean ranks, ties and per-query APs against the record; no difference |
 | `results/fractional-ties.json`, `.md` | A10.17 (Phase 4, deciding nothing): the fractional-tie MAPs of Phase 1's L5 arms and Phase 2's L4(a) rank lists, beside the pessimistic MAPs those phases published, which every recomputed value equals; from `fractional_ties.py`, with the commit and code SHA-256s it ran on |
-| `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5; and Phase 3's last (`claims-phase3.*`, `phase3-console.txt`, `phase3-registry.json`, Amendment 7 item 8, committed as `25b48b3`), before Amendment 8; and Phase 4's on the solid.n.01 closure set (A10.13: `tuning.json`, `settings.json`, `phase4-tuning-console.txt`, committed as `78c661d`; `claims-phase4.*`, `phase4-console.txt`, `lbench-phase4.txt`, `l6-tables/`, committed as `a780bb5`), before registered tuning |
+| `results/stage2-time.json`, `stage2-time-console.txt` | Stage 2's timing projection (A13.16; on the code at `93a5a8e`, committed as `b2ba411`): two epochs per L14 cell on U_@ with unregistered seeds, the projected total (9.93 h against the 11 h limit) and the disk |
+| `results/tuning-stage2.json`, `stage2-tuning-console.txt` | Stage 2's registered tuning (2026-11-07 to 08, on the code at `b2ba411`, committed as `60345b4`): the 48 runs on HiT val, each with its exact mean RRs, float and snapped SHA-256s, generator state, loss curve and convergence; each cell's choice; the replay; the three starts (Amendment 15 item 5). The tuning tables stay in the cache |
+| `settings-stage2.json` (beside the runner) | The frozen rates of Amendment 15 (SHA-256 `f7823bdf…`), written by `--write-settings` from `results/tuning-stage2.json`: 10 in every cell, Lorentz and Euclidean at d = 2 and 3 |
+| `results/claims-stage2.json`, `.md` | Stage 2's decisive run (2026-11-08, on the code at `6b6ec09`, committed as `5d32f47`): the count checks, every instance with its pair-set SHA-256, every decided interval with its row bootstrap, every control with its permutations' exact values, the decisions of L12–L15 with their reasons, L12(d)'s flag, the reported values (L12's grid and chain, the strata, L13's suite protocol, L14's floors, tails and diagnostics, WordSim and path2vec), every trained run with its SHA-256s, loss and convergence, the replay and pre-flight checks, the wiring's provenance, `files_metrics` for every pass-1 file, the environment, the readings of the runner, the timings and the receipts |
+| `results/stage2-console.txt` | The decisive run's console output and timing (its last line, written after the record, says 16,684 s; the record's `timings.total_s` is 16,673 s) |
+| `results/lbench-stage2.txt` | All 1,848 `LBENCH/1` records of the run, in A13.14's 24-field layout (SHA-256 `492f7213…`) |
+| `results/stage2-manifest.json` | The SHA-256 (gzip and text), size and line count of every one of the 1,635 pass-1 code files and its side file, and of every run's loss file (SHA-256 `71f82fcb…`); the decision files (68.8 MB) are committed by these hashes only |
+| `results/stage2-tables/` | The 20 measured snapped texts, gzipped (26.2 MB), for the Node re-evaluation |
+| `results/dry/stage2-sealed/` | The dry runs' two sealed files (A13.13), opened in step 8 and committed as gzip copies: `values-05d467d.json.gz` (the first dry run; its SHA-256 `7ba50e01…` is named by Amendment 14) and `values-5acbbb7.json.gz` (the rerun; `9c9eac2c…`, named by `results/dry/claims-stage2.json`). Each SHA-256 is that of the decompressed file. Metric values and receipts only, like the decisive record |
+| `results/dry/` | The registered dry runs: Phase 1's on unregistered seeds and the verb forest, as rerun after the review fixes (commit `20c3320`), before Amendment 2; Phase 2's (`phase2-python.*`, `claims-phase2.*`, Amendment 4 item 7), every cell run, before Amendment 5; and Phase 3's last (`claims-phase3.*`, `phase3-console.txt`, `phase3-registry.json`, Amendment 7 item 8, committed as `25b48b3`), before Amendment 8; and Phase 4's on the solid.n.01 closure set (A10.13: `tuning.json`, `settings.json`, `phase4-tuning-console.txt`, committed as `78c661d`; `claims-phase4.*`, `phase4-console.txt`, `lbench-phase4.txt`, `l6-tables/`, committed as `a780bb5`), before registered tuning; and Stage 2's on WordNet's verbs (A13.13: `claims-stage2.*`, `lbench-stage2.txt`, `stage2-manifest.json`, `stage2-codes/`, `stage2-tables/`, `tuning-stage2.json`, `settings-stage2.json` and both consoles, committed as `05d467d` and rerun as `5acbbb7`), whose values on human-rated sets were sealed in the cache until the decisive run, before Amendment 14 and registered tuning |
 
 | Claim | Decision | Key numbers |
 | --- | --- | --- |
@@ -471,5 +544,23 @@ relabelled closure MAP of 0.018803 over 316 tables (the bar is 1/20); control 2 
 50 cells and seeds, for closure and graph-edge; control 3's floors are reported, beside a random ranking's 0.014957
 (closure) and 0.007320 (graph-edge). L6 is not void. Reported, deciding nothing: the exact arm's fractional-tie MAP
 (graph-edge 0.7701 against the pessimistic 0.6907, closure 0.3305 against 0.3054); geoopt not run (above).
+
+Stage 2 (`results/claims-stage2.json`; intervals are 95% bootstraps, word-level for ρ):
+
+| Claim | Decision | Key numbers |
+| --- | --- | --- |
+| L12(a) | supported | HyperLex nouns, ρ by G: H3 0.624924, H2 0.620716, F3 0.173168, F3\* 0.216920, F2 0.054840, F2\* 0.211128; every H − F interval above 0, the smallest H3 − F3\* +0.408 [+0.317, +0.503] |
+| L12(b) | supported | G − Dep°: H3 +0.174 [+0.062, +0.293], H2 +0.168 [+0.055, +0.287] |
+| L12(c) | supported | G − Sym: H3 +0.399 [+0.309, +0.488], H2 +0.410 [+0.320, +0.498] |
+| L12(d) | refuted (low side); flagged, registered after a partial preview (A13.20) | H3 − WN −0.161 [−0.221, −0.112], WN 0.785527 |
+| L13(a)–(c) | supported | BLESS AP H3 0.789, H2 0.801 against 0.092–0.137 flat; WBLESS 0.970, 0.971 against 0.516–0.569; direction 195/199 and 587/597 against 0.438–0.628; every H − F lower end at least +0.304 |
+| L14(a) | supported in all four cells | HiT test, RR Lorentz − Euclidean per seed +0.178 to +0.487 across the cells, every lower end at least +0.174 |
+| L14(b) | supported at d = 2 and 3 | HL within U_@, ρ Lorentz 0.475–0.507 against Euclidean 0.112–0.265; differences +0.221 to +0.366, lower ends at least +0.126 |
+| L15(a) | refuted | By Sym, all eight H − F lower ends above +0.02: SimLex +0.222 to +0.391, MEN +0.093 to +0.278 (the smallest lower end +0.034) |
+| L15(b) | supported | GloVe − H3: MEN +0.366 [+0.276, +0.456], WSR +0.585 [+0.285, +0.858]; H3 − GloVe on HL +0.110 [+0.024, +0.193] |
+
+Every control failed as required, L14's closure check passed, and no claim is void. The wiring check matched 141
+decided comparisons and 321 control values; 40 of 42 runs converged (not the two pre-flight retrains at rate 0.03,
+which equal tuning's).
 
 `../README.md` has the full tables, the commits in order, and what went against prediction or was disclosed.

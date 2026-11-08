@@ -22,6 +22,8 @@
 // and the decisive pass-1 code files re-rendered and compared by SHA-256 (tests/parity-stage2.cjs --codes, about three
 // minutes on four workers, tagged "slow"; skipped without the Stage-2 cache, which CI's cache does not hold, so it is
 // optional: a skip stays a skip under --strict).
+// The write-up adds Explainer 15's data view (make_stage2_view_v1.py --check, from committed files only, with every
+// number on explainers/lexical.html) and the explainer in Chromium (tests/pages-chromium-lexical.cjs, tagged "browser").
 // A check whose data or checkout is missing exits 2 and is reported as skipped, never as passed; one that ran only in
 // part (tests/parity-lexicon.cjs without a cache) exits 3 and is reported as partial; pytest's own exit 2 (interrupted,
 // or an error while collecting) counts as a failure. The summary is "N pass, M partial, K skipped"
@@ -46,12 +48,14 @@ const RUNS = [
     ['lexicon', 'Stage 2 re-evaluation: decisive code files', ['node', L + 'tests/parity-stage2.cjs', '--codes', '--quiet'], { tags: ['slow'], optional: true }],
     ['lexicon', 'JS data wrappers', ['node', L + 'reference/golden/make_js_data_v1.cjs', '--check']],
     ['lexicon', 'L6 view data (Explainer 12)', [...PY, L + 'reference/golden/make_l6_view_v1.py', '--check']],
+    ['lexicon', 'Stage 2 view data (Explainer 15)', ['python3', '-B', '-I', L + 'reference/golden/make_stage2_view_v1.py', '--check']],
     ['lexicon', 'WordNet data of the 2D and 3D pages', ['node', L + 'reference/golden/make_wordnet_view_v1.cjs', '--check']],
     ['lexicon', 'chain: records, tampers, signing', ['node', L + 'tests/chain-lexicon.cjs']],
     ['lexicon', 'Engram imports Lexicon shards', ['node', L + 'tests/bridges-lexicon.cjs']],
     ['lexicon', 'page engine (2D and 3D pages)', ['node', L + 'tests/pages-lexicon.cjs']],
     ['pages', 'the 2D page in Chromium', ['node', L + 'tests/pages-chromium-2d.cjs'], { tags: ['browser'] }],
     ['pages', 'the 3D page in Chromium', ['node', L + 'tests/pages-chromium-3d.cjs'], { tags: ['browser'] }],
+    ['pages', 'Explainer 15 in Chromium (the live panel)', ['node', L + 'tests/pages-chromium-lexical.cjs'], { tags: ['browser'] }],
     ['pins', 'Owl and BioChain-AI growers (compat)', ['node', L + 'reference/golden/make_biomesh_compat_v1.cjs', siblings.dir('Owl-Academy'), siblings.dir('BioChain-AI'), '--check'],
         { tags: ['siblings', 'slow'] }],
     ['lexicon', 'links and the ways in', ['node', L + 'tests/links.cjs']],

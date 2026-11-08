@@ -1,23 +1,25 @@
 # Hyperbolic Lexicon · SHD-CCP integration and a staged hyperbolic BERT front end
 
-**Status: Phase 5 done (the 2D and 3D pages); the Stage-1 gate, a review with the user before any encoder code, is
-next.**
-Of the eleven claims registered in `PREREGISTRATION.md`, Phase 1's one decisive run supported L2, L5 and L7, and L3
-on its Python side (parts (a)–(e) and (g)). Phase 2's one decisive run supported L1, L3(f), which completes L3, and
-L4(a) and (b). Phase 3's one decisive run supported L8 (for the JS grower and for the Python port), L9, L10 and L11.
-L11 was decided on packages grown with engrams off, a reading Amendment 8 fixed before the run but after dry runs had
-put the engrams-on median near the 250 ms bar (below). Phase 4's one decisive run supported L6, all four parts, and
-L4(c), which completes L4; L6(c) was supported against its registered prediction of refuted (below). So all eleven
-registered claims are supported, each in full. Three predictions were wrong, and they stay on record: L2's band,
-L11's band and L6(c). Learned static embeddings of the mammal hierarchy exist now; no encoder or language model does,
-and the Stage-2 lexical claims the plan listed for Phase 4 have not been registered. Phase 5 built the two pages,
+**Status: Phase 5 (the 2D and 3D pages) and Stage 2 (lexical semantics, L12–L15) done; the Stage-1 gate, a review
+with the user before any encoder code, is next.**
+Of the eleven claims registered in `PREREGISTRATION.md` in Phase 0, Phase 1's one decisive run supported L2, L5 and
+L7, and L3 on its Python side (parts (a)–(e) and (g)). Phase 2's one decisive run supported L1, L3(f), which completes
+L3, and L4(a) and (b). Phase 3's one decisive run supported L8 (for the JS grower and for the Python port), L9, L10
+and L11. L11 was decided on packages grown with engrams off, a reading Amendment 8 fixed before the run but after dry
+runs had put the engrams-on median near the 250 ms bar (below). Phase 4's one decisive run supported L6, all four
+parts, and L4(c), which completes L4; L6(c) was supported against its registered prediction of refuted (below). So all
+eleven are supported, each in full. Three predictions were wrong, and they stay on record: L2's band, L11's band and
+L6(c). Learned static embeddings exist now; no encoder or language model does. Phase 5 built the two pages,
 [`lexicon-2d.html`](lexicon-2d.html) (the exact H² tree in the Poincaré disk) and [`lexicon-3d.html`](lexicon-3d.html)
 (the exact H³ tree in the Poincaré ball), with a shard panel and an Engram Mind's Eye session import; it decides no
-claim (below).
+claim (below). Then Stage 2, the benchmark ladder's lexical semantics: Amendment 13 registered four more claims,
+L12–L15, on HyperLex, BLESS and WBLESS, HiT's WordNet multi-hop split, SimLex-999, MEN, WordSim-353 and GloVe, and one
+decisive run decided them. L12(a)–(c), L13(a)–(c), L14(a) and (b) and L15(b) are supported; L12(d) and L15(a) are
+refuted. Every part came out as its registered prediction said; four graded details did not (below).
 
 Open [`index.html`](index.html) for the hub: the pages, the system map, the explainer library, the roadmap, the claims
-ledger with the results of Phases 1 to 4, and the decisions. [`summary.html`](summary.html) is the whole analysis on
-one page.
+ledger with the results of Phases 1 to 4 and Stage 2, and the decisions. [`summary.html`](summary.html) is the whole
+analysis on one page.
 
 ## The question
 
@@ -73,7 +75,7 @@ help such a system develop?
    | --- | --- | --- |
    | 0 | Determinism and the tokenizer | here |
    | 1 | WordNet hierarchy reconstruction | here |
-   | 2 | Lexical semantics | here, on the network widened at the start of Phase 1 (the SimLex host is still blocked); its claims, planned for Phase 4, are not registered yet |
+   | 2 | Lexical semantics | here: L12–L15, registered by Amendment 13 and decided (Stage 2 below); the SimLex, HyperLex and MEN hosts are unreachable, so pinned copies replace them |
    | 3 | BabyLM pretraining with BLiMP | here (BabyLM from Hugging Face; osf.io's file downloads are blocked), or a GPU |
    | 4 | GLUE and MTEB | needs a GPU |
 
@@ -647,7 +649,8 @@ node reference/run_l6_node.cjs                          # the Node re-evaluation
 ### Left open after Phase 4
 
 - **Not done in Phase 4:** the Stage-2 lexical claims the roadmap listed for it (HyperLex, the hypernymy suite,
-  SimLex and the rest) were not registered. They remain to be registered by amendment before any code for them.
+  SimLex and the rest) were not registered. Amendment 13 registered them after Phase 5, before any code for them, and
+  Stage 2 decided them (below).
 - **Carried over from Phase 3's plan:** the SHDGEV01 golden-vector suites of
   [`proposals/SHD-CCP-golden-vectors.md`](proposals/SHD-CCP-golden-vectors.md) (`make_shdgev_v1.py`). They decide no
   claim and were not written. The proposals are to be sent with the measured numbers
@@ -746,10 +749,233 @@ only and draw a neighbourhood, never the whole tree. The 3D page couples the fir
 slows sharply with length), and its coupler is an integrity check, not a model. The 3D page's optional view of
 Engram Mind's Eye's own packet frame beside the Lexicon's was not built.
 
+### What came next
+
+After Phase 5 came Stage 2's lexical claims (below), and then the Stage-1 gate.
+
+## Stage 2: lexical semantics (L12–L15), and its decisive run
+
+Stage 2 is the benchmark ladder's Stage 2, lexical semantics ([`explainers/benchmarks.html`](explainers/benchmarks.html)),
+not the encoder stage that [`explainers/architecture.html`](explainers/architecture.html) calls Stage 2. Amendment 13
+registered four claims on human-rated and human-labelled sets after Phase 5, before any Stage-2 code; one decisive run
+decided them. [`explainers/lexical.html`](explainers/lexical.html) (Explainer 15) tells the whole story. Every number
+from the decisive run below is in [`reference/results/claims-stage2.json`](reference/results/claims-stage2.json)
+(readable as [`claims-stage2.md`](reference/results/claims-stage2.md)), and its console output is in
+[`reference/results/stage2-console.txt`](reference/results/stage2-console.txt). Tuning's numbers are in
+[`reference/results/tuning-stage2.json`](reference/results/tuning-stage2.json) and Amendment 15, and the dry run's
+visible record is [`reference/results/dry/claims-stage2.json`](reference/results/dry/claims-stage2.json).
+
+### What was built
+
+- **The pins** (A13.2): `reference/golden/make_stage2_v1.py --check` fetches each set once into its own folder under
+  `~/.cache/hyperbolic-lexicon/stage2/` and checks its size and SHA-256 against `golden/stage2_pins_v1.json`:
+  HyperLex, the hypernymy suite (BLESS, WBLESS and the reported sets), HiT's WordNet multi-hop split, SimLex-999, MEN,
+  WordSim-353 and GloVe 6B. Nothing of them is committed but hashes. The instance manifest
+  (`golden/stage2_instances_v1.meta.json`) fixes every instance's rows, coverage and pair set, and
+  `golden/stage2_protocol_v1.txt` (Amendment 10, then Amendment 13, verbatim) is the protocolSha of every receipt.
+- **The modules** (A13.1), in `reference/lexicon/`: `stage2data.py` (the pins, word readers for pass 1 and gold
+  readers for pass 2, kept apart), `senses.py` (N_S, the universes U_full and U_@, senses, pair sets, HiT's names),
+  `wngraph.py` (WordNet's own graph as an arm, WN, and the reported chain), `scores2.py` (the arms' points, the scores
+  G, Dep°, Sym and the reported forms, certified values at 120 and 240 digits, tie classes), `stats2.py` (ρ on average
+  ranks, the word-level, row and cluster bootstraps, AP, RR, accuracy, the decisions), `hit.py` and `glove.py`; `embed.py`
+  and `stream.py` gained new functions only, for L14's training on WordNet's direct edges.
+- **The runner**, `reference/run_claims_stage2.py`: blind two-pass scoring (pass 1 reads only word columns and writes a
+  file of tie-class codes per instance, arm, score, sense rule and table; pass 2 opens the gold and decides), the
+  decision wiring checked against Amendment 13's own text (`check_spec`, then `verify_wiring`, which recomputes every
+  decided comparison and control value from the files), LBENCH/1 receipts in A13.14's 24-field layout, and a manifest
+  of every pass-1 file's SHA-256.
+- **The Node re-evaluation** (A13.1, in the write-up): `lexicon_stage2.js`, beside `lexicon_core.js`, which stays
+  unedited (decision D4 of the integration overhaul; Amendment 16 records the file name as an erratum to A13.1); the
+  trace `reference/traces/stage2_v1.txt` from `reference/traces_stage2.py` (18 cases from `Rng(8000 + i)`); and
+  `tests/parity-stage2.cjs`, which regenerates the trace and re-renders the decisive code files.
+- **Explainer 15's data**, `data/stage2_view_v1.js`, written from the committed record, tuning, the visible dry record
+  and the two opened sealed files by `reference/golden/make_stage2_view_v1.py` (with `--check`, which also checks
+  every number on the explainer). The sealed files are committed as gzip copies in
+  `reference/results/dry/stage2-sealed/`, each checked against the SHA-256 that names it.
+- **Tests:** `reference/tests/test_stage2_*.py` (data, senses, scores, statistics, HiT, training, reports, the runner,
+  the decision spec against Amendment 13's text, and, slow, the wiring under a mutated runner), with the synthetic world
+  of `tests/stage2_synth.py`.
+
+### How it was checked
+
+- **Before the run.** An adversarial review with independent implementations of the certified order, ρ and its
+  bootstraps, the cluster keys and the implicit map (A13.15 step 2; seeds 95600 + i). The dry run on WordNet's verbs
+  (every seed + 3000), its values on human-rated sets sealed in a file outside the repository, then rerun at Amendment
+  14's code commit with every earlier dry value equal. The count checks of A13.9 before any metric. Registered tuning
+  replayed one run with `hpstep.prng.Rng` and reached its state.
+- **In the run.** The count checks again; the replay of a measured run with `hpstep.prng.Rng`, equal; the two
+  pre-flight retrains, bit for bit tuning's; and the wiring check, which matched all 141 decided comparisons and 321
+  control values with Amendment 13's text and with their recomputation from the files.
+- **After the run** (A13.15 step 8): an independent check of the record, the Node re-evaluation, and the dry runs'
+  sealed files opened (below).
+
+### The commits, in order
+
+| Commit | What |
+| --- | --- |
+| `b3a5003` | Amendment 13: L12–L15, their definitions and the order of work, before any Stage-2 module, loader, scorer, trainer or runner |
+| `613721d` | The code, built on synthetic data, the dry data and unregistered seeds 95200 + i: pins, loaders, scores, statistics, the trainer's additions, the runner and tests |
+| `e91e02d`, `841b90c` | Fixes from the adversarial review, every reported analysis of A13.11, the decision wiring pinned to Amendment 13's text |
+| `05d467d` | The dry run (A13.13) on WordNet's verbs; every value on a human-rated set sealed in the cache |
+| `513e079` | Amendment 14, the definitions after the dry run: the readings fixed in the code, the instance manifest, the dry diagnostics; no definition changed |
+| `9550eea`, `5acbbb7` | Amendment 14's code commit (S-full_i and W_i scored in L12's grid; HiT val's counts) and the dry run rerun on it, every earlier dry value equal |
+| `93a5a8e` | A test fix: the refusal test reads the preregistration before Amendment 14 |
+| `b2ba411` | The timing projection on U_@ (A13.16): 9.93 h projected against 11 h |
+| `60345b4` | Registered tuning of L14 on HiT val: 48 runs and the replay |
+| `6b6ec09` | Amendment 15: the rates frozen in `reference/settings-stage2.json` (SHA-256 `f7823bdf…`), 10 in every cell, the grid's top |
+| `5d32f47` | The decisive record: one run of `run_claims_stage2.py --decisive` at `6b6ec09`, 16,673 s on 4 workers |
+
+### The decisions
+
+The engine was Python 3.13.18 with numpy 2.5.3 and numba 0.68.1 on a 4-CPU Linux container. 40 of the 42 training
+runs converged; the two that did not are the pre-flight retrains at rate 0.03, which repeat tuning's runs bit for
+bit (A13.10.9). Intervals are 95% percentile bootstraps of 10,000 resamples from a fresh `default_rng(7)` (A13.7): word-level for ρ (words, not rows, are
+resampled), over concepts for BLESS and WBLESS, over rows for HiT. Every control failed as required, L14's closure
+check passed, and no claim is void.
+
+| Part | Decision | Key numbers |
+| --- | --- | --- |
+| L12(a) | supported | HyperLex nouns, 2,163 pairs, Spearman ρ by the is-a score G with the maximum over senses: H³ 0.624924, H² 0.620716; F3 0.173168, F3\* 0.216920, F2 0.054840, F2\* 0.211128. H³ − F3 +0.452 [+0.366, +0.537]; H³ − F3\* +0.408 [+0.317, +0.503]; H² − F2 +0.566 [+0.468, +0.653]; H² − F2\* +0.410 [+0.313, +0.507] |
+| L12(b) | supported | G − Dep°: H³ +0.174 [+0.062, +0.293]; H² +0.168 [+0.055, +0.287] |
+| L12(c) | supported | G − Sym: H³ +0.399 [+0.309, +0.488]; H² +0.410 [+0.320, +0.498] |
+| L12(d) | refuted, on the low side; flagged as registered after a partial preview (A13.20) | H³ − WN −0.161 [−0.221, −0.112], entirely below [−0.02, +0.02]: WordNet's own graph, read by the same score, reaches 0.785527 |
+| L13(a) | supported | BLESS test, 12,365 rows, 1,194 positive (share 0.097): AP H³ 0.789, H² 0.801; F3 0.106, F3\* 0.137, F2 0.092, F2\* 0.122. H − F +0.653 to +0.709, lower ends at least +0.624 |
+| L13(b) | supported | WBLESS test, 1,493 rows (share 0.512): AP H³ 0.970, H² 0.971; flat 0.516–0.569. H − F +0.401 to +0.455, lower ends at least +0.362 |
+| L13(c) | supported | Direction on BLESS's positives: H³ 0.980 (195/199), H² 0.983 (587/597); F3 0.628, F3\* 0.603, F2 0.518, F2\* 0.438. H − F +0.352 to +0.545, lower ends at least +0.304 |
+| L14(a) | supported in all four (d, setting) cells | HiT multi-hop test, 29,383 rows, per-row reciprocal rank, Lorentz − Euclidean per seed: d = 2 random +0.280 to +0.316, hard +0.446 to +0.487; d = 3 random +0.178 to +0.222, hard +0.382 to +0.409; all 5 seeds present with lower ends above 0 in every cell (the smallest +0.175). Mean RR: Lorentz 0.948–0.964 (random) and 0.711–0.812 (hard), Euclidean 0.640–0.786 and 0.318–0.366 |
+| L14(b) | supported at d = 2 and 3 | HyperLex nouns in U_@, 2,153 pairs: ρ Lorentz 0.475–0.490 (d = 2) and 0.486–0.507 (d = 3), Euclidean 0.112–0.204 and 0.199–0.265; Lorentz − Euclidean +0.285 to +0.366 and +0.221 to +0.293 per seed, the smallest lower end +0.127 |
+| L15(a) | refuted | By Sym. SimLex-999 nouns, 666 pairs: H³ 0.589, H² 0.583, flat 0.191–0.363. MEN noun pairs, 2,005: H³ 0.395, H² 0.400, flat 0.122–0.302. The eight hyperbolic gains are +0.222 to +0.391 (SimLex) and +0.093 to +0.278 (MEN), every lower end above the +0.02 bar (the smallest +0.034, MEN H³ − F3\*) |
+| L15(b) | supported | GloVe 6B 300-d cosine − H³: MEN +0.366 [+0.276, +0.456] (ρ 0.761 against 0.395), WordSim-353 relatedness +0.585 [+0.285, +0.858] (0.580 against −0.004); H³ − GloVe on HyperLex within GloVe +0.110 [+0.024, +0.193] (0.226 against 0.116) |
+
+The controls:
+- **L12.** Hierarchy removed: H³ − K3 +0.527 [+0.397, +0.645] and H³ − S-full-18 (the strongest of 20 permutations)
+  +0.531 [+0.433, +0.623]. Senses scrambled: H³ − W-10 +0.577 [+0.473, +0.673]. Roles reversed: +0.723 [+0.606,
+  +0.827]. Gold shuffled: |mean ρ| over 20 permutations at most 0.0141 for each of seven arms, band 0.0240.
+- **L13.** H³ − K3, − S-full\* and − W\* above 0 on each part (lower ends at least +0.309); the label-shuffle means at
+  most the share of positives + 1/50 for all six arms on both sets; Sym on H³ and GloVe give a direction accuracy of
+  exactly 0.
+- **L14.** The within-row label shuffle gives a mean RR of at most 0.2784 over all 88 trained tables, and point
+  relabelling a macro mean of at most 0.2874, both against the band 0.2945. Edge-shuffled training: at every d, seed
+  and metric at least one cell lies above 0; one cell, Euclidean d = 3, seed 0, hard negatives, is "true ≈ shuffled"
+  (−0.0069 [−0.0118, −0.0022]). Gold shuffled: |mean ρ| at most 0.0107, band 0.0241. The closure of the training
+  edges scores RR = 1 on every test row.
+- **L15.** On SimLex and MEN, H³ − K3, − S-full\* and − W\* lie above 0 (lower ends at least +0.239); all 100 gold
+  shuffle means and the three GloVe vector-shuffle means lie within their bands.
+
+### What went against prediction, what was disclosed
+
+- **Every part came out as predicted:** L12(a)–(c) supported and (d) refuted on the low side; L13(a)–(c) supported;
+  L14(a) and (b) supported; L15(a) refuted (predicted "at least on SimLex"; it is refuted on MEN too) and (b)
+  supported.
+- **Graded details.** Right: ρ(H³) on HyperLex between 0.45 and 0.70 (0.625), and every flat arm at least 0.10 below
+  it (the smallest gap 0.408). Wrong: L12(d)'s width, a word-level half-width predicted at 0.015–0.026 and
+  measured at 0.054. Its estimate, −0.161, is also far beyond the part of the shortfall the prediction sized: 0.02–0.04
+  from the 46 hyp pairs whose closure link is not a spanning one, plus a loss to the embedding's bends that it left
+  unsized. Wrong: L13's "F\* is the likeliest inconclusive cell of
+  (c)"; both F\* cells lie well above 0 (lower ends +0.344 and +0.514), and F2\* picks the right direction on fewer
+  than half the pairs (523 of 1,194). Half right: L14's "a larger gap in (a) than in (b)" holds with hard negatives
+  (+0.382 to +0.487 against +0.221 to +0.366), not with random ones (+0.178 to +0.316); the gaps are in different
+  units, RR and ρ. Wrong: L15's "MEN's word reuse widens its intervals"; none of MEN's four (a) intervals is wider
+  than its SimLex twin (widths 0.121–0.170 against 0.209–0.258), since MEN's three times as many rows outweigh its
+  reuse. Explainer 15 grades each of these.
+- **Where L12(d)'s gap opens.** The reported chain of arms: WordNet's graph 0.786, its spanning tree with unit edges
+  0.739, the letter tree with virtual letters 0.734, the letter tree placed in H³ 0.625 (the undirected graph metric
+  0.716). So 0.109 of the 0.161 opens in the embedding. WordNet's graph gives only 13 tie classes on these pairs:
+  with every tie broken against the gold, WN would score 0.496 and H³ 0.621 (the reported tie bounds). Amendment 13
+  item 7 registered average ranks, with its reason, so L12(d)'s sign rests on that registered reading.
+- **Two registered choices kept L14 from being void.** Control 2 decides on the macro mean, which weights each positive
+  synset once: the per-row mean would have crossed the band in 21 of the 88 tables, 5 of them measured, and the
+  macro mean crossed it in none. Control 3 asks for one cell above 0 at each d, seed and metric: under A10.9's
+  every-cell reading, the "true ≈ shuffled" cell above would have voided (a). Amendment 13 registered both, with their
+  reasons.
+- **Disclosed before the run.** L12(d) was registered after a partial preview from counts (A13.20). Tuning, on HiT's
+  validation split, showed Lorentz ahead before any measured run (Amendment 15 item 3), and every cell chose rate 10,
+  the grid's top, where the scores were still rising. The dry run's L15 control 1 did not fail as required; Amendment
+  14 traced it to size, a 29-row verb stand-in for MEN, and changed nothing. On the registered sets all six of its
+  legs lie above 0.
+- **Near chance.** On BLESS the flat arms sit near chance (F2's AP, 0.092, is below the share of positives, 0.097), so
+  L13 measures the exact trees against a near-chance baseline.
+
+### The independent check, the Node re-evaluation and the sealed dry values
+
+- **The independent check.** Code written apart from the reference, importing none of its statistics, scores or
+  runner, recomputed every decided value of L12–L15 from the pass-1 code files and the gold, after checking each
+  file's SHA-256 against `stage2-manifest.json`. Every exact ρ, AP and accuracy is equal; every interval end is equal
+  to six decimals and every estimate bit for bit; L13's interval ends are equal bit for bit when the terms of AP are
+  summed as numpy sums them (1–2 ulp apart with `math.fsum`). All 1,635 code and side files, the 90 loss files, the
+  1,848 LBENCH/1 receipts, the 42 trained runs, the 20 floors and the 48 tuning tables match the record; a separate
+  scorer reproduced L14's 216 code files byte for byte from the snapped tables. No value or verdict differs. One
+  wording does: Amendment 14 says an interval's estimate is the exact difference rounded once to binary64, but L14's
+  per-row intervals report `rank.ci_mean`'s float64 mean, as A13.7 registered (1–2 ulp apart in 24 of 60 estimates).
+  Amendment 16, an erratum written with this write-up, records it and changes no rule and no result.
+- **The Node re-evaluation** (A13.1). `lexicon_stage2.js` re-renders the code files in Node from the pinned word
+  columns, WordNet and the committed snapped tables alone (exact rationals; square roots at 1,024 bits; A13.6's
+  240-digit bound as the tie rule, with a guard that refuses rather than guesses). It reproduces
+  `reference/traces/stage2_v1.txt` (3,129 lines) line for line, and all 106 decision files of A13.14 (66 exact-arm
+  files, and the 20 measured tables on HiT test and on HyperLex), 12,685,235 lines, byte for byte by the SHA-256 of
+  their text, with every recorded count and every value that took the 240-digit path equal; 624 further files on the
+  same instances match too (730 in all, 14,734,884 lines, about 5 minutes on 4 workers). The gzip bytes differ, since
+  Node bundles its own zlib, so the comparison is the text's SHA-256, the receipts' itemScoresSha. Not re-rendered,
+  since only controls read them: the files of L14's edge-shuffled and tuning tables and of its relabelled points, and
+  GloVe's files for the controls 3 of L13 and L15; the independent check reproduced them in Python. Every decision file is reproduced, so the browser may show L12–L15's verdicts as holding
+  (A13.1).
+- **The dry runs' sealed files** (A13.13), opened after the decisive run: both hash to the SHA-256s their visible
+  records give (`7ba50e01…` for `05d467d`, `9c9eac2c…` for `5acbbb7`), and the rerun holds every value of the first.
+  The dry L15 control 1 failed on the 29-row MEN stand-in alone, and its three legs held on SimLex's verbs, as
+  Amendment 14's size diagnosis expected. Both files are committed as gzip copies in
+  `reference/results/dry/stage2-sealed/`, so Explainer 15's dry values come from committed files.
+
+### How to rerun and verify Stage 2
+
+From `Pages/Hyperbolic Lexicon/reference/`, with numpy and numba 0.68.1:
+
+```
+python3 -B -I golden/make_stage2_v1.py --check          # fetch and check every pinned set into ~/.cache/hyperbolic-lexicon/stage2/
+python3 -B -I golden/make_stage2_v1.py --check-manifest # rebuild the instance manifest and compare
+python3 -B -I run_claims_stage2.py --selftest --out <dir>   # the whole pipeline on a synthetic world, seeds 95200 + i
+                                                        # (about 25 s on 2 workers; decides nothing; <dir> outside the repository)
+python3 -B -I run_claims_stage2.py --dry                # the dry run on WordNet's verbs (its rerun: dry tuning 1,487 s, then 1,815 s)
+python3 -B -I run_claims_stage2.py --time               # the timing projection on U_@ (about 23 s)
+python3 -B -I run_claims_stage2.py --tune               # registered tuning on HiT val (projected 3.89 h on 4 workers; it ran in
+                                                        # three starts around a container suspension, Amendment 15 item 5)
+python3 -B -I run_claims_stage2.py --write-settings     # settings-stage2.json from tuning-stage2.json; prints its SHA-256
+python3 -B -I run_claims_stage2.py --decisive           # the decisive run of L12-L15 (16,673 s on 4 workers)
+python3 -B traces_stage2.py --check                     # the Stage-2 trace rebuilt and compared
+```
+
+and from `Pages/Hyperbolic Lexicon/`, with Node 22:
+
+```
+node tests/parity-stage2.cjs --trace                    # lexicon_stage2.js regenerates the trace line for line
+node tests/parity-stage2.cjs --codes                    # the 106 decision files re-rendered and compared (about 2-3 minutes
+                                                        # on 4 workers; exit 2, skipped, without the cache)
+node tests/parity-stage2.cjs --codes --group reported   # the 624 further certified and exact-key files
+python3 -B -I reference/golden/make_stage2_view_v1.py --check   # Explainer 15's data rebuilt from the record and compared
+```
+
+- **Refusals.** `--tune` and `--decisive` refuse an unclean tree and refuse until an amendment after 13 holds the
+  instance manifest's SHA-256; `--decisive` also refuses unless the only paths changed since tuning's commit are
+  `PREREGISTRATION.md`, `settings-stage2.json`, `results/tuning-stage2.json` and tuning's console, and the lr-freeze
+  amendment holds the settings' SHA-256. So a repeat of the decisive run starts from `6b6ec09`. Fetched data is parsed
+  only under `python3 -B -I`.
+- **Verifying the record without rerunning.** The pass-1 code files and side files stay in the cache
+  (`~/.cache/hyperbolic-lexicon/stage2-run/registered/`: 1,635 code files, 953,390,065 bytes of gzip, and their side
+  files). Each is named, with its
+  gzip and text SHA-256 and its line count, in `reference/results/stage2-manifest.json`, whose SHA-256 the record's
+  receipts hold; each LBENCH/1 receipt in `lbench-stage2.txt` carries its file's text SHA-256 as itemScoresSha and the
+  SHA-256 of its exact metric. The decision files (68.8 MB) exceed A13.14's 50 MB rule, so they are committed by hash
+  only; the 20 measured snapped tables (26.2 MB) are committed in `reference/results/stage2-tables/`, so the Node
+  re-evaluation needs only the pinned sets and WordNet.
+- **Cost.** One training run is single-threaded; in the decisive run training took 13,272 s of the 16,673 s, pass 1
+  on the exact arms 371 s, on the learned tables 1,754 s, and pass 2 1,151 s. Pass 1 certified 147,634,222 values,
+  about 3.7 × 10^−5 s each.
+
+`reference/README.md` lists every module, option and results file.
+
 ### What is next: the Stage-1 gate
 
-Phase 5 ends at the Stage-1 gate: a review with the user of L1–L11, their results and what Phases 1–5 built, before
-any encoder code is written.
+A review with the user of L1–L15, their results and what Phases 1–5 and Stage 2 built, before any encoder code is
+written. The encoder's candidate claims take the next free numbers, L16–L19, when they are registered (A13.18).
 
 ## Roadmap
 
@@ -759,10 +985,11 @@ any encoder code is written.
 | 1 · Python reference | N_B, WordPiece with V0 and V1, WordNet, addresses, the H² tree, exact ranking, flat arms, LPS, traces; Amendments 1 and 2; two reviews; a dry run, then one decisive run: L2, L3 (Python side), L5, L7 supported | here · **done** |
 | 2 · Browser core | `lexicon_core.js` at line-for-line trace parity; the data files; the Python and Node/Chromium runners; Amendments 4 and 5; a review; a dry run, then one decisive run: L1, L3(f), L4(a, b) supported | here · **done** |
 | 3 · Records and biochains | The grower in JS and Python, the records, the RFC 6962 manifest, the exact weave, the hardened, attested verifier, the chain trace; Amendments 7 and 8; a review; dry runs, then one decisive run: L8, L9, L10, L11 supported. The SHDGEV01 golden-vector suites were not written and are carried over | here · **done** |
-| 4 · Learned embeddings | The numpy float64 trainer, the exact evaluator of snapped tables, the runner, the core's exact ranking of snapped tables; Amendments 10, 11 and 12; a review; a dry run and registered tuning, then one decisive run: L6 and L4(c) supported, L6(c) against its prediction; the Node re-evaluation. The Stage-2 lexical claims were not registered and remain to be registered by amendment | here · **done** |
+| 4 · Learned embeddings | The numpy float64 trainer, the exact evaluator of snapped tables, the runner, the core's exact ranking of snapped tables; Amendments 10, 11 and 12; a review; a dry run and registered tuning, then one decisive run: L6 and L4(c) supported, L6(c) against its prediction; the Node re-evaluation. The Stage-2 lexical claims were not registered here; Amendment 13 registered them after Phase 5 | here · **done** |
 | 5 · The 2D and 3D pages | `lexicon-2d.html` (the exact H² tree in the disk) and `lexicon-3d.html` (the exact H³ tree in the ball), a shared shard panel and Engram import, the page engine and its WordNet data, the pages trace, Explainers 13 and 14, the engine's Node tests and both pages' Chromium tests | here · **done** |
-| Stage-1 gate | A review with the user of L1–L11, their results and what Phases 1–5 built, before any encoder code | here · **next** |
-| 6 · CPU encoder | 1–10M parameters; claims L12–L15 by amendment; BabyLM strict-small | here (BabyLM from Hugging Face; osf.io's file downloads are blocked), or your machine |
+| Stage 2 · Lexical semantics | Amendment 13 (L12–L15) before any code; the pins of HyperLex, the hypernymy suite, HiT, SimLex-999, MEN, WordSim-353 and GloVe; the Stage-2 modules and runner (blind two-pass scoring, the wiring checked against Amendment 13's text); a review; the dry run, its values sealed; Amendments 14 and 15; registered tuning; one decisive run: L12(a)–(c), L13, L14 and L15(b) supported, L12(d) and L15(a) refuted, every part as predicted; the independent check, the sealed files opened, the Node re-evaluation (`lexicon_stage2.js`) and Explainer 15 | here · **done** |
+| Stage-1 gate | A review with the user of L1–L15, their results and what Phases 1–5 and Stage 2 built, before any encoder code | here · **next** |
+| 6 · CPU encoder | 1–10M parameters; claims L16–L19 by amendment (A13.18 renumbered them); BabyLM strict-small | here (BabyLM from Hugging Face; osf.io's file downloads are blocked), or your machine |
 | 7 · GPU track | BERT-mini/small, BabyLM 100M, GLUE, HiT | your hardware |
 | 8 · Integration | engram/2 in Engram Mind's Eye; proposals delivered | here |
 
@@ -826,13 +1053,25 @@ Open choices with defaults:
   9.37 × 10^−6 (L4(c)), and Node ranks them as Python does. It covers one instance (1,182 synsets), one protocol,
   one tuning grid, five seeds and one Python build on one Linux container; the tables are trained on the closure
   they are scored on, so it measures how well each geometry fits that relation, not generalisation to held-out
-  edges. It shows nothing about lexical semantics (the Stage-2 claims are not registered) or about a language
+  edges. It shows nothing about lexical semantics (Stage 2, below, decided those claims later) or about a language
   model.
 - **What Phase 5 shows.** Nothing new is decided. The pages show, in the browser, machinery the claims decided: a
   sentence's tokens and ids, their addresses, their exact points in H² and H³ decoded back, the bits that exactness
   costs, the X(5, q) vertex of an address, and a language shard grown, signed and verified. The engine's outputs equal
   the reference's pages trace line for line, and each page's numbers equal the engine's in Node, on one Node release
   and one Chromium build on one Linux container.
+- **What Stage 2 shows.** Read by the is-a score with the maximum over senses, the training-free exact trees track
+  HyperLex's graded type-of judgements on nouns, and detect hypernymy and its direction on BLESS and WBLESS, far
+  better than the same construction at curvature 0; the score carries ancestry beyond depth and direction beyond
+  similarity (L12(a)–(c), L13). WordNet's own graph, read the same way, still beats H³ on HyperLex, mostly because of
+  the embedding (L12(d), refuted). With the same WordNet information on both sides, curvature also helps on similarity
+  and relatedness (L15(a), refuted), while GloVe beats H³ on relatedness and H³ beats GloVe on HyperLex (L15(b)).
+  Trained on WordNet's direct edges, learned Lorentz beats learned Euclidean at d = 2 and 3 on held-out multi-hop
+  ancestors and on HyperLex (L14). Every arm reads WordNet, and HyperLex's TYPE, most of BLESS's positives and all of
+  HiT were built from it, so these claims decide what curvature and learning do with the same information, not lexical
+  knowledge beyond WordNet (A13.21). Nouns only, one sense per word without context, one protocol and five seeds for
+  L14, one Python build on one Linux container; every literature number is orientation only. It shows nothing about a
+  language model.
 - **What Hyperbolic Oracles already found.** Its C1 ("hyperbolic beats flat" for PolyStep optimisation) was refuted.
   The literature finds clear gains only on explicit hierarchies, and modest or none on general NLP.
 - **What this system bets on.** Representation of hierarchies in low dimensions, and certification: exactness,
@@ -848,17 +1087,18 @@ Open choices with defaults:
 | --- | --- |
 | `index.html` | The hub |
 | `summary.html` | The analysis on one page (also the shareable page) |
-| `PREREGISTRATION.md` | L1–L11, D1–D12, common rules, shared instances, Amendments 1–12 |
+| `PREREGISTRATION.md` | L1–L11, D1–D12, common rules, shared instances, Amendments 1–16 (L12–L15 in Amendment 13) |
 | `lexicon-2d.html`, `lexicon-3d.html` | The 2D and 3D pages (Phase 5) |
-| `explainers/` | 1 analysis · 2 shdccp · 3 architecture · 4 biochains · 5 alternatives · 6 tracks · 7 benchmarks · 8 evidence · 9 reference · 10 browser-core · 11 chains · 12 learned · 13 page-2d · 14 page-3d |
+| `explainers/` | 1 analysis · 2 shdccp · 3 architecture · 4 biochains · 5 alternatives · 6 tracks · 7 benchmarks · 8 evidence · 9 reference · 10 browser-core · 11 chains · 12 learned · 13 page-2d · 14 page-3d · 15 lexical |
 | `lexicon_core.js` | The browser core (Phase 2), its chain section (Phase 3) and its exact ranking of snapped tables (Phase 4), on the shared cores unchanged |
-| `data/` | The pinned Unicode 15.1 table and V0 as script files, for the pages (`reference/golden/make_js_data_v1.cjs`); L6's view for Explainer 12 (`make_l6_view_v1.py`); the pages' WordNet data, with the WordNet licence (`make_wordnet_view_v1.cjs`, Phase 5) |
+| `lexicon_stage2.js` | Stage 2's Node re-evaluation (A13.1): exact rationals and 1,024-bit square roots that re-render the decisive code files, beside `lexicon_core.js`, which it loads and leaves unedited |
+| `data/` | The pinned Unicode 15.1 table and V0 as script files, for the pages (`reference/golden/make_js_data_v1.cjs`); L6's view for Explainer 12 (`make_l6_view_v1.py`); the pages' WordNet data, with the WordNet licence (`make_wordnet_view_v1.cjs`, Phase 5); Stage 2's view for Explainer 15 (`make_stage2_view_v1.py`) |
 | `assets/hl.css`, `assets/hl-map.js` | Shared style; the system map (Hyperbolic Oracles' renderer, renamed) |
 | `assets/hl-pages.js`, `hl-panels.js`, `hl-app.css`, `lexicon-2d.*`, `lexicon-3d.*` | The pages' engine (`LexiconPages`), their shared panels (shard, Engram, checks) and style, and each page's own script and style (Phase 5) |
-| `reference/` | The Python reference (Phase 1; the chain modules, Phase 3; the trainer and the L6 modules, Phase 4): pins (`golden/`), modules (`lexicon/`), tests, traces, `run_claims.py`, the Phase 2 runner `run_claims_js.cjs`, the Phase 3 runner `run_claims_phase3.cjs` (with `run_claims_phase3.py`), the Phase 4 runner `run_claims_phase4.py` with `settings.json` (the frozen rates), the Node re-evaluation `run_l6_node.cjs`, `fractional_ties.py`, and their results; see `reference/README.md` |
+| `reference/` | The Python reference (Phase 1; the chain modules, Phase 3; the trainer and the L6 modules, Phase 4): pins (`golden/`), modules (`lexicon/`), tests, traces, `run_claims.py`, the Phase 2 runner `run_claims_js.cjs`, the Phase 3 runner `run_claims_phase3.cjs` (with `run_claims_phase3.py`), the Phase 4 runner `run_claims_phase4.py` with `settings.json` (the frozen rates), the Node re-evaluation `run_l6_node.cjs`, `fractional_ties.py`, the Stage 2 modules and runner `run_claims_stage2.py` with `settings-stage2.json` and `traces_stage2.py`, and their results; see `reference/README.md` |
 | `spikes/` | S1–S7 with captured outputs, and the L1 stress set |
 | `proposals/` | Documents for SHD-CCP, BioChain-AI and Owl Academy, never applied; the kernel check |
-| `tests/` | `parity-lexicon.cjs` (the browser core against the traces), `chain-lexicon.cjs` (the chain section's checks beyond the trace), `bridges-lexicon.cjs` (Engram Mind's Eye imports the Lexicon's shards), `pages-lexicon.cjs` (the page engine in Node), `pages-chromium-2d.cjs` and `pages-chromium-3d.cjs` (the pages in Chromium), `links.cjs`, `spikes.cjs`, `all.cjs`; `l1-harness.html`, the page the Phase 2 runner opens in Chromium |
+| `tests/` | `parity-lexicon.cjs` (the browser core against the traces), `chain-lexicon.cjs` (the chain section's checks beyond the trace), `bridges-lexicon.cjs` (Engram Mind's Eye imports the Lexicon's shards), `pages-lexicon.cjs` (the page engine in Node), `pages-chromium-2d.cjs` and `pages-chromium-3d.cjs` (the pages in Chromium), `parity-stage2.cjs` (Stage 2's trace and decisive code files in Node), `links.cjs`, `spikes.cjs`, `all.cjs`; `l1-harness.html`, the page the Phase 2 runner opens in Chromium |
 
 ## How to check
 
@@ -869,6 +1109,8 @@ node "Pages/Hyperbolic Lexicon/tests/all.cjs"
 It runs:
 - the shared cores' checks and Engram's parity and bridges;
 - the browser core's parity (`tests/parity-lexicon.cjs`, the chain and L6 traces included) and the data files' check;
+- Stage 2's Node re-evaluation (`tests/parity-stage2.cjs`): `--trace`, and `--codes`, the 106 decision files (tagged
+  slow, about three minutes on four workers; skipped without the cache);
 - the chain section's checks (`tests/chain-lexicon.cjs`), Engram's import of the Lexicon's shards
   (`tests/bridges-lexicon.cjs`), and the Owl Academy and BioChain-AI compatibility pin
   (`make_biomesh_compat_v1.cjs --check`). Since the integration overhaul (E1) the pin compares content, not commits:
@@ -885,7 +1127,8 @@ It runs:
 - the WordNet and EWT pins;
 - the Python reference: its fast pytest suite, the five pin checks (Unicode 15.1, the table against the official
   UCD 15.1.0 files, V0 retrained, V1, the L1 instance lists) and the four trace checks (text, geometry, L6 and the
-  pages) and, since E1, the chain trace (`traces_chain.py --check`);
+  pages) and, since E1, the chain trace (`traces_chain.py --check`), and since Stage 2's write-up the Stage-2 trace
+  (`traces_stage2.py --check`);
 - the kernel check, and the fast suite's one test that reads SHD-CCP's `hurwitz.py` (`test_lps.py::test_hurwitz_read_only`,
   left out of the fast suite so that it needs no checkout). Checks are reported as skipped, never passed, without the
   data cache or an SHD-CCP checkout; `--strict` (the CI workflows) counts a skip as a failure.
@@ -895,8 +1138,9 @@ The summary reads "N pass, M partial, K skipped" (`scripts/lib/runner.cjs`): a c
 is given; `-j N` runs N checks at a time. The root `tests/run-all.cjs` runs this list with the other systems'.
 
 It does not run `run_claims.py`, `run_claims_js.cjs`, `run_claims_phase3.cjs`, `run_claims_phase4.py`,
-`run_l6_node.cjs`, `fractional_ties.py` or the slow tests; see "How to run the reference", "How to run Phase 2", "How
-to run Phase 3" and "How to run Phase 4" above, and `reference/README.md`.
+`run_l6_node.cjs`, `fractional_ties.py`, `run_claims_stage2.py` or the slow tests; see "How to run the reference",
+"How to run Phase 2", "How to run Phase 3", "How to run Phase 4" and "How to rerun and verify Stage 2" above, and
+`reference/README.md`.
 
 Fetch the data once:
 
