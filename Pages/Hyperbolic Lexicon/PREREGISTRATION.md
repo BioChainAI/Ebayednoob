@@ -3266,3 +3266,99 @@ load average.
 - The exact time of the suspension (item 5 bounds it).
 - What added the small excess over 4.00 (at most 0.13) in 10 of the 24 load samples taken while four workers trained
   (item 6): not recorded.
+
+### Amendment 16 · 2026-11-08, Stage 2 write-up: errata
+
+Written on 2026-11-08, after the decisive run of L12–L15 (run at 6b6ec09, record committed in 5d32f47), with the
+write-up of A13.15 step 8. It changes no definition, no rule and no result. An independent check recomputed every
+decided value of L12–L15 from the pass-1 code files and the gold, checked all 1,635 code and side files, the 90 loss
+files and the 1,848 LBENCH/1 receipts against the record, and found no value or verdict different. Item 1 records
+where the Node re-evaluation of A13.1 lives. Item 2 corrects one sentence of Amendment 14. Item 3 records three
+readings that the check made explicit, item 4 the figures of Amendment 14 that the opened sealed file corrects, and
+item 5 where the opened sealed files are kept.
+
+**1. A13.1's file name: the Node re-evaluation is in `lexicon_stage2.js`.** A13.1 says: "After the decisive run,
+`lexicon_core.js` reproduces the rational keys and the tie-class lists (BigInt fixed point at 1,024 bits for the square
+roots), compared by SHA-256 on `Rng(8000 + i)` traces and on the decisive pass-1 code files." The code is in a new file
+beside it, `lexicon_stage2.js`, not in `lexicon_core.js`. The reason is decision D4 of the integration overhaul, under
+which `lexicon_core.js` stays unedited and new Node code goes in a new file beside it. `lexicon_stage2.js` loads
+`lexicon_core.js` and uses only its exported functions (`h3Points`, `h3Den`, `H2_TREE`, `F3`, `F3S`, `F2`, `F2S`,
+`closureParents`, `ENTITY`, `wordOf`, `gcdB`, `bitLength`, `sha256Hex`, `hex`, `utf8`, `utf8FirstBad`), and
+`hyperbolic_core.js`'s `Rng` and `P.children`; the test runner also uses `nounWords` and `parseSnapText`. It adds
+nothing to `lexicon_core.js`, which is byte for byte unchanged. Everything else is as registered: the square roots are
+taken in BigInt fixed point at 1,024 fractional bits from radicands formed exactly, A13.6's 240-digit bound
+(10^−230·M) is the tie rule, and a comparison that the file's own error bound could change throws instead of guessing
+(it never did on the decisive files). The re-evaluation decides nothing. Its results, with `tests/parity-stage2.cjs`:
+- *The trace.* `reference/traces/stage2_v1.txt` (from `reference/traces_stage2.py`; 18 cases, case i from
+  `Rng(8000 + i)`; 3,129 lines, SHA-256 `a2dd462cd012bcfb428805df52104ccb4986f6d7f35ddf60b7f337b460f9fa91`) is
+  regenerated line for line. Its controls bite: one changed line fails exactly that line, and square roots at 64 bits
+  change 31 planted lines with the guard off and stop the run with it on.
+- *The decisive pass-1 code files,* read as A13.14's decision-file group: the 66 exact-arm files that a decided
+  comparison reads (on HL, HL-glove, BD, BD-dir, WB, SL, MEN, MEN-glove and WSR-glove), the 20 measured tables' G on HiT
+  test (both settings) and the 20 on HL within U_@. All 106 are re-rendered from the pinned word columns, WordNet and
+  the 20 committed snapped texts alone, 12,685,235 lines, and equal the record: each text's SHA-256 and line count
+  (`stage2-manifest.json`'s `tsv_sha256`), the counts in `files_metrics`, and every value that took the 240-digit path
+  and every numerical tie inside Φ in the side files. 624 further certified or exact-key files on the same instances
+  are equal too (reported).
+- *Readings.* "Compared by SHA-256" is read as the SHA-256 of a code file's text, which is A13.14's itemScoresSha. The
+  gzip bytes are not compared: Node bundles its own zlib, whose level-9 deflate stream differs from Python's (the gzip
+  header and the CRC-32 and size trailer agree). The 120-digit decimal strings (the value-stream SHA-256 and the side
+  files' decimal fields) are Python decimal's output and are not reproduced. In the trace, `scores2.w_map` takes a
+  seed, and the input cases i = 16 and 17 pass 8000 + i: a second generator of the same family; no registered seed is
+  drawn and no Stage-2 data is read.
+- *Not rendered:* the reported forms ordered by 120-digit decimals of ln (NK17, product, WN-LCh), the closure bits, the
+  reported arms WN-U, ST, letter and S3, the files of other instances, and the files of the floor tables. Nor the
+  files that only controls read: the 20 edge-shuffled tables' (L14 control 3, which compares them in 60 of the 141
+  decided comparisons; and control 1), the tuning tables' and the relabelled points' (L14 controls 1 and 2), GloVe's
+  cosine on BLESS's direction pairs within GloVe (`BD-dir-glove`, L13 control 3) and the 60 GloVe-vec permutations
+  (L15 control 3). None of them is in A13.14's decision group. The independent check reproduced the control files
+  with its own Python code: L14's 216 code files (measured, edge-shuffled, tuning and relabelled) byte for byte, and
+  the controls 3 from GloVe itself (L15's 60 permutation files equal tie class for tie class; L13's direction
+  accuracy 0, every pair tied).
+- Every decision file is reproduced, so the browser may show L12–L15's verdicts as holding (A13.1).
+
+**2. Amendment 14 item 1, the estimate of a `ci_mean` interval.** Amendment 14 item 1 lists, under `stats2`: "an
+interval's estimate is the exact difference evaluated at 60 digits and rounded once to binary64". That holds for the
+ρ differences (`ci_rho`), the AP and accuracy differences (`ci_cluster`) and the reported bootstrap of L14's macro
+mean RR over positive synsets (`ci_macro`, whose estimate is the exact difference of the two macro means, rounded once
+to binary64). It does not hold for the intervals over
+HiT's rows, L14(a) and the RR cells of L14's control 3: there the record's estimate is `rank.ci_mean`'s own, the
+float64 mean of the per-row differences, each RR rounded to binary64 first, as A13.7 registered ("`rank.ci_mean`,
+unchanged") and A10.7 read ("the mean being ci_mean's mean"). The two differ by 1–2 units in the last place in 7 of
+the 20 estimates of L14(a) and in 17 of the 40 RR cells of control 3, by at most 1.1·10^−16. No decision depends on
+it: every estimate keeps its sign, the smallest lower end of L14(a) is +0.1747, and the one cell of control 3 that is
+"true ≈ shuffled" has estimate −0.0069. The sentence of Amendment 14 is corrected to "the estimate of a `ci_rho`,
+`ci_cluster` or `ci_macro` interval"; `ci_mean` keeps its registered estimate.
+
+**3. Readings made explicit by the check.** None changes a value.
+- *The reported tie bounds of ρ* (A13.7: "the arm's ties broken against and with the gold order"). The record breaks
+  every tie of the arm, and rows tied in both the arm and the gold in row order, so the arm's Σa² is n(n² − 1)/3 (for
+  example 3,373,247,528 at n = 2,163). The tie bounds decide nothing.
+- *AP inside the cluster bootstrap* (A13.7: "in float64"). The record sums the terms of AP with numpy's pairwise sum,
+  in ranking order. Summed with `math.fsum`, 8 of L13's 42 interval ends move by 1–2 units in the last place (at most
+  2.2·10^−16), and none of the 42 changes at six decimals. The smallest decided lower end of L13 is +0.304.
+- *LBENCH/1's fields* (A13.14). The seed field holds the index i for S-full_i, W_i, S3_i and GloVe-vec_i, not the
+  stream's seed (2400 + i, 2420 + i, …), as A10.12 reads it for a floor. settingsSha is `-` on the floors, the tuning
+  tables and the exact arms, and `settings-stage2.json`'s SHA-256 on the 520 measured and edge-shuffled records (Phase
+  4's receipts carried `settings.json`'s on its floors too). The 14 reported `suite-acc` records hash `repr` of a float
+  as metricSha, since the suite protocol's accuracy is a float mean, not one of A13.14's exact forms.
+
+**4. Amendment 14 item 3, the dry run's L15 control 1.** Amendment 14 diagnosed the failure as one of size, on the
+29-row MEN v–v stand-in, and wrote that "there a word-level interval of a difference of ρ has half-width 0.8–0.9, and
+the strongest of 20 permutations sits about 0.35 above their mean with no signal". The sealed file, opened in step 8
+(its SHA-256 equals the one the visible dry record gives), measures:
+- the three MEN legs' half-widths as 0.819 (K3), 0.849 (S-full-12) and 0.590 (W-6), and the four L15(a) cells' on MEN
+  (word-level intervals of a difference of ρ on the same stand-in) as 0.655 to 0.744: the W-6 leg and all four cells
+  lie below the stated range;
+- the strongest of the 20 permutations by Sym on MEN as 0.315 above their mean for S-full (S-full-12) and 0.230 for W
+  (W-6), below "about 0.35".
+The diagnosis stands: all three MEN legs failed to lie above 0, all three SimLex verb legs did (lower ends +0.084,
++0.034 and +0.128), and on the registered sets all six legs lie above 0. Nothing is changed.
+
+**5. The opened sealed files are committed.** A13.13 wrote the dry values on human-rated sets only to a sealed file in
+the cache, to be opened after step 7 and reported then. Both sealed files were opened in step 8, after their SHA-256
+was checked against the one that names each (`7ba50e01…`, the first dry run's, in Amendment 14; `9c9eac2c…`, the
+rerun's, in the visible dry record). They are committed as gzip copies, `reference/results/dry/stage2-sealed/
+values-05d467d.json.gz` and `values-5acbbb7.json.gz`, whose decompressed bytes are the sealed files; like the decisive
+record, they hold metric values and receipts, no pair, rating, label or vector. Explainer 15's dry values are read from
+them (`make_stage2_view_v1.py`). This decides nothing.
