@@ -6,7 +6,8 @@
 // Pages/Hyperbolic Lexicon/tests/all.cjs (a check two systems share runs once), the site checks (the site bar, page
 // policies, sinks, storage keys, the GitHub store, the rebuilt calculator pages), the core manifest
 // (scripts/check-cores.mjs) and the contracts (tests/contracts: the duplicated primitives, the census check word, the
-// calculator's tiers).
+// calculator's tiers; against the sibling checkouts, the three strict verifiers on the Lexicon's L8, compat and L10
+// records and the notes on BioChain-AI's copies of Owl's code).
 // Profiles:
 //   full         everything (the default)
 //   ci           everything that needs no sibling checkout (the pull-request workflow, .github/workflows/check.yml)
@@ -42,6 +43,8 @@ const SITE = [
     ['contracts', 'duplicated primitives (Python)', [...PY, '-m', 'pytest', '-q', '-p', 'no:cacheprovider', 'tests/contracts'], { skips: false, python: ['pytest'] }],
     ['contracts', 'the census check word', ['node', 'tests/contracts/check-word.cjs']],
     ['contracts', 'the calculator\'s tiers and orbital_core.js', ['node', 'tests/contracts/tiers-spec.cjs']],
+    ['contracts', 'three strict verifiers: L8, compat and L10 records', ['node', 'tests/contracts/strict-verifiers.cjs'], { tags: ['siblings', 'slow'] }],
+    ['contracts', 'BioChain-AI\'s copies of Owl\'s code (notes)', ['node', 'tests/contracts/owl-copies.cjs'], { tags: ['siblings'] }],
     ['pins', 'ATTEST/1 and the grower against the checkouts', [...PY, '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '--rootdir', L + 'reference',
         L + 'reference/tests/test_attest.py', L + 'reference/tests/test_chain.py'], { skips: false, python: ['numpy', 'pytest', 'cryptography'], tags: ['siblings'], innerSkips: true }],
 ];

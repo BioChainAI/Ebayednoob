@@ -32,15 +32,16 @@
             <li><a href="#formats">2. What crosses</a></li>
             <li><a href="#out">3. Back to Owl Academy</a></li>
             <li><a href="#in">4. Coming in</a></li>
-            <li><a href="#pinned">5. Pinned from Owl Academy&rsquo;s code</a></li>
-            <li><a href="#tested">6. How it is tested</a></li>
-            <li><a href="#limits">7. What does not cross</a></li>
+            <li><a href="#strict">5. Two verdicts and where a record came from</a></li>
+            <li><a href="#pinned">6. Pinned from Owl Academy&rsquo;s code</a></li>
+            <li><a href="#tested">7. How it is tested</a></li>
+            <li><a href="#limits">8. What does not cross, and what the checks do not prove</a></li>
         </ol>
     </nav>
     <main>
         <details class="toc-mobile"><summary>Contents</summary><ol>
             <li><a href="#where">Where this sits</a></li><li><a href="#formats">What crosses</a></li><li><a href="#out">Back to Owl Academy</a></li>
-            <li><a href="#in">Coming in</a></li><li><a href="#pinned">Pinned from Owl Academy&rsquo;s code</a></li><li><a href="#tested">How it is tested</a></li><li><a href="#limits">What does not cross</a></li></ol></details>
+            <li><a href="#in">Coming in</a></li><li><a href="#strict">Two verdicts</a></li><li><a href="#pinned">Pinned from Owl Academy&rsquo;s code</a></li><li><a href="#tested">How it is tested</a></li><li><a href="#limits">What does not cross</a></li></ol></details>
 
         <section class="chapter" id="where">
             <div class="chapter-num">01</div>
@@ -58,14 +59,16 @@
                     <tr><td>Saved session (<code>engram_mind_eye_v1</code>)</td><td>Engram Mind Eye&rsquo;s browser storage</td><td>verified, with its conversation</td><td>byte for byte as Owl Academy saves it</td><td>2D page</td></tr>
                     <tr><td>v1 chain (<code>engram_chain_N&hellip;</code>)</td><td>Engram Mind Eye&rsquo;s export</td><td>verified</td><td>byte for byte (Phase 4)</td><td>2D page</td></tr>
                     <tr><td>v1 text crystal, 72 or 720 (<code>engram_crystal_S&hellip;</code>)</td><td>Engram Mind Eye&rsquo;s export</td><td>verified; speakers where the file has them</td><td>byte for byte (Phase 4)</td><td>2D page</td></tr>
-                    <tr><td>Biochain record</td><td><code>biomesh.js</code> <code>growBiochain</code></td><td>verified; its text recreated losslessly</td><td>&mdash;</td><td>2D page</td></tr>
+                    <tr><td>Biochain record</td><td><code>biomesh.js</code> <code>growBiochain</code></td><td>two verdicts, Owl-compatible and strict; its text recreated losslessly</td><td>&mdash;</td><td>2D page</td></tr>
+                    <tr><td>Biochain package (<code>biochain-package/1</code>, draft; a Hyperbolic Lexicon package)</td><td>a grower that signs: the Hyperbolic Lexicon, Owl Academy</td><td>the record&rsquo;s two verdicts, its kind, where it says it came from, its signer</td><td><code>biochain-package/1</code> for Owl Academy</td><td>2D page</td></tr>
                     <tr><td>Engram stream (16 hex a word)</td><td>a biochain&rsquo;s <code>engramStream</code></td><td>by its grids</td><td>&mdash;</td><td>2D page</td></tr>
                     <tr><td>LATTICE-SEED/1</td><td>Biomesh Mind&rsquo;s Eye 3D</td><td>verified (Phase 5)</td><td>&mdash;</td><td>3D page</td></tr>
                     <tr><td>ENVIRONMENT/1</td><td>Biomesh Mind&rsquo;s Eye 3D</td><td>verified; its pump drives the breath</td><td>&mdash;</td><td>3D page</td></tr>
-                    <tr><td>v2 (<code>engram_mind_eye_v2_&hellip;</code>)</td><td>this system</td><td>verified</td><td>everything exact (Phase 4)</td><td>2D page</td></tr>
+                    <tr><td>v2 (<code>engram_mind_eye_v2_&hellip;</code>), and a backup (<code>engram_mind_eye_backup_&hellip;</code>, the same format)</td><td>this system</td><td>verified</td><td>everything exact (Phase 4)</td><td>2D page</td></tr>
                 </tbody>
             </table></div>
             <p>Paste or choose a file in the 2D page&rsquo;s <em>Owl Academy, in and out</em> panel and press <em>Read and check</em>. The panel says what the file is and what each check found; <em>Load as this session</em> replaces the dialogue with it. Lattice seeds and environments go to the 3D page&rsquo;s seed panel. The two pages share the loaded session.</p>
+            <p><em>Back up this session</em>, under the dialogue, downloads the session as a v2 file. The session itself lives in this browser&rsquo;s storage, which every page of this site shares and any of them can clear; reading the backup here and loading it brings the session back, checked packet by packet.</p>
         </section>
 
         <section class="chapter" id="out">
@@ -88,15 +91,35 @@
                 <li><strong>A saved session.</strong> Its conversation is replayed here, and every packet&rsquo;s token, body, header, footer, grid, triangulation and chiral key must come out as in the file, along with the final codex parity. If the conversation does not rebuild the packets (an edited conversation, say), the packets&rsquo; own tokens are tried. Either way the first packet that differs is named. Replies Owl Academy&rsquo;s BERT once wrote are just text here: they become STRIX turns with no concept attached.</li>
                 <li><strong>A v1 chain.</strong> Each packet is rebuilt from its token and compared field by field, then the chain is exported again and compared with the file byte for byte. Speakers come from the packets, and runs of one speaker become turns.</li>
                 <li><strong>A v1 text crystal.</strong> The tokens are read in slot order. Every slot&rsquo;s XOR crystal and chiral key, the master crystal on its manifold anchor and the header are rebuilt, and the file is reproduced byte for byte. In 720 sections a slot holds at most one word of a short session, so every speaker is known. In 72 sections a slot can hold words of both speakers, and the file keeps only the counts: those words are marked <em>unknown</em>. Their packets, words, registers and binding do not depend on who said them, and are exact.</li>
-                <li><strong>A biochain.</strong> Owl Academy&rsquo;s <code>verifyIntegrity</code>, step for step: each frame&rsquo;s parity, the text recreated losslessly by its order-2 rank coder, every leaf hash, the Merkle root, the chiral weave and the engram layer. The reasons are reported in Owl Academy&rsquo;s own words. The recreated text then comes in as one turn of its words, tokenized as <code>biomesh.js</code> tokenizes them; this system&rsquo;s engram stream of that text must equal the record&rsquo;s.</li>
+                <li><strong>A biochain.</strong> Owl Academy&rsquo;s <code>verifyIntegrity</code>, step for step: each frame&rsquo;s parity, the text recreated losslessly by its order-2 rank coder, every leaf hash, the Merkle root, the chiral weave and the engram layer. The reasons are reported in Owl Academy&rsquo;s own words. The recreated text then comes in as one turn of its words, tokenized as <code>biomesh.js</code> tokenizes them; this system&rsquo;s engram stream of that text must equal the record&rsquo;s. That is the <em>Owl-compatible</em> verdict; the page also gives the <em>strict</em> one (section 5).</li>
+                <li><strong>A biochain package.</strong> A <code>biochain-package/1</code> (the draft of RFC 07: a kind, the record, what was signed and the attestation) or a Hyperbolic Lexicon package (the record, its LPREP/1 string, the attestation and the corpus manifest). The record gets both verdicts, and the panel shows the package&rsquo;s claims beside them (section 5). <em>Pass it on</em> writes a <code>biochain-package/1</code> for Owl Academy&rsquo;s package import, only when the record passes the strict check and what was signed is this record&rsquo;s. A Tier-P LPREP/1 is not passed on yet: the package format has no field for its salt.</li>
                 <li><strong>An engram stream alone.</strong> Sixteen hex digits a word, with no words: the packets come in by their grids. The chain, words and registers are exact, since none of them needs the word. The count and mean J are checked against the record&rsquo;s. Each packet is labelled with a word from STRIX&rsquo;s library whose key it equals, where there is one. engram/1 keeps only letter parity, so that label is a word with the same key, not necessarily the word said.</li>
                 <li><strong>ENVIRONMENT/1</strong> (3D page). Its hash is recomputed as the Biomesh page computes it. Its boundary seed is checked as a LATTICE-SEED/1, and its codex must pass Owl Academy&rsquo;s ABI gate (parity, GEAR first, PRIME entries, HALT last). Its pump then drives the breath of the view: frames, breath and torsion. Its frontier nodes get a teal ring.</li>
                 <li><strong>v2</strong>, this system&rsquo;s own export: its turns are replayed, and every packet, address, memory word&rsquo;s root and link, and the chain quaternion must come out as recorded.</li>
             </ul>
         </section>
 
-        <section class="chapter" id="pinned">
+        <section class="chapter" id="strict">
             <div class="chapter-num">05</div>
+            <h2>Two verdicts and where a record came from</h2>
+            <p class="chapter-intro">A biochain record is checked twice, by two different questions, and the page shows both.</p>
+            <ul>
+                <li><strong>Owl-compatible.</strong> Owl Academy&rsquo;s own <code>verifyIntegrity</code>, step for step, and this system&rsquo;s engram layer beside it. It checks that the record agrees with itself: each packet&rsquo;s parity bit holds, its residuals decode, and the leaves, root, chiral weave and engram layer it carries match the text they recreate; this system&rsquo;s engram stream, count and mean J of that text must match too. Whether the record is what its bytes grow is the strict verdict&rsquo;s question.</li>
+                <li><strong>Strict.</strong> Owl Academy&rsquo;s <code>verifyIntegrityStrict</code> (RFC 07, section 12), pinned here as <code>biochain_v2.js</code> and run with this system&rsquo;s SHA-256 from <code>orbital_core.js</code>. It asks whether the record is exactly what <code>growBiochain</code> grows from its bytes, and names the first check that fails, in this order: <em>parity</em> (the stream&rsquo;s form, each packet&rsquo;s parity), <em>canonical</em> (the 720-byte cut, each residual re-encoded byte for byte, well-formed UTF-8), <em>crystal</em> (each packet is the chunk&rsquo;s), <em>leaves</em> (all of them and the root, never optional), <em>weaves</em> (both weaves, the segment cuts and the chain id) and <em>derived</em> (the engram layer and the size fields).</li>
+            </ul>
+            <p>The labels are the overhaul&rsquo;s (decision D15): <em>strict ok</em>; <em>legacy</em> for a record without a shdccp/2 stream; <em>failed at &lt;check&gt;</em>; and <em>self-consistent only, failed at &lt;check&gt;</em> when Owl Academy&rsquo;s <code>verifyIntegrity</code> steps pass and the strict check does not. The labels are Owl Academy&rsquo;s, so a record reads the same there. The Owl-compatible verdict here also compares this system&rsquo;s engram count and mean J, so a record whose engram numbers differ from its text reads &ldquo;Owl-compatible failed&rdquo; beside &ldquo;self-consistent only, failed at derived&rdquo;, and the line that failed is named under it. A line above the checks puts the two together, for example &ldquo;Owl-compatible ok; strict failed at crystal&rdquo; for a record whose packets were written with BioChain-AI&rsquo;s kernel rule (a crystal byte 0x80 written as 0x81). Nothing is refused for a strict failure: the label says what the record is, and it can still be loaded. Owl Academy&rsquo;s engram layer and this system&rsquo;s are both computed for the text, each word&rsquo;s key once, and compared on its own line.</p>
+            <p><strong>Where a record says it came from.</strong> A bare record says nothing about who grew it. A package carries claims, and the panel checks each one it can and says which it cannot:</p>
+            <ul>
+                <li>its <em>kind</em>, against Owl Academy&rsquo;s registry of kinds;</li>
+                <li>what was signed: for GROWN/1, the commitment rebuilt from the record (chain id, root, both weaves, size); for LPREP/1, that the string has its registered shape and names this record&rsquo;s Merkle root, and in Tier S its chain id; a Tier-P string withholds the chain id behind a salted root, which is recomputed with the package&rsquo;s salt when the package carries one (the Hyperbolic Lexicon&rsquo;s does). The string&rsquo;s other fields are the Lexicon&rsquo;s own verifier&rsquo;s to recompute;</li>
+                <li>that the attestation&rsquo;s content hash is the SHA-256 of what was signed;</li>
+                <li>the signer, with Web Crypto: the fingerprint of the public key the attestation carries must be its keyId (or an Owl seal&rsquo;s sealId), and an ATTEST/1 signature must verify with that key.</li>
+            </ul>
+            <p>A key that signs is not thereby a key that may sign. Whether it was registered to anyone, revoked or retired needs the key registry, which this page does not have; it says so on its own line.</p>
+        </section>
+
+        <section class="chapter" id="pinned">
+            <div class="chapter-num">06</div>
             <h2>Pinned from Owl Academy&rsquo;s code</h2>
             <p class="chapter-intro"><code>reference/golden/make_bridges_v1.cjs</code> reads three Owl Academy files and runs their code, unchanged, on fixed inputs: <code>biomesh.js</code>, the Engram Mind Eye and the Biomesh Mind&rsquo;s Eye 3D.</p>
             <ul>
@@ -104,11 +127,12 @@
                 <li><code>bridges_v1.json</code> records what that code gives. The session is saved, restored and continued. Five biochains are grown and verified: three texts, from 14 bytes to 2,728 bytes in four chunks with non-ASCII characters, plus two altered copies. Three environments are built and hashed, one altered after hashing, and a good codex and a broken one are parsed.</li>
                 <li><code>growBiochain</code> and <code>verifyIntegrity</code> hash with Web Crypto. The fixture runs them with SHA-256 over UTF-8 from Node, as <code>seal-crypto.js</code> defines it. The engine repeats <code>verifyIntegrity</code> with the orbital core&rsquo;s synchronous SHA-256, and must give Owl Academy&rsquo;s verdict word for word.</li>
                 <li><code>--check</code> recomputes both files from an Owl Academy checkout and says whether they still match, as for the golden corpus, STRIX&rsquo;s library and the lattice seed.</li>
+                <li><strong>Version 2</strong> (<code>reference/golden/make_bridges_v2.cjs &lt;Owl Academy commit&gt;</code>) reads Owl Academy&rsquo;s Firebase-free core, <code>scripts/biomesh-core.js</code>, at one commit. <code>biochain_v2.js</code> is its synchronous code, verbatim, under its own MIT licence (NOTICE beside it): v1&rsquo;s codec and engram layer with each letter&rsquo;s grid built once, <code>qconj</code> and <code>chainFrames</code>, and the strict verifier. <code>bridges_v2.json</code> records Owl Academy&rsquo;s strict verdicts and labels on v1&rsquo;s biochains, on altered copies and on RFC 07&rsquo;s tamper vectors. <code>VENDOR.json</code> lists every file copied in, by SHA-256, with RFC 07&rsquo;s contract vectors (public domain) under <code>reference/golden/vendor/</code>. The v1 files stay as they were.</li>
             </ul>
         </section>
 
         <section class="chapter" id="tested">
-            <div class="chapter-num">06</div>
+            <div class="chapter-num">07</div>
             <h2>How it is tested</h2>
             <div class="table-wrap"><table>
                 <thead><tr><th>Check (<code>tests/bridges.cjs</code>, 34/34)</th><th>Result</th></tr></thead>
@@ -120,19 +144,23 @@
                     <tr><td>An engram stream alone</td><td>The same chain as the words it came from; a wrong mean J caught; a bare hex stream read</td></tr>
                     <tr><td>Environments</td><td>Owl Academy&rsquo;s hash and verdict on all three; the codex through the ABI gate, and the broken one refused with Owl Academy&rsquo;s message</td></tr>
                     <tr><td>v2, the store, the detector</td><td>v2 verified and the same memory; a stored session replays with every STRIX reply recognised; every format named, anything else refused</td></tr>
+                    <tr><td>Strict and the checked import (<code>tests/bridges-v2.cjs</code>)</td><td>Owl Academy&rsquo;s strict verdict on every input of <code>bridges_v2.json</code>, with this system&rsquo;s SHA-256 and with Owl&rsquo;s; every RFC 07 tamper vector at its expected check and every honest one passing; every record vector regrown and passing; both engram implementations on every key vector; the Owl-compatible fields exactly <code>importBiochain</code>&rsquo;s; each word&rsquo;s key once; packages written, read back and their signer checked; LPREP/1 strings written by the Hyperbolic Lexicon, in both tiers, bound to their record and not to another</td></tr>
                 </tbody>
             </table></div>
             <p>In Chromium at 1440 and 390 px, the page checks pass. The Owl session download equals the engine&rsquo;s, and the loader is offered when the clipboard is blocked. A saved session, a biochain and an engram stream each read, verify, load and survive a reload, and the 3D page shows the same session. An environment loads with its checks, its pump drives the breath, and an altered environment is caught. A file that is not one of these is refused with a reason. The earlier suites still pass: 829 parity lines, 27 behaviour checks, the 2D engine&rsquo;s 26 and the 3D engine&rsquo;s 19.</p>
         </section>
 
         <section class="chapter" id="limits">
-            <div class="chapter-num">07</div>
-            <h2>What does not cross</h2>
+            <div class="chapter-num">08</div>
+            <h2>What does not cross, and what the checks do not prove</h2>
             <ul>
                 <li><strong>No network.</strong> Published biochains live in Owl Academy&rsquo;s Firestore. A record comes in as the JSON object <code>growBiochain</code> returns and Firestore stores. Seals, certification, transfers and the familiar&rsquo;s binding stay in Owl Academy, outside this system&rsquo;s core, as the plan set out.</li>
                 <li><strong>Epochs.</strong> Owl Academy&rsquo;s session has a <code>biochain</code> list of epochs that its page never grows; it is exported empty, and its greeting says &ldquo;0 epochs&rdquo;.</li>
                 <li><strong>Words a stream never had.</strong> A session that came in as a bare engram stream has labels where the words would be. Its packets and memory are exact, but its v1 exports carry the labels, and those labels cannot rebuild it; importing such an export says so.</li>
                 <li><strong>Who said what, in 72 sections.</strong> Marked unknown, as above.</li>
+                <li><strong>A matching ENVIRONMENT/1 hash is not a signature.</strong> The hash is Owl Academy&rsquo;s <code>fold32</code>: 32 bits of a checksum over the object&rsquo;s JSON. It catches a file damaged by accident. Anyone who changes an environment on purpose can compute the new hash, so a match says nothing about who made the file. The same holds for a v1 crystal&rsquo;s parity and a session&rsquo;s codex parity: they detect accidents, not changes made to pass.</li>
+                <li><strong>The Owl-compatible verdict is self-consistency.</strong> As section 5 says, a record can agree with itself and still not be what its bytes grow. Only the strict verdict says that, and only a verified signature by a registered key says who grew it.</li>
+                <li><strong>The pins run Owl Academy&rsquo;s code.</strong> <code>make_*_v1.cjs</code>, <code>make_bridges_v2.cjs</code> and their <code>--check</code> take functions from an Owl Academy checkout by name and run them, in a separate JavaScript context without Node&rsquo;s <code>process</code> or <code>require</code>. That context keeps the checkout&rsquo;s code away from the file system by accident, not by design: it is not a security boundary. Run the pins only against checkouts you trust, as the nightly job does with Owl Academy&rsquo;s own repository.</li>
             </ul>
             <div class="pager">
                 <a class="btn btn-ghost" href="page-3d.html">&larr; The 3D page manual</a>

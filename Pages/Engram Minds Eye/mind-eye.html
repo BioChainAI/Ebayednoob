@@ -20,6 +20,7 @@
     <script src="strix_library_v1.js"></script>
     <script src="lattice_seed_v1.js"></script>
     <script src="biochain_v1.js"></script>
+    <script src="biochain_v2.js"></script>
 </head>
 <body class="app">
 <header class="app-head">
@@ -42,8 +43,10 @@
         </form>
         <div class="row">
             <button class="chip" type="button" id="b-new">New session</button>
+            <button class="chip" type="button" id="b-backup">Back up this session</button>
             <span class="help" id="save-note">Your dialogue is kept in this browser only.</span>
         </div>
+        <p class="help">This browser&rsquo;s storage is shared by every page of this site and can be cleared by any of them. A backup is a v2 file: read it in <a href="#p-bridge">Owl Academy, in and out</a> and load it to have the session back.</p>
     </section>
 
     <section class="panel" id="p-clock" aria-labelledby="h-clock">
@@ -130,13 +133,15 @@
 
     <section class="panel" id="p-bridge" aria-labelledby="h-bridge">
         <h2 id="h-bridge">Owl Academy, in and out <small>sessions, chains, crystals, biochains</small></h2>
-        <textarea id="b-text" class="seedbox" spellcheck="false" placeholder="Paste an Owl Academy file: a saved Engram Mind Eye session, a chain or crystal export, a biochain record or engram stream, or a v2 export from here." aria-label="A file to import"></textarea>
+        <textarea id="b-text" class="seedbox" spellcheck="false" placeholder="Paste an Owl Academy file: a saved Engram Mind Eye session, a chain or crystal export, a biochain record or package, an engram stream, or a v2 export or backup from here." aria-label="A file to import"></textarea>
         <div class="row">
             <label class="chip" style="cursor:pointer">file <input type="file" id="b-file" accept=".json,application/json,text/plain" hidden></label>
             <button class="chip" type="button" id="b-read">Read and check</button>
             <button class="chip" type="button" id="b-load" disabled>Load as this session</button>
+            <button class="chip" type="button" id="b-pass" hidden>Pass it on (biochain-package/1)</button>
         </div>
-        <div class="checks" id="b-out"></div>
+        <div class="checks" id="b-out" aria-live="polite"></div>
+        <p class="help">A biochain gets two verdicts. <b>Owl-compatible</b> repeats Owl Academy&rsquo;s own check and this system&rsquo;s engram layer: the record agrees with itself. <b>Strict</b> (RFC 07) checks that the record is what Owl Academy grows from its bytes, and names the first check that fails. A record whose Owl Academy steps pass and whose strict check fails reads &ldquo;self-consistent only&rdquo;, as Owl Academy labels it; it can still be loaded. A package&rsquo;s signer is checked against the public key it carries, not against a registry. See <a href="explainers/bridges.html#in">The Bridges</a>.</p>
         <h3 class="mini">Back to Owl Academy</h3>
         <p class="help">Owl Academy&rsquo;s Engram Mind Eye keeps its session in its own browser storage. Export this session in exactly that form, then in that page&rsquo;s console run the loader: it stores the session and reloads, and STRIX resumes it there, chain and all.</p>
         <div class="row">

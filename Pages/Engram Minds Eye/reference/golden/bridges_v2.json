@@ -1,0 +1,1459 @@
+{
+ "format": "bridges_v2_golden",
+ "version": 2,
+ "source": {
+  "repository": "BioChainAI/Owl-Academy",
+  "commit": "26a05eae0320e1287b40accff60d06086171cc24",
+  "files": {
+   "scripts/biomesh-core.js": {
+    "sha256": "0c7e9b3e7f67e821047537a1be76ec18e96af65bf73864a589597fd458578a69",
+    "commit": "f1d31afd48f8424348972b4d68abf8e23830a539"
+   }
+  },
+  "suites": {
+   "shdccp2_record": "87f5860db0d4157cf14e354fa328aea124dd8208dde23306c6c054ece11ce59e",
+   "shdccp2_tamper": "8e4646c1bbd896185a36ea3bd9ab3a462549c1e58cf20fbe429dc9e4f6d88a4b",
+   "shdccp2_tamper_open": "360dc3cc17d0891ddeb7a35c1d5b86951097d29fc0ad4fde3d0cd9243c014fda",
+   "engram1_keys": "995ef52f9ba3c412ea17097a2504f3c6b34a1ffb002d8a60156fd2c11eca3653"
+  }
+ },
+ "note": "What Owl Academy's Firebase-free core gives on fixed inputs: its strict verdict (verifyIntegrityStrict with its own SHA-256), its self-consistency (verifyIntegrity) and the label of RFC 07 section 12.4, on bridges_v1.json's biochains, on owl_extract.cjs's differential set and on the vendored tamper suites; the vendored records regrown; the engram/1 keys. EngramCore.verifyBiochainStrict must give the same verdicts with orbital_core.js's SHA-256 (tests/bridges-v2.cjs).",
+ "strict_checks": [
+  "parity",
+  "canonical",
+  "crystal",
+  "leaves",
+  "weaves",
+  "derived"
+ ],
+ "kinds": [
+  "text",
+  "language-session",
+  "language-shard",
+  "mindseye.lattice_seed",
+  "mindseye.environment",
+  "latticeforge.lattice_seed",
+  "latticeforge.environment"
+ ],
+ "bridges_v1": [
+  {
+   "name": "intro",
+   "ok": true,
+   "failed": null,
+   "legacy": false,
+   "self_consistent": true,
+   "label": "strict ok"
+  },
+  {
+   "name": "longer",
+   "ok": true,
+   "failed": null,
+   "legacy": false,
+   "self_consistent": true,
+   "label": "strict ok"
+  },
+  {
+   "name": "short",
+   "ok": true,
+   "failed": null,
+   "legacy": false,
+   "self_consistent": true,
+   "label": "strict ok"
+  },
+  {
+   "name": "engram stream altered",
+   "ok": false,
+   "failed": "derived",
+   "legacy": false,
+   "fields": [
+    "engramStream"
+   ],
+   "self_consistent": false,
+   "label": "failed at derived"
+  },
+  {
+   "name": "residual altered",
+   "ok": false,
+   "failed": "canonical",
+   "legacy": false,
+   "self_consistent": false,
+   "label": "failed at canonical"
+  }
+ ],
+ "differential": [
+  {
+   "tamper": "as grown",
+   "ok": true,
+   "failed": null,
+   "legacy": false,
+   "self_consistent": true,
+   "label": "strict ok"
+  },
+  {
+   "tamper": "merkleRoot altered",
+   "ok": false,
+   "failed": "leaves",
+   "legacy": false,
+   "fields": [
+    "merkleRoot"
+   ],
+   "self_consistent": false,
+   "label": "failed at leaves"
+  },
+  {
+   "tamper": "weaveChiral altered",
+   "ok": false,
+   "failed": "weaves",
+   "legacy": false,
+   "fields": [
+    "weaveChiral"
+   ],
+   "self_consistent": false,
+   "label": "failed at weaves"
+  },
+  {
+   "tamper": "a leaf hash altered",
+   "ok": false,
+   "failed": "leaves",
+   "legacy": false,
+   "fields": [
+    "leafHashes"
+   ],
+   "self_consistent": false,
+   "label": "failed at leaves"
+  },
+  {
+   "tamper": "leafHashes absent",
+   "ok": false,
+   "failed": "leaves",
+   "legacy": false,
+   "fields": [
+    "leafHashes"
+   ],
+   "self_consistent": true,
+   "label": "self-consistent only, failed at leaves"
+  },
+  {
+   "tamper": "packet 1's parity bit flipped",
+   "ok": false,
+   "failed": "parity",
+   "legacy": false,
+   "self_consistent": false,
+   "label": "failed at parity"
+  },
+  {
+   "tamper": "a residual digit of frame 1 altered",
+   "ok": false,
+   "failed": "canonical",
+   "legacy": false,
+   "self_consistent": false,
+   "label": "failed at canonical"
+  },
+  {
+   "tamper": "the last frame truncated",
+   "ok": false,
+   "failed": "parity",
+   "legacy": false,
+   "self_consistent": false,
+   "label": "failed at parity"
+  },
+  {
+   "tamper": "a frame length not hexadecimal",
+   "ok": false,
+   "failed": "parity",
+   "legacy": false,
+   "self_consistent": false,
+   "label": "failed at parity"
+  },
+  {
+   "tamper": "engramStream altered",
+   "ok": false,
+   "failed": "derived",
+   "legacy": false,
+   "fields": [
+    "engramStream"
+   ],
+   "self_consistent": false,
+   "label": "failed at derived"
+  },
+  {
+   "tamper": "chainId altered",
+   "ok": false,
+   "failed": "weaves",
+   "legacy": false,
+   "fields": [
+    "chainId"
+   ],
+   "self_consistent": true,
+   "label": "self-consistent only, failed at weaves"
+  },
+  {
+   "tamper": "no stream",
+   "ok": false,
+   "failed": "parity",
+   "legacy": true,
+   "self_consistent": false,
+   "label": "legacy"
+  },
+  {
+   "tamper": "legacy streams and chunkLens",
+   "ok": false,
+   "failed": "parity",
+   "legacy": true,
+   "self_consistent": true,
+   "label": "legacy"
+  },
+  {
+   "tamper": "legacy streams and chunkLens, a residual altered",
+   "ok": false,
+   "failed": "parity",
+   "legacy": true,
+   "self_consistent": false,
+   "label": "legacy"
+  }
+ ],
+ "tamper": {
+  "shdccp2_tamper": {
+   "status": "normative",
+   "cases": [
+    {
+     "id": "honest_ascii_1441",
+     "ok": true,
+     "failed": null,
+     "legacy": false,
+     "self_consistent": true,
+     "label": "strict ok",
+     "as_expected": true
+    },
+    {
+     "id": "honest_tokens_mixed",
+     "ok": true,
+     "failed": null,
+     "legacy": false,
+     "self_consistent": true,
+     "label": "strict ok",
+     "as_expected": true
+    },
+    {
+     "id": "honest_x80_single_chunk",
+     "ok": true,
+     "failed": null,
+     "legacy": false,
+     "self_consistent": true,
+     "label": "strict ok",
+     "as_expected": true
+    },
+    {
+     "id": "honest_leading_bom",
+     "ok": true,
+     "failed": null,
+     "legacy": false,
+     "self_consistent": true,
+     "label": "strict ok",
+     "as_expected": true
+    },
+    {
+     "id": "honest_split_4byte_at_720",
+     "ok": true,
+     "failed": null,
+     "legacy": false,
+     "self_consistent": true,
+     "label": "strict ok",
+     "as_expected": true
+    },
+    {
+     "id": "legacy_streams",
+     "ok": false,
+     "failed": "parity",
+     "legacy": true,
+     "self_consistent": true,
+     "label": "legacy",
+     "as_expected": true
+    },
+    {
+     "id": "streamversion_missing",
+     "ok": false,
+     "failed": "parity",
+     "legacy": true,
+     "self_consistent": true,
+     "label": "legacy",
+     "as_expected": true
+    },
+    {
+     "id": "streamversion_unknown",
+     "ok": false,
+     "failed": "parity",
+     "legacy": true,
+     "self_consistent": true,
+     "label": "legacy",
+     "as_expected": true
+    },
+    {
+     "id": "streamversion_upper_case",
+     "ok": false,
+     "failed": "parity",
+     "legacy": true,
+     "self_consistent": true,
+     "label": "legacy",
+     "as_expected": true
+    },
+    {
+     "id": "stream_missing",
+     "ok": false,
+     "failed": "parity",
+     "legacy": true,
+     "self_consistent": false,
+     "label": "legacy",
+     "as_expected": true
+    },
+    {
+     "id": "stream_not_string",
+     "ok": false,
+     "failed": "parity",
+     "legacy": true,
+     "self_consistent": false,
+     "label": "legacy",
+     "as_expected": true
+    },
+    {
+     "id": "not_a_record_null",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "not_a_record_array",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "not_a_record_string",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "stream_empty",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "stream_truncated_residual",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "stream_truncated_header",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "trailing_bytes",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "residual_not_hex",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "packet_not_hex",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "length_not_hex",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "length_negative",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "length_plus_one",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "parity_bit_flipped",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "crystal_bit_parity_not_fixed",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "cut_719_middle",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "cut_1_720_720",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "cut_empty_last_frame",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "over_60000_bytes",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "T9_escape_flip",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "T9_padding_flip",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "residual_extra_zero_byte",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "residual_short_byte",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "residual_zeroed",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "payload_one_less",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "payload_one_more",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "T2_crystal_last_packet_bit31",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "T2_crystal_packet0_bit0",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "csum_amp_bit",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "csum_freq_bit",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "form_changed",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "spin_changed",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "packets_swapped",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "kernel_normalized_0x80",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "T1_no_leaves_no_root",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "leafhashes_missing",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "merkleroot_missing",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "merkleRoot"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "merkleroot_null",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "merkleRoot"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "extra_leaf",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "leaf_missing",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "leaf_changed",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "leaf_upper_case",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "merkleroot_changed",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "merkleRoot"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "merkleroot_bioseed1",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "merkleRoot"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "frames_swapped",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "T8_chainid_last_digit",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "chainId"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "chainid_upper_case",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "chainId"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "chainid_missing",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "chainId"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "weavemirror_changed",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "weaveMirror"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "weavemirror_is_chiral",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "weaveMirror"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "weavechiral_changed",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "weaveChiral"
+     ],
+     "self_consistent": false,
+     "label": "failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "segcuts_changed",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "segCuts"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "segcuts_strings",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "segCuts"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "segcuts_seven",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "segCuts"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "segments_8",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "segments"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "segments_string",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "segments"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "segments_missing",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "segments"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at weaves",
+     "as_expected": true
+    },
+    {
+     "id": "engramstream_changed",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "engramStream"
+     ],
+     "self_consistent": false,
+     "label": "failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "engramstream_lower_case",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "engramStream"
+     ],
+     "self_consistent": false,
+     "label": "failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "engramcount_plus_one",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "engramCount"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "engrammeanj_changed",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "engramMeanJ"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "engramstream_missing",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "engramStream"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "engram_layer_removed",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "shippedBytes",
+      "value"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "engram_field_added",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "engramStream",
+      "engramCount",
+      "engramMeanJ",
+      "shippedBytes",
+      "value"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "origbytes_plus_one",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "origBytes"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "origbytes_string",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "origBytes"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "shippedbytes_minus_one",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "shippedBytes"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "value_changed",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "value"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "value_string",
+     "ok": false,
+     "failed": "derived",
+     "legacy": false,
+     "fields": [
+      "value"
+     ],
+     "self_consistent": true,
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    }
+   ]
+  },
+  "shdccp2_tamper_open": {
+   "status": "draft",
+   "cases": [
+    {
+     "id": "packet_lower_case",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "packet_mixed_case",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "residual_upper_case",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "residual_mixed_case",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "length_upper_case",
+     "ok": false,
+     "failed": "parity",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at parity",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_lead_byte_at_end",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_overlong",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_encoded_surrogate",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_lone_continuation",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_invalid_across_cut",
+     "ok": false,
+     "failed": "canonical",
+     "legacy": false,
+     "self_consistent": true,
+     "label": "self-consistent only, failed at canonical",
+     "as_expected": true
+    }
+   ]
+  }
+ },
+ "records": [
+  {
+   "id": "one_byte",
+   "chainId": "BC-1c258d410bfb8ba7a84037a5",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "geodesic",
+   "chainId": "BC-787287da41a1375701094b64",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "geodesic_no_engrams",
+   "chainId": "BC-787287da41a1375701094b64",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "leading_bom",
+   "chainId": "BC-68d78631a9f17e4a043a7cba",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "no_tokens",
+   "chainId": "BC-faa82bf58cecdf0183a332d6",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "tokens_mixed",
+   "chainId": "BC-90510b13dee66176499caa4f",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "utf8_multibyte",
+   "chainId": "BC-2633f20cad2832ca473aeca2",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "meanj_tie_positive",
+   "chainId": "BC-fca28d3b66af2dfd4e663a72",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "meanj_tie_negative",
+   "chainId": "BC-513b6b91ffc1c097ecb577a5",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "ascii_719",
+   "chainId": "BC-cd467c100120ae82aed68306",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "ascii_720",
+   "chainId": "BC-fa736239000f4be13890a3c8",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "ascii_721",
+   "chainId": "BC-8c701e935fbce49ddf8e21ab",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "ascii_1440",
+   "chainId": "BC-0746991bdb7a19c82b9051eb",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "ascii_1441",
+   "chainId": "BC-29cfb16d9636cc9d438771fd",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "split_2byte_at_720",
+   "chainId": "BC-2219945506a7e903d0961b01",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "split_4byte_at_720",
+   "chainId": "BC-b228c811a845bd49dbaf5b31",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "x80_single_chunk",
+   "chainId": "BC-5be3ba07dab86b0d33e17143",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "x80_three_chunks",
+   "chainId": "BC-d176534df84421bb0b08edf4",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "words_7_chunks",
+   "chainId": "BC-12068ac49689ad37e3a11754",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "max_60000_repeat",
+   "chainId": "BC-6bddf8cafe9193e697eef827",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "max_60000_words",
+   "chainId": "BC-cc6fd01455f2daf9f653c1cf",
+   "as_vector": true,
+   "strict": "strict ok"
+  },
+  {
+   "id": "error_empty",
+   "error": "empty-input",
+   "threw": true
+  },
+  {
+   "id": "error_60001",
+   "error": "input-too-large",
+   "threw": true
+  },
+  {
+   "id": "error_60002_multibyte",
+   "error": "input-too-large",
+   "threw": true
+  }
+ ],
+ "engram1_keys": [
+  {
+   "id": "geodesic_upper",
+   "key": "5C896A4801C9C24C",
+   "as_vector": true
+  },
+  {
+   "id": "geodesic_lower",
+   "key": "5C896A4801C9C24C",
+   "as_vector": true
+  },
+  {
+   "id": "geodesic_mixed",
+   "key": "5C896A4801C9C24C",
+   "as_vector": true
+  },
+  {
+   "id": "geodesic_twice",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "alphabet_lower",
+   "key": "661329302EBA6A9B",
+   "as_vector": true
+  },
+  {
+   "id": "alphabet_upper",
+   "key": "661329302EBA6A9B",
+   "as_vector": true
+  },
+  {
+   "id": "digits_only",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "digits_and_letters",
+   "key": "F7CD2A60C81EC4C1",
+   "as_vector": true
+  },
+  {
+   "id": "apostrophe",
+   "key": "D9A8223138B2647D",
+   "as_vector": true
+  },
+  {
+   "id": "no_apostrophe",
+   "key": "D9A8223138B2647D",
+   "as_vector": true
+  },
+  {
+   "id": "apostrophes_only",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "strasse_sharp_s",
+   "key": "8DD730404B223B20",
+   "as_vector": true
+  },
+  {
+   "id": "strasse_double_s",
+   "key": "8DD730404B223B20",
+   "as_vector": true
+  },
+  {
+   "id": "strasse_title",
+   "key": "8DD730404B223B20",
+   "as_vector": true
+  },
+  {
+   "id": "stra_token",
+   "key": "D080CCD2087A6CAE",
+   "as_vector": true
+  },
+  {
+   "id": "e_token",
+   "key": "5D57FC924358578E",
+   "as_vector": true
+  },
+  {
+   "id": "capital_sharp_s",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "cafe",
+   "key": "1843801E8735D8F7",
+   "as_vector": true
+  },
+  {
+   "id": "naive",
+   "key": "26FFB56A023108BB",
+   "as_vector": true
+  },
+  {
+   "id": "omega",
+   "key": "F85E72D14683CA00",
+   "as_vector": true
+  },
+  {
+   "id": "cjk",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "ligature_fi",
+   "key": "0D757DEF7E90095E",
+   "as_vector": true
+  },
+  {
+   "id": "ligature_st",
+   "key": "43E3F59F9BDCE090",
+   "as_vector": true
+  },
+  {
+   "id": "long_s",
+   "key": "1D9E437A49B226A4",
+   "as_vector": true
+  },
+  {
+   "id": "dotless_i",
+   "key": "174990BB9F9C2B26",
+   "as_vector": true
+  },
+  {
+   "id": "dotted_capital_i",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "n_preceded_by_apostrophe",
+   "key": "396269E94E90D47A",
+   "as_vector": true
+  },
+  {
+   "id": "j_with_caron",
+   "key": "5E0F16C48FB11E49",
+   "as_vector": true
+  },
+  {
+   "id": "kelvin_sign",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "decomposed_e_acute",
+   "key": "5D57FC924358578E",
+   "as_vector": true
+  },
+  {
+   "id": "fullwidth_a",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "owl_emoji",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "empty",
+   "key": "0000000000000000",
+   "as_vector": true
+  },
+  {
+   "id": "sentence",
+   "key": "E314C8F7330A1058",
+   "as_vector": true
+  }
+ ],
+ "engram_grid": {
+  "tokens": 10000,
+  "recipe": "seededTokens() in make_bridges_v2.cjs: mulberry32(20261108), lengths 1-12",
+  "keys_sha256": "315dc63f35ca94ce0f8dbc97179e5e5dd02d42c726d2e7da1529012387cb66b2",
+  "same_as_v1": true
+ }
+}

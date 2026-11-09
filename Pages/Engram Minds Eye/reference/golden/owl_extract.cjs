@@ -21,6 +21,8 @@
 //                                       a star export, so the pages may run a copy the pins do not), and identical
 //                                       copies are listed in `shared`
 //   functionHashes(src, names)          the SHA-256 of each name's text, as piece takes it (null when it is missing)
+//   withHelpers(src, body, provided)    body plus the top-level helpers of src it uses and does not declare (Owl's O3
+//                                       engramGrid calls letterGrid), transitively; body unchanged when it needs none
 //   sandbox()                           a fresh vm context for sibling code: no process, no require
 //   loadGrower(root, candidates)        the grower in a checkout (locate with GROWER_NAMES, the candidates default
 //                                       OWL_GROWER), as growerFromSource gives it, with its file and SHA-256; throws on
@@ -35,7 +37,8 @@
 //   checkPin(spec), Report              the --check of a pin: reproduction, live contract, NOTE lines, exit 0, 1 or 2
 //
 // The sandbox. Sibling code is evaluated with vm in a new context that holds only JavaScript's built-ins and, from a
-// prelude evaluated inside it, a UTF-8 TextEncoder and TextDecoder (the Encoding Standard's algorithms), a SHA-256
+// prelude evaluated inside it, a UTF-8 TextEncoder and TextDecoder (the Encoding Standard's algorithms, with the
+// decoder's fatal and ignoreBOM options: Owl's strict verifier decodes with both), a SHA-256
 // over UTF-8 (FIPS 180-4), and the timer and timing globals a page has, made deterministic: setTimeout and
 // clearTimeout (callbacks run as microtasks in the order set; delays are ignored), queueMicrotask, performance.now (a
 // counter) and structuredClone (for plain data, through JSON). String evaluation (eval, new Function, a string given
@@ -237,10 +240,11 @@ const PRELUDE = `(function (g) {
         }
         return out;
     }
-    function utf8Decode(bytes) {                      // the Encoding Standard's UTF-8 decoder, replacement mode, BOM removed
-        const units = [];
+    function utf8Decode(bytes, fatal, keepBOM) {      // the Encoding Standard's UTF-8 decoder: replacement or fatal mode; its BOM
+        const units = [];                             // removed unless ignoreBOM
         let cp = 0, seen = 0, need = 0, lo = 0x80, hi = 0xBF;
         const emit = c => { if (c < 0x10000) units.push(c); else { c -= 0x10000; units.push(0xD800 + (c >> 10), 0xDC00 + (c & 1023)); } };
+        const bad = () => { if (fatal) throw new TypeError('The encoded data was not valid for encoding utf-8'); emit(0xFFFD); };
         for (let i = 0; i < bytes.length; i++) {
             const b = bytes[i];
             if (need === 0) {
@@ -248,22 +252,29 @@ const PRELUDE = `(function (g) {
                 else if (b >= 0xC2 && b <= 0xDF) { need = 1; cp = b & 0x1F; }
                 else if (b >= 0xE0 && b <= 0xEF) { if (b === 0xE0) lo = 0xA0; if (b === 0xED) hi = 0x9F; need = 2; cp = b & 0xF; }
                 else if (b >= 0xF0 && b <= 0xF4) { if (b === 0xF0) lo = 0x90; if (b === 0xF4) hi = 0x8F; need = 3; cp = b & 7; }
-                else emit(0xFFFD);
+                else bad();
                 continue;
             }
-            if (b < lo || b > hi) { cp = need = seen = 0; lo = 0x80; hi = 0xBF; emit(0xFFFD); i--; continue; }
+            if (b < lo || b > hi) { cp = need = seen = 0; lo = 0x80; hi = 0xBF; bad(); i--; continue; }
             lo = 0x80; hi = 0xBF; cp = (cp << 6) | (b & 0x3F);
             if (++seen === need) { emit(cp); cp = need = seen = 0; }
         }
-        if (need) emit(0xFFFD);
+        if (need) bad();
         let s = '';
-        for (let k = units[0] === 0xFEFF ? 1 : 0; k < units.length; k += 8192) s += String.fromCharCode.apply(null, units.slice(k, k + 8192));
+        for (let k = !keepBOM && units[0] === 0xFEFF ? 1 : 0; k < units.length; k += 8192) s += String.fromCharCode.apply(null, units.slice(k, k + 8192));
         return s;
     }
     class TextEncoder { get encoding() { return 'utf-8'; } encode(s = '') { return Uint8Array.from(utf8Encode(s)); } }
-    class TextDecoder {
+    const FATAL = new WeakMap(), KEEP_BOM = new WeakMap();
+    class TextDecoder {                               // utf-8 only, with the fatal and ignoreBOM options
+        constructor(label = 'utf-8', options = {}) {
+            if (!['utf-8', 'utf8', 'unicode-1-1-utf-8'].includes(String(label).trim().toLowerCase())) throw new RangeError('this sandbox decodes utf-8 only');
+            FATAL.set(this, !!(options && options.fatal)); KEEP_BOM.set(this, !!(options && options.ignoreBOM));
+        }
         get encoding() { return 'utf-8'; }
-        decode(v) { return utf8Decode(v === undefined ? [] : v instanceof ArrayBuffer ? new Uint8Array(v) : new Uint8Array(v.buffer, v.byteOffset, v.byteLength)); }
+        get fatal() { return FATAL.get(this); }
+        get ignoreBOM() { return KEEP_BOM.get(this); }
+        decode(v) { return utf8Decode(v === undefined ? [] : v instanceof ArrayBuffer ? new Uint8Array(v) : new Uint8Array(v.buffer, v.byteOffset, v.byteLength), FATAL.get(this), KEEP_BOM.get(this)); }
     }
     const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
         0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -343,13 +354,97 @@ function sandbox() {
     };
 }
 
+// ------------------------------------------------------------------ the helpers a body taken by name needs
+// Upstream may move part of a named function into a top-level helper: Owl's O3 builds each letter's engram grid once,
+// so engramGrid now calls letterGrid, which reads LETTER_GRIDS. withHelpers(src, body, provided) returns body followed
+// by the top-level declarations of src (at column 0, as in a module) that body uses and does not declare, and those
+// that they use in turn, each once, in source order. A body that already declares everything it uses is returned
+// unchanged, so a v1 artefact rebuilt from its pinned source stays byte for byte the same. provided: names the caller
+// supplies (a sandbox's parameters), never taken from src. Identifiers are read outside comments, strings and regular
+// expressions (template literals' ${...} parts are code); a name after "." is a property, not a use (after "..." it is).
+function identifiersIn(text) {
+    const ids = new Set();
+    const scan = s => {
+        for (let i = 0; i < s.length;) {
+            const c = s[i];
+            if (c === '`') {
+                let j = i + 1;
+                while (j < s.length && s[j] !== '`') {
+                    if (s[j] === '\\') j += 2;
+                    else if (s[j] === '$' && s[j + 1] === '{') { const e = closeOf(s, j + 1); scan(s.slice(j + 2, e)); j = e + 1; }
+                    else j++;
+                }
+                i = j + 1;
+                continue;
+            }
+            const j = skipNonCode(s, i);
+            if (j !== i) { i = j; continue; }
+            if (/[0-9]/.test(c)) { while (i < s.length && /[\w.]/.test(s[i])) i++; continue; }
+            if (/[A-Za-z_$]/.test(c)) {
+                let k = i;
+                while (k < s.length && /[\w$]/.test(s[k])) k++;
+                let p = i - 1;
+                while (p >= 0 && /\s/.test(s[p])) p--;
+                if (s[p] !== '.' || s.slice(p - 2, p + 1) === '...') ids.add(s.slice(i, k));   // a property, unless spread
+                i = k;
+                continue;
+            }
+            i++;
+        }
+    };
+    scan(text);
+    return ids;
+}
+// the declarations at column 0: [{ names, at, text }], in source order (a const statement may declare several names)
+function topLevelDeclarations(src) {
+    const out = [];
+    for (const m of src.matchAll(/^(export )?(?:(?:async )?function ([A-Za-z_$][\w$]*)\(|class ([A-Za-z_$][\w$]*) |(const|let|var)\s)/gm)) {
+        const at = m.index + (m[1] ? m[1].length : 0);
+        if (m[2] || m[3]) {
+            const name = m[2] || m[3];
+            let text;
+            try { text = grab(src.slice(at), name); } catch (e) { continue; }
+            out.push({ names: [name], at, text });
+            continue;
+        }
+        const listStart = at + m[4].length + 1, end = findAtDepth0(src, listStart, ';');
+        if (end < 0) continue;
+        const names = [];
+        for (let i = listStart; i < end;) {
+            const comma = findAtDepth0(src, i, ',', end);
+            const id = /^\s*([A-Za-z_$][\w$]*)/.exec(src.slice(i, comma < 0 ? end : comma));
+            if (id) names.push(id[1]);
+            i = comma < 0 ? end : comma + 1;
+        }
+        if (names.length) out.push({ names, at, text: src.slice(at, end + 1) });
+    }
+    return out;
+}
+function withHelpers(src, body, provided = []) {
+    const decls = topLevelDeclarations(src), byName = new Map();
+    for (const d of decls) for (const n of d.names) if (!byName.has(n)) byName.set(n, d);
+    const have = new Set([...topLevelDeclarations(body).flatMap(d => d.names), ...provided]);
+    const added = new Set(), todo = [...identifiersIn(body)];
+    while (todo.length) {
+        const id = todo.pop();
+        if (have.has(id) || !byName.has(id)) continue;
+        const d = byName.get(id);
+        if (added.has(d)) continue;
+        added.add(d);
+        for (const n of d.names) have.add(n);
+        todo.push(...identifiersIn(d.text));
+    }
+    if (!added.size) return body;
+    return body + '\n' + [...added].sort((a, b) => a.at - b.at).map(d => d.text).join('\n');
+}
+
 // growBiochain and verifyIntegrity of a biomesh source, with SYNC and CONST_NAMES (each statement once), in a sandbox
 function syncBody(src) {
     const consts = [...new Set(CONST_NAMES.map(n => constStatement(src, n)))];
-    return consts.concat(SYNC.map(n => grab(src, n))).join('\n');
+    return withHelpers(src, consts.concat(SYNC.map(n => grab(src, n))).join('\n'));
 }
 function growerFromSource(src, sb = sandbox()) {
-    const body = syncBody(src) + '\n' + grab(src, 'growBiochain') + '\n' + grab(src, 'verifyIntegrity');
+    const body = withHelpers(src, syncBody(src) + '\n' + grab(src, 'growBiochain') + '\n' + grab(src, 'verifyIntegrity'), HASH_PARAMS);
     return sb.compile(HASH_PARAMS, body + '\nreturn { growBiochain, verifyIntegrity, MAX_GROW_BYTES };', HASH_INJECT)();
 }
 const GROWER_NAMES = [...CONST_NAMES, ...SYNC, 'growBiochain', 'verifyIntegrity'];
@@ -449,7 +544,7 @@ function loadOwlEye(EYE, sb = sandbox()) {
 // r.repro(label, ok, detail): a reproduction line (ok: true, false, or null for skipped)
 // r.live(label, ok, detail): a live-contract line; r.note(text): a NOTE line; r.exit(): 0, 1 or 2
 class Report {
-    constructor(name) { this.name = name; this.lines = []; this.failed = 0; this.skipped = 0; }
+    constructor(name, pin = 'v1') { this.name = name; this.pin = pin; this.lines = []; this.failed = 0; this.skipped = 0; }
     repro(label, ok, detail = '') { this.add('reproduction', label, ok, detail); }
     live(label, ok, detail = '') { this.add('live', label, ok, detail); }
     add(part, label, ok, detail) {
@@ -467,13 +562,13 @@ class Report {
     bodies(changed, sameResults, differential = null) {
         if (!changed.length) return;
         if (sameResults && differential === true) this.note(`body changed, behaviour identical: ${changed.join(', ')}`);
-        else if (sameResults && differential === null) this.note(`body changed; same results on the v1 inputs: ${changed.join(', ')}`);
+        else if (sameResults && differential === null) this.note(`body changed; same results on the ${this.pin} inputs: ${changed.join(', ')}`);
         else this.note(`body changed: ${changed.join(', ')}`);
     }
     exit() {
         const code = this.failed ? 1 : this.skipped ? 2 : 0;
         for (const l of this.lines) console.log(l);
-        console.log(`${this.name}: ${code === 0 ? 'v1 reproduces and the live contract holds' : code === 1 ? 'FAILED' : 'skipped (a pinned source or checkout is missing); nothing failed'}`);
+        console.log(`${this.name}: ${code === 0 ? `${this.pin} reproduces and the live contract holds` : code === 1 ? 'FAILED' : 'skipped (a pinned source or checkout is missing); nothing failed'}`);
         process.exit(code);
     }
 }
@@ -503,9 +598,11 @@ function hints(repo, file) { const s = provenance().sources[`${repo}:${file}`]; 
 // A pin's --check, the same for every pin script.
 //   spec.name        what is checked (printed)
 //   spec.repo        { name, root }: the sibling checkout (missing: exit 2); spec.repos for several
-//   spec.sources     [{ file, sha256, repo?, candidates?, names?, lines? }]: the pinned files, by recorded SHA-256, in
-//                    spec.repo or in the named one of spec.repos; for the live contract the first of `candidates`
-//                    (default [file]) that defines every name and line is used
+//   spec.sources     [{ file, sha256, repo?, candidates?, names?, lines?, liveOptional? }]: the pinned files, by recorded
+//                    SHA-256, in spec.repo or in the named one of spec.repos; for the live contract the first of
+//                    `candidates` (default [file]) that defines every name and line is used. A liveOptional source is
+//                    needed for the reproduction only (a copied data file): missing from the checkout, it is a NOTE
+//   spec.pin         optional: what the outputs are called in the summary line (default 'v1')
 //   spec.outputs     [{ label, path }]: the v1 files, in the order build returns their texts
 //   spec.build       async (S, mode) => [texts]: S maps each source file to its text; mode is 'reproduction' (use the
 //                    provenance recorded in v1) or 'live'
@@ -520,7 +617,7 @@ function hints(repo, file) { const s = provenance().sources[`${repo}:${file}`]; 
 //   spec.liveSkip    optional (pinnedS, liveS) => reason: when the live contract needs no rebuild (identical bodies)
 //   spec.commitNotes optional () => [text]: recorded commits that differ from the checkout's (NOTE provenance lines)
 async function checkPin(spec) {
-    const r = new Report(spec.name), repos = spec.repos || [spec.repo];
+    const r = new Report(spec.name, spec.pin), repos = spec.repos || [spec.repo];
     for (const rp of repos) if (!fs.existsSync(rp.root)) { console.log(`skipped: no ${rp.name} checkout at ${rp.root}`); process.exit(2); }
     const repoOf = s => (s.repo ? repos.find(rp => rp.name === s.repo) : repos[0]);
     const found = spec.sources.map(s => ({ s, hit: findSource(repoOf(s).root, s.file, s.sha256, hints(repoOf(s).name, s.file)) }));
@@ -530,7 +627,7 @@ async function checkPin(spec) {
         pinnedS = Object.fromEntries(found.map(f => [f.s.file, f.hit.src]));
         const texts = await spec.build(pinnedS, 'reproduction');
         const why = (a, b) => { try { return `DIFFERS: ${firstDifference(JSON.parse(a), JSON.parse(b))}`; } catch (e) { return 'DIFFERS'; } };
-        spec.outputs.forEach((o, i) => r.repro(o.label, v1[i] !== null && texts[i] === v1[i], v1[i] === null ? 'the v1 file is missing' : texts[i] === v1[i] ? `byte for byte, from ${[...new Set(found.map(f => f.hit.where))].join(', ')}` : why(v1[i], texts[i])));
+        spec.outputs.forEach((o, i) => r.repro(o.label, v1[i] !== null && texts[i] === v1[i], v1[i] === null ? `the ${r.pin} file is missing` : texts[i] === v1[i] ? `byte for byte, from ${[...new Set(found.map(f => f.hit.where))].join(', ')}` : why(v1[i], texts[i])));
     } else {
         for (const f of found.filter(x => !x.hit)) r.repro(`${f.s.file} ${f.s.sha256.slice(0, 12)}…`, null, 'the pinned content is not in the checkout or its git history (missing file or shallow clone)');
     }
@@ -539,6 +636,7 @@ async function checkPin(spec) {
     let missing = false;
     for (const s of spec.sources) {
         const hit = locate(repoOf(s).root, s.candidates || [s.file], s.names || [], s.lines || []);
+        if (!hit && s.liveOptional) { r.note(`provenance: ${s.file} is not in the checkout (pinned ${s.sha256.slice(0, 12)}…; the live contract does not use it)`); continue; }
         if (!hit) { missing = true; r.live(s.file, false, `no ${(s.candidates || [s.file]).join(' or ')} in the checkout defines ${(s.names || []).length} names it needs`); continue; }
         if (hit.conflicts.length) { missing = true; r.live(s.file, false, `defined differently in more than one file, so the pages may run code the pin does not: ${byFiles(hit.conflicts)}`); continue; }
         if (hit.shared.length) r.note(`defined in more than one file, with the same text: ${byFiles(hit.shared)}`);
@@ -547,7 +645,7 @@ async function checkPin(spec) {
         r.provenance(hit.file === s.file ? s.file : `${s.file} (now ${hit.file})`, s.sha256, hit.sha256, f.hit && f.hit.where !== 'working tree' ? f.hit.where : null);
     }
     if (!missing) {
-        const same = spec.sources.every(s => sha256(liveS[s.file]) === s.sha256);
+        const same = spec.sources.every(s => typeof liveS[s.file] === 'string' && sha256(liveS[s.file]) === s.sha256);
         const skip = !same && pinnedS && spec.liveSkip ? spec.liveSkip(pinnedS, liveS) : null;
         let ok = true, deep = null;          // deep: the differential set agreed (true), disagreed (false) or did not run (null)
         if (same) { r.live('the checkout holds the pinned sources', true, 'the reproduction above is the live run'); deep = spec.differential ? true : null; }
@@ -555,7 +653,7 @@ async function checkPin(spec) {
         else {
             const want = spec.behaviour(v1), got = spec.behaviour(await spec.build(liveS, 'live'));
             ok = JSON.stringify(want) === JSON.stringify(got);
-            r.live(`the current code on the v1 inputs`, ok, ok ? 'records and verdicts equal v1' : `differs from v1: ${firstDifference(want, got)}`);
+            r.live(`the current code on the ${r.pin} inputs`, ok, ok ? `records and verdicts equal ${r.pin}` : `differs from ${r.pin}: ${firstDifference(want, got)}`);
             if (spec.differential && !pinnedS) r.live('the differential set (altered records, the grow cap)', null, 'no oracle: the pinned content was not found');
             else if (spec.differential) {
                 const rows = await spec.differential(pinnedS, liveS);
@@ -588,5 +686,5 @@ function firstDifference(a, b, at = '') {
 }
 
 module.exports = { grab, line, constStatement, piece, has, sha256, SYNC, CONST_NAMES, OWL_GROWER, BIOCHAIN_GROWER, GROWER_NAMES, findSource, locate, functionHashes,
-    lastCommit, headCommit, sandbox, syncBody, growerFromSource, loadGrower, tamperSet, differential, loadOwlEye, HASH_NS, HASH_PARAMS, HASH_INJECT, Report, changedBodies,
+    lastCommit, headCommit, sandbox, identifiersIn, topLevelDeclarations, withHelpers, syncBody, growerFromSource, loadGrower, tamperSet, differential, loadOwlEye, HASH_NS, HASH_PARAMS, HASH_INJECT, Report, changedBodies,
     writeFrozen, stripKeys, SIDECAR, provenance, hints, checkPin, firstDifference };
