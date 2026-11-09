@@ -543,16 +543,81 @@ $('x-owl').addEventListener('click', () => doExport('owl'));
 let pending = null, lastOwl = null;
 const loader = (text, cut) => `localStorage.setItem('engram_mind_eye_v1', JSON.stringify(${cut && text.length > cut ? text.slice(0, cut) + ' … ' : text})); location.reload();`;
 const STORE = [...new Set(EC.tokenize(LIB.intro + ' ' + LIB.concepts.flatMap(c => c.responses).join(' ')))];
-function readImport() {
-    const out = $('b-out'), line = (ok, label, detail) => `<div><span class="${ok === true ? 'good' : ok === false ? 'bad' : 'help'}">${ok === true ? 'PASS' : ok === false ? 'FAIL' : 'NOTE'}</span> ${esc(label)}${detail ? ` <span class="help">· ${esc(detail)}</span>` : ''}</div>`;
-    pending = null; $('b-load').disabled = true;
+const yieldTask = () => new Promise(r => setTimeout(r, 0));
+const importLine = (ok, label, detail) => `<div><span class="${ok === true ? 'good' : ok === false ? 'bad' : 'help'}">${ok === true ? 'PASS' : ok === false ? 'FAIL' : 'NOTE'}</span> ${esc(label)}${detail ? ` <span class="help">· ${esc(detail)}</span>` : ''}</div>`;
+let importRun = 0, passOn = null;
+// a biochain record or package: the checked import (engram_core.js importBiochainCheckedSteps on biochain_v2.js), run
+// step by step so the page draws between the steps; its two verdicts, the engram cross-check, the kind and where the
+// record says it came from; the signer (Web Crypto) after that
+async function readChecked(obj, run) {
+    const out = $('b-out'), BC2 = window.BiochainV2;
     let r;
-    try { r = EC.importAny($('b-text').value, { LS: window.LatticeSeedV1, BC: window.BiochainV1, store: STORE }); }
-    catch (e) { out.innerHTML = line(false, e.message); return; }
-    out.innerHTML = `<div class="help" style="margin:2px 0 4px">${esc(r.label)}</div>` + r.checks.map(c => line(c.ok, c.label, c.detail)).join('');
-    if (r.turns && r.turns.length) { pending = r; $('b-load').disabled = false; $('b-load').textContent = r.verified ? 'Load as this session' : 'Load it anyway'; }
-    else if (r.kind === 'lattice_seed' || r.kind === 'environment') out.insertAdjacentHTML('beforeend', line(null, 'lattice seeds and environments are shown on the 3D page: paste it in its LATTICE-SEED/1 panel'));
+    const g = EC.importBiochainCheckedSteps(BC2, obj);
+    for (let s = g.next(); ; s = g.next()) {
+        if (s.done) { r = s.value; break; }
+        out.innerHTML = importLine(null, `checking: ${s.value.label}`, s.value.done ? `${s.value.done} words` : '');
+        await yieldTask();
+        if (run !== importRun) return;
+    }
+    const st = r.strict, pv = r.provenance, yesNo = v => (v === true ? 'yes' : v === false ? 'no' : 'not checked here');
+    // the Owl-compatible line names the line below it that failed: Owl Academy's verifyIntegrity steps (checks[0]) or
+    // this system's engram stream (checks[1])
+    const owlDetail = r.owlCompatible ? 'the record agrees with itself: Owl Academy\'s verifyIntegrity steps and this system\'s engram stream' :
+        r.checks[0].ok === false ? 'Owl Academy\'s verifyIntegrity steps fail' : 'this system\'s engram stream of the text differs from the record\'s';
+    out.innerHTML = `<div class="help" style="margin:2px 0 4px">${esc(r.label)} · ${esc(r.verdict)}</div>` +
+        importLine(st.ok, `strict: ${st.label}`, st.ok ? 'parity, canonical, crystal, leaves, weaves, derived (RFC 07)' : st.detail) +
+        importLine(r.owlCompatible, `Owl-compatible: ${r.owlCompatible ? 'ok' : 'failed'}`, owlDetail) +
+        r.checks.map(c => importLine(c.ok, c.label, c.detail)).join('') +
+        (r.engrams ? importLine(r.engrams.agree, 'Owl Academy\'s engram layer and this system\'s agree on the text', `${r.engrams.tokens} words, ${r.engrams.distinct} distinct`) : '') +
+        importLine(r.recordKindGiven === null || r.recordKind !== null ? null : false, 'kind', r.recordKind || (r.recordKindGiven ? `${r.recordKindGiven}: not in Owl Academy's registry` : 'none given')) +
+        (pv.from === 'record' ? importLine(null, 'a bare record: no package, so nothing says who grew it') :
+            importLine(pv.contentMatches === false || pv.contentHashOk === false ? false : null, `from a ${pv.from === 'lexicon-package' ? 'Hyperbolic Lexicon package' : 'biochain-package/1'}: attests ${pv.attests || 'nothing'}`,
+                `content is this record's: ${yesNo(pv.contentMatches)} (${pv.contentDetail}); its hash is the attestation's: ${yesNo(pv.contentHashOk)}; signer ${pv.signer || 'none'}${pv.manifest ? '; with a corpus manifest' : ''}`));
+    if (r.turns && r.turns.length) { pending = r; $('b-load').disabled = false; $('b-load').textContent = r.verified && st.ok ? 'Load as this session' : 'Load it anyway'; }
+    // passed on only when exportBiochainPackage would write it: strict ok, an attestation, a kind, the content this
+    // record's (or rebuilt from it) and its hash the attestation's; a Tier-P LPREP/1 is not (no package field for its salt)
+    if (st.ok && r.attestation && pv.tier === 'P') out.insertAdjacentHTML('beforeend', importLine(null, 'not passed on: a Tier-P LPREP/1 needs its salt, and biochain-package/1 has no field for it yet'));
+    else if (st.ok && r.attestation && pv.contentMatches !== false && pv.contentHashOk !== false) {
+        const inp = EC.biochainInputOf(obj), kind = r.recordKind || (pv.from === 'lexicon-package' ? 'language-shard' : null);
+        if (kind) {
+            const manifest = pv.from === 'lexicon-package' ? { lcorpus: obj.lcorpus, inclusion: obj.inclusion, lgrow: obj.lgrow, consistency: obj.consistency } : obj.manifest;
+            passOn = { record: inp.record, attestation: r.attestation, opts: { BC2, kind, attests: pv.attests || 'GROWN/1', content: pv.content === null ? undefined : pv.content, manifest, registry: obj.registry } };
+            $('b-pass').hidden = false;
+        }
+    }
+    if (r.attestation) {
+        const s = await EC.checkSigner(obj.format === 'biochain-package/1' ? obj : { attestation: r.attestation });
+        if (run !== importRun) return;
+        out.insertAdjacentHTML('beforeend', s.checks.map(c => importLine(c.ok, `signer: ${c.label}`, c.detail)).join('') +
+            importLine(null, 'whether that key may sign is not checked here', 'that needs the key registry'));
+    }
 }
+async function readImport() {
+    const out = $('b-out'), text = $('b-text').value, run = ++importRun;
+    pending = null; passOn = null; $('b-load').disabled = true; $('b-pass').hidden = true;
+    let obj = null;
+    try { obj = JSON.parse(text); } catch (e) { obj = null; }
+    if (obj && window.BiochainV2 && EC.biochainInputOf(obj)) {
+        try { await readChecked(obj, run); } catch (e) { if (run === importRun) out.innerHTML = importLine(false, e.message); }
+        return;
+    }
+    let r;
+    try { r = EC.importAny(text, { LS: window.LatticeSeedV1, BC: window.BiochainV1, store: STORE }); }
+    catch (e) { out.innerHTML = importLine(false, e.message); return; }
+    out.innerHTML = `<div class="help" style="margin:2px 0 4px">${esc(r.label)}</div>` + r.checks.map(c => importLine(c.ok, c.label, c.detail)).join('');
+    if (r.turns && r.turns.length) { pending = r; $('b-load').disabled = false; $('b-load').textContent = r.verified ? 'Load as this session' : 'Load it anyway'; }
+    else if (r.kind === 'lattice_seed' || r.kind === 'environment') out.insertAdjacentHTML('beforeend', importLine(null, 'lattice seeds and environments are shown on the 3D page: paste it in its LATTICE-SEED/1 panel'));
+}
+$('b-pass').addEventListener('click', () => {
+    if (!passOn) return;
+    try { const e = EC.exportBiochainPackage(passOn.record, passOn.attestation, passOn.opts); download(e.name, e.text); $('b-out').insertAdjacentHTML('beforeend', importLine(true, `written ${e.name}`, 'for Owl Academy\'s package import')); }
+    catch (e) { $('b-out').insertAdjacentHTML('beforeend', importLine(false, e.message)); }
+});
+$('b-backup').addEventListener('click', () => {
+    const e = EC.exportV2(live, { manifold: manifold() }), name = e.name.replace('engram_mind_eye_v2_', 'engram_mind_eye_backup_');
+    download(name, e.text);
+    $('save-note').textContent = `Backed up as ${name}. Kept in this browser too.`;
+});
 $('b-read').addEventListener('click', readImport);
 $('b-file').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; $('b-text').value = await f.text(); e.target.value = ''; readImport(); });
 $('b-load').addEventListener('click', () => {

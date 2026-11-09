@@ -1050,6 +1050,259 @@ function importAny(text, { LS = null, BC = null, store = [] } = {}) {
     throw new Error('unknown format');
 }
 
+// ================================================================== strict verification and the checked import (overhaul E3)
+// Additive (D4): verifyBiochain, importBiochain and importAny above are unchanged; the Hyperbolic Lexicon's decided
+// L8(c) runner and tests/bridges-lexicon.cjs read them. BC2 is biochain_v2.js (BiochainV2): Owl Academy's Firebase-free
+// core, verbatim, pinned by reference/golden/make_bridges_v2.cjs, with the strict verifier of RFC 07 section 12.
+// Two verdicts are kept apart:
+//   Owl-compatible  what importBiochain reports as `verified`: the record agrees with itself. Owl Academy's
+//                   verifyIntegrity steps (each packet's parity bit, its residuals decode, the leaves, root, chiral weave
+//                   and engram layer it carries match the recreated text) and this system's engram stream, count and
+//                   mean J of that text.
+//   strict          Owl's verifyIntegrityStrict: the record is what growBiochain grows from its bytes. Only this verdict
+//                   checks that: parity, canonical, crystal, leaves, weaves, derived, in that order, or the first check
+//                   that fails.
+// The labels follow decision D15, as Owl labels them: "strict ok", "legacy", "failed at <check>", and "self-consistent
+// only, failed at <check>" when Owl's verifyIntegrity steps pass (the Owl-compatible verdict also needs this system's
+// engram stream, so it can read "failed" beside that label).
+
+// The strict verdict of a record: Owl's verifyIntegrityStrict, run with orbital_core.js's SHA-256 (synchronous).
+// -> { ok, failed, legacy, checks: [{ name, ok, detail, fields? }] }
+function verifyBiochainStrict(BC2, chain) {
+    if (!BC2 || typeof BC2.verifyIntegrityStrict !== 'function') throw new Error('biochain_v2.js is needed for the strict check');
+    return BC2.verifyIntegrityStrict(chain, { sha256: sha256Hex });
+}
+// A record's engram layer by both implementations, each key computed once per distinct token (F76): Owl's
+// (biochain_v2.js engramGrid, engramGridHex, engramJ, its grid built once per letter) and this system's (ttmpt_core_v1.js
+// crystallize, hexLsb, computeJ). The stream, count and mean J are assembled as biomesh.js engramStreamFromText does,
+// in token order, so they equal the unmemoised results.
+function engramMemo(BC2) {
+    const owl = new Map(), mine = new Map(), texts = new Map();
+    const owlKey = t => { let e = owl.get(t); if (!e) { const g = BC2.engramGrid(t); e = [BC2.engramGridHex(g), BC2.engramJ(g)]; owl.set(t, e); } return e; };
+    const mineKey = t => { let e = mine.get(t); if (!e) { const g = crystallize(t); e = [hexLsb(g).toUpperCase(), computeJ(g)]; mine.set(t, e); } return e; };
+    // a generator: the stream of `tokens` under `key`, yielding every `every` tokens
+    function* layer(tokens, key, every = 1000) {
+        let stream = '', jsum = 0;
+        for (let i = 0; i < tokens.length; i++) {
+            const [h, j] = key(tokens[i]);
+            stream += h; jsum += j;
+            if ((i + 1) % every === 0) yield i + 1;
+        }
+        return { stream, count: tokens.length, meanJ: tokens.length ? +(jsum / tokens.length).toFixed(4) : 0 };
+    }
+    const run = g => { let r; do r = g.next(); while (!r.done); return r.value; };
+    function* both(text, every) {                  // { owl, mine } of a text, cached by text
+        if (texts.has(text)) return texts.get(text);
+        const o = yield* layer(BC2.tokenizeEngrams(text), owlKey, every), m = yield* layer(tokenizeBiomesh(text), mineKey, every);
+        const r = { owl: o, mine: m };
+        texts.set(text, r);
+        return r;
+    }
+    return { both, owl: text => run(both(text)).owl, mine: text => run(both(text)).mine, sizes: () => ({ owl: owl.size, mine: mine.size }) };
+}
+// What a biochain import can be: a record as growBiochain returns it (or a legacy one), a biochain-package/1 (the
+// draft of RFC 07, overhaul S3: format, kind, record, attests, content, attestation, registry?, manifest?), or the
+// Hyperbolic Lexicon's package (record, lprep, attestation, lcorpus, inclusion, lgrow, consistency). null otherwise.
+function biochainInputOf(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+    if (o.format === 'biochain-package/1') return o.record && typeof o.record === 'object' && !Array.isArray(o.record) ? { from: 'biochain-package/1', record: o.record, pkg: o } : null;
+    if (o.record && typeof o.record === 'object' && typeof o.lprep === 'string') return { from: 'lexicon-package', record: o.record, pkg: o };
+    if (typeof o.stream === 'string' || Array.isArray(o.streams)) return { from: 'record', record: o, pkg: null };
+    return null;
+}
+const attestationFormatOf = a => (typeof a.format === 'string' ? a.format : typeof a.keyId === 'string' ? 'attestation/1' : typeof a.sealId === 'string' ? 'owl-seal/1' : null);
+// An LPREP/1 string (the Hyperbolic Lexicon's lprepFields) against a record. Its registered shape: 15 fields and tier S,
+// or 16 with tier P, chainId "-" and a salted root of 64 lower-case hex digits. Field 4, merkleRoot, must be the
+// record's in both tiers; Tier S's field 3 must be its chainId; Tier P's salted root, SHA-256 over UTF-8 of
+// "LPREP-SALT/1|salt|merkleRoot|chainId", is checked when the salt (64 lower-case hex digits) is given.
+// The other fields (sizes, text hashes, vocabulary and address hashes) are the Lexicon's verifyPackage's to recompute.
+// -> { ok: true | false | null (Tier P without its salt: the salted root not checked), tier: 'S' | 'P' | null, detail }
+const HEX64 = /^[0-9a-f]{64}$/;
+function lprepBinding(content, record, salt = null) {
+    const parts = typeof content === 'string' ? content.split('|') : [], f = parts.slice(0, 15);
+    const tier = parts[0] !== 'LPREP/1' ? null : parts.length === 15 && f[14] === 'S' ? 'S' : parts.length === 16 && f[14] === 'P' && f[3] === '-' && HEX64.test(parts[15]) ? 'P' : null;
+    if (!tier) return { ok: false, tier: null, detail: 'not an LPREP/1 string of the registered shape (15 fields and tier S, or 16 with tier P)' };
+    if (!record || f[4] !== record.merkleRoot) return { ok: false, tier, detail: 'it names another merkleRoot' };
+    if (tier === 'S') return f[3] === record.chainId ? { ok: true, tier, detail: 'it names this record\'s chainId and merkleRoot' } : { ok: false, tier, detail: 'it names another chainId' };
+    if (salt === null || salt === undefined) return { ok: null, tier, detail: 'Tier P: it names this record\'s merkleRoot; its salted root needs the salt, which the package does not carry' };
+    if (typeof salt !== 'string' || !HEX64.test(salt)) return { ok: false, tier, detail: 'Tier P: the salt is not 64 lower-case hex digits' };
+    return sha256Hex(`LPREP-SALT/1|${salt}|${record.merkleRoot}|${record.chainId}`) === parts[15] ?
+        { ok: true, tier, detail: 'Tier P: it names this record\'s merkleRoot, and its salted root is this record\'s with the package\'s salt' } :
+        { ok: false, tier, detail: 'Tier P: its salted root is not this record\'s with the package\'s salt' };
+}
+// Where a record says it came from, read from its package (nothing is trusted here: each claim is checked or marked
+// unchecked). contentMatches: the signed content against the record (GROWN/1 rebuilt with Owl's grownCommitment;
+// LPREP/1 by lprepBinding above, with the package's salt when it has one), and contentDetail says what was compared;
+// tier: an LPREP/1 string's tier. contentHashOk: the attestation's contentHash is SHA-256(content). The signature and
+// the key: checkSigner (asynchronous).
+function provenanceOf(BC2, input) {
+    const { from, record, pkg } = input;
+    if (!pkg) return { from, attests: null, content: null, contentMatches: null, contentDetail: null, tier: null, contentHashOk: null, signer: null, attestationFormat: null, registry: null, manifest: false };
+    const att = pkg.attestation && typeof pkg.attestation === 'object' && !Array.isArray(pkg.attestation) ? pkg.attestation : null;
+    const attests = from === 'lexicon-package' ? 'LPREP/1' : typeof pkg.attests === 'string' ? pkg.attests : null;
+    const content = from === 'lexicon-package' ? pkg.lprep : typeof pkg.content === 'string' ? pkg.content : null;
+    let contentMatches = null, contentDetail = content === null ? 'no content' : 'not a content this system checks', tier = null;
+    if (content !== null && attests === 'GROWN/1') {
+        contentMatches = content === BC2.grownCommitment(record);
+        contentDetail = contentMatches ? 'the GROWN/1 commitment rebuilt from the record' : 'not the GROWN/1 commitment rebuilt from the record';
+    } else if (content !== null && attests === 'LPREP/1') {
+        const b = lprepBinding(content, record, Object.prototype.hasOwnProperty.call(pkg, 'salt') ? pkg.salt : null);
+        contentMatches = b.ok; contentDetail = b.detail; tier = b.tier;
+    }
+    return {
+        from, attests, content, contentMatches, contentDetail, tier,
+        contentHashOk: att && content !== null && typeof att.contentHash === 'string' ? att.contentHash === sha256Hex(content) : null,
+        signer: att ? (typeof att.keyId === 'string' ? att.keyId : typeof att.sealId === 'string' ? att.sealId : null) : null,
+        attestationFormat: att ? attestationFormatOf(att) : null,
+        registry: pkg.registry && typeof pkg.registry.sha256 === 'string' ? { sha256: pkg.registry.sha256 } : null,
+        manifest: from === 'lexicon-package' ? typeof pkg.lcorpus === 'string' : !!(pkg.manifest && typeof pkg.manifest === 'object'),
+    };
+}
+// The checked import, step by step: a generator that yields { step, label, done?, of? } between its stages (a page
+// runs it in chunks and draws between them; importBiochainChecked runs it to the end) and returns the result:
+//   importBiochain's fields, with the same meaning (kind 'biochain', label, checks, verified, turns, text): Owl's
+//     verifyIntegrity steps and this system's engram stream, as importBiochain computes them, here on biochain_v2.js
+//   owlCompatible  = verified
+//   strict         the strict verdict, its label (D15, as Owl labels it: "self-consistent only" when the first check,
+//                  Owl's verifyIntegrity steps, passes) and the failing check's detail
+//   verdict        "Owl-compatible ok; strict ok", "Owl-compatible ok; strict failed at crystal", ...
+//   engrams        both engram implementations on the recreated text, compared: { agree, tokens, distinct }
+//   recordKind     the package's or the record's kind when it is in Owl's registry (RFC 07 section 11.3), else null;
+//                  recordKindGiven is what was given (null when none). importBiochain's `kind` stays 'biochain'.
+//   provenance     provenanceOf above
+//   attestation    the package's attestation, as given (null when none)
+// input: an object or its JSON text. opts.every: the tokens between two yields of the engram passes (default 1,000).
+function* importBiochainCheckedSteps(BC2, input, opts = {}) {
+    if (!BC2 || typeof BC2.verifyIntegrityStrict !== 'function') throw new Error('biochain_v2.js is needed for the checked import');
+    const o = typeof input === 'string' ? JSON.parse(input) : input, inp = biochainInputOf(o);
+    if (!inp) throw new Error('not a biochain record or package');
+    const rec = inp.record, memo = opts.memo || engramMemo(BC2);
+    yield { step: 'strict', label: 'the strict check (RFC 07 section 12)' };
+    const strict = verifyBiochainStrict(BC2, rec);
+    // the recreated text, read ahead so that both engram layers can be computed in chunks before Owl's steps use them
+    let text = null;
+    try { text = BC2.recreateText(rec); } catch (e) { text = null; }
+    if (text !== null) {
+        yield { step: 'engrams', label: 'both engram layers of the recreated text', done: 0 };
+        const g = memo.both(text, opts.every || 1000);
+        for (let r = g.next(); !r.done; r = g.next()) yield { step: 'engrams', label: 'both engram layers of the recreated text', done: r.value };
+    }
+    yield { step: 'owl', label: 'Owl Academy\'s verifyIntegrity steps' };
+    // importBiochain, step for step: verifyBiochain (unchanged) on biochain_v2.js with Owl's engram layer memoised
+    const v = verifyBiochain(Object.assign({}, BC2, { engramStreamFromText: memo.owl }), rec);
+    const checks = [check(v.ok, 'Owl Academy\'s verifyIntegrity steps: frame parity, leaves, Merkle root, chiral weave, engram layer', v.reasons.join('; '))];
+    let base;
+    if (!v.ok) base = { kind: 'biochain', label: `a biochain (${rec.chainId || 'no id'})`, checks, verified: false, turns: [] };
+    else {
+        const tokens = BC2.tokenizeEngrams(v.text), mine = memo.mine(v.text);
+        checks.push(check(typeof rec.engramStream !== 'string' || (mine.stream === rec.engramStream && mine.count === rec.engramCount && mine.meanJ === rec.engramMeanJ),
+            'this system\'s engram stream of the recreated text equals the record\'s', `${mine.count} tokens, mean J ${mine.meanJ}`));
+        base = { kind: 'biochain', label: `a biochain (${rec.chainId || 'no id'}), ${v.text.length} characters recreated`, checks, verified: checks.every(x => x.ok !== false), turns: [{ source: 'biochain', tokens }], text: v.text };
+    }
+    let engrams = null;
+    if (text !== null) {
+        const r = memo.owl(text), m = memo.mine(text);
+        engrams = { agree: r.stream === m.stream && r.count === m.count && r.meanJ === m.meanJ, tokens: r.count, distinct: new Set(BC2.tokenizeEngrams(text)).size, meanJ: r.meanJ };
+    }
+    const f = strict.ok ? null : strict.checks[strict.checks.length - 1];
+    // the label as Owl labels it: "self-consistent only" when Owl's verifyIntegrity steps (the first check) pass
+    const strictOut = { ok: strict.ok, failed: strict.failed, legacy: strict.legacy, label: BC2.strictLabel(strict, v.ok), detail: f ? f.detail : null, ...(f && f.fields ? { fields: f.fields } : {}), checks: strict.checks };
+    const kindGiven = inp.pkg && typeof inp.pkg.kind === 'string' ? inp.pkg.kind : typeof rec.kind === 'string' ? rec.kind : null;
+    let recordKind = null;
+    if (kindGiven !== null) { try { recordKind = BC2.validateKind(kindGiven); } catch (e) { recordKind = null; } }
+    return {
+        ...base,
+        owlCompatible: base.verified,
+        strict: strictOut,
+        verdict: `Owl-compatible ${base.verified ? 'ok' : 'failed'}; ${strict.ok ? 'strict ok' : strict.legacy ? 'strict: legacy' : `strict failed at ${strict.failed}`}`,
+        engrams,
+        recordKind, recordKindGiven: kindGiven,
+        provenance: provenanceOf(BC2, inp),
+        attestation: inp.pkg && inp.pkg.attestation && typeof inp.pkg.attestation === 'object' ? inp.pkg.attestation : null,
+    };
+}
+// The checked import, synchronously (importBiochainCheckedSteps run to the end).
+function importBiochainChecked(BC2, input, opts = {}) {
+    const g = importBiochainCheckedSteps(BC2, input, opts);
+    let r;
+    do r = g.next(); while (!r.done);
+    return r.value;
+}
+// The signer of a package, asynchronously with Web Crypto (opts.subtle, else globalThis.crypto.subtle):
+//   fingerprint  the attestation's embedded publicJwk (P-256): SHA-256 over UTF-8 of "x|y", its first 24 hex digits,
+//                must be the keyId ("K-" + them, BioChain-AI's keyIdFromPublic) or the sealId ("S-" + them, Owl's
+//                sealIdFromPublic)
+//   signature    ATTEST/1 only: the P1363 signature (128 hex digits) over "ATTEST/1|keyId|keyVector|contentHash|
+//                epochToken" verifies with that key. SEAL/1 signatures are Owl Academy's to check (overhaul phase 4).
+// It does not decide whether the key may sign (its registry status, decision D10): that needs a registry.
+// -> { ok (true, false, or null when the signature could not be checked here), signer: { id, kind, fingerprint } | null, checks }
+async function checkSigner(pkg, opts = {}) {
+    const checks = [], subtle = opts.subtle || (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.subtle) || null;
+    const att = pkg && typeof pkg === 'object' && pkg.attestation && typeof pkg.attestation === 'object' ? pkg.attestation : null;
+    if (!att) return { ok: null, signer: null, checks: [check(null, 'no attestation in the package')] };
+    const isKey = typeof att.keyId === 'string', id = isKey ? att.keyId : typeof att.sealId === 'string' ? att.sealId : null, jwk = att.publicJwk;
+    if (!id) return { ok: false, signer: null, checks: [check(false, 'the attestation names no keyId or sealId')] };
+    if (!jwk || typeof jwk !== 'object' || typeof jwk.x !== 'string' || typeof jwk.y !== 'string') return { ok: null, signer: { id, kind: isKey ? 'key' : 'seal', fingerprint: null }, checks: [check(null, 'no public key in the attestation', 'the signer can be checked only against a registry')] };
+    if (!subtle) return { ok: null, signer: { id, kind: isKey ? 'key' : 'seal', fingerprint: null }, checks: [check(null, 'Web Crypto is not available here')] };
+    const bytes = s => new Uint8Array(O.utf8(String(s)));
+    const fp = O.toHex(new Uint8Array(await subtle.digest('SHA-256', bytes(`${jwk.x}|${jwk.y}`)))).slice(0, 24), prefix = isKey ? 'K-' : 'S-';
+    const fpOk = id === prefix + fp;
+    checks.push(check(fpOk, `the embedded public key's fingerprint is the ${isKey ? 'keyId' : 'sealId'}`, fpOk ? id : `${prefix}${fp} ≠ ${id}`));
+    let sigOk = null;
+    if (isKey && typeof att.sig === 'string' && /^[0-9a-f]{128}$/i.test(att.sig)) {
+        try {
+            const key = await subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y, ext: true }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+            const payload = ['ATTEST/1', att.keyId, att.keyVector, att.contentHash, att.epochToken].join('|');
+            sigOk = await subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, Uint8Array.from(att.sig.match(/../g).map(h => parseInt(h, 16))), bytes(payload));
+        } catch (e) { sigOk = false; }
+        checks.push(check(sigOk, 'the ATTEST/1 signature verifies with that key', sigOk ? 'P-256, SHA-256' : 'it does not'));
+    } else checks.push(check(null, isKey ? 'no P1363 signature (128 hex digits) to check' : 'the SEAL/1 signature is checked by Owl Academy'));
+    // ok: true when the fingerprint holds and the signature verifies; false when either fails; null when the signature
+    // could not be checked here (a SEAL/1, or no signature)
+    return { ok: !fpOk || sigOk === false ? false : sigOk === true ? true : null, signer: { id, kind: isKey ? 'key' : 'seal', fingerprint: fp }, checks };
+}
+// A biochain-package/1 for the next hop (overhaul N03, hop 2: the Hyperbolic Lexicon -> Engram -> Owl Academy), in the
+// draft form of RFC 07 (overhaul S3): { format, kind, record, attests, content, attestation, registry?, manifest? }.
+// The record must pass the strict check, else nothing is written; only its shdccp/2 fields are kept (Firestore and
+// app fields are dropped). opts: BC2 (biochain_v2.js, required); kind (default the record's; required, in Owl's
+// registry); attests ('GROWN/1', the default, or 'LPREP/1'); content (GROWN/1: rebuilt from the record when absent and
+// must equal it when given; LPREP/1: required, a Tier-S string naming the record's chainId and merkleRoot, see
+// lprepBinding; a Tier-P string is not written, since the draft package has no field for its salt and the next hop could
+// not check its salted root); registry ({ snapshot, sha256 }) and manifest ({ lcorpus, inclusion, lgrow, consistency })
+// copied when given. The attestation's contentHash, when present, must be SHA-256(content).
+// -> { name, text, package }
+const PACKAGE_RECORD_FIELDS = ['chainId', 'stream', 'streamVersion', 'leafHashes', 'merkleRoot', 'weaveChiral', 'weaveMirror', 'segCuts', 'segments',
+    'engramStream', 'engramCount', 'engramMeanJ', 'origBytes', 'shippedBytes', 'value'];
+function exportBiochainPackage(chain, attestation, opts = {}) {
+    const BC2 = opts.BC2;
+    if (!BC2 || typeof BC2.verifyIntegrityStrict !== 'function') throw new Error('biochain_v2.js is needed (opts.BC2) to export a package');
+    const strict = verifyBiochainStrict(BC2, chain);
+    if (!strict.ok) throw new Error(`the record fails the strict check (${BC2.strictLabel(strict)}): not exported`);
+    if (!attestation || typeof attestation !== 'object' || Array.isArray(attestation)) throw new Error('a package carries an attestation');
+    const record = {};
+    for (const k of PACKAGE_RECORD_FIELDS) if (Object.prototype.hasOwnProperty.call(chain, k)) record[k] = JSON.parse(JSON.stringify(chain[k]));
+    const kind = BC2.validateKind(opts.kind !== undefined ? opts.kind : chain.kind);
+    const attests = opts.attests || 'GROWN/1';
+    let content;
+    if (attests === 'GROWN/1') {
+        content = BC2.grownCommitment(record);
+        if (opts.content !== undefined && opts.content !== content) throw new Error('the content given is not the GROWN/1 commitment of the record');
+    } else if (attests === 'LPREP/1') {
+        if (typeof opts.content !== 'string' || opts.content.split('|')[0] !== 'LPREP/1') throw new Error('an LPREP/1 package needs its LPREP/1 string as content');
+        const b = lprepBinding(opts.content, record);
+        if (b.tier === 'P') throw new Error('a Tier-P LPREP/1 is not passed on: biochain-package/1 has no field for its salt yet');
+        if (b.ok !== true) throw new Error(`the LPREP/1 string is not this record's: ${b.detail}`);
+        content = opts.content;
+    } else throw new Error('attests is GROWN/1 or LPREP/1');
+    const att = JSON.parse(JSON.stringify(attestation));
+    if (!att.format) { const fmt = attestationFormatOf(att); if (fmt) att.format = fmt; }
+    if (typeof att.contentHash === 'string' && att.contentHash !== sha256Hex(content)) throw new Error('the attestation\'s contentHash is not SHA-256 of the content');
+    const pkg = { format: 'biochain-package/1', kind, record, attests, content, attestation: att };
+    if (opts.registry) pkg.registry = { snapshot: opts.registry.snapshot, sha256: opts.registry.sha256 };
+    if (opts.manifest) pkg.manifest = { lcorpus: opts.manifest.lcorpus, inclusion: opts.manifest.inclusion, lgrow: opts.manifest.lgrow, consistency: opts.manifest.consistency };
+    return { name: `biochain-package_${record.chainId}.json`, text: JSON.stringify(pkg, null, 1), package: pkg };
+}
+
 // ================================================================== parity with the reference
 // Each check is one line: { section, label, ok, detail }. The sections can be run one at a time (a page yields
 // between them); runParity runs them all.
@@ -1341,6 +1594,9 @@ return {
     // the bridges (Phase 6)
     gridFromHex, liveOf, turnsOf, replayTurns, exportOwlSession, owlGreeting, detectImport, importOwlSession, importV1Chain, importV1Crystal, verifyBiochain, importBiochain,
     importEngramStream, importV2, importEnvironment, importAny,
+    // strict verification and the checked import (overhaul E3; additive)
+    verifyBiochainStrict, engramMemo, biochainInputOf, lprepBinding, provenanceOf, importBiochainCheckedSteps, importBiochainChecked, checkSigner, exportBiochainPackage,
+    PACKAGE_RECORD_FIELDS,
     // parity
     paritySections, behaviourSections, runParity,
 };

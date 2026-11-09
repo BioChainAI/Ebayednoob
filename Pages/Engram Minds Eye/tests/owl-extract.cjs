@@ -2,10 +2,11 @@
 //
 //   node "Pages/Engram Minds Eye/tests/owl-extract.cjs"
 //
-// Checks: the sandbox's TextEncoder, TextDecoder and SHA-256 against Node's on random inputs, its timer and timing
-// globals (deterministic), and that the sandbox has no process, no require and refuses string evaluation; grab,
-// constStatement and functionHashes, including three harmless upstream edits (a split constant declaration, a lone
-// brace in a comment, an unrelated local of a helper's name earlier in the file); stripKeys (top level only); the
+// Checks: the sandbox's TextEncoder, TextDecoder (with its fatal and ignoreBOM options) and SHA-256 against Node's on
+// random inputs, its timer and timing globals (deterministic), and that the sandbox has no process, no require and
+// refuses string evaluation; grab, constStatement and functionHashes, including three harmless upstream edits (a split
+// constant declaration, a lone brace in a comment, an unrelated local of a helper's name earlier in the file);
+// withHelpers (a helper moved out of a named function, as Owl's O3 did to engramGrid); stripKeys (top level only); the
 // differential set against Engram's own verifier (engram_core.js verifyBiochain) on bridges_v1.json's "longer"
 // record; findSource on a scratch git repository (working tree, history, not found); locate with a core module (names
 // spread over two files, an identical copy, a conflicting copy); and checkPin end to end on a scratch "upstream" with a
@@ -36,6 +37,9 @@ const nodeSha = s => crypto.createHash('sha256').update(Buffer.from(s, 'utf8')).
 {
     const sb = X.sandbox();
     const enc = sb.run('(s) => Array.from(new TextEncoder().encode(s))'), dec = sb.run('(a) => new TextDecoder().decode(new Uint8Array(a))'), sh = sb.run('(s) => __sandboxSha256Hex(s)');
+    // the options Owl's strict verifier uses: fatal (throws on ill-formed bytes) and ignoreBOM (keeps a leading U+FEFF)
+    const decOpt = sb.run('(a, o) => { try { return new TextDecoder("utf-8", o).decode(new Uint8Array(a)); } catch (e) { return "THREW " + e.name; } }');
+    const nodeOpt = (a, o) => { try { return new TextDecoder('utf-8', o).decode(new Uint8Array(a)); } catch (e) { return 'THREW ' + e.name; } };
     let seed = 2026, n = 0, bad = 0;
     const rnd = k => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed % k; };
     for (let t = 0; t < 1500; t++) {
@@ -45,9 +49,10 @@ const nodeSha = s => crypto.createHash('sha256').update(Buffer.from(s, 'utf8')).
         const bytes = Array.from({ length: rnd(40) }, () => { const k = rnd(4); return k === 0 ? 0x80 + rnd(0x40) : k === 1 ? 0xC0 + rnd(0x40) : k === 2 ? 0xEF : rnd(256); });
         if (rnd(5) === 0) bytes.unshift(0xEF, 0xBB, 0xBF);
         n++; bad += dec(bytes) !== new TextDecoder().decode(new Uint8Array(bytes));
+        for (const o of [{ fatal: true }, { ignoreBOM: true }, { fatal: true, ignoreBOM: true }]) { n++; bad += decOpt(bytes, o) !== nodeOpt(bytes, o); }
     }
     for (const L of [0, 55, 56, 63, 64, 65, 1000, 70000]) { n++; bad += sh('a'.repeat(L)) !== nodeSha('a'.repeat(L)); }
-    line(!bad && sh('abc') === 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', 'sandbox: UTF-8 coder and SHA-256 agree with Node', `${n - bad}/${n}`);
+    line(!bad && sh('abc') === 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', 'sandbox: UTF-8 coder (the decoder plain, fatal and with ignoreBOM) and SHA-256 agree with Node', `${n - bad}/${n}`);
     let evalRefused = false;
     try { sb.run('eval("1")'); } catch (e) { evalRefused = true; }
     line(sb.run('typeof process') === 'undefined' && sb.run('typeof require') === 'undefined' && evalRefused, 'sandbox: no process, no require, string evaluation refused');
@@ -108,6 +113,37 @@ const nodeSha = s => crypto.createHash('sha256').update(Buffer.from(s, 'utf8')).
         X.constStatement(BASE, 'SEGMENTS') === 'const CHUNK = 4, SEGMENTS = 2;' && X.grab(BASE, 'grow').endsWith('return null;\n}'),
         'grab takes the least-indented declaration; constStatement the whole statement to the end of its line, without "export "');
     line(JSON.stringify(X.stripKeys({ source: { commit: 'a' }, list: [{ source: 'human' }] }, ['source'])) === '{"list":[{"source":"human"}]}', 'stripKeys: the top-level provenance only, nested data kept');
+}
+// a named function whose work moved into top-level helpers (Owl's O3: engramGrid calls letterGrid, which reads
+// LETTER_GRIDS): withHelpers appends what the body uses, transitively and once, and leaves a complete body unchanged
+{
+    const BEFORE = [
+        'const SC = { sha256Hex };',
+        'export function grid(t) { return [...t].map(c => c.charCodeAt(0) & 1); }',
+        'export function key(t) { return grid(t).join(""); }',
+        '',
+    ].join('\n');
+    const AFTER = [
+        'const SC = { sha256Hex };',
+        'const CELLS = new Map();',
+        'function cell(c) { let v = CELLS.get(c); if (v === undefined) { v = bit(c); CELLS.set(c, v); } return v; }',
+        'const bit = c => c.charCodeAt(0) & 1;   // a helper of the helper',
+        'export function grid(t) { /* cell( in a comment */ const o = { cell: 0 }; o.cell = 1; return [...t].map(c => cell(c)).concat(...none()); }',
+        'function none() { return [[]]; }',
+        'export function key(t) { return grid(t).join(""); }',
+        'export function unused() { return SC; }',
+        '',
+    ].join('\n');
+    const body = src => ['grid', 'key'].map(n => X.grab(src, n)).join('\n');
+    const run = src => X.sandbox().compile([], X.withHelpers(src, body(src)) + '\nreturn { key };')().key('abcab');
+    let threw = '';
+    try { X.sandbox().compile([], body(AFTER) + '\nreturn { key };')().key('ab'); } catch (e) { threw = e.message; }
+    const added = X.withHelpers(AFTER, body(AFTER)).slice(body(AFTER).length + 1);
+    line(X.withHelpers(BEFORE, body(BEFORE)) === body(BEFORE) && /cell is not defined/.test(threw) && run(AFTER) === run(BEFORE) && run(AFTER) === '10110' &&
+        added === 'const CELLS = new Map();\nfunction cell(c) { let v = CELLS.get(c); if (v === undefined) { v = bit(c); CELLS.set(c, v); } return v; }\nconst bit = c => c.charCodeAt(0) & 1;\nfunction none() { return [[]]; }',
+        'withHelpers: a complete body unchanged; a helper moved out of a named function appended with its own helpers, in source order; a spread call is a use, a property or a comment is not', threw);
+    line(!X.withHelpers(AFTER, 'function f() { return SC; }', ['SC']).includes('const SC') && X.withHelpers(AFTER, 'function f() { return SC; }').includes('const SC'),
+        'withHelpers: a name the caller provides (a sandbox parameter) is never taken from the source');
 }
 // the differential set: bridges_v1.json's "longer" record (Owl's grower), altered one field at a time, against
 // engram_core.js's verifyBiochain (Owl's verifyIntegrity steps, synchronous): each rejection must be the intended one

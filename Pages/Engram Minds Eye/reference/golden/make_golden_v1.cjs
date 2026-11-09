@@ -60,8 +60,9 @@ function build(S, commit) {
         return { crystallize, encodeToken, hamming, chiralKey, computeJ, CONCEPTS, CONCEPT_NAMES, packets, tokenize,
                  logPacket, logTokens, packGrid64, hex64, hex32, CODEX_ROOT, packetChain, STRIX_INTRO,
                  parity: () => codexParity };`)();
-    // ---- the second implementation, biomesh.js: its engram functions, taken by name (export keywords dropped)
-    const B = sb.compile([], ENGRAM_NAMES.map(n => grabLine(bioSrc, n)).join('\n') + '\nreturn { engramGrid, engramGridHex, engramJ, tokenizeEngrams, engramStreamFromText };')();
+    // ---- the second implementation, biomesh.js: its engram functions, taken by name (export keywords dropped), with
+    // any top-level helper they call that is not one of them (owl_extract.cjs withHelpers: none in the pinned source)
+    const B = sb.compile([], X.withHelpers(bioSrc, ENGRAM_NAMES.map(n => grabLine(bioSrc, n)).join('\n')) + '\nreturn { engramGrid, engramGridHex, engramJ, tokenizeEngrams, engramStreamFromText };')();
 
     // ---- the corpus (PREREGISTRATION.md, E1)
     const dedup = arr => [...new Set(arr)];

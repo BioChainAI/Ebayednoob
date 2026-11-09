@@ -7,7 +7,8 @@
 // decoder3d.js, twin3d.js and fence.js against their Python traces), Engram's own suites (browser-core parity,
 // the 2D and 3D page engines, the bridges, the links, the Oracles names its pages use), the Lexicon's checks of
 // Engram (its chain on biochain_v1.js and engram_core.js, and Engram importing Lexicon shards: see README "Used by"),
-// the site bar, the extractor the pins share, the Python reference, and the four pins from Owl Academy. Each pin
+// the site bar, the extractor the pins share, the Python reference, the four v1 pins from Owl Academy and the v2 pin
+// (biochain_v2.js, from Owl Academy's Firebase-free core). Each pin
 // checks content, not commits: the v1 files rebuilt from the pinned source content (found by SHA-256) must match byte
 // for byte, and the checkout's current code must give v1's results (owl_extract.cjs). A pin whose checkout or pinned
 // content is missing is reported as skipped, never passed. The checkout defaults to OWL_ACADEMY_DIR, else the one
@@ -33,6 +34,7 @@ const RUNS = [
     ['engram', 'the 2D page engine', ['node', E + 'tests/page-engine.cjs']],
     ['engram', 'the 3D page engine', ['node', E + 'tests/page3d-engine.cjs']],
     ['engram', 'the bridges', ['node', E + 'tests/bridges.cjs']],
+    ['engram', 'the strict verdict and the checked import (v2)', ['node', E + 'tests/bridges-v2.cjs']],
     ['engram', 'links and the ways in', ['node', E + 'tests/links.cjs']],
     ['engram', 'Oracles names the pages use', ['node', E + 'tests/core-names.cjs']],
     ['used-by', 'Lexicon chain on biochain_v1/engram_core', ['node', L + 'tests/chain-lexicon.cjs']],
@@ -45,6 +47,7 @@ const RUNS = [
     ['pins', 'STRIX library and exports', ['node', E + 'reference/golden/make_owl_v1.cjs', OWL, '--check'], { tags: ['siblings'] }],
     ['pins', 'LATTICE-SEED/1', ['node', E + 'reference/golden/make_lattice_v1.cjs', OWL, '--check'], { tags: ['siblings'] }],
     ['pins', 'the bridges to Owl Academy', ['node', E + 'reference/golden/make_bridges_v1.cjs', OWL, '--check'], { tags: ['siblings'] }],
+    ['pins', 'biochain_v2.js from Owl Academy\'s core', ['node', E + 'reference/golden/make_bridges_v2.cjs', '--check', '--owl', OWL], { tags: ['siblings'] }],
 ];
 module.exports = { RUNS };
 

@@ -2,8 +2,13 @@
 # (overhaul F20). Each is checked out beside this repository with its full history, so the pin checks can find the
 # pinned source content in git history after upstream commits; every pin compares content: the v1 files must reproduce
 # from the pinned content and the current code must give v1's results. A changed commit or file is a NOTE line, not a
-# failure. It runs tests/run-all.cjs with the "cross-repo" profile: the four Engram pins, the Lexicon's compat pin (with
-# the same WordNet cache as check.yml), test_attest.py and test_chain.py, and the 0xA kernel against SHD-CCP's tooling.
+# failure. It runs tests/run-all.cjs with the "cross-repo" profile: the four Engram v1 pins and the v2 pin (biochain_v2.js
+# from Owl Academy's Firebase-free core), the Lexicon's compat pin (with the same WordNet cache as check.yml),
+# test_attest.py and test_chain.py, the 0xA kernel against SHD-CCP's tooling, and (overhaul E3) Owl Academy's strict
+# verifier, Engram's and the Lexicon's verifyPackage steps 1-6 compared case for case on the Lexicon's L8 records, the
+# compat pin's 26 records and the L10 tamper records (tests/contracts/strict-verifiers.cjs, rebuilt from WordNet). A
+# last step writes notes on BioChain-AI's copies of Owl Academy's code (tests/contracts/owl-copies.cjs, F81) into the job
+# summary; notes never fail.
 # The run is strict: with the checkouts guaranteed, a skipped check means a broken setup, so it fails. It only reads
 # the Lexicon's download cache (check.yml saves it, complete); on a miss it fetches WordNet for this run alone.
 # Actions are pinned to commits (the tag in the comment); no checkout keeps credentials.
@@ -25,7 +30,7 @@ concurrency:
 jobs:
   cross-repo:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout Ebayednoob
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -100,3 +105,11 @@ jobs:
           BIOCHAIN_AI_DIR: ${{ github.workspace }}/BioChain-AI
           SHD_CCP_DIR: ${{ github.workspace }}/SHD-CCP
         run: node tests/run-all.cjs --profile cross-repo --strict -j 2
+
+      - name: Notes on BioChain-AI's copies of Owl Academy's code (F81)
+        if: always()
+        working-directory: Ebayednoob
+        env:
+          OWL_ACADEMY_DIR: ${{ github.workspace }}/Owl-Academy
+          BIOCHAIN_AI_DIR: ${{ github.workspace }}/BioChain-AI
+        run: node tests/contracts/owl-copies.cjs --markdown >> "$GITHUB_STEP_SUMMARY"
