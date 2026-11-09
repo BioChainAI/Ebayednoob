@@ -3,17 +3,17 @@
  "version": 2,
  "source": {
   "repository": "BioChainAI/Owl-Academy",
-  "commit": "26a05eae0320e1287b40accff60d06086171cc24",
+  "commit": "fdc5809bfd9a50a8d17d2238823ad1295504db6b",
   "files": {
    "scripts/biomesh-core.js": {
-    "sha256": "0c7e9b3e7f67e821047537a1be76ec18e96af65bf73864a589597fd458578a69",
-    "commit": "f1d31afd48f8424348972b4d68abf8e23830a539"
+    "sha256": "4475fe7a361df616315b1e7b6369501e39c341d477c322c247aa8da946272263",
+    "commit": "cf1227a6912394ca6424d931ef0330c6be97a915"
    }
   },
   "suites": {
    "shdccp2_record": "87f5860db0d4157cf14e354fa328aea124dd8208dde23306c6c054ece11ce59e",
-   "shdccp2_tamper": "8e4646c1bbd896185a36ea3bd9ab3a462549c1e58cf20fbe429dc9e4f6d88a4b",
-   "shdccp2_tamper_open": "360dc3cc17d0891ddeb7a35c1d5b86951097d29fc0ad4fde3d0cd9243c014fda",
+   "shdccp2_tamper": "3c052c207fe66c92e0f76bbad6d900d88e47a33e6baef2d14ffe55d5cecb6023",
+   "shdccp2_tamper_open": "a2fcc00b9b98169e701bfbdb2a7e3e54929e8779e1bef658ca320263152feb05",
    "engram1_keys": "995ef52f9ba3c412ea17097a2504f3c6b34a1ffb002d8a60156fd2c11eca3653"
   }
  },
@@ -1040,96 +1040,131 @@
    ]
   },
   "shdccp2_tamper_open": {
-   "status": "draft",
+   "status": "normative",
    "cases": [
     {
      "id": "packet_lower_case",
      "ok": false,
-     "failed": "parity",
+     "failed": "crystal",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at parity",
+     "label": "self-consistent only, failed at crystal",
      "as_expected": true
     },
     {
      "id": "packet_mixed_case",
      "ok": false,
-     "failed": "parity",
+     "failed": "crystal",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at parity",
+     "label": "self-consistent only, failed at crystal",
      "as_expected": true
     },
     {
      "id": "residual_upper_case",
      "ok": false,
-     "failed": "parity",
+     "failed": "canonical",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at parity",
+     "label": "self-consistent only, failed at canonical",
      "as_expected": true
     },
     {
      "id": "residual_mixed_case",
      "ok": false,
-     "failed": "parity",
+     "failed": "canonical",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at parity",
+     "label": "self-consistent only, failed at canonical",
      "as_expected": true
     },
     {
      "id": "length_upper_case",
      "ok": false,
-     "failed": "parity",
+     "failed": "canonical",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at parity",
+     "label": "self-consistent only, failed at canonical",
      "as_expected": true
     },
     {
      "id": "utf8_lead_byte_at_end",
      "ok": false,
-     "failed": "canonical",
+     "failed": "derived",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at canonical",
+     "label": "self-consistent only, failed at derived",
      "as_expected": true
     },
     {
      "id": "utf8_overlong",
      "ok": false,
-     "failed": "canonical",
+     "failed": "derived",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at canonical",
+     "label": "self-consistent only, failed at derived",
      "as_expected": true
     },
     {
      "id": "utf8_encoded_surrogate",
      "ok": false,
-     "failed": "canonical",
+     "failed": "derived",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at canonical",
+     "label": "self-consistent only, failed at derived",
      "as_expected": true
     },
     {
      "id": "utf8_lone_continuation",
      "ok": false,
-     "failed": "canonical",
+     "failed": "derived",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at canonical",
+     "label": "self-consistent only, failed at derived",
      "as_expected": true
     },
     {
      "id": "utf8_invalid_across_cut",
      "ok": false,
-     "failed": "canonical",
+     "failed": "derived",
      "legacy": false,
      "self_consistent": true,
-     "label": "self-consistent only, failed at canonical",
+     "label": "self-consistent only, failed at derived",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_residual_changed",
+     "ok": false,
+     "failed": "crystal",
+     "legacy": false,
+     "self_consistent": false,
+     "label": "failed at crystal",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_packet_and_residual_changed",
+     "ok": false,
+     "failed": "leaves",
+     "legacy": false,
+     "fields": [
+      "leafHashes"
+     ],
+     "self_consistent": false,
+     "label": "failed at leaves",
+     "as_expected": true
+    },
+    {
+     "id": "utf8_leaves_and_root_changed",
+     "ok": false,
+     "failed": "weaves",
+     "legacy": false,
+     "fields": [
+      "weaveChiral",
+      "weaveMirror",
+      "chainId"
+     ],
+     "self_consistent": false,
+     "label": "failed at weaves",
      "as_expected": true
     }
    ]

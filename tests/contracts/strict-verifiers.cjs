@@ -16,9 +16,8 @@
 //        (READING runner-9); T3-T6 alter the package, not the record. The three must name the same first failing check.
 // Before anything is compared, every rebuilt record's SHA-256 (over its JSON) must be the one the decided run wrote,
 // pinned in tests/contracts/strict_corpus_v1.json (and, for compat, in biomesh_compat_v1.json).
-// Two differences are open in RFC 07 section 17 (where the hex-case and UTF-8 checks sit) and are NOTE lines, not
-// failures: Owl and Engram fail at parity on hex-case drift and at canonical on ill-formed UTF-8, where the Lexicon names
-// a later check. Every other difference fails, and so does any difference between Owl's and Engram's verdicts.
+// RFC 07 section 17 puts the hex-case and UTF-8 checks where the Lexicon has them (option (a)), so every difference
+// fails, and so does any difference between Owl's and Engram's verdicts.
 //
 //   node tests/contracts/strict-verifiers.cjs [--owl <Owl-Academy checkout>]
 //   node tests/contracts/strict-verifiers.cjs --write-pins     (once: strict_corpus_v1.json from the decided run's cache,
@@ -147,37 +146,26 @@ if (WRITE) {
     if (l8bad.length || l10bad.length || compatBad.length) process.exit(1);
 
     // ---- the verdicts
-    const ORDER = ['parity', 'canonical', 'crystal', 'leaves', 'weaves', 'derived'];
     async function verdicts(rec) {
         const o = OWLV.verifyIntegrityStrict(rec), e = EC.verifyBiochainStrict(BC2, rec), l = await LC.verifyPackage(session, { record: rec }, { skip: SKIP });
         const last = v => (v.ok ? null : v.checks[v.checks.length - 1]);
         return { owl: o.ok ? null : o.failed, owlDetail: o.ok ? '' : last(o).detail, engram: e.ok ? null : e.failed, lexicon: l.failed === '-' ? null : l.failed,
             lexiconDetail: (l.checks.find(c => c.ok === false) || {}).detail || '' };
     }
-    const openClass = v => {
-        if (v.owl === 'parity' && /upper-case|lower-case/.test(v.owlDetail) && ORDER.indexOf(v.lexicon) > 0) return 'hex case';
-        if (v.owl === 'canonical' && /well-formed UTF-8/.test(v.owlDetail) && (v.lexicon === null || ORDER.indexOf(v.lexicon) > 1)) return 'ill-formed UTF-8';
-        return null;
-    };
     for (const [set, list, want] of [['L8', l8.map(r => ({ id: `${r.name} ${r.mode}`, cls: `engrams ${r.mode}`, record: r.record })), true], ['compat', compat, true], ['L10', l10, null]]) {
-        const byCls = {}, diffs = [], owlEngram = [], open = {};
+        const byCls = {}, diffs = [], owlEngram = [];
         for (const x of list) {
             const v = await verdicts(x.record), b = (byCls[x.cls] = byCls[x.cls] || {});
             const key = v.owl || 'ok';
             b[key] = (b[key] || 0) + 1;
             if (v.owl !== v.engram) owlEngram.push(`${x.id}: Owl ${v.owl}, Engram ${v.engram}`);
             if (want && v.owl !== null) diffs.push(`${x.id}: Owl rejects it at ${v.owl} (${v.owlDetail})`);
-            if (v.owl !== v.lexicon) {
-                const oc = openClass(v);
-                if (oc) (open[oc] = open[oc] || []).push(`${x.id} (Lexicon ${v.lexicon || 'accepts'})`);
-                else diffs.push(`${x.id}: Owl ${v.owl || 'accepts'}, Lexicon ${v.lexicon || 'accepts'}${v.lexiconDetail ? ` (${v.lexiconDetail})` : ''}`);
-            }
+            if (v.owl !== v.lexicon) diffs.push(`${x.id}: Owl ${v.owl || 'accepts'}, Lexicon ${v.lexicon || 'accepts'}${v.lexiconDetail ? ` (${v.lexiconDetail})` : ''}`);
         }
         const summary = Object.entries(byCls).map(([c, m]) => `${c}: ${Object.entries(m).map(([k, n]) => `${k} ${n}`).join(', ')}`).join('; ');
         line(!owlEngram.length, `${set}: Engram's verdict (biochain_v2.js) is the checkout's (Owl), case for case`, owlEngram.slice(0, 3).join('; ') || `${list.length} records`);
         line(!diffs.length, want ? `${set}: Owl, Engram and the Lexicon (steps 1-6) accept every record` : `${set}: Owl, Engram and the Lexicon (steps 1-6) name the same first failing check, case for case`,
             diffs.length ? `${diffs.length} differ: ${diffs.slice(0, 3).join('; ')}` : summary);
-        for (const [k, l] of Object.entries(open)) line(null, `${set}: ${l.length} record(s) where the order of the ${k} check is open (RFC 07 section 17)`, l.slice(0, 3).join('; '));
     }
     console.log(`\n${failed ? `${failed} FAIL` : 'the three strict verifiers agree'} (${secs()} s)`);
     process.exit(failed ? 1 : 0);
