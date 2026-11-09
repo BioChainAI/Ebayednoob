@@ -14,7 +14,9 @@
 //                 word, on bridges_v1.json's biochains, the differential set (each row named by its tamper) and every
 //                 tamper case, and the same with
 //                 Owl's own sha256HexSync; every shdccp2_tamper case fails at its expected check and every honest one
-//                 passes; shdccp2_tamper_open as RFC 07 has it (draft); every shdccp2_record record, grown here from
+//                 passes; every shdccp2_tamper_open case fails at its expected check (RFC 07 section 17's option (a):
+//                 hex case at crystal or canonical, ill-formed UTF-8 at the first check its change leaves wrong, at
+//                 derived when every other field comes from the same bytes); every shdccp2_record record, grown here from
 //                 biochain_v2.js's functions, equals the vector and passes, and the two input errors are refused
 //   engram keys   both implementations (Owl's and this system's) give every engram1_keys key
 //   import        importBiochainChecked keeps importBiochain's fields with their meaning (deep equal on every record
@@ -120,8 +122,18 @@ const owlBrief = r => ({ ok: r.ok, failed: r.failed, legacy: r.legacy, ...(r.fie
     for (const c of S.cases.filter(x => !x.expect.ok)) byCheck[c.expect.failed] = (byCheck[c.expect.failed] || 0) + 1;
     check(`shdccp2_tamper (${S.status}): every case at its expected check; the ${honest.length} honest records pass`, !badT.length,
         badT.map(c => c.id).join(', ') || Object.entries(byCheck).map(([k, n]) => `${k} ${n}`).join(', '));
-    const badO = O2.cases.filter(c => !meets(c, verdictOf(c.input.record)));
-    check(`shdccp2_tamper_open (${O2.status}): RFC 07's expected check on every case (hex case at parity, ill-formed UTF-8 at canonical)`, !badO.length, badO.map(c => c.id).join(', ') || `${O2.cases.length} cases`);
+    // RFC 07 section 17, option (a): the expected checks of shdccp2_tamper_open (section 12.5's table), listed here so
+    // that a refreshed copy that moves one of them fails this check
+    const OPTION_A = { packet_lower_case: 'crystal', packet_mixed_case: 'crystal', residual_upper_case: 'canonical', residual_mixed_case: 'canonical',
+        length_upper_case: 'canonical', utf8_lead_byte_at_end: 'derived', utf8_overlong: 'derived', utf8_encoded_surrogate: 'derived',
+        utf8_lone_continuation: 'derived', utf8_invalid_across_cut: 'derived', utf8_residual_changed: 'crystal', utf8_packet_and_residual_changed: 'leaves',
+        utf8_leaves_and_root_changed: 'weaves' };
+    const badA = Object.entries(OPTION_A).filter(([id, failed]) => { const c = O2.cases.find(x => x.id === id); return !c || j(c.expect) !== j({ ok: false, failed }); });
+    const badO = O2.cases.filter(c => c.expect.ok !== false || !meets(c, verdictOf(c.input.record))), byCheckO = {};
+    for (const c of O2.cases) byCheckO[c.expect.failed] = (byCheckO[c.expect.failed] || 0) + 1;
+    check(`shdccp2_tamper_open (${O2.status}): every case fails at its expected check, RFC 07 section 17's option (a) (hex case at crystal or canonical, ill-formed UTF-8 at crystal, leaves, weaves or derived)`,
+        !badA.length && !badO.length, [...badA.map(([id]) => `${id}: not option (a)'s`), ...badO.map(c => c.id)].join(', ') ||
+        `${O2.cases.length} cases: ${Object.entries(byCheckO).map(([k, n]) => `${k} ${n}`).join(', ')}`);
 }
 // ---------------------------------------------------------------- shdccp2_record: grown here from biochain_v2.js's functions
 {
