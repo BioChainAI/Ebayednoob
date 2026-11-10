@@ -267,7 +267,7 @@
                     for (let i = 0; i <= turns * 360; i++) {
                         const angle = toRadians(i); const radius = (i / (turns * 360)) * maxRadius;
                         pointsRed.push(new THREE.Vector3(Math.cos(angle) * (radius), 0, Math.sin(angle) * (radius)));
-                        const blueAngle = angle + toRadians(wireSeparation / radius * 360 || 0);
+                        const blueAngle = angle + toRadians(radius > 0 ? wireSeparation / radius * 360 : 0);
                         pointsBlue.push(new THREE.Vector3(Math.cos(blueAngle) * (radius), 0, Math.sin(blueAngle) * (radius)));
                     }
                     coilGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pointsRed), coilMatRed));
@@ -288,6 +288,7 @@
                     particlesGeometry.setAttribute('meta', new THREE.BufferAttribute(metaArray, 2));
                     const particlesMaterial = new THREE.PointsMaterial({ size: 0.08, color: color, transparent: true, opacity: 0.9 });
                     const particleField = new THREE.Points(particlesGeometry, particlesMaterial);
+                    particleField.frustumCulled = false; // hidden particles are parked at NaN, so no bounding sphere can be computed
                     particleField.userData.isRed = isRed;
                     masterCoilSystem.add(particleField);
                     return particleField;

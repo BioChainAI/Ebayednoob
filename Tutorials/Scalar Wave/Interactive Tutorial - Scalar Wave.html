@@ -249,7 +249,7 @@
                     for (let i = 0; i <= turns * 360; i++) {
                         const angle = toRadians(i), radius = (i / (turns * 360)) * maxRadius;
                         p1.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
-                        const angle2 = angle + toRadians(wireSeparation / radius * 360 || 0);
+                        const angle2 = angle + toRadians(radius > 0 ? wireSeparation / radius * 360 : 0);
                         p2.push(new THREE.Vector3(Math.cos(angle2) * radius, 0, Math.sin(angle2) * radius));
                     }
                     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p1), mat1));
