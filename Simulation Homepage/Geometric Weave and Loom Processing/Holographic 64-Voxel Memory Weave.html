@@ -532,7 +532,8 @@
                 el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.opacity = targetOpacity;
             }
 
-            const historyTexture = new THREE.DataTexture(geoState.historyArray, 25920, 1, THREE.RGBAFormat, THREE.FloatType);
+            // The 25920 frames are stored 160 per row (160 x 162): a 25920 x 1 texture is wider than MAX_TEXTURE_SIZE on most GPUs.
+            const historyTexture = new THREE.DataTexture(geoState.historyArray, 160, 162, THREE.RGBAFormat, THREE.FloatType);
             historyTexture.minFilter = THREE.NearestFilter; historyTexture.magFilter = THREE.NearestFilter;
             
             // Increased to 4320 points for high-resolution rendering over the 25,920 frame track
@@ -571,8 +572,10 @@
                 vec3 rotateZ(vec3 p, float a) { float s=sin(a), c=cos(a); return vec3(p.x*c - p.y*s, p.x*s + p.y*c, p.z); }
 
                 void main() {
-                    // Fetch historical audio data for this point in time
-                    vec4 data = texture2D(t_history, vec2(pIdx, 0.5));
+                    // Fetch historical audio data for this point in time (frame hFrame of 25920, stored 160 per row)
+                    float hFrame = min(floor(pIdx * 25920.0), 25919.0);
+                    float hRow = floor((hFrame + 0.5) / 160.0);
+                    vec4 data = texture2D(t_history, vec2((hFrame - hRow * 160.0 + 0.5) / 160.0, (hRow + 0.5) / 162.0));
                     
                     // Base T2 Torus geometry: R=65, r=8, W=12
                     float R2 = 65.0; float r2 = 8.0; float W2 = 12.0;
